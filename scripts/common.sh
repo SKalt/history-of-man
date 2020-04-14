@@ -44,4 +44,4 @@ function get-log-file-path() {
   echo "$REPO_ROOT/logs/$version.log"  
 }
 
-function version-already-exists() { [ -d "$HTDIR" ]; }
+# function version-already-exists() { [ -d "$HTDIR" ]; }

@@ -58,12 +58,17 @@ function get-version-date(){
   )
 }
 
+function clean-build-dir() {
+  ( cd "$HTDIR" && rm -rf ./*; ) | tee /dev/stderr | log-debug
+}
+
 function build-version() {
   log-debug "build-version man2html opts: HTDIR='$HTDIR'"
   local version_date="$(get-version-date "$VERSION")"
-  set-man-pages-version "$VERSION" && 
+  clean-build-dir && 
+    set-man-pages-version "$VERSION" && 
     parallel-build-all-files &&
-    tag-build "$VERSION";
+    tag-build "$VERSION" "$version_date";
   result=$?
   set-man-pages-version "master";
   cd "$REPO_ROOT" || return $result;
@@ -83,9 +88,9 @@ function main() {
   HM_LOG_FILE="$(get-log-file-path "$VERSION")"
   HTDIR="$(get-htdir-path "$VERSION")"
   log-info "building $VERSION";
-  if ! (version-already-exists); then
-    build-version;
-  fi
+  # if ! (version-already-exists); then
+  build-version;
+  # fi
 }
 
 main "$@"
