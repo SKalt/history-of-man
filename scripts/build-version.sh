@@ -40,12 +40,30 @@ function set-man-pages-version() {
   (cd "$MAN_PAGES_REPO_DIR" && git checkout --force "$ref") 2>&1 | log-debug
 }
 
+function tag-build() {
+  local version="${1:?version is required}"
+  local version_date="${2:?date is required}"
+  log-info "tagging build $version"
+  (
+    cd "$HTDIR" && git add -A . &&
+      git commit -m "$version ~ $version_date" &&
+      git tag "$version"
+  ) | tee /dev/stderr | log-debug
+}
 
+function get-version-date(){
+  local version="${1:?version is required}"
+  (
+    cd "$MAN_PAGES_REPO_DIR" && git show -s --format=%ci | awk '{ print $1 }'
+  )
+}
 
 function build-version() {
   log-debug "build-version man2html opts: HTDIR='$HTDIR'"
-  set-man-pages-version "$VERSION";
-  parallel-build-all-files;
+  local version_date="$(get-version-date "$VERSION")"
+  set-man-pages-version "$VERSION" && 
+    parallel-build-all-files &&
+    tag-build "$VERSION";
   result=$?
   set-man-pages-version "master";
   cd "$REPO_ROOT" || return $result;

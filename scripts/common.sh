@@ -36,7 +36,7 @@ LOG_DIR="$REPO_ROOT/logs"
 
 function get-htdir-path() {
   local version="${1:?version argument is required}"
-  echo "$REPO_ROOT/dist/$version"
+  echo "$REPO_ROOT/history"
 }
 
 function get-log-file-path() { 
