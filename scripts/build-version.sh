@@ -46,15 +46,20 @@ function tag-build() {
   log-info "tagging build $version"
   (
     cd "$HTDIR" && git add -A . &&
+      git config user.name 'anon' &&
+      git config user.email 'anon@mous.org' &&
       git commit -m "$version ~ $version_date" &&
-      git tag "$version"
+      git tag "$version" &&
+      git prune &&
+      git gc
   ) | tee /dev/stderr | log-debug
 }
 
 function get-version-date(){
   local version="${1:?version is required}"
   (
-    cd "$MAN_PAGES_REPO_DIR" && git show -s --format=%ci | awk '{ print $1 }'
+    cd "$MAN_PAGES_REPO_DIR" &&
+    git log -1 --format=%ci "$version" | awk '{ print $1 }'
   )
 }
 
