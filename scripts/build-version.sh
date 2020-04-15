@@ -17,7 +17,7 @@ function parallel-build-all-files() {
   input_files=();
   output_files=();
  
-  for output_dir in "$MAN_PAGES_REPO_DIR"/man*/; do
+  for output_dir in "$MAN_PAGES_REPO_DIR"/man?*/; do
     mkdir -p "${output_dir/$MAN_PAGES_REPO_DIR/$HTDIR}";
   done
   
