@@ -3,13 +3,27 @@
 . "${BASH_SOURCE[0]%/*}/common.sh"
 VERSION=
 HM_LOG_FILE=
-HTOPTS="-h -r -p"
 export HTDIR=
+
+function html-comment-license() {
+  local file="${1:?file is required}"
+  echo '<!--';
+    grep -ie '^\.\\" copyright' "$file";
+    awk '/%%%LICENSE_START\(/,/%%%LICENSE_END/' "$file" \
+      | sed 's/^.\\" //'                                \
+      | sed 's/<--/&lt;--/g'                            \
+      | sed 's/-->/--&gt;/g';
+  echo "-->";
+}
+declare -f html-comment-license;
 
 function build-file() {
   local file="${1:?file is required}"
   local dest="${2:?destination is required}"
-  man2html -h -r -p -D "$file" "$file" | sed -e '1,2d' > "$dest";
+  (
+    man2html -h -r -p -D "$file" "$file" | sed -e '1,2d';
+    html-comment-license "$file"
+  ) > "$dest"
 }
 export -f build-file;
 
