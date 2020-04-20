@@ -8,7 +8,7 @@ May be freely distributed
 <HTML><HEAD><TITLE>Man page of GETITIMER</TITLE>
 </HEAD><BODY>
 <H1>GETITIMER</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2012-10-01<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2014-07-08<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -32,8 +32,8 @@ getitimer, setitimer - get or set value of an interval timer
 
 The system provides each process with three interval timers,
 each decrementing in a distinct time domain.
-When any timer expires, a signal is sent to the
-process, and the timer (potentially) restarts.
+When a timer expires, a signal is sent to the
+process, and the timer is reset to the specified interval (if nonzero).
 <DL COMPACT>
 <DT><B>ITIMER_REAL</B>
 
@@ -71,8 +71,8 @@ Timer values are defined by the following structures:
 <PRE>
 
 struct itimerval {
-    struct timeval it_interval; /* next value */
-    struct timeval it_value;    /* current value */
+    struct timeval it_interval; /* Interval for periodic timer */
+    struct timeval it_value;    /* Time until next expiration */
 };
 
 struct timeval {
@@ -91,7 +91,9 @@ The function
 fills the structure pointed to by
 <I>curr_value</I>
 
-with the current setting for the timer specified by
+with the current value
+(i.e., the amount of time remaining until the next expiration)
+of the timer specified by
 <I>which</I>
 
 (one of
@@ -102,15 +104,17 @@ with the current setting for the timer specified by
 or
 <B>ITIMER_PROF</B>).
 
-The element
+The subfields of the field
 <I>it_value</I>
 
-is set to the amount of time remaining on the timer, or zero if the timer
+are set to the amount of time remaining on the timer, or zero if the timer
 is disabled.
-Similarly,
+The
 <I>it_interval</I>
 
-is set to the reset value.
+field is set to the timer interval (period);
+a value of zero returned in (both subfields of) this field indicates
+that this is a single-shot timer.
 <P>
 The function
 <B>setitimer</B>()
@@ -121,7 +125,11 @@ sets the specified timer to the value in
 If
 <I>old_value</I>
 
-is non-NULL, the old value of the timer is stored there.
+is non-NULL, the old value of the timer
+(i.e., the same information as returned by
+<B>getitimer</B>())
+
+is stored there.
 <P>
 
 Timers decrement from
@@ -355,6 +363,6 @@ error.
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:30:52 GMT, April 20, 2020
+Time: 03:31:28 GMT, April 20, 2020
 </BODY>
 </HTML>

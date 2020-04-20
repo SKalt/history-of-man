@@ -25,7 +25,7 @@ the source, must acknowledge the copyright and authors of this work.
 <HTML><HEAD><TITLE>Man page of DUP</TITLE>
 </HEAD><BODY>
 <H1>DUP</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2012-02-14<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2014-07-08<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -51,19 +51,75 @@ dup, dup2, dup3 - duplicate a file descriptor
 <A NAME="lbAD">&nbsp;</A>
 <H2>DESCRIPTION</H2>
 
-These system calls create a copy of the file descriptor
-<I>oldfd</I>.
-
-<P>
+The
 <B>dup</B>()
 
-uses the lowest-numbered unused descriptor for the new descriptor.
+system call creates a copy of the file descriptor
+<I>oldfd</I>,
+
+using the lowest-numbered unused descriptor for the new descriptor.
 <P>
+After a successful return,
+the old and new file descriptors may be used interchangeably.
+They refer to the same open file description (see
+<B><A HREF="../man2/open.2.html">open</A></B>(2))
+
+and thus share file offset and file status flags;
+for example, if the file offset is modified by using
+<B><A HREF="../man2/lseek.2.html">lseek</A></B>(2)
+
+on one of the descriptors, the offset is also changed for the other.
+<P>
+The two descriptors do not share file descriptor flags
+(the close-on-exec flag).
+The close-on-exec flag
+(<B>FD_CLOEXEC</B>;
+
+see
+<B><A HREF="../man2/fcntl.2.html">fcntl</A></B>(2))
+
+for the duplicate descriptor is off.
+
+<A NAME="lbAE">&nbsp;</A>
+<H3>dup2()</H3>
+
+The
 <B>dup2</B>()
 
-makes <I>newfd</I> be the copy of <I>oldfd</I>, closing <I>newfd</I>
+system call performs the same task as
+<B>dup</B>(),
 
-first if necessary, but note the following:
+but instead of using the lowest-numbered unused file descriptor,
+it uses the descriptor number specified in
+<I>newfd</I>.
+
+If the descriptor
+<I>newfd</I>
+
+was previously open, it is silently closed before being reused.
+<P>
+The steps of closing and reusing the file descriptor
+<I>newfd</I>
+
+are performed
+<I>atomically</I>.
+
+This is important, because trying to implement equivalent functionality using
+<B><A HREF="../man2/close.2.html">close</A></B>(2)
+
+and
+<B>dup</B>()
+
+would be
+subject to race conditions, whereby
+<I>newfd</I>
+
+might be reused between the two steps.
+Such reuse could happen because the main program is interrupted
+by a signal handler that allocates a file descriptor,
+or because a parallel thread allocates a file descriptor.
+<P>
+Note the following points:
 <DL COMPACT>
 <DT>*<DD>
 If
@@ -89,30 +145,11 @@ then
 does nothing, and returns
 <I>newfd</I>.
 
+
 </DL>
-<P>
+<A NAME="lbAF">&nbsp;</A>
+<H3>dup3()</H3>
 
-After a successful return from one of these system calls,
-the old and new file descriptors may be used interchangeably.
-They refer to the same open file description (see
-<B><A HREF="../man2/open.2.html">open</A></B>(2))
-
-and thus share file offset and file status flags;
-for example, if the file offset is modified by using
-<B><A HREF="../man2/lseek.2.html">lseek</A></B>(2)
-
-on one of the descriptors, the offset is also changed for the other.
-<P>
-The two descriptors do not share file descriptor flags
-(the close-on-exec flag).
-The close-on-exec flag
-(<B>FD_CLOEXEC</B>;
-
-see
-<B><A HREF="../man2/fcntl.2.html">fcntl</A></B>(2))
-
-for the duplicate descriptor is off.
-<P>
 <B>dup3</B>()
 
 is the same as
@@ -147,7 +184,7 @@ fails with the error
 <B>EINVAL</B>.
 
 </DL>
-<A NAME="lbAE">&nbsp;</A>
+<A NAME="lbAG">&nbsp;</A>
 <H2>RETURN VALUE</H2>
 
 On success, these system calls
@@ -156,7 +193,7 @@ On error, -1 is returned, and
 <I>errno</I>
 
 is set appropriately.
-<A NAME="lbAF">&nbsp;</A>
+<A NAME="lbAH">&nbsp;</A>
 <H2>ERRORS</H2>
 
 <DL COMPACT>
@@ -217,7 +254,7 @@ was equal to
 The process already has the maximum number of file
 descriptors open and tried to open a new one.
 </DL>
-<A NAME="lbAG">&nbsp;</A>
+<A NAME="lbAI">&nbsp;</A>
 <H2>VERSIONS</H2>
 
 <B>dup3</B>()
@@ -225,7 +262,7 @@ descriptors open and tried to open a new one.
 was added to Linux in version 2.6.27;
 glibc support is available starting with
 version 2.9.
-<A NAME="lbAH">&nbsp;</A>
+<A NAME="lbAJ">&nbsp;</A>
 <H2>CONFORMING TO</H2>
 
 <B>dup</B>(),
@@ -240,7 +277,7 @@ is Linux-specific.
 
 
 
-<A NAME="lbAI">&nbsp;</A>
+<A NAME="lbAK">&nbsp;</A>
 <H2>NOTES</H2>
 
 The error returned by
@@ -270,17 +307,47 @@ was open, any errors that would have been reported at
 <B><A HREF="../man2/close.2.html">close</A></B>(2)
 
 time are lost.
-A careful programmer will not use
-<B>dup2</B>()
+If this is of concern,
+then---unless the program is single-threaded and does not allocate
+file descriptors in signal handlers---the correct approach is
+<I>not</I>
 
-or
-<B>dup3</B>()
-
-without closing
+to close
 <I>newfd</I>
 
-first.
-<A NAME="lbAJ">&nbsp;</A>
+before calling
+<B>dup2</B>(),
+
+because of the race condition described above.
+Instead, code something like the following could be used:
+<P>
+<PRE>
+    /* Obtain a duplicate of 'newfd' that can subsequently
+       be used to check for close() errors; an EBADF error
+       means that 'newfd' was not open. */
+
+    tmpfd = dup(newfd);
+    if (tmpfd == -1 &amp;&amp; errno != EBADF) {
+        /* Handle unexpected dup() error */
+    }
+
+    /* Atomically duplicate 'oldfd' on 'newfd' */
+
+    if (dup2(oldfd, newfd) == -1) {
+        /* Handle dup2() error */
+    }
+
+    /* Now check for close() errors on the file originally
+       referred to by 'newfd' */
+
+    if (tmpfd != -1) {
+        if (close(tmpfd) == -1) {
+            /* Handle errors from close */
+        }
+    }
+</PRE>
+
+<A NAME="lbAL">&nbsp;</A>
 <H2>SEE ALSO</H2>
 
 <B><A HREF="../man2/close.2.html">close</A></B>(2),
@@ -297,17 +364,21 @@ first.
 <DT><A HREF="#lbAB">NAME</A><DD>
 <DT><A HREF="#lbAC">SYNOPSIS</A><DD>
 <DT><A HREF="#lbAD">DESCRIPTION</A><DD>
-<DT><A HREF="#lbAE">RETURN VALUE</A><DD>
-<DT><A HREF="#lbAF">ERRORS</A><DD>
-<DT><A HREF="#lbAG">VERSIONS</A><DD>
-<DT><A HREF="#lbAH">CONFORMING TO</A><DD>
-<DT><A HREF="#lbAI">NOTES</A><DD>
-<DT><A HREF="#lbAJ">SEE ALSO</A><DD>
+<DL>
+<DT><A HREF="#lbAE">dup2()</A><DD>
+<DT><A HREF="#lbAF">dup3()</A><DD>
+</DL>
+<DT><A HREF="#lbAG">RETURN VALUE</A><DD>
+<DT><A HREF="#lbAH">ERRORS</A><DD>
+<DT><A HREF="#lbAI">VERSIONS</A><DD>
+<DT><A HREF="#lbAJ">CONFORMING TO</A><DD>
+<DT><A HREF="#lbAK">NOTES</A><DD>
+<DT><A HREF="#lbAL">SEE ALSO</A><DD>
 </DL>
 <HR>
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:30:51 GMT, April 20, 2020
+Time: 03:31:28 GMT, April 20, 2020
 </BODY>
 </HTML>

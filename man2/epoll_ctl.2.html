@@ -19,7 +19,7 @@ License along with this manual; if not, see
 <HTML><HEAD><TITLE>Man page of EPOLL_CTL</TITLE>
 </HEAD><BODY>
 <H1>EPOLL_CTL</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2012-04-15<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2014-07-08<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -214,6 +214,34 @@ with
 <B>EPOLL_CTL_MOD</B>
 
 to rearm the file descriptor with a new event mask.
+<DT><B>EPOLLWAKEUP</B> (since Linux 3.5)
+
+<DD>
+
+If
+<B>EPOLLONESHOT</B>
+
+and
+<B>EPOLLET</B>
+
+are clear and the process has the
+<B>CAP_BLOCK_SUSPEND</B>
+
+capability,
+ensure that the system does not enter &quot;suspend&quot; or
+&quot;hibernate&quot; while this event is pending or being processed.
+The event is considered as being &quot;processed&quot; from the time
+when it is returned by a call to
+<B><A HREF="../man2/epoll_wait.2.html">epoll_wait</A></B>(2)
+
+until the next call to
+<B><A HREF="../man2/epoll_wait.2.html">epoll_wait</A></B>(2)
+
+on the same
+<B><A HREF="../man7/epoll.7.html">epoll</A></B>(7)
+
+file descriptor.
+See also BUGS.
 </DL>
 <A NAME="lbAE">&nbsp;</A>
 <H2>RETURN VALUE</H2>
@@ -364,6 +392,43 @@ Applications that need to be portable to kernels before 2.6.9
 should specify a non-null pointer in
 <I>event</I>.
 
+<P>
+If
+<B>EPOLLWAKEUP</B>
+
+is specified in
+<I>flags</I>,
+
+but the caller does not have the
+<B>CAP_BLOCK_SUSPEND</B>
+
+capability, then the
+<B>EPOLLWAKEUP</B>
+
+flag is
+<I>silently ignored</I>.
+
+This unfortunate behavior is necessary because no validity
+checks were performed on the
+<I>flags</I>
+
+argument in the original implementation, and the addition of the
+<B>EPOLLWAKEUP</B>
+
+with a check that caused the call to fail if the caller did not have the
+<B>CAP_BLOCK_SUSPEND</B>
+
+capability caused a breakage in at least one existing user-space
+application that happened to randomly (and uselessly) specify this bit.
+
+
+A robust application should therefore double check that it has the
+<B>CAP_BLOCK_SUSPEND</B>
+
+capability if attempting to use the
+<B>EPOLLWAKEUP</B>
+
+flag.
 <A NAME="lbAK">&nbsp;</A>
 <H2>SEE ALSO</H2>
 
@@ -395,6 +460,6 @@ should specify a non-null pointer in
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:30:51 GMT, April 20, 2020
+Time: 03:31:28 GMT, April 20, 2020
 </BODY>
 </HTML>
