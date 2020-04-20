@@ -34,7 +34,7 @@ SUCH DAMAGE.
 <HTML><HEAD><TITLE>Man page of SETPGID</TITLE>
 </HEAD><BODY>
 <H1>SETPGID</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2013-07-31<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2014-01-07<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -94,12 +94,14 @@ _XOPEN_SOURCE&nbsp;&amp;&amp;&nbsp;_XOPEN_SOURCE_EXTENDED
 <PRE>
     _SVID_SOURCE || _XOPEN_SOURCE&nbsp;&gt;=&nbsp;500 ||
     _XOPEN_SOURCE&nbsp;&amp;&amp;&nbsp;_XOPEN_SOURCE_EXTENDED
+<BR>
+    || /* Since glibc 2.19: */ _BSD_SOURCE
 </PRE>
 
 <P>
 <B>setpgrp</B>()&nbsp;(BSD),
 
-<B>getpgrp</B>()&nbsp;(BSD):
+<B>getpgrp</B>()&nbsp;(BSD) [before glibc 2.19]:
 
 <PRE>
     _BSD_SOURCE &amp;&amp;
@@ -194,12 +196,23 @@ call, which takes arguments
 and
 <I>pgid</I>,
 
-is equivalent to
-<I>setpgid(pid, pgid)</I>.
+is is a wrapper function that calls
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;setpgid(pid,&nbsp;pgid)
+<P>
 
 
 
+Since glibc 2.19, the BSD-specific
+<B>setpgrp</B>()
 
+function is no longer exposed by
+<I>&lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;</I>;
+
+calls should be replaced with the
+<B>setpgid</B>()
+
+call shown above.
 <P>
 The BSD-specific
 <B>getpgrp</B>()
@@ -207,9 +220,24 @@ The BSD-specific
 call, which takes a single
 <I>pid</I>
 
-argument, is equivalent to
-<I>getpgid(pid)</I>.
+argument, is a wrapper function that calls
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;getpgid(pid)
+<P>
+Since glibc 2.19, the BSD-specific
+<B>getpgrp</B>()
 
+function is no longer exposed by
+<I>&lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;</I>;
+
+calls should be replaced with calls to the POSIX.1
+<B>getpgrp</B>()
+
+which takes no arguments (if the intent is to obtain the caller's PGID),
+or with the
+<B>getpgid</B>()
+
+call shown above.
 <A NAME="lbAE">&nbsp;</A>
 <H2>RETURN VALUE</H2>
 
@@ -446,6 +474,6 @@ in a different session (see also
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:22:48 GMT, April 20, 2020
+Time: 03:23:19 GMT, April 20, 2020
 </BODY>
 </HTML>

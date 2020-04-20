@@ -24,7 +24,7 @@ License along with this manual; if not, see
 <HTML><HEAD><TITLE>Man page of SETJMP</TITLE>
 </HEAD><BODY>
 <H1>SETJMP</H1>
-Section: Linux Programmer's Manual (3)<BR>Updated: 2009-06-26<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2014-01-07<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -133,14 +133,20 @@ POSIX.1-2001 specifies
 POSIX does not specify whether
 <B>setjmp</B>()
 
-will save the signal mask.
+will save the signal mask
+(to be later restored during
+<B><A HREF="../man3/longjmp.3.html">longjmp</A></B>(3)).
+
 In System V it will not.
 In 4.3BSD it will, and there
 is a function
 <B>_setjmp</B>
 
 that will not.
-By default, Linux/glibc follows the System V behavior,
+On Linux with glibc versions before 2.19,
+<B>setjmp()</B>
+
+follows the System V behavior by default,
 but the BSD behavior is provided if the
 <B>_BSD_SOURCE</B>
 
@@ -159,6 +165,22 @@ or
 <B>_SVID_SOURCE</B>
 
 is defined.
+Since glibc 2.19,
+<I>&lt;<A HREF="file:///usr/include/setjmp.h">setjmp.h</A>&gt;</I>
+
+exposes only the System V version of
+<B>setjmp</B>().
+
+Programs that need the BSD semantics should replace calls to
+<B>setjmp</B>()
+
+with calls to
+<B>sigsetjmp</B>()
+
+with a nonzero
+<I>savesigs</I>
+
+argument.
 <P>
 If you want to portably save and restore signal masks, use
 <B>sigsetjmp</B>()
@@ -200,6 +222,6 @@ If possible an alternative should be used.
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:22:56 GMT, April 20, 2020
+Time: 03:23:27 GMT, April 20, 2020
 </BODY>
 </HTML>

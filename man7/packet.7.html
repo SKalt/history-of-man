@@ -10,7 +10,7 @@ of the modification is added to the header.
 <HTML><HEAD><TITLE>Man page of PACKET</TITLE>
 </HEAD><BODY>
 <H1>PACKET</H1>
-Section: Linux Programmer's Manual (7)<BR>Updated: 2012-05-10<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (7)<BR>Updated: 2014-01-05<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -44,17 +44,16 @@ The
 is either
 <B>SOCK_RAW</B>
 
-for raw packets including the link level header or
+for raw packets including the link-level header or
 <B>SOCK_DGRAM</B>
 
-for cooked packets with the link level header removed.
-The link level
-header information is available in a common format in a
+for cooked packets with the link-level header removed.
+The link-level header information is available in a common format in a
 <I>sockaddr_ll</I>.
 
 <I>protocol</I>
 
-is the IEEE 802.3 protocol number in network order.
+is the IEEE 802.3 protocol number in network byte order.
 See the
 <I>&lt;<A HREF="file:///usr/include/linux/if_ether.h">linux/if_ether.h</A>&gt;</I>
 
@@ -163,7 +162,7 @@ struct sockaddr_ll {
 <P>
 <I>sll_protocol</I>
 
-is the standard ethernet protocol type in network order as defined
+is the standard ethernet protocol type in network byte order as defined
 in the
 <I>&lt;<A HREF="file:///usr/include/linux/if_ether.h">linux/if_ether.h</A>&gt;</I>
 
@@ -238,23 +237,31 @@ are used.
 <A NAME="lbAF">&nbsp;</A>
 <H3>Socket options</H3>
 
-Packet sockets can be used to configure physical layer multicasting
-and promiscuous mode.
-It works by calling
+Packet socket options are configured by calling
 <B><A HREF="../man2/setsockopt.2.html">setsockopt</A></B>(2)
 
-on a packet socket for
-<B>SOL_PACKET</B>
+with level
+<B>SOL_PACKET</B>.
 
-and one of the options
+<DL COMPACT>
+<DT><B>PACKET_ADD_MEMBERSHIP</B>
+
+<DD>
+
+<DT><B>PACKET_DROP_MEMBERSHIP</B>
+
+<DD>
+
+Packet sockets can be used to configure physical layer multicasting
+and promiscuous mode.
 <B>PACKET_ADD_MEMBERSHIP</B>
 
-to add a binding or
+adds a binding and
 <B>PACKET_DROP_MEMBERSHIP</B>
 
-to drop it.
+drops it.
 They both expect a
-<B>packet_mreq</B>
+<I>packet_mreq</I>
 
 structure as argument:
 <P>
@@ -296,7 +303,7 @@ and
 sets the socket up to receive all multicast packets arriving at
 the interface.
 <P>
-In addition the traditional ioctls
+In addition, the traditional ioctls
 <B>SIOCSIFFLAGS</B>,
 
 <B>SIOCADDMULTI</B>,
@@ -304,6 +311,251 @@ In addition the traditional ioctls
 <B>SIOCDELMULTI</B>
 
 can be used for the same purpose.
+<DT><B>PACKET_AUXDATA</B> (since Linux 2.6.21)
+
+<DD>
+
+If this binary option is enabled, the packet socket passes a metadata
+structure along with each packet in the
+<B><A HREF="../man2/recvmsg.2.html">recvmsg</A></B>(2)
+
+control field.
+The structure can be read with
+<B><A HREF="../man3/cmsg.3.html">cmsg</A></B>(3).
+
+It is defined as
+<P>
+
+<PRE>
+struct tpacket_auxdata {
+    __u32 tp_status;
+    __u32 tp_len;      /* packet length */
+    __u32 tp_snaplen;  /* captured length */
+    __u16 tp_mac;
+    __u16 tp_net;
+    __u16 tp_vlan_tci;
+    __u16 tp_padding;
+};
+</PRE>
+
+
+<DT><B>PACKET_FANOUT</B> (since Linux 3.1)
+
+<DD>
+
+To scale processing across threads, packet sockets can form a fanout
+group.
+In this mode, each matching packet is enqueued onto only one
+socket in the group.
+A socket joins a fanout group by calling
+<B><A HREF="../man2/setsockopt.2.html">setsockopt</A></B>(2)
+
+with level
+<B>SOL_PACKET</B>
+
+and option
+<B>PACKET_FANOUT</B>.
+
+Each network namespace can have up to 65536 independent groups.
+A socket selects a group by encoding the ID in the first 16 bits of
+the integer option value.
+The first packet socket to join a group implicitly creates it.
+To successfully join an existing group, subsequent packet sockets
+must have the same protocol, device settings, fanout mode and
+flags (see below).
+Packet sockets can leave a fanout group only by closing the socket.
+The group is deleted when the last socket is closed.
+<P>
+Fanout supports multiple algorithms to spread traffic between sockets.
+The default mode,
+<B>PACKET_FANOUT_HASH</B>,
+
+sends packets from the same flow to the same socket to maintain
+per-flow ordering.
+For each packet, it chooses a socket by taking the packet flow hash
+modulo the number of sockets in the group, where a flow hash is a hash
+over network-layer address and optional transport-layer port fields.
+The load-balance mode
+<B>PACKET_FANOUT_LB</B>
+
+implements a round-robin algorithm.
+<B>PACKET_FANOUT_CPU</B>
+
+selects the socket based on the CPU that the packet arrived on.
+<B>PACKET_FANOUT_ROLLOVER</B>
+
+processes all data on a single socket, moves to the next when one
+becomes backlogged.
+<B>PACKET_FANOUT_RND</B>
+
+selects the socket using a pseudo-random number generator.
+<P>
+Fanout modes can take additional options.
+IP fragmentation causes packets from the same flow to have different
+flow hashes.
+The flag
+<B>PACKET_FANOUT_FLAG_DEFRAG</B>,
+
+if set, causes packet to be defragmented before fanout is applied, to
+preserve order even in this case.
+Fanout mode and options are communicated in the second 16 bits of the
+integer option value.
+The flag
+<B>PACKET_FANOUT_FLAG_ROLLOVER</B>
+
+enables the roll over mechanism as a backup strategy: if the
+original fanout algorithm selects a backlogged socket, the packet
+rolls over to the next available one.
+<DT><B>PACKET_LOSS</B> (with <B>PACKET_TX_RING</B>)
+
+<DD>
+If set, do not silently drop a packet on transmission error, but
+return it with status set to
+<B>TP_STATUS_WRONG_FORMAT</B>.
+
+<DT><B>PACKET_RESERVE</B> (with <B>PACKET_RX_RING</B>)
+
+<DD>
+By default, a packet receive ring writes packets immediately following the
+metadata structure and alignment padding.
+This integer option reserves additional headroom.
+<DT><B>PACKET_RX_RING</B>
+
+<DD>
+Create a memory-mapped ring buffer for asynchronous packet reception.
+The packet socket reserves a contiguous region of application address
+space, lays it out into an array of packet slots and copies packets
+(up to
+<I>tp_snaplen</I>
+
+) into subsequent slots.
+Each packet is preceded by a metadata structure similar to
+<I>tpacket_auxdata</I>.
+
+The protocol fields encode the offset to the data
+from the start of the metadata header.
+<I>tp_net</I>
+
+stores the offset to the network layer.
+If the packet socket is of type
+<B>SOCK_DGRAM</B>,
+
+then
+<I>tp_mac</I>
+
+is the same.
+If it is of type
+<B>SOCK_RAW</B>,
+
+then that field stores the offset to the link-layer frame.
+Packet socket and application communicate the head and tail of the ring
+through the
+<I>tp_status</I>
+
+field.
+The packet socket owns all slots with status
+<B>TP_STATUS_KERNEL</B>.
+
+After filling a slot, it changes the status of the slot to transfer
+ownership to the application.
+During normal operation, the new status is
+<B>TP_STATUS_USER</B>,
+
+to signal that a correctly received packet has been stored.
+When the application has finished processing a packet, it transfers
+ownership of the slot back to the socket by setting the status to
+<B>TP_STATUS_KERNEL</B>.
+
+Packet sockets implement multiple variants of the packet ring.
+The implementation details are described in
+<I>Documentation/networking/packet_mmap.txt</I>
+
+in the Linux kernel source tree.
+<DT><B>PACKET_STATISTICS</B>
+
+<DD>
+Retrieve packet socket statistics in the form of a structure
+<P>
+
+<PRE>
+struct tpacket_stats {
+    unsigned int tp_packets;  /* Total packet count */
+    unsigned int tp_drops;    /* Dropped packet count */
+};
+</PRE>
+
+
+<P>
+Receiving statistics resets the internal counters.
+The statistics structure differs when using a ring of variant
+<B>TPACKET_V3</B>.
+
+<DT><B>PACKET_TIMESTAMP</B> (with <B>PACKET_RX_RING</B>; since Linux 2.6.36)
+
+<DD>
+
+The packet receive ring always stores a timestamp in the metadata header.
+By default, this is a software generated timestamp generated when the
+packet is copied into the ring.
+This integer option selects the type of timestamp.
+Besides the default, it support the two hardware formats described in
+<I>Documentation/networking/timestamping.txt</I>
+
+in the Linux kernel source tree.
+<DT><B>PACKET_TX_RING</B> (since Linux 2.6.31)
+
+<DD>
+
+Create a memory-mapped ring buffer for packet transmission.
+This option is similar to
+<B>PACKET_RX_RING</B>
+
+and takes the same arguments.
+The application writes packets into slots with status
+<B>TP_STATUS_AVAILABLE</B>
+
+and schedules them for transmission by changing the status to
+<B>TP_STATUS_SEND_REQUEST</B>.
+
+When packets are ready to be transmitted, the application calls
+<B><A HREF="../man2/send.2.html">send</A></B>(2)
+
+or a variant thereof.
+The
+<I>buf</I>
+
+and
+<I>len</I>
+
+fields of this call are ignored.
+If an address is passed using
+<B><A HREF="../man2/sendto.2.html">sendto</A></B>(2)
+
+or
+<B><A HREF="../man2/sendmsg.2.html">sendmsg</A></B>(2)<B>,</B>
+
+then that overrides the socket default.
+On successful transmission, the socket resets the slot to
+<B>TP_STATUS_AVAILABLE</B>.
+
+It discards packets silently on error unless
+<B>PACKET_LOSS</B>
+
+is set.
+<DT><B>PACKET_VERSION</B> (with <B>PACKET_RX_RING</B>; since Linux 2.6.27)
+
+<DD>
+
+By default,
+<B>PACKET_RX_RING</B>
+
+creates a packet receive ring of variant
+<B>TPACKET_V1</B>.
+
+To create another variant, configure the desired variant by setting this
+integer option before creating the ring.
+<P>
+</DL>
 <A NAME="lbAG">&nbsp;</A>
 <H3>Ioctls</H3>
 
@@ -311,11 +563,12 @@ can be used for the same purpose.
 
 can be used to receive the timestamp of the last received packet.
 Argument is a
-<I>struct timeval.</I>
+<I>struct timeval</I>
 
+variable.
 
 <P>
-In addition all standard ioctls defined in
+In addition, all standard ioctls defined in
 <B><A HREF="../man7/netdevice.7.html">netdevice</A></B>(7)
 
 and
@@ -377,7 +630,7 @@ Interface address contained an invalid interface index.
 <DD>
 User has insufficient privileges to carry out this operation.
 <P>
-In addition other errors may be generated by the low-level driver.
+In addition, other errors may be generated by the low-level driver.
 </DL>
 <A NAME="lbAJ">&nbsp;</A>
 <H2>VERSIONS</H2>
@@ -433,7 +686,7 @@ Incoming 802.3 packets are not multiplexed on the DSAP/SSAP protocol
 fields; instead they are supplied to the user as protocol
 <B>ETH_P_802_2</B>
 
-with the LLC header prepended.
+with the LLC header prefixed.
 It is thus not possible to bind to
 <B>ETH_P_802_3</B>;
 
@@ -575,6 +828,6 @@ include file for physical layer protocols.
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:23:00 GMT, April 20, 2020
+Time: 03:23:31 GMT, April 20, 2020
 </BODY>
 </HTML>
