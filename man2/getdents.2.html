@@ -5,7 +5,7 @@ Copyright (C) 1995 Andries Brouwer (aeb@cwi.nl)
 <HTML><HEAD><TITLE>Man page of GETDENTS</TITLE>
 </HEAD><BODY>
 <H1>GETDENTS</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2009-01-19<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2009-01-23<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -244,7 +244,6 @@ i-node#  file type  d_reclen  d_off   d_name
 
 
 <PRE>
-#define HAVE_D_TYPE     /* Remove for kernels &lt; 2.6.4 */
 #define _GNU_SOURCE
 #include &lt;<A HREF="file:///usr/include/dirent.h">dirent.h</A>&gt;     /* Defines DT_* constants */
 #include &lt;<A HREF="file:///usr/include/fcntl.h">fcntl.h</A>&gt;
@@ -273,9 +272,7 @@ main(int argc, char *argv[])
     char buf[BUF_SIZE];
     struct linux_dirent *d;
     int bpos;
-#ifdef HAVE_D_TYPE
     char d_type;
-#endif
 
     fd = open(argc &gt; 1 ? argv[1] : &quot;.&quot;, O_RDONLY | O_DIRECTORY);
     if (fd == -1)
@@ -294,7 +291,6 @@ main(int argc, char *argv[])
         for (bpos = 0; bpos &lt; nread;) {
             d = (struct linux_dirent *) (buf + bpos);
             printf(&quot;%8ld  &quot;, d-&gt;d_ino);
-#ifdef HAVE_D_TYPE
             d_type = *(buf + bpos + d-&gt;d_reclen - 1);
             printf(&quot;%-10s &quot;, (d_type == DT_REG) ?  &quot;regular&quot; :
                              (d_type == DT_DIR) ?  &quot;directory&quot; :
@@ -303,7 +299,6 @@ main(int argc, char *argv[])
                              (d_type == DT_LNK) ?  &quot;symlink&quot; :
                              (d_type == DT_BLK) ?  &quot;block dev&quot; :
                              (d_type == DT_CHR) ?  &quot;char dev&quot; : &quot;???&quot;);
-#endif
             printf(&quot;%4d %10lld  %s\n&quot;, d-&gt;d_reclen,
                     (long long) d-&gt;d_off, (char *) d-&gt;d_name);
             bpos += d-&gt;d_reclen;
@@ -343,6 +338,6 @@ main(int argc, char *argv[])
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:02:15 GMT, April 20, 2020
+Time: 03:02:49 GMT, April 20, 2020
 </BODY>
 </HTML>
