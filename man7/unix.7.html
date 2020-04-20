@@ -1,5 +1,6 @@
 <!--
 %%%LICENSE_START(VERBATIM_ONE_PARA)
+and Copyright (C) 2008, 2012 Michael Kerrisk &lt;mtk.manpages@gmail.com&gt;
 Permission is granted to distribute possibly modified copies
 of this page provided the header is included verbatim,
 and in case of nontrivial modification author and date
@@ -10,7 +11,7 @@ of the modification is added to the header.
 <HTML><HEAD><TITLE>Man page of UNIX</TITLE>
 </HEAD><BODY>
 <H1>UNIX</H1>
-Section: Linux Programmer's Manual (7)<BR>Updated: 2012-05-10<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (7)<BR>Updated: 2014-10-15<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -49,10 +50,10 @@ or bound to a filesystem pathname (marked as being of type socket).
 Linux also supports an abstract namespace which is independent of the
 filesystem.
 <P>
-Valid types are:
+Valid socket types in the UNIX domain are:
 <B>SOCK_STREAM</B>,
 
-for a stream-oriented socket and
+for a stream-oriented socket;
 <B>SOCK_DGRAM</B>,
 
 for a datagram-oriented socket that preserves message boundaries
@@ -84,13 +85,41 @@ struct sockaddr_un {
 
 <P>
 
+The
 <I>sun_family</I>
 
-always contains
+field always contains
 <B>AF_UNIX</B>.
 
 <P>
-Three types of address are distinguished in this structure:
+Various systems calls (for example,
+<B><A HREF="../man2/bind.2.html">bind</A></B>(2),
+
+<B><A HREF="../man2/connect.2.html">connect</A></B>(2),
+
+and
+<B><A HREF="../man2/sendto.2.html">sendto</A></B>(2))
+
+take a
+<I>sockaddr_un</I>
+
+argument as input.
+Some other system calls (for example,
+<B><A HREF="../man2/getsockname.2.html">getsockname</A></B>(2),
+
+<B><A HREF="../man2/getpeername.2.html">getpeername</A></B>(2),
+
+<B><A HREF="../man2/recvfrom.2.html">recvfrom</A></B>(2),
+
+and
+<B><A HREF="../man2/accept.2.html">accept</A></B>(2))
+
+return an argument of this type.
+<P>
+Three types of address are distinguished in the
+<I>sockaddr_un</I>
+
+structure:
 <DL COMPACT>
 <DT>*<DD>
 <I>pathname</I>:
@@ -99,14 +128,8 @@ a UNIX domain socket can be bound to a null-terminated
 filesystem pathname using
 <B><A HREF="../man2/bind.2.html">bind</A></B>(2).
 
-When the address of the socket is returned by
-<B><A HREF="../man2/getsockname.2.html">getsockname</A></B>(2),
-
-<B><A HREF="../man2/getpeername.2.html">getpeername</A></B>(2),
-
-and
-<B><A HREF="../man2/accept.2.html">accept</A></B>(2),
-
+When the address of a pathname socket is returned
+(by one of the system calls noted above),
 its length is
 <P>
 <BR>&nbsp;&nbsp;&nbsp;&nbsp;offsetof(struct&nbsp;sockaddr_un,&nbsp;sun_path)&nbsp;+&nbsp;strlen(sun_path)&nbsp;+&nbsp;1
@@ -115,6 +138,21 @@ and
 <I>sun_path</I>
 
 contains the null-terminated pathname.
+(On Linux, the above
+<B>offsetof</B>()
+
+expression equates to the same value as
+<I>sizeof(sa_family_t)</I>,
+
+but some other implementations include other fields before
+<I>sun_path</I>,
+
+so the
+<B>offsetof</B>()
+
+expression more portably describes the size of the address structure.)
+<DT><DD>
+For further details of pathname sockets, see below.
 <DT>*<DD>
 <I>unnamed</I>:
 
@@ -126,14 +164,7 @@ Likewise, the two sockets created by
 <B><A HREF="../man2/socketpair.2.html">socketpair</A></B>(2)
 
 are unnamed.
-When the address of an unnamed socket is returned by
-<B><A HREF="../man2/getsockname.2.html">getsockname</A></B>(2),
-
-<B><A HREF="../man2/getpeername.2.html">getpeername</A></B>(2),
-
-and
-<B><A HREF="../man2/accept.2.html">accept</A></B>(2),
-
+When the address of an unnamed socket is returned,
 its length is
 <I>sizeof(sa_family_t)</I>,
 
@@ -146,7 +177,8 @@ should not be inspected.
 <DT>*<DD>
 <I>abstract</I>:
 
-an abstract socket address is distinguished by the fact that
+an abstract socket address is distinguished (from a pathname socket)
+by the fact that
 <I>sun_path[0]</I>
 
 is a null byte ('\0').
@@ -157,14 +189,7 @@ bytes in
 that are covered by the specified length of the address structure.
 (Null bytes in the name have no special significance.)
 The name has no connection with filesystem pathnames.
-When the address of an abstract socket is returned by
-<B><A HREF="../man2/getsockname.2.html">getsockname</A></B>(2),
-
-<B><A HREF="../man2/getpeername.2.html">getpeername</A></B>(2),
-
-and
-<B><A HREF="../man2/accept.2.html">accept</A></B>(2),
-
+When the address of an abstract socket is returned,
 the returned
 <I>addrlen</I>
 
@@ -181,6 +206,88 @@ bytes of
 The abstract socket namespace is a nonportable Linux extension.
 </DL>
 <A NAME="lbAF">&nbsp;</A>
+<H3>Pathname sockets</H3>
+
+When binding a socket to a pathname, a few rules should be observed
+for maximum portability and ease of coding:
+<DL COMPACT>
+<DT>*<DD>
+The pathname in
+<I>sun_path</I>
+
+should be null-terminated.
+<DT>*<DD>
+The length of the pathname, including the terminating null byte,
+should not exceed the size of
+<I>sun_path</I>.
+
+<DT>*<DD>
+The
+<I>addrlen</I>
+
+argument that describes the enclosing
+<I>sockaddr_un</I>
+
+structure should have a value of at least:
+<P>
+<PRE>
+    offsetof(struct sockaddr_un, sun_path)+strlen(addr.sun_path)+1
+</PRE>
+
+<DT><DD>
+or, more simply,
+<I>addrlen</I>
+
+can be specified as
+<I>sizeof(struct sockaddr_un)</I>.
+
+</DL>
+<P>
+
+There is some variation in how implementations handle UNIX domain
+socket addresses that do not follow the above rules.
+For example, some (but not all) implementations
+
+
+append a null terminator if none is present in the supplied
+<I>sun_path</I>.
+
+<P>
+When coding portable applications,
+keep in mind that some implementations
+
+have
+<I>sun_path</I>
+
+as short as 92 bytes.
+
+
+<P>
+Various system calls
+(<B><A HREF="../man2/accept.2.html">accept</A></B>(2),
+
+<B><A HREF="../man2/recvfrom.2.html">recvfrom</A></B>(2),
+
+<B><A HREF="../man2/getsockname.2.html">getsockname</A></B>(2),
+
+<B><A HREF="../man2/getpeername.2.html">getpeername</A></B>(2))
+
+return socket address structures.
+When applied to UNIX domain sockets, the value-result
+<I>addrlen</I>
+
+argument supplied to the call should be initialized as above.
+Upon return, the argument is set to indicate the
+<I>actual</I>
+
+size of the address structure.
+The caller should check the value returned in this argument:
+if the output value exceeds the input value,
+then there is no guarantee that a null terminator is present in
+<I>sun_path</I>.
+
+(See BUGS.)
+<A NAME="lbAG">&nbsp;</A>
 <H3>Socket options</H3>
 
 For historical reasons these socket options are specified with a
@@ -210,7 +317,7 @@ When this option is set and the socket is not yet connected
 a unique name in the abstract namespace will be generated automatically.
 Expects an integer boolean flag.
 </DL>
-<A NAME="lbAG">&nbsp;</A>
+<A NAME="lbAH">&nbsp;</A>
 <H3>Autobind feature</H3>
 
 If a
@@ -237,7 +344,7 @@ Thus, there is a limit of 2^20 autobind addresses.
 (From Linux 2.1.15, when the autobind feature was added,
 8 bytes were used, and the limit was thus 2^32 autobind addresses.
 The change to 5 bytes came in Linux 2.3.15.)
-<A NAME="lbAH">&nbsp;</A>
+<A NAME="lbAI">&nbsp;</A>
 <H3>Sockets API</H3>
 
 The following paragraphs describe domain-specific details and
@@ -287,7 +394,7 @@ This limit is calculated as the doubled (see
 <B><A HREF="../man7/socket.7.html">socket</A></B>(7))
 
 option value less 32 bytes used for overhead.
-<A NAME="lbAI">&nbsp;</A>
+<A NAME="lbAJ">&nbsp;</A>
 <H3>Ancillary messages</H3>
 
 Ancillary data is sent and received using
@@ -384,7 +491,7 @@ message the
 
 option must be enabled on the socket.
 </DL>
-<A NAME="lbAJ">&nbsp;</A>
+<A NAME="lbAK">&nbsp;</A>
 <H3>Ioctls</H3>
 
 The following
@@ -439,7 +546,7 @@ defined in
 
 
 </DL>
-<A NAME="lbAK">&nbsp;</A>
+<A NAME="lbAL">&nbsp;</A>
 <H2>ERRORS</H2>
 
 <DL COMPACT>
@@ -455,7 +562,7 @@ The remote address specified by
 <B><A HREF="../man2/connect.2.html">connect</A></B>(2)
 
 was not a listening socket.
-This error can also occur if the target filename is not a socket.
+This error can also occur if the target pathname is not a socket.
 <DT><B>ECONNRESET</B>
 
 <DD>
@@ -551,7 +658,7 @@ Unknown socket type.
 Other errors can be generated by the generic socket layer or
 by the filesystem while generating a filesystem socket object.
 See the appropriate manual pages for more information.
-<A NAME="lbAL">&nbsp;</A>
+<A NAME="lbAM">&nbsp;</A>
 <H2>VERSIONS</H2>
 
 <B>SCM_CREDENTIALS</B>
@@ -560,12 +667,12 @@ and the abstract namespace were introduced with Linux 2.2 and should not
 be used in portable programs.
 (Some BSD-derived systems also support credential passing,
 but the implementation details differ.)
-<A NAME="lbAM">&nbsp;</A>
+<A NAME="lbAN">&nbsp;</A>
 <H2>NOTES</H2>
 
 In the Linux implementation, sockets which are visible in the
 filesystem honor the permissions of the directory they are in.
-Their owner, group and their permissions can be changed.
+Their owner, group, and permissions can be changed.
 Creation of a new socket will fail if the process does not have write and
 search (execute) permission on the directory the socket is created in.
 Connecting to the socket object requires read/write permission.
@@ -596,7 +703,113 @@ or
 call.
 <P>
 UNIX domain stream sockets do not support the notion of out-of-band data.
-<A NAME="lbAN">&nbsp;</A>
+
+<A NAME="lbAO">&nbsp;</A>
+<H2>BUGS</H2>
+
+When binding a socket to an address,
+Linux is one of the implementations that appends a null terminator
+if none is supplied in
+<I>sun_path</I>.
+
+In most cases this is unproblematic:
+when the socket address is retrieved,
+it will be one byte longer than that supplied when the socket was bound.
+However, there is one case where confusing behavior can result:
+if 108 non-null bytes are supplied when a socket is bound,
+then the addition of the null terminator takes the length of
+the pathname beyond
+<I>sizeof(sun_path)</I>.
+
+Consequently, when retrieving the socket address
+(for example, via
+<B><A HREF="../man2/accept.2.html">accept</A></B>(2)),
+
+
+if the input
+<I>addrlen</I>
+
+argument for the retrieving call is specified as
+<I>sizeof(struct sockaddr_un)</I>,
+
+then the returned address structure
+<I>won't</I>
+
+have a null terminator in
+<I>sun_path</I>.
+
+<P>
+In addition, some implementations
+
+don't require a null terminator when binding a socket (the
+<I>addrlen</I>
+
+argument is used to determine the length of
+<I>sun_path</I>)
+
+and when the socket address is retrieved on these implementations,
+there is no null terminator in
+<I>sun_path</I>.
+
+<P>
+Applications that retrieve socket addresses can (portably) code
+to handle the possibility that there is no null terminator in
+<I>sun_path</I>
+
+by respecting the fact that the number of valid bytes in the pathname is:
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;strnlen(addr.sun_path,&nbsp;addrlen&nbsp;-&nbsp;offsetof(sockaddr_un,&nbsp;sun_path))
+
+
+
+
+
+
+
+
+
+
+<P>
+Alternatively, an application can retrieve
+the socket address by allocating a buffer of size
+<I>sizeof(struct sockaddr_un)+1</I>
+
+that is zeroed out before the retrieval.
+The retrieving call can specify
+<I>addrlen</I>
+
+as
+<I>sizeof(struct sockaddr_un)</I>,
+
+and the extra zero byte ensures that there will be
+a null terminator for the string returned in
+<I>sun_path</I>:
+
+<P>
+<PRE>
+void *addrp;
+
+addrlen = sizeof(struct sockaddr_un);
+addrp = malloc(addrlen + 1);
+if (addrp == NULL)
+    /* Handle error */ ;
+memset(addrp, 0, addrlen + 1);
+
+if (getsockname(sfd, (struct sockaddr *) addrp, &amp;addrlen)) != -1)
+    /* handle error */ ;
+
+printf(&quot;sun_path = %s\n&quot;, ((struct sockaddr_un *) addrp)-&gt;sun_path);
+</PRE>
+
+<P>
+This sort of messiness can be avoided if it is guaranteed
+that the applications that
+<I>create</I>
+
+pathname sockets follow the rules outlined above under
+<I>Pathname sockets</I>.
+
+<A NAME="lbAP">&nbsp;</A>
 <H2>EXAMPLE</H2>
 
 See
@@ -609,7 +822,7 @@ For an example of the use of
 see
 <B><A HREF="../man3/cmsg.3.html">cmsg</A></B>(3).
 
-<A NAME="lbAO">&nbsp;</A>
+<A NAME="lbAQ">&nbsp;</A>
 <H2>SEE ALSO</H2>
 
 <B><A HREF="../man2/recvmsg.2.html">recvmsg</A></B>(2),
@@ -638,22 +851,24 @@ see
 <DT><A HREF="#lbAD">DESCRIPTION</A><DD>
 <DL>
 <DT><A HREF="#lbAE">Address format</A><DD>
-<DT><A HREF="#lbAF">Socket options</A><DD>
-<DT><A HREF="#lbAG">Autobind feature</A><DD>
-<DT><A HREF="#lbAH">Sockets API</A><DD>
-<DT><A HREF="#lbAI">Ancillary messages</A><DD>
-<DT><A HREF="#lbAJ">Ioctls</A><DD>
+<DT><A HREF="#lbAF">Pathname sockets</A><DD>
+<DT><A HREF="#lbAG">Socket options</A><DD>
+<DT><A HREF="#lbAH">Autobind feature</A><DD>
+<DT><A HREF="#lbAI">Sockets API</A><DD>
+<DT><A HREF="#lbAJ">Ancillary messages</A><DD>
+<DT><A HREF="#lbAK">Ioctls</A><DD>
 </DL>
-<DT><A HREF="#lbAK">ERRORS</A><DD>
-<DT><A HREF="#lbAL">VERSIONS</A><DD>
-<DT><A HREF="#lbAM">NOTES</A><DD>
-<DT><A HREF="#lbAN">EXAMPLE</A><DD>
-<DT><A HREF="#lbAO">SEE ALSO</A><DD>
+<DT><A HREF="#lbAL">ERRORS</A><DD>
+<DT><A HREF="#lbAM">VERSIONS</A><DD>
+<DT><A HREF="#lbAN">NOTES</A><DD>
+<DT><A HREF="#lbAO">BUGS</A><DD>
+<DT><A HREF="#lbAP">EXAMPLE</A><DD>
+<DT><A HREF="#lbAQ">SEE ALSO</A><DD>
 </DL>
 <HR>
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:33:56 GMT, April 20, 2020
+Time: 03:34:33 GMT, April 20, 2020
 </BODY>
 </HTML>
