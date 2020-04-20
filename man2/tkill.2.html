@@ -1,17 +1,17 @@
 <!--
-Copyright 2003 Abhijit Menon-Sen &lt;ams@wiw.org&gt;
+Copyright (C) 2008 Michael Kerrisk &lt;tmk.manpages@gmail.com&gt;
 -->
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
 <HTML><HEAD><TITLE>Man page of TKILL</TITLE>
 </HEAD><BODY>
 <H1>TKILL</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2007-06-01<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2008-01-15<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
 <H2>NAME</H2>
 
-tkill, tgkill - send a signal to a single process
+tkill, tgkill - send a signal to a thread
 <A NAME="lbAC">&nbsp;</A>
 <H2>SYNOPSIS</H2>
 
@@ -24,48 +24,44 @@ tkill, tgkill - send a signal to a single process
 <A NAME="lbAD">&nbsp;</A>
 <H2>DESCRIPTION</H2>
 
-The
-<B>tkill</B>()
+<B>tgkill</B>()
 
-system call is analogous to
-<B><A HREF="../man2/kill.2.html">kill</A></B>(2),
+sends the signal
+<I>sig</I>
 
-except when the specified process is part of a thread group
-(created by specifying the
-<B>CLONE_THREAD</B>
+to the thread with the thread ID
+<I>tid</I>
 
-flag in the call to
-<B><A HREF="../man2/clone.2.html">clone</A></B>(2)).
+in the thread group
+<I>tgid</I>.
 
-Since all the processes in a thread group have the same PID,
-they cannot be individually signaled with
-<B><A HREF="../man2/kill.2.html">kill</A></B>(2).
+(By contrast,
+<B><A HREF="../man2/kill.2.html">kill</A></B>(2)
 
-With
-<B>tkill</B>(),
-
-however, one can address each process
-by its unique TID.
+can only be used to send a signal to a process (i.e., thread group)
+as a whole, and the signal will be delivered to an arbitrary
+thread within that process.)
 <P>
-
-The
-<B>tgkill</B>()
-
-call improves on
 <B>tkill</B>()
 
-by allowing the caller to
-specify the thread group ID of the thread to be signaled, protecting
-against TID reuse.
-If the tgid is specified as -1,
+is an obsolete predecessor to
+<B>tgkill</B>().
+
+It only allows the target thread ID to be specified,
+which may result in the wrong thread being signaled if a thread
+terminates and its thread ID is recycled.
+Avoid using this system call.
+<P>
+If
+<I>tgid</I>
+
+is specified as -1,
 <B>tgkill</B>()
 
-degenerates
-into
+is equivalent to
 <B>tkill</B>().
 
 <P>
-
 These are the raw system call interfaces, meant for internal
 thread library use.
 <A NAME="lbAE">&nbsp;</A>
@@ -116,11 +112,23 @@ in programs that are intended to be portable.
 <A NAME="lbAI">&nbsp;</A>
 <H2>NOTES</H2>
 
-Glibc does not provide wrapper for these system calls; call them using
+See the description of
+<B>CLONE_THREAD</B>
+
+in
+<B><A HREF="../man2/clone.2.html">clone</A></B>(2)
+
+for an explanation of thread groups.
+<P>
+Glibc does not provide wrappers for these system calls; call them using
 <B><A HREF="../man2/syscall.2.html">syscall</A></B>(2).
 
 <A NAME="lbAJ">&nbsp;</A>
 <H2>SEE ALSO</H2>
+
+<B><A HREF="../man2/clone.2.html">clone</A></B>(2),
+
+<B><A HREF="../man2/gettid.2.html">gettid</A></B>(2),
 
 <B><A HREF="../man2/gettid.2.html">gettid</A></B>(2),
 
@@ -145,6 +153,6 @@ Glibc does not provide wrapper for these system calls; call them using
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 02:50:30 GMT, April 20, 2020
+Time: 02:51:04 GMT, April 20, 2020
 </BODY>
 </HTML>

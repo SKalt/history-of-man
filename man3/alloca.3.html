@@ -5,13 +5,13 @@ Copyright (c) 1980, 1991 Regents of the University of California.
 <HTML><HEAD><TITLE>Man page of ALLOCA</TITLE>
 </HEAD><BODY>
 <H1>ALLOCA</H1>
-Section: Linux Programmer's Manual (3)<BR>Updated: 2002-07-17<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2008-01-24<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
 <H2>NAME</H2>
 
-alloca - memory allocator
+alloca - allocate memory that is automatically freed
 <A NAME="lbAC">&nbsp;</A>
 <H2>SYNOPSIS</H2>
 
@@ -46,28 +46,80 @@ If the allocation causes stack overflow, program behavior is undefined.
 <A NAME="lbAF">&nbsp;</A>
 <H2>CONFORMING TO</H2>
 
+This function is not in POSIX.1-2001.
+<P>
 There is evidence that the
 <B>alloca</B>()
 
-function appeared in 32v, pwb, pwb.2, 3bsd, and 4bsd.
+function appeared in 32V, PWB, PWB.2, 3BSD, and 4BSD.
 There is a man page for it in 4.3BSD.
 Linux uses the GNU version.
-This function is not in POSIX.1-2001.
 <A NAME="lbAG">&nbsp;</A>
 <H2>NOTES</H2>
+
+The
+<B>alloca</B>()
+
+function is machine- and compiler-dependent.
+For certain applications,
+its use can improve efficiency compared to the use of
+<B><A HREF="../man3/malloc.3.html">malloc</A>(3)</B>
+
+plus
+<B><A HREF="../man3/free.3.html">free</A></B>(3).
+
+In certain cases,
+it can also simplify memory deallocation in applications that use
+<B><A HREF="../man3/longjmp.3.html">longjmp</A></B>(3)
+
+or
+<B><A HREF="../man3/siglongjmp.3.html">siglongjmp</A></B>(3).
+
+Otherwise, its use is discouraged.
+<P>
+Because the space allocated by
+<B>alloca</B>()
+
+is allocated within the stack frame,
+that space is automatically freed if the function return
+is jumped over by a call to
+<B><A HREF="../man3/longjmp.3.html">longjmp</A></B>(3)
+
+or
+<B><A HREF="../man3/siglongjmp.3.html">siglongjmp</A></B>(3).
+
+<P>
+Do not attempt to
+<B><A HREF="../man3/free.3.html">free</A></B>(3)
+
+space allocated by
+<B>alloca</B>()!
 
 <A NAME="lbAH">&nbsp;</A>
 <H3>Notes on the GNU Version</H3>
 
 Normally,
-<B>gcc (1)</B>
+<B><A HREF="../man1/gcc.1.html">gcc</A></B>(1)
 
 translates calls to
 <B>alloca</B>()
 
-by inlined code.
-This is not done when either the <I>-ansi</I> or
-the <I>-fno-builtin</I> option is given.
+with inlined code.
+This is not done when either the
+<I>-ansi</I>,
+
+<I>-std=c89</I>,
+
+<I>-std=c99</I>,
+
+or the
+<I>-fno-builtin</I>
+
+option is given
+(and the header
+<I>&lt;<A HREF="file:///usr/include/alloca.h">alloca.h</A>&gt;</I>
+
+is not included).
 But beware!
 By default the glibc version of
 <I>&lt;<A HREF="file:///usr/include/stdlib.h">stdlib.h</A>&gt;</I>
@@ -85,7 +137,7 @@ and that contains the line:
 with messy consequences if one has a private version of this function.
 <P>
 
-The fact that the code is inlined, means that it is impossible
+The fact that the code is inlined means that it is impossible
 to take the address of this function, or to change its behavior
 by linking with a different library.
 <P>
@@ -96,15 +148,12 @@ Thus, there is no NULL error return.
 <A NAME="lbAI">&nbsp;</A>
 <H2>BUGS</H2>
 
-The
-<B>alloca</B>()
+There is no error indication if the stack frame cannot be extended.
+(However, after a failed allocation, the program is likely to receive a
+<B>SIGSEGV</B>
 
-function is machine- and compiler- dependent.
-On many systems
-its implementation is buggy.
-Its use is discouraged.
+signal if it attempts to access the unallocated space.)
 <P>
-
 On many systems
 <B>alloca</B>()
 
@@ -119,13 +168,9 @@ function arguments.
 
 <B><A HREF="../man2/brk.2.html">brk</A></B>(2),
 
-<B><A HREF="../man2/getpagesize.2.html">getpagesize</A></B>(2),
+<B><A HREF="../man3/longjmp.3.html">longjmp</A></B>(3),
 
-<B><A HREF="../man3/calloc.3.html">calloc</A></B>(3),
-
-<B><A HREF="../man3/malloc.3.html">malloc</A></B>(3),
-
-<B><A HREF="../man3/realloc.3.html">realloc</A></B>(3)
+<B><A HREF="../man3/malloc.3.html">malloc</A></B>(3)
 
 <P>
 
@@ -148,6 +193,6 @@ function arguments.
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 02:50:30 GMT, April 20, 2020
+Time: 02:51:04 GMT, April 20, 2020
 </BODY>
 </HTML>
