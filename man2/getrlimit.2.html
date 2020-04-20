@@ -26,7 +26,7 @@ the source, must acknowledge the copyright and authors of this work.
 <HTML><HEAD><TITLE>Man page of GETRLIMIT</TITLE>
 </HEAD><BODY>
 <H1>GETRLIMIT</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2016-10-08<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2017-03-13<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -122,7 +122,8 @@ argument must be one of:
 <DT><B>RLIMIT_AS</B>
 
 <DD>
-The maximum size of the process's virtual memory (address space) in bytes.
+This is the maximum size of the process's virtual memory
+(address space) in bytes.
 
 This limit affects calls to
 <B><A HREF="../man2/brk.2.html">brk</A></B>(2),
@@ -149,18 +150,20 @@ either this limit is at most 2 GiB, or this resource is unlimited.
 <DT><B>RLIMIT_CORE</B>
 
 <DD>
-Maximum size of a
+This is the maximum size of a
 <I>core</I>
 
 file (see
-<B><A HREF="../man5/core.5.html">core</A></B>(5)).
+<B><A HREF="../man5/core.5.html">core</A></B>(5))
 
+that the process may dump.
 When 0 no core dump files are created.
 When nonzero, larger dumps are truncated to this size.
 <DT><B>RLIMIT_CPU</B>
 
 <DD>
-CPU time limit in seconds.
+This is a limit, in seconds,
+on the amount of CPU time that the process can consume.
 When the process reaches the soft limit, it is sent a
 <B>SIGXCPU</B>
 
@@ -185,7 +188,7 @@ perform an orderly termination upon first receipt of
 <DT><B>RLIMIT_DATA</B>
 
 <DD>
-The maximum size of the process's data segment (initialized data,
+This is the maximum size of the process's data segment (initialized data,
 uninitialized data, and heap).
 This limit affects calls to
 <B><A HREF="../man2/brk.2.html">brk</A></B>(2)
@@ -200,7 +203,7 @@ upon encountering the soft limit of this resource.
 <DT><B>RLIMIT_FSIZE</B>
 
 <DD>
-The maximum size of files that the process may create.
+This is the maximum size of files that the process may create.
 Attempts to extend a file beyond this limit result in delivery of a
 <B>SIGXFSZ</B>
 
@@ -214,11 +217,11 @@ catch this signal instead, in which case the relevant system call (e.g.,
 fails with the error
 <B>EFBIG</B>.
 
-<DT><B>RLIMIT_LOCKS</B> (Early Linux 2.4 only)
+<DT><B>RLIMIT_LOCKS</B> (early Linux 2.4 only)
 
 <DD>
 
-A limit on the combined number of
+This is a limit on the combined number of
 <B><A HREF="../man2/flock.2.html">flock</A></B>(2)
 
 locks and
@@ -228,15 +231,14 @@ leases that this process may establish.
 <DT><B>RLIMIT_MEMLOCK</B>
 
 <DD>
-The maximum number of bytes of memory that may be locked
+This is the maximum number of bytes of memory that may be locked
 into RAM.
-In effect this limit is rounded down to the nearest multiple
+This limit is in effect rounded down to the nearest multiple
 of the system page size.
 This limit affects
-<B><A HREF="../man2/mlock.2.html">mlock</A></B>(2)
+<B><A HREF="../man2/mlock.2.html">mlock</A></B>(2),
 
-and
-<B><A HREF="../man2/mlockall.2.html">mlockall</A></B>(2)
+<B><A HREF="../man2/mlockall.2.html">mlockall</A></B>(2),
 
 and the
 <B><A HREF="../man2/mmap.2.html">mmap</A></B>(2)
@@ -244,7 +246,7 @@ and the
 <B>MAP_LOCKED</B>
 
 operation.
-Since Linux 2.6.9 it also affects the
+Since Linux 2.6.9, it also affects the
 <B><A HREF="../man2/shmctl.2.html">shmctl</A></B>(2)
 
 <B>SHM_LOCK</B>
@@ -281,7 +283,7 @@ the amount of memory that an unprivileged process may lock.
 <DT><B>RLIMIT_MSGQUEUE</B> (since Linux 2.6.8)
 
 <DD>
-Specifies the limit on the number of bytes that can be allocated
+This is a limit on the number of bytes that can be allocated
 for POSIX message queues for the real user ID of the calling process.
 This limit is enforced for
 <B><A HREF="../man3/mq_open.3.html">mq_open</A></B>(3).
@@ -333,7 +335,7 @@ nevertheless each consume some system memory for bookkeeping overhead).
 <DT><B>RLIMIT_NICE</B> (since Linux 2.6.12, but see BUGS below)
 
 <DD>
-Specifies a ceiling to which the process's nice value can be raised using
+This specifies a ceiling to which the process's nice value can be raised using
 <B><A HREF="../man2/setpriority.2.html">setpriority</A></B>(2)
 
 or
@@ -345,7 +347,7 @@ The actual ceiling for the nice value is calculated as
 The useful range for this limit is thus from 1
 (corresponding to a nice value of 19) to 40
 (corresponding to a nice value of -20).
-This unusual choice of range is was necessary
+This unusual choice of range was necessary
 because negative numbers cannot be specified
 as resource limit values, since they typically have special meanings.
 For example,
@@ -358,7 +360,7 @@ For more detail on the nice value, see
 <DT><B>RLIMIT_NOFILE</B>
 
 <DD>
-Specifies a value one greater than the maximum file descriptor number
+This specifies a value one greater than the maximum file descriptor number
 that can be opened by this process.
 Attempts
 (<B><A HREF="../man2/open.2.html">open</A></B>(2),
@@ -375,10 +377,26 @@ to exceed this limit yield the error
 <B>RLIMIT_OFILE</B>
 
 on BSD.)
+<P>
+Since Linux 4.5,
+this limit also defines the maximum number of file descriptors that
+an unprivileged process (one without the
+<B>CAP_SYS_RESOURCE</B>
+
+capability) may have &quot;in flight&quot; to other processes,
+by being passed across UNIX domain sockets.
+This limit applies to the
+<B><A HREF="../man2/sendmsg.2.html">sendmsg</A></B>(2)
+
+system call.
+For further details, see
+<B><A HREF="../man7/unix.7.html">unix</A></B>(7).
+
 <DT><B>RLIMIT_NPROC</B>
 
 <DD>
-The maximum number of processes (or, more precisely on Linux, threads)
+This is the maximum number of processes
+(or, more precisely on Linux, threads)
 that can be created for the real user ID of the calling process.
 Upon encountering this limit,
 <B><A HREF="../man2/fork.2.html">fork</A></B>(2)
@@ -396,7 +414,7 @@ capability.
 <DT><B>RLIMIT_RSS</B>
 
 <DD>
-Specifies the limit (in bytes) of the process's resident set
+This is a limit (in bytes) on the process's resident set
 (the number of virtual pages resident in RAM).
 This limit has effect only in Linux 2.4.x, x &lt; 30, and there
 affects only calls to
@@ -411,7 +429,7 @@ specifying
 <DT><B>RLIMIT_RTPRIO</B> (since Linux 2.6.12, but see BUGS)
 
 <DD>
-Specifies a ceiling on the real-time priority that may be set for
+This specifies a ceiling on the real-time priority that may be set for
 this process using
 <B><A HREF="../man2/sched_setscheduler.2.html">sched_setscheduler</A></B>(2)
 
@@ -425,7 +443,7 @@ For further details on real-time scheduling policies, see
 <DT><B>RLIMIT_RTTIME</B> (since Linux 2.6.25)
 
 <DD>
-Specifies a limit (in microseconds)
+This is a limit (in microseconds)
 on the amount of CPU time that a process scheduled
 under a real-time scheduling policy may consume without making a blocking
 system call.
@@ -460,7 +478,7 @@ For further details on real-time scheduling policies, see
 <DT><B>RLIMIT_SIGPENDING</B> (since Linux 2.6.8)
 
 <DD>
-Specifies the limit on the number of signals
+This is a limit on the number of signals
 that may be queued for the real user ID of the calling process.
 Both standard and real-time signals are counted for the purpose of
 checking this limit.
@@ -477,7 +495,7 @@ queued to the process.
 <DT><B>RLIMIT_STACK</B>
 
 <DD>
-The maximum size of the process stack, in bytes.
+This is the maximum size of the process stack, in bytes.
 Upon reaching this limit, a
 <B>SIGSEGV</B>
 
@@ -1013,7 +1031,7 @@ main(int argc, char *argv[])
     printf(&quot;New limits: soft=%lld; hard=%lld\n&quot;,
             (long long) old.rlim_cur, (long long) old.rlim_max);
 
-    exit(EXIT_FAILURE);
+    exit(EXIT_SUCCESS);
 }
 </PRE>
 
@@ -1052,9 +1070,9 @@ main(int argc, char *argv[])
 
 <B><A HREF="../man7/capabilities.7.html">capabilities</A></B>(7),
 
-<B><A HREF="../man7/credentials.7.html">credentials</A></B>(7),
-
 <B><A HREF="../man7/cgroups.7.html">cgroups</A></B>(7),
+
+<B><A HREF="../man7/credentials.7.html">credentials</A></B>(7),
 
 <B><A HREF="../man7/signal.7.html">signal</A></B>(7)
 
@@ -1089,6 +1107,6 @@ main(int argc, char *argv[])
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:44:43 GMT, April 20, 2020
+Time: 03:45:21 GMT, April 20, 2020
 </BODY>
 </HTML>

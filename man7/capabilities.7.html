@@ -110,8 +110,15 @@ Bypass file read permission checks and
 directory read and execute permission checks;
 <DT>*<DD>
 invoke
-<B><A HREF="../man2/open_by_handle_at.2.html">open_by_handle_at</A></B>(2).
+<B><A HREF="../man2/open_by_handle_at.2.html">open_by_handle_at</A></B>(2);
 
+<DT>*<DD>
+use the
+<B><A HREF="../man2/linkat.2.html">linkat</A></B>(2)
+
+<B>AT_EMPTY_PATH</B>
+
+flag to create a link to a file referred to by a file descriptor.
 </DL>
 </DL>
 
@@ -137,8 +144,8 @@ and
 <B>CAP_DAC_READ_SEARCH</B>;
 
 <DT>*<DD>
-set extended file attributes (see
-<B><A HREF="../man1/chattr.1.html">chattr</A></B>(1))
+set inode flags (see
+<B><A HREF="../man2/ioctl_iflags.2.html">ioctl_iflags</A></B>(2))
 
 on arbitrary files;
 <DT>*<DD>
@@ -225,9 +232,8 @@ Set the
 and
 <B>FS_IMMUTABLE_FL</B>
 
-
 inode flags (see
-<B><A HREF="../man1/chattr.1.html">chattr</A></B>(1)).
+<B><A HREF="../man2/ioctl_iflags.2.html">ioctl_iflags</A></B>(2)).
 
 <DT><B>CAP_MAC_ADMIN</B> (since Linux 2.6.25)
 
@@ -305,7 +311,7 @@ Bind a socket to Internet domain privileged ports
 <DL COMPACT><DT><DD>
 <DL COMPACT>
 <DT>*<DD>
-use RAW and PACKET sockets;
+Use RAW and PACKET sockets;
 <DT>*<DD>
 bind to any address for transparent proxying.
 </DL>
@@ -392,6 +398,13 @@ write a user ID mapping in a user namespace (see
 <DT><B>CAP_SYS_ADMIN</B>
 
 <DD>
+<I>Note</I>:
+
+this capability is overloaded; see
+<I>Notes to kernel developers</I>,
+
+below.
+<P>
 
 <DL COMPACT><DT><DD>
 <DL COMPACT>
@@ -583,6 +596,33 @@ operations on the
 device (see
 <B><A HREF="../man4/random.4.html">random</A></B>(4));
 
+<DT>*<DD>
+install a
+<B><A HREF="../man2/seccomp.2.html">seccomp</A></B>(2)
+
+filter without first having to set the
+<I>no_new_privs</I>
+
+thread attribute;
+<DT>*<DD>
+modify allow/deny rules for device control groups;
+<DT>*<DD>
+employ the
+<B><A HREF="../man2/ptrace.2.html">ptrace</A></B>(2)
+
+<B>PTRACE_SECCOMP_GET_FILTER</B>
+
+operation to dump tracee's seccomp filters;
+<DT>*<DD>
+employ the
+<B><A HREF="../man2/ptrace.2.html">ptrace</A></B>(2)
+
+<B>PTRACE_SETOPTIONS</B>
+
+operation to suspend the tracee's seccomp protections (i.e., the
+<B>PTRACE_O_SUSPEND_SECCOMP</B>
+
+flag).
 <DT>*<DD>
 perform administrative operations on many device drivers.
 </DL>
@@ -829,6 +869,15 @@ and
 <B><A HREF="../man2/msgctl.2.html">msgctl</A></B>(2));
 
 <DT>*<DD>
+allow the
+<B>RLIMIT_NOFILE</B>
+
+resource limit on the number of &quot;in-flight&quot; file descriptors
+to be bypassed when passing file descriptors to another process
+via a UNIX domain socket (see
+<B><A HREF="../man7/unix.7.html">unix</A></B>(7));
+
+<DT>*<DD>
 override the
 <I>/proc/sys/fs/pipe-size-max</I>
 
@@ -958,6 +1007,67 @@ Before kernel 2.6.24, only the first two of these requirements are met;
 since kernel 2.6.24, all three requirements are met.
 
 <A NAME="lbAF">&nbsp;</A>
+<H3>Notes to kernel developers</H3>
+
+When adding a new kernel feature that should be governed by a capability,
+consider the following points.
+<DL COMPACT>
+<DT>*<DD>
+The goal of capabilities is divide the power of superuser into pieces,
+such that if a program that has one or more capabilities is compromised,
+its power to do damage to the system would be less than the same program
+running with root privilege.
+<DT>*<DD>
+You have the choice of either creating a new capability for your new feature,
+or associating the feature with one of the existing capabilities.
+In order to keep the set of capabilities to a manageable size,
+the latter option is preferable,
+unless there are compelling reasons to take the former option.
+(There is also a technical limit:
+the size of capability sets is currently limited to 64 bits.)
+<DT>*<DD>
+To determine which existing capability might best be associated
+with your new feature, review the list of capabilities above in order
+to find a &quot;silo&quot; into which your new feature best fits.
+One approach to take is to determine if there are other features
+requiring capabilities that will always be use along with the new feature.
+If the new feature is useless without these other features,
+you should use the same capability as the other features.
+<DT>*<DD>
+<I>Don't</I>
+
+choose
+<B>CAP_SYS_ADMIN</B>
+
+if you can possibly avoid it!
+A vast proportion of existing capability checks are associated
+with this capability (see the partial list above).
+It can plausibly be called &quot;the new root&quot;,
+since on the one hand, it confers a wide range of powers,
+and on the other hand,
+its broad scope means that this is the capability
+that is required by many privileged programs.
+Don't make the problem worse.
+The only new features that should be associated with
+<B>CAP_SYS_ADMIN</B>
+
+are ones that
+<I>closely</I>
+
+match existing uses in that silo.
+<DT>*<DD>
+If you have determined that it really is necessary to create
+a new capability for your feature,
+don't make or name it as a &quot;single-use&quot; capability.
+Thus, for example, the addition of the highly specific
+<B>CAP_PACCT</B>
+
+was probably a mistake.
+Instead, try to identify and name your new capability as a broader
+silo into which other related future use cases might fit.
+
+</DL>
+<A NAME="lbAG">&nbsp;</A>
 <H3>Thread capability sets</H3>
 
 Each thread has three capability sets containing zero or more
@@ -1053,7 +1163,7 @@ supported by the running kernel;
 this can be used to determine the highest bit
 that may be set in a capability set.
 
-<A NAME="lbAG">&nbsp;</A>
+<A NAME="lbAH">&nbsp;</A>
 <H3>File capabilities</H3>
 
 Since kernel 2.6.24, the kernel supports
@@ -1124,20 +1234,9 @@ then the effective flag must also be specified as enabled
 for all other capabilities for which the corresponding permitted or
 inheritable flags is enabled.
 
-<P>
-File capability sets are ignored if the executable file
-resides on a filesystem mounted with the
-<B>nosuid</B>
-
-option (see
-<B><A HREF="../man2/mount.2.html">mount</A></B>(2)
-
-and
-<B><A HREF="../man8/mount.8.html">mount</A></B>(8)).
-
 
 </DL>
-<A NAME="lbAH">&nbsp;</A>
+<A NAME="lbAI">&nbsp;</A>
 <H3>Transformation of capabilities during execve()</H3>
 
 <P>
@@ -1150,12 +1249,12 @@ the process using the following algorithm:
 
 <PRE>
 
-P'(ambient) = (file is privileged) ? 0 : P(ambient)
+P'(ambient)     = (file is privileged) ? 0 : P(ambient)
 
-P'(permitted) = (P(inheritable) &amp; F(inheritable)) |
-                (F(permitted) &amp; cap_bset) | P'(ambient)
+P'(permitted)   = (P(inheritable) &amp; F(inheritable)) |
+                  (F(permitted) &amp; cap_bset) | P'(ambient)
 
-P'(effective) = F(effective) ? P'(permitted) : P'(ambient)
+P'(effective)   = F(effective) ? P'(permitted) : P'(ambient)
 
 P'(inheritable) = P(inheritable)    [i.e., unchanged]
 
@@ -1184,8 +1283,18 @@ is the value of the capability bounding set (described below).
 
 A privileged file is one that has capabilities or
 has the set-user-ID or set-group-ID bit set.
+<P>
+<I>Note</I>:
 
-<A NAME="lbAI">&nbsp;</A>
+the capability transitions described above may
+<I>not</I>
+
+performed (i.e., file capabilities may be ignored) for the same reasons
+that the set-user-ID and set-group-ID bits are ignored; see
+<B><A HREF="../man2/execve.2.html">execve</A></B>(2).
+
+
+<A NAME="lbAJ">&nbsp;</A>
 <H3>Safety checking for capability-dumb binaries</H3>
 
 A capability-dumb binary is an application that has been
@@ -1228,7 +1337,7 @@ since it does not employ the
 
 API.
 
-<A NAME="lbAJ">&nbsp;</A>
+<A NAME="lbAK">&nbsp;</A>
 <H3>Capabilities and execution of programs by root</H3>
 
 In order to provide an all-powerful
@@ -1265,7 +1374,7 @@ except those masked out by the capability bounding set.
 
 This provides semantics that are the same as those provided by
 traditional UNIX systems.
-<A NAME="lbAK">&nbsp;</A>
+<A NAME="lbAL">&nbsp;</A>
 <H3>Capability bounding set</H3>
 
 The capability bounding set is a security mechanism that can be used
@@ -1417,7 +1526,7 @@ However it does prevent the capability from being added
 back into the thread's inherited set in the future.
 
 
-<A NAME="lbAL">&nbsp;</A>
+<A NAME="lbAM">&nbsp;</A>
 <H3>Effect of user ID changes on capabilities</H3>
 
 To preserve the traditional semantics for transitions between
@@ -1485,7 +1594,7 @@ operation or the
 
 securebits flag described below.
 
-<A NAME="lbAM">&nbsp;</A>
+<A NAME="lbAN">&nbsp;</A>
 <H3>Programmatically adjusting capability sets</H3>
 
 A thread can retrieve and change its capability sets using the
@@ -1526,7 +1635,7 @@ that the thread does not currently have).
 <DT>4.<DD>
 The new effective set must be a subset of the new permitted set.
 </DL>
-<A NAME="lbAN">&nbsp;</A>
+<A NAME="lbAO">&nbsp;</A>
 <H3>The securebits flags: establishing a capabilities-only environment</H3>
 
 
@@ -1654,13 +1763,13 @@ prctl(PR_SET_SECUREBITS,
 </PRE>
 
 
-<A NAME="lbAO">&nbsp;</A>
+<A NAME="lbAP">&nbsp;</A>
 <H3>Interaction with user namespaces</H3>
 
 For a discussion of the interaction of capabilities and user namespaces, see
 <B><A HREF="../man7/user_namespaces.7.html">user_namespaces</A></B>(7).
 
-<A NAME="lbAP">&nbsp;</A>
+<A NAME="lbAQ">&nbsp;</A>
 <H2>CONFORMING TO</H2>
 
 <P>
@@ -1669,7 +1778,7 @@ No standards govern capabilities, but the Linux capability implementation
 is based on the withdrawn POSIX.1e draft standard; see
 
 
-<A NAME="lbAQ">&nbsp;</A>
+<A NAME="lbAR">&nbsp;</A>
 <H2>NOTES</H2>
 
 From kernel 2.5.27 to kernel 2.6.26,
@@ -1747,7 +1856,7 @@ starts out with this capability removed from its per-process bounding
 set, and that bounding set is inherited by all other processes
 created on the system.
 </DL>
-<A NAME="lbAR">&nbsp;</A>
+<A NAME="lbAS">&nbsp;</A>
 <H2>SEE ALSO</H2>
 
 <B><A HREF="../man1/capsh.1.html">capsh</A></B>(1),
@@ -1803,25 +1912,26 @@ in the Linux kernel source tree
 <DL>
 <DT><A HREF="#lbAD">Capabilities list</A><DD>
 <DT><A HREF="#lbAE">Past and current implementation</A><DD>
-<DT><A HREF="#lbAF">Thread capability sets</A><DD>
-<DT><A HREF="#lbAG">File capabilities</A><DD>
-<DT><A HREF="#lbAH">Transformation of capabilities during execve()</A><DD>
-<DT><A HREF="#lbAI">Safety checking for capability-dumb binaries</A><DD>
-<DT><A HREF="#lbAJ">Capabilities and execution of programs by root</A><DD>
-<DT><A HREF="#lbAK">Capability bounding set</A><DD>
-<DT><A HREF="#lbAL">Effect of user ID changes on capabilities</A><DD>
-<DT><A HREF="#lbAM">Programmatically adjusting capability sets</A><DD>
-<DT><A HREF="#lbAN">The securebits flags: establishing a capabilities-only environment</A><DD>
-<DT><A HREF="#lbAO">Interaction with user namespaces</A><DD>
+<DT><A HREF="#lbAF">Notes to kernel developers</A><DD>
+<DT><A HREF="#lbAG">Thread capability sets</A><DD>
+<DT><A HREF="#lbAH">File capabilities</A><DD>
+<DT><A HREF="#lbAI">Transformation of capabilities during execve()</A><DD>
+<DT><A HREF="#lbAJ">Safety checking for capability-dumb binaries</A><DD>
+<DT><A HREF="#lbAK">Capabilities and execution of programs by root</A><DD>
+<DT><A HREF="#lbAL">Capability bounding set</A><DD>
+<DT><A HREF="#lbAM">Effect of user ID changes on capabilities</A><DD>
+<DT><A HREF="#lbAN">Programmatically adjusting capability sets</A><DD>
+<DT><A HREF="#lbAO">The securebits flags: establishing a capabilities-only environment</A><DD>
+<DT><A HREF="#lbAP">Interaction with user namespaces</A><DD>
 </DL>
-<DT><A HREF="#lbAP">CONFORMING TO</A><DD>
-<DT><A HREF="#lbAQ">NOTES</A><DD>
-<DT><A HREF="#lbAR">SEE ALSO</A><DD>
+<DT><A HREF="#lbAQ">CONFORMING TO</A><DD>
+<DT><A HREF="#lbAR">NOTES</A><DD>
+<DT><A HREF="#lbAS">SEE ALSO</A><DD>
 </DL>
 <HR>
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:44:57 GMT, April 20, 2020
+Time: 03:45:35 GMT, April 20, 2020
 </BODY>
 </HTML>

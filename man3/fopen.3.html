@@ -34,7 +34,7 @@ SUCH DAMAGE.
 <HTML><HEAD><TITLE>Man page of FOPEN</TITLE>
 </HEAD><BODY>
 <H1>FOPEN</H1>
-Section: Linux Programmer's Manual (3)<BR>Updated: 2016-03-15<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2017-03-13<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -47,11 +47,11 @@ fopen, fdopen, freopen - stream open functions
 <PRE>
 <B>#include &lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;</B>
 
-<B>FILE *fopen(const char *</B><I>path</I><B>, const char *</B><I>mode</I><B>);</B>
+<B>FILE *fopen(const char *</B><I>pathname</I><B>, const char *</B><I>mode</I><B>);</B>
 
 <B>FILE *fdopen(int </B><I>fd</I><B>, const char *</B><I>mode</I><B>);</B>
 
-<B>FILE *freopen(const char *</B><I>path</I><B>, const char *</B><I>mode</I><B>, FILE *</B><I>stream</I><B>);</B>
+<B>FILE *freopen(const char *</B><I>pathname</I><B>, const char *</B><I>mode</I><B>, FILE *</B><I>stream</I><B>);</B>
 </PRE>
 
 <P>
@@ -71,7 +71,7 @@ The
 <B>fopen</B>()
 
 function opens the file whose name is the string pointed to by
-<I>path</I>
+<I>pathname</I>
 
 and associates a stream with it.
 <P>
@@ -140,7 +140,7 @@ See NOTES below for details of glibc extensions for
 
 <P>
 
-Any created files will have mode
+Any created file will have the mode
 <B>S_IRUSR</B> | <B>S_IWUSR</B> | <B>S_IRGRP</B> | <B>S_IWGRP</B> | <B>S_IROTH</B> | <B>S_IWOTH</B>
 
 (0666), as modified by the process's umask value (see
@@ -178,6 +178,27 @@ at end-of-file, as if preceded the call:
 
 <P>
 
+The file descriptor associated with the stream is opened as if by a call to
+<B><A HREF="../man2/open.2.html">open</A></B>(2)
+
+with the following flags:
+<DL COMPACT><DT><DD>
+<TABLE BORDER>
+<TR VALIGN=top><TD><B>fopen() mode</B></TD><TD><B>open() flags</B><BR></TD></TR>
+<TR VALIGN=top><TD ALIGN=center><I>r</I></TD><TD>O_RDONLY<BR></TD></TR>
+<TR VALIGN=top><TD ALIGN=center><I>w</I></TD><TD>O_WRONLY | O_CREAT | O_TRUNC<BR></TD></TR>
+<TR VALIGN=top><TD ALIGN=center><I>a</I></TD><TD>O_WRONLY | O_CREAT | O_APPEND<BR></TD></TR>
+<TR VALIGN=top><TD ALIGN=center><I>r+</I></TD><TD>O_RDWR<BR></TD></TR>
+<TR VALIGN=top><TD ALIGN=center><I>w+</I></TD><TD>O_RDWR | O_CREAT | O_TRUNC<BR></TD></TR>
+<TR VALIGN=top><TD ALIGN=center><I>a+</I></TD><TD>O_RDWR | O_CREAT | O_APPEND<BR></TD></TR>
+</TABLE>
+
+</DL>
+
+
+<A NAME="lbAE">&nbsp;</A>
+<H3>fdopen()</H3>
+
 The
 <B>fdopen</B>()
 
@@ -204,13 +225,15 @@ The result of applying
 <B>fdopen</B>()
 
 to a shared memory object is undefined.
-<P>
+
+<A NAME="lbAF">&nbsp;</A>
+<H3>freopen()</H3>
 
 The
 <B>freopen</B>()
 
 function opens the file whose name is the string pointed to by
-<I>path</I>
+<I>pathname</I>
 
 and associates the stream pointed to by
 <I>stream</I>
@@ -224,13 +247,42 @@ argument is used just as in the
 <B>fopen</B>()
 
 function.
+<P>
+If the
+<I>pathname</I>
+
+argument is a null pointer,
+<B>freopen</B>()
+
+changes the mode of the stream to that specified in
+<I>mode</I>;
+
+that is,
+<B>freopen</B>()
+
+reopens the pathname that is associated with the stream.
+The specification for this behavior was added in the C99 standard, which says:
+<P>
+<DL COMPACT><DT><DD>
+In this case,
+the file descriptor associated with the stream need not be closed
+if the call to
+<B>freopen</B>()
+
+succeeds.
+It is implementation-defined which changes of mode are permitted (if any),
+and under what circumstances.
+</DL>
+
+<P>
+
 The primary use of the
 <B>freopen</B>()
 
 function is to change the file associated with a standard text stream
 (<I>stderr</I>, <I>stdin</I>, or <I>stdout</I>).
 
-<A NAME="lbAE">&nbsp;</A>
+<A NAME="lbAG">&nbsp;</A>
 <H2>RETURN VALUE</H2>
 
 Upon successful completion
@@ -249,7 +301,7 @@ Otherwise, NULL is returned and
 <I>errno</I>
 
 is set to indicate the error.
-<A NAME="lbAF">&nbsp;</A>
+<A NAME="lbAH">&nbsp;</A>
 <H2>ERRORS</H2>
 
 <DL COMPACT>
@@ -323,7 +375,7 @@ for any of the errors specified for the routines
 and
 <B><A HREF="../man3/fflush.3.html">fflush</A></B>(3).
 
-<A NAME="lbAG">&nbsp;</A>
+<A NAME="lbAI">&nbsp;</A>
 <H2>ATTRIBUTES</H2>
 
 For an explanation of the terms used in this section, see
@@ -341,7 +393,7 @@ For an explanation of the terms used in this section, see
 </TD><TD>Thread safety</TD><TD>MT-Safe<BR></TD></TR>
 </TABLE>
 
-<A NAME="lbAH">&nbsp;</A>
+<A NAME="lbAJ">&nbsp;</A>
 <H2>CONFORMING TO</H2>
 
 <B>fopen</B>(),
@@ -353,10 +405,10 @@ POSIX.1-2001, POSIX.1-2008, C89, C99.
 <B>fdopen</B>():
 
 POSIX.1-2001, POSIX.1-2008.
-<A NAME="lbAI">&nbsp;</A>
+<A NAME="lbAK">&nbsp;</A>
 <H2>NOTES</H2>
 
-<A NAME="lbAJ">&nbsp;</A>
+<A NAME="lbAL">&nbsp;</A>
 <H3>Glibc notes</H3>
 
 The GNU C library allows the following extensions for the string specified in
@@ -462,7 +514,7 @@ determined by the first file operation.
 If that operation is a wide-character operation,
 the stream is marked wide-oriented,
 and functions to convert to the coded character set are loaded.
-<A NAME="lbAK">&nbsp;</A>
+<A NAME="lbAM">&nbsp;</A>
 <H2>BUGS</H2>
 
 When parsing for individual flag characters in
@@ -487,7 +539,7 @@ The current implementation of
 parses at most 5 characters in
 <I>mode</I>.
 
-<A NAME="lbAL">&nbsp;</A>
+<A NAME="lbAN">&nbsp;</A>
 <H2>SEE ALSO</H2>
 
 <B><A HREF="../man2/open.2.html">open</A></B>(2),
@@ -510,21 +562,25 @@ parses at most 5 characters in
 <DT><A HREF="#lbAB">NAME</A><DD>
 <DT><A HREF="#lbAC">SYNOPSIS</A><DD>
 <DT><A HREF="#lbAD">DESCRIPTION</A><DD>
-<DT><A HREF="#lbAE">RETURN VALUE</A><DD>
-<DT><A HREF="#lbAF">ERRORS</A><DD>
-<DT><A HREF="#lbAG">ATTRIBUTES</A><DD>
-<DT><A HREF="#lbAH">CONFORMING TO</A><DD>
-<DT><A HREF="#lbAI">NOTES</A><DD>
 <DL>
-<DT><A HREF="#lbAJ">Glibc notes</A><DD>
+<DT><A HREF="#lbAE">fdopen()</A><DD>
+<DT><A HREF="#lbAF">freopen()</A><DD>
 </DL>
-<DT><A HREF="#lbAK">BUGS</A><DD>
-<DT><A HREF="#lbAL">SEE ALSO</A><DD>
+<DT><A HREF="#lbAG">RETURN VALUE</A><DD>
+<DT><A HREF="#lbAH">ERRORS</A><DD>
+<DT><A HREF="#lbAI">ATTRIBUTES</A><DD>
+<DT><A HREF="#lbAJ">CONFORMING TO</A><DD>
+<DT><A HREF="#lbAK">NOTES</A><DD>
+<DL>
+<DT><A HREF="#lbAL">Glibc notes</A><DD>
+</DL>
+<DT><A HREF="#lbAM">BUGS</A><DD>
+<DT><A HREF="#lbAN">SEE ALSO</A><DD>
 </DL>
 <HR>
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:44:49 GMT, April 20, 2020
+Time: 03:45:27 GMT, April 20, 2020
 </BODY>
 </HTML>

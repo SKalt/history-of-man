@@ -4,7 +4,7 @@
 <HTML><HEAD><TITLE>Man page of MLOCK</TITLE>
 </HEAD><BODY>
 <H1>MLOCK</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2016-10-08<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2017-03-13<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -362,7 +362,7 @@ For
 <A NAME="lbAI">&nbsp;</A>
 <H2>VERSIONS</H2>
 
-<B><A HREF="../man2/mlock2.2.html">mlock2</A></B>(2)
+<B>mlock2</B>()
 
 is available since Linux 4.4.
 <A NAME="lbAJ">&nbsp;</A>
@@ -602,6 +602,35 @@ unprivileged process may lock.
 <A NAME="lbAO">&nbsp;</A>
 <H2>BUGS</H2>
 
+In Linux 4.8 and earlier,
+a bug in the kernel's accounting of locked memory for unprivileged processes
+(i.e., without
+<B>CAP_IPC_LOCK</B>)
+
+meant that if the region specified by
+<I>addr</I>
+
+and
+<I>len</I>
+
+overlapped an existing lock,
+then the already locked bytes in the overlapping region were counted twice
+when checking against the limit.
+Such double accounting could incorrectly calculate a &quot;total locked memory&quot;
+value for the process that exceeded the
+<B>RLIMIT_MEMLOCK</B>
+
+limit, with the result that
+<B>mlock</B>()
+
+and
+<B>mlock2()</B>
+
+would fail on requests that should have succeeded.
+This bug was fixed
+
+in Linux 4.9
+<P>
 In the 2.4 series Linux kernels up to and including 2.4.17,
 a bug caused the
 <B>mlockall</B>()
@@ -636,6 +665,8 @@ resource limit is encountered.
 
 <A NAME="lbAP">&nbsp;</A>
 <H2>SEE ALSO</H2>
+
+<B><A HREF="../man2/mincore.2.html">mincore</A></B>(2),
 
 <B><A HREF="../man2/mmap.2.html">mmap</A></B>(2),
 
@@ -679,6 +710,6 @@ resource limit is encountered.
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:44:44 GMT, April 20, 2020
+Time: 03:45:22 GMT, April 20, 2020
 </BODY>
 </HTML>

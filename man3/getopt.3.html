@@ -26,7 +26,7 @@ the source, must acknowledge the copyright and authors of this work.
 <HTML><HEAD><TITLE>Man page of GETOPT</TITLE>
 </HEAD><BODY>
 <H1>GETOPT</H1>
-Section: Linux Programmer's Manual (3)<BR>Updated: 2015-08-08<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2017-03-13<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -196,37 +196,53 @@ The special argument &quot;--&quot; forces an end of option-scanning regardless
 of the scanning mode.
 <P>
 
-If
+While processing the option list,
 <B>getopt</B>()
 
-does not recognize an option character, it prints an
-error message to <I>stderr</I>, stores the character in <I>optopt</I>, and
-returns '?'.
-The calling program may prevent the error message by
-setting <I>opterr</I> to 0.
-<P>
+can detect two kinds of errors:
+(1) an option character that was not specified in
+<I>optstring</I>
 
-If
+and (2) a missing option argument
+(i.e., an option at the end of the command line without an expected argument).
+Such errors are handled and reported as follows:
+<DL COMPACT>
+<DT>*<DD>
+By default,
 <B>getopt</B>()
 
-finds an option character in <I>argv</I> that was not
-included in <I>optstring</I>, or if it detects a missing option argument,
-it returns '?' and sets the external variable <I>optopt</I> to the
-actual option character.
+prints an error message on standard error,
+places the erroneous option character in
+<I>optopt</I>,
+
+and returns '?' as the function result.
+<DT>*<DD>
+If the caller has set the global variable
+<I>opterr</I>
+
+to zero, then
+<B>getopt</B>()
+
+does not print an error message.
+The caller can determine that there was an error by testing whether
+the function return value is '?'.
+(By default,
+<I>opterr</I>
+
+has a nonzero value.)
+<DT>*<DD>
 If the first character
 (following any optional '+' or '-' described above)
 of <I>optstring</I>
 is a colon (':'), then
 <B>getopt</B>()
 
-returns ':' instead of '?' to
+likewise does not print an error message.
+In addition, it returns ':' instead of '?' to
 indicate a missing option argument.
-If an error was detected, and
-the first character of <I>optstring</I> is not a colon, and
-the external variable <I>opterr</I> is nonzero (which is the default),
-<B>getopt</B>()
+This allows the caller to distinguish the two different types of errors.
 
-prints an error message.
+</DL>
 <A NAME="lbAE">&nbsp;</A>
 <H3>getopt_long() and getopt_long_only()</H3>
 
@@ -450,11 +466,11 @@ SUSv1 permitted the declaration to appear in either
 or
 <I>&lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;</I>.
 
-POSIX.1-2001 marked the use of
+POSIX.1-1996 marked the use of
 <I>&lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;</I>
 
 for this purpose as LEGACY.
-POSIX.1-2001 does not allow the declaration to appear in
+POSIX.1-2001 does not require the declaration to appear in
 <I>&lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;</I>.
 
 <DT><B>getopt_long</B>() and <B>getopt_long_only</B>():
@@ -675,6 +691,6 @@ main(int argc, char **argv)
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:44:50 GMT, April 20, 2020
+Time: 03:45:28 GMT, April 20, 2020
 </BODY>
 </HTML>

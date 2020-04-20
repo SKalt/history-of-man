@@ -25,7 +25,7 @@ License along with this manual; if not, see
 <HTML><HEAD><TITLE>Man page of FTW</TITLE>
 </HEAD><BODY>
 <H1>FTW</H1>
-Section: Linux Programmer's Manual (3)<BR>Updated: 2015-04-19<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2017-03-13<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -189,6 +189,10 @@ but did not have execute permission,
 so that the file could not be reached for
 <B><A HREF="../man2/stat.2.html">stat</A></B>(2).
 
+The contents of the buffer pointed to by
+<I>sb</I>
+
+are undefined.
 <DT><B>FTW_SL</B>
 
 <DD>
@@ -559,13 +563,21 @@ static int
 display_info(const char *fpath, const struct stat *sb,
              int tflag, struct FTW *ftwbuf)
 {
-    printf(&quot;%-3s %2d %7jd   %-40s %d %s\n&quot;,
-        (tflag == FTW_D) ?   &quot;d&quot;   : (tflag == FTW_DNR) ? &quot;dnr&quot; :
-        (tflag == FTW_DP) ?  &quot;dp&quot;  : (tflag == FTW_F) ?   &quot;f&quot; :
-        (tflag == FTW_NS) ?  &quot;ns&quot;  : (tflag == FTW_SL) ?  &quot;sl&quot; :
-        (tflag == FTW_SLN) ? &quot;sln&quot; : &quot;???&quot;,
-        ftwbuf-&gt;level, (intmax_t) sb-&gt;st_size,
-        fpath, ftwbuf-&gt;base, fpath + ftwbuf-&gt;base);
+    printf(&quot;%-3s %2d &quot;,
+            (tflag == FTW_D) ?   &quot;d&quot;   : (tflag == FTW_DNR) ? &quot;dnr&quot; :
+            (tflag == FTW_DP) ?  &quot;dp&quot;  : (tflag == FTW_F) ?   &quot;f&quot; :
+            (tflag == FTW_NS) ?  &quot;ns&quot;  : (tflag == FTW_SL) ?  &quot;sl&quot; :
+            (tflag == FTW_SLN) ? &quot;sln&quot; : &quot;???&quot;,
+            ftwbuf-&gt;level);
+
+    if (tflag == FTW_NS)
+        printf(&quot;-------&quot;);
+    else
+        printf(&quot;%7jd&quot;, (intmax_t) sb-&gt;st_size);
+
+    printf(&quot;   %-40s %d %s\n&quot;,
+            fpath, ftwbuf-&gt;base, fpath + ftwbuf-&gt;base);
+
     return 0;           /* To tell nftw() to continue */
 }
 
@@ -584,6 +596,7 @@ main(int argc, char *argv[])
         perror(&quot;nftw&quot;);
         exit(EXIT_FAILURE);
     }
+
     exit(EXIT_SUCCESS);
 }
 </PRE>
@@ -623,6 +636,6 @@ main(int argc, char *argv[])
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:44:50 GMT, April 20, 2020
+Time: 03:45:28 GMT, April 20, 2020
 </BODY>
 </HTML>

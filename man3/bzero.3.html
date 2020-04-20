@@ -1,5 +1,5 @@
 <!--
-Copyright 1993 David Metcalfe (david@prism.demon.co.uk)
+Copyright (C) 2017 Michael Kerrisk &lt;mtk.manpages@gmail.com&gt;
 %%%LICENSE_START(VERBATIM)
 Permission is granted to make and distribute verbatim copies of this
 manual provided the copyright notice and this permission notice are
@@ -26,13 +26,13 @@ the source, must acknowledge the copyright and authors of this work.
 <HTML><HEAD><TITLE>Man page of BZERO</TITLE>
 </HEAD><BODY>
 <H1>BZERO</H1>
-Section: Linux Programmer's Manual (3)<BR>Updated: 2015-03-02<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2017-03-13<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
 <H2>NAME</H2>
 
-bzero - write zero-valued bytes
+bzero, explicit_bzero - zero a byte string
 <A NAME="lbAC">&nbsp;</A>
 <H2>SYNOPSIS</H2>
 
@@ -40,6 +40,8 @@ bzero - write zero-valued bytes
 <B>#include &lt;<A HREF="file:///usr/include/strings.h">strings.h</A>&gt;</B>
 
 <B>void bzero(void *</B><I>s</I><B>, size_t </B><I>n</I><B>);</B>
+
+<B>void explicit_bzero(void *</B><I>s</I><B>, size_t </B><I>n</I><B>);</B>
 </PRE>
 
 <A NAME="lbAD">&nbsp;</A>
@@ -48,18 +50,36 @@ bzero - write zero-valued bytes
 The
 <B>bzero</B>()
 
-function sets the first
+function erases the data in the
 <I>n</I>
 
-bytes of the area starting at
-<I>s</I>
+bytes of the memory starting at the location pointed to by
+<I>s</I>,
 
-to zero (bytes containing '\0').
+by writing zeroes (bytes containing '\0') to that area.
+<P>
+The
+<B>explicit_bzero</B>()
+
+function performs the same task as
+<B>bzero</B>().
+
+It differs from
+<B>bzero</B>()
+
+in that it guarantees that compiler optimizations will not remove the
+erase option if the compiler deduces that the operation is &quot;unnecessary&quot;.
 <A NAME="lbAE">&nbsp;</A>
 <H2>RETURN VALUE</H2>
 
 None.
 <A NAME="lbAF">&nbsp;</A>
+<H2>VERSIONS</H2>
+
+<B>explicit_bzero</B>()
+
+first appeared in glibc 2.25.
+<A NAME="lbAG">&nbsp;</A>
 <H2>ATTRIBUTES</H2>
 
 For an explanation of the terms used in this section, see
@@ -68,24 +88,152 @@ For an explanation of the terms used in this section, see
 <TABLE BORDER>
 <TR VALIGN=top><TD><B>Interface</B></TD><TD><B>Attribute</B></TD><TD><B>Value</B><BR></TD></TR>
 <TR VALIGN=top><TD>
-<B>bzero</B>()
+<B>bzero</B>(),
+
+<BR>
+
+<B>explicit_bzero</B>()
 
 </TD><TD>Thread safety</TD><TD>MT-Safe<BR></TD></TR>
 </TABLE>
 
-<A NAME="lbAG">&nbsp;</A>
+<A NAME="lbAH">&nbsp;</A>
 <H2>CONFORMING TO</H2>
 
-4.3BSD.
-This function is deprecated (marked as LEGACY in POSIX.1-2001): use
+The
+<B>bzero</B>()
+
+function is deprecated (marked as LEGACY in POSIX.1-2001); use
 <B><A HREF="../man3/memset.3.html">memset</A></B>(3)
 
 in new programs.
 POSIX.1-2008 removes the specification of
 <B>bzero</B>().
 
-<A NAME="lbAH">&nbsp;</A>
+The
+<B>bzero</B>()
+
+function first appeared in 4.3BSD.
+<P>
+The
+<B>explicit_bzero</B>()
+
+function is a nonstandard extension that is also present on some of the BSDs.
+Some other implementations have a similar function, such as
+<B>memset_explicit</B>()
+
+or
+<B>memset_s</B>().
+
+<A NAME="lbAI">&nbsp;</A>
+<H2>NOTES</H2>
+
+The
+<B>explicit_bzero</B>()
+
+function addresses a problem that security-conscious applications
+may run into when using
+<B>bzero</B>():
+
+if the compiler can deduce that the location to zeroed will
+never again be touched by a
+<I>correct</I>
+
+program, then it may remove the
+<B>bzero</B>()
+
+call altogether.
+This is a problem if the intent of the
+<B>bzero</B>()
+
+call was to erase sensitive data (e.g., passwords)
+to prevent the possibility that the data was leaked
+by an incorrect or compromised program.
+Calls to
+<B>explicit_bzero</B>()
+
+are never optimized away by the compiler.
+<P>
+The
+<B>explicit_bzero</B>()
+
+function does not solve all problems associated with erasing sensitive data:
+<DL COMPACT>
+<DT>1.<DD>
+The
+<B>explicit_bzero</B>()
+
+function does
+<I>not</I>
+
+guarantee that sensitive data is completely erased from memory.
+(The same is true of
+<B>bzero</B>().)
+
+For example, there may be copies of the sensitive data in
+a register and in &quot;scratch&quot; stack areas.
+The
+<B>explicit_bzero</B>()
+
+function is not aware of these copies, and can't erase them.
+<DT>2.<DD>
+In some circumstances,
+<B>explicit_bzero</B>()
+
+can
+<I>decrease</I>
+
+security.
+If the compiler determined that the variable containing the
+sensitive data could be optimized to be stored in a register
+(because it is small enough to fit in a register,
+and no operation other than the
+<B>explicit_bzero</B>()
+
+call would need to take the address of the variable), then the
+<B>explicit_bzero</B>()
+
+call will force the data to be copied from the register
+to a location in RAM that is then immediately erased
+(while the copy in the register remains unaffected).
+The problem here is that data in RAM is more likely to be exposed
+by a bug than data in a register, and thus the
+<B>explicit_bzero</B>()
+
+call creates a brief time window where the sensitive data is more
+vulnerable than it would otherwise have been
+if no attempt had been made to erase the data.
+</DL>
+<P>
+
+Note that declaring the sensitive variable with the
+<B>volatile</B>
+
+qualifier does
+<I>not</I>
+
+eliminate the above problems.
+Indeed, it will make them worse, since, for example,
+it may force a variable that would otherwise have been optimized
+into a register to instead be maintained in (more vulnerable)
+RAM for its entire lifetime.
+<P>
+Notwithstanding the above details, for security-conscious applications, using
+<B>explicit_bzero</B>()
+
+is generally preferable to not using it.
+The developers of
+<B>explicit_bzero</B>()
+
+anticipate that future compilers will recognize calls to
+<B>explicit_bzero</B>()
+
+and take steps to ensure that all copies of the sensitive data are erased,
+including copies in registers or in &quot;scratch&quot; stack areas.
+<A NAME="lbAJ">&nbsp;</A>
 <H2>SEE ALSO</H2>
+
+<B><A HREF="../man3/bstring.3.html">bstring</A></B>(3),
 
 <B><A HREF="../man3/memset.3.html">memset</A></B>(3),
 
@@ -100,14 +248,16 @@ POSIX.1-2008 removes the specification of
 <DT><A HREF="#lbAC">SYNOPSIS</A><DD>
 <DT><A HREF="#lbAD">DESCRIPTION</A><DD>
 <DT><A HREF="#lbAE">RETURN VALUE</A><DD>
-<DT><A HREF="#lbAF">ATTRIBUTES</A><DD>
-<DT><A HREF="#lbAG">CONFORMING TO</A><DD>
-<DT><A HREF="#lbAH">SEE ALSO</A><DD>
+<DT><A HREF="#lbAF">VERSIONS</A><DD>
+<DT><A HREF="#lbAG">ATTRIBUTES</A><DD>
+<DT><A HREF="#lbAH">CONFORMING TO</A><DD>
+<DT><A HREF="#lbAI">NOTES</A><DD>
+<DT><A HREF="#lbAJ">SEE ALSO</A><DD>
 </DL>
 <HR>
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:44:47 GMT, April 20, 2020
+Time: 03:45:25 GMT, April 20, 2020
 </BODY>
 </HTML>

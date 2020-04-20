@@ -11,7 +11,7 @@ of the modification is added to the header.
 <HTML><HEAD><TITLE>Man page of UNIX</TITLE>
 </HEAD><BODY>
 <H1>UNIX</H1>
-Section: Linux Programmer's Manual (7)<BR>Updated: 2016-07-17<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (7)<BR>Updated: 2017-03-13<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -425,7 +425,9 @@ The
 
 flag is not supported by UNIX domain sockets.
 <P>
-The use of
+Before Linux 3.4,
+
+the use of
 <B>MSG_TRUNC</B>
 
 in the
@@ -434,7 +436,7 @@ in the
 argument of
 <B><A HREF="../man2/recv.2.html">recv</A></B>(2)
 
-is not supported by UNIX domain sockets.
+was not supported by UNIX domain sockets.
 <P>
 The
 <B>SO_SNDBUF</B>
@@ -715,12 +717,49 @@ Remote socket does not match the local socket type
 (<B>SOCK_DGRAM</B>
 
 versus
-<B>SOCK_STREAM</B>)
+<B>SOCK_STREAM</B>).
 
 <DT><B>ESOCKTNOSUPPORT</B>
 
 <DD>
 Unknown socket type.
+<DT><B>ETOOMANYREFS</B>
+
+<DD>
+This error can occur for
+<B><A HREF="../man2/sendmsg.2.html">sendmsg</A></B>(2)
+
+when sending a file descriptor as ancillary data over
+a UNIX domain socket (see the description of
+<B>SCM_RIGHTS</B>,
+
+above).
+It occurs if the number of &quot;in-flight&quot; file descriptors exceeds the
+<B>RLIMIT_NOFILE</B>
+
+resource limit and the caller does not have the
+<B>CAP_SYS_RESOURCE</B>
+
+capability.
+An in-flight file descriptor is one that has been sent using
+<B><A HREF="../man2/sendmsg.2.html">sendmsg</A></B>(2)
+
+but has not yet been accepted in the recipient process using
+<B><A HREF="../man2/recvmsg.2.html">recvmsg</A></B>(2).
+
+<P>
+This error is diagnosed since mainline Linux 4.5
+(and in some earlier kernel versions where the fix has been backported).
+
+In earlier kernel versions,
+it was possible to place an unlimited number of file descriptors in flight,
+by sending each file descriptor with
+<B><A HREF="../man2/sendmsg.2.html">sendmsg</A></B>(2)
+
+and then closing the file descriptor so that it was not accounted against the
+<B>RLIMIT_NOFILE</B>
+
+resource limit.
 </DL>
 <P>
 
@@ -1212,6 +1251,6 @@ see
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:44:57 GMT, April 20, 2020
+Time: 03:45:35 GMT, April 20, 2020
 </BODY>
 </HTML>

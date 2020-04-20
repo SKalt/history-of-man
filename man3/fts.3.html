@@ -34,7 +34,7 @@ SUCH DAMAGE.
 <HTML><HEAD><TITLE>Man page of FTS</TITLE>
 </HEAD><BODY>
 <H1>FTS</H1>
-Section: Linux Programmer's Manual (3)<BR>Updated: 2016-03-15<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2017-03-13<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -54,9 +54,9 @@ fts, fts_open, fts_read, fts_children, fts_set, fts_close - traverse a file hier
 
 <B>FTSENT *fts_read(FTS *</B><I>ftsp</I><B>);</B>
 
-<B>FTSENT *fts_children(FTS *</B><I>ftsp</I><B>, int </B><I>options</I><B>);</B>
+<B>FTSENT *fts_children(FTS *</B><I>ftsp</I><B>, int </B><I>instr</I><B>);</B>
 
-<B>int fts_set(FTS *</B><I>ftsp</I><B>, FTSENT *</B><I>f</I><B>, int </B><I>options</I><B>);</B>
+<B>int fts_set(FTS *</B><I>ftsp</I><B>, FTSENT *</B><I>f</I><B>, int </B><I>instr</I><B>);</B>
 
 <B>int fts_close(FTS *</B><I>ftsp</I><B>);</B>
 </PRE>
@@ -70,8 +70,11 @@ file hierarchies.
 A simple overview is that the
 <B>fts_open</B>()
 
-function returns a &quot;handle&quot; on a file hierarchy, which is then supplied to
-the other
+function returns a &quot;handle&quot; (of type
+<I>FTS&nbsp;*</I>)
+
+that refers to a file hierarchy &quot;stream&quot;.
+This handle is then supplied to the other
 fts functions.
 The function
 <B>fts_read</B>()
@@ -83,6 +86,7 @@ The function
 
 returns a pointer to a linked list of structures, each of which describes
 one of the files contained in a directory in the hierarchy.
+<P>
 In general, directories are visited two distinguishable times; in preorder
 (before any of their descendants are visited) and in postorder (after all
 of their descendants have been visited).
@@ -94,14 +98,14 @@ order the walk of the hierarchy or
 prune and/or revisit portions of the hierarchy.
 <P>
 
-Two structures are defined (and typedef'd) in the include file
+Two structures (and associated types) are defined in the include file
 <I>&lt;<A HREF="file:///usr/include/fts.h">fts.h</A>&gt;</I>.
 
-The first is
+The first type is
 <I>FTS</I>,
 
 the structure that represents the file hierarchy itself.
-The second is
+The second type is
 <I>FTSENT</I>,
 
 the structure that represents a file in the file
@@ -114,29 +118,32 @@ hierarchy.
 In this manual page, &quot;file&quot; and
 &quot;FTSENT structure&quot;
 are generally interchangeable.
+<P>
 The
 <I>FTSENT</I>
 
-structure contains at least the following fields, which are
-described in greater detail below:
+structure contains fields describing a file.
+The structure contains at least the following fields
+(there are additional fields that
+should be considered private to the implementation):
 
 <PRE>
 
 typedef struct _ftsent {
-    unsigned short fts_info;     /* flags for FTSENT structure */
-    char          *fts_accpath;  /* access path */
-    char          *fts_path;     /* root path */
-    short          fts_pathlen;  /* strlen(fts_path) */
-    char          *fts_name;     /* filename */
-    short          fts_namelen;  /* strlen(fts_name) */
-    short          fts_level;    /* depth (-1 to N) */
-    int            fts_errno;    /* file errno */
-    long           fts_number;   /* local numeric value */
-    void          *fts_pointer;  /* local address value */
-    struct ftsent *fts_parent;   /* parent directory */
-    struct ftsent *fts_link;     /* next file structure */
-    struct ftsent *fts_cycle;    /* cycle structure */
-    struct stat   *fts_statp;    /* <A HREF="../man2/stat.2.html">stat</A>(2) information */
+    unsigned short  fts_info;     /* flags for FTSENT structure */
+    char           *fts_accpath;  /* access path */
+    char           *fts_path;     /* root path */
+    short           fts_pathlen;  /* strlen(fts_path) */
+    char           *fts_name;     /* filename */
+    short           fts_namelen;  /* strlen(fts_name) */
+    short           fts_level;    /* depth (-1 to N) */
+    int             fts_errno;    /* file errno */
+    long            fts_number;   /* local numeric value */
+    void           *fts_pointer;  /* local address value */
+    struct _ftsent *fts_parent;   /* parent directory */
+    struct _ftsent *fts_link;     /* next file structure */
+    struct _ftsent *fts_cycle;    /* cycle structure */
+    struct stat    *fts_statp;    /* <A HREF="../man2/stat.2.html">stat</A>(2) information */
 } FTSENT;
 </PRE>
 
@@ -149,7 +156,7 @@ These fields are defined as follows:
 <DT><I>fts_info</I>
 
 <DD>
-One of the following flags describing the returned
+One of the following values describing the returned
 <I>FTSENT</I>
 
 structure and
@@ -323,22 +330,22 @@ itself is numbered 0.
 <DT><I>fts_errno</I>
 
 <DD>
-Upon return of a
-<I>FTSENT</I>
-
-structure from the
+If
 <B>fts_children</B>()
 
 or
 <B>fts_read</B>()
 
-functions, with its
+returns an
+<I>FTSENT</I>
+
+structure whose
 <I>fts_info</I>
 
-field set to
+field is set to
 <B>FTS_DNR</B>,
 
-<B>FTS_ERR</B>
+<B>FTS_ERR</B>,
 
 or
 <B>FTS_NS</B>,
@@ -346,9 +353,10 @@ or
 the
 <I>fts_errno</I>
 
-field contains the value of the external variable
+field contains the error number (i.e., the
 <I>errno</I>
 
+value)
 specifying the cause of the error.
 Otherwise, the contents of the
 <I>fts_errno</I>
@@ -382,7 +390,7 @@ A parent structure for the initial entry point is provided as well,
 however, only the
 <I>fts_level</I>,
 
-<I>fts_number</I>
+<I>fts_number</I>,
 
 and
 <I>fts_pointer</I>
@@ -639,7 +647,7 @@ with respect to, or after, the file referenced by its second argument.
 The
 <I>fts_accpath</I>,
 
-<I>fts_path</I>
+<I>fts_path</I>,
 
 and
 <I>fts_pathlen</I>
@@ -822,7 +830,7 @@ structures returned by
 may be overwritten after a call to
 <B>fts_children</B>(),
 
-<B>fts_close</B>()
+<B>fts_close</B>(),
 
 or
 <B>fts_read</B>()
@@ -830,9 +838,10 @@ or
 on the same file hierarchy stream.
 <P>
 
-<I>Option</I>
+The
+<I>instr</I>
 
-may be set to the following value:
+argument is either zero or the following value:
 
 <DL COMPACT>
 <DT><B>FTS_NAMEONLY</B>
@@ -867,9 +876,11 @@ The
 
 function
 returns 0 on success, and -1 if an error occurs.
-<I>Option</I>
+<P>
+The
+<I>instr</I>
 
-must be set to one of the following values:
+argument is either 0 (meaning &quot;do nothing&quot;) or one of the following values:
 
 <DL COMPACT>
 <DT><B>FTS_AGAIN</B>
@@ -956,7 +967,7 @@ or
 The
 <B>fts_close</B>()
 
-function closes a file hierarchy stream
+function closes the file hierarchy stream referred to by
 <I>ftsp</I>
 
 and restores the current directory to the directory from which
@@ -1040,7 +1051,12 @@ as follows:
 <DT><B>EINVAL</B>
 
 <DD>
-The options were invalid.
+<I>options</I>
+
+or
+<I>instr</I>
+
+was invalid.
 </DL>
 <A NAME="lbAK">&nbsp;</A>
 <H2>VERSIONS</H2>
@@ -1133,6 +1149,6 @@ a program using the LFS APIs (e.g., when compiling with
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:44:50 GMT, April 20, 2020
+Time: 03:45:28 GMT, April 20, 2020
 </BODY>
 </HTML>

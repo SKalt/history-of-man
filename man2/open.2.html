@@ -179,7 +179,9 @@ are all of the remaining flags listed below.
 
 
 The distinction between these two groups of flags is that
-the file status flags can be retrieved and (in some cases)
+the file creation flags affect the semantics of the open operation itself,
+while the file status flags affect the semantics of subsequent I/O operations.
+The file status flags can be retrieved and (in some cases)
 modified; see
 <B><A HREF="../man2/fcntl.2.html">fcntl</A></B>(2)
 
@@ -198,6 +200,9 @@ the file offset is positioned at the end of the file,
 as if with
 <B><A HREF="../man2/lseek.2.html">lseek</A></B>(2).
 
+The modification of the file offset and the write operation
+are performed as a single atomic step.
+<P>
 <B>O_APPEND</B>
 
 may lead to corrupted files on NFS filesystems if more than one process
@@ -651,10 +656,21 @@ process does not have one.
 <DT><B>O_NOFOLLOW</B>
 
 <DD>
-If <I>pathname</I> is a symbolic link, then the open fails.
-This is a FreeBSD extension, which was added to Linux in version 2.1.126.
+If <I>pathname</I> is a symbolic link, then the open fails, with the error
+<B>ELOOP</B>.
+
 Symbolic links in earlier components of the pathname will still be
 followed.
+(Note that the
+<B>ELOOP</B>
+
+error that can occur in this case is indistinguishable from the case where
+an open fails because there are too many symbolic links found
+while resolving components in the prefix part of the pathname.)
+<P>
+This flag is a FreeBSD extension, which was added to Linux in version 2.1.126,
+and has subsequently been standardized in POSIX.1-2008.
+<P>
 See also
 <B>O_PATH</B>
 
@@ -774,7 +790,7 @@ Passing the file descriptor as the
 <I>dirfd</I>
 
 argument of
-<B><A HREF="../man2/openat.2.html">openat</A></B>(2)
+<B>openat</B>()
 
 and the other &quot;*at()&quot; system calls.
 This includes
@@ -2247,6 +2263,6 @@ is ignored).
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:44:44 GMT, April 20, 2020
+Time: 03:45:22 GMT, April 20, 2020
 </BODY>
 </HTML>

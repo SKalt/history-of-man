@@ -309,15 +309,6 @@ In SELinux, a process can set only its own
 <I>/proc/[pid]/attr/fscreate</I>
 
 attribute.
-<DT><I>/proc/[pid]/attr/prev</I> (since Linux 2.6.0)
-
-<DD>
-This file contains the security context of the process before the last
-<B><A HREF="../man2/execve.2.html">execve</A></B>(2);
-
-that is, the previous value of
-<I>/proc/[pid]/attr/current</I>.
-
 <DT><I>/proc/[pid]/attr/keycreate</I> (since Linux 2.6.18)
 
 <DD>
@@ -330,6 +321,15 @@ all subsequently created keys
 will be labeled with this context.
 For further information, see the kernel source file
 <I>Documentation/keys.txt</I>.
+
+<DT><I>/proc/[pid]/attr/prev</I> (since Linux 2.6.0)
+
+<DD>
+This file contains the security context of the process before the last
+<B><A HREF="../man2/execve.2.html">execve</A></B>(2);
+
+that is, the previous value of
+<I>/proc/[pid]/attr/current</I>.
 
 <DT><I>/proc/[pid]/attr/socketcreate</I> (since Linux 2.6.18)
 
@@ -564,7 +564,10 @@ check; see
 <DT><I>/proc/[pid]/environ</I>
 
 <DD>
-This file contains the environment for the process.
+This file contains the initial environment that was set
+when the currently executing program was started via
+<B><A HREF="../man2/execve.2.html">execve</A></B>(2).
+
 The entries are separated by null bytes ('\0'),
 and there may be a null byte at the end.
 Thus, to print out the environment of process 1, you would do:
@@ -574,6 +577,29 @@ Thus, to print out the environment of process 1, you would do:
 $<B> strings /proc/1/environ</B>
 </PRE>
 
+
+<P>
+If, after an
+<B><A HREF="../man2/execve.2.html">execve</A></B>(2),
+
+the process modifies its environment
+(e.g., by calling functions such as
+<B><A HREF="../man3/putenv.3.html">putenv</A></B>(3)
+
+or modifying the
+<B><A HREF="../man7/environ.7.html">environ</A></B>(7)
+
+variable directly),
+this file will
+<I>not</I>
+
+reflect those changes.
+<P>
+Furthermore, a process may change the memory location that this file refers via
+<B><A HREF="../man2/prctl.2.html">prctl</A></B>(2)
+
+operations such as
+<B>PR_SET_MM_ENV_START</B>.
 
 <P>
 Permission to access this file is governed by a ptrace access mode
@@ -663,22 +689,28 @@ in one of the files under
 <P>
 For file descriptors that have no corresponding inode
 (e.g., file descriptors produced by
+<B><A HREF="../man2/bpf.2.html">bpf</A></B>(2),
+
 <B><A HREF="../man2/epoll_create.2.html">epoll_create</A></B>(2),
 
 <B><A HREF="../man2/eventfd.2.html">eventfd</A></B>(2),
 
 <B><A HREF="../man2/inotify_init.2.html">inotify_init</A></B>(2),
 
+<B><A HREF="../man2/perf_event_open.2.html">perf_event_open</A></B>(2),
+
 <B><A HREF="../man2/signalfd.2.html">signalfd</A></B>(2),
 
+<B><A HREF="../man2/timerfd_create.2.html">timerfd_create</A></B>(2),
+
 and
-<B><A HREF="../man2/timerfd.2.html">timerfd</A></B>(2)),
+<B><A HREF="../man2/userfautfd.2.html">userfautfd</A></B>(2)),
 
 the entry will be a symbolic link with contents of the form
 <P>
 <BR>&nbsp;&nbsp;&nbsp;&nbsp;anon_inode:&lt;file-type&gt;
 <P>
-In some cases, the
+In many cases (but not all), the
 <I>file-type</I>
 
 is surrounded by square brackets.
@@ -695,14 +727,15 @@ are not available if the main thread has already terminated
 <B><A HREF="../man3/pthread_exit.3.html">pthread_exit</A></B>(3)).
 
 <P>
-Programs that will take a filename as a command-line argument,
-but will not take input from standard input if no argument is supplied,
-or that write to a file named as a command-line argument,
-but will not send their output to standard output
+Programs that take a filename as a command-line argument,
+but don't take input from standard input if no argument is supplied,
+and programs that write to a file named as a command-line argument,
+but don't send their output to standard output
 if no argument is supplied, can nevertheless be made to use
-standard input or standard out using
-<I>/proc/[pid]/fd</I>.
+standard input or standard output by using
+<I>/proc/[pid]/fd</I>
 
+files as command-line arguments.
 For example, assuming that
 <I>-i</I>
 
@@ -774,9 +807,6 @@ the symbolic links in this directory is governed by a ptrace access mode
 
 check; see
 <B><A HREF="../man2/ptrace.2.html">ptrace</A></B>(2).
-
-
-
 
 <DT><I>/proc/[pid]/fdinfo/</I> (since Linux 2.6.22)
 
@@ -1062,6 +1092,12 @@ The mask of events that are ignored for this mark
 For details on these fields, see
 <B><A HREF="../man2/fanotify_mark.2.html">fanotify_mark</A></B>(2).
 
+<DT><I>/proc/[pid]/gid_map</I> (since Linux 3.5)
+
+<DD>
+See
+<B><A HREF="../man7/user_namespaces.7.html">user_namespaces</A></B>(7).
+
 <DT><I>/proc/[pid]/io</I> (since kernel 2.6.20)
 
 <DD>
@@ -1171,12 +1207,6 @@ Permission to access this file is governed by a ptrace access mode
 check; see
 <B><A HREF="../man2/ptrace.2.html">ptrace</A></B>(2).
 
-<DT><I>/proc/[pid]/gid_map</I> (since Linux 3.5)
-
-<DD>
-See
-<B><A HREF="../man7/user_namespaces.7.html">user_namespaces</A></B>(7).
-
 <DT><I>/proc/[pid]/limits</I> (since Linux 2.6.24)
 
 <DD>
@@ -1189,6 +1219,9 @@ this file is protected to allow reading only by the real UID of the process.
 Since Linux 2.6.36,
 
 this file is readable by all users on the system.
+
+
+
 <DT><I>/proc/[pid]/map_files/</I> (since kernel 3.3)
 
 <DD>
@@ -1361,6 +1394,9 @@ path.
 
 <DD>
 The virtual dynamically linked shared object.
+See
+<B><A HREF="../man7/vdso.7.html">vdso</A></B>(7).
+
 <DT><I>[heap]</I>
 
 <DD>
@@ -1705,7 +1741,7 @@ since it will always report a badness score of 0.
 <P>
 Consequently, it is very simple for user space to define
 the amount of memory to consider for each task.
-Setting a
+Setting an
 <I>oom_score_adj</I>
 
 value of +500, for example,
@@ -1883,8 +1919,6 @@ check; see
 
 
 
-
-
 <DT><I>/proc/[pid]/seccomp</I> (Linux 2.6.12 to 2.6.22)
 
 <DD>
@@ -1936,28 +1970,6 @@ field in
 
 
 
-<DT><I>/proc/[pid]/seccomp</I> (from Linux 2.6.12 to 2.6.22)
-
-<DD>
-Read/set the seccomp mode for the process.
-If this file contains the value zero, seccomp mode is not enabled.
-Writing the value 1 to this file (irreversibly) places the process in
-seccomp mode: the only permitted system calls are
-<B><A HREF="../man2/read.2.html">read</A></B>(2),
-
-<B><A HREF="../man2/write.2.html">write</A></B>(2),
-
-<B><A HREF="../man2/_exit.2.html">_exit</A></B>(2),
-
-and
-<B><A HREF="../man2/sigreturn.2.html">sigreturn</A></B>(2).
-
-This file went away in Linux 2.6.23,
-
-when it was replaced by a
-<B><A HREF="../man2/prctl.2.html">prctl</A></B>(2)-based
-
-mechanism.
 <DT><I>/proc/[pid]/setgroups</I> (since Linux 3.19)
 
 <DD>
@@ -2523,6 +2535,7 @@ CapPrm: 0000000000000000
 CapEff: 0000000000000000
 CapBnd: ffffffffffffffff
 CapAmb: 0000000000000000
+NoNewPrivs:     0
 Seccomp:        0
 Cpus_allowed:   00000001
 Cpus_allowed_list:      0
@@ -2783,6 +2796,17 @@ Capability Bounding set
 Ambient capability set
 (since Linux 4.3, see
 <B><A HREF="../man7/capabilities.7.html">capabilities</A></B>(7)).
+
+<DT>*<DD>
+<I>NoNewPrivs</I>:
+
+
+Value of the
+<I>no_new_privs</I>
+
+bit
+(since Linux 4.10, see
+<B><A HREF="../man2/prctl.2.html">prctl</A></B>(2)).
 
 <DT>*<DD>
 <I>Seccomp</I>:
@@ -3380,6 +3404,18 @@ examine the current state of any kernel data structures.
 <P>
 The total length of the file is the size of physical memory (RAM) plus
 4KB.
+<DT><I>/proc/keys</I> (since Linux 2.6.10)
+
+<DD>
+See
+<B><A HREF="../man7/keyrings.7.html">keyrings</A></B>(7).
+
+<DT><I>/proc/key-users</I> (since Linux 2.6.10)
+
+<DD>
+See
+<B><A HREF="../man7/keyrings.7.html">keyrings</A></B>(7).
+
 <DT><I>/proc/kmsg</I>
 
 <DD>
@@ -3692,6 +3728,9 @@ filesystems.
 
 <DD>
 In-kernel data structures cache.
+(See
+<B><A HREF="../man5/slabinfo.5.html">slabinfo</A></B>(5).)
+
 <DT><I>SReclaimable</I> %lu (since Linux 2.6.19)
 
 <DD>
@@ -4772,6 +4811,13 @@ This file can be used to enable or disable file leases
 on a system-wide basis.
 If this file contains the value 0, leases are disabled.
 A nonzero value enables leases.
+<DT><I>/proc/sys/fs/mount-max</I> (since Linux 4.9)
+
+<DD>
+
+The value in this file specifies the maximum number of mounts that may exist
+in a mount namespace.
+The default value in this file is 100,000.
 <DT><I>/proc/sys/fs/mqueue</I> (since Linux 2.6.6)
 
 <DD>
@@ -5217,6 +5263,14 @@ the PowerPC htab
 
 is pruned
 each time the system hits the idle loop.
+<DT><I>/proc/sys/kernel/keys/*</I>
+
+<DD>
+This directory contains various files that define parameters and limits
+for the key-management facility.
+These files are described in
+<B><A HREF="../man7/keyrings.7.html">keyrings</A></B>(7).
+
 <DT><I>/proc/sys/kernel/kptr_restrict</I> (since Linux 2.6.38)
 
 <DD>
@@ -5832,6 +5886,40 @@ On some systems, it is not present.
 <DD>
 This directory contains files for memory management tuning, buffer and
 cache management.
+<DT><I>/proc/sys/vm/admin_reserve_kbytes</I> (since Linux 3.10)
+
+<DD>
+
+This file defines the amount of free memory (in KiB) on the system that
+that should be reserved for users with the capability
+<B>CAP_SYS_ADMIN</B>.
+
+<P>
+The default value in this file is the minimum of [3% of free pages, 8MiB]
+expressed as KiB.
+The default is intended to provide enough for the superuser
+to log in and kill a process, if necessary,
+under the default overcommit 'guess' mode (i.e., 0 in
+<I>/proc/sys/vm/overcommit_memory</I>).
+
+<P>
+Systems running in &quot;overcommit never&quot; mode (i.e., 2 in
+<I>/proc/sys/vm/overcommit_memory</I>)
+
+should increase the value in this file to account
+for the full virtual memory size of the programs used to recover (e.g.,
+<B><A HREF="../man1/login.1.html">login</A></B>(1)
+
+<B><A HREF="../man1/ssh.1.html">ssh</A></B>(1),
+
+and
+<B><A HREF="../man1/top.1.html">top</A></B>(1))
+
+Otherwise, the superuser may not be able to log in to recover the system.
+For example, on x86_64 a suitable value is 131072 (128MiB reserved).
+<P>
+Changing the value in this file takes effect whenever
+an application requests memory.
 <DT><I>/proc/sys/vm/compact_memory</I> (since Linux 2.6.35)
 
 <DD>
@@ -6078,7 +6166,12 @@ with
 
 are not checked, and the default check is very weak,
 leading to the risk of getting a process &quot;OOM-killed&quot;.
-Under Linux 2.4, any nonzero value implies mode 1.
+<P>
+In mode 1, the kernel pretends there is always enough memory,
+until memory actually runs out.
+One use case for this mode is scientific computing applications
+that employ large sparse arrays.
+In Linux kernel versions before 2.6.0, any nonzero value implies mode 1.
 <P>
 In mode 2 (available since Linux 2.6), the total virtual address space
 that can be allocated
@@ -6136,6 +6229,13 @@ is nonzero, then
 is instead calculated as:
 <P>
 <BR>&nbsp;&nbsp;&nbsp;&nbsp;CommitLimit&nbsp;=&nbsp;overcommit_kbytes&nbsp;+&nbsp;total_swap
+<P>
+See also the description of
+<I>/proc/sys/vm/admiin_reserve_kbytes</I>
+
+and
+<I>/proc/sys/vm/user_reserve_kbytes</I>.
+
 <DT><I>/proc/sys/vm/overcommit_ratio</I> (since Linux 2.6.0)
 
 <DD>
@@ -6190,6 +6290,35 @@ memory pages.
 Higher values increase aggressiveness, lower values
 decrease aggressiveness.
 The default value is 60.
+<DT><I>/proc/sys/vm/user_reserve_kbytes</I> (since Linux 3.10)
+
+<DD>
+
+Specifies an amount of memory (in KiB) to reserve for user processes,
+This is intended to prevent a user from starting a single memory hogging
+process, such that they cannot recover (kill the hog).
+The value in this file has an effect only when
+<I>/proc/sys/vm/overcommit_memory</I>
+
+is set to 2 (&quot;overcommit never&quot; mode).
+In this case, the system reserves an amount of memory that is the minimum
+of [3% of current process size,
+<I>user_reserve_kbytes</I>].
+
+<P>
+The default value in this file is the minimum of [3% of free pages, 128MiB]
+expressed as KiB.
+<P>
+If the value in this file is set to zero,
+then a user will be allowed to allocate all free memory with a single process
+(minus the amount reserved by
+<I>/proc/sys/vm/admin_reserve_kbytes</I>).
+
+Any subsequent attempts to execute a command will result in
+&quot;fork: Cannot allocate memory&quot;.
+<P>
+Changing the value in this file takes effect whenever
+an application requests memory.
 <DT><I>/proc/sysrq-trigger</I> (since Linux 2.4.21)
 
 <DD>
@@ -7310,6 +7439,6 @@ and
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:44:56 GMT, April 20, 2020
+Time: 03:45:34 GMT, April 20, 2020
 </BODY>
 </HTML>

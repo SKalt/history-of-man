@@ -34,7 +34,7 @@ SUCH DAMAGE.
 <HTML><HEAD><TITLE>Man page of SYSCALL</TITLE>
 </HEAD><BODY>
 <H1>SYSCALL</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2016-10-08<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2017-03-13<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -124,13 +124,14 @@ instead of the wrapper provided by glibc,
 the
 <B>readahead</B>()
 
-system call would be invoked as follows on the ARM architecture with the EABI:
+system call would be invoked as follows on the ARM architecture with the EABI
+in little endian mode:
 <P>
 
 <PRE>
 syscall(SYS_readahead, fd, 0,
-        (unsigned int) (offset &gt;&gt; 32),
         (unsigned int) (offset &amp; 0xFFFFFFFF),
+        (unsigned int) (offset &gt;&gt; 32),
         count);
 </PRE>
 
@@ -152,11 +153,17 @@ That means inserting a dummy value into
 <I>r1</I>
 
 (the second argument of 0).
+Care also must be taken so that the split follows endian conventions
+(according to the C ABI for the platform).
 <P>
 Similar issues can occur on MIPS with the O32 ABI,
 on PowerPC with the 32-bit ABI, and on Xtensa.
 
 
+<P>
+
+Note that while the parisc C ABI also uses aligned register pairs,
+it uses a shim layer to hide the issue from userspace.
 <P>
 The affected system calls are
 <B><A HREF="../man2/fadvise64_64.2.html">fadvise64_64</A></B>(2),
@@ -176,6 +183,26 @@ The affected system calls are
 and
 <B><A HREF="../man2/truncate64.2.html">truncate64</A></B>(2).
 
+<P>
+
+
+
+
+
+This does not affect syscalls that manually split and assemble 64-bit values
+such as
+<B><A HREF="../man2/_llseek.2.html">_llseek</A></B>(2),
+
+<B><A HREF="../man2/preadv.2.html">preadv</A></B>(2),
+
+<B><A HREF="../man2/preadv2.2.html">preadv2</A></B>(2),
+
+<B><A HREF="../man2/pwritev.2.html">pwritev</A></B>(2).
+
+and
+<B><A HREF="../man2/pwritev2.2.html">pwritev2</A></B>(2).
+
+Welcome to the wonderful world of historical baggage.
 <A NAME="lbAH">&nbsp;</A>
 <H3>Architecture calling conventions</H3>
 
@@ -384,6 +411,6 @@ main(int argc, char *argv[])
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:44:45 GMT, April 20, 2020
+Time: 03:45:23 GMT, April 20, 2020
 </BODY>
 </HTML>

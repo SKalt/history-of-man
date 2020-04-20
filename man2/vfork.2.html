@@ -26,7 +26,7 @@ the source, must acknowledge the copyright and authors of this work.
 <HTML><HEAD><TITLE>Man page of VFORK</TITLE>
 </HEAD><BODY>
 <H1>VFORK</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2016-03-15<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2017-03-13<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -150,9 +150,13 @@ or it makes a call to
 Until that point, the child shares all memory with its parent,
 including the stack.
 The child must not return from the current function or call
-<B><A HREF="../man3/exit.3.html">exit</A></B>(3),
+<B><A HREF="../man3/exit.3.html">exit</A></B>(3)
 
-but may call
+(which would have the effect of calling exit handlers
+established by the parent process and flushing the parent's
+<B><A HREF="../man3/stdio.3.html">stdio</A></B>(3)
+
+buffers), but may call
 <B><A HREF="../man2/_exit.2.html">_exit</A></B>(2).
 
 <P>
@@ -286,8 +290,76 @@ is designed to be implementable on systems that lack an MMU.)
 
 
 
+
+<DT>*<DD>
+On systems where memory is constrained,
+<B>vfork</B>()
+
+avoids the need to temporarily commit memory (see the description of
+<I>/proc/sys/vm/overcommit_memory</I>
+
+in
+<B><A HREF="../man5/proc.5.html">proc</A></B>(5))
+
+in order to execute a new program.
+(This can be especially beneficial where a large parent process wishes
+to execute a small helper program in a child process.)
+By contrast, using
+<B><A HREF="../man2/fork.2.html">fork</A></B>(2)
+
+in this scenario requires either committing an amount of memory equal
+to the size of the parent process (if strict overcommitting is in force)
+or overcommiting memory with the risk that a process is terminated
+by the out-of-memory (OOM) killer.
+
 </DL>
 <A NAME="lbAJ">&nbsp;</A>
+<H3>Caveats</H3>
+
+The child process should take care not to modify the memory in unintended ways,
+since such changes will be seen by the parent process once
+the child terminates or executes another program.
+In this regard, signal handlers can be especially problematic:
+if a signal handler that is invoked in the child of
+<B>vfork</B>()
+
+changes memory, those changes may result in an inconsistent process state
+from the perspective of the parent process
+(e.g., memory changes would be visible in the parent,
+but changes to the state of open file descriptors would not be visible).
+<P>
+When
+<B>vfork</B>()
+
+is called in a multithreaded process,
+only the calling thread is suspended until the child terminates
+or executes a new program.
+This means that the child is sharing an address space with other running code.
+This can be dangerous if another thread in the parent process
+changes credentials (using
+<B><A HREF="../man2/setuid.2.html">setuid</A></B>(2)
+
+or similar),
+since there are now two processes with different privilege levels
+running in the same address space.
+As an example of the dangers,
+suppose that a multithreaded program running as root creates a child using
+<B>vfork</B>().
+
+After the
+<B>vfork</B>(),
+
+a thread in the parent process drops the process to an unprivileged user
+in order to run some untrusted code
+(e.g., perhaps via plug-in opened with
+<B><A HREF="../man3/dlopen.3.html">dlopen</A></B>(3)).
+
+In this case, attacks are possible where the parent process uses
+<B><A HREF="../man2/mmap.2.html">mmap</A></B>(2)
+
+to map in code that will be executed by the privileged child process.
+
+<A NAME="lbAK">&nbsp;</A>
 <H3>Linux notes</H3>
 
 Fork handlers established using
@@ -316,7 +388,7 @@ with
 specified as:
 <P>
 <BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;CLONE_VM&nbsp;|&nbsp;CLONE_VFORK&nbsp;|&nbsp;SIGCHLD
-<A NAME="lbAK">&nbsp;</A>
+<A NAME="lbAL">&nbsp;</A>
 <H3>History</H3>
 
 The
@@ -339,7 +411,7 @@ until 2.2.0-pre6 or so.
 Since 2.2.0-pre9 (on i386, somewhat later on
 other architectures) it is an independent system call.
 Support was added in glibc 2.0.112.
-<A NAME="lbAL">&nbsp;</A>
+<A NAME="lbAM">&nbsp;</A>
 <H2>BUGS</H2>
 
 <P>
@@ -367,12 +439,14 @@ are allowed and input attempts result in an end-of-file indication.&quot;
 
 
 
-<A NAME="lbAM">&nbsp;</A>
+<A NAME="lbAN">&nbsp;</A>
 <H2>SEE ALSO</H2>
 
 <B><A HREF="../man2/clone.2.html">clone</A></B>(2),
 
 <B><A HREF="../man2/execve.2.html">execve</A></B>(2),
+
+<B><A HREF="../man2/_exit.2.html">_exit</A></B>(2),
 
 <B><A HREF="../man2/fork.2.html">fork</A></B>(2),
 
@@ -396,16 +470,17 @@ are allowed and input attempts result in an end-of-file indication.&quot;
 <DT><A HREF="#lbAH">CONFORMING TO</A><DD>
 <DT><A HREF="#lbAI">NOTES</A><DD>
 <DL>
-<DT><A HREF="#lbAJ">Linux notes</A><DD>
-<DT><A HREF="#lbAK">History</A><DD>
+<DT><A HREF="#lbAJ">Caveats</A><DD>
+<DT><A HREF="#lbAK">Linux notes</A><DD>
+<DT><A HREF="#lbAL">History</A><DD>
 </DL>
-<DT><A HREF="#lbAL">BUGS</A><DD>
-<DT><A HREF="#lbAM">SEE ALSO</A><DD>
+<DT><A HREF="#lbAM">BUGS</A><DD>
+<DT><A HREF="#lbAN">SEE ALSO</A><DD>
 </DL>
 <HR>
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:44:46 GMT, April 20, 2020
+Time: 03:45:24 GMT, April 20, 2020
 </BODY>
 </HTML>
