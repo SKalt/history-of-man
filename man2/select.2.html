@@ -27,7 +27,7 @@ select, pselect, FD_CLR, FD_ISSET, FD_SET, FD_ZERO - synchronous I/O multiplexin
 <BR>
 <B>#include &lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;</B>
 
-<B>int select(int </B><I>n</I><B>, fd_set *</B><I>readfds</I><B>, fd_set *</B><I>writefds</I><B>, 
+<B>int select(int </B><I>nfds</I><B>, fd_set *</B><I>readfds</I><B>, fd_set *</B><I>writefds</I><B>, 
            fd_set *</B><I>exceptfds</I><B>, struct timeval *</B><I>timeout</I><B>);
 
 void FD_CLR(int </B><I>fd</I><B>, fd_set *</B><I>set</I><B>);</B>
@@ -41,9 +41,9 @@ void FD_CLR(int </B><I>fd</I><B>, fd_set *</B><I>set</I><B>);</B>
 <B>#define _XOPEN_SOURCE 600</B>
 <B>#include &lt;<A HREF="file:///usr/include/sys/select.h">sys/select.h</A>&gt;</B>
 
-<B>int pselect(int </B><I>n</I><B>, fd_set *</B><I>readfds</I><B>, fd_set *</B><I>writefds</I><B>, 
-           fd_set *</B><I>exceptfds</I><B>, const struct timespec *</B><I>timeout</I><B>, 
-           const sigset_t *</B><I>sigmask</I><B>);
+<B>int pselect(int </B><I>nfds</I><B>, fd_set *</B><I>readfds</I><B>, fd_set *</B><I>writefds</I><B>, 
+            fd_set *</B><I>exceptfds</I><B>, const struct timespec *</B><I>timeout</I><B>, 
+            const sigset_t *</B><I>sigmask</I><B>);
 </B></PRE>
 
 <A NAME="lbAD">&nbsp;</A>
@@ -150,7 +150,7 @@ this is useful after
 returns.
 <P>
 
-<I>n</I>
+<I>nfds</I>
 
 is the highest-numbered file descriptor in any of the three sets, plus 1.
 <P>
@@ -196,7 +196,7 @@ argument, the following
 call:
 <PRE>
 
-    ready = pselect(n, &amp;readfds, &amp;writefds, &amp;exceptfds, 
+    ready = pselect(nfds, &amp;readfds, &amp;writefds, &amp;exceptfds, 
                     timeout, &amp;sigmask);
 
 </PRE>
@@ -345,14 +345,16 @@ rely on their contents after an error.
 
 <DD>
 An invalid file descriptor was given in one of the sets.
+(Perhaps a file descriptor that was already closed, 
+or one on which an error has occurred.)
 <DT><B>EINTR</B>
 
 <DD>
-A non blocked signal was caught.
+A signal was caught.
 <DT><B>EINVAL</B>
 
 <DD>
-<I>n</I>
+<I>nfds</I>
 
 is negative or the value contained within
 <I>timeout</I>
@@ -361,9 +363,7 @@ is invalid.
 <DT><B>ENOMEM</B>
 
 <DD>
-<B>select</B>()
-
-was unable to allocate memory for internal tables.
+unable to allocate memory for internal tables.
 </DL>
 <A NAME="lbAH">&nbsp;</A>
 <H2>EXAMPLE</H2>
@@ -383,6 +383,7 @@ main(void) {
     /* Watch stdin (fd 0) to see when it has input. */
     FD_ZERO(&amp;rfds);
     FD_SET(0, &amp;rfds);
+
     /* Wait up to five seconds. */
     tv.tv_sec = 5;
     tv.tv_usec = 0;
@@ -464,7 +465,7 @@ struct timeval {
 where the structure is defined in
 <I>&lt;<A HREF="file:///usr/include/sys/select.h">sys/select.h</A>&gt;</I>
 
-and the data types i
+and the data types 
 <I>time_t </I>
 
 and 
@@ -613,7 +614,9 @@ For vaguely related stuff, see
 
 <B><A HREF="../man2/write.2.html">write</A></B>(2),
 
-<B><A HREF="../man7/ftm.7.html">ftm</A></B>(7)
+<B><A HREF="../man7/epoll.7.html">epoll</A></B>(7),
+
+<B><A HREF="../man7/feature_test_macros.7.html">feature_test_macros</A></B>(7)
 
 <P>
 
@@ -640,6 +643,6 @@ For vaguely related stuff, see
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 02:27:15 GMT, April 20, 2020
+Time: 02:27:48 GMT, April 20, 2020
 </BODY>
 </HTML>

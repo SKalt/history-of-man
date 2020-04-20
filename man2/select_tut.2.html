@@ -4,7 +4,7 @@
 <HTML><HEAD><TITLE>Man page of SELECT_TUT</TITLE>
 </HEAD><BODY>
 <H1>SELECT_TUT</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: October 21, 2001<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2006-05-13<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -58,8 +58,10 @@ select, pselect, FD_CLR, FD_ISSET, FD_SET, FD_ZERO - synchronous I/O multiplexin
 <H2>DESCRIPTION</H2>
 
 <P>
-<B>select</B>() (or <B>pselect</B>()) is the pivot function of most C programs that
-handle more than one simultaneous file descriptor (or socket handle) in an efficient
+<B>select</B>() (or <B>pselect</B>()) is the pivot function of 
+most C programs that
+handle more than one simultaneous file descriptor (or socket handle) 
+in an efficient
 manner. Its principal arguments are three arrays of file descriptors:
 <I>readfds</I>, <I>writefds</I>, and <I>exceptfds</I>. The way that
 <B>select</B>() is usually used is to block while waiting for a &quot;change of
@@ -83,9 +85,7 @@ you are interested in can be added one by one with <B>FD_SET</B>().
 described below; after calling <B>select</B>() you can test if your file
 descriptor is still present in the set with the <B>FD_ISSET</B>() macro.
 <B>FD_ISSET</B>() returns non-zero if the descriptor is present and zero if
-it is not. <B>FD_CLR</B>() removes a file descriptor from the set although
-I can't see the use for it in a clean program.
-<P>
+it is not. <B>FD_CLR</B>() removes a file descriptor from the set.
 <A NAME="lbAE">&nbsp;</A>
 <H2>ARGUMENTS</H2>
 
@@ -98,7 +98,8 @@ are immediately available for reading with a <B>recv</B>() (for sockets) or
 <B>read</B>() (for pipes, files, and sockets) call.
 <DT><I>writefds</I><DD>
 This set is watched to see if there is space to write data to any of
-its file descriptor. After <B>select</B>() has returned, <I>writefds</I> will be
+its file descriptors. 
+After <B>select</B>() has returned, <I>writefds</I> will be
 cleared of all file descriptors except for those file descriptors that
 are immediately available for writing with a <B>send</B>() (for sockets) or
 <B>write</B>() (for pipes, files, and sockets) call.
@@ -141,7 +142,7 @@ struct timeval {
 
 <DT><I>ntimeout</I><DD>
 <DL COMPACT><DT><DD>
-This argument has the same meaning as <I>utimeout</I> but <B>struct timespec</B>
+This argument has the same meaning as <I>utimeout</I> but <I>struct timespec</I>
 has nanosecond precision as follows,
 <P>
 
@@ -159,7 +160,6 @@ This argument holds a set of signals to allow while performing a <B>pselect</B>(
 call (see <B><A HREF="../man3/sigaddset.3.html">sigaddset</A></B>(3) and <B><A HREF="../man2/sigprocmask.2.html">sigprocmask</A></B>(2)). It can be passed
 as NULL, in which case it does not modify the set of allowed signals on
 entry and exit to the function. It will then behave just like <B>select</B>().
-<P>
 </DL>
 <A NAME="lbAF">&nbsp;</A>
 <H2>COMBINING SIGNAL AND DATA EVENTS</H2>
@@ -214,90 +214,32 @@ int main (int argc, char **argv) {
 }
 </PRE>
 
-<P>
-
-Note that the above <B>pselect</B>() call can be replaced with:
-<P>
-
-<PRE>
-        sigprocmask (SIG_BLOCK, &amp;orig_sigmask, 0);
-        r = select (nfds, &amp;rd, &amp;wr, &amp;er, 0);
-        sigprocmask (SIG_BLOCK, &amp;sigmask, 0);
-</PRE>
-
-<P>
-
-but then there is still the possibility that a signal
-could arrive after the first <B>sigprocmask</B>() and before
-the <B>select</B>(). If you do do this, it is prudent to
-at least put a finite timeout so that the process does
-not block. At present glibc probably works this way.
-The Linux kernel does not have a native <B>pselect</B>()
-system call as yet so this is all probably much of a
-moot point.
-<P>
-
-<P>
-<P>
 <A NAME="lbAG">&nbsp;</A>
 <H2>PRACTICAL</H2>
 
-<P>
 So what is the point of <B>select</B>()? Can't I just read and write to my
-descriptors whenever I want? The point of select is that it watches
+descriptors whenever I want? 
+The point of <B>select</B>() is that it watches
 multiple descriptors at the same time and properly puts the process to
 sleep if there is no activity. It does this while enabling you to handle
 multiple simultaneous pipes and sockets. Unix programmers often find
-themselves in a position where they have to handle IO from more than one
+themselves in a position where they have to handle I/O from more than one
 file descriptor where the data flow may be intermittent. If you were to
 merely create a sequence of <B>read</B>() and <B>write</B>() calls, you would
 find that one of your calls may block waiting for data from/to a file
 descriptor, while another file descriptor is unused though available
 for data. <B>select</B>() efficiently copes with this situation.
 <P>
-A classic example of <B>select</B>() comes from the <B>select</B>()
-man page:
-<P>
-<PRE>
-#include &lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;
-#include &lt;<A HREF="file:///usr/include/sys/time.h">sys/time.h</A>&gt;
-#include &lt;<A HREF="file:///usr/include/sys/types.h">sys/types.h</A>&gt;
-#include &lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;
+A simple example of the use of 
+<B>select</B>()
 
-int
-main(void) {
-    fd_set rfds;
-    struct timeval tv;
-    int retval;
+can be found in the
+<B><A HREF="../man2/select.2.html">select</A></B>(2)
 
-    /* Watch stdin (fd 0) to see when it has input. */
-    FD_ZERO(&amp;rfds);
-    FD_SET(0, &amp;rfds);
-    /* Wait up to five seconds. */
-    tv.tv_sec = 5;
-    tv.tv_usec = 0;
-
-    retval = select(1, &amp;rfds, NULL, NULL, &amp;tv);
-    /* Don't rely on the value of tv now! */
-
-    if (retval == -1)
-        perror(&quot;select()&quot;);
-    else if (retval)
-        printf(&quot;Data is available now.\n&quot;);
-        /* FD_ISSET(0, &amp;rfds) will be true. */
-    else
-        printf(&quot;No data within five seconds.\n&quot;);
-
-    exit(0);
-}
-</PRE>
-
-<P>
-<P>
+manual page.
 <A NAME="lbAH">&nbsp;</A>
 <H2>PORT FORWARDING EXAMPLE</H2>
 
-<P>
 Here is an example that better demonstrates the true utility of
 <B>select</B>().
 The listing below is a TCP forwarding program that forwards
@@ -587,7 +529,7 @@ including OOB signal data transmitted by <B>telnet</B> servers. It
 handles the tricky problem of having data flow in both directions
 simultaneously. You might think it more efficient to use a <B>fork</B>()
 call and devote a thread to each stream. This becomes more tricky than
-you might suspect. Another idea is to set non-blocking IO using an
+you might suspect. Another idea is to set non-blocking I/O using an
 <B>ioctl</B>() call. This also has its problems because you end up having
 to have inefficient timeouts.
 <P>
@@ -595,11 +537,9 @@ The program does not handle more than one simultaneous connection at a
 time, although it could easily be extended to do this with a linked list
 of buffers --- one for each connection. At the moment, new
 connections cause the current connection to be dropped.
-<P>
 <A NAME="lbAI">&nbsp;</A>
 <H2>SELECT LAW</H2>
 
-<P>
 Many people who try to use <B>select</B>() come across behavior that is
 difficult to understand and produces non-portable or borderline
 results. For instance, the above program is carefully written not to
@@ -608,12 +548,11 @@ non-blocking mode at all (see <B><A HREF="../man2/ioctl.2.html">ioctl</A></B>(2)
 subtle errors that will remove the advantage of using <B>select</B>(),
 hence I will present a list of essentials to watch for when using the
 <B>select</B>() call.
-<P>
 <DL COMPACT>
 <DT><B>1.</B><DD>
-You should always try use <B>select</B>() without a timeout. Your program
+You should always try to use <B>select</B>() without a timeout. Your program
 should have nothing to do if there is no data available. Code that
-depends on timeouts is not usually portable and difficult to debug.
+depends on timeouts is not usually portable and is difficult to debug.
 <DT><B>2.</B><DD>
 The value <I>nfds</I> must be properly calculated for efficiency as
 explained above.
@@ -623,9 +562,11 @@ to check its result after the <B>select</B>() call, and respond
 appropriately. See next rule.
 <DT><B>4.</B><DD>
 After <B>select</B>() returns, all file descriptors in all sets
-<I>must</I> be checked. Any file descriptor that is available
-for writing <I>must</I> be written to, and any file descriptor
-available for reading <I>must</I> be read, etc.
+should be checked to see if they are ready. 
+
+
+
+
 <DT><B>5.</B><DD>
 The functions <B>read</B>(), <B>recv</B>(), <B>write</B>(), and
 <B>send</B>() do <I>not</I> necessarily read/write the full amount of data
@@ -638,29 +579,35 @@ Never read/write only in single bytes at a time unless your are really
 sure that you have a small amount of data to process. It is extremely
 inefficient not to read/write as much data as you can buffer each time.
 The buffers in the example above are 1024 bytes although they could
-easily be made as large as the maximum possible packet size on your
-local network.
+easily be made larger.
 <DT><B>7.</B><DD>
 The functions <B>read</B>(), <B>recv</B>(), <B>write</B>(), and
-<B>send</B>() as well as the <B>select</B>() call can return -1 with an
-errno of <B>EINTR</B> or <B>EAGAIN</B> (<B>EWOULDBLOCK</B>) which are not
-errors. These results must be properly managed (not done properly
+<B>send</B>() as well as the <B>select</B>() call can return -1 with
+<I>errno </I>
+
+set to <B>EINTR</B>, 
+or with 
+<I>errno</I>
+
+set to <B>EAGAIN</B> (<B>EWOULDBLOCK</B>).
+These results must be properly managed (not done properly
 above). If your program is not going to receive any signals then
 it is unlikely you will get <B>EINTR</B>. If your program does not
-set non-blocking IO, you will not get <B>EAGAIN</B>. Nonetheless
+set non-blocking I/O, you will not get <B>EAGAIN</B>. Nonetheless
 you should still cope with these errors for completeness.
 <DT><B>8.</B><DD>
 Never call <B>read</B>(), <B>recv</B>(), <B>write</B>(), or <B>send</B>()
 with a buffer length of zero.
 <DT><B>9.</B><DD>
-Except as indicated in <B>7.</B>, the functions <B>read</B>(),
-<B>recv</B>(), <B>write</B>(), and <B>send</B>() never have a return value
-less than 1 except if an error has occurred. For instance, a
-<B>read</B>() on a pipe where the other end has died returns zero (so
-does an end-of-file error), <I>but</I> only returns zero
-once (a followup read or write will return -1). Should
-any of these functions return 0 or -1, you should <I>not</I>
-pass that descriptor to select ever again. In the above example,
+If the functions <B>read</B>(),
+<B>recv</B>(), <B>write</B>(), and <B>send</B>() fail
+with errors other than those listed in <B>7.</B>, 
+or one of the input functions returns 0, indicating end of file, 
+then you should <I>not</I> pass that descriptor to
+<B>select</B>()
+
+again. 
+In the above example,
 I close the descriptor immediately, and then set it to -1
 to prevent it being included in a set.
 <DT><B>10.</B><DD>
@@ -673,12 +620,10 @@ properly. It also does not cope with <B>select</B>() calls when no file
 descriptors are set at all. Having no file descriptors set is a useful
 way to sleep the process with sub-second precision by using the timeout.
 (See further on.)
-<P>
 </DL>
 <A NAME="lbAJ">&nbsp;</A>
 <H2>USLEEP EMULATION</H2>
 
-<P>
 On systems that do not have a <B>usleep</B>() function, you can call
 <B>select</B>() with a finite timeout and no file descriptors as
 follows:
@@ -694,77 +639,57 @@ follows:
 <P>
 
 This is only guaranteed to work on Unix systems, however.
-<P>
 <A NAME="lbAK">&nbsp;</A>
 <H2>RETURN VALUE</H2>
 
-<P>
 On success, <B>select</B>() returns the total number of file descriptors
 still present in the file descriptor sets.
 <P>
-If <B>select</B>() timed out, then the file descriptors sets should be all
-empty (but may not be on some systems). However the return value will
-definitely be zero.
+If <B>select</B>() timed out, then 
+the return value will be zero.
+The file descriptors set should be all
+empty (but may not be on some systems). 
 <P>
 A return value of -1 indicates an error, with <I>errno</I> being
 set appropriately. In the case of an error, the returned sets and
 the timeout struct contents are undefined and should not be used.
 <B>pselect</B>() however never modifies <I>ntimeout</I>.
-<P>
 <A NAME="lbAL">&nbsp;</A>
-<H2>ERRORS</H2>
-
-<DL COMPACT>
-<DT><B>EBADF</B><DD>
-A set contained an invalid file descriptor. This error often occurs when
-you add a file descriptor to a set that you have already issued a
-<B>close</B>() on, or when that file descriptor has experienced some kind
-of error. Hence you should cease adding to sets any file descriptor that
-returns an error on reading or writing.
-<DT><B>EINTR</B><DD>
-An interrupting signal was caught like <B>SIGINT</B> or <B>SIGCHLD</B> etc.
-In this case you should rebuild your file descriptor sets and retry.
-<DT><B>EINVAL</B><DD>
-Occurs if <I>nfds</I> is negative or an invalid value is specified
-in <I>utimeout</I> or <I>ntimeout</I>.
-<DT><B>ENOMEM</B><DD>
-Internal memory allocation failure.
-<P>
-</DL>
-<A NAME="lbAM">&nbsp;</A>
 <H2>NOTES</H2>
 
 Generally speaking, all operating systems that support sockets, also
-support <B>select</B>(). Some people consider <B>select</B>() to be an
-esoteric and rarely used function. Indeed, many types of programs become
-extremely complicated without it. <B>select</B>() can be used to solve
+support <B>select</B>(). 
+Many types of programs become
+extremely complicated without the use of
+<B>select</B>().
+
+<B>select</B>() can be used to solve
 many problems in a portable and efficient way that naive programmers try
-to solve with threads, forking, IPCs, signals, memory sharing and other
-dirty methods. <B>pselect</B>() is a newer function that is less commonly
-used.
+to solve in a more complicated manner using 
+threads, forking, IPCs, signals, memory sharing, and so on.
 <P>
 
 The
 <B><A HREF="../man2/poll.2.html">poll</A></B>(2)
 
 system call has the same functionality as <B>select</B>(),
-but with less subtle behavior. It is less portable than <B>select</B>().
-<P>
-<A NAME="lbAN">&nbsp;</A>
-<H2>CONFORMING TO</H2>
-
-4.4BSD (the <B>select</B>() function first appeared in 4.2BSD).  Generally
-portable to/from non-BSD systems supporting clones of the BSD socket
-layer (including System V variants). However, note that the System V
-variant typically sets the timeout variable before exit, but the BSD
-variant does not.
+and is somewhat more efficient when monitoring sparse 
+file descriptor sets.
+It is nowadays widely available, 
+but historically was less portable than <B>select</B>().
 <P>
 
-The <B>pselect</B>() function is defined in IEEE Std 1003.1g-2000 (POSIX.1g).
-It is found in glibc2.1 and later. Glibc2.0 has a function with this name,
-that however does not take a <I>sigmask</I> parameter.
-<P>
-<A NAME="lbAO">&nbsp;</A>
+The Linux-specific 
+<B><A HREF="../man7/epoll.7.html">epoll</A></B>(7)
+
+API provides an interface that that is more efficient than
+<B><A HREF="../man2/select.2.html">select</A></B>(2)
+
+and
+<B><A HREF="../man2/poll.2.html">poll</A></B>(2)
+
+when monitoring large numbers of file descriptors.
+<A NAME="lbAM">&nbsp;</A>
 <H2>SEE ALSO</H2>
 
 <B><A HREF="../man2/accept.2.html">accept</A></B>(2),
@@ -795,13 +720,12 @@ that however does not take a <I>sigmask</I> parameter.
 
 <B><A HREF="../man3/sigfillset.3.html">sigfillset</A></B>(3),
 
-<B><A HREF="../man3/sigismember.3.html">sigismember</A></B>(3)
+<B><A HREF="../man3/sigismember.3.html">sigismember</A></B>(3),
 
-<P>
-<A NAME="lbAP">&nbsp;</A>
-<H2>AUTHORS</H2>
+<B><A HREF="../man7/epoll.7.html">epoll</A></B>(7)
 
-This man page was written by Paul Sheer.
+
+
 <P>
 
 <HR>
@@ -817,16 +741,13 @@ This man page was written by Paul Sheer.
 <DT><A HREF="#lbAI">SELECT LAW</A><DD>
 <DT><A HREF="#lbAJ">USLEEP EMULATION</A><DD>
 <DT><A HREF="#lbAK">RETURN VALUE</A><DD>
-<DT><A HREF="#lbAL">ERRORS</A><DD>
-<DT><A HREF="#lbAM">NOTES</A><DD>
-<DT><A HREF="#lbAN">CONFORMING TO</A><DD>
-<DT><A HREF="#lbAO">SEE ALSO</A><DD>
-<DT><A HREF="#lbAP">AUTHORS</A><DD>
+<DT><A HREF="#lbAL">NOTES</A><DD>
+<DT><A HREF="#lbAM">SEE ALSO</A><DD>
 </DL>
 <HR>
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 02:27:15 GMT, April 20, 2020
+Time: 02:27:48 GMT, April 20, 2020
 </BODY>
 </HTML>
