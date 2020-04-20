@@ -4,7 +4,7 @@
 <HTML><HEAD><TITLE>Man page of EPOLL</TITLE>
 </HEAD><BODY>
 <H1>EPOLL</H1>
-Section: Linux Programmer's Manual (7)<BR>Updated: 2008-10-10<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (7)<BR>Updated: 2008-11-04<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -265,28 +265,48 @@ from where it stopped before.
 <P>
 
 <PRE>
-struct epoll_event ev, *events;
+#define MAX_EVENTS 10
+struct epoll_event ev, events[MAX_EVENTS];
+int listen_sock, conn_sock, nfds, epollfd;
+
+/* Set up listening socket, 'listen_sock' (socket(),
+   bind(), listen()) */
+
+epollfd = epoll_create(10);
+if (epollfd == -1) {
+    perror(&quot;epoll_create&quot;);
+    exit(EXIT_FAILURE);
+}
+
+ev.events = EPOLL_IN;
+ev.data.fd = listen_sock;
+if (epoll_ctl(epollfd, EPOLL_CTL_ADD, listen_sock, &amp;ev) == -1) {
+    perror(&quot;epoll_ctl: listen_sock&quot;);
+    exit(EXIT_FAILURE);
+}
 
 for (;;) {
-    nfds = epoll_wait(kdpfd, events, maxevents, -1);
+    nfds = epoll_wait(epollfd, events, MAX_EVENTS, -1);
+    if (nfds == -1) {
+        perror(&quot;epoll_pwait&quot;);
+        exit(EXIT_FAILURE);
+    }
 
     for (n = 0; n &lt; nfds; ++n) {
-        if (events[n].data.fd == listener) {
-            client = accept(listener, (struct sockaddr *) &amp;local,
-                            &amp;addrlen);
-            if (client &lt; 0){
+        if (events[n].data.fd == listen_sock) {
+            conn_sock = accept(listen_sock,
+                            (struct sockaddr *) &amp;local, &amp;addrlen);
+            if (conn_sock == -1) {
                 perror(&quot;accept&quot;);
-                continue;
+                exit(EXIT_FAILURE);
             }
-            setnonblocking(client);
+            setnonblocking(conn_sock);
             ev.events = EPOLLIN | EPOLLET;
-            ev.data.fd = client;
-            if (epoll_ctl(kdpfd, EPOLL_CTL_ADD, client, &amp;ev)
-                    == -1) {
-                fprintf(stderr,
-                        &quot;epoll set insertion error: fd=%d\n&quot;,
-                        client);
-                return -1;
+            ev.data.fd = conn_sock;
+            if (epoll_ctl(epollfd, EPOLL_CTL_ADD, conn_sock,
+                        &amp;ev) == -1) {
+                perror(&quot;epoll_ctl: conn_sock);
+                exit(EXIT_FAILURE);
             }
         } else {
             do_use_fd(events[n].data.fd);
@@ -693,6 +713,6 @@ and Solaris has
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 02:59:39 GMT, April 20, 2020
+Time: 03:00:12 GMT, April 20, 2020
 </BODY>
 </HTML>
