@@ -4,7 +4,7 @@
 <HTML><HEAD><TITLE>Man page of LD.SO</TITLE>
 </HEAD><BODY>
 <H1>LD.SO</H1>
-Section: Linux Programmer's Manual (8)<BR>Updated: 2008-10-27<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (8)<BR>Updated: 2009-01-12<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -251,12 +251,33 @@ for a.out binaries only.
 Old versions of ld-linux.so.1 also supported
 <B>LD_ELF_PRELOAD</B>.
 
+<DT><B>LD_AUDIT</B>
 
+<DD>
+(glibc since 2.4)
+A colon-separated list of user-specified, ELF shared objects
+to be loaded before all others in a separate linker namespace
+(i.e., one that does not intrude upon the normal symbol bindings that
+would occur in the process).
+These libraries can be used to audit the operation of the dynamic linker.
+<B>LD_AUDIT</B>
 
+is ignored for set-user-ID/set-group-ID binaries.
+<P>
+The dynamic linker will notify the audit
+libraries at so-called auditing checkpoints---for example,
+loading a new library, resolving a symbol,
+or calling a symbol from another shared object---by
+calling an appropriate function within the audit library.
+For details, see
+<B><A HREF="../man7/rtld-audit.7.html">rtld-audit</A></B>(7).
 
+The auditing interface is largely compatible with that provided on Solaris,
+as described in its
+<I>Linker and Libraries Guide</I>,
 
-
-
+in the chapter
+<I>Runtime Linker Auditing Interface</I>.
 
 <DT><B>LD_BIND_NOT</B>
 
@@ -329,18 +350,20 @@ For security reasons, since glibc 2.4,
 is ignored for set-user-ID/set-group-ID binaries.
 
 
+<DT><B>LD_POINTER_GUARD</B>
 
+<DD>
+(glibc since 2.4)
+Set to 0 to disable pointer guarding.
+Any other value enables pointer guarding, which is also the default.
+Pointer guarding is a security mechanism whereby some pointers to code
+stored in writable program memory (return addresses saved by
+<B><A HREF="../man3/setjmp.3.html">setjmp</A></B>(3)
 
-
-
-
-
-
-
-
-
-
-
+or function pointers used by various glibc internals) are mangled
+semi-randomly to make it more difficult for an attacker to hijack
+the pointers for use in the event of a buffer overrun or
+stack-smashing attack.
 <DT><B>LD_PROFILE</B>
 
 <DD>
@@ -477,6 +500,8 @@ ELF functionality is available since Linux 1.1.52 and libc5.
 
 <B><A HREF="../man1/ldd.1.html">ldd</A></B>(1),
 
+<B><A HREF="../man7/rtld-audit.7.html">rtld-audit</A></B>(7),
+
 <B><A HREF="../man8/ldconfig.8.html">ldconfig</A></B>(8)
 
 
@@ -506,6 +531,6 @@ ELF functionality is available since Linux 1.1.52 and libc5.
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:01:20 GMT, April 20, 2020
+Time: 03:01:54 GMT, April 20, 2020
 </BODY>
 </HTML>

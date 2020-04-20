@@ -5,7 +5,7 @@ Copyright (c) 1999 Andries Brouwer (aeb@cwi.nl)
 <HTML><HEAD><TITLE>Man page of PRINTF</TITLE>
 </HEAD><BODY>
 <H1>PRINTF</H1>
-Section: Linux Programmer's Manual (3)<BR>Updated: 2008-07-12<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2008-12-19<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -169,6 +169,21 @@ the variable-length argument facilities of
 <B><A HREF="../man3/stdarg.3.html">stdarg</A></B>(3))
 
 are converted for output.
+<P>
+C99 and POSIX.1-2001 specify that the results are undefined if a call to
+<B>sprintf</B>(),
+
+<B>snprintf</B>(),
+
+<B>vsprintf</B>(),
+
+or
+<B>vsnprintf</B>()
+
+would cause to copying to take place between objects that overlap
+(e.g., if the target string array and one of the supplied input arguments
+refer to the same buffer).
+See NOTES.
 <A NAME="lbAE">&nbsp;</A>
 <H3>Return value</H3>
 
@@ -1173,6 +1188,33 @@ and the flag character <B>I</B>.
 <A NAME="lbAM">&nbsp;</A>
 <H2>NOTES</H2>
 
+Some programs imprudently rely on code such as the following
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;sprintf(buf,&nbsp;&quot;%s&nbsp;some&nbsp;further&nbsp;text&quot;,&nbsp;buf);
+<P>
+to append text to
+<I>buf</I>.
+
+However, the standards explicitly note that the results are undefined
+if source and destination buffers overlap when calling
+<B>sprintf</B>(),
+
+<B>snprintf</B>(),
+
+<B>vsprintf</B>(),
+
+and
+<B>vsnprintf</B>().
+
+
+Depending on the version of
+<B><A HREF="../man1/gcc.1.html">gcc</A></B>(1)
+
+used, and the compiler options employed, calls such as the above will
+<B>not</B>
+
+produce the expected results.
+<P>
 The glibc implementation of the functions
 <B>snprintf</B>()
 
@@ -1431,6 +1473,6 @@ make_message(const char *fmt, ...)
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:01:14 GMT, April 20, 2020
+Time: 03:01:49 GMT, April 20, 2020
 </BODY>
 </HTML>
