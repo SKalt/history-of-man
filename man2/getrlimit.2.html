@@ -272,6 +272,7 @@ and
 
 a process can lock bytes up to this limit in each of these
 two categories.
+<P>
 In Linux kernels before 2.6.9, this limit controlled the amount of
 memory that could be locked by a privileged process.
 Since Linux 2.6.9, no limits are placed on the amount of memory
@@ -290,6 +291,7 @@ against this limit according to the formula:
 <PRE>
 
     Since Linux 3.5:
+
         bytes = attr.mq_maxmsg * sizeof(struct msg_msg) +
                 min(attr.mq_maxmsg, MQ_PRIO_MAX) *
                       sizeof(struct posix_msg_tree_node)+
@@ -298,6 +300,7 @@ against this limit according to the formula:
                                 /* For message data */
 
     Linux 3.4 and earlier:
+
         bytes = attr.mq_maxmsg * sizeof(struct msg_msg *) +
                                 /* For overhead */
                 attr.mq_maxmsg * attr.mq_msgsize;
@@ -339,12 +342,19 @@ or
 The actual ceiling for the nice value is calculated as
 <I>20&nbsp;-&nbsp;rlim_cur</I>.
 
-(This strangeness occurs because negative numbers cannot be specified
+The useful range for this limit is thus from 1
+(corresponding to a nice value of 19) to 40
+(corresponding to a nice value of -20).
+This unusual choice of range is was necessary
+because negative numbers cannot be specified
 as resource limit values, since they typically have special meanings.
 For example,
 <B>RLIM_INFINITY</B>
 
-typically is the same as -1.)
+typically is the same as -1.
+For more detail on the nice value, see
+<B><A HREF="../man7/sched.7.html">sched</A></B>(7).
+
 <DT><B>RLIMIT_NOFILE</B>
 
 <DD>
@@ -408,6 +418,10 @@ this process using
 and
 <B><A HREF="../man2/sched_setparam.2.html">sched_setparam</A></B>(2).
 
+<P>
+For further details on real-time scheduling policies, see
+<B><A HREF="../man7/sched.7.html">sched</A></B>(7)
+
 <DT><B>RLIMIT_RTTIME</B> (since Linux 2.6.25)
 
 <DD>
@@ -439,6 +453,10 @@ signal.
 <P>
 The intended use of this limit is to stop a runaway
 real-time process from locking up the system.
+<P>
+For further details on real-time scheduling policies, see
+<B><A HREF="../man7/sched.7.html">sched</A></B>(7)
+
 <DT><B>RLIMIT_SIGPENDING</B> (since Linux 2.6.8)
 
 <DD>
@@ -1034,6 +1052,8 @@ main(int argc, char *argv[])
 
 <B><A HREF="../man7/capabilities.7.html">capabilities</A></B>(7),
 
+<B><A HREF="../man7/credentials.7.html">credentials</A></B>(7),
+
 <B><A HREF="../man7/cgroups.7.html">cgroups</A></B>(7),
 
 <B><A HREF="../man7/signal.7.html">signal</A></B>(7)
@@ -1069,6 +1089,6 @@ main(int argc, char *argv[])
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:44:11 GMT, April 20, 2020
+Time: 03:44:43 GMT, April 20, 2020
 </BODY>
 </HTML>

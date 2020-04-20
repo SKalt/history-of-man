@@ -26,7 +26,7 @@
 <HTML><HEAD><TITLE>Man page of ELF</TITLE>
 </HEAD><BODY>
 <H1>ELF</H1>
-Section: Linux Programmer's Manual (5)<BR>Updated: 2016-07-17<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (5)<BR>Updated: 2016-12-12<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -88,7 +88,9 @@ the file.
 This header file describes the above mentioned headers as C structures
 and also includes structures for dynamic sections, relocation sections and
 symbol tables.
-<P>
+
+<A NAME="lbAE">&nbsp;</A>
+<H3>Basic types</H3>
 
 The following types are used for N-bit architectures (N=32,64,
 <I>ElfN</I>
@@ -125,7 +127,7 @@ ElfN_Xword      uint64_t
 
 <P>
 
-(Note: The *BSD terminology is a bit different.
+(Note: the *BSD terminology is a bit different.
 There,
 <I>Elf64_Half</I>
 
@@ -149,7 +151,9 @@ size and alignment guidelines for the relevant class.
 If necessary,
 data structures contain explicit padding to ensure 4-byte alignment
 for 4-byte objects, to force structure sizes to a multiple of 4, and so on.
-<P>
+
+<A NAME="lbAF">&nbsp;</A>
+<H3>ELF header (Ehdr)</H3>
 
 The ELF header is described by the type
 <I>Elf32_Ehdr</I>
@@ -645,8 +649,8 @@ This member holds the ELF header's size in bytes.
 <DT><I>e_phentsize</I>
 
 <DD>
-This member holds the size in bytes of one entry in the file's program header
-table; all entries are the same size.
+This member holds the size in bytes of one entry in the file's
+program header table; all entries are the same size.
 <DT><I>e_phnum</I>
 
 <DD>
@@ -665,7 +669,8 @@ If a file has no program header,
 
 holds the value zero.
 <DT><DD>
-If the number of entries in the program header table is larger than or equal to
+If the number of entries in the program header table is
+larger than or equal to
 
 <B>PN_XNUM</B>
 
@@ -719,7 +724,8 @@ header table,
 
 holds the value of zero.
 <DT><DD>
-If the number of entries in the section header table is larger than or equal to
+If the number of entries in the section header table is
+larger than or equal to
 <B>SHN_LORESERVE</B>
 
 (0xff00),
@@ -733,7 +739,8 @@ member of the initial entry in section header table.
 Otherwise, the
 <I>sh_size</I>
 
-member of the initial entry in the section header table holds the value zero.
+member of the initial entry in the section header table holds
+the value zero.
 <DT><I>e_shstrndx</I>
 
 <DD>
@@ -744,7 +751,8 @@ table, this member holds the value
 <B>SHN_UNDEF</B>.
 
 <DT><DD>
-If the index of section name string table section is larger than or equal to
+If the index of section name string table section is
+larger than or equal to
 <B>SHN_LORESERVE</B>
 
 (0xff00), this member holds
@@ -759,8 +767,10 @@ Otherwise, the
 <I>sh_link</I>
 
 member of the initial entry in section header table contains the value zero.
+
 </DL>
-<P>
+<A NAME="lbAG">&nbsp;</A>
+<H3>Program header (Phdr)</H3>
 
 An executable or shared object file's program header table is an array of
 structures, each describing a segment or other information the system needs
@@ -881,7 +891,7 @@ If it is present, it must precede any loadable segment entry.
 <DT><B>PT_NOTE</B>
 
 <DD>
-The array element specifies the location and size for auxiliary information.
+The array element specifies the location of notes (ElfN_Nhdr).
 <DT><B>PT_SHLIB</B>
 
 <DD>
@@ -891,8 +901,9 @@ contain an array element of this type do not conform to the ABI.
 <DT><B>PT_PHDR</B>
 
 <DD>
-The array element, if present, specifies the location and size of the program
-header table itself, both in the file and in the memory image of the program.
+The array element, if present,
+specifies the location and size of the program header table itself,
+both in the file and in the memory image of the program.
 This segment type may not occur more than once in a file.
 Moreover, it may
 occur only if the program header table is part of the memory image of the
@@ -1008,8 +1019,10 @@ should equal
 modulo
 <I>p_align</I>.
 
+
 </DL>
-<P>
+<A NAME="lbAH">&nbsp;</A>
+<H3>Section header (Shdr)</H3>
 
 A file's section header table lets one locate all the file's sections.
 The
@@ -1058,8 +1071,8 @@ these special indices:
 <DT><B>SHN_UNDEF</B>
 
 <DD>
-This value marks an undefined, missing, irrelevant, or otherwise meaningless
-section reference.
+This value marks an undefined, missing, irrelevant,
+or otherwise meaningless section reference.
 <DT><B>SHN_LORESERVE</B>
 
 <DD>
@@ -1083,8 +1096,8 @@ has an absolute value and is not affected by relocation.
 <DT><B>SHN_COMMON</B>
 
 <DD>
-Symbols defined relative to this section are common symbols, such as FORTRAN
-COMMON or unallocated C external variables.
+Symbols defined relative to this section are common symbols,
+such as FORTRAN COMMON or unallocated C external variables.
 <DT><B>SHN_HIRESERVE</B>
 
 <DD>
@@ -1218,7 +1231,7 @@ have only one dynamic section.
 <DT><B>SHT_NOTE</B>
 
 <DD>
-This section holds information that marks the file in some way.
+This section holds notes (ElfN_Nhdr).
 <DT><B>SHT_NOBITS</B>
 
 <DD>
@@ -1380,8 +1393,7 @@ must be congruent to zero, modulo the value of
 <I>sh_addralign</I>.
 
 Only zero and positive integral powers of two are allowed.
-Values of zero
-or one mean the section has no alignment constraints.
+The value 0 or 1 means that the section has no alignment constraints.
 <DT><I>sh_entsize</I>
 
 <DD>
@@ -1599,8 +1611,8 @@ The attribute used is
 <DD>
 This section holds executable instructions that contribute to the process
 initialization code.
-When a program starts to run the system arranges to
-execute the code in this section before calling the main program entry point.
+When a program starts to run the system arranges to execute
+the code in this section before calling the main program entry point.
 This section is of type
 <B>SHT_PROGBITS</B>.
 
@@ -1627,8 +1639,9 @@ This section is of type
 <DT><I>.line</I>
 
 <DD>
-This section holds line number information for symbolic debugging, which
-describes the correspondence between the program source and the machine code.
+This section holds line number information for symbolic debugging,
+which describes the correspondence between the program source and
+the machine code.
 The contents are unspecified.
 This section is of type
 <B>SHT_PROGBITS</B>.
@@ -1637,19 +1650,39 @@ No attribute types are used.
 <DT><I>.note</I>
 
 <DD>
-This section holds information in the
-&quot;Note Section&quot;
-format.
+This section holds various notes.
 This section is of type
 <B>SHT_NOTE</B>.
 
 No attribute types are used.
-OpenBSD
-native executables usually contain a
-<I>.note.openbsd.ident</I>
+<DT><I>.note.ABI-tag</I>
 
-section to identify themselves, for the kernel to bypass any compatibility
-ELF binary emulation tests when loading the file.
+<DD>
+This section is used to declare the expected runtime ABI of the ELF image.
+It may include the operating system name and its runtime versions.
+This section is of type
+<B>SHT_NOTE</B>.
+
+The only attribute used is
+<B>SHF_ALLOC</B>.
+
+<DT><I>.note.gnu.build-id</I>
+
+<DD>
+This section is used to hold an ID that uniquely identifies
+the contents of the ELF image.
+Different files with the same build ID should contain the same executable
+content.
+See the
+<B>--build-id</B>
+
+option to the GNU linker (<B>ld</B> (1)) for more details.
+This section is of type
+<B>SHT_NOTE</B>.
+
+The only attribute used is
+<B>SHF_ALLOC</B>.
+
 <DT><I>.note.GNU-stack</I>
 
 <DD>
@@ -1662,6 +1695,12 @@ The only attribute used is
 
 This indicates to the GNU linker that the object file requires an
 executable stack.
+<DT><I>.note.openbsd.ident</I>
+
+<DD>
+OpenBSD native executables usually contain this section
+to identify themselves so the kernel can bypass any compatibility
+ELF binary emulation tests when loading the file.
 <DT><I>.plt</I>
 
 <DD>
@@ -1792,8 +1831,10 @@ The attributes used are
 and
 <B>SHF_EXECINSTR</B>.
 
+
 </DL>
-<P>
+<A NAME="lbAI">&nbsp;</A>
+<H3>String and symbol tables</H3>
 
 String table sections hold null-terminated character sequences, commonly
 called strings.
@@ -2020,8 +2061,10 @@ Every symbol table entry is
 in relation to some section.
 This member holds the relevant section
 header table index.
+
 </DL>
-<P>
+<A NAME="lbAJ">&nbsp;</A>
+<H3>Relocation entries (Rel &amp; Rela)</H3>
 
 Relocation is the process of connecting symbolic references with
 symbolic definitions.
@@ -2112,8 +2155,10 @@ member.
 <DD>
 This member specifies a constant addend used to compute the value to be
 stored into the relocatable field.
+
 </DL>
-<P>
+<A NAME="lbAK">&nbsp;</A>
+<H3>Dynamic tags (Dyn)</H3>
 
 The
 <I>.dynamic</I>
@@ -2299,8 +2344,401 @@ Array containing all the dynamic structures in the
 
 section.
 This is automatically populated by the linker.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 </DL>
-<A NAME="lbAE">&nbsp;</A>
+<A NAME="lbAL">&nbsp;</A>
+<H3>Notes (Nhdr)</H3>
+
+ELF notes allow for appending arbitrary information for the system to use.
+They are largely used by core files
+(<I>e_type</I>
+
+of
+<B>ET_CORE</B>),
+
+but many projects define their own set of extensions.
+For example,
+the GNU tool chain uses ELF notes to pass information from
+the linker to the C library.
+<P>
+Note sections contain a series of notes (see the
+<I>struct</I>
+
+definitions below).
+Each note is followed by the name field (whose length is defined in
+<I>n_namesz</I>) and then by the descriptor field (whose length is defined in
+<I>n_descsz</I>) and whose starting address has a 4 byte alignment.
+Neither field is defined in the note struct due to their arbitrary lengths.
+<P>
+An example for parsing out two consecutive notes should clarify their layout
+in memory:
+<P>
+
+<PRE>
+void *memory, *name, *desc;
+Elf64_Nhdr *note, *next_note;
+
+/* The buffer is pointing to the start of the section/segment */
+note = memory;
+
+/* If the name is defined, it follows the note */
+name = note-&gt;n_namesz == 0 ? NULL : memory + sizeof(*note);
+
+/* If the descriptor is defined, it follows the name
+   (with alignment) */
+
+desc = note-&gt;n_descsz == 0 ? NULL :
+       memory + sizeof(*note) + ALIGN_UP(note-&gt;n_namesz, 4);
+
+/* The next note follows both (with alignment) */
+next_note = memory + sizeof(*note) +
+                     ALIGN_UP(note-&gt;n_namesz, 4) +
+                     ALIGN_UP(note-&gt;n_descsz, 4);
+</PRE>
+
+
+<P>
+Keep in mind that the interpretation of
+<I>n_type</I>
+
+depends on the namespace defined by the
+<I>n_namesz</I>
+
+field.
+If the
+<I>n_namesz</I>
+
+field is not set (e.g., is 0), then there are two sets of notes:
+one for core files and one for all other ELF types.
+If the namespace is unknown, then tools will usually fallback to these sets
+of notes as well.
+
+<PRE>
+
+typedef struct {
+    Elf32_Word n_namesz;
+    Elf32_Word n_descsz;
+    Elf32_Word n_type;
+} Elf32_Nhdr;
+</PRE>
+
+
+
+<PRE>
+
+typedef struct {
+    Elf64_Word n_namesz;
+    Elf64_Word n_descsz;
+    Elf64_Word n_type;
+} Elf64_Nhdr;
+</PRE>
+
+
+<DL COMPACT>
+<DT><I>n_namesz</I>
+
+<DD>
+The length of the name field in bytes.
+The contents will immediately follow this note in memory.
+The name is null terminated.
+For example, if the name is &quot;GNU&quot;, then
+<I>n_namesz</I>
+
+will be set to 4.
+<DT><I>n_descsz</I>
+
+<DD>
+The length of the descriptor field in bytes.
+The contents will immediately follow the name field in memory.
+<DT><I>n_type</I>
+
+<DD>
+Depending on the value of the name field, this member may have any of the
+following values:
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT><B>Core files (e_type = ET_CORE)</B>
+
+<DD>
+Notes used by all core files.
+These are highly operating system or architecture specific and often require
+close coordination with kernels, C libraries, and debuggers.
+These are used when the namespace is the default (i.e.,
+<I>n_namesz</I>
+
+will be set to 0), or a fallback when the namespace is unknown.
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT>
+<DD>
+<B>NT_PRSTATUS</B>
+
+prstatus struct
+<DT><B>NT_FPREGSET</B>
+
+<DD>
+fpregset struct
+<DT><B>NT_PRPSINFO</B>
+
+<DD>
+prpsinfo struct
+<DT><B>NT_PRXREG</B>
+
+<DD>
+prxregset struct
+<DT><B>NT_TASKSTRUCT</B>
+
+<DD>
+task structure
+<DT><B>NT_PLATFORM</B>
+
+<DD>
+String from sysinfo(SI_PLATFORM)
+<DT><B>NT_AUXV</B>
+
+<DD>
+auxv array
+<DT><B>NT_GWINDOWS</B>
+
+<DD>
+gwindows struct
+<DT><B>NT_ASRS</B>
+
+<DD>
+asrset struct
+<DT><B>NT_PSTATUS</B>
+
+<DD>
+pstatus struct
+<DT><B>NT_PSINFO</B>
+
+<DD>
+psinfo struct
+<DT><B>NT_PRCRED</B>
+
+<DD>
+prcred struct
+<DT><B>NT_UTSNAME</B>
+
+<DD>
+utsname struct
+<DT><B>NT_LWPSTATUS</B>
+
+<DD>
+lwpstatus struct
+<DT><B>NT_LWPSINFO</B>
+
+<DD>
+lwpinfo struct
+<DT><B>NT_PRFPXREG</B>
+
+<DD>
+fprxregset struct
+<DT><B>NT_SIGINFO</B>
+
+<DD>
+siginfo_t (size might increase over time)
+<DT><B>NT_FILE</B>
+
+<DD>
+Contains information about mapped files
+<DT><B>NT_PRXFPREG</B>
+
+<DD>
+user_fxsr_struct
+<DT><B>NT_PPC_VMX</B>
+
+<DD>
+PowerPC Altivec/VMX registers
+<DT><B>NT_PPC_SPE</B>
+
+<DD>
+PowerPC SPE/EVR registers
+<DT><B>NT_PPC_VSX</B>
+
+<DD>
+PowerPC VSX registers
+<DT><B>NT_386_TLS</B>
+
+<DD>
+i386 TLS slots (struct user_desc)
+<DT><B>NT_386_IOPERM</B>
+
+<DD>
+x86 io permission bitmap (1=deny)
+<DT><B>NT_X86_XSTATE</B>
+
+<DD>
+x86 extended state using xsave
+<DT><B>NT_S390_HIGH_GPRS</B>
+
+<DD>
+s390 upper register halves
+<DT><B>NT_S390_TIMER</B>
+
+<DD>
+s390 timer register
+<DT><B>NT_S390_TODCMP</B>
+
+<DD>
+s390 time-of-day (TOD) clock comparator register
+<DT><B>NT_S390_TODPREG</B>
+
+<DD>
+s390 time-of-day (TOD) programmable register
+<DT><B>NT_S390_CTRS</B>
+
+<DD>
+s390 control registers
+<DT><B>NT_S390_PREFIX</B>
+
+<DD>
+s390 prefix register
+<DT><B>NT_S390_LAST_BREAK</B>
+
+<DD>
+s390 breaking event address
+<DT><B>NT_S390_SYSTEM_CALL</B>
+
+<DD>
+s390 system call restart data
+<DT><B>NT_S390_TDB</B>
+
+<DD>
+s390 transaction diagnostic block
+<DT><B>NT_ARM_VFP</B>
+
+<DD>
+ARM VFP/NEON registers
+<DT><B>NT_ARM_TLS</B>
+
+<DD>
+ARM TLS register
+<DT><B>NT_ARM_HW_BREAK</B>
+
+<DD>
+ARM hardware breakpoint registers
+<DT><B>NT_ARM_HW_WATCH</B>
+
+<DD>
+ARM hardware watchpoint registers
+<DT><B>NT_ARM_SYSTEM_CALL</B>
+
+<DD>
+ARM system call number
+
+</DL>
+</DL>
+
+<DT><B>n_name = GNU</B>
+
+<DD>
+Extensions used by the GNU tool chain.
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT><B>NT_GNU_ABI_TAG</B>
+
+<DD>
+Operating system (OS) ABI information.
+The desc field will be 4 words:
+<P>
+
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT>&bull;<DD>
+word 0: OS descriptor
+(<B>ELF_NOTE_OS_LINUX</B>, <B>ELF_NOTE_OS_GNU</B>, and so on)`
+<DT>&bull;<DD>
+word 1: major version of the ABI
+<DT>&bull;<DD>
+word 2: minor version of the ABI
+<DT>&bull;<DD>
+word 3: subminor version of the ABI
+</DL>
+</DL>
+
+
+<DT><B>NT_GNU_HWCAP</B>
+
+<DD>
+Synthetic hwcap information.
+The desc field begins with two words:
+<P>
+
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT>&bull;<DD>
+word 0: number of entries
+<DT>&bull;<DD>
+word 1: bit mask of enabled entries
+</DL>
+</DL>
+
+
+<DT><DD>
+Then follow variable-length entries, one byte followed by a null-terminated
+hwcap name string.
+The byte gives the bit number to test if enabled, (1U &lt;&lt; bit) &amp; bit mask.
+<DT><B>NT_GNU_BUILD_ID</B>
+
+<DD>
+Unique build ID as generated by the GNU
+<B><A HREF="../man1/ld.1.html">ld</A></B>(1)
+
+<B>--build-id</B>
+
+option.
+The desc consists of any nonzero number of bytes.
+<DT><B>NT_GNU_GOLD_VERSION</B>
+
+<DD>
+The desc contains the GNU Gold linker version used.
+</DL>
+</DL>
+
+<DT><B>Default/unknown namespace (e_type != ET_CORE)</B>
+
+<DD>
+These are used when the namespace is the default (i.e.,
+<I>n_namesz</I>
+
+will be set to 0), or a fallback when the namespace is unknown.
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT>
+<DD>
+<B>NT_VERSION</B>
+
+A version string of some sort.
+<DT><B>NT_ARCH</B>
+
+<DD>
+Architecture information.
+
+</DL>
+</DL>
+
+<P>
+</DL>
+</DL>
+
+</DL>
+<A NAME="lbAM">&nbsp;</A>
 <H2>NOTES</H2>
 
 
@@ -2333,7 +2771,7 @@ look under SEE ALSO.
 
 
 
-<A NAME="lbAF">&nbsp;</A>
+<A NAME="lbAN">&nbsp;</A>
 <H2>SEE ALSO</H2>
 
 <B><A HREF="../man1/as.1.html">as</A></B>(1),
@@ -2386,13 +2824,23 @@ AMD64 ABI Draft,
 <DT><A HREF="#lbAB">NAME</A><DD>
 <DT><A HREF="#lbAC">SYNOPSIS</A><DD>
 <DT><A HREF="#lbAD">DESCRIPTION</A><DD>
-<DT><A HREF="#lbAE">NOTES</A><DD>
-<DT><A HREF="#lbAF">SEE ALSO</A><DD>
+<DL>
+<DT><A HREF="#lbAE">Basic types</A><DD>
+<DT><A HREF="#lbAF">ELF header (Ehdr)</A><DD>
+<DT><A HREF="#lbAG">Program header (Phdr)</A><DD>
+<DT><A HREF="#lbAH">Section header (Shdr)</A><DD>
+<DT><A HREF="#lbAI">String and symbol tables</A><DD>
+<DT><A HREF="#lbAJ">Relocation entries (Rel &amp; Rela)</A><DD>
+<DT><A HREF="#lbAK">Dynamic tags (Dyn)</A><DD>
+<DT><A HREF="#lbAL">Notes (Nhdr)</A><DD>
+</DL>
+<DT><A HREF="#lbAM">NOTES</A><DD>
+<DT><A HREF="#lbAN">SEE ALSO</A><DD>
 </DL>
 <HR>
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:44:24 GMT, April 20, 2020
+Time: 03:44:56 GMT, April 20, 2020
 </BODY>
 </HTML>

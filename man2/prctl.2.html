@@ -26,7 +26,7 @@ the source, must acknowledge the copyright and authors of this work.
 <HTML><HEAD><TITLE>Man page of PRCTL</TITLE>
 </HEAD><BODY>
 <H1>PRCTL</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2016-07-17<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2016-12-12<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -313,6 +313,163 @@ Return the endian-ness of the calling process,
 in the location pointed to by
 <I>(int&nbsp;*) arg2</I>.
 
+<DT><B>PR_SET_FP_MODE</B> (since Linux 4.0, only on MIPS)
+
+<DD>
+
+On the MIPS architecture,
+user-space code can be built using an ABI which permits linking
+with code that has more restrictive floating-point (FP) requirements.
+For example, user-space code may be built to target the O32 FPXX ABI
+and linked with code built for either one of the more restrictive
+FP32 or FP64 ABIs.
+When more restrictive code is linked in,
+the overall requirement for the process is to use the more
+restrictive floating-point mode.
+<P>
+Because the kernel has no means of knowing in advance
+which mode the process should be executed in,
+and because these restrictions can
+change over the lifetime of the process, the
+<B>PR_SET_FP_MODE</B>
+
+operation is provided to allow control of the floating-point mode
+from user space.
+<P>
+
+The
+<I>(unsigned int) arg2</I>
+
+argument is a bit mask describing the floating-point mode used:
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT><B>PR_FP_MODE_FR</B>
+
+<DD>
+When this bit is
+<I>unset</I>
+
+(so called
+<B>FR=0</B> or <B>FR0</B>
+
+mode), the 32 floating-point registers are 32 bits wide,
+and 64-bit registers are represented as a pair of registers
+(even- and odd- numbered,
+with the even-numbered register containing the lower 32 bits,
+and the odd-numbered register containing the higher 32 bits).
+<P>
+When this bit is
+<I>set</I>
+
+(on supported hardware),
+the 32 floating-point registers are 64 bits wide (so called
+<B>FR=1</B> or <B>FR1</B>
+
+mode).
+Note that modern MIPS implementations (MIPS R6 and newer) support
+<B>FR=1</B>
+
+mode only.
+<P>
+<P>
+Applications that use the O32 FP32 ABI can operate only when this bit is
+<I>unset</I>
+
+(<B>FR=0</B>;
+
+or they can be used with FRE enabled, see below).
+Applications that use the O32 FP64 ABI
+(and the O32 FP64A ABI, which exists to
+provide the ability to operate with existing FP32 code; see below)
+can operate only when this bit is
+<I>set</I>
+
+(<B>FR=1</B>).
+
+Applications that use the O32 FPXX ABI can operate with either
+<B>FR=0</B>
+
+or
+<B>FR=1</B>.
+
+<DT><B>PR_FP_MODE_FRE</B>
+
+<DD>
+Enable emulation of 32-bit floating-point mode.
+When this mode is enabled,
+it emulates 32-bit floating-point operations
+by raising a reserved-instruction exception
+on every instruction that uses 32-bit formats and
+the kernel then handles the instruction in software.
+(The problem lies in the discrepancy of handling odd-numbered registers
+which are the high 32 bits of 64-bit registers with even numbers in
+<B>FR=0</B>
+
+mode and the lower 32-bit parts of odd-numbered 64-bit registers in
+<B>FR=1</B>
+
+mode.)
+Enabling this bit is necessary when code with the O32 FP32 ABI should operate
+with code with compatible the O32 FPXX or O32 FP64A ABIs (which require
+<B>FR=1</B>
+
+FPU mode) or when it is executed on newer hardware (MIPS R6 onwards)
+which lacks
+<B>FR=0</B>
+
+mode support when a binary with the FP32 ABI is used.
+<DT><DD>
+Note that this mode makes sense only when the FPU is in 64-bit mode
+(<B>FR=1</B>).
+
+<DT><DD>
+Note that the use of emulation inherently has a significant performance hit
+and should be avoided if possible.
+</DL>
+</DL>
+
+<DT><DD>
+In the N32/N64 ABI, 64-bit floating-point mode is always used,
+so FPU emulation is not required and the FPU always operates in
+<B>FR=1</B>
+
+mode.
+<DT><DD>
+This option is mainly intended for use by the dynamic linker
+(<B><A HREF="../man8/ld.so.8.html">ld.so</A></B>(8)).
+
+<DT><DD>
+The arguments
+<I>arg3</I>,
+
+<I>arg4</I>,
+
+and
+<I>arg5</I>
+
+are ignored.
+<DT><B>PR_GET_FP_MODE</B> (since Linux 4.0, only on MIPS)
+
+<DD>
+Get the current floating-point mode (see the description of
+<B>PR_SET_FP_MODE</B>
+
+for details).
+<P>
+On success,
+the call returns a bit mask which represents the current floating-point mode.
+<P>
+The arguments
+<I>arg2</I>,
+
+<I>arg3</I>,
+
+<I>arg4</I>,
+
+and
+<I>arg5</I>
+
+are ignored.
 <DT><B>PR_SET_FPEMU</B> (since Linux 2.4.18, 2.5.9, only on ia64)
 
 <DD>
@@ -1105,6 +1262,13 @@ This feature is available only if the kernel is built with the
 <B>CONFIG_CHECKPOINT_RESTORE</B>
 
 option enabled.
+Note that since the
+<B>prctl</B>()
+
+system call does not have a compat implementation for
+the AMD64 x32 and MIPS n32 ABIs,
+and the kernel writes out a pointer using the kernel's pointer size,
+this operation expects a user-space buffer of 8 (not 4) bytes on these ABIs.
 <DT><B>PR_SET_TIMERSLACK</B> (since Linux 2.6.28)
 
 <DD>
@@ -1257,7 +1421,10 @@ in the location pointed to by
 
 <DD>
 (Only on: ia64, since Linux 2.3.48; parisc, since Linux 2.6.15;
-PowerPC, since Linux 2.6.18; Alpha, since Linux 2.6.22)
+PowerPC, since Linux 2.6.18; Alpha, since Linux 2.6.22;
+
+
+sh, since Linux 2.6.34; tile, since Linux 3.12)
 Set unaligned access control bits to <I>arg2</I>.
 Pass
 <B>PR_UNALIGN_NOPRINT</B> to silently fix up unaligned user accesses,
@@ -1265,6 +1432,19 @@ or <B>PR_UNALIGN_SIGBUS</B> to generate
 <B>SIGBUS</B>
 
 on unaligned user access.
+Alpha also supports an additional flag with the value
+of 4 and no corresponding named constant,
+which instructs kernel to not fix up
+unaligned accesses (it is analogous to providing the
+<B>UAC_NOFIX</B>
+
+flag in
+<B>SSI_NVPAIRS</B>
+
+operation of the
+<B>setsysinfo</B>()
+
+system call on Tru64).
 <DT><B>PR_GET_UNALIGN</B>
 
 <DD>
@@ -1273,7 +1453,7 @@ on unaligned user access.
 
 for information on versions and architectures)
 Return unaligned access control bits, in the location pointed to by
-<I>(int&nbsp;*) arg2</I>.
+<I>(unsigned int&nbsp;*) arg2</I>.
 
 </DL>
 <A NAME="lbAE">&nbsp;</A>
@@ -1724,6 +1904,18 @@ or
 
 and the kernel or the CPU does not support MPX management.
 Check that the kernel and processor have MPX support.
+<DT><B>EOPNOTSUPP</B>
+
+<DD>
+<I>option</I>
+
+is
+<B>PR_SET_FP_MODE</B>
+
+and
+<I>arg2</I>
+
+has an invalid or unsupported value.
 <DT><B>EPERM</B>
 
 <DD>
@@ -1854,6 +2046,6 @@ get or set the maximum stack size, and so on.
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:44:12 GMT, April 20, 2020
+Time: 03:44:44 GMT, April 20, 2020
 </BODY>
 </HTML>

@@ -26,7 +26,7 @@ the source, must acknowledge the copyright and authors of this work.
 <HTML><HEAD><TITLE>Man page of REMAINDER</TITLE>
 </HEAD><BODY>
 <H1>REMAINDER</H1>
-Section: Linux Programmer's Manual (3)<BR>Updated: 2016-03-15<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2016-12-12<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -185,9 +185,12 @@ when calling these functions.
 The following errors can occur:
 <DL COMPACT>
 <DT>Domain error: <I>x</I> is an infinity and <I>y</I> is not a NaN<DD>
+<I>errno</I>
 
+is set to
+<B>EDOM</B>
 
-
+(but see BUGS).
 An invalid floating-point exception
 (<B>FE_INVALID</B>)
 
@@ -197,9 +200,6 @@ These functions do not set
 <I>errno</I>
 
 for this case.
-
-
-
 <DT>Domain error: <I>y</I> is zero<I>errno</I>
 
 <DD>
@@ -277,13 +277,30 @@ etc.
 <A NAME="lbAI">&nbsp;</A>
 <H2>BUGS</H2>
 
-The call
+Before glibc 2.15,
+
+the call
 <P>
 <BR>&nbsp;&nbsp;&nbsp;&nbsp;remainder(nan(&quot;&quot;),&nbsp;0);
 <P>
-returns a NaN, as expected, but wrongly causes a domain error;
-it should yield a silent NaN.
+returned a NaN, as expected, but wrongly caused a domain error.
+Since glibc 2.15, a silent NaN (i.e., no domain error) is returned.
+<P>
+Before glibc 2.15,
 
+<I>errno</I>
+
+was not set to
+<B>EDOM</B>
+
+for the domain error that occurs when
+<I>x</I>
+
+is an infinity and
+<I>y</I>
+
+is not a NaN.
+<I>errno was not set</I>
 
 <A NAME="lbAJ">&nbsp;</A>
 <H2>EXAMPLE</H2>
@@ -318,6 +335,6 @@ The call &quot;remainder(29.0, 3.0)&quot; returns -1.
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:44:20 GMT, April 20, 2020
+Time: 03:44:53 GMT, April 20, 2020
 </BODY>
 </HTML>

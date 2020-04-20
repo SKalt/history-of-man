@@ -25,7 +25,7 @@ License along with this manual; if not, see
 <HTML><HEAD><TITLE>Man page of PTRACE</TITLE>
 </HEAD><BODY>
 <H1>PTRACE</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2016-07-17<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2016-12-12<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -454,7 +454,8 @@ struct ptrace_peeksiginfo_args {
 </PRE>
 
 
-<P>
+<DL COMPACT>
+<DT><DD>
 Currently, there is only one flag,
 <B>PTRACE_PEEKSIGINFO_SHARED</B>,
 
@@ -462,6 +463,7 @@ for dumping signals from the process-wide signal queue.
 If this flag is not set,
 signals are read from the per-thread queue of the specified thread.
 
+</DL>
 <P>
 
 <DL COMPACT>
@@ -773,8 +775,11 @@ value such that
 While this triggers a
 <B>PTRACE_EVENT</B>
 
-stop, it is similar to a syscall-enter-stop, in that the tracee has
-not yet entered the syscall that seccomp triggered on.
+stop, it is similar to a syscall-enter-stop.
+For details, see the note on
+<B>PTRACE_EVENT_SECCOMP</B>
+
+below.
 The seccomp event message data (from the
 <B>SECCOMP_RET_DATA</B>
 
@@ -897,6 +902,7 @@ For
 
 continue and stop on entry to the next system call,
 which will not be executed.
+See the documentation on syscall-stops below.
 For
 <B>PTRACE_SYSEMU_SINGLESTEP</B>,
 
@@ -1131,6 +1137,65 @@ is governed by a ptrace access mode
 <B>PTRACE_MODE_ATTACH_REALCREDS</B>
 
 check; see below.
+
+<DT><B>PTRACE_SECCOMP_GET_FILTER</B> (since Linux 4.4)
+
+<DD>
+
+This operation allows the tracer to dump the tracee's
+classic BPF filters.
+<P>
+<I>addr</I>
+
+is an integer specifying the index of the filter to be dumped.
+The most recently installed filter has the index 0.
+If
+<I>addr</I>
+
+is greater than the number of installed filters,
+the operation fails with the error
+<B>ENOENT</B>.
+
+<P>
+<I>data</I>
+
+is either a pointer to a
+<I>struct sock_filter</I>
+
+array that is large enough to store the BPF program,
+or NULL if the program is not to be stored.
+<P>
+Upon success,
+the return value is the number of instructions in the BPF program.
+If
+<I>data</I>
+
+was NULL, then this return value can be used to correctly size the
+<I>struct sock_filter</I>
+
+array passed in a subsequent call.
+<P>
+This operation fails with the error
+<B>EACCESS</B>
+
+if the caller does not have the
+<B>CAP_SYS_ADMIN</B>
+
+capability or if the caller is in strict or filter seccomp mode.
+If the filter referred to by
+<I>addr</I>
+
+is not a classic BPF filter, the operation fails with the error
+<B>EMEDIUMTYPE</B>.
+
+<P>
+This operation is available if the kernel was configured with both the
+<B>CONFIG_SECCOMP_FILTER</B>
+
+and the
+<B>CONFIG_CHECKPOINT_RESTORE</B>
+
+options.
 <DT><B>PTRACE_DETACH</B>
 
 <DD>
@@ -1143,6 +1208,59 @@ of which method was used to initiate tracing.
 (<I>addr</I>
 
 is ignored.)
+
+<DT><B>PTRACE_GET_THREAD_AREA</B> (since Linux 2.6.0)
+
+<DD>
+This operation performs a similar task to
+<B><A HREF="../man2/get_thread_area.2.html">get_thread_area</A></B>(2).
+
+It reads the TLS entry in the GDT whose index is given in
+<I>addr</I>,
+
+placing a copy of the entry into the
+<I>struct user_desc</I>
+
+pointed to by
+<I>data</I>.
+
+(By contrast with
+<B><A HREF="../man2/get_thread_area.2.html">get_thread_area</A></B>(2),
+
+the
+<I>entry_number</I>
+
+of the
+<I>struct user_desc</I>
+
+is ignored.)
+<DT><B>PTRACE_SET_THREAD_AREA</B> (since Linux 2.6.0)
+
+<DD>
+This operation performs a similar task to
+<B><A HREF="../man2/set_thread_area.2.html">set_thread_area</A></B>(2).
+
+It sets the TLS entry in the GDT whose index is given in
+<I>addr</I>,
+
+assigning it the data supplied in the
+<I>struct user_desc</I>
+
+pointed to by
+<I>data</I>.
+
+(By contrast with
+<B><A HREF="../man2/set_thread_area.2.html">set_thread_area</A></B>(2),
+
+the
+<I>entry_number</I>
+
+of the
+<I>struct user_desc</I>
+
+is ignored; in other words,
+this ptrace operation can't be used to allocate a free TLS entry.)
+
 </DL>
 <A NAME="lbAE">&nbsp;</A>
 <H3>Death under ptrace</H3>
@@ -1319,6 +1437,8 @@ be further subdivided into
 <I>group-stop</I>,
 
 <I>syscall-stop</I>,
+
+<I>PTRACE_EVENT</I>stops,
 
 and so on.
 These stopped states are described in detail below.
@@ -1902,6 +2022,8 @@ The seccomp event message data (from the
 portion of the seccomp filter rule) can be retrieved with
 <B>PTRACE_GETEVENTMSG</B>.
 
+The semantics of this stop are described in
+detail in a separate section below.
 </DL>
 <P>
 
@@ -1926,11 +2048,20 @@ set to
 <H3>Syscall-stops</H3>
 
 If the tracee was restarted by
-<B>PTRACE_SYSCALL</B>,
+<B>PTRACE_SYSCALL</B>
+
+or
+<B>PTRACE_SYSEMU</B>,
 
 the tracee enters
-syscall-enter-stop just prior to entering any system call.
-If the tracer restarts the tracee with
+syscall-enter-stop just prior to entering any system call (which
+will not be executed if the restart was using
+<B>PTRACE_SYSEMU</B>,
+
+regardless of any change made to registers at this point or how the
+tracee is restarted after this stop).
+No matter which method caused the syscall-entry-stop,
+if the tracer restarts the tracee with
 <B>PTRACE_SYSCALL</B>,
 
 the tracee enters syscall-exit-stop when the system call is finished,
@@ -1939,13 +2070,27 @@ or if it is interrupted by a signal.
 and syscall-exit-stop; it happens
 <I>after</I>
 
-syscall-exit-stop.)
+syscall-exit-stop.).
+If the tracee is continued using any other method (including
+<B>PTRACE_SYSEMU</B>),
+
+no syscall-exit-stop occurs.
+Note that all mentions
+<B>PTRACE_SYSEMU</B>
+
+apply equally to
+<B>PTRACE_SYSEMU_SINGLESTEP.</B>
+
 <P>
 
+However, even if the tracee was continued using
+<B>PTRACE_SYSCALL</B>
+
+, it is not guaranteed that the next stop will be a syscall-exit-stop.
 Other possibilities are that the tracee may stop in a
 <B>PTRACE_EVENT</B>
 
-stop, exit (if it entered
+stop (including seccomp stops), exit (if it entered
 <B><A HREF="../man2/_exit.2.html">_exit</A></B>(2)
 
 or
@@ -2074,12 +2219,16 @@ indistinguishable from each other by the tracer.
 The tracer needs to keep track of the sequence of
 ptrace-stops in order to not misinterpret syscall-enter-stop as
 syscall-exit-stop or vice versa.
-The rule is that syscall-enter-stop is
+In general, a syscall-enter-stop is
 always followed by syscall-exit-stop,
 <B>PTRACE_EVENT</B>
 
-stop or the tracee's death;
+stop, or the tracee's death;
 no other kinds of ptrace-stop can occur in between.
+However, note that seccomp stops (see below) can cause syscall-exit-stops,
+without preceding syscall-entry-stops.
+If seccomp is in use, care needs
+to be taken not to misinterpret such stops as syscall-entry-stops.
 <P>
 
 If after syscall-enter-stop,
@@ -2106,15 +2255,108 @@ set to
 or
 <I>(SIGTRAP|0x80)</I>.
 
+
 <A NAME="lbAL">&nbsp;</A>
-<H3>PTRACE_SINGLESTEP, PTRACE_SYSEMU, PTRACE_SYSEMU_SINGLESTEP stops</H3>
+<H3>PTRACE_EVENT_SECCOMP stops (Linux 3.5 to 4.7)</H3>
+
+The behavior of
+<B>PTRACE_EVENT_SECCOMP</B>
+
+stops and their interaction with other kinds
+of ptrace stops has changed between kernel versions.
+This documents the behavior
+from their introduction until Linux 4.7 (inclusive).
+The behavior in later kernel versions is documented in the next section.
+<P>
+A
+<B>PTRACE_EVENT_SECCOMP</B>
+
+stop occurs whenever a
+<B>SECCOMP_RET_TRACE</B>
+
+rule is triggered.
+This is independent of which methods was used to restart the system call.
+Notably, seccomp still runs even if the tracee was restarted using
+<B>PTRACE_SYSEMU</B>
+
+and this system call is unconditionally skipped.
+<P>
+Restarts from this stop will behave as if the stop had occurred right
+before the system call in question.
+In particular, both
+<B>PTRACE_SYSCALL</B>
+
+and
+<B>PTRACE_SYSEMU</B>
+
+will normally cause a subsequent syscall-entry-stop.
+However, if after the
+<B>PTRACE_EVENT_SECCOMP</B>
+
+the system call number is negative,
+both the syscall-entry-stop and the system call itself will be skipped.
+This means that if the system call number is negative after a
+<B>PTRACE_EVENT_SECCOMP</B>
+
+and the tracee is restarted using
+<B>PTRACE_SYSCALL,</B>
+
+the next observed stop will be a syscall-exit-stop,
+rather than the syscall-entry-stop that might have been expected.
+
+<A NAME="lbAM">&nbsp;</A>
+<H3>PTRACE_EVENT_SECCOMP stops (since Linux 4.8)</H3>
+
+Starting with Linux 4.8,
+
+the
+<B>PTRACE_EVENT_SECCOMP</B>
+
+stop was reordered to occur between syscall-entry-stop and
+syscall-exit-stop.
+Note that seccomp no longer runs (and no
+<B>PTRACE_EVENT_SECCOMP</B>
+
+will be reported) if the system call is skipped due to
+<B>PTRACE_SYSEMU</B>.
+
+<P>
+Functionally, a
+<B>PTRACE_EVENT_SECCOMP</B>
+
+stop functions comparably
+to a syscall-entry-stop (i.e., continuations using
+<B>PTRACE_SYSCALL</B>
+
+will cause syscall-exit-stops,
+the system call number may be changed and any other modified registers
+are visible to the to-be-executed system call as well).
+Note that there may be,
+but need not have been a preceding syscall-entry-stop.
+<P>
+After a
+<B>PTRACE_EVENT_SECCOMP</B>
+
+stop, seccomp will be rerun, with a
+<B>SECCOMP_RET_TRACE</B>
+
+rule now functioning the same as a
+<B>SECCOMP_RET_ALLOW</B>.
+
+Specifically, this means that if registers are not modified during the
+<B>PTRACE_EVENT_SECCOMP</B>
+
+stop, the system call will then be allowed.
+
+<A NAME="lbAN">&nbsp;</A>
+<H3>PTRACE_SINGLESTEP stops</H3>
 
 [Details of these kinds of stops are yet to be documented.]
 
 
 
 
-<A NAME="lbAM">&nbsp;</A>
+<A NAME="lbAO">&nbsp;</A>
 <H3>Informational and restarting ptrace commands</H3>
 
 Most ptrace commands (all except
@@ -2225,7 +2467,7 @@ may be ignored.
 recommended practice is to always pass 0 in
 <I>sig</I>.)
 
-<A NAME="lbAN">&nbsp;</A>
+<A NAME="lbAP">&nbsp;</A>
 <H3>Attaching and detaching</H3>
 
 A thread can be attached to the tracer using the call
@@ -2403,7 +2645,7 @@ but the &quot;as planned&quot; behavior is to leave tracee stopped and waiting f
 
 If the tracee is restarted from signal-delivery-stop,
 the pending signal is injected.
-<A NAME="lbAO">&nbsp;</A>
+<A NAME="lbAQ">&nbsp;</A>
 <H3><A HREF="../man2/execve.2.html">execve</A>(2) under ptrace</H3>
 
 
@@ -2626,7 +2868,7 @@ and thus suppressing this extra
 <B>SIGTRAP</B>
 
 is the recommended approach.
-<A NAME="lbAP">&nbsp;</A>
+<A NAME="lbAR">&nbsp;</A>
 <H3>Real parent</H3>
 
 The ptrace API (ab)uses the standard UNIX parent/child signaling over
@@ -2655,7 +2897,7 @@ whole multithreaded process exits).
 If the tracer and the real parent are the same process,
 the report is sent only once.
 </DL>
-<A NAME="lbAQ">&nbsp;</A>
+<A NAME="lbAS">&nbsp;</A>
 <H2>RETURN VALUE</H2>
 
 On success, the
@@ -2677,7 +2919,7 @@ request may be -1, the caller must clear
 
 before the call, and then check it afterward
 to determine whether or not an error occurred.
-<A NAME="lbAR">&nbsp;</A>
+<A NAME="lbAT">&nbsp;</A>
 <H2>ERRORS</H2>
 
 <DL COMPACT>
@@ -2735,11 +2977,11 @@ The specified process does not exist, or is not currently being traced
 by the caller, or is not stopped
 (for requests that require a stopped tracee).
 </DL>
-<A NAME="lbAS">&nbsp;</A>
+<A NAME="lbAU">&nbsp;</A>
 <H2>CONFORMING TO</H2>
 
 SVr4, 4.3BSD.
-<A NAME="lbAT">&nbsp;</A>
+<A NAME="lbAV">&nbsp;</A>
 <H2>NOTES</H2>
 
 Although arguments to
@@ -2800,7 +3042,7 @@ is highly specific to the operating system and architecture.
 
 
 
-<A NAME="lbAU">&nbsp;</A>
+<A NAME="lbAW">&nbsp;</A>
 <H3>Ptrace access mode checking</H3>
 
 Various parts of the kernel-user-space API (not just
@@ -3098,7 +3340,7 @@ then access is allowed.
 
 
 </DL>
-<A NAME="lbAV">&nbsp;</A>
+<A NAME="lbAX">&nbsp;</A>
 <H3>/proc/sys/kernel/yama/ptrace_scope</H3>
 
 On systems with the Yama Linux Security Module (LSM) installed
@@ -3232,7 +3474,7 @@ it inadvertently weakens the protections offered by the Yama LSM.
 
 
 
-<A NAME="lbAW">&nbsp;</A>
+<A NAME="lbAY">&nbsp;</A>
 <H3>C library/kernel differences</H3>
 
 At the system call level, the
@@ -3250,7 +3492,7 @@ at the address specified by the
 parameter, and the return value is the error flag.
 The glibc wrapper function provides the API given in DESCRIPTION above,
 with the result being returned via the function return value.
-<A NAME="lbAX">&nbsp;</A>
+<A NAME="lbAZ">&nbsp;</A>
 <H2>BUGS</H2>
 
 On hosts with 2.6 kernel headers,
@@ -3401,7 +3643,7 @@ errors may behave in an unintended way upon an
 <B><A HREF="../man1/strace.1.html">strace</A></B>(1)
 
 attach.)
-<A NAME="lbAY">&nbsp;</A>
+<A NAME="lbBA">&nbsp;</A>
 <H2>SEE ALSO</H2>
 
 <B><A HREF="../man1/gdb.1.html">gdb</A></B>(1),
@@ -3450,28 +3692,30 @@ attach.)
 <DT><A HREF="#lbAI">Group-stop</A><DD>
 <DT><A HREF="#lbAJ">PTRACE_EVENT stops</A><DD>
 <DT><A HREF="#lbAK">Syscall-stops</A><DD>
-<DT><A HREF="#lbAL">PTRACE_SINGLESTEP, PTRACE_SYSEMU, PTRACE_SYSEMU_SINGLESTEP stops</A><DD>
-<DT><A HREF="#lbAM">Informational and restarting ptrace commands</A><DD>
-<DT><A HREF="#lbAN">Attaching and detaching</A><DD>
-<DT><A HREF="#lbAO">execve(2) under ptrace</A><DD>
-<DT><A HREF="#lbAP">Real parent</A><DD>
+<DT><A HREF="#lbAL">PTRACE_EVENT_SECCOMP stops (Linux 3.5 to 4.7)</A><DD>
+<DT><A HREF="#lbAM">PTRACE_EVENT_SECCOMP stops (since Linux 4.8)</A><DD>
+<DT><A HREF="#lbAN">PTRACE_SINGLESTEP stops</A><DD>
+<DT><A HREF="#lbAO">Informational and restarting ptrace commands</A><DD>
+<DT><A HREF="#lbAP">Attaching and detaching</A><DD>
+<DT><A HREF="#lbAQ">execve(2) under ptrace</A><DD>
+<DT><A HREF="#lbAR">Real parent</A><DD>
 </DL>
-<DT><A HREF="#lbAQ">RETURN VALUE</A><DD>
-<DT><A HREF="#lbAR">ERRORS</A><DD>
-<DT><A HREF="#lbAS">CONFORMING TO</A><DD>
-<DT><A HREF="#lbAT">NOTES</A><DD>
+<DT><A HREF="#lbAS">RETURN VALUE</A><DD>
+<DT><A HREF="#lbAT">ERRORS</A><DD>
+<DT><A HREF="#lbAU">CONFORMING TO</A><DD>
+<DT><A HREF="#lbAV">NOTES</A><DD>
 <DL>
-<DT><A HREF="#lbAU">Ptrace access mode checking</A><DD>
-<DT><A HREF="#lbAV">/proc/sys/kernel/yama/ptrace_scope</A><DD>
-<DT><A HREF="#lbAW">C library/kernel differences</A><DD>
+<DT><A HREF="#lbAW">Ptrace access mode checking</A><DD>
+<DT><A HREF="#lbAX">/proc/sys/kernel/yama/ptrace_scope</A><DD>
+<DT><A HREF="#lbAY">C library/kernel differences</A><DD>
 </DL>
-<DT><A HREF="#lbAX">BUGS</A><DD>
-<DT><A HREF="#lbAY">SEE ALSO</A><DD>
+<DT><A HREF="#lbAZ">BUGS</A><DD>
+<DT><A HREF="#lbBA">SEE ALSO</A><DD>
 </DL>
 <HR>
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:44:12 GMT, April 20, 2020
+Time: 03:44:44 GMT, April 20, 2020
 </BODY>
 </HTML>

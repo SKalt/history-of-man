@@ -26,7 +26,7 @@ the source, must acknowledge the copyright and authors of this work.
 <HTML><HEAD><TITLE>Man page of NICE</TITLE>
 </HEAD><BODY>
 <H1>NICE</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2016-03-15<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2016-12-12<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -61,13 +61,22 @@ _XOPEN_SOURCE
 adds
 <I>inc</I>
 
-to the nice value for the calling process.
+to the nice value for the calling thread.
 (A higher nice value means a low priority.)
-Only the superuser may specify a negative increment,
-or priority increase.
-The range for nice values is described in
-<B><A HREF="../man2/getpriority.2.html">getpriority</A></B>(2).
+<P>
+The range of the nice value is +19 (low priority) to -20 (high priority).
+Attempts to set a nice value outside the range are clamped to the range.
+<P>
+Traditionally, only a privileged process could lower the nice value
+(i.e., set a higher priority).
+However, since Linux 2.6.12, an unprivileged process can decrease
+the nice value of a target process that has a suitable
+<B>RLIMIT_NICE</B>
 
+soft limit; see
+<B><A HREF="../man2/getrlimit.2.html">getrlimit</A></B>(2)
+
+for details.
 <A NAME="lbAE">&nbsp;</A>
 <H2>RETURN VALUE</H2>
 
@@ -76,6 +85,15 @@ On error, -1 is returned, and
 <I>errno</I>
 
 is set appropriately.
+<P>
+A successful call can legitimately return -1.
+To detect an error, set
+<I>errno</I>
+
+to 0 before the call, and check whether it is nonzero after
+<B>nice</B>()
+
+returns -1.
 <A NAME="lbAF">&nbsp;</A>
 <H2>ERRORS</H2>
 
@@ -103,45 +121,47 @@ resource limit in
 <H2>CONFORMING TO</H2>
 
 POSIX.1-2001, POSIX.1-2008, SVr4, 4.3BSD.
-However, the Linux and (g)libc
+However, the raw system call and (g)libc
 (earlier than glibc 2.2.4) return value is nonstandard, see below.
-SVr4 documents an additional
-<B>EINVAL</B>
 
-error code.
+
+
 <A NAME="lbAH">&nbsp;</A>
 <H2>NOTES</H2>
 
-SUSv2 and POSIX.1 specify that
+For further details on the nice value, see
+<B><A HREF="../man7/sched.7.html">sched</A></B>(7).
+
+<P>
+<I>Note</I>:
+
+the addition of the &quot;autogroup&quot; feature in Linux 2.6.38 means that
+the nice value no longer has its traditional effect in many circumstances.
+For details, see
+<B><A HREF="../man7/sched.7.html">sched</A></B>(7).
+
+
+<A NAME="lbAI">&nbsp;</A>
+<H3>C library/kernel differences</H3>
+
+POSIX.1 specifies that
 <B>nice</B>()
 
 should return the new nice value.
-However, the Linux system call and the
+However, the raw Linux system call returns 0 on success.
+Likewise, the
 <B>nice</B>()
 
-library function provided in older versions of (g)libc
-(earlier than glibc 2.2.4) return 0 on success.
-The new nice value can be found using
-<B><A HREF="../man2/getpriority.2.html">getpriority</A></B>(2).
-
+wrapper function provided in glibc 2.2.3 and earlier returns 0 on success.
 <P>
-Since glibc 2.2.4,
+Since glibc 2.2.4, the
 <B>nice</B>()
 
-is implemented as a library function that calls
+wrapper function provided by glibc provides conformance to POSIX.1 by calling
 <B><A HREF="../man2/getpriority.2.html">getpriority</A></B>(2)
 
-to obtain the new nice value to be returned to the caller.
-With this implementation,
-a successful call can legitimately return -1.
-To reliably detect an error, set
-<I>errno</I>
-
-to 0 before the call, and check its value when
-<B>nice</B>()
-
-returns -1.
-<A NAME="lbAI">&nbsp;</A>
+to obtain the new nice value, which is then returned to the caller.
+<A NAME="lbAJ">&nbsp;</A>
 <H2>SEE ALSO</H2>
 
 <B><A HREF="../man1/nice.1.html">nice</A></B>(1),
@@ -151,6 +171,8 @@ returns -1.
 <B><A HREF="../man2/fork.2.html">fork</A></B>(2),
 
 <B><A HREF="../man2/getpriority.2.html">getpriority</A></B>(2),
+
+<B><A HREF="../man2/getrlimit.2.html">getrlimit</A></B>(2),
 
 <B><A HREF="../man2/setpriority.2.html">setpriority</A></B>(2),
 
@@ -170,12 +192,15 @@ returns -1.
 <DT><A HREF="#lbAF">ERRORS</A><DD>
 <DT><A HREF="#lbAG">CONFORMING TO</A><DD>
 <DT><A HREF="#lbAH">NOTES</A><DD>
-<DT><A HREF="#lbAI">SEE ALSO</A><DD>
+<DL>
+<DT><A HREF="#lbAI">C library/kernel differences</A><DD>
+</DL>
+<DT><A HREF="#lbAJ">SEE ALSO</A><DD>
 </DL>
 <HR>
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:44:12 GMT, April 20, 2020
+Time: 03:44:44 GMT, April 20, 2020
 </BODY>
 </HTML>

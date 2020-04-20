@@ -26,13 +26,13 @@ the source, must acknowledge the copyright and author of this work.
 <HTML><HEAD><TITLE>Man page of MPROTECT</TITLE>
 </HEAD><BODY>
 <H1>MPROTECT</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2015-07-23<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2016-12-12<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
 <H2>NAME</H2>
 
-mprotect - set protection on a region of memory
+mprotect, pkey_mprotect - set protection on a region of memory
 <A NAME="lbAC">&nbsp;</A>
 <H2>SYNOPSIS</H2>
 
@@ -40,6 +40,7 @@ mprotect - set protection on a region of memory
 <B>#include &lt;<A HREF="file:///usr/include/sys/mman.h">sys/mman.h</A>&gt;</B>
 
 <B>int mprotect(void *</B><I>addr</I><B>, size_t </B><I>len</I><B>, int </B><I>prot</I><B>);</B>
+<B>int pkey_mprotect(void *</B><I>addr</I><B>, size_t </B><I>len</I><B>, int </B><I>prot</I><B>, int </B><I>pkey</I><B>);</B>
 </PRE>
 
 <A NAME="lbAD">&nbsp;</A>
@@ -47,7 +48,7 @@ mprotect - set protection on a region of memory
 
 <B>mprotect</B>()
 
-changes protection for the calling process's memory page(s)
+changes the access protections for the calling process's memory pages
 containing any part of the address range in the
 interval [<I>addr</I>,&nbsp;<I>addr</I>+<I>len</I>-1].
 <I>addr</I>
@@ -55,7 +56,7 @@ interval [<I>addr</I>,&nbsp;<I>addr</I>+<I>len</I>-1].
 must be aligned to a page boundary.
 <P>
 If the calling process tries to access memory in a manner
-that violates the protection, then the kernel generates a
+that violates the protections, then the kernel generates a
 <B>SIGSEGV</B>
 
 signal for the process.
@@ -63,7 +64,7 @@ signal for the process.
 
 <I>prot</I>
 
-is either
+is a combination of the following access flags:
 <B>PROT_NONE</B>
 
 or a bitwise-or of the other values in the following list:
@@ -84,15 +85,102 @@ The memory can be modified.
 
 <DD>
 The memory can be executed.
+<DT><B>PROT_SEM</B> (since Linux 2.5.7)
+
+<DD>
+The memory can be used for atomic operations.
+This flag was introduced as part of the
+<B><A HREF="../man2/futex.2.html">futex</A></B>(2)
+
+implementation (in order to guarantee the ability to perform atomic
+operations required by commands such as
+<B>FUTEX_WAIT</B>),
+
+but is not currently used in on any architecture.
+<DT><B>PROT_SAO</B> (since Linux 2.6.26)
+
+<DD>
+
+
+The memory should have strong access ordering.
+This feature is specific to
+the PowerPC architecture
+(version 2.06 of the architecture specification adds the SAO CPU feature,
+and it is available on POWER 7 or PowerPC A2, for example).
 </DL>
+<P>
+
+Additionally (since Linux 2.6.0),
+<I>prot</I>
+
+can have one of the following flags set:
+<DL COMPACT>
+<DT>
+<DD>
+
+
+
+<B>PROT_GROWSUP</B>
+
+Apply the protection mode up to the end of a mapping
+that grows upwards.
+(Such mappings are created for the stack area on
+architectures---for example, HP-PARISC---that
+have an upwardly growing stack.)
+
+
+
+
+<DT><B>PROT_GROWSDOWN</B>
+
+<DD>
+Apply the protection mode down to the beginning of a mapping
+that grows downward
+(which should be a stack segment or a segment mapped with the
+<B>MAP_GROWSDOWN</B>
+
+flag set).
+</DL>
+<P>
+
+Like
+<B>mprotect</B>(),
+
+<B>pkey_mprotect</B>()
+
+changes the protection on the pages specified by
+<I>addr</I>
+
+and
+<I>len</I>.
+
+The
+<I>pkey</I>
+
+argument specifies the protection key (see
+<B><A HREF="../man7/pkeys.7.html">pkeys</A></B>(7))
+
+to assign to the memory.
+The protection key must be allocated with
+<B><A HREF="../man2/pkey_alloc.2.html">pkey_alloc</A></B>(2)
+
+before it is passed to
+<B>pkey_mprotect</B>().
+
+For an example of the use of this system call, see
+<B><A HREF="../man7/pkeys.7.html">pkeys</A></B>(7).
+
 <A NAME="lbAE">&nbsp;</A>
 <H2>RETURN VALUE</H2>
 
 On success,
 <B>mprotect</B>()
 
-returns zero.
-On error, -1 is returned, and
+and
+<B>pkey_mprotect</B>()
+
+return zero.
+On error, these system calls return -1, and
 <I>errno</I>
 
 is set appropriately.
@@ -118,7 +206,42 @@ to mark it
 <DD>
 <I>addr</I> is not a valid pointer,
 or not a multiple of the system page size.
+<DT><B>EINVAL</B>
 
+<DD>
+(<B>pkey_mprotect</B>())
+
+<I>pkey</I> has not been allocated with
+<B><A HREF="../man2/pkey_alloc.2.html">pkey_alloc</A></B>(2)
+
+<DT><B>EINVAL</B>
+
+<DD>
+Both
+<B>PROT_GROWSUP</B>
+
+and
+<B>PROT_GROWSDOWN</B>
+
+were specified in
+<I>prot</I>.
+
+<DT><B>EINVAL</B>
+
+<DD>
+Invalid flags specified in
+<I>prot</I>.
+
+<DT><B>EINVAL</B>
+
+<DD>
+(PowerPC architecture)
+<B>PROT_SAO</B>
+
+was specified in
+<I>prot</I>,
+
+but SAO hardware feature is not available.
 <DT><B>ENOMEM</B>
 
 <DD>
@@ -154,7 +277,16 @@ would result in three mappings:
 two read/write mappings at each end and a read-only mapping in the middle.)
 </DL>
 <A NAME="lbAG">&nbsp;</A>
+<H2>VERSIONS</H2>
+
+<B>pkey_mprotect</B>()
+
+first appeared in Linux 4.9.
+Glibc support is not yet available.
+<A NAME="lbAH">&nbsp;</A>
 <H2>CONFORMING TO</H2>
+
+<B>mprotect</B>():
 
 POSIX.1-2001, POSIX.1-2008, SVr4.
 
@@ -166,7 +298,11 @@ is unspecified if it is applied to a region of memory that
 was not obtained via
 <B><A HREF="../man2/mmap.2.html">mmap</A></B>(2).
 
-<A NAME="lbAH">&nbsp;</A>
+<P>
+<B>pkey_mprotect</B>()
+
+is a nonportable Linux extension.
+<A NAME="lbAI">&nbsp;</A>
 <H2>NOTES</H2>
 
 On Linux, it is always permissible to call
@@ -174,7 +310,7 @@ On Linux, it is always permissible to call
 
 on any address in a process's address space (except for the
 kernel vsyscall area).
-In particular it can be used
+In particular, it can be used
 to change existing code mappings to be writable.
 <P>
 Whether
@@ -215,13 +351,48 @@ has been set, and must not allow any access if
 <B>PROT_NONE</B>
 
 has been set.
-<A NAME="lbAI">&nbsp;</A>
+<P>
+Applications should be careful when mixing use of
+<B>mprotect</B>()
+
+and
+<B>pkey_mprotect</B>().
+
+On x86, when
+<B>mprotect</B>()
+
+is used with
+<I>prot</I>
+
+set to
+<B>PROT_EXEC</B>
+
+a pkey is may be allocated and set on the memory implicitly
+by the kernel, but only when the pkey was 0 previously.
+<P>
+On systems that do not support protection keys in hardware,
+<B>pkey_mprotect</B>()
+
+may still be used, but
+<I>pkey</I>
+
+must be set to 0.
+When called this way, the operation of
+<B>pkey_mprotect</B>()
+
+is equivalent to
+<B>mprotect</B>().
+
+<A NAME="lbAJ">&nbsp;</A>
 <H2>EXAMPLE</H2>
 
 
 <P>
 
-The program below allocates four pages of memory, makes the third
+The program below demonstrates the use of
+<B>mprotect</B>().
+
+The program allocates four pages of memory, makes the third
 of these pages read-only, and then executes a loop that walks upward
 through the allocated region modifying bytes.
 <P>
@@ -236,7 +407,7 @@ Got SIGSEGV at address: 0x804e000
 </PRE>
 
 
-<A NAME="lbAJ">&nbsp;</A>
+<A NAME="lbAK">&nbsp;</A>
 <H3>Program source</H3>
 
 
@@ -300,12 +471,14 @@ main(int argc, char *argv[])
 }
 </PRE>
 
-<A NAME="lbAK">&nbsp;</A>
+<A NAME="lbAL">&nbsp;</A>
 <H2>SEE ALSO</H2>
 
 <B><A HREF="../man2/mmap.2.html">mmap</A></B>(2),
 
-<B><A HREF="../man3/sysconf.3.html">sysconf</A></B>(3)
+<B><A HREF="../man3/sysconf.3.html">sysconf</A></B>(3),
+
+<B><A HREF="../man7/pkeys.7.html">pkeys</A></B>(7)
 
 <P>
 
@@ -317,18 +490,19 @@ main(int argc, char *argv[])
 <DT><A HREF="#lbAD">DESCRIPTION</A><DD>
 <DT><A HREF="#lbAE">RETURN VALUE</A><DD>
 <DT><A HREF="#lbAF">ERRORS</A><DD>
-<DT><A HREF="#lbAG">CONFORMING TO</A><DD>
-<DT><A HREF="#lbAH">NOTES</A><DD>
-<DT><A HREF="#lbAI">EXAMPLE</A><DD>
+<DT><A HREF="#lbAG">VERSIONS</A><DD>
+<DT><A HREF="#lbAH">CONFORMING TO</A><DD>
+<DT><A HREF="#lbAI">NOTES</A><DD>
+<DT><A HREF="#lbAJ">EXAMPLE</A><DD>
 <DL>
-<DT><A HREF="#lbAJ">Program source</A><DD>
+<DT><A HREF="#lbAK">Program source</A><DD>
 </DL>
-<DT><A HREF="#lbAK">SEE ALSO</A><DD>
+<DT><A HREF="#lbAL">SEE ALSO</A><DD>
 </DL>
 <HR>
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:44:11 GMT, April 20, 2020
+Time: 03:44:44 GMT, April 20, 2020
 </BODY>
 </HTML>

@@ -103,6 +103,12 @@ call was interrupted by a signal; see
 <DD>
 An I/O error occurred.
 </DL>
+<P>
+
+See NOTES for a discussion of why
+<B>close</B>()
+
+should not be retried after an error.
 <A NAME="lbAG">&nbsp;</A>
 <H2>CONFORMING TO</H2>
 
@@ -110,32 +116,6 @@ POSIX.1-2001, POSIX.1-2008, SVr4, 4.3BSD.
 
 <A NAME="lbAH">&nbsp;</A>
 <H2>NOTES</H2>
-
-Not checking the return value of
-<B>close</B>()
-
-is a common but nevertheless
-serious programming error.
-It is quite possible that errors on a
-previous
-<B><A HREF="../man2/write.2.html">write</A></B>(2)
-
-operation are first reported at the final
-<B>close</B>().
-
-Not checking the return value when closing the file may lead to
-silent loss of data.
-This can especially be observed with NFS
-and with disk quota.
-Note that the return value should be used only for diagnostics.
-In particular
-<B>close</B>()
-
-should not be retried after an
-<B>EINTR</B>
-
-since this may cause a reused file descriptor from another thread to be closed.
-<P>
 
 A successful close does not guarantee that the data has been successfully
 saved to disk, as the kernel uses the buffer cache to defer writes.
@@ -171,7 +151,145 @@ that may cause unintended side effects.
 
 
 
+
 <A NAME="lbAI">&nbsp;</A>
+<H3>Dealing with error returns from close()</H3>
+
+A careful programmer will check the return value of
+<B>close</B>(),
+
+since it is quite possible that errors on a previous
+<B><A HREF="../man2/write.2.html">write</A></B>(2)
+
+operation are reported only on the final
+<B>close</B>()
+
+that releases the open file description.
+Failing to check the return value when closing a file may lead to
+<I>silent</I>
+
+loss of data.
+This can especially be observed with NFS and with disk quota.
+<P>
+Note, however, that a failure return should be used only for
+diagnostic purposes (i.e., a warning to the application that there
+may still be I/O pending or there may have been failed I/O)
+or remedial purposes
+(e.g., writing the file once more or creating a backup).
+<P>
+Retrying the
+<B>close</B>()
+
+after a failure return is the wrong thing to do,
+
+
+
+
+
+
+
+since this may cause a reused file descriptor
+from another thread to be closed.
+This can occur because the Linux kernel
+<I>always</I>
+
+releases the file descriptor early in the close
+operation, freeing it for reuse;
+the steps that may return an error,
+
+such as flushing data to the filesystem or device,
+occur only later in the close operation.
+<P>
+Many other implementations similarly always close the file descriptor
+
+
+(except in the case of
+<B>EBADF</B>,
+
+meaning that the file descriptor was invalid)
+even if they subsequently report an error on return from
+<B>close</B>().
+
+POSIX.1 is currently silent on this point,
+but there are plans to mandate this behavior in the next major release
+
+of the standard
+<P>
+A careful programmer who wants to know about I/O errors may precede
+<B>close</B>()
+
+with a call to
+<B><A HREF="../man2/fsync.2.html">fsync</A></B>(2).
+
+<P>
+The
+<B>EINTR</B>
+
+error is a somewhat special case.
+Regarding the
+<B>EINTR</B>
+
+error, POSIX.1-2013 says:
+<P>
+<DL COMPACT><DT><DD>
+If
+<B>close</B>()
+
+is interrupted by a signal that is to be caught, it shall return -1 with
+<I>errno</I>
+
+set to
+<B>EINTR</B>
+
+and the state of
+<I>fildes</I>
+
+is unspecified.
+</DL>
+
+<P>
+This permits the behavior that occurs on Linux and
+many other implementations, where,
+as with other errors that may be reported by
+<B>close</B>(),
+
+the file descriptor is guaranteed to be closed.
+However, it also permits another possibility:
+that the implementation returns an
+<B>EINTR</B>
+
+error and keeps the file descriptor open.
+(According to its documentation, HP-UX's
+<B>close</B>()
+
+does this.)
+The caller must then once more use
+<B>close</B>()
+
+to close the file descriptor, to avoid file descriptor leaks.
+This divergence in implementation behaviors provides
+a difficult hurdle for portable applications, since on many implementations,
+<B>close</B>()
+
+must not be called again after an
+<B>EINTR</B>
+
+error, and on at least one,
+<B>close</B>()
+
+must be called again.
+There are plans to address this conundrum for
+the next major release of the POSIX.1 standard.
+
+
+
+
+
+
+
+
+<P>
+<A NAME="lbAJ">&nbsp;</A>
 <H2>SEE ALSO</H2>
 
 <B><A HREF="../man2/fcntl.2.html">fcntl</A></B>(2),
@@ -198,12 +316,15 @@ that may cause unintended side effects.
 <DT><A HREF="#lbAF">ERRORS</A><DD>
 <DT><A HREF="#lbAG">CONFORMING TO</A><DD>
 <DT><A HREF="#lbAH">NOTES</A><DD>
-<DT><A HREF="#lbAI">SEE ALSO</A><DD>
+<DL>
+<DT><A HREF="#lbAI">Dealing with error returns from close()</A><DD>
+</DL>
+<DT><A HREF="#lbAJ">SEE ALSO</A><DD>
 </DL>
 <HR>
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:44:10 GMT, April 20, 2020
+Time: 03:44:42 GMT, April 20, 2020
 </BODY>
 </HTML>
