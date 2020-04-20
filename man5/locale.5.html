@@ -22,7 +22,7 @@ License along with this manual; if not, see
 <HTML><HEAD><TITLE>Man page of LOCALE</TITLE>
 </HEAD><BODY>
 <H1>LOCALE</H1>
-Section: Linux User Manual (5)<BR>Updated: 2014-03-18<BR><A HREF="#index">Index</A>
+Section: Linux User Manual (5)<BR>Updated: 2014-05-23<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -238,12 +238,18 @@ followed by the two-letter abbreviation of the language (ISO 639).
 <DT><I>lang_term</I>
 
 <DD>
-followed by the three-letter abbreviation of the language (ISO 639-2).
+followed by the three-letter abbreviation of the language (ISO 639-2/T).
 <DT><I>lang_lib</I>
 
 <DD>
-followed by the three-letter abbreviation of the language for
-library use (ISO 639-2).
+followed by the three-letter abbreviation of the language for library
+use (ISO 639-2/B).
+Applications should in general prefer
+<I>lang_term</I>
+
+over
+<I>lang_lib</I>.
+
 </DL>
 <P>
 
@@ -566,17 +572,17 @@ in the first column.
 The following keywords are allowed:
 
 
-
-
-
-
 <DL COMPACT>
 <DT><I>collating-element</I>
 
 <DD>
+followed by the definition of a collating-element symbol
+representing a multicharacter collating element.
 <DT><I>collating-symbol</I>
 
 <DD>
+followed by the definition of a collating symbol
+that can be used in collation order statements.
 </DL>
 <P>
 
@@ -585,9 +591,6 @@ The order-definition starts with a line:
 <DT><I>order_start</I>
 
 <DD>
-</DL>
-<P>
-
 followed by a list of keywords chosen from
 <B>forward</B>,
 
@@ -598,24 +601,13 @@ or
 
 The order definition consists of lines that describe the order
 and is terminated with the keyword
-<DL COMPACT>
-<DT><I>order_end</I>.
+<I>order_end</I>.
 
-<DD>
+
+
+
+
 </DL>
-<P>
-
-For more details see the sources in
-<I>/usr/lib/nls/src</I>
-
-notably the examples
-<B>POSIX</B>,
-
-<B>Example</B>
-
-and
-<B>Example2</B>.
-
 <P>
 
 The
@@ -836,8 +828,12 @@ when formatting monetary quantities.
 <DT><I>mon_grouping</I>
 
 <DD>
-followed by a string that describes the formatting of numeric
-quantities.
+followed by a sequence of integers separated by semicolons that
+describe the formatting of monetary quantities.
+See
+<I>grouping</I>
+
+below for details.
 <DT><I>positive_sign</I>
 
 <DD>
@@ -1079,7 +1075,13 @@ The definition starts with the string
 
 in the first column.
 <P>
-The following keywords are allowed:
+Various keywords are allowed, but only
+<I>name_fmt</I>
+
+is mandatory.
+Other keywords are needed only if there is common convention to
+use the corresponding salutation in this locale.
+The allowed keywords are as follows:
 <DL COMPACT>
 <DT><I>name_fmt</I>
 
@@ -1181,8 +1183,17 @@ when formatting numeric quantities.
 <DT><I>grouping</I>
 
 <DD>
-followed by a string that describes the formatting of numeric
-quantities.
+followed by a sequence of integers separated by semicolons that
+describe the formatting of numeric quantities.
+<DT><DD>
+Each integer specifies the number of digits in a group.
+The first integer defines the size of the group immediately
+to the left of the decimal delimiter.
+Subsequent integers define succeeding groups to the
+left of the previous group.
+If the last integer is not -1, then the size of the previous group
+(if any) is repeatedly used for the remainder of the digits.
+If the last integer is -1, then no further grouping is performed.
 </DL>
 <P>
 
@@ -1322,29 +1333,31 @@ followed by a list of month names.
 <DT><I>am_pm</I>
 
 <DD>
-The appropriate representation of the
+followed by the appropriate representation of the
 <B>am</B>
 
 and
 <B>pm</B>
 
 strings.
+This should be defined only for locales using AM/PM convention.
 <DT><I>d_t_fmt</I>
 
 <DD>
-The appropriate date and time format.
+followed by the appropriate date and time format.
 <DT><I>d_fmt</I>
 
 <DD>
-The appropriate date format.
+followed by the appropriate date format.
 <DT><I>t_fmt</I>
 
 <DD>
-The appropriate time format.
+followed by the appropriate time format.
 <DT><I>t_fmt_ampm</I>
 
 <DD>
-The appropriate time format when using 12h clock format.
+followed by the appropriate time format when using 12h clock format.
+This should be defined only for locales using the AM/PM convention.
 <DT><I>week</I>
 
 <DD>
@@ -1376,7 +1389,7 @@ list.
 <DT><I>first_weekday</I> (since glibc 2.2)
 
 <DD>
-Number of the first day from the
+followed by the number of the first day from the
 <I>day</I>
 
 list to be shown in calendar applications.
@@ -1391,10 +1404,13 @@ list item.
 <DT><I>first_workday</I> (since glibc 2.2)
 
 <DD>
-Number of the first working day from the
+followed by the number of the first working day from the
 <I>day</I>
 
 list.
+The default value is
+<B>2</B>.
+
 <DT><I>cal_direction</I>
 
 <DD>
@@ -1436,15 +1452,20 @@ definition ends with the string
 <A NAME="lbAR">&nbsp;</A>
 <H2>FILES</H2>
 
-/usr/lib/locale/
---- database for the current locale setting of that category
-<BR>
+<DL COMPACT>
+<DT><I>/usr/lib/locale/locale-archive</I>
 
-/usr/lib/nls/charmap/* --- charmap-files
+<DD>
+Usual default locale archive location.
+<DT><I>/usr/share/i18n/locales</I>
+
+<DD>
+Usual default path for locale definition files.
+</DL>
 <A NAME="lbAS">&nbsp;</A>
 <H2>CONFORMING TO</H2>
 
-POSIX.2, ISO/IEC 14652.
+POSIX.2, ISO/IEC TR 14652.
 <A NAME="lbAT">&nbsp;</A>
 <H2>BUGS</H2>
 
@@ -1502,6 +1523,6 @@ This manual page isn't complete.
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:29:52 GMT, April 20, 2020
+Time: 03:30:28 GMT, April 20, 2020
 </BODY>
 </HTML>

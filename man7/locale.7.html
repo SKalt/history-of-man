@@ -26,7 +26,7 @@ the source, must acknowledge the copyright and authors of this work.
 <HTML><HEAD><TITLE>Man page of LOCALE</TITLE>
 </HEAD><BODY>
 <H1>LOCALE</H1>
-Section: Linux Programmer's Manual (7)<BR>Updated: 2014-03-18<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (7)<BR>Updated: 2014-05-28<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -100,7 +100,11 @@ which return strings such as &quot;Deutschland&quot; and &quot;Deutsch&quot;
 <DT><B>LC_COLLATE</B>
 
 <DD>
-This is used to change the behavior of the functions
+This category governs the collation rules used for
+sorting and regular expressions,
+including character equivalence classes and
+multicharacter collating elements.
+This locale category changes the behavior of the functions
 <B><A HREF="../man3/strcoll.3.html">strcoll</A></B>(3)
 
 and
@@ -112,7 +116,10 @@ the German sharp s is sorted as &quot;ss&quot;.
 <DT><B>LC_CTYPE</B>
 
 <DD>
-This changes the behavior of the character handling and
+This category determines the interpretation of byte sequences as characters
+(e.g., single versus multibyte characters), character classifications
+(e.g., alphabetic or digit), and the behavior of character classes.
+It changes the behavior of the character handling and
 classification functions, such as
 <B><A HREF="../man3/isupper.3.html">isupper</A></B>(3)
 
@@ -149,8 +156,10 @@ and &quot;USA&quot;.
 <DT><B>LC_MONETARY</B>
 
 <DD>
+This category determines the formatting used for
+monetary-related numeric values.
 This changes the information returned by
-<B><A HREF="../man3/localeconv.3.html">localeconv</A></B>(3)
+<B><A HREF="../man3/localeconv.3.html">localeconv</A></B>(3),
 
 which describes the way numbers are usually printed, with details such
 as decimal point versus decimal comma.
@@ -161,9 +170,9 @@ used by the function
 <DT><B>LC_MESSAGES</B>
 
 <DD>
-This changes the language messages are displayed in and what an affirmative or
-negative answer looks like.
-The GNU C-library contains the
+This category affects the language in which messages are displayed
+and what an affirmative or negative answer looks like.
+The GNU C library contains the
 <B><A HREF="../man3/gettext.3.html">gettext</A></B>(3),
 
 <B><A HREF="../man3/ngettext.3.html">ngettext</A></B>(3),
@@ -179,6 +188,9 @@ functions also obey the environment variable
 (containing a colon-separated list of locales)
 if the category is set to a valid locale other than
 <B>&quot;C&quot;</B>.
+
+This category also affects the behavior of
+<B><A HREF="../man3/catopen.3.html">catopen</A></B>(3).
 
 <DT><B>LC_MEASUREMENT</B> (GNU extension, since glibc 2.2)
 
@@ -217,13 +229,19 @@ elements, which return strings such as &quot;Herr&quot; and &quot;Frau&quot;
 <DT><B>LC_NUMERIC</B>
 
 <DD>
-This changes the information used by the
+This category determines the formatting rules used for nonmonetary
+numeric values---for example,
+the thousands separator and the radix character
+(a period in most English-speaking countries,
+but a comma in many other regions).
+It affects functions such as
 <B><A HREF="../man3/printf.3.html">printf</A></B>(3)
 
-and
-<B><A HREF="../man3/scanf.3.html">scanf</A></B>(3)
+<B><A HREF="../man3/scanf.3.html">scanf</A></B>(3),
 
-family of functions, when they are advised to use the locale settings.
+and
+<B><A HREF="../man3/strtod.3.html">strtod</A></B>(3).
+
 This information can also be read with the
 <B><A HREF="../man3/localeconv.3.html">localeconv</A></B>(3)
 
@@ -266,12 +284,15 @@ which returns a string such as &quot;49&quot; (for Germany).
 <DT><B>LC_TIME</B>
 
 <DD>
-This changes the behavior of the
+This category governs the formatting used for date and time values.
+For example, most of Europe uses a 24-hour clock versus the
+12-hour clock used in the United States.
+the setting of this category affects the behavior of functions such as
 <B><A HREF="../man3/strftime.3.html">strftime</A></B>(3)
 
-function to display the current time in a locally acceptable form; for
-example, most of Europe uses a 24-hour clock versus the
-12-hour clock used in the United States.
+and
+<B><A HREF="../man3/strptime.3.html">strptime</A></B>(3).
+
 <DT><B>LC_ALL</B>
 
 <DD>
@@ -396,12 +417,53 @@ that extend the traditional locale-dependent APIs (e.g.,
 to allow the specification of a locale object that should apply when
 executing the function.
 <A NAME="lbAF">&nbsp;</A>
+<H2>ENVIRONMENT</H2>
+
+The following environment variable is used by
+<B><A HREF="../man3/newlocale.3.html">newlocale</A></B>(3)
+
+and
+<B><A HREF="../man3/setlocale.3.html">setlocale</A></B>(3),
+
+and thus affects all localized programs:
+<DL COMPACT>
+<DT><B>LOCPATH</B>
+
+<DD>
+A list of pathnames, separated by colons (':'),
+that should be used to find locale data.
+If this variable is set, only the individual locale data files from
+<I>LOCPATH</I>
+
+and the system default locale data path are used; any available locale
+archives are not used. The individual locale data files are searched
+under subdirectories which depend on the currently used locale. For
+example, when
+<I>en_GB.UTF-8</I>
+
+is used for a category, the following subdirectories are searched for,
+in this order:
+<I>en_GB.UTF-8</I>,
+
+<I>en_GB.utf8</I>,
+
+<I>en_GB</I>,
+
+<I>en.UTF-8</I>,
+
+<I>en.utf8</I>,
+
+and
+<I>en</I>.
+
+</DL>
+<A NAME="lbAG">&nbsp;</A>
 <H2>CONFORMING TO</H2>
 
 POSIX.1-2001.
 
 
-<A NAME="lbAG">&nbsp;</A>
+<A NAME="lbAH">&nbsp;</A>
 <H2>SEE ALSO</H2>
 
 <B><A HREF="../man1/locale.1.html">locale</A></B>(1),
@@ -451,13 +513,14 @@ POSIX.1-2001.
 <DL>
 <DT><A HREF="#lbAE">POSIX.1-2008 extensions to the locale API</A><DD>
 </DL>
-<DT><A HREF="#lbAF">CONFORMING TO</A><DD>
-<DT><A HREF="#lbAG">SEE ALSO</A><DD>
+<DT><A HREF="#lbAF">ENVIRONMENT</A><DD>
+<DT><A HREF="#lbAG">CONFORMING TO</A><DD>
+<DT><A HREF="#lbAH">SEE ALSO</A><DD>
 </DL>
 <HR>
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:29:52 GMT, April 20, 2020
+Time: 03:30:29 GMT, April 20, 2020
 </BODY>
 </HTML>
