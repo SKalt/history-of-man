@@ -5,7 +5,7 @@ Copyright (C) 1998 Andries Brouwer (aeb@cwi.nl)
 <HTML><HEAD><TITLE>Man page of PRCTL</TITLE>
 </HEAD><BODY>
 <H1>PRCTL</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2008-07-15<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2008-07-16<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -32,79 +32,6 @@ is called with a first argument describing what to do
 arguments with a significance depending on the first one.
 The first argument can be:
 <DL COMPACT>
-<DT><B>PR_SET_PDEATHSIG</B> (since Linux 2.1.57)
-
-<DD>
-Set the parent process death signal
-of the calling process to <I>arg2</I> (either a signal value
-in the range 1..maxsig, or 0 to clear).
-This is the signal that the calling process will get when its
-parent dies.
-This value is cleared for the child of a
-<B><A HREF="../man2/fork.2.html">fork</A></B>(2).
-
-<DT><B>PR_GET_PDEATHSIG</B> (since Linux 2.3.15)
-
-<DD>
-Return the current value of the parent process death signal,
-in the location pointed to by
-<I>(int&nbsp;*) arg2</I>.
-
-<DT><B>PR_SET_DUMPABLE</B> (since Linux 2.3.20)
-
-<DD>
-Set the state of the flag determining whether core dumps are produced
-for this process upon delivery of a signal whose default behavior is
-to produce a core dump.
-(Normally this flag is set for a process by default, but it is cleared
-when a set-user-ID or set-group-ID program is executed and also by
-various system calls that manipulate process UIDs and GIDs).
-In kernels up to and including 2.6.12,
-<I>arg2</I>
-
-must be either 0 (process is not dumpable) or 1 (process is dumpable).
-Between kernels 2.6.13 and 2.6.17, the value 2 was also permitted,
-which caused any binary which normally would not be dumped
-to be dumped readable by root only;
-for security reasons, this feature has been removed.
-
-
-
-
-(See also the description of
-<I>/proc/sys/fs/suid_dumpable</I>
-
-in
-<B><A HREF="../man5/proc.5.html">proc</A></B>(5).)
-
-<DT><B>PR_GET_DUMPABLE</B> (since Linux 2.3.20)
-
-<DD>
-Return (as the function result) the current state of the calling
-process's dumpable flag.
-
-
-
-<DT><B>PR_SET_KEEPCAPS</B> (since Linux 2.2.18)
-
-<DD>
-Set the state of the thread's &quot;keep capabilities&quot; flag,
-which determines whether the threads's effective and permitted
-capability sets are cleared when a change is made to the threads's user IDs
-such that the threads's real UID, effective UID, and saved set-user-ID
-all become non-zero when at least one of them previously had the value 0.
-(By default, these credential sets are cleared).
-<I>arg2</I>
-
-must be either 0 (capabilities are cleared) or 1 (capabilities are kept).
-This value will be reset to 0 on subsequent calls to
-<B><A HREF="../man2/execve.2.html">execve</A></B>(2).
-
-<DT><B>PR_GET_KEEPCAPS</B> (since Linux 2.2.18)
-
-<DD>
-Return (as the function result) the current state of the calling threads's
-&quot;keep capabilities&quot; flag.
 <DT><B>PR_CAPBSET_READ</B> (since Linux 2.6.25)
 
 <DD>
@@ -157,95 +84,41 @@ does not represent a valid capability; or
 
 if file capabilities are not enabled in the kernel,
 in which case bounding sets are not supported.
-<DT><B>PR_SET_SECUREBITS</B> (since Linux 2.6.26)
+<DT><B>PR_SET_DUMPABLE</B> (since Linux 2.3.20)
 
 <DD>
-Set the &quot;securebits&quot; flags of the calling thread to the value supplied in
-<I>arg2</I>.
-
-See
-<B><A HREF="../man7/capabilities.7.html">capabilities</A></B>(7).
-
-<DT><B>PR_GET_SECUREBITS</B> (since Linux 2.6.26)
-
-<DD>
-Return (as the function result)
-the &quot;securebits&quot; flags of the calling thread.
-See
-<B><A HREF="../man7/capabilities.7.html">capabilities</A></B>(7).
-
-<DT><B>PR_SET_TSC</B> (since Linux 2.6.26, x86 only)
-
-<DD>
-Set the state of the flag determining whether the timestamp counter
-can be read by the process.
-Pass
-<B>PR_TSC_ENABLE</B>
-
-to
+Set the state of the flag determining whether core dumps are produced
+for this process upon delivery of a signal whose default behavior is
+to produce a core dump.
+(Normally this flag is set for a process by default, but it is cleared
+when a set-user-ID or set-group-ID program is executed and also by
+various system calls that manipulate process UIDs and GIDs).
+In kernels up to and including 2.6.12,
 <I>arg2</I>
 
-to allow it to be read, or
-<B>PR_TSC_SIGSEGV</B>
-
-to generate a
-<B>SIGSEGV</B>
-
-when the process tries to read the timestamp counter.
-<DT><B>PR_GET_TSC</B> (since Linux 2.6.26, x86 only)
-
-<DD>
-Return the state of the flag determining whether the timestamp counter
-can be read,
-in the location pointed to by
-<I>(int&nbsp;*) arg2</I>.
-
-<DT><B>PR_SET_TIMING</B> (since Linux 2.6.0-test4)
-
-<DD>
-Set whether to use (normal, traditional) statistical process timing or
-accurate timestamp based process timing, by passing
-<B>PR_TIMING_STATISTICAL</B>
-
-
-or
-<B>PR_TIMING_TIMESTAMP</B>
-
-
-to <I>arg2</I>.
-<B>PR_TIMING_TIMESTAMP</B>
-
-is not currently implemented
-(attempting to set this mode will yield the error
-<B>EINVAL</B>).
+must be either 0 (process is not dumpable) or 1 (process is dumpable).
+Between kernels 2.6.13 and 2.6.17, the value 2 was also permitted,
+which caused any binary which normally would not be dumped
+to be dumped readable by root only;
+for security reasons, this feature has been removed.
 
 
 
 
-<DT><B>PR_GET_TIMING</B> (since Linux 2.6.0-test4)
+(See also the description of
+<I>/proc/sys/fs/suid_dumpable</I>
+
+in
+<B><A HREF="../man5/proc.5.html">proc</A></B>(5).)
+
+<DT><B>PR_GET_DUMPABLE</B> (since Linux 2.3.20)
 
 <DD>
-Return (as the function result) which process timing method is currently
-in use.
-<DT><B>PR_SET_NAME</B> (since Linux 2.6.9)
+Return (as the function result) the current state of the calling
+process's dumpable flag.
 
-<DD>
-Set the process name for the calling process,
-using the value in the location pointed to by
-<I>(char&nbsp;*) arg2</I>.
 
-The name can be up to 16 bytes long,
 
-and should be null terminated if it contains fewer bytes.
-<DT><B>PR_GET_NAME</B> (since Linux 2.6.11)
-
-<DD>
-Return the process name for the calling process,
-in the buffer pointed to by
-<I>(char&nbsp;*) arg2</I>.
-
-The buffer should allow space for up to 16 bytes;
-the returned string will be null terminated if it is shorter than that.
 <DT><B>PR_SET_ENDIAN</B> (since Linux 2.6.18, PowerPC only)
 
 <DD>
@@ -265,28 +138,6 @@ or
 <DD>
 Return the endian-ness of the calling process,
 in the location pointed to by
-<I>(int&nbsp;*) arg2</I>.
-
-<DT><B>PR_SET_UNALIGN</B>
-
-<DD>
-(Only on: ia64, since Linux 2.3.48; parisc, since Linux 2.6.15;
-PowerPC, since Linux 2.6.18; Alpha, since Linux 2.6.22)
-Set unaligned access control bits to <I>arg2</I>.
-Pass
-<B>PR_UNALIGN_NOPRINT</B> to silently fix up unaligned user accesses,
-or <B>PR_UNALIGN_SIGBUS</B> to generate
-<B>SIGBUS</B>
-
-on unaligned user access.
-<DT><B>PR_GET_UNALIGN</B>
-
-<DD>
-(see
-<B>PR_SET_UNALIGN</B>
-
-for information on versions and architectures)
-Return unaligned access control bits, in the location pointed to by
 <I>(int&nbsp;*) arg2</I>.
 
 <DT><B>PR_SET_FPEMU</B> (since Linux 2.4.18, 2.5.9, only on ia64)
@@ -310,11 +161,11 @@ in the location pointed to by
 <DD>
 Set floating-point exception mode to <I>arg2</I>.
 Pass <B>PR_FP_EXC_SW_ENABLE</B> to use FPEXC for FP exception enables,
-<B>PR_FP_EXC_DIV</B> for floating point divide by zero,
-<B>PR_FP_EXC_OVF</B> for floating point overflow,
-<B>PR_FP_EXC_UND</B> for floating point underflow,
-<B>PR_FP_EXC_RES</B> for floating point inexact result,
-<B>PR_FP_EXC_INV</B> for floating point invalid operation,
+<B>PR_FP_EXC_DIV</B> for floating-point divide by zero,
+<B>PR_FP_EXC_OVF</B> for floating-point overflow,
+<B>PR_FP_EXC_UND</B> for floating-point underflow,
+<B>PR_FP_EXC_RES</B> for floating-point inexact result,
+<B>PR_FP_EXC_INV</B> for floating-point invalid operation,
 <B>PR_FP_EXC_DISABLED</B> for FP exceptions disabled,
 <B>PR_FP_EXC_NONRECOV</B> for async non-recoverable exception mode,
 <B>PR_FP_EXC_ASYNC</B> for async recoverable exception mode,
@@ -323,6 +174,63 @@ Pass <B>PR_FP_EXC_SW_ENABLE</B> to use FPEXC for FP exception enables,
 
 <DD>
 Return floating-point exception mode,
+in the location pointed to by
+<I>(int&nbsp;*) arg2</I>.
+
+<DT><B>PR_SET_KEEPCAPS</B> (since Linux 2.2.18)
+
+<DD>
+Set the state of the thread's &quot;keep capabilities&quot; flag,
+which determines whether the threads's effective and permitted
+capability sets are cleared when a change is made to the threads's user IDs
+such that the threads's real UID, effective UID, and saved set-user-ID
+all become non-zero when at least one of them previously had the value 0.
+(By default, these credential sets are cleared).
+<I>arg2</I>
+
+must be either 0 (capabilities are cleared) or 1 (capabilities are kept).
+This value will be reset to 0 on subsequent calls to
+<B><A HREF="../man2/execve.2.html">execve</A></B>(2).
+
+<DT><B>PR_GET_KEEPCAPS</B> (since Linux 2.2.18)
+
+<DD>
+Return (as the function result) the current state of the calling threads's
+&quot;keep capabilities&quot; flag.
+<DT><B>PR_SET_NAME</B> (since Linux 2.6.9)
+
+<DD>
+Set the process name for the calling process,
+using the value in the location pointed to by
+<I>(char&nbsp;*) arg2</I>.
+
+The name can be up to 16 bytes long,
+
+and should be null terminated if it contains fewer bytes.
+<DT><B>PR_GET_NAME</B> (since Linux 2.6.11)
+
+<DD>
+Return the process name for the calling process,
+in the buffer pointed to by
+<I>(char&nbsp;*) arg2</I>.
+
+The buffer should allow space for up to 16 bytes;
+the returned string will be null terminated if it is shorter than that.
+<DT><B>PR_SET_PDEATHSIG</B> (since Linux 2.1.57)
+
+<DD>
+Set the parent process death signal
+of the calling process to <I>arg2</I> (either a signal value
+in the range 1..maxsig, or 0 to clear).
+This is the signal that the calling process will get when its
+parent dies.
+This value is cleared for the child of a
+<B><A HREF="../man2/fork.2.html">fork</A></B>(2).
+
+<DT><B>PR_GET_PDEATHSIG</B> (since Linux 2.3.15)
+
+<DD>
+Return the current value of the parent process death signal,
 in the location pointed to by
 <I>(int&nbsp;*) arg2</I>.
 
@@ -373,6 +281,98 @@ call will cause a
 signal to be sent to the process.
 This operation is only available
 if the kernel is configured with CONFIG_SECCOMP enabled.
+<DT><B>PR_SET_SECUREBITS</B> (since Linux 2.6.26)
+
+<DD>
+Set the &quot;securebits&quot; flags of the calling thread to the value supplied in
+<I>arg2</I>.
+
+See
+<B><A HREF="../man7/capabilities.7.html">capabilities</A></B>(7).
+
+<DT><B>PR_GET_SECUREBITS</B> (since Linux 2.6.26)
+
+<DD>
+Return (as the function result)
+the &quot;securebits&quot; flags of the calling thread.
+See
+<B><A HREF="../man7/capabilities.7.html">capabilities</A></B>(7).
+
+<DT><B>PR_SET_TIMING</B> (since Linux 2.6.0-test4)
+
+<DD>
+Set whether to use (normal, traditional) statistical process timing or
+accurate timestamp based process timing, by passing
+<B>PR_TIMING_STATISTICAL</B>
+
+
+or
+<B>PR_TIMING_TIMESTAMP</B>
+
+
+to <I>arg2</I>.
+<B>PR_TIMING_TIMESTAMP</B>
+
+is not currently implemented
+(attempting to set this mode will yield the error
+<B>EINVAL</B>).
+
+
+
+
+<DT><B>PR_GET_TIMING</B> (since Linux 2.6.0-test4)
+
+<DD>
+Return (as the function result) which process timing method is currently
+in use.
+<DT><B>PR_SET_TSC</B> (since Linux 2.6.26, x86 only)
+
+<DD>
+Set the state of the flag determining whether the timestamp counter
+can be read by the process.
+Pass
+<B>PR_TSC_ENABLE</B>
+
+to
+<I>arg2</I>
+
+to allow it to be read, or
+<B>PR_TSC_SIGSEGV</B>
+
+to generate a
+<B>SIGSEGV</B>
+
+when the process tries to read the timestamp counter.
+<DT><B>PR_GET_TSC</B> (since Linux 2.6.26, x86 only)
+
+<DD>
+Return the state of the flag determining whether the timestamp counter
+can be read,
+in the location pointed to by
+<I>(int&nbsp;*) arg2</I>.
+
+<DT><B>PR_SET_UNALIGN</B>
+
+<DD>
+(Only on: ia64, since Linux 2.3.48; parisc, since Linux 2.6.15;
+PowerPC, since Linux 2.6.18; Alpha, since Linux 2.6.22)
+Set unaligned access control bits to <I>arg2</I>.
+Pass
+<B>PR_UNALIGN_NOPRINT</B> to silently fix up unaligned user accesses,
+or <B>PR_UNALIGN_SIGBUS</B> to generate
+<B>SIGBUS</B>
+
+on unaligned user access.
+<DT><B>PR_GET_UNALIGN</B>
+
+<DD>
+(see
+<B>PR_SET_UNALIGN</B>
+
+for information on versions and architectures)
+Return unaligned access control bits, in the location pointed to by
+<I>(int&nbsp;*) arg2</I>.
+
 </DL>
 <A NAME="lbAE">&nbsp;</A>
 <H2>RETURN VALUE</H2>
@@ -542,6 +542,6 @@ get or set the maximum stack size, etc.
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 02:55:09 GMT, April 20, 2020
+Time: 02:55:38 GMT, April 20, 2020
 </BODY>
 </HTML>
