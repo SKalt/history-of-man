@@ -5,7 +5,7 @@ Copyright (c) 1993 by Thomas Koenig (ig25@rz.uni-karlsruhe.de)
 <HTML><HEAD><TITLE>Man page of GETCWD</TITLE>
 </HEAD><BODY>
 <H1>GETCWD</H1>
-Section: Linux Programmer's Manual (3)<BR>Updated: 2007-07-26<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2008-08-08<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -43,6 +43,14 @@ _GNU_SOURCE
 <A NAME="lbAD">&nbsp;</A>
 <H2>DESCRIPTION</H2>
 
+These functions return a null-terminated string containing an
+absolute pathname that is the current working directory of
+the calling process.
+The pathname is returned as the function result and via the argument
+<I>buf</I>,
+
+if present.
+<P>
 The
 <B>getcwd</B>()
 
@@ -55,10 +63,11 @@ which is of length
 
 <P>
 
-If the current absolute pathname would require a buffer longer than
+If the length of the absolute pathname of the current working directory,
+including the terminating null byte, exceeds
 <I>size</I>
 
-elements, NULL is returned, and
+bytes, NULL is returned, and
 <I>errno</I>
 
 is set to
@@ -66,15 +75,6 @@ is set to
 
 an application should check for this error, and allocate a larger
 buffer if necessary.
-<P>
-
-If
-<I>buf</I>
-
-is NULL, the behavior of
-<B>getcwd</B>()
-
-is undefined.
 <P>
 
 As an extension to the POSIX.1-2001 standard, Linux (libc4, libc5, glibc)
@@ -86,7 +86,7 @@ allocates the buffer dynamically using
 if
 <I>buf</I>
 
-is NULL on call.
+is NULL.
 In this case, the allocated buffer has the length
 <I>size</I>
 
@@ -97,25 +97,29 @@ is zero, when
 <I>buf</I>
 
 is allocated as big as necessary.
-It is possible (and, indeed,
-advisable) to
+The caller should
 <B><A HREF="../man3/free.3.html">free</A></B>(3)
 
-the buffers if they have been obtained this way.
+the returned buffer.
 <P>
-<B>get_current_dir_name</B>(),
+<B>get_current_dir_name</B>()
 
 will
 <B><A HREF="../man3/malloc.3.html">malloc</A></B>(3)
 
-an array big enough to hold the current directory name.
+an array big enough to hold the absolute pathname of
+the current working directory.
 If the environment
 variable
 <B>PWD</B>
 
 is set, and its value is correct, then that value will be returned.
+The caller should
+<B><A HREF="../man3/free.3.html">free</A></B>(3)
+
+the returned buffer.
 <P>
-<B>getwd</B>(),
+<B>getwd</B>()
 
 does not
 <B><A HREF="../man3/malloc.3.html">malloc</A></B>(3)
@@ -128,17 +132,23 @@ argument should be a pointer to an array at least
 <B>PATH_MAX</B>
 
 bytes long.
-<B>getwd</B>()
-
-does only return the first
+If the length of the absolute pathname of the current working directory,
+including the terminating null byte, exceeds
 <B>PATH_MAX</B>
 
-bytes of the actual pathname.
-Note that
+bytes, NULL is returned, and
+<I>errno</I>
+
+is set to
+<B>ENAMETOOLONG</B>.
+
+(Note that on some systems,
 <B>PATH_MAX</B>
 
-need not be a compile-time constant; it may depend on the file system
-and may even be unlimited.
+may not not be a compile-time constant;
+furthermore, its value may depend on the file system, see
+<B><A HREF="../man3/pathconf.3.html">pathconf</A></B>(3).)
+
 For portability and security reasons, use of
 <B>getwd</B>()
 
@@ -146,18 +156,26 @@ is deprecated.
 <A NAME="lbAE">&nbsp;</A>
 <H2>RETURN VALUE</H2>
 
-NULL
-on failure with
+On success, these functions return a pointer to a string containing
+the pathname of the current working directory.
+In the case
+<B>getcwd</B>()
+
+and
+<B>getwd</B>()
+
+this is the same value as
+<I>buf.</I>
+
+<P>
+On failure, these functions return NULL, and
 <I>errno</I>
 
-set accordingly, and
-<I>buf</I>
-
-on success.
+is set to indicate the error.
 The contents of the array pointed to by
 <I>buf</I>
 
-is undefined on error.
+are undefined on error.
 <A NAME="lbAF">&nbsp;</A>
 <H2>ERRORS</H2>
 
@@ -182,6 +200,19 @@ argument is zero and
 <I>buf</I>
 
 is not a null pointer.
+<DT>EINVAL<DD>
+<B>getwd</B>():
+
+<I>buf</I>
+
+is NULL.
+<DT>ENAMETOOLONG<DD>
+<B>getwd</B>():
+
+The size of the null-terminated absolute pathname string exceeds
+<B>PATH_MAX</B>
+
+bytes.
 <DT><B>ENOENT</B>
 
 <DD>
@@ -192,7 +223,8 @@ The current working directory has been unlinked.
 The
 <I>size</I>
 
-argument is less than the length of the working directory name.
+argument is less than the length of the the absolute pathname of the
+working directory, including the terminating null byte.
 You need to allocate a bigger array and try again.
 </DL>
 <A NAME="lbAG">&nbsp;</A>
@@ -201,10 +233,25 @@ You need to allocate a bigger array and try again.
 <B>getcwd</B>()
 
 conforms to POSIX.1-2001.
+Note however that POSIX.1-2001 leaves the behavior of
+<B>getcwd</B>()
+
+unspecified if
+<I>buf</I>
+
+is NULL.
+<P>
 <B>getwd</B>()
 
 is present in POSIX.1-2001, but marked LEGACY.
+POSIX.1-2008 removes the specification of
+<B>getwd</B>().
 
+POSIX.1-2001
+does not define any errors for
+<B>getwd</B>().
+
+<P>
 <B>get_current_dir_name</B>()
 
 is a GNU extension.
@@ -267,6 +314,6 @@ many file descriptors are available, especially on platforms other than Linux.
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 02:56:18 GMT, April 20, 2020
+Time: 02:56:53 GMT, April 20, 2020
 </BODY>
 </HTML>

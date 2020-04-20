@@ -5,7 +5,7 @@ Copyright (c) 2000 Andries Brouwer (aeb@cwi.nl)
 <HTML><HEAD><TITLE>Man page of FENV</TITLE>
 </HEAD><BODY>
 <H1>FENV</H1>
-Section: Linux Programmer's Manual (3)<BR>Updated: 2008-08-05<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2008-08-11<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -178,16 +178,25 @@ set in the argument
 
 and for which the corresponding exception is currently set.
 <A NAME="lbAG">&nbsp;</A>
-<H3>Rounding</H3>
+<H3>Rounding mode</H3>
 
+The rounding  mode determines how the result of floating-point operation
+is treated when the result cannot be exactly represented in the signifcand.
+Various rounding modes may be provided:
+round to nearest (the default),
+round up (towards positive infinity),
+round down (towards negative infinity), and
+round towards zero.
+<P>
 Each of the macros
-<B>FE_DOWNWARD</B>,
-
 <B>FE_TONEAREST</B>,
 
-<B>FE_TOWARDZERO</B>,
+<B>FE_UPWARD</B>,
 
-<B>FE_UPWARD</B>
+<B>FE_DOWNWARD</B>,
+
+and
+<B>FE_TOWARDZERO</B>
 
 is defined when the implementation supports getting and setting
 the corresponding rounding direction.
@@ -205,6 +214,40 @@ The
 
 function sets the rounding mode as specified by its argument
 and returns zero when it was successful.
+<P>
+C99 and POSIX.1-2008 specify an identifier,
+<B>FLT_ROUNDS</B>,
+
+defined in
+<I>&lt;<A HREF="file:///usr/include/float.h">float.h</A>&gt;</I>,
+
+which indicates the implementation-defined rounding
+behavior for floating-point addition.
+This identifier has one of the following values:
+<DL COMPACT>
+<DT>-1<DD>
+The rounding mode is not determinable.
+<DT>0<DD>
+Rounding is towards 0.
+<DT>1<DD>
+Rounding is towards nearest number.
+<DT>2<DD>
+Rounding is towards positive infinity.
+<DT>3<DD>
+Rounding is towards negative infinity.
+</DL>
+<P>
+
+Other values represent machine-dependent, non-standard rounding modes.
+<P>
+
+The value of
+<B>FLT_ROUNDS</B>
+
+should reflect the current rounding mode as set by
+<B>fesetround</B>()
+
+(but see BUGS).
 <A NAME="lbAH">&nbsp;</A>
 <H3>Floating-point environment</H3>
 
@@ -284,13 +327,17 @@ These functions return zero on success and non-zero if an error occurred.
 
 
 <A NAME="lbAJ">&nbsp;</A>
+<H2>VERSIONS</H2>
+
+These functions first appeared in glibc in version 2.1.
+<A NAME="lbAK">&nbsp;</A>
 <H2>CONFORMING TO</H2>
 
 IEC 60559 (IEC 559:1989), ANSI/IEEE 854, C99, POSIX.1-2001.
-<A NAME="lbAK">&nbsp;</A>
+<A NAME="lbAL">&nbsp;</A>
 <H2>NOTES</H2>
 
-<A NAME="lbAL">&nbsp;</A>
+<A NAME="lbAM">&nbsp;</A>
 <H3>Glibc Notes</H3>
 
 If possible, the GNU C Library defines a macro
@@ -348,7 +395,23 @@ The
 <B>fegetexcept</B>()
 
 function returns the set of all currently enabled exceptions.
-<A NAME="lbAM">&nbsp;</A>
+<A NAME="lbAN">&nbsp;</A>
+<H2>BUGS</H2>
+
+C99 specifies that the value of
+<B>FLT_ROUNDS</B>
+
+should reflect changes to the current rounding mode, as set by
+<B>fesetround</B>().
+
+Currently,
+
+this does not occur:
+<B>FLT_ROUNDS</B>
+
+always has the value 1.
+
+<A NAME="lbAO">&nbsp;</A>
 <H2>SEE ALSO</H2>
 
 <B><A HREF="../man7/feature_test_macros.7.html">feature_test_macros</A></B>(7),
@@ -366,21 +429,23 @@ function returns the set of all currently enabled exceptions.
 <DL>
 <DT><A HREF="#lbAE">Exceptions</A><DD>
 <DT><A HREF="#lbAF">Exception handling</A><DD>
-<DT><A HREF="#lbAG">Rounding</A><DD>
+<DT><A HREF="#lbAG">Rounding mode</A><DD>
 <DT><A HREF="#lbAH">Floating-point environment</A><DD>
 </DL>
 <DT><A HREF="#lbAI">RETURN VALUE</A><DD>
-<DT><A HREF="#lbAJ">CONFORMING TO</A><DD>
-<DT><A HREF="#lbAK">NOTES</A><DD>
+<DT><A HREF="#lbAJ">VERSIONS</A><DD>
+<DT><A HREF="#lbAK">CONFORMING TO</A><DD>
+<DT><A HREF="#lbAL">NOTES</A><DD>
 <DL>
-<DT><A HREF="#lbAL">Glibc Notes</A><DD>
+<DT><A HREF="#lbAM">Glibc Notes</A><DD>
 </DL>
-<DT><A HREF="#lbAM">SEE ALSO</A><DD>
+<DT><A HREF="#lbAN">BUGS</A><DD>
+<DT><A HREF="#lbAO">SEE ALSO</A><DD>
 </DL>
 <HR>
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 02:56:18 GMT, April 20, 2020
+Time: 02:56:53 GMT, April 20, 2020
 </BODY>
 </HTML>
