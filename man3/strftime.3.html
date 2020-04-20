@@ -5,7 +5,7 @@ Copyright 1993 David Metcalfe (david@prism.demon.co.uk)
 <HTML><HEAD><TITLE>Man page of STRFTIME</TITLE>
 </HEAD><BODY>
 <H1>STRFTIME</H1>
-Section: Linux Programmer's Manual (3)<BR>Updated: 1999-03-29<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2005-11-23<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -31,8 +31,14 @@ result in the character array <I>s</I> of size <I>max</I>.
 <P>
 
 Ordinary characters placed in the format string are copied to <I>s</I>
-without conversion.  Conversion specifiers are introduced by a `%'
-character, and are replaced in <I>s</I> as follows:
+without conversion.  
+<I>Conversion specifications</I>
+
+are introduced by a `%'
+character, and terminated by a 
+<I>conversion specifier character</I>,
+
+and are replaced in <I>s</I> as follows:
 <DL COMPACT>
 <DT><B>%a</B>
 
@@ -232,10 +238,13 @@ The time zone or name or abbreviation.
 <DT><B>%+</B>
 
 <DD>
+Nov 05 -- Not in Linux/glibc, but is in some BSDs (according to 
+their man pages)
 The date and time in 
 <B><A HREF="../man1/date.1.html">date</A>(1)</B>
 
 format. (TZ)
+(Not supported in glibc2.)
 <DT><B>%%</B>
 
 <DD>
@@ -243,9 +252,11 @@ A literal `%' character.
 </DL>
 <P>
 
-Some conversion specifiers can be modified by preceding them
-by the E or O modifier to indicate that an alternative format
-should be used.
+Some conversion specifications can be modified by preceding the 
+conversion specifier character by the E or O 
+<I>modifier </I>
+
+to indicate that an alternative format should be used.
 If the alternative format or specification does not exist for
 the current locale, the behaviour will be as if the unmodified
 conversion specification were used. (SU)
@@ -260,7 +271,6 @@ The broken-down time structure <I>tm</I> is defined in <I>&lt;<A HREF="file:///u
 See also
 <B><A HREF="../man3/ctime.3.html">ctime</A></B>(3).
 
-<P>
 <A NAME="lbAE">&nbsp;</A>
 <H2>RETURN VALUE</H2>
 
@@ -301,6 +311,56 @@ to allow for the theoretical possibility of a minute that
 included a double leap second
 (there never has been such a minute).
 <A NAME="lbAH">&nbsp;</A>
+<H2>GLIBC NOTES</H2>
+
+Glibc provides some extensions for conversion specifications.
+(These extensions are not specified in POSIX.1-2001, but a few other
+systems provide similar features.)
+
+Between the % character and the conversion specifier character, 
+an optional 
+<I>flag </I>
+
+and field
+<I>width </I>
+
+may be specified.  
+(These precede the E or O modifiers, if present.)
+<P>
+The following flag characters are permitted:
+<DL COMPACT>
+<DT><B>_</B>
+
+<DD>
+(underscore)
+Pad a numeric result string with spaces.
+<DT><B>- </B>
+
+<DD>
+(dash)
+Do not pad a numeric result string.
+<DT><B>0</B>
+
+<DD>
+Pad a numeric result string with zeros even if the conversion 
+specifier character uses space-padding by default.
+<DT><B>^</B>
+
+<DD>
+Convert alphabetic characters in result string to upper case.
+<DT><B>#</B>
+
+<DD>
+Swap the case of the result string.  
+(This flag only works with certain conversion specifier characters, 
+and of these, it is only really useful with %Z).
+</DL>
+<P>
+
+An optional decimal width specifier may follow the (possibly absent) flag.
+If the natural size of the field is smaller than this width,
+then the result string is padded (on the left) to the specified width.
+<A NAME="lbAI">&nbsp;</A>
 <H2>BUGS</H2>
 
 Some buggy versions of gcc complain about the use of %c:
@@ -321,7 +381,59 @@ const struct tm *tm) {
 }
 </DL>
 
-<A NAME="lbAI">&nbsp;</A>
+<A NAME="lbAJ">&nbsp;</A>
+<H2>EXAMPLE</H2>
+
+The program below can be used to experiment with 
+<B>strftime</B>().
+
+<PRE>
+
+#include &lt;<A HREF="file:///usr/include/time.h">time.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/stdlib.h">stdlib.h</A>&gt;
+
+int
+main(int argc, char *argv[])
+{
+    char outstr[200];
+    time_t t;
+    struct tm *tmp;
+
+    t = time(NULL);
+    tmp = localtime(&amp;t);
+    if (tmp == NULL) {
+        perror(&quot;localtime&quot;);
+        exit(EXIT_FAILURE);
+    }
+
+    if (strftime(outstr, sizeof(outstr), argv[1], tmp) == 0) {
+        fprintf(stderr, &quot;strftime returned 0&quot;);
+        exit(EXIT_FAILURE);
+    }
+
+    printf(&quot;Result string is \&quot;%s\&quot;\n&quot;, outstr);
+    exit(EXIT_SUCCESS);
+} /* main */
+</PRE>
+
+<P>
+
+Some examples of the result string produced by the glibc implementation of
+<B>strftime</B>()
+
+are as follows:
+<PRE>
+
+$ ./a.out &quot;%m&quot;
+Result string is &quot;11&quot;
+$ ./a.out &quot;%5m&quot;
+Result string is &quot;00011&quot;
+$ ./a.out &quot;%_5m&quot;
+Result string is &quot;   11&quot;
+</PRE>
+
+<A NAME="lbAK">&nbsp;</A>
 <H2>SEE ALSO</H2>
 
 <B><A HREF="../man1/date.1.html">date</A></B>(1),
@@ -347,13 +459,15 @@ const struct tm *tm) {
 <DT><A HREF="#lbAE">RETURN VALUE</A><DD>
 <DT><A HREF="#lbAF">ENVIRONMENT</A><DD>
 <DT><A HREF="#lbAG">CONFORMING TO</A><DD>
-<DT><A HREF="#lbAH">BUGS</A><DD>
-<DT><A HREF="#lbAI">SEE ALSO</A><DD>
+<DT><A HREF="#lbAH">GLIBC NOTES</A><DD>
+<DT><A HREF="#lbAI">BUGS</A><DD>
+<DT><A HREF="#lbAJ">EXAMPLE</A><DD>
+<DT><A HREF="#lbAK">SEE ALSO</A><DD>
 </DL>
 <HR>
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 02:18:13 GMT, April 20, 2020
+Time: 02:18:39 GMT, April 20, 2020
 </BODY>
 </HTML>
