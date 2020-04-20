@@ -5,7 +5,7 @@ Copyright (c) 2002 by Michael Kerrisk &lt;mtk.manpages@gmail.com&gt;
 <HTML><HEAD><TITLE>Man page of CAPABILITIES</TITLE>
 </HEAD><BODY>
 <H1>CAPABILITIES</H1>
-Section: Linux Programmer's Manual (7)<BR>Updated: 2009-08-03<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (7)<BR>Updated: 2010-01-31<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -23,7 +23,7 @@ processes (whose effective user ID is 0, referred to as superuser or root),
 and
 <I>unprivileged</I>
 
-processes (whose effective UID is non-zero).
+processes (whose effective UID is nonzero).
 Privileged processes bypass all kernel permission checks,
 while unprivileged processes are subject to full permission
 checking based on the process's credentials
@@ -530,8 +530,7 @@ For all privileged operations,
 the kernel must check whether the thread has the required
 capability in its effective set.
 <DT>2.<DD>
-The kernel must provide
-system calls allowing a thread's capability sets to
+The kernel must provide system calls allowing a thread's capability sets to
 be changed and retrieved.
 <DT>3.<DD>
 The file system must support attaching capabilities to an executable file,
@@ -560,7 +559,7 @@ may be added to the inheritable set by a thread that does not have the
 capability in its effective set.
 <P>
 If a thread drops a capability from its permitted set,
-it can never re-acquire that capability (unless it
+it can never reacquire that capability (unless it
 <B><A HREF="../man2/execve.2.html">execve</A></B>(2)s
 
 either a set-user-ID-root program, or
@@ -896,7 +895,7 @@ back into the thread's inherited set in the future.
 <H3>Effect of User ID Changes on Capabilities</H3>
 
 To preserve the traditional semantics for transitions between
-0 and non-zero user IDs,
+0 and nonzero user IDs,
 the kernel makes the following changes to a thread's capability
 sets on changes to the thread's real, effective, saved set,
 and file system user IDs (using
@@ -909,17 +908,17 @@ or similar):
 <DT>1.<DD>
 If one or more of the real, effective or saved set user IDs
 was previously 0, and as a result of the UID changes all of these IDs
-have a non-zero value,
+have a nonzero value,
 then all capabilities are cleared from the permitted and effective
 capability sets.
 <DT>2.<DD>
-If the effective user ID is changed from 0 to non-zero,
+If the effective user ID is changed from 0 to nonzero,
 then all capabilities are cleared from the effective set.
 <DT>3.<DD>
-If the effective user ID is changed from non-zero to 0,
+If the effective user ID is changed from nonzero to 0,
 then the permitted set is copied to the effective set.
 <DT>4.<DD>
-If the file system user ID is changed from 0 to non-zero (see
+If the file system user ID is changed from 0 to nonzero (see
 <B><A HREF="../man2/setfsuid.2.html">setfsuid</A></B>(2))
 
 then the following capabilities are cleared from the effective set:
@@ -942,7 +941,7 @@ and
 <B>CAP_MKNOD</B>
 
 (since Linux 2.2.30).
-If the file system UID is changed from non-zero to 0,
+If the file system UID is changed from nonzero to 0,
 then any of these capabilities that are enabled in the permitted set
 are enabled in the effective set.
 </DL>
@@ -950,7 +949,7 @@ are enabled in the effective set.
 
 If a thread that has a 0 value for one or more of its user IDs wants
 to prevent its permitted capability set being cleared when it resets
-all of its user IDs to non-zero values, it can do so using the
+all of its user IDs to nonzero values, it can do so using the
 <B><A HREF="../man2/prctl.2.html">prctl</A></B>(2)
 
 <B>PR_SET_KEEPCAPS</B>
@@ -1014,11 +1013,11 @@ flags that can be used to disable special handling of capabilities for UID 0
 
 These flags are as follows:
 <DL COMPACT>
-<DT><B>SECURE_KEEP_CAPS</B>
+<DT><B>SECBIT_KEEP_CAPS</B>
 
 <DD>
 Setting this flag allows a thread that has one or more 0 UIDs to retain
-its capabilities when it switches all of its UIDs to a non-zero value.
+its capabilities when it switches all of its UIDs to a nonzero value.
 If this flag is not set,
 then such a UID switch causes the thread to lose all capabilities.
 This flag is always cleared on an
@@ -1030,16 +1029,16 @@ This flag is always cleared on an
 <B>PR_SET_KEEPCAPS</B>
 
 operation.)
-<DT><B>SECURE_NO_SETUID_FIXUP</B>
+<DT><B>SECBIT_NO_SETUID_FIXUP</B>
 
 <DD>
 Setting this flag stops the kernel from adjusting  capability sets when
 the threads's effective and file system UIDs are switched between
-zero and non-zero values.
+zero and nonzero values.
 (See the subsection
 <I>Effect of User ID Changes on Capabilities</I>.)
 
-<DT><B>SECURE_NOROOT</B>
+<DT><B>SECBIT_NOROOT</B>
 
 <DD>
 If this bit is set, then the kernel does not grant capabilities
@@ -1058,12 +1057,12 @@ Setting any of the &quot;locked&quot; flags is irreversible,
 and has the effect of preventing further changes to the
 corresponding &quot;base&quot; flag.
 The locked flags are:
-<B>SECURE_KEEP_CAPS_LOCKED</B>,
+<B>SECBIT_KEEP_CAPS_LOCKED</B>,
 
-<B>SECURE_NO_SETUID_FIXUP_LOCKED</B>,
+<B>SECBIT_NO_SETUID_FIXUP_LOCKED</B>,
 
 and
-<B>SECURE_NOROOT_LOCKED</B>.
+<B>SECBIT_NOROOT_LOCKED</B>.
 
 <P>
 
@@ -1104,11 +1103,11 @@ is by executing a program with associated file capabilities:
 <PRE>
 
 prctl(PR_SET_SECUREBITS,
-        1 &lt;&lt; SECURE_KEEP_CAPS_LOCKED |
-        1 &lt;&lt; SECURE_NO_SETUID_FIXUP |
-        1 &lt;&lt; SECURE_NO_SETUID_FIXUP_LOCKED |
-        1 &lt;&lt; SECURE_NOROOT |
-        1 &lt;&lt; SECURE_NOROOT_LOCKED);
+        SECBIT_KEEP_CAPS_LOCKED |
+        SECBIT_NO_SETUID_FIXUP |
+        SECBIT_NO_SETUID_FIXUP_LOCKED |
+        SECBIT_NOROOT |
+        SECBIT_NOROOT_LOCKED);
 </PRE>
 
 
@@ -1251,6 +1250,6 @@ in the kernel source
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:05:39 GMT, April 20, 2020
+Time: 03:06:08 GMT, April 20, 2020
 </BODY>
 </HTML>

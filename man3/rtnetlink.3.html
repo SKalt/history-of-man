@@ -4,7 +4,7 @@
 <HTML><HEAD><TITLE>Man page of RTNETLINK</TITLE>
 </HEAD><BODY>
 <H1>RTNETLINK</H1>
-Section: Linux Programmer's Manual (3)<BR>Updated: 2008-08-08<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2010-01-11<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -76,7 +76,7 @@ When not true then you must assume there are no more attributes in the
 message, even if
 <I>attrlen</I>
 
-is non-zero.
+is nonzero.
 <P>
 
 <B>RTA_DATA(</B><I>rta</I><B>)</B>
@@ -120,7 +120,7 @@ bytes of data.
 <A NAME="lbAE">&nbsp;</A>
 <H2>CONFORMING TO</H2>
 
-These macros are non-standard Linux extensions.
+These macros are nonstandard Linux extensions.
 <A NAME="lbAF">&nbsp;</A>
 <H2>BUGS</H2>
 
@@ -132,6 +132,9 @@ This manual page is incomplete.
 <P>
 Creating a rtnetlink message to set the MTU of a device:
 <PRE>
+    #include &lt;<A HREF="file:///usr/include/linux/rtnetlink.h">linux/rtnetlink.h</A>&gt;
+
+    ...
 
     struct {
         struct nlmsghdr  nh;
@@ -147,18 +150,18 @@ Creating a rtnetlink message to set the MTU of a device:
     memset(&amp;req, 0, sizeof(req));
     req.nh.nlmsg_len = NLMSG_LENGTH(sizeof(struct ifinfomsg));
     req.nh.nlmsg_flags = NLM_F_REQUEST;
-    req.nh.nlmsg_type = RTML_NEWLINK;
+    req.nh.nlmsg_type = RTM_NEWLINK;
     req.if.ifi_family = AF_UNSPEC;
     req.if.ifi_index = INTERFACE_INDEX;
     req.if.ifi_change = 0xffffffff; /* ???*/
     rta = (struct rtattr *)(((char *) &amp;req) +
-                                  NLMSG_ALIGN(n-&gt;nlmsg_len));
+                                  NLMSG_ALIGN(req.nh.nlmsg_len));
     rta-&gt;rta_type = IFLA_MTU;
     rta-&gt;rta_len = sizeof(unsigned int);
-    req.n.nlmsg_len = NLMSG_ALIGN(req.n.nlmsg_len) +
+    req.n.nlmsg_len = NLMSG_ALIGN(req.nh.nlmsg_len) +
                                   RTA_LENGTH(sizeof(mtu));
     memcpy(RTA_DATA(rta), &amp;mtu, sizeof(mtu));
-    send(rtnetlink_sk, &amp;req, req.n.nlmsg_len);
+    send(rtnetlink_sk, &amp;req, req.nh.nlmsg_len);
 </PRE>
 
 <A NAME="lbAH">&nbsp;</A>
@@ -187,6 +190,6 @@ Creating a rtnetlink message to set the MTU of a device:
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:05:35 GMT, April 20, 2020
+Time: 03:06:04 GMT, April 20, 2020
 </BODY>
 </HTML>

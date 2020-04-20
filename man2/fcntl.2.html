@@ -4,7 +4,7 @@
 <HTML><HEAD><TITLE>Man page of FCNTL</TITLE>
 </HEAD><BODY>
 <H1>FCNTL</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2009-07-25<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2009-10-17<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -533,7 +533,18 @@ See BUGS below.
 <A NAME="lbAJ">&nbsp;</A>
 <H3>Managing signals</H3>
 
-<B>F_GETOWN</B>, <B>F_SETOWN</B>, <B>F_GETSIG</B> and <B>F_SETSIG</B>
+<B>F_GETOWN</B>,
+
+<B>F_SETOWN</B>,
+
+<B>F_GETOWN_EX</B>,
+
+<B>F_SETOWN_EX</B>,
+
+<B>F_GETSIG</B>
+
+and
+<B>F_SETSIG</B>
 
 are used to manage I/O availability signals:
 <DL COMPACT>
@@ -643,7 +654,12 @@ would report the socket as having an &quot;exceptional condition&quot;.)
 
 
 <P>
-If a non-zero value is given to
+The following was true in 2.6.x kernels up to and including
+kernel 2.6.11:
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT><DD>
+If a nonzero value is given to
 <B>F_SETSIG</B>
 
 in a multithreaded process running with a threading library
@@ -691,20 +707,120 @@ depending on the value given to
 
 
 
-Note also that Linux imposes a limit on the
-number of real-time signals that may be queued to a
-process (see
-<B><A HREF="../man2/getrlimit.2.html">getrlimit</A></B>(2)
+</DL>
+</DL>
+
+<DT><DD>
+The above behavior was accidentally dropped in Linux 2.6.12,
+and won't be restored.
+From Linux 2.6.32 onwards, use
+<B>F_SETOWN_EX</B>
+
+to target
+<B>SIGIO</B>
 
 and
-<B><A HREF="../man7/signal.7.html">signal</A></B>(7))
+<B>SIGURG</B>
 
-and if this limit is reached, then the kernel reverts to
-delivering
-<B>SIGIO</B>,
+signals at a particular thread.
+<DT><B>F_GETOWN_EX</B> (struct f_owner_ex *) (since Linux 2.6.32)
 
-and this signal is delivered to the entire
-process rather than to a specific thread.
+<DD>
+Return the current file descriptor owner settings
+as defined by a previous
+<B>F_SETOWN_EX</B>
+
+operation.
+The information is returned in the structure pointed to by
+<I>arg</I>,
+
+which has the following form:
+<PRE>
+
+struct f_owner_ex {
+    int   type;
+    pid_t pid;
+};
+
+</PRE>
+
+The
+<I>type</I>
+
+field will have one of the values
+<B>F_OWNER_TID</B>,
+
+<B>F_OWNER_PID</B>,
+
+or
+<B>F_OWNER_PGRP</B>.
+
+The
+<I>pid</I>
+
+field is a positive integer representing a thread ID, process ID,
+or process group ID.
+See
+<B>F_SETOWN_EX</B>
+
+for more details.
+<DT><B>F_SETOWN_EX</B> (struct f_owner_ex *) (since Linux 2.6.32)
+
+<DD>
+This operation performs a similar task to
+<B>F_SETOWN</B>.
+
+It allows the caller to direct I/O availability signals
+to a specific thread, process, or process group.
+The caller specifies the target of signals via
+<I>arg</I>,
+
+which is a pointer to a
+<I>f_owner_ex</I>
+
+structure.
+The
+<I>type</I>
+
+field has one of the following values, which define how
+<I>pid</I>
+
+is interpreted:
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT><B>F_OWNER_TID</B>
+
+<DD>
+Send the signal to the thread whose thread ID
+(the value returned by a call to
+<B><A HREF="../man2/clone.2.html">clone</A></B>(2)
+
+or
+<B><A HREF="../man2/gettid.2.html">gettid</A></B>(2))
+
+is specified in
+<I>pid</I>.
+
+<DT><B>F_OWNER_PID</B>
+
+<DD>
+Send the signal to the process whose ID
+is specified in
+<I>pid</I>.
+
+<DT><B>F_OWNER_PGRP</B>
+
+<DD>
+Send the signal to the process group whose ID
+is specified in
+<I>pid</I>.
+
+(Note that, unlike with
+<B>F_SETOWN</B>,
+
+a process group ID is specified as a positive value here.)
+</DL>
+</DL>
 
 <DT><B>F_GETSIG</B> (<I>void</I>)
 
@@ -744,21 +860,21 @@ is the signal to send instead, and in this case additional info
 is available to the signal handler if installed with
 <B>SA_SIGINFO</B>.
 
-<P>
-Additionally, passing a non-zero value to
-<B>F_SETSIG</B>
 
-changes the signal recipient from a whole process to a specific thread
-within a process.
-See the description of
-<B>F_SETOWN</B>
 
-for more details.
+
+
+
+
+
+
+
+
 <P>
 By using
 <B>F_SETSIG</B>
 
-with a non-zero value, and setting
+with a nonzero value, and setting
 <B>SA_SIGINFO</B>
 
 for the
@@ -804,6 +920,22 @@ if
 <B>SA_SIGINFO</B>
 
 is set for the signal handler, as above.
+<P>
+Note that Linux imposes a limit on the
+number of real-time signals that may be queued to a
+process (see
+<B><A HREF="../man2/getrlimit.2.html">getrlimit</A></B>(2)
+
+and
+<B><A HREF="../man7/signal.7.html">signal</A></B>(7))
+
+and if this limit is reached, then the kernel reverts to
+delivering
+<B>SIGIO</B>,
+
+and this signal is delivered to the entire
+process rather than to a specific thread.
+
 </DL>
 <P>
 
@@ -825,7 +957,11 @@ The use of
 <B>F_SETOWN</B>
 
 is specific to BSD and Linux.
-<B>F_GETSIG</B>
+<B>F_GETOWN_EX</B>,
+
+<B>F_SETOWN_EX</B>,
+
+<B>F_GETSIG</B>,
 
 and
 <B>F_SETSIG</B>
@@ -1102,7 +1238,7 @@ The attributes of a file were changed (chown, chmod, utime[s]).
 feature test macro must be defined.)
 <P>
 Directory notifications are normally &quot;one-shot&quot;, and the application
-must re-register to receive further notifications.
+must reregister to receive further notifications.
 Alternatively, if
 <B>DN_MULTISHOT</B>
 
@@ -1333,6 +1469,10 @@ are specified in POSIX.1-2001.
 
 is specified in POSIX.1-2008.
 <P>
+<B>F_GETOWN_EX</B>,
+
+<B>F_SETOWN_EX</B>,
+
 <B>F_GETSIG</B>,
 
 <B>F_SETSIG</B>,
@@ -1400,6 +1540,13 @@ will be -1, and
 <I>errno</I>
 
 will contain the (positive) process group ID.
+The Linux-specific
+<B>F_SETOWN_EX</B>
+
+and
+<B>F_GETOWN_EX</B>
+
+operations avoid this problem.
 
 
 
@@ -1511,6 +1658,6 @@ is called
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:05:25 GMT, April 20, 2020
+Time: 03:05:54 GMT, April 20, 2020
 </BODY>
 </HTML>
