@@ -1,5 +1,5 @@
 <!--
-Copyright (C) 1995, Thomas K. Dyas &lt;tdyas@eden.rutgers.edu&gt;
+Copyright (C) 2008, 2014, Michael Kerrisk &lt;mtk.manpages@gmail.com&gt;
 %%%LICENSE_START(VERBATIM)
 Permission is granted to make and distribute verbatim copies of this
 manual provided the copyright notice and this permission notice are
@@ -26,7 +26,7 @@ the source, must acknowledge the copyright and authors of this work.
 <HTML><HEAD><TITLE>Man page of SIGRETURN</TITLE>
 </HEAD><BODY>
 <H1>SIGRETURN</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2013-07-30<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2014-12-31<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -36,32 +36,42 @@ sigreturn - return from signal handler and cleanup stack frame
 <A NAME="lbAC">&nbsp;</A>
 <H2>SYNOPSIS</H2>
 
-<B>int sigreturn(unsigned long </B><I>__unused</I><B>);</B>
+<B>int sigreturn(...);</B>
 
 <A NAME="lbAD">&nbsp;</A>
 <H2>DESCRIPTION</H2>
 
-When the Linux kernel creates the stack frame for a signal handler, a
-call to
-<B>sigreturn</B>()
+If the Linux kernel determines that an unblocked
+signal is pending for a process, then,
+at the next transition back to user mode in that process
+(e.g., upon return from a system call or
+when the process is rescheduled onto the CPU),
+it saves various pieces of process context
+(processor status word, registers, signal mask, and signal stack settings)
+into the user-space stack.
 
-is inserted into the stack frame so that upon
-return from the signal handler,
-<B>sigreturn</B>()
+<P>
+The kernel also arranges that, during the transition back to user mode,
+the signal handler is called, and that, upon return from the handler,
+control passes to a piece of user-space code commonly called
+the &quot;signal trampoline&quot;.
+The signal trampoline code in turn calls
+<B>sigreturn</B>().
 
-will be called.
 <P>
 This
 <B>sigreturn</B>()
 
 call undoes everything that was
-done---changing the process's signal mask, switching stacks (see
+done---changing the process's signal mask, switching signal stacks (see
 <B><A HREF="../man2/sigaltstack.2.html">sigaltstack</A></B>(2))---in 
 
-order to invoke the signal handler:
-it restores the process's signal mask, switches stacks,
-and restores the process's context (registers, processor flags),
-so that the process directly resumes execution
+order to invoke the signal handler.
+It restores the process's signal mask, switches stacks,
+and restores the process's context
+(processor flags and registers,
+including the stack pointer and instruction pointer),
+so that the process resumes execution
 at the point where it was interrupted by the signal.
 <A NAME="lbAE">&nbsp;</A>
 <H2>RETURN VALUE</H2>
@@ -70,35 +80,79 @@ at the point where it was interrupted by the signal.
 
 never returns.
 <A NAME="lbAF">&nbsp;</A>
-<H2>FILES</H2>
-
-/usr/src/linux/arch/i386/kernel/signal.c
-<BR>
-
-/usr/src/linux/arch/alpha/kernel/entry.S
-<A NAME="lbAG">&nbsp;</A>
 <H2>CONFORMING TO</H2>
 
+Many UNIX-type systems have a
 <B>sigreturn</B>()
 
-is specific to Linux and should not be used in programs intended to be
-portable.
-<A NAME="lbAH">&nbsp;</A>
+system call or near equivalent.
+However, this call is not specified in POSIX,
+and details of its behavior vary across systems.
+<A NAME="lbAG">&nbsp;</A>
 <H2>NOTES</H2>
 
-The
 <B>sigreturn</B>()
 
-call is used by the kernel to implement signal handlers.
+exists only to allow the implementation of signal handlers.
 It should
 <B>never</B>
 
 be called directly.
-Better yet, the specific use of the
-<I>__unused</I>
+Details of the arguments (if any) passed to
+<B>sigreturn</B>()
 
-argument varies depending on the architecture.
-<A NAME="lbAI">&nbsp;</A>
+vary depending on the architecture.
+<P>
+Once upon a time, UNIX systems placed the signal trampoline code
+onto the user stack.
+Nowadays, pages of the user stack are protected so as to
+disallow code execution.
+Thus, on contemporary Linux systems, depending on the architecture,
+the signal trampoline code lives either in the
+<B><A HREF="../man7/vdso.7.html">vdso</A></B>(7)
+
+or in the C library.
+In the latter case,
+
+
+the C library supplies the location of the trampoline code using the
+<I>sa_restorer</I>
+
+field of the
+<I>sigaction</I>
+
+structure that is passed to
+<B><A HREF="../man2/sigaction.2.html">sigaction</A></B>(2),
+
+and sets the
+<B>SA_RESTORER</B>
+
+flag in the
+<I>sa_flags</I>
+
+field.
+<P>
+The saved process context information is placed in a
+<I>ucontext_t</I>
+
+structure (see
+<I>&lt;<A HREF="file:///usr/include/sys/ucontext.h">sys/ucontext.h</A>&gt;</I>).
+
+That structure is visible within the signal handler
+as the third argument of a handler established with the
+<B>SA_SIGINFO</B>
+
+flag.
+<P>
+On some other UNIX systems,
+the operation of the signal trampoline differs a little.
+In particular, on some systems, upon transitioning back to user mode,
+the kernel passes control to the trampoline (rather than the signal handler),
+and the trampoline code calls the signal handler (and then calls
+<B>sigreturn</B>()
+
+once the handler returns).
+<A NAME="lbAH">&nbsp;</A>
 <H2>SEE ALSO</H2>
 
 <B><A HREF="../man2/kill.2.html">kill</A></B>(2),
@@ -108,6 +162,8 @@ argument varies depending on the architecture.
 <B><A HREF="../man2/sigaltstack.2.html">sigaltstack</A></B>(2),
 
 <B><A HREF="../man2/signal.2.html">signal</A></B>(2),
+
+<B><A HREF="../man3/getcontext.3.html">getcontext</A></B>(3),
 
 <B><A HREF="../man7/signal.7.html">signal</A></B>(7)
 
@@ -120,15 +176,14 @@ argument varies depending on the architecture.
 <DT><A HREF="#lbAC">SYNOPSIS</A><DD>
 <DT><A HREF="#lbAD">DESCRIPTION</A><DD>
 <DT><A HREF="#lbAE">RETURN VALUE</A><DD>
-<DT><A HREF="#lbAF">FILES</A><DD>
-<DT><A HREF="#lbAG">CONFORMING TO</A><DD>
-<DT><A HREF="#lbAH">NOTES</A><DD>
-<DT><A HREF="#lbAI">SEE ALSO</A><DD>
+<DT><A HREF="#lbAF">CONFORMING TO</A><DD>
+<DT><A HREF="#lbAG">NOTES</A><DD>
+<DT><A HREF="#lbAH">SEE ALSO</A><DD>
 </DL>
 <HR>
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:34:21 GMT, April 20, 2020
+Time: 03:34:53 GMT, April 20, 2020
 </BODY>
 </HTML>

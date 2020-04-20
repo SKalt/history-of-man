@@ -10,7 +10,7 @@ of the modification is added to the header.
 <HTML><HEAD><TITLE>Man page of CMSG</TITLE>
 </HEAD><BODY>
 <H1>CMSG</H1>
-Section: Linux Programmer's Manual (3)<BR>Updated: 2008-11-20<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2014-12-31<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -283,11 +283,16 @@ UNIX domain socket using
 struct msghdr msg = {0};
 struct cmsghdr *cmsg;
 int myfds[NUM_FD]; /* Contains the file descriptors to pass. */
-char buf[CMSG_SPACE(sizeof myfds)];  /* ancillary data buffer */
+union {
+    /* ancillary data buffer, wrapped in a union in order to ensure it is
+       suitably aligned */
+    char buf[CMSG_SPACE(sizeof myfds)];
+    struct cmsghdr align;
+} u;
 int *fdptr;
 
-msg.msg_control = buf;
-msg.msg_controllen = sizeof buf;
+msg.msg_control = u.buf;
+msg.msg_controllen = sizeof u.buf;
 cmsg = CMSG_FIRSTHDR(&amp;msg);
 cmsg-&gt;cmsg_level = SOL_SOCKET;
 cmsg-&gt;cmsg_type = SCM_RIGHTS;
@@ -327,6 +332,6 @@ RFC&nbsp;2292
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:34:24 GMT, April 20, 2020
+Time: 03:34:56 GMT, April 20, 2020
 </BODY>
 </HTML>

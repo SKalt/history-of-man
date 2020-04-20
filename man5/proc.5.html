@@ -25,7 +25,7 @@ License along with this manual; if not, see
 <HTML><HEAD><TITLE>Man page of PROC</TITLE>
 </HEAD><BODY>
 <H1>PROC</H1>
-Section: Linux Programmer's Manual (5)<BR>Updated: 2014-09-21<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (5)<BR>Updated: 2014-12-31<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -1462,7 +1462,7 @@ see the PF_* defines in the Linux kernel source file
 Details depend on the kernel version.
 <P>
 The format for this field was %lu before Linux 2.6.
-<DT>(1) <I>minflt</I> &nbsp;%lu<DD>
+<DT>(10) <I>minflt</I> &nbsp;%lu<DD>
 The number of minor faults the process has made which have not
 required loading a memory page from disk.
 <DT>(11) <I>cminflt</I> &nbsp;%lu<DD>
@@ -1749,6 +1749,7 @@ VmStk:        88 kB
 VmExe:       572 kB
 VmLib:      1708 kB
 VmPTE:        20 kB
+VmSwap:        0 kB
 Threads:        1
 SigQ:   0/3067
 SigPnd: 0000000000000000
@@ -1854,6 +1855,11 @@ Shared library code size.
 <I>VmPTE</I>:
 
 Page table entries size (since Linux 2.6.10).
+<DT>*<DD>
+<I>VmSwap</I>:
+
+
+Swapped-out virtual memory size (since Linux 2.6.34).
 <DT>*<DD>
 <I>Threads</I>:
 
@@ -3213,6 +3219,64 @@ Currently, type is always &quot;1&quot; (UNIX domain datagram sockets are
 not yet supported in the kernel).
 &quot;St&quot; is the internal state of the
 socket and Path is the bound path (if any) of the socket.
+<DT><I>/proc/net/netfilter/nfnetlink_queue</I>
+
+<DD>
+This file contains information about netfilter userspace queueing, if used.
+Each line represents a queue.  Queues that have not been subscribed to
+by userspace are not shown.
+<PRE>
+
+   1   4207     0  2 65535     0     0        0  1
+  (1)   (2)    (3)(4)  (5)    (6)   (7)      (8)
+</PRE>
+
+<DT><DD>
+The fields in each line are:
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT>(1)<DD>
+The ID of the queue.  This matches what is specified in the
+<B>--queue-num</B>
+
+or
+<B>--queue-balance</B>
+
+options to the
+<B><A HREF="../man8/iptables.8.html">iptables</A></B>(8)
+
+NFQUEUE target.  See
+<B><A HREF="../man8/iptables-extensions.8.html">iptables-extensions</A></B>(8)
+
+for more information.
+<DT>(2)<DD>
+The netlink port id subscribed to the queue.
+<DT>(3)<DD>
+The number of packets currently queued and waiting to be processed by
+the application.
+<DT>(4)<DD>
+The copy mode of the queue. It is either 1 (metadata only) or 2
+(also copy payload data to userspace).
+<DT>(5)<DD>
+Copy range, i.e. how many bytes of packet payload should be copied to
+userspace at most.
+<DT>(6)<DD>
+queue dropped.  Number of packets that had to be dropped by the kernel because
+too many packets are already waiting for userspace to send back the mandatory
+accept/drop verdicts.
+<DT>(7)<DD>
+queue user dropped.  Number of packets that were dropped within the netlink
+subsystem.  Such drops usually happen when the corresponding socket buffer is
+full, i.e.  userspace is not able to read messages fast enough.
+<DT>(8)<DD>
+sequence number. Every queued packet is associated with a (32-bit)
+monotonically-increasing sequence number.
+This shows the ID of the most recent packet queued.
+</DL>
+</DL>
+
+<DT><DD>
+The last number only exists for compatibility reasons and is always 1.
 <DT><I>/proc/partitions</I>
 
 <DD>
@@ -4931,6 +4995,21 @@ for easy understanding.
 <B><A HREF="../man7/svipc.7.html">svipc</A></B>(7)
 
 provides further background on the information shown by these files.
+<DT><I>/proc/thread-self</I> (since Linux 3.17)
+
+<DD>
+
+This directory refers to the thread accessing the
+<I>/proc</I>
+
+filesystem,
+and is identical to the
+<I>/proc/self/task/[tid]</I>
+
+directory named by the process thread ID
+(<I>[tid]</I>)
+
+of the same thread.
 <DT><I>/proc/timer_list</I> (since Linux 2.6.21)
 
 <DD>
@@ -5171,6 +5250,6 @@ and
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:34:32 GMT, April 20, 2020
+Time: 03:35:04 GMT, April 20, 2020
 </BODY>
 </HTML>

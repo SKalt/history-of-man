@@ -26,7 +26,7 @@ the source, must acknowledge the copyright and authors of this work.
 <HTML><HEAD><TITLE>Man page of POSIX_FADVISE</TITLE>
 </HEAD><BODY>
 <H1>POSIX_FADVISE</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2014-05-03<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2014-12-31<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -126,8 +126,12 @@ An invalid value was specified for <I>advice</I>.
 
 <DD>
 The specified file descriptor refers to a pipe or FIFO.
-(Linux actually
-returns
+(<B>ESPIPE</B>
+
+is the error specified by POSIX,
+but before kernel version 2.16,
+
+Linux returned
 <B>EINVAL</B>
 
 in this case.)
@@ -144,6 +148,14 @@ Library support has been provided since glibc version 2.2,
 via the wrapper function
 <B>posix_fadvise</B>().
 
+<P>
+Since Linux 3.18,
+
+support for the underlying system call is optional,
+depending on the setting of the
+<B>CONFIG_ADVISE_SYSCALLS</B>
+
+configuration option.
 <A NAME="lbAH">&nbsp;</A>
 <H2>CONFORMING TO</H2>
 
@@ -185,6 +197,16 @@ files.
 A program may periodically request the kernel to free cached data
 that has already been used, so that more useful cached pages are not
 discarded instead.
+<P>
+Requests to discard partial pages are ignored.
+It is preferable to preserve needed data than discard unneeded data.
+If the application requires that data be considered for discarding then
+<I>offset</I>
+
+and
+<I>len</I>
+
+must be page-aligned.
 <P>
 Pages that have not yet been written out will be unaffected, so if the
 application wishes to guarantee that pages will be released, it should
@@ -281,6 +303,6 @@ rather than as meaning &quot;all bytes through to the end of the file&quot;.
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:34:20 GMT, April 20, 2020
+Time: 03:34:51 GMT, April 20, 2020
 </BODY>
 </HTML>

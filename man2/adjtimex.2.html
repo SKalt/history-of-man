@@ -25,7 +25,7 @@ License along with this manual; if not, see
 <HTML><HEAD><TITLE>Man page of ADJTIMEX</TITLE>
 </HEAD><BODY>
 <H1>ADJTIMEX</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2014-05-28<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2014-12-31<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -45,7 +45,7 @@ adjtimex - tune kernel clock
 <A NAME="lbAD">&nbsp;</A>
 <H2>DESCRIPTION</H2>
 
-Linux uses David L. Mills' clock adjustment algorithm (see RFC&nbsp;1305).
+Linux uses David L. Mills' clock adjustment algorithm (see RFC&nbsp;5905).
 The system call
 <B>adjtimex</B>()
 
@@ -61,18 +61,43 @@ This structure is declared as follows:
 
 <PRE>
 struct timex {
-    int modes;           /* mode selector */
-    long offset;         /* time offset (usec) */
-    long freq;           /* frequency offset (scaled ppm) */
-    long maxerror;       /* maximum error (usec) */
-    long esterror;       /* estimated error (usec) */
-    int status;          /* clock command/status */
-    long constant;       /* pll time constant */
-    long precision;      /* clock precision (usec) (read-only) */
-    long tolerance;      /* clock frequency tolerance (ppm)
-                            (read-only) */
-    struct timeval time; /* current time (read-only) */
-    long tick;           /* usecs between clock ticks */
+    int  modes;       /* Mode selector */
+    long offset;      /* Time offset; nanoseconds, if STA_NANO
+                         status flag is set, otherwise
+                         microseconds */
+    long freq;        /* Frequency offset, as scaled PPM
+                         (parts per million) */
+    long maxerror;    /* Maximum error (microseconds) */
+    long esterror;    /* Estimated error (microseconds) */
+    int  status;      /* Clock command/status */
+    long constant;    /* PLL (phase-locked loop) time constant */
+    long precision;   /* Clock precision (microseconds,
+                         read-only) */
+    long tolerance;   /* Clock frequency tolerance (PPM,
+                         read-only) */
+    struct timeval time;
+                      /* Current time (read-only, except for
+                         ADJ_SETOFFSET); upon return, time.tv_usec
+                         contains nanoseconds, if STA_NANO status
+                         flag is set, otherwise microseconds */
+    long tick;        /* Microseconds between clock ticks */
+    long ppsfreq;     /* PPS (pulse per second) frequency
+                         (scaled PPM, read-only) */
+    long jitter;      /* PPS jitter (read-only); nanoseconds, if
+                         STA_NANO status flag is set, otherwise
+                         microseconds */
+    int  shift;       /* PPS interval duration
+                         (seconds, read-only) */
+    long stabil;      /* PPS stability (scaled PPM, read-only) */
+    long jitcnt;      /* PPS jitter limit exceeded (read-only) */
+    long calcnt;      /* PPS calibration intervals (read-only) */
+    long errcnt;      /* PPS calibration errors (read-only) */
+    long stbcnt;      /* PPS stability limit exceeded
+                         (read-only) */
+    int tai;          /* TAI offset, as set by previous ADJ_TAI
+                         operation (seconds, read-only,
+                         since Linux 2.6.26) */
+    /* Further padding bytes to allow for future expansion */
 };
 </PRE>
 
@@ -83,54 +108,300 @@ The
 <I>modes</I>
 
 field determines which parameters, if any, to set.
-It may contain a
+It is a bit mask containing a
 bitwise-<I>or</I>
 
 combination of zero or more of the following bits:
+<DL COMPACT>
+<DT><B>ADJ_OFFSET</B>
+
+<DD>
+Set time offset from
+<I>buf.offset</I>.
+
+<DT><B>ADJ_FREQUENCY</B>
+
+<DD>
+Set frequency offset from
+<I>buf.freq</I>.
+
+<DT><B>ADJ_MAXERROR</B>
+
+<DD>
+Set maximum time error from
+<I>buf.maxerror</I>.
+
+<DT><B>ADJ_ESTERROR</B>
+
+<DD>
+Set estimated time error from
+<I>buf.esterror</I>.
+
+<DT><B>ADJ_STATUS</B>
+
+<DD>
+Set clock status from
+<I>buf.status</I>.
+
+<DT><B>ADJ_TIMECONST</B>
+
+<DD>
+Set PLL time constant from
+<I>buf.constant</I>.
+
+If the
+<B>STA_NANO</B>
+
+status flag (see below) is clear, the kernel adds 4 to this value.
+<DT><B>ADJ_SETOFFSET</B> (since Linux 2.6.29)
+
+<DD>
+
+
+Add
+<I>buf.time</I>
+
+to the current time.
+If
+<I>buf.status</I>
+
+includes the
+<B>ADJ_NANO</B>
+
+flag, then
+<I>buf.time.tv_usec</I>
+
+is interpreted as a nanosecond value;
+otherwise it is interpreted as microseconds.
+<DT><B>ADJ_MICRO</B> (since Linux 2.6.36)
+
+<DD>
+
+
+Select microsecond resolution.
+<DT><B>ADJ_NANO</B> (since Linux 2.6.36)
+
+<DD>
+
+
+Select nanosecond resolution.
+Only one of
+<B>ADJ_MICRO</B>
+
+and
+<B>ADJ_NANO</B>
+
+should be specified.
+<DT><B>ADJ_TAI</B> (since Linux 2.6.26)
+
+<DD>
+
+Set TAI (Atomic International Time) offset from
+<I>buf-&gt;constant</I>.
+
+<P>
+<B>ADJ_TAI</B>
+
+should not be used in conjunction with
+<B>ADJ_TIMECONST</B>,
+
+since the latter mode also employs the
+<I>buf-&gt;constant</I>
+
+field.
+<P>
+For a complete explanation of TAI
+and the difference between TAI and UTC, see
+
+<I>BIPM</I>
+
+
+<DT><B>ADJ_TICK</B>
+
+<DD>
+Set tick value from
+<I>buf.tick</I>.
+
+</DL>
 <P>
 
+Alternatively,
+<I>modes</I>
 
-<PRE>
-#define ADJ_OFFSET            0x0001 /* time offset */
-#define ADJ_FREQUENCY         0x0002 /* frequency offset */
-#define ADJ_MAXERROR          0x0004 /* maximum time error */
-#define ADJ_ESTERROR          0x0008 /* estimated time error */
-#define ADJ_STATUS            0x0010 /* clock status */
-#define ADJ_TIMECONST         0x0020 /* pll time constant */
-#define ADJ_TICK              0x4000 /* tick value */
-#define ADJ_OFFSET_SINGLESHOT 0x8001 /* old-fashioned adjtime() */
-</PRE>
+can be specified as either of the following (multibit mask) values,
+in which case other bits should not be specified in
+<I>modes</I>:
 
 
+
+<DL COMPACT>
+<DT><B>ADJ_OFFSET_SINGLESHOT</B>
+
+<DD>
+
+
+Old-fashioned
+<B>adjtime</B>():
+
+(gradually) adjust time by value specified in
+<I>buf.offset</I>,
+
+which specifies an adjustment in microseconds.
+<DT><B>ADJ_OFFSET_SS_READ</B> (functional since Linux 2.6.28)
+
+<DD>
+
+
+
+Return (in
+<B>buf.offset</B>)
+
+the remaining amount of time to be adjusted after an earlier
+<B>ADJ_OFFSET_SINGLESHOT</B>
+
+operation.
+This feature was added in Linux 2.6.24,
+
+but did not work correctly
+
+until Linux 2.6.28.
+</DL>
 <P>
 
-Ordinary users are restricted to a zero value for
+Ordinary users are restricted to a value of either 0 or
+<B>ADJ_OFFSET_SS_READ</B>
+
+for
 <I>modes</I>.
 
 Only the superuser may set any parameters.
-<BR>
+<P>
+The
+<I>buf.status</I>
+
+field is a bit mask that is used to set and/or retrieve status
+bits associated with the NTP implementation.
+Some bits in the mask are both readable and settable,
+while others are read-only.
+<DL COMPACT>
+<DT><B>STA_PLL</B>
+
+<DD>
+Enable phase-locked loop (PLL) updates (read-write) via
+<B>ADJ_OFFSET</B>.
+
+<DT><B>STA_PPSFREQ</B>
+
+<DD>
+Enable PPS freq discipline (read-write).
+<DT><B>STA_PPSTIME</B>
+
+<DD>
+Enable PPS time discipline (read-write).
+<DT><B>STA_FLL</B>
+
+<DD>
+Select frequency-locked loop (FLL) mode (read-write).
+<DT><B>STA_INS</B>
+
+<DD>
+Insert leap second (read-write).
+<DT><B>STA_DEL</B>
+
+<DD>
+Delete leap second (read-write).
+<DT><B>STA_UNSYNC</B>
+
+<DD>
+Clock unsynchronized (read-write).
+<DT><B>STA_FREQHOLD</B>
+
+<DD>
+Hold frequency (read-write).
+<DT><B>STA_PPSSIGNAL</B>
+
+<DD>
+PPS signal present (read-only).
+<DT><B>STA_PPSJITTER</B>
+
+<DD>
+PPS signal jitter exceeded (read-only).
+<DT><B>STA_PPSWANDER</B>
+
+<DD>
+PPS signal wander exceeded (read-only).
+<DT><B>STA_PPSERROR</B>
+
+<DD>
+PPS signal calibration error (read-only).
+<DT><B>STA_CLOCKERR</B>
+
+<DD>
+Clock hardware fault (read-only).
+<DT><B>STA_NANO</B> (since Linux 2.6.26)
+
+<DD>
 
 
+Resolution (0 = microsecond, 1 = nanoseconds; read-only).
+Set via
+<B>ADJ_NANO</B>,
+
+cleared via
+<B>ADJ_MICRO</B>.
+
+<DT><B>STA_MODE</B> (since Linux 2.6.26)
+
+<DD>
+
+
+Mode (0 = Phase Locked Loop, 1 = Frequency Locked Loop; read-only).
+<DT><B>STA_CLK</B> (since Linux 2.6.26)
+
+<DD>
+
+
+Clock source (0 = A, 1 = B; read-only).
+</DL>
+<P>
+
+Attempts to set read-only
+<I>status</I>
+
+bits are silently ignored.
 <A NAME="lbAE">&nbsp;</A>
 <H2>RETURN VALUE</H2>
 
 On success,
 <B>adjtimex</B>()
 
-returns the clock state:
-<P>
+returns the clock state; that is, one of the following values:
+<DL COMPACT>
+<DT><B>TIME_OK</B>
 
+<DD>
+Clock synchronized.
+<DT><B>TIME_INS</B>
 
-<PRE>
-#define TIME_OK   0 /* clock synchronized */
-#define TIME_INS  1 /* insert leap second */
-#define TIME_DEL  2 /* delete leap second */
-#define TIME_OOP  3 /* leap second in progress */
-#define TIME_WAIT 4 /* leap second has occurred */
-#define TIME_BAD  5 /* clock not synchronized */
-</PRE>
+<DD>
+Insert leap second.
+<DT><B>TIME_DEL</B>
 
+<DD>
+Delete leap second.
+<DT><B>TIME_OOP</B>
 
+<DD>
+Leap second in progress.
+<DT><B>TIME_WAIT</B>
+
+<DD>
+Leap second has occurred.
+<DT><B>TIME_BAD</B>
+
+<DD>
+Clock not synchronized.
+</DL>
 <P>
 
 On failure,
@@ -152,7 +423,7 @@ does not point to writable memory.
 <DT><B>EINVAL</B>
 
 <DD>
-An attempt is made to set
+An attempt was made to set
 <I>buf.offset</I>
 
 to a value outside the range -131071 to +131071,
@@ -178,8 +449,11 @@ is the system timer interrupt frequency.
 <DD>
 <I>buf.modes</I>
 
-is nonzero and the caller does not have sufficient privilege.
-Under Linux the
+is neither 0 nor
+<B>ADJ_OFFSET_SS_READ</B>,
+
+and the caller does not have sufficient privilege.
+Under Linux, the
 <B>CAP_SYS_TIME</B>
 
 capability is required.
@@ -226,6 +500,6 @@ method of adjusting the system clock.
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:34:18 GMT, April 20, 2020
+Time: 03:34:49 GMT, April 20, 2020
 </BODY>
 </HTML>
