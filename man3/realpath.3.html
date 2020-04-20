@@ -5,7 +5,7 @@ Copyright (C) 1999 Andries Brouwer (aeb@cwi.nl)
 <HTML><HEAD><TITLE>Man page of REALPATH</TITLE>
 </HEAD><BODY>
 <H1>REALPATH</H1>
-Section: Linux Programmer's Manual (3)<BR>Updated: 2008-09-26<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2009-02-23<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -50,7 +50,7 @@ The resulting pathname is stored as a null-terminated string,
 up to a maximum of
 <B>PATH_MAX</B>
 
-butes,
+bytes,
 in the buffer pointed to by
 <I>resolved_path</I>.
 
@@ -100,8 +100,7 @@ Otherwise it returns a NULL pointer, and the contents
 of the array
 <I>resolved_path</I>
 
-are undefined.
-The global variable
+are undefined, and
 <I>errno</I>
 
 is set to indicate the error.
@@ -161,11 +160,14 @@ On Linux this function appeared in libc 4.5.21.
 
 4.4BSD, POSIX.1-2001.
 <P>
-POSIX.1 says that the behavior if
+POSIX.1-2001 says that the behavior if
 <I>resolved_path</I>
 
 is NULL is implementation-defined.
 POSIX.1-2008 specifies the behavior described in this page.
+<A NAME="lbAI">&nbsp;</A>
+<H2>NOTES</H2>
+
 In 4.4BSD and Solaris the limit on the pathname length is
 <B>MAXPATHLEN</B>
 
@@ -211,19 +213,14 @@ The prototype of
 
 is given in <I>&lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;</I> in libc4 and libc5,
 but in <I>&lt;<A HREF="file:///usr/include/stdlib.h">stdlib.h</A>&gt;</I> everywhere else.
-<A NAME="lbAI">&nbsp;</A>
+<A NAME="lbAJ">&nbsp;</A>
 <H2>BUGS</H2>
 
-Avoid using this function.
-It is broken by design since (unless
-using the non-standard
-<I>resolved_path&nbsp;==&nbsp;NULL</I>
-
-feature) it is
-impossible to determine a suitable size for the output buffer,
+The POSIX.1-2001 standard version of this function is broken by design,
+since it is impossible to determine a suitable size for the output buffer,
 <I>resolved_path</I>.
 
-According to POSIX a buffer of size
+According to POSIX.1-2001 a buffer of size
 <B>PATH_MAX</B>
 
 suffices, but
@@ -235,19 +232,23 @@ need not be a defined constant, and may have to be obtained using
 And asking
 <B><A HREF="../man3/pathconf.3.html">pathconf</A></B>(3)
 
-does not really help, since on the one hand POSIX warns that
+does not really help, since, on the one hand POSIX warns that
 the result of
 <B><A HREF="../man3/pathconf.3.html">pathconf</A></B>(3)
 
-may be huge and unsuitable for mallocing memory.
-And on the other
-hand
+may be huge and unsuitable for mallocing memory,
+and on the other hand
 <B><A HREF="../man3/pathconf.3.html">pathconf</A></B>(3)
 
 may return -1 to signify that
 <B>PATH_MAX</B>
 
 is not bounded.
+The
+<I>resolved_path&nbsp;==&nbsp;NULL</I>
+
+feature, not standardized in POSIX.1-2001,
+but standardized in POSIX.1-2008, allows this design problem to be avoided.
 <P>
 
 The libc4 and libc5 implementation contains a buffer overflow
@@ -256,7 +257,7 @@ Thus, set-user-ID programs like
 <B><A HREF="../man8/mount.8.html">mount</A></B>(8)
 
 need a private version.
-<A NAME="lbAJ">&nbsp;</A>
+<A NAME="lbAK">&nbsp;</A>
 <H2>SEE ALSO</H2>
 
 <B><A HREF="../man2/readlink.2.html">readlink</A></B>(2),
@@ -281,13 +282,14 @@ need a private version.
 <DT><A HREF="#lbAF">ERRORS</A><DD>
 <DT><A HREF="#lbAG">VERSIONS</A><DD>
 <DT><A HREF="#lbAH">CONFORMING TO</A><DD>
-<DT><A HREF="#lbAI">BUGS</A><DD>
-<DT><A HREF="#lbAJ">SEE ALSO</A><DD>
+<DT><A HREF="#lbAI">NOTES</A><DD>
+<DT><A HREF="#lbAJ">BUGS</A><DD>
+<DT><A HREF="#lbAK">SEE ALSO</A><DD>
 </DL>
 <HR>
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:03:34 GMT, April 20, 2020
+Time: 03:04:04 GMT, April 20, 2020
 </BODY>
 </HTML>

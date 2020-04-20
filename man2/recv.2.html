@@ -5,7 +5,7 @@ Copyright (c) 1983, 1990, 1991 The Regents of the University of California.
 <HTML><HEAD><TITLE>Man page of RECV</TITLE>
 </HEAD><BODY>
 <H1>RECV</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2008-12-03<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2009-03-10<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -111,8 +111,8 @@ message to arrive, unless the socket is non-blocking (see
 in which case the value -1 is returned and the external variable
 <I>errno</I>
 
-set to
-<B>EAGAIN</B>.
+is set to
+<B>EAGAIN</B> or <B>EWOULDBLOCK.</B>
 
 The receive calls normally return any data available, up to the requested
 amount, rather than waiting for receipt of the full amount requested.
@@ -159,12 +159,12 @@ flag of
 <DD>
 Enables non-blocking operation; if the operation would block,
 the call fails with the error
-<B>EAGAIN</B>
+<B>EAGAIN</B> or <B>EWOULDBLOCK</B>
 
 (this can also be enabled using the
 <B>O_NONBLOCK</B>
 
-with the
+flag with the
 <B>F_SETFL</B>
 
 <B><A HREF="../man2/fcntl.2.html">fcntl</A></B>(2)).
@@ -338,11 +338,16 @@ call uses a
 <I>msghdr</I>
 
 structure to minimize the number of directly supplied arguments.
-This structure has the following form, as defined in
+This structure is defined as follows in
 <I>&lt;<A HREF="file:///usr/include/sys/socket.h">sys/socket.h</A>&gt;</I>:
 
 
 <PRE>
+
+struct iovec {                    /* Scatter/gather array items */
+    void  *iov_base;              /* Starting address */
+    size_t iov_len;               /* Number of bytes to transfer */
+};
 
 struct msghdr {
     void         *msg_name;       /* optional address */
@@ -473,12 +478,16 @@ Additional errors
 may be generated and returned from the underlying protocol modules;
 see their manual pages.
 <DL COMPACT>
-<DT><B>EAGAIN</B>
+<DT><B>EAGAIN</B> or <B>EWOULDBLOCK</B>
 
 <DD>
+
 The socket is marked non-blocking and the receive operation
 would block, or a receive timeout had been set and the timeout expired
 before data was received.
+POSIX.1-2001 allows either error to be returned for this case,
+and does not require these constants to have the same value,
+so a portable application should check for both possibilities.
 <DT><B>EBADF</B>
 
 <DD>
@@ -637,6 +646,6 @@ is shown in
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:03:25 GMT, April 20, 2020
+Time: 03:03:56 GMT, April 20, 2020
 </BODY>
 </HTML>
