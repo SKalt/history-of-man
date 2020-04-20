@@ -180,25 +180,22 @@ parameter is the bitwise OR
 of zero or more of the following flags.
 
 <DL COMPACT>
-<DT><B>MSG_OOB</B>
+<DT><B>MSG_CONFIRM</B> (Linux 2.3+ only)
 
 <DD>
-Sends
-<I>out-of-band</I>
+Tell the link layer that forward progress happened: you got a successful
+reply from the other side. If the link layer doesn't get this 
+it'll regularly reprobe the neighbour (e.g. via a unicast ARP).
+Only valid on 
+<B>SOCK_DGRAM</B>
 
-data on sockets that support this notion (e.g. of type
-<B>SOCK_STREAM</B>);
+and
+<B>SOCK_RAW</B>
 
-the underlying protocol must also support
-<I>out-of-band</I>
+sockets and currently only implemented for IPv4 and IPv6. See
+<B><A HREF="../man7/arp.7.html">arp</A></B>(7)
 
-data.
-<DT><B>MSG_EOR</B>
-
-<DD>
-Terminates a record (when this notion is supported, as for sockets of type
-<B>SOCK_SEQPACKET</B>).
-
+for details.
 <DT><B>MSG_DONTROUTE</B>
 
 <DD>
@@ -220,6 +217,32 @@ with the
 
 <B><A HREF="../man2/fcntl.2.html">fcntl</A></B>(2)).
 
+<DT><B>MSG_EOR</B>
+
+<DD>
+Terminates a record (when this notion is supported, as for sockets of type
+<B>SOCK_SEQPACKET</B>).
+
+<DT><B>MSG_MORE</B> (Since Linux 2.4.4)
+
+<DD>
+The caller has more data to send.
+This flag is used with TCP sockets to obtain the same effect
+as the TCP_CORK socket option (see
+<B><A HREF="../man7/tcp.7.html">tcp</A></B>(7)),
+
+with the difference that this flag can be set on a per-call basis.
+<P>
+Since Linux 2.6, this flag is also supported for UDP sockets, and informs
+the kernel to package all of the data sent in calls with this flag set
+into a single datagram which is only transmitted when a call is performed
+that does not specify this flag.  
+(See also the 
+<B>UDP_CORK </B>
+
+socket option described in 
+<B><A HREF="../man7/udp.7.html">udp</A></B>(7).)
+
 <DT><B>MSG_NOSIGNAL</B>
 
 <DD>
@@ -231,35 +254,19 @@ connection. The
 <B>EPIPE</B>
 
 error is still returned.
-<DT><B>MSG_CONFIRM</B> (Linux 2.3+ only)
+<DT><B>MSG_OOB</B>
 
 <DD>
-Tell the link layer that forward progress happened: you got a successful
-reply from the other side. If the link layer doesn't get this 
-it'll regularly reprobe the neighbour (e.g. via a unicast ARP).
-Only valid on 
-<B>SOCK_DGRAM</B>
+Sends
+<I>out-of-band</I>
 
-and
-<B>SOCK_RAW</B>
+data on sockets that support this notion (e.g. of type
+<B>SOCK_STREAM</B>);
 
-sockets and currently only implemented for IPv4 and IPv6. See
-<B><A HREF="../man7/arp.7.html">arp</A></B>(7)
+the underlying protocol must also support
+<I>out-of-band</I>
 
-for details.
-<DT><B>MSG_MORE</B> (Since Linux 2.4.4)
-
-<DD>
-The caller has more data to send.
-This flag is used with TCP sockets to obtain the same effect
-as the TCP_CORK socket option (see
-<B><A HREF="../man7/tcp.7.html">tcp</A></B>(7)),
-
-with the difference that this flag can be set on a per-call basis.
-Since Linux 2.6, this flag is also supported for UDP sockets, and informs
-the kernel to package all of the data sent in calls with this flag set
-into a single datagram which is only transmitted when a call is performed
-that does not specify this flag.
+data.
 </DL>
 <P>
 
@@ -506,6 +513,6 @@ Linux may return EPIPE instead of ENOTCONN.
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 02:19:35 GMT, April 20, 2020
+Time: 02:20:06 GMT, April 20, 2020
 </BODY>
 </HTML>

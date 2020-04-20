@@ -67,6 +67,12 @@ see
 <B><A HREF="../man7/ip.7.html">ip</A></B>(7),
 
 for
+<B>AF_INET6</B>
+
+see
+<B><A HREF="../man7/ipv6.7.html">ipv6</A></B>(7),
+
+for
 <B>AF_UNIX</B>
 
 see
@@ -97,6 +103,61 @@ see
 <B><A HREF="../man7/netlink.7.html">netlink</A></B>(7).
 
 <P>
+The actual structure passed for the
+<I>my_addr </I>
+
+argument will depend on the address family.
+The
+<I>sockaddr</I>
+
+structure is defined as something like:
+
+<PRE>
+
+struct sockaddr {
+    sa_family_t sa_family;
+    char        sa_data[14];
+}
+
+</PRE>
+
+
+The only purpose of this structure is to cast the structure 
+pointer passed in 
+<I>my_addr </I>
+
+in order to avoid compiler warnings.  
+The following example shows how this is done when binding a socket 
+in the Unix 
+(<B>AF_UNIX</B>)
+
+domain:
+<P>
+
+<PRE>
+#include &lt;<A HREF="file:///usr/include/sys/socket.h">sys/socket.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/sys/un.h">sys/un.h</A>&gt;
+
+int sfd;
+struct sockaddr_un addr;
+
+sfd = socket(AF_UNIX, SOCK_STREAM, 0);         
+if (sfd == -1) { perror(&quot;socket&quot;); exit(EXIT_FAILURE); }
+
+memset(&amp;addr, 0, sizeof(struct sockaddr_un));  
+                        /* Clear structure */
+addr.sun_family = AF_UNIX;                     
+strncpy(addr.sun_path, MY_SOCK_PATH, 
+        sizeof(addr.sun_path) - 1);
+
+if (bind(sfd, (struct sockaddr *) &amp;addr,
+        sizeof(struct sockaddr_un)) == -1) { 
+    perror(&quot;bind&quot;); 
+    exit(EXIT_FAILURE); 
+}
+</PRE>
+
+
 <A NAME="lbAE">&nbsp;</A>
 <H2>RETURN VALUE</H2>
 
@@ -252,7 +313,11 @@ See also
 
 <B><A HREF="../man7/ip.7.html">ip</A></B>(7),
 
-<B><A HREF="../man7/socket.7.html">socket</A></B>(7)
+<B><A HREF="../man7/ipv6.7.html">ipv6</A></B>(7),
+
+<B><A HREF="../man7/socket.7.html">socket</A></B>(7),
+
+<B><A HREF="../man7/unix.7.html">unix</A></B>(7)
 
 <P>
 
@@ -273,6 +338,6 @@ See also
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 02:19:33 GMT, April 20, 2020
+Time: 02:20:03 GMT, April 20, 2020
 </BODY>
 </HTML>

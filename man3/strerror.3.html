@@ -5,13 +5,13 @@ Copyright (C) 1993 David Metcalfe (david@prism.demon.co.uk)
 <HTML><HEAD><TITLE>Man page of STRERROR</TITLE>
 </HEAD><BODY>
 <H1>STRERROR</H1>
-Section: Linux Programmer's Manual (3)<BR>Updated: 2001-10-16<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2005-12-13<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
 <H2>NAME</H2>
 
-strerror, strerror_r - return string describing error code
+strerror, strerror_r - return string describing error number
 <A NAME="lbAC">&nbsp;</A>
 <H2>SYNOPSIS</H2>
 
@@ -20,10 +20,14 @@ strerror, strerror_r - return string describing error code
 
 <B>char *strerror(int </B><I>errnum</I><B>);</B>
 
-<B>#define _XOPEN_SOURCE 600</B>
+<B>char *strerror_r(int </B><I>errnum</I><B>, char *</B><I>buf</I><B>, size_t </B><I>buflen</I><B>);</B>
+                        /* GNU-specific strerror_r() */
+
+<B>#define _XOPEN_SOURCE 600  </B>
 <B>#include &lt;<A HREF="file:///usr/include/string.h">string.h</A>&gt;</B>
 
-<B>int strerror_r(int </B><I>errnum</I><B>, char *</B><I>buf</I><B>, size_t </B><I>n</I><B>);</B>
+<B>int strerror_r(int </B><I>errnum</I><B>, char *</B><I>buf</I><B>, size_t </B><I>buflen</I><B>);</B>
+                        /* XSI-compliant strerror_r() */
 </PRE>
 
 <A NAME="lbAD">&nbsp;</A>
@@ -37,22 +41,60 @@ modified by a subsequent call to <B>perror</B>() or <B>strerror</B>().
 No library function will modify this string.
 <P>
 The <B>strerror_r</B>() function is similar to <B>strerror</B>(), but is
-thread safe. It returns the string in the user-supplied buffer
+thread safe. 
+This function is available in two versions: 
+an XSI-compliant version specified in SUSv3, 
+and a GNU-specific version (available since glibc 2.0).
+If _XOPEN_SOURCE is defined with the value 600, 
+then the XSI-compliant version is provided, 
+otherwise the GNU-specific version is provided.
+<P>
+The XSI-compliant 
+<B>strerror_r</B>()
+
+is preferred for portable applications.
+It returns the error string in the user-supplied buffer
 <I>buf</I>
 
 of length
-<I>n</I>.
+<I>buflen</I>.
 
+<P>
+The GNU-specific 
+<B>strerror_r</B>()
+
+returns a pointer to a string containing the error message.
+This may be either a pointer to a string that the function stores in
+<I>buf</I>,
+
+or a pointer to some (immutable) static string
+(in which case
+<I>buf </I>
+
+is unused).
+If the function stores a string in 
+<I>buf</I>,
+
+then at most
+<I>buflen</I>
+
+bytes are stored (the string may be truncated if
+<I>buflen</I>
+
+is too small) and the string always includes a terminating null byte.
 <P>
 <A NAME="lbAE">&nbsp;</A>
 <H2>RETURN VALUE</H2>
 
-The <B>strerror</B>() function returns the appropriate error description
-string, or an unknown error message if the error code is unknown.
-The value of <I>errno</I> is not changed for a successful call, and is
-set to a non-zero value upon error.
-The <B>strerror_r</B>() function returns 0 on success and -1 on failure,
-setting <I>errno</I>.
+The <B>strerror</B>() and <B>strerror_r</B>() functions return
+the appropriate error description string, 
+or an &quot;Unknown error nnn&quot; message if the error number is unknown.
+<P>
+The XSI-compliant <B>strerror_r</B>() function returns 0 on success;
+on error, -1 is returned and
+<I>errno</I>
+
+is set to indicate the error.
 <P>
 <A NAME="lbAF">&nbsp;</A>
 <H2>ERRORS</H2>
@@ -74,24 +116,42 @@ Insufficient storage was supplied to contain the error description string.
 <A NAME="lbAG">&nbsp;</A>
 <H2>CONFORMING TO</H2>
 
-SVID 3, POSIX, 4.3BSD, ISO/IEC 9899:1990 (C89).
-<BR>
-
+POSIX.1
+<P>
+The GNU-specific 
 <B>strerror_r</B>()
 
-with prototype as given above is specified by SUSv3, and was in use
-under Digital Unix and HP Unix. An incompatible function, with prototype
+function is a non-standard extension.
 <P>
-<B>char *strerror_r(int </B><I>errnum</I><B>, char *</B><I>buf</I><B>, size_t </B><I>n</I><B>);</B>
+POSIX.1 permits
+<B>strerror</B>()
 
+to set 
+<I>errno</I>
+
+if the call encounters an error, but does not specify what 
+value should be returned as the function result in the event of an error.
+On some systems,
+
+<B>strerror</B>()
+
+returns NULL if the error number is unknown.
+On other systems, 
+
+<B>strerror</B>()
+
+returns a string something like &quot;Error nnn occurred&quot; and sets 
+<I>errno</I>
+
+to 
+<B>EINVAL</B>
+
+if the error number is unknown.
 <P>
-is a GNU extension used by glibc (since 2.0),
-and must be regarded as obsolete in view of SUSv3.
-The GNU version may, but need not, use the user-supplied buffer.
-If it does, the result may be truncated in case the supplied buffer
-is too small. The result is always NUL-terminated.
 <A NAME="lbAH">&nbsp;</A>
 <H2>SEE ALSO</H2>
+
+<B><A HREF="../man3/err.3.html">err</A></B>(3),
 
 <B><A HREF="../man3/errno.3.html">errno</A></B>(3),
 
@@ -116,6 +176,6 @@ is too small. The result is always NUL-terminated.
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 02:19:43 GMT, April 20, 2020
+Time: 02:20:14 GMT, April 20, 2020
 </BODY>
 </HTML>
