@@ -65,8 +65,11 @@ in separate
 
 Note that in this manual
 page, &quot;calling process&quot; normally corresponds to &quot;parent process&quot;.
-But see the description of
+But see the descriptions of
 <B>CLONE_PARENT</B>
+
+and
+<B>CLONE_THREAD</B>
 
 below.
 <P>
@@ -216,6 +219,8 @@ struct clone_args {
 <BR>&nbsp;&nbsp;&nbsp;&nbsp;u64&nbsp;stack;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Pointer&nbsp;to&nbsp;lowest&nbsp;byte&nbsp;of&nbsp;stack&nbsp;*/
 <BR>&nbsp;&nbsp;&nbsp;&nbsp;u64&nbsp;stack_size;&nbsp;&nbsp;&nbsp;/*&nbsp;Size&nbsp;of&nbsp;stack&nbsp;*/
 <BR>&nbsp;&nbsp;&nbsp;&nbsp;u64&nbsp;tls;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Location&nbsp;of&nbsp;new&nbsp;TLS&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;u64&nbsp;set_tid;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Pointer&nbsp;to&nbsp;a&nbsp;<I>pid_t</I>&nbsp;array&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;u64&nbsp;set_tid_size;&nbsp;/*&nbsp;Number&nbsp;of&nbsp;elements&nbsp;in&nbsp;<I>set_tid</I>&nbsp;*/
 };
 
 
@@ -292,7 +297,7 @@ argument supplied to
 
 <DL COMPACT><DT><DD>
 <TABLE>
-<TR VALIGN=top><TD><B>clone()</B></TD><TD><B><A HREF="../man3/clone.3.html">clone</A>(3)</B></TD><TD><B>Notes</B><BR></TD></TR>
+<TR VALIGN=top><TD><B>clone()</B></TD><TD><B>clone3()</B></TD><TD><B>Notes</B><BR></TD></TR>
 <TR VALIGN=top><TD></TD><TD><I>cl_args</I> field</TD><TD><BR></TD></TR>
 <TR VALIGN=top><TD><I>flags &amp; ~0xff</I></TD><TD><I>flags</I></TD><TD>For most flags; details below<BR></TD></TR>
 <TR VALIGN=top><TD><I>parent_tid</I></TD><TD><I>pidfd</I></TD><TD>See CLONE_PIDFD<BR></TD></TR>
@@ -302,6 +307,8 @@ argument supplied to
 <TR VALIGN=top><TD><I>stack</I></TD><TD><I>stack</I></TD><TD><BR></TD></TR>
 <TR VALIGN=top><TD><I>---</I></TD><TD><I>stack_size</I></TD><TD><BR></TD></TR>
 <TR VALIGN=top><TD><I>tls</I></TD><TD><I>tls</I></TD><TD>See CLONE_SETTLS<BR></TD></TR>
+<TR VALIGN=top><TD><I>---</I></TD><TD><I>set_tid</I></TD><TD>See below for details<BR></TD></TR>
+<TR VALIGN=top><TD><I>---</I></TD><TD><I>set_tid_size</I></TD><TD><BR></TD></TR>
 </TABLE>
 
 </DL>
@@ -339,6 +346,114 @@ If no signal (i.e., zero) is specified, then the parent process is not signaled
 when the child terminates.
 
 <A NAME="lbAI">&nbsp;</A>
+<H3>The set_tid array</H3>
+
+<P>
+
+By default, the kernel chooses the next sequential PID for the new
+process in each of the PID namespaces where it is present.
+When creating a process with
+<B>clone3</B>(),
+
+the
+<I>set_tid</I>
+
+array (available since Linux 5.5)
+can be used to select specific PIDs for the process in some
+or all of the PID namespaces where it is present.
+If the PID of the newly created process should be set only for the current
+PID namespace or in the newly created PID namespace (if
+<I>flags</I>
+
+contains
+<B>CLONE_NEWPID</B>)
+
+then the first element in the
+<I>set_tid</I>
+
+array has to be the desired PID and
+<I>set_tid_size</I>
+
+needs to be 1.
+<P>
+
+If the PID of the newly created process should have a certain value in
+multiple PID namespaces, then the
+<I>set_tid</I>
+
+array can have multiple entries.
+The first entry defines the PID in the most
+deeply nested PID namespace and each of the following entries contains
+the PID in the
+corresponding ancestor PID namespace.
+The number of PID namespaces in which a PID
+should be set is defined by
+<I>set_tid_size</I>
+
+which cannot be larger than the number of currently nested PID namespaces.
+<P>
+
+To create a process with the following PIDs in a PID namespace hierarchy:
+<DL COMPACT><DT><DD>
+<TABLE>
+<TR VALIGN=top><TD><B>PID NS level</B></TD><TD><B>Requested PID</B></TD><TD><B>Notes</B><BR></TD></TR>
+<TR VALIGN=top><TD>0</TD><TD>31496</TD><TD>Outermost PID namespace<BR></TD></TR>
+<TR VALIGN=top><TD>1</TD><TD>42</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD>2</TD><TD>7</TD><TD>Innermost PID namespace<BR></TD></TR>
+</TABLE>
+
+</DL>
+
+<P>
+
+Set the array to:
+<P>
+
+
+
+set_tid[0] = 7;
+set_tid[1] = 42;
+set_tid[2] = 31496;
+set_tid_size = 3;
+
+
+<P>
+
+If only the PIDs in the two innermost PID namespaces
+need to be specified, set the array to:
+<P>
+
+
+
+set_tid[0] = 7;
+set_tid[1] = 42;
+set_tid_size = 2;
+
+
+<P>
+
+The PID in the PID namespaces outside the two innermost PID namespaces
+will be selected the same way as any other PID is selected.
+<P>
+
+The
+<I>set_tid</I>
+
+feature requires
+<B>CAP_SYS_ADMIN</B>
+
+in all owning user namespaces of the target PID namespaces.
+<P>
+
+Callers may only choose a PID greater than 1 in a given PID namespace
+if an
+<B>init</B>
+
+process (i.e., a process with PID 1) already exists in that namespace.
+Otherwise the PID
+entry for this PID namespace must be 1.
+
+<A NAME="lbAJ">&nbsp;</A>
 <H3>The flags mask</H3>
 
 <P>
@@ -424,6 +539,23 @@ returns in the parent process, which will be relevant if the
 <B>CLONE_VM</B>
 
 flag is also employed.)
+<DT><B>CLONE_CLEAR_SIGHAND</B> (since Linux 5.5)
+
+<DD>
+
+By default, signal dispositions in the child thread are the same as
+in the parent.
+If this flag is specified,
+then all signals that are handled in the parent
+are reset to their default dispositions
+(<B>SIG_DFL</B>)
+
+in the child.
+<DT><DD>
+Specifying this flag together with
+<B>CLONE_SIGHAND</B>
+
+is nonsensical and disallowed.
 <DT><B>CLONE_DETACHED</B> (historical)
 
 <DD>
@@ -820,6 +952,15 @@ if
 
 is set, then the parent of the calling process, rather than the
 calling process itself, will be signaled.
+<DT><DD>
+The
+<B>CLONE_PARENT</B>
+
+flag can't be used in clone calls by the
+global init process (PID 1 in the initial PID namespace)
+and init processes in other PID namespaces.
+This restriction prevents the creation of multi-rooted process trees
+as well as the creation of unreapable zombies in the initial PID namespace.
 <DT><B>CLONE_PARENT_SETTID</B> (since Linux 2.5.49)
 
 <DD>
@@ -1291,7 +1432,7 @@ processes do not affect the other, as with
 <B><A HREF="../man2/fork.2.html">fork</A></B>(2).
 
 </DL>
-<A NAME="lbAJ">&nbsp;</A>
+<A NAME="lbAK">&nbsp;</A>
 <H2>NOTES</H2>
 
 <P>
@@ -1330,7 +1471,7 @@ is used to recursively create children,
 do not use the buffer employed for the parent's stack
 as the stack of the child.
 
-<A NAME="lbAK">&nbsp;</A>
+<A NAME="lbAL">&nbsp;</A>
 <H3>C library/kernel differences</H3>
 
 The raw
@@ -1458,7 +1599,7 @@ an additional argument is supplied:
 
 
 
-<A NAME="lbAL">&nbsp;</A>
+<A NAME="lbAM">&nbsp;</A>
 <H3>blackfin, m68k, and sparc</H3>
 
 
@@ -1467,7 +1608,7 @@ an additional argument is supplied:
 The argument-passing conventions on
 blackfin, m68k, and sparc are different from the descriptions above.
 For details, see the kernel (and glibc) source.
-<A NAME="lbAM">&nbsp;</A>
+<A NAME="lbAN">&nbsp;</A>
 <H3>ia64</H3>
 
 On ia64, a different interface is used:
@@ -1526,7 +1667,7 @@ and
 specifies the size of the stack pointed to by
 <I>stack_base</I>.
 
-<A NAME="lbAN">&nbsp;</A>
+<A NAME="lbAO">&nbsp;</A>
 <H3>Linux 2.4 and earlier</H3>
 
 In Linux 2.4 and earlier,
@@ -1540,7 +1681,7 @@ does not take arguments
 and
 <I>child_tid</I>.
 
-<A NAME="lbAO">&nbsp;</A>
+<A NAME="lbAP">&nbsp;</A>
 <H2>RETURN VALUE</H2>
 
 
@@ -1552,7 +1693,7 @@ in the caller's context, no child process will be created, and
 <I>errno</I>
 
 will be set appropriately.
-<A NAME="lbAP">&nbsp;</A>
+<A NAME="lbAQ">&nbsp;</A>
 <H2>ERRORS</H2>
 
 <DL COMPACT>
@@ -1562,6 +1703,26 @@ will be set appropriately.
 Too many processes are already running; see
 <B><A HREF="../man2/fork.2.html">fork</A></B>(2).
 
+<DT><B>EEXIST</B> (<B>clone3</B>() only)
+
+<DD>
+One (or more) of the PIDs specified in
+<I>set_tid</I>
+
+already exists in the corresponding PID namespace.
+<DT><B>EINVAL</B>
+
+<DD>
+Both
+<B>CLONE_SIGHAND</B>
+
+and
+<B>CLONE_CLEAR_SIGHAND</B>
+
+were specified in the
+<I>flags</I>
+
+mask.
 <DT><B>EINVAL</B>
 
 <DD>
@@ -1674,6 +1835,13 @@ were specified in the
 <I>flags</I>
 
 mask.
+<DT><B>EINVAL</B> (since Linux 2.6.32)
+
+<DD>
+
+<B>CLONE_PARENT</B>
+
+was specified, and the caller is an init process.
 <DT><B>EINVAL</B>
 
 <DD>
@@ -1765,7 +1933,7 @@ For example, on aarch64,
 <I>stack</I>
 
 must be a multiple of 16.
-<DT><B>EINVAL</B> (<B>clone3</B>() only
+<DT><B>EINVAL</B> (<B>clone3</B>() only)
 
 <DD>
 <B>CLONE_DETACHED</B>
@@ -1774,7 +1942,7 @@ was specified in the
 <I>flags</I>
 
 mask.
-<DT><B>EINVAL</B> (<B>clone</B>() only
+<DT><B>EINVAL</B> (<B>clone</B>() only)
 
 <DD>
 <B>CLONE_PIDFD</B>
@@ -1810,6 +1978,25 @@ in the
 <I>flags</I>
 
 mask.
+<DT><B>EINVAL</B> (<B>clone3</B>() only)
+
+<DD>
+<I>set_tid_size</I>
+
+is greater than the number of nested PID namespaces.
+<DT><B>EINVAL</B> (<B>clone3</B>() only)
+
+<DD>
+If one of the PIDs specified in
+<I>set_tid</I>
+
+was an invalid PID.
+<DT><B>EINVAL</B> (AArch64 only, Linux 4.6 and earlier)
+
+<DD>
+<I>stack</I>
+
+was not aligned to a 126-bit boundary.
 <DT><B>ENOMEM</B>
 
 <DD>
@@ -1911,6 +2098,16 @@ mask and the caller is in a chroot environment
 
 (i.e., the caller's root directory does not match the root directory
 of the mount namespace in which it resides).
+<DT><B>EPERM</B> (<B>clone3</B>() only)
+
+<DD>
+<I>set_tid_size</I>
+
+was greater than zero, and the caller lacks the
+<B>CAP_SYS_ADMIN</B>
+
+capability in one or more of the user namespaces that own the
+corresponding PID namespaces.
 <DT><B>ERESTARTNOINTR</B> (since Linux 2.6.17)
 
 <DD>
@@ -1932,7 +2129,7 @@ See the discussion of the
 
 error above.
 </DL>
-<A NAME="lbAQ">&nbsp;</A>
+<A NAME="lbAR">&nbsp;</A>
 <H2>VERSIONS</H2>
 
 The
@@ -1945,13 +2142,13 @@ system call first appeared in Linux 5.3.
 
 
 
-<A NAME="lbAR">&nbsp;</A>
+<A NAME="lbAS">&nbsp;</A>
 <H2>CONFORMING TO</H2>
 
 These system calls
 are Linux-specific and should not be used in programs
 intended to be portable.
-<A NAME="lbAS">&nbsp;</A>
+<A NAME="lbAT">&nbsp;</A>
 <H2>NOTES</H2>
 
 The
@@ -1990,7 +2187,7 @@ On i386,
 should not be called through vsyscall, but directly through
 <I>int $0x80</I>.
 
-<A NAME="lbAT">&nbsp;</A>
+<A NAME="lbAU">&nbsp;</A>
 <H2>BUGS</H2>
 
 GNU C library versions 2.3.4 up to and including 2.24
@@ -2053,7 +2250,7 @@ Because of the stale-cache problem, as well as other problems noted in
 <B><A HREF="../man2/getpid.2.html">getpid</A></B>(2),
 
 the PID caching feature was removed in glibc 2.25.
-<A NAME="lbAU">&nbsp;</A>
+<A NAME="lbAV">&nbsp;</A>
 <H2>EXAMPLE</H2>
 
 The following program demonstrates the use of
@@ -2098,7 +2295,7 @@ For the moment, this flag is a no-op on Linux,
 but it exists and has effect on some other systems,
 so we should include it for portability.
 </DL>
-<A NAME="lbAV">&nbsp;</A>
+<A NAME="lbAW">&nbsp;</A>
 <H3>Program source</H3>
 
 
@@ -2190,7 +2387,7 @@ main(int argc, char *argv[])
 <BR>&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_SUCCESS);
 }
 
-<A NAME="lbAW">&nbsp;</A>
+<A NAME="lbAX">&nbsp;</A>
 <H2>SEE ALSO</H2>
 
 <B><A HREF="../man2/fork.2.html">fork</A></B>(2),
@@ -2238,31 +2435,32 @@ main(int argc, char *argv[])
 <DT><A HREF="#lbAF">clone3()</A><DD>
 <DT><A HREF="#lbAG">Equivalence between clone() and clone3() arguments</A><DD>
 <DT><A HREF="#lbAH">The child termination signal</A><DD>
-<DT><A HREF="#lbAI">The flags mask</A><DD>
+<DT><A HREF="#lbAI">The set_tid array</A><DD>
+<DT><A HREF="#lbAJ">The flags mask</A><DD>
 </DL>
-<DT><A HREF="#lbAJ">NOTES</A><DD>
+<DT><A HREF="#lbAK">NOTES</A><DD>
 <DL>
-<DT><A HREF="#lbAK">C library/kernel differences</A><DD>
-<DT><A HREF="#lbAL">blackfin, m68k, and sparc</A><DD>
-<DT><A HREF="#lbAM">ia64</A><DD>
-<DT><A HREF="#lbAN">Linux 2.4 and earlier</A><DD>
+<DT><A HREF="#lbAL">C library/kernel differences</A><DD>
+<DT><A HREF="#lbAM">blackfin, m68k, and sparc</A><DD>
+<DT><A HREF="#lbAN">ia64</A><DD>
+<DT><A HREF="#lbAO">Linux 2.4 and earlier</A><DD>
 </DL>
-<DT><A HREF="#lbAO">RETURN VALUE</A><DD>
-<DT><A HREF="#lbAP">ERRORS</A><DD>
-<DT><A HREF="#lbAQ">VERSIONS</A><DD>
-<DT><A HREF="#lbAR">CONFORMING TO</A><DD>
-<DT><A HREF="#lbAS">NOTES</A><DD>
-<DT><A HREF="#lbAT">BUGS</A><DD>
-<DT><A HREF="#lbAU">EXAMPLE</A><DD>
+<DT><A HREF="#lbAP">RETURN VALUE</A><DD>
+<DT><A HREF="#lbAQ">ERRORS</A><DD>
+<DT><A HREF="#lbAR">VERSIONS</A><DD>
+<DT><A HREF="#lbAS">CONFORMING TO</A><DD>
+<DT><A HREF="#lbAT">NOTES</A><DD>
+<DT><A HREF="#lbAU">BUGS</A><DD>
+<DT><A HREF="#lbAV">EXAMPLE</A><DD>
 <DL>
-<DT><A HREF="#lbAV">Program source</A><DD>
+<DT><A HREF="#lbAW">Program source</A><DD>
 </DL>
-<DT><A HREF="#lbAW">SEE ALSO</A><DD>
+<DT><A HREF="#lbAX">SEE ALSO</A><DD>
 </DL>
 <HR>
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:52:02 GMT, April 20, 2020
+Time: 03:52:40 GMT, April 20, 2020
 </BODY>
 </HTML>

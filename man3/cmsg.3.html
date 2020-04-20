@@ -10,7 +10,7 @@ of the modification is added to the header.
 <HTML><HEAD><TITLE>Man page of CMSG</TITLE>
 </HEAD><BODY>
 <H1>CMSG</H1>
-Section: Linux Programmer's Manual (3)<BR>Updated: 2019-03-06<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2020-02-09<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -143,6 +143,13 @@ This is a constant expression.
 returns a pointer to the data portion of a
 <I>cmsghdr</I>.
 
+The pointer returned cannot be assumed to be suitably aligned for
+accessing arbitrary payload data types.
+Applications should not cast it to a pointer type matching the payload,
+but should instead use
+<B><A HREF="../man3/memcpy.3.html">memcpy</A></B>(3)
+
+to copy data to or from a suitably declared object.
 <DT>*<DD>
 <B>CMSG_LEN</B>()
 
@@ -248,7 +255,6 @@ option in a received ancillary buffer:
 
 struct msghdr msgh;
 struct cmsghdr *cmsg;
-int *ttlptr;
 int received_ttl;
 <P>
 /* Receive auxiliary data in msgh */
@@ -257,8 +263,7 @@ for (cmsg = CMSG_FIRSTHDR(&amp;msgh); cmsg != NULL;
 <BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;cmsg&nbsp;=&nbsp;CMSG_NXTHDR(&amp;msgh,&nbsp;cmsg))&nbsp;{
 <BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(cmsg-&gt;cmsg_level&nbsp;==&nbsp;IPPROTO_IP
 <BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&amp;&amp;&nbsp;cmsg-&gt;cmsg_type&nbsp;==&nbsp;IP_TTL)&nbsp;{
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ttlptr&nbsp;=&nbsp;(int&nbsp;*)&nbsp;CMSG_DATA(cmsg);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;received_ttl&nbsp;=&nbsp;*ttlptr;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;memcpy(&amp;receive_ttl,&nbsp;CMSG_DATA(cmsg),&nbsp;sizeof(int));
 <BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;break;
 <BR>&nbsp;&nbsp;&nbsp;&nbsp;}
 }
@@ -330,6 +335,6 @@ RFC&nbsp;2292
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:52:07 GMT, April 20, 2020
+Time: 03:52:46 GMT, April 20, 2020
 </BODY>
 </HTML>
