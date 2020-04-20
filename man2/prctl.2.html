@@ -421,6 +421,13 @@ For further information, see the kernel source file
 
 Set the secure computing (seccomp) mode for the calling thread, to limit
 the available system calls.
+The more recent
+<B><A HREF="../man2/seccomp.2.html">seccomp</A></B>(2)
+
+system call provides a superset of the functionality of
+<B>PR_SET_SECCOMP</B>.
+
+<P>
 The seccomp mode is selected via
 <I>arg2</I>.
 
@@ -432,7 +439,7 @@ With
 <I>arg2</I>
 
 set to
-<B>SECCOMP_MODE_STRICT</B>
+<B>SECCOMP_MODE_STRICT</B>,
 
 the only system calls that the thread is permitted to make are
 <B><A HREF="../man2/read.2.html">read</A></B>(2),
@@ -461,7 +468,7 @@ With
 <I>arg2</I>
 
 set to
-<B>SECCOMP_MODE_FILTER</B> (since Linux 3.5)
+<B>SECCOMP_MODE_FILTER</B> (since Linux 3.5),
 
 the system calls allowed are defined by a pointer
 to a Berkeley Packet Filter passed in
@@ -515,12 +522,26 @@ call will cause a
 
 signal to be sent to the process.
 If the caller is in filter mode, and this system call is allowed by the
-seccomp filters, it returns 2.
+seccomp filters, it returns 2; otherwise, the process is killed with a
+<B>SIGKILL</B>
+
+signal.
 This operation is available only
 if the kernel is configured with
 <B>CONFIG_SECCOMP</B>
 
 enabled.
+<P>
+Since Linux 3.8, the
+<I>Seccomp</I>
+
+field of the
+<I>/proc/[pid]/status</I>
+
+file provides a method of obtaining the same information,
+without the risk that the process is killed; see
+<B><A HREF="../man5/proc.5.html">proc</A></B>(5).
+
 <DT><B>PR_SET_SECUREBITS</B> (since Linux 2.6.26)
 
 <DD>
@@ -1025,6 +1046,78 @@ symbolic-link transitions over all processes running on a system.
 </DL>
 </DL>
 
+<DT><B>PR_MPX_ENABLE_MANAGEMENT</B>, <B>PR_MPX_DISABLE_MANAGEMENT</B> (since Linux 3.19) 
+
+<DD>
+
+
+
+Enable or disable kernel management of Memory Protection eXtensions (MPX)
+bounds tables.
+<P>
+MPX is a hardware-assisted mechanism for performing bounds checking on
+pointers.
+It consists of a set of registers storing bounds information
+and a set of special instruction prefixes that tell the CPU on which
+instructions it should do bounds enforcement.
+There is a limited number of these registers and
+when there are more pointers than registers,
+their contents must be &quot;spilled&quot; into a set of tables.
+These tables are called &quot;bounds tables&quot; and the MPX
+<B>prctl</B>()
+
+operations control
+whether the kernel manages their allocation and freeing.
+<P>
+When management is enabled, the kernel will take over allocation
+and freeing of the bounds tables.
+It does this by trapping the #BR exceptions that result
+at first use of missing bounds tables and
+instead of delivering the exception to user space,
+it allocates the table and populates the bounds directory
+with the location of the new table.
+For freeing, the kernel checks to see if bounds tables are
+present for memory which is not allocated, and frees them if so.
+<P>
+Before enabling MPX management using
+<B>PR_MPX_ENABLE_MANAGEMENT</B>,
+
+the application must first have allocated a user-space buffer for
+the bounds directory and placed the location of that directory in the
+<I>bndcfgu</I>
+
+register.
+<P>
+These calls will fail if the CPU or kernel does not support MPX.
+Kernel support for MPX is enabled via the
+<B>CONFIG_X86_INTEL_MPX</B>
+
+configuration option.
+You can check whether the CPU supports MPX by looking for the 'mpx'
+CPUID bit, like with the following command:
+<P>
+<TT>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT>cat /proc/cpuinfo | grep ' mpx '<BR>
+<P>
+A thread may not switch in or out of long (64-bit) mode while MPX is
+enabled.
+<P>
+All threads in a process are affected by these calls.
+<P>
+The child of a
+<B><A HREF="../man2/fork.2.html">fork</A></B>(2)
+
+inherits the state of MPX management.
+During
+<B><A HREF="../man2/execve.2.html">execve</A></B>(2),
+
+MPX management is reset to a state as if
+<B>PR_MPX_DISABLE_MANAGEMENT</B>
+
+had been called.
+<P>
+For further information on Intel MPX, see the kernel source file
+<I>Documentation/x86/intel_mpx.txt</I>.
+
 
 </DL>
 <A NAME="lbAE">&nbsp;</A>
@@ -1069,6 +1162,26 @@ is set appropriately.
 
 <DD>
 <I>arg2</I>
+
+is an invalid address.
+<DT><B>EFAULT</B>
+
+<DD>
+<I>option</I>
+
+is
+<B>PR_SET_SECCOMP</B>,
+
+<I>arg2</I>
+
+is
+<B>SECCOMP_MODE_FILTER</B>,
+
+the system was built with
+<B>CONFIG_SECCOMP_FILTER</B>,
+
+and
+<I>arg3</I>
 
 is an invalid address.
 <DT><B>EINVAL</B>
@@ -1117,6 +1230,22 @@ or
 
 and the kernel was not configured with
 <B>CONFIG_SECCOMP</B>.
+
+<DT><B>EINVAL</B>
+
+<DD>
+<I>option</I>
+
+is
+<B>PR_SET_SECCOMP</B>,
+
+<I>arg2</I>
+
+is
+<B>SECCOMP_MODE_FILTER</B>,
+
+and the kernel was not configured with
+<B>CONFIG_SECCOMP_FILTER</B>.
 
 <DT><B>EINVAL</B>
 
@@ -1426,6 +1555,19 @@ is not valid.
 
 
 
+<DT><B>ENXIO</B>
+
+<DD>
+<I>option</I>
+
+was
+<B>PR_MPX_ENABLE_MANAGEMENT</B>
+
+or
+<B>PR_MPX_DISABLE_MANAGEMENT</B>
+
+and the kernel or the CPU does not support MPX management.
+Check that the kernel and processor have MPX support.
 </DL>
 <A NAME="lbAG">&nbsp;</A>
 <H2>VERSIONS</H2>
@@ -1478,6 +1620,6 @@ get or set the maximum stack size, and so on.
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:34:52 GMT, April 20, 2020
+Time: 03:35:23 GMT, April 20, 2020
 </BODY>
 </HTML>

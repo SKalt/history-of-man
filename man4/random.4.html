@@ -11,7 +11,7 @@ the License, or (at your option) any later version.
 <HTML><HEAD><TITLE>Man page of RANDOM</TITLE>
 </HEAD><BODY>
 <H1>RANDOM</H1>
-Section: Linux Programmer's Manual (4)<BR>Updated: 2013-03-15<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (4)<BR>Updated: 2015-01-10<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -50,18 +50,55 @@ pool.
 high quality randomness such as one-time pad or key generation.
 When the entropy pool is empty, reads from <I>/dev/random</I> will block
 until additional environmental noise is gathered.
+If
+<B><A HREF="../man2/open.2.html">open</A></B>(2)
+
+is called for
+<I>/dev/random</I>
+
+with flag
+<B>O_NONBLOCK</B>,
+
+a subsequent
+<B><A HREF="../man2/read.2.html">read</A></B>(2)
+
+will not block if the requested number of bytes is not available.
+Instead, the available bytes are returned.
+If no byte is available
+<B><A HREF="../man2/read.2.html">read</A></B>(2)
+
+will return -1 and
+<I>errno</I>
+
+will be set to
+<B>EAGAIN</B>.
+
 <P>
 
 A read from the <I>/dev/urandom</I> device will not block
 waiting for more entropy.
-As a result, if there is not sufficient entropy in the
-entropy pool, the returned values are theoretically vulnerable to a
+If there is not sufficient entropy, a pseudorandom number generator is used
+to create the requested bytes.
+As a result, in this case the returned values are theoretically vulnerable to a
 cryptographic attack on the algorithms used by the driver.
 Knowledge of how to do this is not available in the current unclassified
 literature, but it is theoretically possible that such an attack may
 exist.
 If this is a concern in your application, use <I>/dev/random</I>
 instead.
+<B>O_NONBLOCK</B>
+
+has no effect when opening
+<I>/dev/urandom</I>.
+
+When calling
+<B><A HREF="../man2/read.2.html">read</A></B>(2)
+
+for device
+<I>/dev/urandom</I>
+
+signals will not be handled until after the requested random bytes
+have been generated.
 <P>
 
 Writing to <I>/dev/random</I> or <I>/dev/urandom</I> will update the
@@ -372,6 +409,6 @@ RFC&nbsp;1750, &quot;Randomness Recommendations for Security&quot;
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:35:03 GMT, April 20, 2020
+Time: 03:35:35 GMT, April 20, 2020
 </BODY>
 </HTML>

@@ -61,42 +61,38 @@ This structure is declared as follows:
 
 <PRE>
 struct timex {
-    int  modes;       /* Mode selector */
-    long offset;      /* Time offset; nanoseconds, if STA_NANO
-                         status flag is set, otherwise
-                         microseconds */
-    long freq;        /* Frequency offset, as scaled PPM
-                         (parts per million) */
-    long maxerror;    /* Maximum error (microseconds) */
-    long esterror;    /* Estimated error (microseconds) */
-    int  status;      /* Clock command/status */
-    long constant;    /* PLL (phase-locked loop) time constant */
-    long precision;   /* Clock precision (microseconds,
-                         read-only) */
-    long tolerance;   /* Clock frequency tolerance (PPM,
-                         read-only) */
+    int  modes;      /* Mode selector */
+    long offset;     /* Time offset; nanoseconds, if STA_NANO
+                        status flag is set, otherwise microseconds */
+    long freq;       /* Frequency offset, in units of 2^-16 ppm
+                        (parts per million, see NOTES below) */
+    long maxerror;   /* Maximum error (microseconds) */
+    long esterror;   /* Estimated error (microseconds) */
+    int  status;     /* Clock command/status */
+    long constant;   /* PLL (phase-locked loop) time constant */
+    long precision;  /* Clock precision (microseconds, read-only) */
+    long tolerance;  /* Clock frequency tolerance (ppm, read-only) */
     struct timeval time;
-                      /* Current time (read-only, except for
-                         ADJ_SETOFFSET); upon return, time.tv_usec
-                         contains nanoseconds, if STA_NANO status
-                         flag is set, otherwise microseconds */
-    long tick;        /* Microseconds between clock ticks */
-    long ppsfreq;     /* PPS (pulse per second) frequency
-                         (scaled PPM, read-only) */
-    long jitter;      /* PPS jitter (read-only); nanoseconds, if
-                         STA_NANO status flag is set, otherwise
-                         microseconds */
-    int  shift;       /* PPS interval duration
-                         (seconds, read-only) */
-    long stabil;      /* PPS stability (scaled PPM, read-only) */
-    long jitcnt;      /* PPS jitter limit exceeded (read-only) */
-    long calcnt;      /* PPS calibration intervals (read-only) */
-    long errcnt;      /* PPS calibration errors (read-only) */
-    long stbcnt;      /* PPS stability limit exceeded
-                         (read-only) */
-    int tai;          /* TAI offset, as set by previous ADJ_TAI
-                         operation (seconds, read-only,
-                         since Linux 2.6.26) */
+                     /* Current time (read-only, except for
+                        ADJ_SETOFFSET); upon return, time.tv_usec
+                        contains nanoseconds, if STA_NANO status
+                        flag is set, otherwise microseconds */
+    long tick;       /* Microseconds between clock ticks */
+    long ppsfreq;    /* PPS (pulse per second) frequency (in units
+                        of 2^-16 ppm--see NOTES, read-only) */
+    long jitter;     /* PPS jitter (read-only); nanoseconds, if
+                        STA_NANO status flag is set, otherwise
+                        microseconds */
+    int  shift;      /* PPS interval duration (seconds, read-only) */
+    long stabil;     /* PPS stability (2^-16 ppm--see NOTES,
+                        read-only) */
+    long jitcnt;     /* PPS jitter limit exceeded (read-only) */
+    long calcnt;     /* PPS calibration intervals (read-only) */
+    long errcnt;     /* PPS calibration errors (read-only) */
+    long stbcnt;     /* PPS stability limit exceeded (read-only) */
+    int tai;         /* TAI offset, as set by previous ADJ_TAI
+                        operation (seconds, read-only,
+                        since Linux 2.6.26) */
     /* Further padding bytes to allow for future expansion */
 };
 </PRE>
@@ -362,6 +358,8 @@ Mode (0 = Phase Locked Loop, 1 = Frequency Locked Loop; read-only).
 
 
 Clock source (0 = A, 1 = B; read-only).
+
+
 </DL>
 <P>
 
@@ -397,10 +395,17 @@ Leap second in progress.
 
 <DD>
 Leap second has occurred.
-<DT><B>TIME_BAD</B>
+<DT><B>TIME_ERROR</B>
 
 <DD>
 Clock not synchronized.
+The symbolic name
+<B>TIME_BAD</B>
+
+is a synonym for
+<B>TIME_ERROR</B>,
+
+provided for backward compatibility.
 </DL>
 <P>
 
@@ -459,6 +464,26 @@ Under Linux, the
 capability is required.
 </DL>
 <A NAME="lbAG">&nbsp;</A>
+<H2>NOTES</H2>
+
+In struct
+<I>timex</I>,
+
+<I>freq</I>,
+
+<I>ppsfreq</I>,
+
+and
+<I>stabil</I>
+
+are ppm (parts per million) with a 16-bit fractional part,
+which means that a value of 1 in one of those fields
+actually means 2^-16 ppm, and 2^16=65536 is 1 ppm.
+This is the case for both input values (in the case of
+<I>freq</I>)
+
+and output values.
+<A NAME="lbAH">&nbsp;</A>
 <H2>CONFORMING TO</H2>
 
 <B>adjtimex</B>()
@@ -470,7 +495,7 @@ See
 
 for a more portable, but less flexible,
 method of adjusting the system clock.
-<A NAME="lbAH">&nbsp;</A>
+<A NAME="lbAI">&nbsp;</A>
 <H2>SEE ALSO</H2>
 
 <B><A HREF="../man2/settimeofday.2.html">settimeofday</A></B>(2),
@@ -493,13 +518,14 @@ method of adjusting the system clock.
 <DT><A HREF="#lbAD">DESCRIPTION</A><DD>
 <DT><A HREF="#lbAE">RETURN VALUE</A><DD>
 <DT><A HREF="#lbAF">ERRORS</A><DD>
-<DT><A HREF="#lbAG">CONFORMING TO</A><DD>
-<DT><A HREF="#lbAH">SEE ALSO</A><DD>
+<DT><A HREF="#lbAG">NOTES</A><DD>
+<DT><A HREF="#lbAH">CONFORMING TO</A><DD>
+<DT><A HREF="#lbAI">SEE ALSO</A><DD>
 </DL>
 <HR>
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:34:49 GMT, April 20, 2020
+Time: 03:35:21 GMT, April 20, 2020
 </BODY>
 </HTML>
