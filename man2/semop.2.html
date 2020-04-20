@@ -5,7 +5,7 @@ Copyright 1993 Giorgio Ciucci (giorgio@crcc.it)
 <HTML><HEAD><TITLE>Man page of SEMOP</TITLE>
 </HEAD><BODY>
 <H1>SEMOP</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2012-05-31<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2012-08-27<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -46,7 +46,7 @@ Each semaphore in a semaphore set has the following associated values:
 unsigned short  semval;   /* semaphore value */
 unsigned short  semzcnt;  /* # waiting for zero */
 unsigned short  semncnt;  /* # waiting for increase */
-pid_t           sempid;   /* process that did last op */
+pid_t           sempid;   /* ID of process that did last op */
 
 </PRE>
 
@@ -130,11 +130,11 @@ the semaphore value
 Furthermore, if
 <B>SEM_UNDO</B>
 
-is specified for this operation, the system updates the process undo count
+is specified for this operation, the system updates the undo count
 (<I>semadj</I>)
 
 for this semaphore.
-This operation can always proceed---it never forces a process to wait.
+This operation can always proceed---it never forces a thread to wait.
 The calling process must have alter permission on the semaphore set.
 <P>
 
@@ -168,8 +168,8 @@ is performed).
 Otherwise
 <I>semzcnt</I>
 
-(the count of processes waiting until this semaphore's value becomes zero)
-is incremented by one and the process sleeps until
+(the count of threads waiting until this semaphore's value becomes zero)
+is incremented by one and the thread sleeps until
 one of the following occurs:
 <DL COMPACT>
 <DT>&bull;<DD>
@@ -191,7 +191,7 @@ set to
 <B>EIDRM</B>.
 
 <DT>&bull;<DD>
-The calling process catches a signal:
+The calling thread catches a signal:
 the value of
 <I>semzcnt</I>
 
@@ -244,7 +244,7 @@ is subtracted from
 and, if
 <B>SEM_UNDO</B>
 
-is specified for this operation, the system updates the process undo count
+is specified for this operation, the system updates the undo count
 (<I>semadj</I>)
 
 for this semaphore.
@@ -275,8 +275,8 @@ is performed).
 Otherwise
 <I>semncnt</I>
 
-(the counter of processes waiting for this semaphore's value to increase)
-is incremented by one and the process sleeps until
+(the counter of threads waiting for this semaphore's value to increase)
+is incremented by one and the thread sleeps until
 one of the following occurs:
 <DL COMPACT>
 <DT>&bull;<DD>
@@ -297,7 +297,7 @@ is subtracted from
 and, if
 <B>SEM_UNDO</B>
 
-is specified for this operation, the system updates the process undo count
+is specified for this operation, the system updates the undo count
 (<I>semadj</I>)
 
 for this semaphore.
@@ -312,7 +312,7 @@ set to
 <B>EIDRM</B>.
 
 <DT>&bull;<DD>
-The calling process catches a signal:
+The calling thread catches a signal:
 the value of
 <I>semncnt</I>
 
@@ -347,7 +347,7 @@ On successful completion, the
 value for each semaphore specified in the array pointed to by
 <I>sops</I>
 
-is set to the process ID of the calling process.
+is set to the caller's process ID.
 In addition, the
 <I>sem_otime</I>
 
@@ -361,7 +361,7 @@ is set to the current time.
 behaves identically to
 <B>semop</B>()
 
-except that in those cases were the calling process would sleep,
+except that in those cases were the calling thread would sleep,
 the duration of that sleep is limited by the amount of elapsed
 time specified by the
 <I>timespec</I>
@@ -477,7 +477,7 @@ The semaphore set was removed.
 <DT><B>EINTR</B>
 
 <DD>
-While blocked in this system call, the process caught a signal; see
+While blocked in this system call, the thread caught a signal; see
 <B><A HREF="../man7/signal.7.html">signal</A></B>(7).
 
 <DT><B>EINVAL</B>
@@ -660,7 +660,7 @@ as far as possible (i.e., to zero) and allowing process
 termination to proceed immediately.
 <P>
 In kernels 2.6.x, x &lt;= 10, there is a bug that in some circumstances
-prevents a process that is waiting for a semaphore value to become
+prevents a thread that is waiting for a semaphore value to become
 zero from being woken up when the value does actually become zero.
 This bug is fixed in kernel 2.6.11.
 
@@ -699,6 +699,8 @@ and then increment the semaphore value by one.
 <A NAME="lbAL">&nbsp;</A>
 <H2>SEE ALSO</H2>
 
+<B><A HREF="../man2/clone.2.html">clone</A></B>(2),
+
 <B><A HREF="../man2/semctl.2.html">semctl</A></B>(2),
 
 <B><A HREF="../man2/semget.2.html">semget</A></B>(2),
@@ -734,6 +736,6 @@ and then increment the semaphore value by one.
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:15:35 GMT, April 20, 2020
+Time: 03:16:05 GMT, April 20, 2020
 </BODY>
 </HTML>

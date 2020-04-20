@@ -5,7 +5,7 @@ Copyright (C) 1994, 1995 by Daniel Quinlan (quinlan@yggdrasil.com)
 <HTML><HEAD><TITLE>Man page of PROC</TITLE>
 </HEAD><BODY>
 <H1>PROC</H1>
-Section: Linux Programmer's Manual (5)<BR>Updated: 2012-05-03<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (5)<BR>Updated: 2012-10-15<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -456,7 +456,7 @@ and not the &quot;propagate_from:X&quot; field.
 For more information on mount propagation see:
 <I>Documentation/filesystems/sharedsubtree.txt</I>
 
-in the kernel source tree.
+in the Linux kernel source tree.
 <DT><I>/proc/[pid]/mounts</I> (since Linux 2.4.19)
 
 <DD>
@@ -770,8 +770,8 @@ terminal of the process.
 <DT><I>flags</I> %u (%lu before Linux 2.6.22)<DD>
 The kernel flags word of the process.
 For bit meanings,
-see the PF_* defines in
-<I>&lt;<A HREF="file:///usr/include/linux/sched.h">linux/sched.h</A>&gt;</I>.
+see the PF_* defines in the Linux kernel source file
+<I>include/linux/sched.h</I>.
 
 Details depend on the kernel version.
 <DT><I>minflt</I> %lu<DD>
@@ -791,7 +791,7 @@ waited-for children have made.
 <DT><I>utime</I> %lu<DD>
 Amount of time that this process has been scheduled in user mode,
 measured in clock ticks (divide by
-<I>sysconf(_SC_CLK_TCK)</I>.
+<I>sysconf(_SC_CLK_TCK)</I>).
 
 This includes guest time, <I>guest_time</I>
 (time spent running a virtual CPU, see below),
@@ -800,13 +800,13 @@ do not lose that time from their calculations.
 <DT><I>stime</I> %lu<DD>
 Amount of time that this process has been scheduled in kernel mode,
 measured in clock ticks (divide by
-<I>sysconf(_SC_CLK_TCK)</I>.
+<I>sysconf(_SC_CLK_TCK)</I>).
 
 <DT><I>cutime</I> %ld<DD>
 Amount of time that this process's
 waited-for children have been scheduled in user mode,
 measured in clock ticks (divide by
-<I>sysconf(_SC_CLK_TCK)</I>.
+<I>sysconf(_SC_CLK_TCK)</I>).
 
 (See also
 <B><A HREF="../man2/times.2.html">times</A></B>(2).)
@@ -817,7 +817,7 @@ This includes guest time, <I>cguest_time</I>
 Amount of time that this process's
 waited-for children have been scheduled in kernel mode,
 measured in clock ticks (divide by
-<I>sysconf(_SC_CLK_TCK)</I>.
+<I>sysconf(_SC_CLK_TCK)</I>).
 
 <DT><I>priority</I> %ld<DD>
 (Explanation for Linux 2.6)
@@ -872,7 +872,11 @@ is sent to the process due to an interval timer.
 Since kernel 2.6.17, this field is no longer maintained,
 and is hard coded as 0.
 <DT><I>starttime</I> %llu (was %lu before Linux 2.6)<DD>
-The time in jiffies the process started after system boot.
+The time the process started after system boot.
+In kernels before Linux 2.6, this value was expressed in jiffies.
+Since Linux 2.6, the value is expressed in clock ticks (divide by
+<I>sysconf(_SC_CLK_TCK)</I>).
+
 <DT><I>vsize</I> %lu<DD>
 Virtual memory size in bytes.
 <DT><I>rss</I> %ld<DD>
@@ -966,11 +970,11 @@ Aggregated block I/O delays, measured in clock ticks (centiseconds).
 <DT><I>guest_time</I> %lu (since Linux 2.6.24)<DD>
 Guest time of the process (time spent running a virtual CPU
 for a guest operating system), measured in clock ticks (divide by
-<I>sysconf(_SC_CLK_TCK)</I>.
+<I>sysconf(_SC_CLK_TCK)</I>).
 
 <DT><I>cguest_time</I> %ld (since Linux 2.6.24)<DD>
 Guest time of the process's children, measured in clock ticks (divide by
-<I>sysconf(_SC_CLK_TCK)</I>.
+<I>sysconf(_SC_CLK_TCK)</I>).
 
 </DL>
 </DL>
@@ -1372,7 +1376,7 @@ This can be used by MAKEDEV scripts for consistency with the kernel.
 
 <DD>
 This file contains disk I/O statistics for each disk device.
-See the kernel source file
+See the Linux kernel source file
 <I>Documentation/iostats.txt</I>
 
 for further information.
@@ -1587,7 +1591,7 @@ The format of this file is documented in
 
 <DD>
 Memory Type Range Registers.
-See the kernel source file
+See the Linux kernel source file
 <I>Documentation/mtrr.txt</I>
 
 for details.
@@ -2015,7 +2019,7 @@ system call.
 <DD>
 This directory may contain files with application binary information.
 
-See the kernel source file
+See the Linux kernel source file
 <I>Documentation/sysctl/abi.txt</I>
 
 for more information.
@@ -2040,7 +2044,7 @@ related to file systems.
 
 <DD>
 Documentation for files in this directory can be found
-in the kernel sources in
+in the Linux kernel sources in
 <I>Documentation/binfmt_misc.txt</I>.
 
 <DT><I>/proc/sys/fs/dentry-state</I> (since Linux 2.2)
@@ -2304,6 +2308,94 @@ to reflect the value actually employed for a convenient implementation.
 To determine the rounded-up value,
 display the contents of this file after assigning a value to it.
 The minimum value that can be assigned to this file is the system page size.
+<DT><I>/proc/sys/fs/protected_hardlinks</I> (since Linux 3.6)
+
+<DD>
+
+When the value in this file is 0,
+no restrictions are placed the creation of hard links
+(i.e., this is the historical behaviour before Linux 3.6).
+When the value in this file is 1,
+a hard link can be created to a target file
+only if one of the following conditions is true:
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT>*<DD>
+The caller has the
+<B>CAP_FOWNER</B>
+
+capability.
+<DT>*<DD>
+The file system UID of the process creating the link matches
+the owner (UID) of the target file
+(as described in
+<B><A HREF="../man7/credentials.7.html">credentials</A></B>(7),
+
+a process's file system UID is normally the same as its effective UID).
+<DT>*<DD>
+All of the following conditions are true:
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT>&bull;<DD>
+the target is a regular file;
+<DT>&bull;<DD>
+the target file does not have its set-user-ID permission bit enabled;
+<DT>&bull;<DD>
+the target file does not have both its set-group-ID and
+group-executable permission bits enabled; and
+<DT>&bull;<DD>
+the caller has permission to read and write the target file
+(either via the file's permissions mask or because it has
+suitable capabilities).
+</DL>
+</DL>
+
+</DL>
+</DL>
+
+<DT><DD>
+The default value in this file is 1.
+This setting prevents a longstanding class of security issues caused by
+the hard-link-based time-of-check, time-of-use races,
+most commonly seen in world-writable directories such as
+<I>/tmp</I>.
+
+The common method of exploiting this flaw
+is to cross privilege boundaries when following a given hard link
+(i.e., a root process follows a hard link created by another user).
+Additionally, on systems without separated partitions,
+this stops unauthorized users from &quot;pinning&quot; vulnerable set-user-ID and
+set-group-ID files against being upgraded by
+the administrator, or linking to special files.
+<DT><I>/proc/sys/fs/protected_symlinks</I> (since Linux 3.6)
+
+<DD>
+
+When the value in this file is 0,
+no restrictions are placed on following symbolic links
+(i.e., this is the historical behaviour before Linux 3.6).
+When the value in this file is 1, symbolic links are followed only
+in the following circumstances:
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT>*<DD>
+the file system UID of the process following the link matches
+the owner (UID) of the symbolic link
+(as described in
+<B><A HREF="../man7/credentials.7.html">credentials</A></B>(7),
+
+a process's file system UID is normally the same as its effective UID);
+<DT>*<DD>
+the link is not in a sticky world-writable directory; or
+<DT>*<DD>
+the symbolic link and and its parent directory have the same owner (UID)
+</DL>
+</DL>
+
+<DT><DD>
+The default value in this file is 1.
+This setting avoids a longstanding class of security issues
+based on time-of-check, time-of-use races when accessing symbolic links.
 <DT><I>/proc/sys/fs/suid_dumpable</I> (since Linux 2.6.13)
 
 <DD>
@@ -2497,6 +2589,31 @@ the PowerPC htab
 
 is pruned
 each time the system hits the idle loop.
+<DT><I>/proc/sys/kernel/kptr_restrict</I> (since Linux 2.6.38)
+
+<DD>
+
+The value in this file determines whether kernel addresses are exposed via
+<I>/proc</I>
+
+files and other interfaces.
+A value of 0 in this file imposes no restrictions.
+If the value is 1, kernel pointers printed using the
+<I>%pK</I>
+
+format specifier will be replaced with zeros unless the user has the
+<B>CAP_SYSLOG</B>
+
+capability.
+If the value is 2, kernel pointers printed using the
+<I>%pK</I>
+
+format specifier will be replaced with zeros regardless
+of the user's capabilities.
+The initial default value for this file was 1,
+but the default was changed
+
+to 0 in Linux 2.6.39.
 <DT><I>/proc/sys/kernel/l2cr</I>
 
 <DD>
@@ -2516,7 +2633,7 @@ The file is only present if the kernel is built with the
 <B>CONFIG_KMOD</B>
 
 option enabled.
-It is described by the kernel source file
+It is described by the Linux kernel source file
 <I>Documentation/kmod.txt</I>
 
 (only present in kernel 2.4 and earlier).
@@ -2682,7 +2799,7 @@ for further information.
 <DT><I>/proc/sys/kernel/real-root-dev</I>
 
 <DD>
-This file is documented in the kernel source file
+This file is documented in the Linux kernel source file
 <I>Documentation/initrd.txt</I>.
 
 <DT><I>/proc/sys/kernel/reboot-cmd</I> (Sparc only) 
@@ -2793,7 +2910,7 @@ This file is only present if the
 <B>CONFIG_MAGIC_SYSRQ</B>
 
 kernel configuration option is enabled.
-For further details see the kernel source file
+For further details see the Linux kernel source file
 <I>Documentation/sysrq.txt</I>.
 
 <DT><I>/proc/sys/kernel/version</I>
@@ -3108,7 +3225,7 @@ typing ALT-SysRq-&lt;character&gt; (see the description of
 This file is normally only writable by
 <I>root</I>.
 
-For further details see the kernel source file
+For further details see the Linux kernel source file
 <I>Documentation/sysrq.txt</I>.
 
 <DT><I>/proc/sysvipc</I>
@@ -3242,10 +3359,11 @@ of thing that needs to be updated very often.
 
 <BR>
 
-The kernel source files:
-<I>Documentation/filesystems/proc.txt</I>,
+The Linux kernel source files:
+<I>Documentation/filesystems/proc.txt</I>
 
-<I>Documentation/sysctl/vm.txt</I>
+and
+<I>Documentation/sysctl/vm.txt</I>.
 
 <P>
 
@@ -3261,6 +3379,6 @@ The kernel source files:
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:15:46 GMT, April 20, 2020
+Time: 03:16:16 GMT, April 20, 2020
 </BODY>
 </HTML>

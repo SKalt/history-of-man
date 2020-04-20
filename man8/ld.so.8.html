@@ -4,7 +4,7 @@
 <HTML><HEAD><TITLE>Man page of LD.SO</TITLE>
 </HEAD><BODY>
 <H1>LD.SO</H1>
-Section: Linux Programmer's Manual (8)<BR>Updated: 2012-04-17<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (8)<BR>Updated: 2012-08-26<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -68,8 +68,17 @@ and
 
 <P>
 
-The shared libraries needed by the program are searched for
-in the following order:
+When resolving library dependencies,
+the dynamic linker first inspects each dependency
+string to see if it contains a slash (this can occur if
+a library pathname containing slashes was specified at link time).
+If a slash is found, then the dependency string is interpreted as
+a (relative or absolute) pathname,
+and the library is loaded using that pathname.
+<P>
+
+If a library dependency does not contain a slash,
+then it is searched for in the following order:
 <DL COMPACT>
 <DT>o<DD>
 (ELF only) Using the directories specified in the
@@ -88,7 +97,7 @@ DT_RUNPATH dynamic section attribute
 of the binary if present.
 <DT>o<DD>
 From the cache file
-<I>/etc/ld.so.cache</I>
+<I>/etc/ld.so.cache</I>,
 
 which contains a compiled list of candidate libraries previously found
 in the augmented library path.
@@ -256,15 +265,19 @@ Similar to the
 <B>PATH</B>
 
 environment variable.
+Ignored in set-user-ID and set-group-ID programs.
 <DT><B>LD_PRELOAD</B>
 
 <DD>
-A whitespace-separated list of additional, user-specified, ELF shared
+A list of additional, user-specified, ELF shared
 libraries to be loaded before all others.
+The items of the list can be separated by spaces or colons.
 This can be used to selectively override functions in other shared libraries.
+The libraries are searched for using the rules given under DESCRIPTION.
 For set-user-ID/set-group-ID ELF binaries,
-only libraries in the standard search
-directories that are also set-user-ID will be loaded.
+preload pathnames containing slashes are ignored,
+and libraries in the standard search directories are loaded
+only if the set-user-ID permission bit is enabled on the library file.
 <DT><B>LD_TRACE_LOADED_OBJECTS</B>
 
 <DD>
@@ -529,7 +542,7 @@ libraries and an ordered list of candidate libraries.
 <DT><I>/etc/ld.so.preload</I>
 
 <DD>
-File containing a whitespace separated list of ELF shared libraries to
+File containing a whitespace-separated list of ELF shared libraries to
 be loaded before the program.
 <DT><B>lib*.so*</B>
 
@@ -583,6 +596,6 @@ ELF functionality is available since Linux 1.1.52 and libc5.
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:15:47 GMT, April 20, 2020
+Time: 03:16:17 GMT, April 20, 2020
 </BODY>
 </HTML>

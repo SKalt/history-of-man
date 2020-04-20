@@ -4,7 +4,7 @@
 <HTML><HEAD><TITLE>Man page of SELECT</TITLE>
 </HEAD><BODY>
 <H1>SELECT</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2012-05-02<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2012-08-17<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -80,7 +80,7 @@ The operation of
 and
 <B>pselect</B>()
 
-is identical, with three differences:
+is identical, other than these three differences:
 <DL COMPACT>
 <DT>(i)<DD>
 <B>select</B>()
@@ -230,9 +230,9 @@ executing the following calls:
 
     sigset_t origmask;
 
-    sigprocmask(SIG_SETMASK, &amp;sigmask, &amp;origmask);
+    pthread_sigmask(SIG_SETMASK, &amp;sigmask, &amp;origmask);
     ready = select(nfds, &amp;readfds, &amp;writefds, &amp;exceptfds, timeout);
-    sigprocmask(SIG_SETMASK, &amp;origmask, NULL);
+    pthread_sigmask(SIG_SETMASK, &amp;origmask, NULL);
 </PRE>
 
 <P>
@@ -516,6 +516,28 @@ when
 is defined.
 Since glibc 2.2.2 the requirements are as shown in the SYNOPSIS.
 <A NAME="lbAK">&nbsp;</A>
+<H3>Multithreaded applications</H3>
+
+If a file descriptor being monitored by
+<B>select</B>()
+
+is closed in another thread, the result is unspecified.
+On some UNIX systems,
+<B>select</B>()
+
+unblocks and returns, with an indication that the file descriptor is ready
+(a subsequent I/O operation will likely fail with an error,
+unless another the file descriptor reopened between the time
+<B>select</B>()
+
+returned and the I/O operations was performed).
+On Linux (and some other systems),
+closing the file descriptor in another thread has no effect on
+<B>select</B>().
+
+In summary, any application that relies on a particular behavior
+in this scenario must be considered buggy.
+<A NAME="lbAL">&nbsp;</A>
 <H3>Linux Notes</H3>
 
 The
@@ -570,7 +592,7 @@ This allows the system call to obtain both
 a pointer to the signal set and its size,
 while allowing for the fact that most architectures
 support a maximum of 6 arguments to a system call.
-<A NAME="lbAL">&nbsp;</A>
+<A NAME="lbAM">&nbsp;</A>
 <H2>BUGS</H2>
 
 Glibc 2.0 provided a version of
@@ -651,7 +673,7 @@ but the glibc wrapper hides this behavior by internally copying the
 <I>timeout</I>
 
 to a local variable and passing that variable to the system call.
-<A NAME="lbAM">&nbsp;</A>
+<A NAME="lbAN">&nbsp;</A>
 <H2>EXAMPLE</H2>
 
 <PRE>
@@ -691,15 +713,9 @@ main(void)
 }
 </PRE>
 
-<A NAME="lbAN">&nbsp;</A>
+<A NAME="lbAO">&nbsp;</A>
 <H2>SEE ALSO</H2>
 
-For a tutorial with discussion and examples, see
-<B><A HREF="../man2/select_tut.2.html">select_tut</A></B>(2).
-
-<P>
-
-For vaguely related stuff, see
 <B><A HREF="../man2/accept.2.html">accept</A></B>(2),
 
 <B><A HREF="../man2/connect.2.html">connect</A></B>(2),
@@ -721,6 +737,10 @@ For vaguely related stuff, see
 <B><A HREF="../man7/time.7.html">time</A></B>(7)
 
 <P>
+For a tutorial with discussion and examples, see
+<B><A HREF="../man2/select_tut.2.html">select_tut</A></B>(2).
+
+<P>
 
 <HR>
 <A NAME="index">&nbsp;</A><H2>Index</H2>
@@ -737,16 +757,17 @@ For vaguely related stuff, see
 <DT><A HREF="#lbAI">CONFORMING TO</A><DD>
 <DT><A HREF="#lbAJ">NOTES</A><DD>
 <DL>
-<DT><A HREF="#lbAK">Linux Notes</A><DD>
+<DT><A HREF="#lbAK">Multithreaded applications</A><DD>
+<DT><A HREF="#lbAL">Linux Notes</A><DD>
 </DL>
-<DT><A HREF="#lbAL">BUGS</A><DD>
-<DT><A HREF="#lbAM">EXAMPLE</A><DD>
-<DT><A HREF="#lbAN">SEE ALSO</A><DD>
+<DT><A HREF="#lbAM">BUGS</A><DD>
+<DT><A HREF="#lbAN">EXAMPLE</A><DD>
+<DT><A HREF="#lbAO">SEE ALSO</A><DD>
 </DL>
 <HR>
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:15:35 GMT, April 20, 2020
+Time: 03:16:04 GMT, April 20, 2020
 </BODY>
 </HTML>

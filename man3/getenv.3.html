@@ -5,13 +5,13 @@ Copyright 1993 David Metcalfe (david@prism.demon.co.uk)
 <HTML><HEAD><TITLE>Man page of GETENV</TITLE>
 </HEAD><BODY>
 <H1>GETENV</H1>
-Section: Linux Programmer's Manual (3)<BR>Updated: 2008-03-17<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2012-08-14<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
 <H2>NAME</H2>
 
-getenv - get an environment variable
+getenv, secure_getenv - get an environment variable
 <A NAME="lbAC">&nbsp;</A>
 <H2>SYNOPSIS</H2>
 
@@ -19,8 +19,20 @@ getenv - get an environment variable
 <B>#include &lt;<A HREF="file:///usr/include/stdlib.h">stdlib.h</A>&gt;</B>
 
 <B>char *getenv(const char *</B><I>name</I><B>);</B>
+
+<B>char *secure_getenv(const char *</B><I>name</I><B>);</B>
 </PRE>
 
+<P>
+
+Feature Test Macro Requirements for glibc (see
+<B><A HREF="../man7/feature_test_macros.7.html">feature_test_macros</A></B>(7)):
+
+
+<P>
+<B>secure_getenv</B>():
+
+_GNU_SOURCE
 <A NAME="lbAD">&nbsp;</A>
 <H2>DESCRIPTION</H2>
 
@@ -35,6 +47,39 @@ and returns a pointer to the corresponding
 <I>value</I>
 
 string.
+<P>
+The GNU-specific
+<B>secure_getenv</B>()
+
+function is just like
+<B>getenv</B>()
+
+except that it returns NULL in cases where &quot;secure execution&quot; is required.
+Secure execution is required if one of the following conditions
+was true when the program run by the calling process was loaded:
+<DL COMPACT>
+<DT>*<DD>
+the process's effective user ID did not match its real user ID or
+the process's effective group ID did not match its real group ID
+(typically this is the result of executing a set-user-ID or
+set-group-ID program);
+<DT>*<DD>
+the effective capability bit was set on the executable file; or
+<DT>*<DD>
+the process has a nonempty permitted capability set.
+</DL>
+<P>
+
+Secure execution may also required if triggered
+by some Linux security modules.
+<P>
+The
+<B>secure_getenv</B>()
+
+function is intended for use in general-purpose libraries
+to avoid vulnerabilities that could occur if
+set-user-ID or set-group-ID programs accidentally
+trusted the environment.
 <A NAME="lbAE">&nbsp;</A>
 <H2>RETURN VALUE</H2>
 
@@ -46,8 +91,20 @@ environment, or NULL if there is no match.
 <A NAME="lbAF">&nbsp;</A>
 <H2>CONFORMING TO</H2>
 
+<B>getenv</B>():
+
 SVr4, POSIX.1-2001, 4.3BSD, C89, C99.
+<P>
+<B>secure_getenv</B>()
+
+is a GNU extension.
 <A NAME="lbAG">&nbsp;</A>
+<H2>VERSIONS</H2>
+
+<B>secure_getenv</B>()
+
+first appeared in glibc 2.17.
+<A NAME="lbAH">&nbsp;</A>
 <H2>NOTES</H2>
 
 The strings in the environment list are of the form <I>name=value</I>.
@@ -77,16 +134,27 @@ and can be modified by a subsequent call to
 or
 <B><A HREF="../man3/unsetenv.3.html">unsetenv</A></B>(3).
 
-<A NAME="lbAH">&nbsp;</A>
+<P>
+The &quot;secure execution&quot; mode of
+<B>secure_getenv</B>()
+
+is controlled by the
+<B>AT_SECURE</B>
+
+flag contained in the auxiliary vector passed from the kernel to user space.
+<A NAME="lbAI">&nbsp;</A>
 <H2>SEE ALSO</H2>
 
 <B><A HREF="../man3/clearenv.3.html">clearenv</A></B>(3),
+
 
 <B><A HREF="../man3/putenv.3.html">putenv</A></B>(3),
 
 <B><A HREF="../man3/setenv.3.html">setenv</A></B>(3),
 
 <B><A HREF="../man3/unsetenv.3.html">unsetenv</A></B>(3),
+
+<B><A HREF="../man7/capabilities.7.html">capabilities</A></B>(7),
 
 <B><A HREF="../man7/environ.7.html">environ</A></B>(7)
 
@@ -100,13 +168,14 @@ or
 <DT><A HREF="#lbAD">DESCRIPTION</A><DD>
 <DT><A HREF="#lbAE">RETURN VALUE</A><DD>
 <DT><A HREF="#lbAF">CONFORMING TO</A><DD>
-<DT><A HREF="#lbAG">NOTES</A><DD>
-<DT><A HREF="#lbAH">SEE ALSO</A><DD>
+<DT><A HREF="#lbAG">VERSIONS</A><DD>
+<DT><A HREF="#lbAH">NOTES</A><DD>
+<DT><A HREF="#lbAI">SEE ALSO</A><DD>
 </DL>
 <HR>
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:15:40 GMT, April 20, 2020
+Time: 03:16:10 GMT, April 20, 2020
 </BODY>
 </HTML>
