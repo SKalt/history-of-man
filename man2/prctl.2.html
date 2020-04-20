@@ -5,7 +5,7 @@ Copyright (C) 1998 Andries Brouwer (aeb@cwi.nl)
 <HTML><HEAD><TITLE>Man page of PRCTL</TITLE>
 </HEAD><BODY>
 <H1>PRCTL</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2011-09-17<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2012-04-14<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -450,6 +450,163 @@ All unused
 <B>prctl</B>()
 
 arguments must be zero.
+<DT><B>PR_SET_MM</B> (since Linux 3.3)
+
+<DD>
+Modify certain kernel memory map descriptor fields
+of the calling process.
+Usually these fields are set by the kernel and dynamic loader (see
+<B><A HREF="../man8/ld.so.8.html">ld.so</A></B>(8)
+
+for more information) and a regular application should not use this feature.
+However, there are cases, such as self-modifying programs,
+where a program might find it useful to change its own memory map.
+This feature is available only if the kernel is built with the
+<B>CONFIG_CHECKPOINT_RESTORE</B>
+
+option enabled.
+The calling process must have the
+<B>CAP_SYS_RESOURCE</B>
+
+capability.
+The value in
+<I>arg2</I>
+
+is one of the options below, while
+<I>arg3</I>
+
+provides a new value for the option.
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT><B>PR_SET_MM_START_CODE</B>
+
+<DD>
+Set the address above which the program text can run.
+The corresponding memory area must be readable and executable,
+but not writable or sharable (see
+<B><A HREF="../man2/mprotect.2.html">mprotect</A></B>(2)
+
+and
+<B><A HREF="../man2/mmap.2.html">mmap</A></B>(2)
+
+for more information).
+<DT><B>PR_SET_MM_END_CODE</B>
+
+<DD>
+Set the address below which the program text can run.
+The corresponding memory area must be readable and executable,
+but not writable or sharable.
+<DT><B>PR_SET_MM_START_DATA</B>
+
+<DD>
+Set the address above which initialized and
+uninitialized (bss) data are placed.
+The corresponding memory area must be readable and writable,
+but not executable or sharable.
+<DT><B>PR_SET_MM_END_DATA</B>
+
+<DD>
+Set the address below which initialized and
+uninitialized (bss) data are placed.
+The corresponding memory area must be readable and writable,
+but not executable or sharable.
+<DT><B>PR_SET_MM_START_STACK</B>
+
+<DD>
+Set the start address of the stack.
+The corresponding memory area must be readable and writable.
+<DT><B>PR_SET_MM_START_BRK</B>
+
+<DD>
+Set the address above which the program heap can be expanded with
+<B><A HREF="../man2/brk.2.html">brk</A></B>(2)
+
+call.
+The address must be greater than the ending address of
+the current program data segment.
+In addition, the combined size of the resulting heap and
+the size of the data segment can't exceed the
+<B>RLIMIT_DATA</B>
+
+resource limit (see
+<B><A HREF="../man2/setrlimit.2.html">setrlimit</A></B>(2)).
+
+<DT><B>PR_SET_MM_BRK</B>
+
+<DD>
+Set the current
+<B><A HREF="../man2/brk.2.html">brk</A></B>(2)
+
+value.
+The requirements for the address are the same as for the
+<B>PR_SET_MM_START_BRK</B>
+
+option.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</DL>
+</DL>
+
+
 </DL>
 <A NAME="lbAE">&nbsp;</A>
 <H2>RETURN VALUE</H2>
@@ -505,7 +662,10 @@ is
 <B>PR_MCE_KILL</B>
 
 or
-<B>PR_MCE_KILL_GET</B>,
+<B>PR_MCE_KILL_GET</B>
+
+or
+<B>PR_SET_MM</B>,
 
 and unused
 <B>prctl</B>()
@@ -532,6 +692,67 @@ or
 
 and the kernel was not configured with
 <B>CONFIG_SECCOMP</B>.
+
+<DT><B>EINVAL</B>
+
+<DD>
+<I>option</I>
+
+is
+<B>PR_SET_MM</B>,
+
+and one of the following is true
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT>*<DD>
+<I>arg4</I>
+
+or
+<I>arg5</I>
+
+is nonzero;
+<DT>*<DD>
+<I>arg3</I>
+
+is greater than
+<B>TASK_SIZE</B>
+
+(the limit on the size of the user address space for this architecture);
+<DT>*<DD>
+<I>arg2</I>
+
+is
+<B>PR_SET_MM_START_CODE</B>,
+
+<B>PR_SET_MM_END_CODE</B>,
+
+<B>PR_SET_MM_START_DATA</B>,
+
+<B>PR_SET_MM_END_DATA</B>,
+
+or
+<B>PR_SET_MM_START_STACK,</B>
+
+and the permissions of the corresponding memory area are not as required;
+<DT>*<DD>
+<I>arg2</I>
+
+is
+<B>PR_SET_MM_START_BRK</B>
+
+or
+<B>PR_SET_MM_BRK</B>,
+
+and
+<I>arg3</I>
+
+is less than or equal to the end of the data segment
+or specifies a value that would cause the
+<B>RLIMIT_DATA</B>
+
+resource limit to be exceeded.
+</DL>
+</DL>
 
 <DT><B>EPERM</B>
 
@@ -577,6 +798,53 @@ and the caller does not have the
 <B>CAP_SETPCAP</B>
 
 capability.
+<DT><B>EPERM</B>
+
+<DD>
+<I>option</I>
+
+is
+<B>PR_SET_MM</B>,
+
+and the caller does not have the
+<B>CAP_SYS_RESOURCE</B>
+
+capability.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -637,6 +905,6 @@ get or set the maximum stack size, etc.
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:13:25 GMT, April 20, 2020
+Time: 03:13:56 GMT, April 20, 2020
 </BODY>
 </HTML>

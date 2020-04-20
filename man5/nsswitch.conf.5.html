@@ -1,51 +1,48 @@
 <!--
 Copyright (c) 1998, 1999 Thorsten Kukuk (kukuk@vt.uni-paderborn.de)
+Copyright (c) 2011, Mark R. Bannister &lt;cambridge@users.sourceforge.net&gt;
 -->
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
 <HTML><HEAD><TITLE>Man page of NSSWITCH.CONF</TITLE>
 </HEAD><BODY>
 <H1>NSSWITCH.CONF</H1>
-Section: Linux Programmer's Manual (5)<BR>Updated: 1999-01-17<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (5)<BR>Updated: 2012-04-14<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
 <H2>NAME</H2>
 
-nsswitch.conf - System Databases and Name Service Switch configuration file
+nsswitch.conf - Name Service Switch configuration file
 <A NAME="lbAC">&nbsp;</A>
 <H2>DESCRIPTION</H2>
 
-Various functions in the C Library need to be configured to work
-correctly in the local environment.
-Traditionally, this was done by
-using files (e.g., <I>/etc/passwd</I>), but other nameservices (like the
-Network Information Service (NIS) and the Domain Name Service (DNS))
-became popular, and were hacked into the C library, usually with a fixed
-search order.
+The Name Service Switch (NSS) configuration file,
+<I>/etc/nsswitch.conf</I>,
+
+is used by the GNU C Library to determine
+the sources from which to obtain name-service information in
+a range of categories,
+and in what order.
+(The &quot;
+Each category of information is identified by a database name.
 <P>
 
-The Linux libc5 with NYS support and the GNU C Library 2.x (libc.so.6)
-contain a cleaner solution of this problem.
-It is designed after a method
-used by Sun Microsystems in the C library of Solaris 2.
-We follow their
-name and call this scheme &quot;Name Service Switch&quot; (NSS).
-The sources for
-the &quot;databases&quot; and their lookup order are specified in the
-<I>/etc/nsswitch.conf</I>
-
-file.
+The file is plain ASCII text, with columns separated by spaces or tab
+characters.
+The first column specifies the database name.
+The remaining columns describe the order of sources to query and a
+limited set of actions that can be performed by lookup result.
 <P>
 
-The following databases are available in the NSS:
+The following databases are understood by the GNU C Library:
 <DL COMPACT>
 <DT><B>aliases</B>
 
 <DD>
 Mail aliases, used by
-<B><A HREF="../man8/sendmail.8.html">sendmail</A></B>(8).
+<B><A HREF="../man3/getaliasent.3.html">getaliasent</A></B>(3)
 
-Presently ignored.
+and related functions.
 <DT><B>ethers</B>
 
 <DD>
@@ -56,40 +53,40 @@ Ethernet numbers.
 Groups of users, used by
 <B><A HREF="../man3/getgrent.3.html">getgrent</A></B>(3)
 
-functions.
+and related functions.
 <DT><B>hosts</B>
 
 <DD>
 Host names and numbers, used by
 <B><A HREF="../man3/gethostbyname.3.html">gethostbyname</A></B>(3)
 
-and similar functions.
+and related functions.
 <DT><B>netgroup</B>
 
 <DD>
-Network wide list of hosts and users, used for access rules.
-C libraries before glibc 2.1 only support netgroups over NIS.
+Network-wide list of hosts and users, used for access rules.
+C libraries before glibc 2.1 supported netgroups only over NIS.
 <DT><B>networks</B>
 
 <DD>
 Network names and numbers, used by
 <B><A HREF="../man3/getnetent.3.html">getnetent</A></B>(3)
 
-functions.
+and related functions.
 <DT><B>passwd</B>
 
 <DD>
 User passwords, used by
 <B><A HREF="../man3/getpwent.3.html">getpwent</A></B>(3)
 
-functions.
+and related functions.
 <DT><B>protocols</B>
 
 <DD>
 Network protocols, used by
 <B><A HREF="../man3/getprotoent.3.html">getprotoent</A></B>(3)
 
-functions.
+and related functions.
 <DT><B>publickey</B>
 
 <DD>
@@ -100,31 +97,31 @@ Public and secret keys for Secure_RPC used by NFS and NIS+.
 Remote procedure call names and numbers, used by
 <B><A HREF="../man3/getrpcbyname.3.html">getrpcbyname</A></B>(3)
 
-and similar functions.
+and related functions.
 <DT><B>services</B>
 
 <DD>
 Network services, used by
 <B><A HREF="../man3/getservent.3.html">getservent</A></B>(3)
 
-functions.
+and related functions.
 <DT><B>shadow</B>
 
 <DD>
 Shadow user passwords, used by
-<B><A HREF="../man3/getspnam.3.html">getspnam</A></B>(3).
+<B><A HREF="../man3/getspnam.3.html">getspnam</A></B>(3)
 
+and related functions.
 </DL>
 <P>
 
-An example
+Here is an example
 <I>/etc/nsswitch.conf</I>
 
-(namely, the default used when
-<I>/etc/nsswitch.conf</I>
-
-is missing):
+file:
 <P>
+
+<DL COMPACT><DT><DD>
 
 <DL COMPACT>
 <DT>passwd:<DD>
@@ -148,194 +145,305 @@ nis [NOTFOUND=return] files
 nis [NOTFOUND=return] files
 
 </DL>
+</DL>
+
 <P>
 
-The first column is the database.
-The rest of the line specifies how the lookup process works.
-You can specify the way it works for each database individually.
-<P>
-
-The configuration specification for each database can contain two
-different items:
-
+The first column is the database name.
+The remaining columns specify:
 <DL COMPACT>
-<DT>* The service specification like `files', `db', or `nis'.<DD>
-<DT>* The reaction on lookup result like `[NOTFOUND=return]'.<DD>
+<DT>*<DD>
+One or more service specifications e.g., &quot;files&quot;, &quot;db&quot;, or &quot;nis&quot;.
+The order of the services on the line determines the order in which
+those services will be queried, in turn, until a result is found.
+<DT>*<DD>
+Optional actions to perform if a particular result is obtained
+from the preceding service, e.g., &quot;[NOTFOUND=return]&quot;.
 
 </DL>
 <P>
 
-For libc5 with NYS, the allowed service specifications are `files', `nis',
-and `nisplus'.
-For hosts, you could specify `dns' as extra service, for
-passwd and group `compat', but not for shadow.
-<P>
+The service specifications supported on your system depend on the
+presence of shared libraries, and are therefore extensible.
+Libraries called
+<I>/lib/libnss_SERVICE.so.</I><B>X</B>
 
-For glibc, you must have a file called
-<B>/lib/libnss_SERVICE.so.</B><I>X</I>
+will provide the named
+<I>SERVICE</I>.
 
-for every SERVICE you are using.
-On a standard installation, you could use
-`files', `db', `nis', and `nisplus'.
-For hosts, you could specify `dns' as
-extra service, for passwd, group, and shadow `compat'.
-These services will not
-be used by libc5 with NYS.
+On a standard installation, you can use
+&quot;files&quot;, &quot;db&quot;, &quot;nis&quot;, and &quot;nisplus&quot;.
+For the
+<B>hosts</B>
+
+database, you can additionally specify &quot;dns&quot;.
+For the
+<B>passwd</B>,
+
+<B>group</B>,
+
+and
+<B>shadow</B>
+
+databases, you can additionally specify
+&quot;compat&quot; (see
+<B>Compatibility mode</B>
+
+below).
 The version number
-<I>X</I>
+<B>X</B>
 
-is 1 for glibc 2.0 and 2 for glibc 2.1.
+may be 1 for glibc 2.0, or 2 for glibc 2.1 and later.
+On systems with additional libraries installed, you may have access to
+further services such as &quot;hesiod&quot;, &quot;ldap&quot;, &quot;winbind&quot; and &quot;wins&quot;.
 <P>
 
-The second item in the specification gives the user much finer
-control on the lookup process.
-Action items are placed between two
-service names and are written within brackets.
-The general form is
+An action may also be specified following a service specification.
+The action modifies the behavior following a result obtained
+from the preceding data source.
+Action items take the general form:
 <P>
 
-`[' ( `!'? STATUS `=' ACTION )+ `]'
+<DL COMPACT><DT><DD>
+[<I>STATUS</I>=<I>ACTION</I>]
+
+<BR>
+
+[!<I>STATUS</I>=<I>ACTION</I>]
+
+</DL>
+
 <P>
 
 where
 <P>
 
-<DL COMPACT>
-<DT>STATUS =&gt; success | notfound | unavail | tryagain<DD>
-<DT>ACTION =&gt; return | continue<DD>
+<DL COMPACT><DT><DD>
+<I>STATUS</I>
+
+=&gt;
+<B>success</B>
+
+|
+<B>notfound</B>
+
+|
+<B>unavail</B>
+
+|
+<B>tryagain</B>
+
+<BR>
+
+<I>ACTION</I>
+
+=&gt;
+<B>return</B>
+
+|
+<B>continue</B>
 
 </DL>
+
 <P>
 
-The case of the keywords is insignificant.
-The STATUS values are
-the results of a call to a lookup function of a specific service.
-They mean:
+The ! negates the test, matching all possible results except the
+one specified.
+The case of the keywords is not significant.
+<P>
+
+The
+<I>STATUS</I>
+
+value is matched against the result of the lookup function called by
+the preceding service specification, and can be one of:
+<DL COMPACT><DT><DD>
 <DL COMPACT>
 <DT><B>success</B>
 
 <DD>
-No error occurred and the wanted entry is returned.
-The default
-action for this is `return'.
+No error occurred and the requested entry is returned.
+The default action for this condition is &quot;return&quot;.
 <DT><B>notfound</B>
 
 <DD>
-The lookup process succeeded, but the needed value was not found.
-The default action is `continue'.
+The lookup succeeded, but the requested entry was not found.
+The default action for this condition is &quot;continue&quot;.
 <DT><B>unavail</B>
 
 <DD>
 The service is permanently unavailable.
-This can either mean the
-needed file is not available, or, for DNS, the server is not
-available or does not allow queries.
-The default action is
-`continue'.
+This can mean either that the
+required file cannot be read, or, for network services, that the server
+is not available or does not allow queries.
+The default action for this condition is &quot;continue&quot;.
 <DT><B>tryagain</B>
 
 <DD>
 The service is temporarily unavailable.
 This could mean a file is
 locked or a server currently cannot accept more connections.
-The default action is `continue'.
+The default action for this condition is &quot;continue&quot;.
 </DL>
+</DL>
+
+<P>
+
+The
+<I>ACTION</I>
+
+value can be one of:
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT><B>return</B>
+
+<DD>
+Return a result now.
+Do not call any further lookup functions.
+<DT><B>continue</B>
+
+<DD>
+Call the next lookup function.
+</DL>
+</DL>
+
 <A NAME="lbAD">&nbsp;</A>
-<H3>Interaction with +/- syntax (compat mode)</H3>
+<H3>Compatibility mode (compat)</H3>
 
-Linux libc5 without NYS does not have the name service switch but does
-allow the user some policy control.
-In
+The NSS &quot;compat&quot; service is similar to &quot;files&quot; except that it
+additionally permits special entries in
 <I>/etc/passwd</I>
 
-you could have entries of the form +user or +@netgroup
-(include the specified user from the NIS passwd map),
--user or -@netgroup (exclude the specified user),
-and + (include every user, except the excluded ones, from the NIS
-passwd map).
-Since most people only put a + at the end of
-<I>/etc/passwd</I>
+for granting users or members of netgroups access to the system.
+The following entries are valid in this mode:
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT><B>+</B><I>user</I>
 
-to include everything from NIS, the switch provides a faster
-alternative for this case (`passwd: files nis') which doesn't
-require the single + entry in
-<I>/etc/passwd</I>,
+<DD>
+Include the specified
+<I>user</I>
 
-<I>/etc/group</I>,
+from the NIS passwd map.
+<DT><B>+@</B><I>netgroup</I>
 
-and
-<I>/etc/shadow</I>.
+<DD>
+Include all users in the given
+<I>netgroup</I>.
 
-If this is not sufficient, the NSS `compat' service provides full
-+/- semantics.
-By default, the source is `nis', but this may be
-overridden by specifying `nisplus' as source for the pseudo-databases
+<DT><B>-</B><I>user</I>
+
+<DD>
+Exclude the specified
+<I>user</I>
+
+from the NIS passwd map.
+<DT><B>-@</B><I>netgroup</I>
+
+<DD>
+Exclude all users in the given
+<I>netgroup</I>.
+
+<DT><B>+</B>
+
+<DD>
+Include every user, except previously excluded ones, from the
+NIS passwd map.
+</DL>
+</DL>
+
+<P>
+
+By default the source is &quot;nis&quot;, but this may be
+overridden by specifying &quot;nisplus&quot; as the source for the pseudo-databases
 <B>passwd_compat</B>,
 
-<B>group_compat</B>
+<B>group_compat</B>,
 
 and
 <B>shadow_compat</B>.
 
-These pseudo-databases are only available in GNU C Library.
 <A NAME="lbAE">&nbsp;</A>
 <H2>FILES</H2>
 
-A service named SERVICE is implemented by a shared object library named
-<B>libnss_SERVICE.so.</B><I>X</I>
+A service named
+<I>SERVICE</I>
+
+is implemented by a shared object library named
+<I>libnss_SERVICE.so.</I><B>X</B>
 
 that resides in
 <I>/lib</I>.
 
+<DL COMPACT><DT><DD>
 <DL COMPACT>
 <DT>
 <DD>
 <I>/etc/nsswitch.conf</I>
 
-configuration file
-<DT><B>/lib/libnss_compat.so.</B><I>X</I>
+NSS configuration file.
+<DT><I>/lib/libnss_compat.so.</I><B>X</B>
 
 <DD>
-implements `compat' source for glibc2
-<DT><B>/lib/libnss_db.so.</B><I>X</I>
+implements &quot;compat&quot; source.
+<DT><I>/lib/libnss_db.so.</I><B>X</B>
 
 <DD>
-implements `db' source for glibc2
-<DT><B>/lib/libnss_dns.so.</B><I>X</I>
+implements &quot;db&quot; source.
+<DT><I>/lib/libnss_dns.so.</I><B>X</B>
 
 <DD>
-implements `dns' source for glibc2
-<DT><B>/lib/libnss_files.so.</B><I>X</I>
+implements &quot;dns&quot; source.
+<DT><I>/lib/libnss_files.so.</I><B>X</B>
 
 <DD>
-implements `files' source for glibc2
-<DT><B>/lib/libnss_hesiod.so.</B><I>X</I>
+implements &quot;files&quot; source.
+<DT><I>/lib/libnss_hesiod.so.</I><B>X</B>
 
 <DD>
-implements `hesiod' source for glibc2
-<DT><B>/lib/libnss_nis.so.</B><I>X</I>
+implements &quot;hesiod&quot; source.
+<DT><I>/lib/libnss_nis.so.</I><B>X</B>
 
 <DD>
-implements `nis' source for glibc2
-<DT><I>/lib/libnss_nisplus.so.2</I>
+implements &quot;nis&quot; source.
+<DT><I>/lib/libnss_nisplus.so.</I><B>X</B>
 
 <DD>
-implements `nisplus' source for glibc 2.1
+implements &quot;nisplus&quot; source.
 
 </DL>
+</DL>
+
 <A NAME="lbAF">&nbsp;</A>
 <H2>NOTES</H2>
 
 Within each process that uses
 <B>nsswitch.conf</B>,
 
-the entire file is read only once; if the file is later changed, the
+the entire file is read only once.
+If the file is later changed, the
 process will continue using the old configuration.
 <P>
 
-With Solaris, it isn't possible to link programs using the NSS Service
-statically.
-With Linux, this is no problem.
+Traditionally, there was only a single source for service information,
+often in the form of a single configuration
+file (e.g., <I>/etc/passwd</I>).
+However, as other name services, such as the Network Information
+Service (NIS) and the Domain Name Service (DNS), became popular,
+a method was needed
+that would be more flexible than fixed search orders coded into
+the C library.
+The Name Service Switch mechanism,
+which was based on the mechanism used by
+Sun Microsystems in the Solaris 2 C library,
+introduced a cleaner solution to the problem.
+<A NAME="lbAG">&nbsp;</A>
+<H2>SEE ALSO</H2>
+
+<B><A HREF="../man1/getent.1.html">getent</A></B>(1),
+
+<B><A HREF="../man5/nss.5.html">nss</A></B>(5)
+
 <P>
 
 <HR>
@@ -344,15 +452,16 @@ With Linux, this is no problem.
 <DT><A HREF="#lbAB">NAME</A><DD>
 <DT><A HREF="#lbAC">DESCRIPTION</A><DD>
 <DL>
-<DT><A HREF="#lbAD">Interaction with +/- syntax (compat mode)</A><DD>
+<DT><A HREF="#lbAD">Compatibility mode (compat)</A><DD>
 </DL>
 <DT><A HREF="#lbAE">FILES</A><DD>
 <DT><A HREF="#lbAF">NOTES</A><DD>
+<DT><A HREF="#lbAG">SEE ALSO</A><DD>
 </DL>
 <HR>
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:13:37 GMT, April 20, 2020
+Time: 03:14:08 GMT, April 20, 2020
 </BODY>
 </HTML>

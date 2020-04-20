@@ -4,7 +4,7 @@
 <HTML><HEAD><TITLE>Man page of EPOLL_CREATE</TITLE>
 </HEAD><BODY>
 <H1>EPOLL_CREATE</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2010-12-03<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2012-04-15<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -26,20 +26,14 @@ epoll_create, epoll_create1 - open an epoll file descriptor
 
 <B>epoll_create</B>()
 
-creates an epoll &quot;instance&quot;,
-requesting the kernel to allocate an event backing store dimensioned for
+creates an
+<B><A HREF="../man7/epoll.7.html">epoll</A></B>(7)
+
+instance.
+Since Linux 2.6.8, the
 <I>size</I>
 
-descriptors.
-The
-<I>size</I>
-
-is not the maximum size of the backing store but
-just a hint to the kernel about how to dimension internal structures.
-(Nowadays,
-<I>size</I>
-
-is unused; see NOTES below.)
+argument is ignored, but must be greater than zero; see NOTES below.
 <P>
 <B>epoll_create</B>()
 
@@ -58,6 +52,9 @@ When all file descriptors referring to an epoll instance have been closed,
 the kernel destroys the instance
 and releases the associated resources for reuse.
 <P>
+<A NAME="lbAE">&nbsp;</A>
+<H3>epoll_create1()</H3>
+
 If
 <I>flags</I>
 
@@ -90,7 +87,7 @@ flag in
 
 for reasons why this may be useful.
 </DL>
-<A NAME="lbAE">&nbsp;</A>
+<A NAME="lbAF">&nbsp;</A>
 <H2>RETURN VALUE</H2>
 
 On success,
@@ -100,7 +97,7 @@ On error, -1 is returned, and
 <I>errno</I>
 
 is set to indicate the error.
-<A NAME="lbAF">&nbsp;</A>
+<A NAME="lbAG">&nbsp;</A>
 <H2>ERRORS</H2>
 
 <DL COMPACT>
@@ -138,7 +135,7 @@ The system limit on the total number of open files has been reached.
 <DD>
 There was insufficient memory to create the kernel object.
 </DL>
-<A NAME="lbAG">&nbsp;</A>
+<A NAME="lbAH">&nbsp;</A>
 <H2>VERSIONS</H2>
 
 <B>epoll_create</B>()
@@ -152,22 +149,44 @@ Library support is provided in glibc starting with version 2.3.2.
 
 was added to the kernel in version 2.6.27.
 Library support is provided in glibc starting with version 2.9.
-<A NAME="lbAH">&nbsp;</A>
+<A NAME="lbAI">&nbsp;</A>
 <H2>CONFORMING TO</H2>
 
 <B>epoll_create</B>()
 
 is Linux-specific.
-<A NAME="lbAI">&nbsp;</A>
+<A NAME="lbAJ">&nbsp;</A>
 <H2>NOTES</H2>
 
-Since Linux 2.6.8, the
+In the initial
+<B>epoll_create</B>()
+
+implementation, the
 <I>size</I>
 
-argument is unused, but must be greater than zero.
-(The kernel dynamically sizes the required data structures
-without needing this initial hint.)
-<A NAME="lbAJ">&nbsp;</A>
+argument informed the kernel of the number of file descriptors
+that the caller expected to add to the
+<B>epoll</B>
+
+instance.
+The kernel used this information as a hint for the amount of
+space to initially allocate in internal data structures describing events.
+(If necessary, the kernel would allocate more space
+if the caller's usage exceeded the hint given in
+<I>size</I>.)
+
+Nowadays,
+this hint is no longer required
+(the kernel dynamically sizes the required data structures
+without needing the hint), but
+<I>size</I>
+
+must still be greater than zero,
+in order to ensure backward compatibility when new
+<B>epoll</B>
+
+applications are run on older kernels.
+<A NAME="lbAK">&nbsp;</A>
 <H2>SEE ALSO</H2>
 
 <B><A HREF="../man2/close.2.html">close</A></B>(2),
@@ -186,17 +205,20 @@ without needing this initial hint.)
 <DT><A HREF="#lbAB">NAME</A><DD>
 <DT><A HREF="#lbAC">SYNOPSIS</A><DD>
 <DT><A HREF="#lbAD">DESCRIPTION</A><DD>
-<DT><A HREF="#lbAE">RETURN VALUE</A><DD>
-<DT><A HREF="#lbAF">ERRORS</A><DD>
-<DT><A HREF="#lbAG">VERSIONS</A><DD>
-<DT><A HREF="#lbAH">CONFORMING TO</A><DD>
-<DT><A HREF="#lbAI">NOTES</A><DD>
-<DT><A HREF="#lbAJ">SEE ALSO</A><DD>
+<DL>
+<DT><A HREF="#lbAE">epoll_create1()</A><DD>
+</DL>
+<DT><A HREF="#lbAF">RETURN VALUE</A><DD>
+<DT><A HREF="#lbAG">ERRORS</A><DD>
+<DT><A HREF="#lbAH">VERSIONS</A><DD>
+<DT><A HREF="#lbAI">CONFORMING TO</A><DD>
+<DT><A HREF="#lbAJ">NOTES</A><DD>
+<DT><A HREF="#lbAK">SEE ALSO</A><DD>
 </DL>
 <HR>
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:13:23 GMT, April 20, 2020
+Time: 03:13:54 GMT, April 20, 2020
 </BODY>
 </HTML>
