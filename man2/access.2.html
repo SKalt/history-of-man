@@ -4,13 +4,13 @@
 <HTML><HEAD><TITLE>Man page of ACCESS</TITLE>
 </HEAD><BODY>
 <H1>ACCESS</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2004-06-23<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2007-07-10<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
 <H2>NAME</H2>
 
-access - check user's permissions for a file
+access - check real user's permissions for a file
 <A NAME="lbAC">&nbsp;</A>
 <H2>SYNOPSIS</H2>
 
@@ -25,64 +25,53 @@ access - check user's permissions for a file
 
 <B>access</B>()
 
-checks whether the calling process would be allowed to read,
-write or test for existence of the file (or other file system
-object) whose name is
+checks whether the calling process can access the file
 <I>pathname</I>.
 
 If
 <I>pathname</I>
 
-is a symbolic link permissions of the file referred to by this
-symbolic link are tested.
+is a symbolic link, it is dereferenced.
 <P>
+The
 <I>mode</I>
 
-is either the value
-<B>F_OK</B>
+specifies the accessibility check(s) to be performed,
+and is either the value
+<B>F_OK</B>,
 
 or a mask consisting of the bitwise OR of one or more of
-<B>R_OK</B>, <B>W_OK</B> and <B>X_OK</B>.
+<B>R_OK</B>, <B>W_OK</B>, and <B>X_OK</B>.
 
-<P>
-<B>R_OK</B>, <B>W_OK</B> and <B>X_OK</B>
 
-request checking whether the file exists and has read, write and
-execute permissions, respectively.
+
+
+
 <B>F_OK</B>
 
-just requests checking for the existence of the file.
-<P>
-The tests depend on the permissions of the directories
-occurring in the path to the file, as given in
-<I>pathname</I>,
+tests for the existence of the file.
+<B>R_OK</B>, <B>W_OK</B>, and <B>X_OK</B>
 
-and on the permissions of directories and files referred to by symbolic
-links encountered on the way.
+test whether the file exists and grants read, write, and
+execute permissions, respectively.
 <P>
-The check is done with the calling process's
+The check is done using the calling process's
 <I>real</I>
 
-UID and GID, rather than with the effective IDs as is done when
-actually attempting an operation.
-This is to allow set-user-ID programs to
+UID and GID, rather than the effective IDs as is done when
+actually attempting an operation (e.g.,
+<B><A HREF="../man2/open.2.html">open</A></B>(2))
+
+on the file.
+This allows set-user-ID programs to
 easily determine the invoking user's authority.
 <P>
-Only access bits are checked, not the file type or contents.
-Therefore, if
-a directory is found to be &quot;writable,&quot; it probably means that files can be
-created in the directory, and not that the directory can be written as a
-file.
-Similarly, a DOS file may be found to be &quot;executable,&quot; but the
-<B><A HREF="../man2/execve.2.html">execve</A></B>(2)
-
-call will still fail.
-<P>
-If the calling process has appropriate privileges, an implementation may
-indicate success for
+If the calling process is privileged (i.e., its real UID is zero),
+then an
 <B>X_OK</B>
 
-even if none of the execute file permission bits are set.
+check is successful for a regular file if execute permission
+is enabled for any of the file owner, group, or other.
 <A NAME="lbAE">&nbsp;</A>
 <H2>RETURN VALUE</H2>
 
@@ -182,17 +171,6 @@ SVr4, 4.3BSD, POSIX.1-2001.
 <A NAME="lbAH">&nbsp;</A>
 <H2>NOTES</H2>
 
-<B>access</B>()
-
-returns an error if any of the access types in the requested call
-fails, even if other types might be successful.
-<P>
-
-<B>access</B>()
-
-may not work correctly on NFS file systems with UID mapping enabled,
-because UID mapping is done on the server and hidden from the client,
-which checks permissions.
 <P>
 
 <B>Warning:</B>
@@ -206,9 +184,89 @@ open a file before actually doing so using
 
 creates a security hole, because the user might exploit the short time
 interval between checking and opening the file to manipulate it.
-<A NAME="lbAI">&nbsp;</A>
-<H3>Linux Notes</H3>
+<B>For this reason, the use of this system call should be avoided</B>.
 
+<P>
+
+<B>access</B>()
+
+returns an error if any of the access types in
+<I>mode</I>
+
+is denied, even if some of the other access types in
+<I>mode</I>
+
+are permitted.
+<P>
+
+If the calling process has appropriate privileges (i.e., is superuser),
+POSIX.1-2001 permits implementation to indicate success for an
+<B>X_OK</B>
+
+check even if none of the execute file permission bits are set.
+Linux does not do this.
+<P>
+
+A file is only accessible if the permissions on each of the
+directories in the path prefix of
+<I>pathname</I>
+
+grant search (i.e., execute) access.
+If any directory is inaccessible, then the
+<B>access</B>()
+
+call will fail, regardless of the permissions on the file itself.
+<P>
+
+Only access bits are checked, not the file type or contents.
+Therefore, if a directory is found to be writable,
+it probably means that files can be created in the directory,
+and not that the directory can be written as a file.
+Similarly, a DOS file may be found to be &quot;executable,&quot; but the
+<B><A HREF="../man2/execve.2.html">execve</A></B>(2)
+
+call will still fail.
+<P>
+
+<B>access</B>()
+
+may not work correctly on NFS file systems with UID mapping enabled,
+because UID mapping is done on the server and hidden from the client,
+which checks permissions.
+<A NAME="lbAI">&nbsp;</A>
+<H2>BUGS</H2>
+
+In kernel 2.4 (and earlier) there is some strangeness in the handling of
+<B>X_OK</B>
+
+tests for superuser.
+If all categories of execute permission are disabled
+for a non-directory file, then the only
+<B>access</B>()
+
+test that returns -1 is when
+<I>mode</I>
+
+is specified as just
+<B>X_OK</B>;
+
+if
+<B>R_OK</B>
+
+or
+<B>W_OK</B>
+
+is also specified in
+<I>mode</I>,
+
+then
+<B>access</B>()
+
+returns 0 for such files.
+
+Early 2.6 kernels (up to and including 2.6.3)
+also behaved in the same way as kernel 2.4.
+<P>
 In kernels before 2.6.20,
 <B>access</B>()
 
@@ -258,15 +316,13 @@ honors this flag.
 <DT><A HREF="#lbAF">ERRORS</A><DD>
 <DT><A HREF="#lbAG">CONFORMING TO</A><DD>
 <DT><A HREF="#lbAH">NOTES</A><DD>
-<DL>
-<DT><A HREF="#lbAI">Linux Notes</A><DD>
-</DL>
+<DT><A HREF="#lbAI">BUGS</A><DD>
 <DT><A HREF="#lbAJ">SEE ALSO</A><DD>
 </DL>
 <HR>
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 02:43:08 GMT, April 20, 2020
+Time: 02:43:42 GMT, April 20, 2020
 </BODY>
 </HTML>

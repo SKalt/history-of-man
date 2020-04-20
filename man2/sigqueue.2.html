@@ -11,7 +11,7 @@ Section: Linux Programmer's Manual (2)<BR>Updated: 2004-06-16<BR><A HREF="#index
 <A NAME="lbAB">&nbsp;</A>
 <H2>NAME</H2>
 
-sigqueue - queue a signal and data to a process
+sigqueue, rt_sigqueueinfo - queue a signal and data to a process
 <A NAME="lbAC">&nbsp;</A>
 <H2>SYNOPSIS</H2>
 
@@ -122,10 +122,14 @@ No process has a PID matching
 
 </DL>
 <A NAME="lbAG">&nbsp;</A>
+<H2>VERSIONS</H2>
+
+This system call first appeared in Linux 2.2.
+<A NAME="lbAH">&nbsp;</A>
 <H2>CONFORMING TO</H2>
 
 POSIX.1-2001
-<A NAME="lbAH">&nbsp;</A>
+<A NAME="lbAI">&nbsp;</A>
 <H2>NOTES</H2>
 
 If this function results in the sending of a signal to the process
@@ -136,7 +140,37 @@ having it unblocked, or by waiting for it using
 
 then at least some signal must be delivered to this thread before this
 function returns.
-<A NAME="lbAI">&nbsp;</A>
+<P>
+On Linux, the underlying system call is actually named
+<B>rt_sigqueueinfo</B>(),
+
+and differs in its third argument, which is the
+<I>siginfo_t</I>
+
+structure that will be supplied to the receiving process's
+signal handler or returned by the receiving process's
+<B><A HREF="../man2/sigtimedwait.2.html">sigtimedwait</A></B>(2)
+
+call.
+Inside the glibc 
+<B>sigqueue</B>()
+
+wrapper, this argument,
+<I>info</I>,
+
+is initialized as follows:
+
+<PRE>
+
+info.si_signo = sig;      // argument supplied to sigqueue()
+info.si_code = SI_QUEUE;
+info.si_pid = getpid();
+info.si_uid = getuid();
+info.si_value = val;      // argument supplied to sigqueue()
+</PRE>
+
+
+<A NAME="lbAJ">&nbsp;</A>
 <H2>SEE ALSO</H2>
 
 <B><A HREF="../man2/kill.2.html">kill</A></B>(2),
@@ -159,14 +193,15 @@ function returns.
 <DT><A HREF="#lbAD">DESCRIPTION</A><DD>
 <DT><A HREF="#lbAE">RETURN VALUE</A><DD>
 <DT><A HREF="#lbAF">ERRORS</A><DD>
-<DT><A HREF="#lbAG">CONFORMING TO</A><DD>
-<DT><A HREF="#lbAH">NOTES</A><DD>
-<DT><A HREF="#lbAI">SEE ALSO</A><DD>
+<DT><A HREF="#lbAG">VERSIONS</A><DD>
+<DT><A HREF="#lbAH">CONFORMING TO</A><DD>
+<DT><A HREF="#lbAI">NOTES</A><DD>
+<DT><A HREF="#lbAJ">SEE ALSO</A><DD>
 </DL>
 <HR>
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 02:43:11 GMT, April 20, 2020
+Time: 02:43:45 GMT, April 20, 2020
 </BODY>
 </HTML>

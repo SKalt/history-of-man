@@ -1,12 +1,11 @@
 <!--
 Copyright (c) 1992 Drew Eckhardt (drew@cs.colorado.edu), March 28, 1992
-Copyright (c) 1998 Andries Brouwer (aeb@cwi.nl)
 -->
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
 <HTML><HEAD><TITLE>Man page of CHOWN</TITLE>
 </HEAD><BODY>
 <H1>CHOWN</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2004-06-23<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2007-07-08<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -16,10 +15,6 @@ chown, fchown, lchown - change ownership of a file
 <A NAME="lbAC">&nbsp;</A>
 <H2>SYNOPSIS</H2>
 
-<B>#include &lt;<A HREF="file:///usr/include/sys/types.h">sys/types.h</A>&gt;</B>
-
-<BR>
-
 <B>#include &lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;</B>
 
 <P>
@@ -27,6 +22,14 @@ chown, fchown, lchown - change ownership of a file
 
 <BR>
 
+<P>
+<B>#define _XOPEN_SOURCE 500   </B>/* or: <B>#define _BSD_SOURCE </B>*/
+
+<BR>
+
+<B>#include &lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;</B>
+
+<P>
 <B>int fchown(int </B><I>fd</I><B>, uid_t </B><I>owner</I><B>, gid_t </B><I>group</I><B>);</B>
 
 <BR>
@@ -229,16 +232,60 @@ has got the same syscall number, and
 <B>chown</B>()
 
 got the newly introduced number.
+<A NAME="lbAI">&nbsp;</A>
+<H2>EXAMPLE</H2>
+
 <P>
 
-The prototype for
-<B>fchown</B>()
+The following program changes the ownership of the file named in
+its second command-line argument to the value specified in its
+first command-line arguemnt.
+The new owner can be specified either as a numeric user ID,
+or as a username (which is converted to a user ID by using
+<B><A HREF="../man3/getpwnam.3.html">getpwnam</A></B>(3)
 
-is only available if
-<B>_BSD_SOURCE</B>
+to perform a lookup in the system password file).
+<PRE>
 
-is defined.
-<A NAME="lbAI">&nbsp;</A>
+#include &lt;<A HREF="file:///usr/include/pwd.h">pwd.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/stdlib.h">stdlib.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;
+
+int
+main(int argc, char *argv[])
+{
+    uid_t uid;
+    struct passwd *pwd;
+    char *endptr;
+
+    if (argc != 3 || argv[1][0] == '\0') {
+        fprintf(stderr, &quot;%s &lt;owner&gt; &lt;file&gt;\n&quot;, argv[0]);
+        exit(EXIT_FAILURE);
+    }
+
+    uid = strtol(argv[1], &amp;endptr, 10);  /* Allow a numeric string */
+
+    if (*endptr != '\0') {         /* Was not pure numeric string */
+        pwd = getpwnam(argv[1]);    /* Try getting UID for username */
+        if (pwd == NULL) {
+            perror(&quot;getpwnam&quot;);
+            exit(EXIT_FAILURE);
+        }
+
+        uid = pwd-&gt;pw_uid;
+    } 
+
+    if (chown(argv[2], uid, -1) == -1) {
+        perror(&quot;chown&quot;);
+        exit(EXIT_FAILURE);
+    } /* if */
+    
+    exit(EXIT_SUCCESS);
+} /* main */
+</PRE>
+
+<A NAME="lbAJ">&nbsp;</A>
 <H2>SEE ALSO</H2>
 
 <B><A HREF="../man2/chmod.2.html">chmod</A></B>(2),
@@ -261,12 +308,13 @@ is defined.
 <DT><A HREF="#lbAF">ERRORS</A><DD>
 <DT><A HREF="#lbAG">CONFORMING TO</A><DD>
 <DT><A HREF="#lbAH">NOTES</A><DD>
-<DT><A HREF="#lbAI">SEE ALSO</A><DD>
+<DT><A HREF="#lbAI">EXAMPLE</A><DD>
+<DT><A HREF="#lbAJ">SEE ALSO</A><DD>
 </DL>
 <HR>
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 02:43:08 GMT, April 20, 2020
+Time: 02:43:42 GMT, April 20, 2020
 </BODY>
 </HTML>

@@ -5,7 +5,7 @@ Copyright (c) 1992 Drew Eckhardt (drew@cs.colorado.edu), March 28, 1992
 <HTML><HEAD><TITLE>Man page of STAT</TITLE>
 </HEAD><BODY>
 <H1>STAT</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2007-06-08<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2007-07-05<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -137,9 +137,9 @@ The
 
 field indicates the number of blocks allocated to the file, 512-byte units.
 (This may be smaller than
-<I>st_size</I>/512,
+<I>st_size</I>/512
 
-for example, when the file has holes.)
+when the file has holes.)
 <P>
 The
 <I>st_blksize</I>
@@ -261,7 +261,7 @@ The following flags are defined for the
 field:
 <DL COMPACT><DT><DD>
 <TABLE>
-<TR VALIGN=top><TD><B>S_IFMT</B></TD><TD>0170000</TD><TD>bitmask for the file type bitfields<BR></TD></TR>
+<TR VALIGN=top><TD><B>S_IFMT</B></TD><TD>0170000</TD><TD>bit mask for the file type bit fields<BR></TD></TR>
 <TR VALIGN=top><TD><B>S_IFSOCK</B></TD><TD>0140000</TD><TD>socket<BR></TD></TR>
 <TR VALIGN=top><TD><B>S_IFLNK</B></TD><TD>0120000</TD><TD>symbolic link<BR></TD></TR>
 <TR VALIGN=top><TD><B>S_IFREG</B></TD><TD>0100000</TD><TD>regular file<BR></TD></TR>
@@ -528,6 +528,47 @@ does not return the file size in the
 
 field; instead the field is returned with the value 0.
 <A NAME="lbAK">&nbsp;</A>
+<H3>Underlying kernel interface</H3>
+
+Over time, increases in the size of the
+<I>stat</I>
+
+structure have led to three successive implementations of
+<B>stat</B>():
+
+<I>sys_stat</I>()
+
+(slot
+<I>__NR_oldstat</I>),
+
+<I>sys_newstat</I>()
+
+(slot
+<I>__NR_stat</I>),
+
+and
+<I>sys_stat64()</I>
+
+(new in kernel 2.4; slot
+<I>__NR_stat64</I>).
+
+The last of these is the most current,
+but the other interfaces must be maintained so that the
+behavior of old binaries does not change.
+The glibc
+<B>stat</B>()
+
+wrapper function hides these details from applications,
+ensuring that new applications linked against 
+the current library automatically use the current implementation,
+and that binary compatibility is not broken for older binaries.
+Similar remarks apply for
+<B><A HREF="../man2/fstat.2.html">fstat</A></B>(2)
+
+and
+<B><A HREF="../man2/lstat.2.html">lstat</A></B>(2).
+
+<A NAME="lbAL">&nbsp;</A>
 <H2>EXAMPLE</H2>
 
 The following program calls
@@ -596,7 +637,7 @@ main(int argc, char *argv[])
 }
 </PRE>
 
-<A NAME="lbAL">&nbsp;</A>
+<A NAME="lbAM">&nbsp;</A>
 <H2>SEE ALSO</H2>
 
 <B><A HREF="../man2/access.2.html">access</A></B>(2),
@@ -630,14 +671,15 @@ main(int argc, char *argv[])
 <DT><A HREF="#lbAI">NOTES</A><DD>
 <DL>
 <DT><A HREF="#lbAJ">Linux Notes</A><DD>
+<DT><A HREF="#lbAK">Underlying kernel interface</A><DD>
 </DL>
-<DT><A HREF="#lbAK">EXAMPLE</A><DD>
-<DT><A HREF="#lbAL">SEE ALSO</A><DD>
+<DT><A HREF="#lbAL">EXAMPLE</A><DD>
+<DT><A HREF="#lbAM">SEE ALSO</A><DD>
 </DL>
 <HR>
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 02:43:11 GMT, April 20, 2020
+Time: 02:43:45 GMT, April 20, 2020
 </BODY>
 </HTML>

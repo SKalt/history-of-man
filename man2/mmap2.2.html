@@ -5,7 +5,7 @@ Copyright (C) 2002, Michael Kerrisk
 <HTML><HEAD><TITLE>Man page of MMAP2</TITLE>
 </HEAD><BODY>
 <H1>MMAP2</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2007-06-01<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2007-07-08<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -32,12 +32,13 @@ system call operates in exactly the same way as
 <B><A HREF="../man2/mmap.2.html">mmap</A></B>(2),
 
 except that the final argument specifies the offset into the
-file in units of the system page size (instead of bytes).
+file in 4096-byte units (instead of bytes, as is done by
+<B><A HREF="../man2/mmap.2.html">mmap</A></B>(2)).
+
 This enables applications that use a 32-bit
 <I>off_t</I>
 
-to map
-larger files (typically up to 2^44 bytes).
+to map large files (up to 2^44 bytes).
 <A NAME="lbAE">&nbsp;</A>
 <H2>RETURN VALUE</H2>
 
@@ -45,8 +46,7 @@ On success,
 <B>mmap2</B>()
 
 returns a pointer to the mapped area.
-On error -1 is returned
-and
+On error -1 is returned and
 <I>errno</I>
 
 is set appropriately.
@@ -57,32 +57,51 @@ is set appropriately.
 <DT><B>EFAULT</B>
 
 <DD>
-Problem with getting the
-data from userspace.
+Problem with getting the data from userspace.
+<DT><B>EINVAL</B>
+
+<DD>
+(Various platforms where the page size is not 4096 bytes.)
+<I>offset * 4096</I>
+
+is not a multiple of the system page size.
 </DL>
-<A NAME="lbAG">&nbsp;</A>
-<H2>CONFORMING TO</H2>
-
-This system call is Linux specific.
-<A NAME="lbAH">&nbsp;</A>
-<H2>NOTES</H2>
-
-Glibc does not provide a wrapper for this system call; call it using
-<B><A HREF="../man2/syscall.2.html">syscall</A></B>(2).
-
 <P>
+
+<B>mmap2</B>()
+
+can return any of the same errors as
+<B><A HREF="../man2/mmap.2.html">mmap</A></B>(2).
+
+<A NAME="lbAG">&nbsp;</A>
+<H2>VERSIONS</H2>
+
 <B>mmap2</B>()
 
 is available since Linux 2.3.31.
-It is Linux specific, and should be avoided in portable applications.
-On 32-bit systems,
-<B>mmap2</B>()
+<A NAME="lbAH">&nbsp;</A>
+<H2>CONFORMING TO</H2>
 
-is used to implement the
-<B>mmap64</B>()
-
-function that is part of the LFS (Large File Summit).
+This system call is Linux specific.
 <A NAME="lbAI">&nbsp;</A>
+<H2>NOTES</H2>
+
+Nowadays, the glibc
+<B>mmap</B>()
+
+wrapper function invokes this system call rather than the
+<B><A HREF="../man2/mmap.2.html">mmap</A></B>(2)
+
+system call.
+<P>
+On ia64, the unit for
+<I>offset</I>
+
+is actually the system page size, rather than 4096 bytes.
+
+
+
+<A NAME="lbAJ">&nbsp;</A>
 <H2>SEE ALSO</H2>
 
 <B><A HREF="../man2/getpagesize.2.html">getpagesize</A></B>(2),
@@ -105,14 +124,15 @@ function that is part of the LFS (Large File Summit).
 <DT><A HREF="#lbAD">DESCRIPTION</A><DD>
 <DT><A HREF="#lbAE">RETURN VALUE</A><DD>
 <DT><A HREF="#lbAF">ERRORS</A><DD>
-<DT><A HREF="#lbAG">CONFORMING TO</A><DD>
-<DT><A HREF="#lbAH">NOTES</A><DD>
-<DT><A HREF="#lbAI">SEE ALSO</A><DD>
+<DT><A HREF="#lbAG">VERSIONS</A><DD>
+<DT><A HREF="#lbAH">CONFORMING TO</A><DD>
+<DT><A HREF="#lbAI">NOTES</A><DD>
+<DT><A HREF="#lbAJ">SEE ALSO</A><DD>
 </DL>
 <HR>
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 02:43:09 GMT, April 20, 2020
+Time: 02:43:44 GMT, April 20, 2020
 </BODY>
 </HTML>

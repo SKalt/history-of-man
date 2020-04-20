@@ -91,7 +91,13 @@ for a process as a whole (e.g., when sent using
 <B><A HREF="../man2/kill.2.html">kill</A></B>(2))
 
 or for a specific thread (e.g., certain signals,
-such as SIGSEGV and SIGFPE, generated as a
+such as
+<B>SIGSEGV</B>
+
+and
+<B>SIGFPE</B>,
+
+generated as a
 consequence of executing a specific machine-language instruction
 are thread directed, as are signals targeted at a specific thread using
 <B><A HREF="../man3/pthread_kill.3.html">pthread_kill</A></B>(3)).
@@ -158,7 +164,7 @@ SUSv2 and POSIX.1-2001.
 <TABLE>
 <TR VALIGN=top><TD>Signal</TD><TD ALIGN=center>Value</TD><TD ALIGN=center>Action</TD><TD>Comment<BR></TD></TR>
 <TR VALIGN=top><TD><HR></TD><TD><HR></TD><TD><HR></TD><TD><HR></TD></TR>
-<TR VALIGN=top><TD><B>SIGPOLL</B></TD><TD ALIGN=center></TD><TD ALIGN=center>Term</TD><TD>Pollable event (Sys V). Synonym of SIGIO<BR></TD></TR>
+<TR VALIGN=top><TD><B>SIGPOLL</B></TD><TD ALIGN=center></TD><TD ALIGN=center>Term</TD><TD>Pollable event (Sys V). Synonym of <I>SIGIO</I><BR></TD></TR>
 <TR VALIGN=top><TD><B>SIGPROF</B></TD><TD ALIGN=center>27,27,29</TD><TD ALIGN=center>Term</TD><TD>Profiling timer expired<BR></TD></TR>
 <TR VALIGN=top><TD><B>SIGSYS</B></TD><TD ALIGN=center>12,-,12</TD><TD ALIGN=center>Core</TD><TD>Bad argument to routine (SVr4)<BR></TD></TR>
 <TR VALIGN=top><TD><B>SIGTRAP</B></TD><TD ALIGN=center>5</TD><TD ALIGN=center>Core</TD><TD>Trace/breakpoint trap<BR></TD></TR>
@@ -190,12 +196,12 @@ Next various other signals.
 <TR VALIGN=top><TD><B>SIGEMT</B></TD><TD ALIGN=center>7,-,7</TD><TD ALIGN=center>Term</TD><TD><BR></TD></TR>
 <TR VALIGN=top><TD><B>SIGSTKFLT</B></TD><TD ALIGN=center>-,16,-</TD><TD ALIGN=center>Term</TD><TD>Stack fault on coprocessor (unused)<BR></TD></TR>
 <TR VALIGN=top><TD><B>SIGIO</B></TD><TD ALIGN=center>23,29,22</TD><TD ALIGN=center>Term</TD><TD>I/O now possible (4.2BSD)<BR></TD></TR>
-<TR VALIGN=top><TD><B>SIGCLD</B></TD><TD ALIGN=center>-,-,18</TD><TD ALIGN=center>Ign</TD><TD>A synonym for SIGCHLD<BR></TD></TR>
+<TR VALIGN=top><TD><B>SIGCLD</B></TD><TD ALIGN=center>-,-,18</TD><TD ALIGN=center>Ign</TD><TD>A synonym for <B>SIGCHLD</B><BR></TD></TR>
 <TR VALIGN=top><TD><B>SIGPWR</B></TD><TD ALIGN=center>29,30,19</TD><TD ALIGN=center>Term</TD><TD>Power failure (System V)<BR></TD></TR>
-<TR VALIGN=top><TD><B>SIGINFO</B></TD><TD ALIGN=center>29,-,-</TD><TD ALIGN=center></TD><TD>A synonym for SIGPWR<BR></TD></TR>
+<TR VALIGN=top><TD><B>SIGINFO</B></TD><TD ALIGN=center>29,-,-</TD><TD ALIGN=center></TD><TD>A synonym for <B>SIGPWR</B><BR></TD></TR>
 <TR VALIGN=top><TD><B>SIGLOST</B></TD><TD ALIGN=center>-,-,-</TD><TD ALIGN=center>Term</TD><TD>File lock lost<BR></TD></TR>
 <TR VALIGN=top><TD><B>SIGWINCH</B></TD><TD ALIGN=center>28,28,20</TD><TD ALIGN=center>Ign</TD><TD>Window resize signal (4.3BSD, Sun)<BR></TD></TR>
-<TR VALIGN=top><TD><B>SIGUNUSED</B></TD><TD ALIGN=center>-,31,-</TD><TD ALIGN=center>Term</TD><TD>Unused signal (will be SIGSYS)<BR></TD></TR>
+<TR VALIGN=top><TD><B>SIGUNUSED</B></TD><TD ALIGN=center>-,31,-</TD><TD ALIGN=center>Term</TD><TD>Unused signal (will be <B>SIGSYS</B>)<BR></TD></TR>
 </TABLE>
 
 <P>
@@ -231,16 +237,45 @@ on several other Unix systems.
 
 Linux supports real-time signals as originally defined in the POSIX.1b
 real-time extensions (and now included in POSIX.1-2001).
-Linux supports 32 real-time signals, numbered from 32
-(<B>SIGRTMIN</B>)
+The range of supported real-time signals is defined by the macros
+<B>SIGRTMIN</B>
 
-to 63
-(<B>SIGRTMAX</B>).
+and
+<B>SIGRTMAX</B>.
 
-(Programs should always refer to real-time signals using notation
+POSIX.1-2001 requires that an implementation support at least
+<B>_POSIX_RTSIG_MAX</B>
+
+(8) real-time signals.
+<P>
+
+The Linux kernel supports a range of 32 different real-time
+signals, numbered 33 to 64.
+However, the glibc POSIX threads implementation internally uses
+two (for NPTL) or three (for LinuxThreads) real-time signals 
+(see
+<B><A HREF="../man7/pthreads.7.html">pthreads</A></B>(7)),
+
+and adjusts the value of
+<B>SIGRTMIN</B>
+
+suitably (to 34 or 35).
+Because the range of available real-time signals varies according
+to the glibc threading implementation (and this variation can occur
+at run-time according to the available kernel and glibc),
+and indeed the range of real-time signals varies across Unix systems,
+programs should
+<I>never refer to real-time signals using hard-coded numbers</I>,
+
+but instead should always refer to real-time signals using the notation
 <B>SIGRTMIN</B>+n,
 
-since the range of real-time signal numbers varies across Unix systems.)
+and include suitable (run-time) checks that 
+<B>SIGRTMIN</B>+n
+
+does not exceed
+<B>SIGRTMAX</B>.
+
 <P>
 
 Unlike standard signals, real-time signals have no predefined meanings:
@@ -304,7 +339,9 @@ to standard signals in this case.
 <P>
 
 According to POSIX, an implementation should permit at least
-_POSIX_SIGQUEUE_MAX (32) real-time signals to be queued to
+<B>_POSIX_SIGQUEUE_MAX</B>
+
+(32) real-time signals to be queued to
 a process.
 However, Linux does things differently.
 In kernels up to and including 2.6.7, Linux imposes
@@ -498,6 +535,8 @@ signal 29 is
 
 <B><A HREF="../man2/setrlimit.2.html">setrlimit</A></B>(2),
 
+<B><A HREF="../man2/sgetmask.2.html">sgetmask</A></B>(2),
+
 <B><A HREF="../man2/sigaction.2.html">sigaction</A></B>(2),
 
 <B><A HREF="../man2/signal.2.html">signal</A></B>(2),
@@ -552,6 +591,6 @@ signal 29 is
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 02:43:22 GMT, April 20, 2020
+Time: 02:43:56 GMT, April 20, 2020
 </BODY>
 </HTML>
