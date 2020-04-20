@@ -26,7 +26,7 @@ stat, fstat, lstat - get file status
 <B>#include &lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;</B>
 
 <P>
-<B>int stat(const char *</B><I>file_name</I><B>, struct stat *</B><I>buf</I><B>);</B>
+<B>int stat(const char *</B><I>path</I><B>, struct stat *</B><I>buf</I><B>);</B>
 
 <BR>
 
@@ -34,54 +34,58 @@ stat, fstat, lstat - get file status
 
 <BR>
 
-<B>int lstat(const char *</B><I>file_name</I><B>, struct stat *</B><I>buf</I><B>);</B>
+<B>int lstat(const char *</B><I>path</I><B>, struct stat *</B><I>buf</I><B>);</B>
 
 <A NAME="lbAD">&nbsp;</A>
 <H2>DESCRIPTION</H2>
 
 <P>
 
-These functions return information about the specified file.  You do
-not need any access rights to the file to get this information but you
-need search rights to all directories named in the path leading to the
-file.
+These functions return information about a file.
+No permissions are required on the file itself, but --- in the case of
+<B>stat</B>()
+
+and 
+<B>lstat</B>()
+
+---
+execute (search) permission is required on all of the directories in
+<I>path</I>
+
+that lead to the file.
 <P>
 
-<B>stat</B>
+<B>stat</B>()
 
 stats the file pointed to by 
-<I>file_name</I>
+<I>path</I>
 
 and fills in
 <I>buf</I>.
 
 <P>
-<B>lstat</B>
+<B>lstat</B>()
 
 is identical to
-<B>stat</B>,
+<B>stat</B>(),
 
-except in the case of a symbolic link, where the link itself is stat-ed,
+except that if
+<I>path</I>
+
+is a symbolic link, then the link itself is stat-ed,
 not the file that it refers to.
 <P>
-<B>fstat</B>
+<B>fstat</B>()
 
 is identical to
-<B>stat</B>,
+<B>stat</B>(),
 
-only the open file pointed to by 
-<I>filedes</I>
-
-(as returned by
-<B><A HREF="../man2/open.2.html">open</A></B>(2))
-
-is stat-ed in place of 
-<I>file_name</I>.
+except that the file to be stat-ed is specified by the file descriptor
+<I>filedes</I>.
 
 <P>
-<P>
 
-They all return a
+All of these system calls return a
 <I>stat</I>
 
 structure, which contains the following fields:
@@ -90,13 +94,13 @@ structure, which contains the following fields:
 <DL COMPACT><DT><DD>
 <PRE>
 struct stat {
-    dev_t     st_dev;     /* device */
-    ino_t     st_ino;     /* inode */
+    dev_t     st_dev;     /* ID of device containing file */
+    ino_t     st_ino;     /* inode number */
     mode_t    st_mode;    /* protection */
     nlink_t   st_nlink;   /* number of hard links */
     uid_t     st_uid;     /* user ID of owner */
     gid_t     st_gid;     /* group ID of owner */
-    dev_t     st_rdev;    /* device type (if inode device) */
+    dev_t     st_rdev;    /* device ID (if special file) */
     off_t     st_size;    /* total size, in bytes */
     blksize_t st_blksize; /* blocksize for filesystem I/O */
     blkcnt_t  st_blocks;  /* number of blocks allocated */
@@ -110,25 +114,37 @@ struct stat {
 
 <P>
 
-The value
+The
+<I>stdev</I>
+
+field describes the device on which this file resides.
+<P>
+The
+<I>st_rdev</I>
+
+field describes the device that this file (inode) represents.
+<P>
+The
 <I>st_size</I>
 
-gives the size of the file (if it is a regular file or a symlink)
-in bytes. The size of a symlink is the length of the pathname
+field gives the size of the file (if it is a regular 
+file or a symbolic link) in bytes. 
+The size of a symlink is the length of the pathname
 it contains, without trailing NUL.
 <P>
-The value
+The
 <I>st_blocks</I>
 
-gives the size of the file in 512-byte blocks.
+field gives the size of the file in 512-byte blocks.
 (This may be smaller than
-<I>st_size</I>/512
+<I>st_size</I>/512,
 
-e.g. when the file has holes.)
-The value
+for example, when the file has holes.)
+<P>
+The
 <I>st_blksize</I>
 
-gives the &quot;preferred&quot; blocksize for efficient file system I/O.
+field gives the &quot;preferred&quot; blocksize for efficient file system I/O.
 (Writing to a file in smaller chunks may cause
 an inefficient read-modify-rewrite.)
 <P>
@@ -213,7 +229,7 @@ character device?
 <DT>S_ISBLK(m)<DD>
 block device?
 <DT>S_ISFIFO(m)<DD>
-fifo?
+FIFO (named pipe)?
 <DT>S_ISLNK(m)<DD>
 symbolic link? (Not in POSIX.1-1996.)
 <DT>S_ISSOCK(m)<DD>
@@ -227,8 +243,6 @@ The following flags are defined for the
 <I>st_mode</I>
 
 field:
-<P>
-
 <TABLE>
 <TR VALIGN=top><TD>S_IFMT</TD><TD>0170000</TD><TD>bitmask for the file type bitfields<BR></TD></TR>
 <TR VALIGN=top><TD>S_IFSOCK</TD><TD>0140000</TD><TD>socket<BR></TD></TR>
@@ -237,9 +251,9 @@ field:
 <TR VALIGN=top><TD>S_IFBLK</TD><TD>0060000</TD><TD>block device<BR></TD></TR>
 <TR VALIGN=top><TD>S_IFDIR</TD><TD>0040000</TD><TD>directory<BR></TD></TR>
 <TR VALIGN=top><TD>S_IFCHR</TD><TD>0020000</TD><TD>character device<BR></TD></TR>
-<TR VALIGN=top><TD>S_IFIFO</TD><TD>0010000</TD><TD>fifo<BR></TD></TR>
+<TR VALIGN=top><TD>S_IFIFO</TD><TD>0010000</TD><TD>FIFO<BR></TD></TR>
 <TR VALIGN=top><TD>S_ISUID</TD><TD>0004000</TD><TD>set UID bit<BR></TD></TR>
-<TR VALIGN=top><TD>S_ISGID</TD><TD>0002000</TD><TD>set GID bit (see below)<BR></TD></TR>
+<TR VALIGN=top><TD>S_ISGID</TD><TD>0002000</TD><TD>set-group-ID bit (see below)<BR></TD></TR>
 <TR VALIGN=top><TD>S_ISVTX</TD><TD>0001000</TD><TD>sticky bit (see below)<BR></TD></TR>
 <TR VALIGN=top><TD>S_IRWXU</TD><TD>00700</TD><TD>mask for file owner permissions<BR></TD></TR>
 <TR VALIGN=top><TD>S_IRUSR</TD><TD>00400</TD><TD>owner has read permission<BR></TD></TR>
@@ -257,13 +271,13 @@ field:
 
 <P>
 
-The set GID bit (S_ISGID) has several special uses:
+The set-group-ID bit (S_ISGID) has several special uses.
 For a directory it indicates that BSD semantics is to be used
 for that directory: files created there inherit their group ID from
 the directory, not from the effective group ID of the creating process,
 and directories created there will also get the S_ISGID bit set.
 For a file that does not have the group execution bit (S_IXGRP) set,
-it indicates mandatory file/record locking.
+the set-group-ID bit indicates mandatory file/record locking.
 <P>
 
 The `sticky' bit (S_ISVTX) on a directory means that a file
@@ -286,7 +300,7 @@ is set appropriately.
 <DD>
 Search permission is denied for one of the directories
 in the path prefix of
-<I>file_name</I>.
+<I>path</I>.
 
 (See also
 <B><A HREF="../man2/path_resolution.2.html">path_resolution</A></B>(2).)
@@ -313,7 +327,7 @@ File name too long.
 
 <DD>
 A component of the path
-<I>file_name</I>
+<I>path</I>
 
 does not exist, or the path is an empty string.
 <DT><B>ENOMEM</B>
@@ -329,24 +343,24 @@ A component of the path is not a directory.
 <H2>CONFORMING TO</H2>
 
 The
-<B>stat</B>
+<B>stat</B>()
 
 and
-<B>fstat</B>
+<B>fstat</B>()
 
-calls conform to SVr4, SVID, POSIX, X/OPEN, BSD 4.3.  The
-<B>lstat</B>
+calls conform to SVr4, SVID, POSIX, X/OPEN, 4.3BSD.  The
+<B>lstat</B>()
 
 call conforms to 4.3BSD and SVr4.
 SVr4 documents additional
-<B>fstat</B>
+<B>fstat</B>()
 
 error conditions EINTR, ENOLINK, and EOVERFLOW.  SVr4
 documents additional
-<B>stat</B>
+<B>stat</B>()
 
 and
-<B>lstat</B>
+<B>lstat</B>()
 
 error conditions EINTR, EMULTIHOP, ENOLINK, and EOVERFLOW.
 Use of the
@@ -380,7 +394,7 @@ Values that have been (or are) in use on various systems:
 <TR VALIGN=top><TD>f000</TD><TD>S_IFMT</TD><TD></TD><TD>170000</TD><TD>mask for file type<BR></TD></TR>
 <TR VALIGN=top><TD>0000</TD><TD></TD><TD></TD><TD>000000</TD><TD>SCO out-of-service inode, BSD unknown type<BR></TD></TR>
 <TR VALIGN=top><TD></TD><TD></TD><TD></TD><TD></TD><TD>SVID-v2 and XPG2 have both 0 and 0100000 for ordinary file<BR></TD></TR>
-<TR VALIGN=top><TD>1000</TD><TD>S_IFIFO</TD><TD>p|</TD><TD>010000</TD><TD>fifo (named pipe)<BR></TD></TR>
+<TR VALIGN=top><TD>1000</TD><TD>S_IFIFO</TD><TD>p|</TD><TD>010000</TD><TD>FIFO (named pipe)<BR></TD></TR>
 <TR VALIGN=top><TD>2000</TD><TD>S_IFCHR</TD><TD>c</TD><TD>020000</TD><TD>character special (V7)<BR></TD></TR>
 <TR VALIGN=top><TD>3000</TD><TD>S_IFMPC</TD><TD></TD><TD>030000</TD><TD>multiplexed character special (V7)<BR></TD></TR>
 <TR VALIGN=top><TD>4000</TD><TD>S_IFDIR</TD><TD>d/</TD><TD>040000</TD><TD>directory (V7)<BR></TD></TR>
@@ -403,10 +417,10 @@ Values that have been (or are) in use on various systems:
 <TR VALIGN=top><TD></TD><TD></TD><TD></TD><TD></TD><TD>reserved (SVID-v2)<BR></TD></TR>
 <TR VALIGN=top><TD></TD><TD></TD><TD></TD><TD></TD><TD>On non-directories: don't cache this file (SunOS)<BR></TD></TR>
 <TR VALIGN=top><TD></TD><TD></TD><TD></TD><TD></TD><TD>On directories: restricted deletion flag (SVID-v4.2)<BR></TD></TR>
-<TR VALIGN=top><TD>0400</TD><TD>S_ISGID</TD><TD></TD><TD>002000</TD><TD>set group ID on execution (V7)<BR></TD></TR>
-<TR VALIGN=top><TD></TD><TD></TD><TD></TD><TD></TD><TD>for directories: use BSD semantics for propagation of gid<BR></TD></TR>
-<TR VALIGN=top><TD>0400</TD><TD>S_ENFMT</TD><TD></TD><TD>002000</TD><TD>SysV file locking enforcement (shared w/ S_ISGID)<BR></TD></TR>
-<TR VALIGN=top><TD>0800</TD><TD>S_ISUID</TD><TD></TD><TD>004000</TD><TD>set user ID on execution (V7)<BR></TD></TR>
+<TR VALIGN=top><TD>0400</TD><TD>S_ISGID</TD><TD></TD><TD>002000</TD><TD>set-group-ID on execution (V7)<BR></TD></TR>
+<TR VALIGN=top><TD></TD><TD></TD><TD></TD><TD></TD><TD>for directories: use BSD semantics for propagation of GID<BR></TD></TR>
+<TR VALIGN=top><TD>0400</TD><TD>S_ENFMT</TD><TD></TD><TD>002000</TD><TD>SysV file locking enforcement (shared with S_ISGID)<BR></TD></TR>
+<TR VALIGN=top><TD>0800</TD><TD>S_ISUID</TD><TD></TD><TD>004000</TD><TD>set-user-ID on execution (V7)<BR></TD></TR>
 <TR VALIGN=top><TD>0800</TD><TD>S_CDF</TD><TD></TD><TD>004000</TD><TD>directory is a context dependent file (HP-UX)<BR></TD></TR>
 </TABLE>
 
@@ -444,6 +458,6 @@ A sticky command appeared in Version 32V AT&amp;T UNIX.
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 02:14:20 GMT, April 20, 2020
+Time: 02:14:45 GMT, April 20, 2020
 </BODY>
 </HTML>
