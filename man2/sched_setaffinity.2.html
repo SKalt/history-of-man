@@ -1,11 +1,12 @@
 <!--
 Copyright (C) 2002 Robert Love
+Copyright (C) 2006 Michael Kerrisk
 -->
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
 <HTML><HEAD><TITLE>Man page of SCHED_SETAFFINITY</TITLE>
 </HEAD><BODY>
 <H1>SCHED_SETAFFINITY</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2005-05-03<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2006-02-03<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -19,76 +20,135 @@ affinity mask
 <B>#include &lt;<A HREF="file:///usr/include/sched.h">sched.h</A>&gt;</B>
 
 <P>
-<B>int sched_setaffinity(pid_t </B><I>pid</I><B>, unsigned int </B><I>len</I><B>,</B>
+<B>int sched_setaffinity(pid_t </B><I>pid</I><B>, unsigned int </B><I>cpusetsize</I><B>,</B>
 
-<B>unsigned long *</B><I>mask</I><B>);</B>
+<B>cpu_set_t *</B><I>mask</I><B>);</B>
 
 <P>
-<B>int sched_getaffinity(pid_t </B><I>pid</I><B>, unsigned int </B><I>len</I><B>,</B>
+<B>int sched_getaffinity(pid_t </B><I>pid</I><B>, unsigned int </B><I>cpusetsize</I><B>,</B>
 
-<B>unsigned long *</B><I>mask</I><B>);</B>
+<B>cpu_set_t *</B><I>mask</I><B>);</B>
+
+<P>
+<B>void CPU_CLR(int </B><I>cpu</I><B>, cpu_set_t *</B><I>set</I><B>);</B>
+
+<BR>
+
+<B>int CPU_ISSET(int </B><I>cpu</I><B>, cpu_set_t *</B><I>set</I><B>);</B>
+
+<BR>
+
+<B>void CPU_SET(int </B><I>cpu</I><B>, cpu_set_t *</B><I>set</I><B>);</B>
+
+<BR>
+
+<B>void CPU_ZERO(cpu_set_t *</B><I>set</I><B>);</B>
 
 <A NAME="lbAD">&nbsp;</A>
 <H2>DESCRIPTION</H2>
 
+A process's CPU affinity mask determines the set of CPUs on which
+it is eligible to run.
+On a multiprocessor system, setting the CPU affinity mask
+can be used to obtain performance benefits.  
+For example,
+by dedicating one CPU to a particular process 
+(i.e., setting the affinity mask of that process to specify a single CPU, 
+and setting the affinity mask of all other processes to exclude that CPU), 
+it is possible to ensure maximum execution speed for that process.
+Restricting a process to run on a single CPU also prevents
+the performance cost caused by the cache invalidation that occurs 
+when a process ceases to execute on one CPU and then 
+recommences execution on a different CPU.
+<P>
+A CPU affinity mask is represented by the 
+<I>cpu_set_t </I>
+
+structure, a &quot;CPU set&quot;, pointed to by
+<I>mask</I>.
+
+Four macros are provided to manipulate CPU sets.
+<B>CPU_ZERO</B>()
+
+clears a set.
+<B>CPU_SET</B>()
+
+and
+<B>CPU_CLR</B>()
+
+respectively add and remove a given CPU from a set.
+<B>CPU_ISSET</B>()
+
+tests to see if a CPU is part of the set; this is useful after
+<B>sched_getaffinity</B>()
+
+returns.
+The first available CPU on the system corresponds to a
+<I>cpu</I>
+
+value of 0, the next CPU corresponds to a
+<I>cpu</I>
+
+value of 1, and so on.
+The constant
+<B>CPU_SETSIZE</B>
+
+(1024) specifies a value one greater than the maximum CPU 
+number that can be stored in a CPU set.
+<P>
 <B>sched_setaffinity</B>()
 
-sets the CPU affinity mask of the process denoted by
-<I>pid</I>.
+sets the CPU affinity mask of the process whose ID is
+<I>pid</I>
+
+to the value specified by
+<I>mask</I>.
 
 If
 <I>pid</I>
 
-is zero, then the current process is used.
-<P>
-The affinity mask is represented by the bitmask stored in
+is zero, then the calling process is used.
+The argument
+<I>cpusetsize</I>
+
+is the length (in bytes) of the data pointed to by
 <I>mask</I>.
 
-The least significant bit corresponds to the first logical processor
-number on the system, while the most significant bit corresponds to
-the last logical processor number on the system.
-A set bit corresponds to a legally schedulable CPU while an unset
-bit corresponds to an illegally schedulable CPU.
-In other words, a process is bound to and will only run on
-processors whose corresponding bit is set.
-Usually, all bits in the mask are set.
+Normally this argument would be specified as
+<I>sizeof(cpu_set_t)</I>.
+
 <P>
 If the process specified by
 <I>pid</I>
 
-is not curently running on one of the CPUs specified in
+is not currently running on one of the CPUs specified in
 <I>mask</I>,
 
 then that process is migrated to one of the CPUs specified in
 <I>mask</I>.
 
 <P>
-The argument
-<I>len</I>
-
-is the length (in bytes) of the data pointed to by
-<I>mask</I>.
-
-Normally this is the size of a word on the system.  For compatibility with
-future versions of the Linux kernel, since this size can change, the bitmask
-supplied must be at least as large as the affinity mask stored in the kernel.
-<P>
-The function
 <B>sched_getaffinity</B>()
 
-writes into the pointer supplied by
-<I>mask</I>
+writes the affinity mask of the process whose ID is
+<I>pid</I>
 
-that has size
-<I>len</I>
+into the 
+<I>cpu_set_t</I>
 
-the affinity mask of process
-<I>pid</I>.
+structure pointed to by
+<I>mask</I>.
+
+The 
+<I>cpusetsize</I>
+
+argument specifies the size (in bytes) of
+<I>mask</I>.
 
 If
 <I>pid</I>
 
-is zero, then the mask of the current process is returned.
+is zero, then the mask of the calling process is returned.
 <P>
 <A NAME="lbAE">&nbsp;</A>
 <H2>RETURN VALUE</H2>
@@ -96,16 +156,10 @@ is zero, then the mask of the current process is returned.
 On success,
 <B>sched_setaffinity</B>()
 
-returns 0.
-On error, -1 is returned, and
-<I>errno</I>
-
-is set appropriately.
-<P>
-On success,
+and
 <B>sched_getaffinity</B>()
 
-always returns the size (in bytes) of the affinity mask used by the kernel.
+return 0.
 On error, -1 is returned, and
 <I>errno</I>
 
@@ -125,8 +179,11 @@ A supplied memory address was invalid.
 The affinity bitmask
 <I>mask</I>
 
-contains no processors that are physically on the system, or the length
-<I>len</I>
+contains no processors that are physically on the system,
+
+
+or 
+<I>cpusetsize</I>
 
 is smaller than the size of the affinity mask used by the kernel.
 <DT><B>EPERM</B>
@@ -150,6 +207,10 @@ capability.
 The process whose ID is <I>pid</I> could not be found.
 </DL>
 <A NAME="lbAG">&nbsp;</A>
+<H2>CONFORMING TO</H2>
+
+These system calls are Linux specific.
+<A NAME="lbAH">&nbsp;</A>
 <H2>NOTES</H2>
 
 The affinity mask is actually a per-thread attribute that can be
@@ -160,28 +221,47 @@ The value returned from a call to
 can be passed in the argument
 <I>pid</I>.
 
-<A NAME="lbAH">&nbsp;</A>
+<P>
+A child created via 
+<B><A HREF="../man2/fork.2.html">fork</A></B>(2)
+
+inherits its parent's CPU affinity mask.
+The affinity mask is preserved across an
+<B><A HREF="../man2/execve.2.html">execve</A></B>(2).
+
+<P>
+This manual page describes the glibc interface for the CPU affinity calls.
+The actual system call interface is slightly different, with the 
+<I>mask</I>
+
+being typed as
+<I>unsigned long *</I>,
+
+reflecting that the fact that the underlying implementation of CPU 
+sets is a simple bitmask.
+On success, the raw 
+<B>sched_getaffinity</B>()
+
+system call returns the size (in bytes) of the 
+<I>cpumask_t</I>
+
+data type that is used internally by the kernel to 
+represent the CPU set bitmask.
+<A NAME="lbAI">&nbsp;</A>
 <H2>HISTORY</H2>
 
-The affinity syscalls were introduced in Linux kernel 2.5.8.
-The library calls were introduced in glibc 2.3, and are still in
-glibc 2.3.2. Later glibc 2.3.2 development versions changed this
-interface to one without the
-<I>len</I>
+The CPU affinity system calls were introduced in Linux kernel 2.5.8.
+The library interfaces were introduced in glibc 2.3. 
+Initially, the glibc interfaces included a
+<I>cpusetsize</I>
 
-field, and still later versions reverted again. The glibc prototype is now
-<P>
-<PRE>
-/* Set the CPU affinity for a task */
-extern int sched_setaffinity (pid_t pid, size_t cpusetsize,
-                              const cpu_set_t *cpuset);
+argument.
+In glibc 2.3.2, the
+<I>cpusetsize</I>
 
-/* Get the CPU affinity for a task */
-extern int sched_getaffinity (pid_t pid, size_t cpusetsize,
-                              cpu_set_t *cpuset);
-</PRE>
+argument was removed, but this argument was restored in glibc 2.3.4.
 
-<A NAME="lbAI">&nbsp;</A>
+<A NAME="lbAJ">&nbsp;</A>
 <H2>SEE ALSO</H2>
 
 <B><A HREF="../man2/clone.2.html">clone</A></B>(2),
@@ -219,14 +299,15 @@ has a description of the Linux scheduling scheme.
 <DT><A HREF="#lbAD">DESCRIPTION</A><DD>
 <DT><A HREF="#lbAE">RETURN VALUE</A><DD>
 <DT><A HREF="#lbAF">ERRORS</A><DD>
-<DT><A HREF="#lbAG">NOTES</A><DD>
-<DT><A HREF="#lbAH">HISTORY</A><DD>
-<DT><A HREF="#lbAI">SEE ALSO</A><DD>
+<DT><A HREF="#lbAG">CONFORMING TO</A><DD>
+<DT><A HREF="#lbAH">NOTES</A><DD>
+<DT><A HREF="#lbAI">HISTORY</A><DD>
+<DT><A HREF="#lbAJ">SEE ALSO</A><DD>
 </DL>
 <HR>
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 02:22:12 GMT, April 20, 2020
+Time: 02:22:44 GMT, April 20, 2020
 </BODY>
 </HTML>

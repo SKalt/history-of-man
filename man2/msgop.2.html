@@ -5,7 +5,7 @@ Copyright 1993 Giorgio Ciucci &lt;giorgio@crcc.it&gt;
 <HTML><HEAD><TITLE>Man page of MSGOP</TITLE>
 </HEAD><BODY>
 <H1>MSGOP</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2004-11-10<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2006-02-02<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -26,7 +26,7 @@ msgop - message operations
 <P>
 <B>int msgsnd(int </B><I>msqid</I><B>,</B>
 
-<B>struct msgbuf *</B><I>msgp</I><B>,</B>
+<B>const void *</B><I>msgp</I><B>,</B>
 
 <B>size_t </B><I>msgsz</I><B>,</B>
 
@@ -35,7 +35,7 @@ msgop - message operations
 <P>
 <B>ssize_t msgrcv(int </B><I>msqid</I><B>,</B>
 
-<B>struct msgbuf *</B><I>msgp</I><B>,</B>
+<B>void *</B><I>msgp</I><B>,</B>
 
 <B>size_t </B><I>msgsz</I><B>,</B>
 
@@ -192,16 +192,13 @@ is set to the current time.
 The system call
 <B>msgrcv</B>()
 
-reads a message from the message queue specified by
+removes a message from the queue specified by
 <I>msqid</I>
 
-into the
-<I>msgbuf</I>
+and places it in the buffer
+pointed to 
+<I>msgp</I>.
 
-pointed to by the
-<I>msgp</I>
-
-argument, removing the read message from the queue.
 <P>
 
 The argument
@@ -293,7 +290,7 @@ of the following flags:
 <DT><B>IPC_NOWAIT</B>
 
 <DD>
-For immediate return if no message of the requested type is in the queue.
+Return immediately if no message of the requested type is in the queue.
 The system call fails with
 <I>errno</I>
 
@@ -450,8 +447,9 @@ value (less than 0 or greater than the system value
 <DT><B>ENOMEM</B>
 
 <DD>
-The system has not enough memory to make a copy of the supplied
-<I>msgbuf</I>.
+The system does not have enough memory to make a copy of the 
+message pointed to by
+<I>msgp</I>.
 
 </DL>
 <P>
@@ -521,8 +519,19 @@ was specified in
 and no message of the requested type existed on the message queue.
 </DL>
 <A NAME="lbAG">&nbsp;</A>
+<H2>CONFORMING TO</H2>
+
+SVr4, SVID, SUSv3.
+<A NAME="lbAH">&nbsp;</A>
 <H2>NOTES</H2>
 
+The 
+<I>msgp</I>
+
+argument is declared as <I>struct msgbuf *</I> with
+libc4, libc5, glibc 2.0, glibc 2.1. It is declared as <I>void *</I>
+with glibc 2.2 and later, as required by SUSv2 and SUSv3.
+<P>
 The following limits on message queue resources affect the
 <B>msgsnd</B>()
 
@@ -559,17 +568,7 @@ number of message headers
 and for the system wide maximum size in bytes of the message pool
 (<B>MSGPOOL</B>).
 
-<A NAME="lbAH">&nbsp;</A>
-<H2>CONFORMING TO</H2>
-
-SVr4, SVID.
 <A NAME="lbAI">&nbsp;</A>
-<H2>NOTE</H2>
-
-The pointer argument is declared as <I>struct msgbuf *</I> with
-libc4, libc5, glibc 2.0, glibc 2.1. It is declared as <I>void *</I>
-(<I>const void *</I> for <I>msgsnd</I>()) with glibc 2.2, following the SUSv2.
-<A NAME="lbAJ">&nbsp;</A>
 <H2>SEE ALSO</H2>
 
 <B><A HREF="../man2/msgctl.2.html">msgctl</A></B>(2),
@@ -594,15 +593,14 @@ libc4, libc5, glibc 2.0, glibc 2.1. It is declared as <I>void *</I>
 <DT><A HREF="#lbAD">DESCRIPTION</A><DD>
 <DT><A HREF="#lbAE">RETURN VALUE</A><DD>
 <DT><A HREF="#lbAF">ERRORS</A><DD>
-<DT><A HREF="#lbAG">NOTES</A><DD>
-<DT><A HREF="#lbAH">CONFORMING TO</A><DD>
-<DT><A HREF="#lbAI">NOTE</A><DD>
-<DT><A HREF="#lbAJ">SEE ALSO</A><DD>
+<DT><A HREF="#lbAG">CONFORMING TO</A><DD>
+<DT><A HREF="#lbAH">NOTES</A><DD>
+<DT><A HREF="#lbAI">SEE ALSO</A><DD>
 </DL>
 <HR>
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 02:22:11 GMT, April 20, 2020
+Time: 02:22:43 GMT, April 20, 2020
 </BODY>
 </HTML>
