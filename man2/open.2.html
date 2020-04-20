@@ -25,7 +25,7 @@ the source, must acknowledge the copyright and authors of this work.
 <HTML><HEAD><TITLE>Man page of OPEN</TITLE>
 </HEAD><BODY>
 <H1>OPEN</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2014-04-06<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2014-04-20<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -240,6 +240,7 @@ See also BUGS, below.
 <DT><B>O_CLOEXEC</B> (since Linux 2.6.23)
 
 <DD>
+
 Enable the close-on-exec flag for the new file descriptor.
 Specifying this flag permits a program to avoid additional
 <B><A HREF="../man2/fcntl.2.html">fcntl</A></B>(2)
@@ -250,9 +251,9 @@ operations to set the
 <B>FD_CLOEXEC</B>
 
 flag.
-Additionally,
-use of this flag is essential in some multithreaded programs
-since using a separate
+<P>
+Note that the use of this flag is essential in some multithreaded programs,
+because using a separate
 <B><A HREF="../man2/fcntl.2.html">fcntl</A></B>(2)
 
 <B>F_SETFD</B>
@@ -261,13 +262,30 @@ operation to set the
 <B>FD_CLOEXEC</B>
 
 flag does not suffice to avoid race conditions
-where one thread opens a file descriptor at the same
-time as another thread does a
+where one thread opens a file descriptor and
+attempts to set its close-on-exec flag using
+<B><A HREF="../man2/fcntl.2.html">fcntl</A></B>(2)
+
+at the same time as another thread does a
 <B><A HREF="../man2/fork.2.html">fork</A></B>(2)
 
 plus
 <B><A HREF="../man2/execve.2.html">execve</A></B>(2).
 
+Depending on the order of execution,
+the race may lead to the file desriptor returned by
+<B>open</B>()
+
+being unintentionally leaked to the program executed by the child process
+created by
+<B><A HREF="../man2/fork.2.html">fork</A></B>(2).
+
+(This kind of race is in principle possible for any system call
+that creates a file descriptor whose close-on-exec flag should be set,
+and various other Linux system calls provide an equivalent of the
+<B>O_CLOEXEC</B>
+
+flag to deal with this problem.)
 
 
 
@@ -421,7 +439,7 @@ If <I>pathname</I> is not a directory, cause the open to fail.
 
 
 
-This flag is Linux-specific, and was added in kernel version 2.1.126, to
+This flag was added in kernel version 2.1.126, to
 avoid denial-of-service problems if
 <B><A HREF="../man3/opendir.3.html">opendir</A></B>(3)
 
@@ -892,8 +910,13 @@ as described above).
 <B>O_TMPFILE</B>
 
 requires support by the underlying filesystem;
-
 only a subset of Linux filesystems provide that support.
+In the initial implementation, support was provided in
+the ex2, ext3, ext4, UDF, Minix, and shmem filesystems.
+XFS support was added
+
+
+in Linux 3.15.
 <DT><B>O_TRUNC</B>
 
 <DD>
@@ -1996,6 +2019,6 @@ functionality.
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:27:55 GMT, April 20, 2020
+Time: 03:28:32 GMT, April 20, 2020
 </BODY>
 </HTML>

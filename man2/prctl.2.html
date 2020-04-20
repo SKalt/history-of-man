@@ -26,7 +26,7 @@ the source, must acknowledge the copyright and authors of this work.
 <HTML><HEAD><TITLE>Man page of PRCTL</TITLE>
 </HEAD><BODY>
 <H1>PRCTL</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2014-02-22<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2014-04-14<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -536,6 +536,33 @@ the &quot;securebits&quot; flags of the calling thread.
 See
 <B><A HREF="../man7/capabilities.7.html">capabilities</A></B>(7).
 
+<DT><B>PR_SET_THP_DISABLE</B> (since Linux 3.15)
+
+<DD>
+
+Set the state of the &quot;THP disable&quot; flag for the calling thread.
+If
+<I>arg2</I>
+
+has a nonzero value, the flag is set, otherwise it is cleared.
+Setting this flag provides a method
+for disabling transparent huge pages
+for jobs where the code cannot be modified, and using a malloc hook with
+<B><A HREF="../man2/madvise.2.html">madvise</A></B>(2)
+
+is not an option (i.e., statically allocated data).
+The setting of the &quot;THP disable&quot; flag is inherited by a child created via
+<B><A HREF="../man2/fork.2.html">fork</A></B>(2)
+
+and is preserved across
+<B><A HREF="../man2/execve.2.html">execve</A></B>(2).
+
+<DT><B>PR_GET_THP_DISABLE</B> (since Linux 3.15)
+
+<DD>
+Return (via the function result) the current setting of the &quot;THP disable&quot;
+flag for the calling thread:
+either 1, if the flag is set, or 0, if it is not.
 <DT><B>PR_GET_TID_ADDRESS</B> (since Linux 3.5)
 
 <DD>
@@ -1008,6 +1035,8 @@ On success,
 
 <B>PR_GET_NO_NEW_PRIVS</B>,
 
+<B>PR_GET_THP_DISABLE</B>,
+
 <B>PR_CAPBSET_READ</B>,
 
 <B>PR_GET_TIMING</B>,
@@ -1163,6 +1192,121 @@ is not 0,
 <B>PR_SET_PTRACER_ANY</B>,
 
 or the PID of an existing process.
+<DT><B>EINVAL</B>
+
+<DD>
+<I>option</I>
+
+is
+<B>PR_SET_PDEATHSIG</B>
+
+and
+<I>arg2</I>
+
+is not a valid signal number.
+<DT><B>EINVAL</B>
+
+<DD>
+<I>option</I>
+
+is
+<B>PR_SET_DUMPABLE</B>
+
+and
+<I>arg2</I>
+
+is neither
+<B>SUID_DUMP_DISABLE</B>
+
+nor
+<B>SUID_DUMP_USER</B>.
+
+<DT><B>EINVAL</B>
+
+<DD>
+<I>option</I>
+
+is
+<B>PR_SET_TIMING</B>
+
+and
+<I>arg2</I>
+
+is not
+<B>PR_TIMING_STATISTICAL</B>.
+
+<DT><B>EINVAL</B>
+
+<DD>
+<I>option</I>
+
+is
+<B>PR_SET_NO_NEW_PRIVS</B>
+
+and
+<I>arg2</I>
+
+is not equal to 1
+or
+<I>arg3</I>,
+
+<I>arg4</I>,
+
+or
+<I>arg5</I>
+
+is nonzero.
+<DT><B>EINVAL</B>
+
+<DD>
+<I>option</I>
+
+is
+<B>PR_GET_NO_NEW_PRIVS</B>
+
+and
+<I>arg2</I>,
+
+<I>arg3</I>,
+
+<I>arg4</I>,
+
+or
+<I>arg5</I>
+
+is nonzero.
+<DT><B>EINVAL</B>
+
+<DD>
+<I>option</I>
+
+is PR_SET_THP_DISABLE
+and
+<I>arg3</I>,
+
+<I>arg4</I>,
+
+or
+<I>arg5</I>
+
+is nonzero.
+<DT><B>EINVAL</B>
+
+<DD>
+<I>option</I>
+
+is PR_GET_THP_DISABLE
+and
+<I>arg2</I>,
+
+<I>arg3</I>,
+
+<I>arg4</I>,
+
+or
+<I>arg5</I>
+
+is nonzero.
 <DT><B>EPERM</B>
 
 <DD>
@@ -1328,6 +1472,6 @@ get or set the maximum stack size, and so on.
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:27:55 GMT, April 20, 2020
+Time: 03:28:32 GMT, April 20, 2020
 </BODY>
 </HTML>

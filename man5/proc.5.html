@@ -25,7 +25,7 @@ License along with this manual; if not, see
 <HTML><HEAD><TITLE>Man page of PROC</TITLE>
 </HEAD><BODY>
 <H1>PROC</H1>
-Section: Linux Programmer's Manual (5)<BR>Updated: 2014-03-17<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (5)<BR>Updated: 2014-04-12<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -104,12 +104,85 @@ This file is present only if the
 <B>CONFIG_CGROUPS</B>
 
 kernel configuration option is enabled.
+<DT><I>/proc/[pid]/clear_refs</I> (since Linux 2.6.22)
+
+<DD>
 
 
 
 
 
 
+<P>
+This is a write-only file, writable only by owner of the process.
+<P>
+The following values may be written to the file:
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT>1 (since Linux 2.6.22)<DD>
+
+Reset the PG_Referenced and ACCESSED/YOUNG
+bits for all the pages associated with the process.
+(Before kernel 2.6.32, writing any nonzero value to this file
+had this effect.)
+<DT>2 (since Linux 2.6.32)<DD>
+
+Reset the PG_Referenced and ACCESSED/YOUNG
+bits for all anonymous pages associated with the process.
+<DT>3 (since Linux 2.6.32)<DD>
+
+Reset the PG_Referenced and ACCESSED/YOUNG
+bits for all file-mapped pages associated with the process.
+</DL>
+</DL>
+
+<DT><DD>
+Clearing the PG_Referenced and ACCESSED/YOUNG bits provides a method
+to measure approximately how much memory a process is using.
+One first inspects the values in the &quot;Referenced:&quot; fields
+for the VMAs shown in
+<I>/proc/[pid]/smaps</I>
+
+to get an idea of the memory footprint of the
+process.
+One then clears the PG_Referenced and ACCESSED/YOUNG bits
+and, after some measured time interval,
+once again inspects the values in the &quot;Referenced:&quot; fields
+to get an idea of the change in memory footprint of the
+process during the measured interval.
+If one is interested only in inspecting the selected mapping types,
+then the value 2 or 3 can be used instead of 1.
+<P>
+A further value can be written to affect a different bit:
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT>4 (since Linux 3.11)<DD>
+Clear the soft-dirty bit for all the pages associated with the process.
+
+This is used (in conjunction with
+<I>/proc/[pid]/pagemap</I>)
+
+by the check-point restore system to discover which pages of a process
+have been dirtied since the file
+<I>/proc/[pid]/clear_refs</I>
+
+was written to.
+</DL>
+</DL>
+
+<DT><DD>
+Writing any value to
+<I>/proc/[pid]/clear_refs</I>
+
+other than those listed above has no effect.
+<P>
+The
+<I>/proc/[pid]/clear_refs</I>
+
+file is present only if the
+<B>CONFIG_PROC_PAGE_MONITOR</B>
+
+kernel configuration option is enabled.
 <DT><I>/proc/[pid]/cmdline</I>
 
 <DD>
@@ -1108,19 +1181,26 @@ are not available if the main thread has already terminated
 <DT><I>/proc/[pid]/smaps</I> (since Linux 2.6.14)
 
 <DD>
-
 This file shows memory consumption for each of the process's mappings.
-For each of mappings there is a series of lines such as the following:
+For each mapping there is a series of lines such as the following:
 
 <PRE>
 
-08048000-080bc000 r-xp 00000000 03:02 13130      /bin/bash
-Size:               464 kB
-Rss:                424 kB
-Shared_Clean:       424 kB
-Shared_Dirty:         0 kB
-Private_Clean:        0 kB
-Private_Dirty:        0 kB
+00400000-0048a000 r-xp 00000000 fd:03 960637       /bin/bash
+Size:                552 kB
+Rss:                 460 kB
+Pss:                 100 kB
+Shared_Clean:        452 kB
+Shared_Dirty:          0 kB
+Private_Clean:         8 kB
+Private_Dirty:         0 kB
+Referenced:          460 kB
+Anonymous:             0 kB
+AnonHugePages:         0 kB
+Swap:                  0 kB
+KernelPageSize:        4 kB
+MMUPageSize:           4 kB
+Locked:                0 kB
 
 </PRE>
 
@@ -1130,15 +1210,78 @@ for the mapping in
 <I>/proc/[pid]/maps</I>.
 
 The remaining lines show the size of the mapping,
-the amount of the mapping that is currently resident in RAM,
+the amount of the mapping that is currently resident in RAM (&quot;Rss&quot;),
+the process' proportional share of this mapping (&quot;Pss&quot;),
 the number of clean and dirty shared pages in the mapping,
 and the number of clean and dirty private pages in the mapping.
+&quot;Referenced&quot; indicates the amount of memory currently marked as
+referenced or accessed.
+&quot;Anonymous&quot; shows the amount of memory
+that does not belong to any file.
+&quot;Swap&quot; shows how much
+would-be-anonymous memory is also used, but out on swap.
 <P>
-This file is present only if the
-<B>CONFIG_MMU</B>
+The &quot;KernelPageSize&quot; entry  is the page size used by the kernel to back a VMA.
+This matches the size used by the MMU in the majority of cases.
+However, one counter-example occurs on PPC64 kernels
+whereby a kernel using 64K as a base page size may still use 4K
+pages for the MMU on older processors.
+To distinguish, this
+patch reports &quot;MMUPageSize&quot; as the page size used by the MMU.
+<P>
+The &quot;Locked&quot; indicates whether the mapping is locked in memory
+or not.
+<P>
+&quot;VmFlags&quot; field represents the kernel flags associated with
+the particular virtual memory area in two letter encoded manner.
+The codes are the following:
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;rd&nbsp;&nbsp;-&nbsp;readable
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;wr&nbsp;&nbsp;-&nbsp;writable
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;ex&nbsp;&nbsp;-&nbsp;executable
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;sh&nbsp;&nbsp;-&nbsp;shared
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;mr&nbsp;&nbsp;-&nbsp;may&nbsp;read
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;mw&nbsp;&nbsp;-&nbsp;may&nbsp;write
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;me&nbsp;&nbsp;-&nbsp;may&nbsp;execute
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;ms&nbsp;&nbsp;-&nbsp;may&nbsp;share
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;gd&nbsp;&nbsp;-&nbsp;stack&nbsp;segment&nbsp;growns&nbsp;down
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;pf&nbsp;&nbsp;-&nbsp;pure&nbsp;PFN&nbsp;range
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;dw&nbsp;&nbsp;-&nbsp;disabled&nbsp;write&nbsp;to&nbsp;the&nbsp;mapped&nbsp;file
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;lo&nbsp;&nbsp;-&nbsp;pages&nbsp;are&nbsp;locked&nbsp;in&nbsp;memory
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;io&nbsp;&nbsp;-&nbsp;memory&nbsp;mapped&nbsp;I/O&nbsp;area
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;sr&nbsp;&nbsp;-&nbsp;sequential&nbsp;read&nbsp;advise&nbsp;provided
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;rr&nbsp;&nbsp;-&nbsp;random&nbsp;read&nbsp;advise&nbsp;provided
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;dc&nbsp;&nbsp;-&nbsp;do&nbsp;not&nbsp;copy&nbsp;area&nbsp;on&nbsp;fork
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;de&nbsp;&nbsp;-&nbsp;do&nbsp;not&nbsp;expand&nbsp;area&nbsp;on&nbsp;remapping
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;ac&nbsp;&nbsp;-&nbsp;area&nbsp;is&nbsp;accountable
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;nr&nbsp;&nbsp;-&nbsp;swap&nbsp;space&nbsp;is&nbsp;not&nbsp;reserved&nbsp;for&nbsp;the&nbsp;area
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;ht&nbsp;&nbsp;-&nbsp;area&nbsp;uses&nbsp;huge&nbsp;tlb&nbsp;pages
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;nl&nbsp;&nbsp;-&nbsp;non-linear&nbsp;mapping
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;ar&nbsp;&nbsp;-&nbsp;architecture&nbsp;specific&nbsp;flag
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;dd&nbsp;&nbsp;-&nbsp;do&nbsp;not&nbsp;include&nbsp;area&nbsp;into&nbsp;core&nbsp;dump
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;sd&nbsp;&nbsp;-&nbsp;soft-dirty&nbsp;flag
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;mm&nbsp;&nbsp;-&nbsp;mixed&nbsp;map&nbsp;area
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;hg&nbsp;&nbsp;-&nbsp;huge&nbsp;page&nbsp;advise&nbsp;flag
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;nh&nbsp;&nbsp;-&nbsp;no-huge&nbsp;page&nbsp;advise&nbsp;flag
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;mg&nbsp;&nbsp;-&nbsp;mergable&nbsp;advise&nbsp;flag
+<P>
+The
+<I>/proc/[pid]/smaps</I>
 
-kernel configuration
-option is enabled.
+file is present only if the
+<B>CONFIG_PROC_PAGE_MONITOR</B>
+
+kernel configuration option is enabled.
+<DT><I>/proc/[pid]/stack</I> (since Linux 2.6.29)
+
+<DD>
+
+This file provides a symbolic trace of the function calls in this
+process's kernel stack.
+This file is provided only if the kernel was built with the
+<B>CONFIG_STACKTRACE</B>
+
+configuration option.
 <DT><I>/proc/[pid]/stat</I>
 
 <DD>
@@ -3558,7 +3701,7 @@ The file is present only if the kernel is built with the
 <B>CONFIG_MODULES</B>
 
 option enabled.
-<DT><I>/proc/sys/kernel/msgmax</I>
+<DT><I>/proc/sys/kernel/msgmax</I> (since Linux 2.2)
 
 <DD>
 This file defines
@@ -3569,7 +3712,7 @@ a single message written on a System V message queue.
 <DD>
 This file defines the system-wide limit on the number of
 message queue identifiers.
-<DT><I>/proc/sys/kernel/msgmnb</I>
+<DT><I>/proc/sys/kernel/msgmnb</I> (since Linux 2.2)
 
 <DD>
 This file defines a system-wide parameter used to initialize the
@@ -3836,13 +3979,13 @@ the default value in this file is 0.
 Only set this file to 1 if you have a good understanding
 of the semantics of the applications using
 System V shared memory on your system.
-<DT><I>/proc/sys/kernel/shmall</I>
+<DT><I>/proc/sys/kernel/shmall</I> (since Linux 2.2)
 
 <DD>
 This file
 contains the system-wide limit on the total number of pages of
 System V shared memory.
-<DT><I>/proc/sys/kernel/shmmax</I>
+<DT><I>/proc/sys/kernel/shmmax</I> (since Linux 2.2)
 
 <DD>
 This file
@@ -4369,6 +4512,6 @@ and
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:28:07 GMT, April 20, 2020
+Time: 03:28:44 GMT, April 20, 2020
 </BODY>
 </HTML>
