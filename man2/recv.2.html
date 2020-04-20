@@ -34,7 +34,7 @@ SUCH DAMAGE.
 <HTML><HEAD><TITLE>Man page of RECV</TITLE>
 </HEAD><BODY>
 <H1>RECV</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2013-11-04<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2014-02-11<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -63,70 +63,21 @@ recv, recvfrom, recvmsg - receive a message from a socket
 <H2>DESCRIPTION</H2>
 
 The
-<B>recvfrom</B>()
+<B>recv</B>(),
+
+<B>recvfrom</B>(),
 
 and
 <B>recvmsg</B>()
 
-calls are used to receive messages from a socket, and may be used
-to receive data on a socket whether or not it is connection-oriented.
+calls are used to receive messages from a socket.
+They may be used
+to receive data on both connectionless and connection-oriented sockets.
+This page first describes common features of all three system calls,
+and then describes the differences between the calls.
 <P>
 
-If
-<I>src_addr</I>
-
-is not NULL, and the underlying protocol provides the source address,
-this source address is filled in.
-When
-<I>src_addr</I>
-
-is NULL, nothing is filled in; in this case,
-<I>addrlen</I>
-
-is not used, and should also be NULL.
-
-
-
-
-
-
-
-
-The argument
-<I>addrlen</I>
-
-is a value-result argument,
-which the caller should initialize before the call to
-the size of the buffer associated with
-<I>src_addr</I>,
-
-and modified on return to indicate the actual size of the source address.
-The returned address is truncated if the buffer provided is too small;
-in this case,
-<I>addrlen</I>
-
-will return a value greater than was supplied to the call.
-<P>
-
-The
-<B>recv</B>()
-
-call is normally used only on a
-<I>connected</I>
-
-socket (see
-<B><A HREF="../man2/connect.2.html">connect</A></B>(2))
-
-and is identical to
-<B>recvfrom</B>()
-
-with a NULL
-<I>src_addr</I>
-
-argument.
-<P>
-
-All three routines return the length of the message on successful
+All three calls return the length of the message on successful
 completion.
 If a message is too long to fit in the supplied buffer, excess
 bytes may be discarded depending on the type of socket the message is
@@ -147,22 +98,22 @@ The receive calls normally return any data available, up to the requested
 amount, rather than waiting for receipt of the full amount requested.
 <P>
 
-The
-<B><A HREF="../man2/select.2.html">select</A></B>(2)
+An application can used
+<B><A HREF="../man2/select.2.html">select</A></B>(2),
+
+<B><A HREF="../man2/poll.2.html">poll</A></B>(2),
 
 or
-<B><A HREF="../man2/poll.2.html">poll</A></B>(2)
+<B><A HREF="../man7/epoll.7.html">epoll</A></B>(7)
 
-call may be used to determine when more data arrives.
-<P>
+to determine when more data arrives on a socket.
+<A NAME="lbAE">&nbsp;</A>
+<H3>The flags argument</H3>
 
 The
 <I>flags</I>
 
-argument to a
-<B>recv</B>()
-
-call is formed by ORing one or more of the following values:
+argument is formed by ORing one or more of the following values:
 <DL COMPACT>
 <DT><B>MSG_CMSG_CLOEXEC</B> (<B>recvmsg</B>() only; since Linux 2.6.23)
 
@@ -351,8 +302,80 @@ satisfied.
 However, the call may still return less data than requested if
 a signal is caught, an error or disconnect occurs, or the next data to be
 received is of a different type than that returned.
+
 </DL>
+<A NAME="lbAF">&nbsp;</A>
+<H3>recvfrom()</H3>
+
+<B>recvfrom</B>()
+
+places the received message into the buffer
+<I>buf</I>.
+
+The caller must specify the size of the buffer in
+<I>len</I>.
+
 <P>
+If
+<I>src_addr</I>
+
+is not NULL,
+and the underlying protocol provides the source address of the message,
+that source address is placed in the buffer pointed to by
+<I>src_addr</I>.
+
+
+
+
+
+
+
+
+
+In this case,
+<I>addrlen</I>
+
+is a value-result argument.
+Before the call,
+it should be initialized to the size of the buffer associated with
+<I>src_addr</I>.
+
+Upon return,
+<I>addrlen</I>
+
+is updated to contain the actual size of the source address.
+The returned address is truncated if the buffer provided is too small;
+in this case,
+<I>addrlen</I>
+
+will return a value greater than was supplied to the call.
+<P>
+If the caller is not interested in the source address,
+<I>src_addr</I>
+
+should be specified as NULL and
+<I>addrlen</I>
+
+should be specified as 0.
+
+<A NAME="lbAG">&nbsp;</A>
+<H3>recv()</H3>
+
+The
+<B>recv</B>()
+
+call is normally used only on a
+<I>connected</I>
+
+socket (see
+<B><A HREF="../man2/connect.2.html">connect</A></B>(2)).
+
+It is equivalent to the call:
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;recvfrom(fd,&nbsp;buf,&nbsp;len,&nbsp;flags,&nbsp;NULL,&nbsp;0));
+
+<A NAME="lbAH">&nbsp;</A>
+<H3>recvmsg()</H3>
 
 The
 <B>recvmsg</B>()
@@ -489,7 +512,7 @@ is returned to indicate that expedited or out-of-band data were received.
 indicates that no data was received but an extended error from the socket
 error queue.
 </DL>
-<A NAME="lbAE">&nbsp;</A>
+<A NAME="lbAI">&nbsp;</A>
 <H2>RETURN VALUE</H2>
 
 These calls return the number of bytes received, or -1
@@ -498,9 +521,17 @@ In the event of an error,
 <I>errno</I>
 
 is set to indicate the error.
-The return value will be 0 when the
-peer has performed an orderly shutdown.
-<A NAME="lbAF">&nbsp;</A>
+<P>
+When a stream socket peer has performed an orderly shutdown,
+the return value will be 0 (the traditional &quot;end-of-file&quot; return).
+<P>
+Datagram sockets in various domains (e.g., the UNIX and Internet domains)
+permit zero-length datagrams.
+When such a datagram is received, the return value is 0.
+<P>
+The value 0 may also be returned if the requested number of bytes
+to receive from a stream socket was 0.
+<A NAME="lbAJ">&nbsp;</A>
 <H2>ERRORS</H2>
 
 These are some standard errors generated by the socket layer.
@@ -571,7 +602,7 @@ The argument
 
 does not refer to a socket.
 </DL>
-<A NAME="lbAG">&nbsp;</A>
+<A NAME="lbAK">&nbsp;</A>
 <H2>CONFORMING TO</H2>
 
 4.4BSD (these function calls first appeared in 4.2BSD),
@@ -587,7 +618,7 @@ and
 <B>MSG_WAITALL</B>
 
 flags.
-<A NAME="lbAH">&nbsp;</A>
+<A NAME="lbAL">&nbsp;</A>
 <H2>NOTES</H2>
 
 The prototypes given above follow glibc2.
@@ -633,7 +664,7 @@ See
 
 for information about a Linux-specific system call
 that can be used to receive multiple datagrams in a single call.
-<A NAME="lbAI">&nbsp;</A>
+<A NAME="lbAM">&nbsp;</A>
 <H2>EXAMPLE</H2>
 
 An example of the use of
@@ -642,7 +673,7 @@ An example of the use of
 is shown in
 <B><A HREF="../man3/getaddrinfo.3.html">getaddrinfo</A></B>(3).
 
-<A NAME="lbAJ">&nbsp;</A>
+<A NAME="lbAN">&nbsp;</A>
 <H2>SEE ALSO</H2>
 
 <B><A HREF="../man2/fcntl.2.html">fcntl</A></B>(2),
@@ -673,17 +704,23 @@ is shown in
 <DT><A HREF="#lbAB">NAME</A><DD>
 <DT><A HREF="#lbAC">SYNOPSIS</A><DD>
 <DT><A HREF="#lbAD">DESCRIPTION</A><DD>
-<DT><A HREF="#lbAE">RETURN VALUE</A><DD>
-<DT><A HREF="#lbAF">ERRORS</A><DD>
-<DT><A HREF="#lbAG">CONFORMING TO</A><DD>
-<DT><A HREF="#lbAH">NOTES</A><DD>
-<DT><A HREF="#lbAI">EXAMPLE</A><DD>
-<DT><A HREF="#lbAJ">SEE ALSO</A><DD>
+<DL>
+<DT><A HREF="#lbAE">The flags argument</A><DD>
+<DT><A HREF="#lbAF">recvfrom()</A><DD>
+<DT><A HREF="#lbAG">recv()</A><DD>
+<DT><A HREF="#lbAH">recvmsg()</A><DD>
+</DL>
+<DT><A HREF="#lbAI">RETURN VALUE</A><DD>
+<DT><A HREF="#lbAJ">ERRORS</A><DD>
+<DT><A HREF="#lbAK">CONFORMING TO</A><DD>
+<DT><A HREF="#lbAL">NOTES</A><DD>
+<DT><A HREF="#lbAM">EXAMPLE</A><DD>
+<DT><A HREF="#lbAN">SEE ALSO</A><DD>
 </DL>
 <HR>
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:23:55 GMT, April 20, 2020
+Time: 03:24:31 GMT, April 20, 2020
 </BODY>
 </HTML>

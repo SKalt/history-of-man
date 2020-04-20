@@ -26,7 +26,7 @@ the source, must acknowledge the copyright and authors of this work.
 <HTML><HEAD><TITLE>Man page of PIPE</TITLE>
 </HEAD><BODY>
 <H1>PIPE</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2014-01-05<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2014-02-11<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -85,17 +85,6 @@ The following values can be bitwise ORed in
 
 to obtain different behavior:
 <DL COMPACT>
-<DT><B>O_NONBLOCK</B>
-
-<DD>
-Set the
-<B>O_NONBLOCK</B>
-
-file status flag on the two new open file descriptions.
-Using this flag saves extra calls to
-<B><A HREF="../man2/fcntl.2.html">fcntl</A></B>(2)
-
-to achieve the same result.
 <DT><B>O_CLOEXEC</B>
 
 <DD>
@@ -107,6 +96,66 @@ See the description of the same flag in
 <B><A HREF="../man2/open.2.html">open</A></B>(2)
 
 for reasons why this may be useful.
+<DT><B>O_DIRECT</B> (since Linux 3.4)
+
+<DD>
+
+Create a pipe that performs I/O in &quot;packet&quot; mode.
+Each
+<B><A HREF="../man2/write.2.html">write</A></B>(2)
+
+to the pipe is dealt with as a separate packet, and
+<B><A HREF="../man2/read.2.html">read</A></B>(2)s
+
+from the pipe will read one packet at a time.
+Note the following points:
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT>*<DD>
+Writes of greater than
+<B>PIPE_BUF</B>
+
+bytes (see
+<B><A HREF="../man7/pipe.7.html">pipe</A></B>(7))
+
+will be split into multiple packets.
+<DT>*<DD>
+If a
+<B><A HREF="../man2/read.2.html">read</A></B>(2)
+
+specifies a buffer size that is smaller than the next packet,
+then the requested number of bytes are read,
+and the excess bytes in the packet are discarded.
+Specifying a buffer size of
+<B>PIPE_BUF</B>
+
+will be sufficient to read the largest possible packets
+(see the previous point).
+<DT>*<DD>
+Zero-length packets are not supported.
+(A
+<B><A HREF="../man2/read.2.html">read</A></B>(2)
+
+that specifies a buffer size of zero is a no-op, and returns 0.)
+</DL>
+</DL>
+
+<DT><DD>
+Older kernels that do not support this flag will indicate this via an
+<B>EINVAL</B>
+
+error.
+<DT><B>O_NONBLOCK</B>
+
+<DD>
+Set the
+<B>O_NONBLOCK</B>
+
+file status flag on the two new open file descriptions.
+Using this flag saves extra calls to
+<B><A HREF="../man2/fcntl.2.html">fcntl</A></B>(2)
+
+to achieve the same result.
 </DL>
 <A NAME="lbAE">&nbsp;</A>
 <H2>RETURN VALUE</H2>
@@ -273,6 +322,6 @@ main(int argc, char *argv[])
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:23:55 GMT, April 20, 2020
+Time: 03:24:30 GMT, April 20, 2020
 </BODY>
 </HTML>
