@@ -4,7 +4,7 @@
 <HTML><HEAD><TITLE>Man page of EPOLL_CTL</TITLE>
 </HEAD><BODY>
 <H1>EPOLL_CTL</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2008-04-25<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2009-01-17<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -22,22 +22,72 @@ epoll_ctl - control interface for an epoll descriptor
 <A NAME="lbAD">&nbsp;</A>
 <H2>DESCRIPTION</H2>
 
-Control an
-<B>epoll</B>
+This system call performs control operations on the epoll instance
+referred to by the file descriptor
+<I>epfd</I>.
 
-descriptor,
-<I>epfd</I>,
-
-by requesting that the operation
+It requests that the operation
 <I>op</I>
 
-be performed on the target file descriptor,
+be performed for the target file descriptor,
 <I>fd</I>.
+
+<P>
+Valid values for the
+<I>op</I>
+
+argument are :
+<DL COMPACT>
+<DT><B>EPOLL_CTL_ADD</B>
+
+<DD>
+Register the target file descriptor
+<I>fd</I>
+
+on the
+<B>epoll</B>
+
+instance referred to by the file descriptor
+<I>epfd</I>
+
+and associate the event
+<I>event</I>
+
+with the internal file linked to
+<I>fd</I>.
+
+<DT><B>EPOLL_CTL_MOD</B>
+
+<DD>
+Change the event
+<I>event</I>
+
+associated with the target file descriptor
+<I>fd</I>.
+
+<DT><B>EPOLL_CTL_DEL</B>
+
+<DD>
+Remove (deregister) the target file descriptor
+<I>fd</I>
+
+from the
+<B>epoll</B>
+
+instance referred to by
+<I>epfd</I>.
 
 The
 <I>event</I>
 
-describes the object linked to the file descriptor
+is ignored and can be NULL (but see BUGS below).
+</DL>
+<P>
+
+The
+<I>event</I>
+
+argument describes the object linked to the file descriptor
 <I>fd</I>.
 
 The
@@ -145,68 +195,8 @@ The user must call
 with
 <B>EPOLL_CTL_MOD</B>
 
-to re-enable the file descriptor with a new event mask.
+to re-arm the file descriptor with a new event mask.
 </DL>
-<P>
-
-The
-<B>epoll</B>
-
-interface supports all file descriptors that support
-<B><A HREF="../man2/poll.2.html">poll</A></B>(2).
-
-Valid values for the
-<I>op</I>
-
-argument are :
-<DL COMPACT><DT><DD>
-<DL COMPACT>
-<DT><B>EPOLL_CTL_ADD</B>
-
-<DD>
-Add the target file descriptor
-<I>fd</I>
-
-to the
-<B>epoll</B>
-
-descriptor
-<I>epfd</I>
-
-and associate the event
-<I>event</I>
-
-with the internal file linked to
-<I>fd</I>.
-
-<DT><B>EPOLL_CTL_MOD</B>
-
-<DD>
-Change the event
-<I>event</I>
-
-associated with the target file descriptor
-<I>fd</I>.
-
-<DT><B>EPOLL_CTL_DEL</B>
-
-<DD>
-Remove the target file descriptor
-<I>fd</I>
-
-from the
-<B>epoll</B>
-
-file descriptor,
-<I>epfd</I>.
-
-The
-<I>event</I>
-
-is ignored and can be NULL (but see BUGS below).
-</DL>
-</DL>
-
 <A NAME="lbAE">&nbsp;</A>
 <H2>RETURN VALUE</H2>
 
@@ -245,9 +235,7 @@ was
 and the supplied file descriptor
 <I>fd</I>
 
-is already in
-<I>epfd</I>.
-
+is already registered with this epoll instance.
 <DT><B>EINVAL</B>
 
 <DD>
@@ -281,9 +269,7 @@ or
 and
 <I>fd</I>
 
-is not in
-<I>epfd</I>.
-
+is not registered on with this epoll instance.
 <DT><B>ENOMEM</B>
 
 <DD>
@@ -291,6 +277,17 @@ There was insufficient memory to handle the requested
 <I>op</I>
 
 control operation.
+<DT>The limit imposed by<DD>
+<I>/proc/sys/fs/epoll/max_user_watches</I>
+
+was encountered while trying to register
+(<B>EPOLL_CTL_ADD</B>)
+
+a new file descriptor on an epoll instance.
+See
+<B><A HREF="../man7/epoll.7.html">epoll</A></B>(7)
+
+for further details.
 <DT><B>EPERM</B>
 
 <DD>
@@ -309,6 +306,15 @@ does not support
 is Linux-specific, and was introduced in kernel 2.5.44.
 
 <A NAME="lbAH">&nbsp;</A>
+<H2>NOTES</H2>
+
+The
+<B>epoll</B>
+
+interface supports all file descriptors that support
+<B><A HREF="../man2/poll.2.html">poll</A></B>(2).
+
+<A NAME="lbAI">&nbsp;</A>
 <H2>BUGS</H2>
 
 In kernel versions before 2.6.9, the
@@ -329,7 +335,7 @@ Applications that need to be portable to kernels before 2.6.9
 should specify a non-NULL pointer in
 <I>event</I>.
 
-<A NAME="lbAI">&nbsp;</A>
+<A NAME="lbAJ">&nbsp;</A>
 <H2>SEE ALSO</H2>
 
 <B><A HREF="../man2/epoll_create.2.html">epoll_create</A></B>(2),
@@ -351,13 +357,14 @@ should specify a non-NULL pointer in
 <DT><A HREF="#lbAE">RETURN VALUE</A><DD>
 <DT><A HREF="#lbAF">ERRORS</A><DD>
 <DT><A HREF="#lbAG">CONFORMING TO</A><DD>
-<DT><A HREF="#lbAH">BUGS</A><DD>
-<DT><A HREF="#lbAI">SEE ALSO</A><DD>
+<DT><A HREF="#lbAH">NOTES</A><DD>
+<DT><A HREF="#lbAI">BUGS</A><DD>
+<DT><A HREF="#lbAJ">SEE ALSO</A><DD>
 </DL>
 <HR>
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:01:40 GMT, April 20, 2020
+Time: 03:02:15 GMT, April 20, 2020
 </BODY>
 </HTML>

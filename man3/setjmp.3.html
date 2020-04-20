@@ -4,7 +4,7 @@
 <HTML><HEAD><TITLE>Man page of SETJMP</TITLE>
 </HEAD><BODY>
 <H1>SETJMP</H1>
-Section: Linux Programmer's Manual (3)<BR>Updated: 2008-08-29<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2009-01-13<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -30,6 +30,11 @@ Feature Test Macro Requirements for glibc (see
 
 
 <P>
+<B>setjmp</B>():
+
+see NOTES.
+<BR>
+
 <B>sigsetjmp</B>():
 
 _POSIX_C_SOURCE&nbsp;&gt;=&nbsp;1 || _XOPEN_SOURCE || _POSIX_C_SOURCE
@@ -61,9 +66,9 @@ returns.
 is similar to
 <B>setjmp</B>().
 
-If <I>savesigs</I> is non-zero,
-the set of blocked signals is saved in <I>env</I> and will be restored
-if a
+If, and only if, <I>savesigs</I> is non-zero,
+the process's current signal mask is saved in <I>env</I>
+and will be restored if a
 <B><A HREF="../man3/siglongjmp.3.html">siglongjmp</A></B>(3)
 
 is later performed with this <I>env</I>.
@@ -95,13 +100,35 @@ POSIX.1-2001 specifies
 POSIX does not specify whether
 <B>setjmp</B>()
 
-will save the
-signal context.
-(In System V it will not.
+will save the signal signal mask.
+In System V it will not.
 In 4.3BSD it will, and there
-is a function <B>_setjmp</B> that will not.)
-If you want to save signal masks, use
-<B>sigsetjmp</B>().
+is a function <B>_setjmp</B> that will not.
+By default, Linux/glibc follows the System V behavior,
+but the BSD behavior is provided if the
+<B>_BSD_SOURCE</B>
+
+feature test macro is defined and none of
+<B>_POSIX_SOURCE</B>,
+
+<B>_POSIX_C_SOURCE</B>,
+
+<B>_XOPEN_SOURCE</B>,
+
+<B>_XOPEN_SOURCE_EXTENDED</B>,
+
+<B>_GNU_SOURCE</B>,
+
+or
+<B>_SVID_SOURCE</B>
+
+is defined.
+<P>
+If you want to portably save and restore signal masks, use
+<B>sigsetjmp</B>()
+
+and
+<B>siglongjmp</B>().
 
 <P>
 
@@ -137,6 +164,6 @@ If possible an alternative should be used.
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:01:50 GMT, April 20, 2020
+Time: 03:02:25 GMT, April 20, 2020
 </BODY>
 </HTML>

@@ -4,7 +4,7 @@
 <HTML><HEAD><TITLE>Man page of EPOLL_CREATE</TITLE>
 </HEAD><BODY>
 <H1>EPOLL_CREATE</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2008-10-10<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2009-01-17<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -26,11 +26,8 @@ epoll_create, epoll_create1 - open an epoll file descriptor
 
 <B>epoll_create</B>()
 
-opens an
-<B>epoll</B>
-
-file descriptor by requesting the kernel to allocate
-an event backing store dimensioned for
+creates an epoll &quot;instance&quot;,
+requesting the kernel to allocate an event backing store dimensioned for
 <I>size</I>
 
 descriptors.
@@ -44,16 +41,22 @@ just a hint to the kernel about how to dimension internal structures.
 
 is ignored; see NOTES below.)
 <P>
-The returned file descriptor is used for all the subsequent calls to the
+<B>epoll_create</B>()
+
+returns a file descriptor referring to the new epoll instance.
+This file descriptor is used for all the subsequent calls to the
 <B>epoll</B>
 
 interface.
-The file descriptor returned by
+When no longer required, the file descriptor returned by
 <B>epoll_create</B>()
 
-must be closed by using
+should be closed by using
 <B><A HREF="../man2/close.2.html">close</A></B>(2).
 
+When all file descriptors referring to an epoll instance have been closed,
+the kernel destroys the instance
+and releases the associated resources for re-use.
 <P>
 If
 <I>flags</I>
@@ -115,6 +118,17 @@ is not positive.
 Invalid value specified in
 <I>flags</I>.
 
+<DT><B>EMFILE</B>
+
+<DD>
+The per-user limit on the number of epoll instances imposed by
+<I>/proc/sys/fs/epoll/max_user_instances</I>
+
+was encountered.
+See
+<B><A HREF="../man7/epoll.7.html">epoll</A></B>(7)
+
+for further details.
 <DT><B>ENFILE</B>
 
 <DD>
@@ -169,6 +183,6 @@ without needing this initial hint.)
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:01:40 GMT, April 20, 2020
+Time: 03:02:15 GMT, April 20, 2020
 </BODY>
 </HTML>

@@ -4,7 +4,7 @@
 <HTML><HEAD><TITLE>Man page of EPOLL</TITLE>
 </HEAD><BODY>
 <H1>EPOLL</H1>
-Section: Linux Programmer's Manual (7)<BR>Updated: 2008-11-04<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (7)<BR>Updated: 2009-01-17<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -27,38 +27,41 @@ is a variant of
 that can be used either as an edge-triggered or a level-triggered
 interface and scales well to large numbers of watched file descriptors.
 The following system calls are provided to
-set up and control an
+create and manage an
 <B>epoll</B>
 
-set:
-<B><A HREF="../man2/epoll_create.2.html">epoll_create</A></B>(2)
-
-(or
-<B><A HREF="../man2/epoll_create1.2.html">epoll_create1</A></B>(2)),
-
-<B><A HREF="../man2/epoll_ctl.2.html">epoll_ctl</A></B>(2),
-
-<B><A HREF="../man2/epoll_wait.2.html">epoll_wait</A></B>(2).
-
-<P>
+instance:
+<DL COMPACT>
+<DT>*<DD>
 An
 <B>epoll</B>
 
-set is connected to a file descriptor created by
-<B><A HREF="../man2/epoll_create.2.html">epoll_create</A></B>(2).
+instance created by
+<B><A HREF="../man2/epoll_create.2.html">epoll_create</A></B>(2),
 
+which returns a file descriptor referring to the epoll instance.
 (The more recent
 <B><A HREF="../man2/epoll_create1.2.html">epoll_create1</A></B>(2)
 
 extends the functionality of
 <B><A HREF="../man2/epoll_create.2.html">epoll_create</A></B>(2).)
 
-Interest for certain file descriptors is then registered via
+<DT>*<DD>
+Interest in particular file descriptors is then registered via
 <B><A HREF="../man2/epoll_ctl.2.html">epoll_ctl</A></B>(2).
 
+The set of file decsriptors currently registered on an
+<B>epoll</B>
+
+instance is sometimes called an
+<I>epoll</I>
+
+set.
+<DT>*<DD>
 Finally, the actual wait is started by
 <B><A HREF="../man2/epoll_wait.2.html">epoll_wait</A></B>(2).
 
+</DL>
 <A NAME="lbAE">&nbsp;</A>
 <H3>Level-Triggered and Edge-Triggered</H3>
 
@@ -66,7 +69,7 @@ The
 <B>epoll</B>
 
 event distribution interface is able to behave both as edge-triggered
-(ET) and level-triggered (LT).
+(ET) and as level-triggered (LT).
 The difference between the two mechanisms
 can be described as follows.
 Suppose that
@@ -76,10 +79,10 @@ this scenario happens:
 The file descriptor that represents the read side of a pipe
 (<I>rfd</I>)
 
-is added inside the
+is registered on the
 <B>epoll</B>
 
-device.
+instance.
 <DT>2.<DD>
 A pipe writer writes 2 kB of data on the write side of the pipe.
 <DT>3.<DD>
@@ -197,8 +200,8 @@ is simply a faster
 and can be used wherever the latter is used since it shares the
 same semantics.
 <P>
-Since even with the edge-triggered
-<B>epoll</B>
+Since even with edge-triggered
+<B>epoll</B>,
 
 multiple events can be generated upon receipt of multiple chunks of data,
 the caller has the option to specify the
@@ -221,6 +224,34 @@ with
 <B>EPOLL_CTL_MOD</B>.
 
 <A NAME="lbAF">&nbsp;</A>
+<H3>/proc interfaces</H3>
+
+The following interfaces can be used to limit the amount of
+kernel memory consumed by epoll:
+<DL COMPACT>
+<DT><I>/proc/sys/fs/epoll/max_user_instances</I> (since Linux 2.6.28)
+
+<DD>
+This specifies an upper limit on the number of epoll instances
+that can be created per real user ID.
+<DT><I>/proc/sys/fs/epoll/max_user_watches</I> (since Linux 2.6.28)
+
+<DD>
+This specifies a limit on the total number of
+file descriptors that a user can register across
+all epoll instances on the system.
+The limit is per real user ID.
+Each registered file descriptor costs roughly 90 bytes on a 32-bit kernel,
+and roughly 160 bytes on a 64-bit kernel.
+Currently,
+
+the default value for
+<I>max_user_watches</I>
+
+is 1/32 of the available low memory,
+divided by the registration cost in bytes.
+</DL>
+<A NAME="lbAG">&nbsp;</A>
 <H3>Example for Suggested Usage</H3>
 
 While the usage of
@@ -340,14 +371,14 @@ calling
 with
 <B>EPOLL_CTL_MOD</B>.
 
-<A NAME="lbAG">&nbsp;</A>
+<A NAME="lbAH">&nbsp;</A>
 <H3>Questions and Answers</H3>
 
 <DL COMPACT>
 <DT><B>Q0</B>
 
 <DD>
-What is the key used to distinguish the file descriptors in an
+What is the key used to distinguish the file descriptors registered in an
 <B>epoll</B>
 
 set?
@@ -361,10 +392,10 @@ the kernel's internal representation of an open file).
 <DT><B>Q1</B>
 
 <DD>
-What happens if you add the same file descriptor to an
+What happens if you register the same file descriptor on an
 <B>epoll</B>
 
-set twice?
+instance twice?
 <DT><B>A1</B>
 
 <DD>
@@ -383,7 +414,7 @@ However, it is possible to add a duplicate
 descriptor to the same
 <B>epoll</B>
 
-set.
+instance.
 
 
 
@@ -410,7 +441,7 @@ masks.
 Can two
 <B>epoll</B>
 
-sets wait for the same file descriptor?
+instances wait for the same file descriptor?
 If so, are events reported to both
 <B>epoll</B>
 
@@ -439,10 +470,10 @@ indicate as being readable.
 <DT><B>Q4</B>
 
 <DD>
-What happens if the
+What happens if one attempts to put an
 <B>epoll</B>
 
-file descriptor is put into its own file descriptor set?
+file descriptor into its own file descriptor set?
 <DT><B>A4</B>
 
 <DD>
@@ -594,7 +625,7 @@ The same is true when writing using
 (Avoid this latter technique if you cannot guarantee that
 the monitored file descriptor always refers to a stream-oriented file.)
 </DL>
-<A NAME="lbAH">&nbsp;</A>
+<A NAME="lbAI">&nbsp;</A>
 <H3>Possible Pitfalls and Ways to Avoid Them</H3>
 
 <DL COMPACT>
@@ -656,16 +687,16 @@ If you find another
 event for file descriptor 13 in your batch processing,
 you will discover the file descriptor had been
 previously removed and there will be no confusion.
-<A NAME="lbAI">&nbsp;</A>
+<A NAME="lbAJ">&nbsp;</A>
 <H2>VERSIONS</H2>
 
 The
 <B>epoll</B>
 
 API was introduced in Linux kernel 2.5.44.
-Its interface should be finalized in Linux kernel 2.5.66.
+
 Support was added to glibc in version 2.3.2.
-<A NAME="lbAJ">&nbsp;</A>
+<A NAME="lbAK">&nbsp;</A>
 <H2>CONFORMING TO</H2>
 
 The
@@ -679,7 +710,7 @@ mechanisms, for example, FreeBSD has
 and Solaris has
 <I>/dev/poll</I>.
 
-<A NAME="lbAK">&nbsp;</A>
+<A NAME="lbAL">&nbsp;</A>
 <H2>SEE ALSO</H2>
 
 <B><A HREF="../man2/epoll_create.2.html">epoll_create</A></B>(2),
@@ -702,18 +733,19 @@ and Solaris has
 <DT><A HREF="#lbAD">DESCRIPTION</A><DD>
 <DL>
 <DT><A HREF="#lbAE">Level-Triggered and Edge-Triggered</A><DD>
-<DT><A HREF="#lbAF">Example for Suggested Usage</A><DD>
-<DT><A HREF="#lbAG">Questions and Answers</A><DD>
-<DT><A HREF="#lbAH">Possible Pitfalls and Ways to Avoid Them</A><DD>
+<DT><A HREF="#lbAF">/proc interfaces</A><DD>
+<DT><A HREF="#lbAG">Example for Suggested Usage</A><DD>
+<DT><A HREF="#lbAH">Questions and Answers</A><DD>
+<DT><A HREF="#lbAI">Possible Pitfalls and Ways to Avoid Them</A><DD>
 </DL>
-<DT><A HREF="#lbAI">VERSIONS</A><DD>
-<DT><A HREF="#lbAJ">CONFORMING TO</A><DD>
-<DT><A HREF="#lbAK">SEE ALSO</A><DD>
+<DT><A HREF="#lbAJ">VERSIONS</A><DD>
+<DT><A HREF="#lbAK">CONFORMING TO</A><DD>
+<DT><A HREF="#lbAL">SEE ALSO</A><DD>
 </DL>
 <HR>
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:01:52 GMT, April 20, 2020
+Time: 03:02:28 GMT, April 20, 2020
 </BODY>
 </HTML>
