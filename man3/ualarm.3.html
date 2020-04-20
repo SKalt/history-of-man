@@ -16,14 +16,7 @@ ualarm - schedule signal after given number of microseconds
 <H2>SYNOPSIS</H2>
 
 <PRE>
-/* BSD version */
-<B>#include &lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;</B>
-
-<B>unsigned int ualarm(unsigned int </B><I>usecs</I><B>, unsigned int </B><I>interval</I><B>);</B>
-
-/* SUSv2 version */
-<B>#define _XOPEN_SOURCE 500</B>
-<BR>
+<B>#define _XOPEN_SOURCE 500     /* Or: #define _BSD_SOURCE */</B>
 <B>#include &lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;</B>
 
 <B>useconds_t ualarm(useconds_t </B><I>usecs</I><B>, useconds_t </B><I>interval</I><B>);</B>
@@ -42,7 +35,7 @@ or by the time spent processing the call or by the
 granularity of system timers.
 <P>
 
-Unless caught or ignored, this signal will terminate the process.
+Unless caught or ignored, the SIGALRM signal will terminate the process.
 <P>
 
 If the
@@ -55,8 +48,8 @@ microseconds after the first.
 <A NAME="lbAE">&nbsp;</A>
 <H2>RETURN VALUE</H2>
 
-This function returns the number of microseconds remaining from
-the previous call, or 0 when no alarm is pending.
+This function returns the number of microseconds remaining for
+any alarm that was previously set, or 0 if no alarm was pending.
 <A NAME="lbAF">&nbsp;</A>
 <H2>ERRORS</H2>
 
@@ -70,26 +63,31 @@ Interrupted by a signal.
 <A NAME="lbAG">&nbsp;</A>
 <H2>CONFORMING TO</H2>
 
-4.3BSD, POSIX.1-2001.
-4.3BSD, SUSv2 and POSIX do not define any errors.
+4.3BSD, POSIX.1-2001.  
+POSIX.1-2001 marks
+<B>ualarm</B>()
+
+as obsolete.
+4.3BSD, SUSv2, and POSIX do not define any errors.
 <A NAME="lbAH">&nbsp;</A>
 <H2>NOTES</H2>
 
 The type
-<B>useconds_t</B>
+<I>useconds_t</I>
 
 is an unsigned integer type capable of holding integers
 in the range [0,1000000].
-This type is defined by
-<I>&lt;<A HREF="file:///usr/include/sys/types.h">sys/types.h</A>&gt;</I>
+On the original BSD implementation, and in glibc before version 2.1,
+the arguments to 
+<B>ualarm</B>()
 
-included by
-<I>&lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;</I>
+were instead typed as
+<I>unsigned int</I>.
 
-but glibc defines it only when _XOPEN_SOURCE has a value not less than 500,
-or both _XOPEN_SOURCE and _XOPEN_SOURCE_EXTENDED are defined.
+Programs will be more portable if they never mention 
+<I>useconds_t</I>
 
-Programs will be more portable if they never mention this type explicitly.
+explicitly.
 <P>
 
 The interaction of this function with
@@ -118,11 +116,12 @@ is unspecified.
 <P>
 
 This function is obsolete. Use
-<B><A HREF="../man2/nanosleep.2.html">nanosleep</A></B>(2)
-
-or
 <B><A HREF="../man2/setitimer.2.html">setitimer</A></B>(2)
 
+or POSIX interval timers
+(<B>timer_create</B>(),
+
+etc.)
 instead.
 <A NAME="lbAI">&nbsp;</A>
 <H2>SEE ALSO</H2>
@@ -139,7 +138,9 @@ instead.
 
 <B><A HREF="../man3/usleep.3.html">usleep</A></B>(3),
 
-<B><A HREF="../man7/feature_test_macros.7.html">feature_test_macros</A></B>(7)
+<B><A HREF="../man7/feature_test_macros.7.html">feature_test_macros</A></B>(7),
+
+<B><A HREF="../man7/time.7.html">time</A></B>(7)
 
 <P>
 
@@ -159,6 +160,6 @@ instead.
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 02:33:03 GMT, April 20, 2020
+Time: 02:33:40 GMT, April 20, 2020
 </BODY>
 </HTML>

@@ -63,6 +63,9 @@ int tcgetattr(int </B><I>fd</I><B>, struct termios *</B><I>termios_p</I><B>);</B
 
 The termios functions describe a general terminal interface that is
 provided to control asynchronous communications ports.
+<A NAME="lbAE">&nbsp;</A>
+<H3>The termios structure</H3>
+
 <P>
 
 Many of the functions described here have a <I>termios_p</I> argument
@@ -306,7 +309,8 @@ Enable parity generation on output and parity checking for input.
 <DT><B>PARODD</B>
 
 <DD>
-Parity for input and output is odd.
+If set, then parity for input and output is odd; 
+otherwise even parity is used.
 <DT><B>HUPCL</B>
 
 <DD>
@@ -323,10 +327,24 @@ For use by <B>shl</B> (shell layers).  (Not implemented on Linux.)
 <DT><B>CIBAUD</B>
 
 <DD>
-(not in POSIX) Mask for input speeds. The values for the CIBAUD bits are
+(not in POSIX) Mask for input speeds.
+The values for the CIBAUD bits are
 the same as the values for the CBAUD bits, shifted left IBSHIFT bits. 
 [requires _BSD_SOURCE or _SVID_SOURCE]
 (Not implemented on Linux.)
+<DT><B>CMSPAR</B>
+
+<DD>
+(not in POSIX)
+Use &quot;stick&quot; (mark/space) parity (supported on certain serial 
+devices): if
+<B>PARODD </B>
+
+is set, the parity bit is always 1; if
+<B>PARODD </B>
+
+is not set, then the parity bit is always 0).
+[requires _BSD_SOURCE or _SVID_SOURCE]
 <DT><B>CRTSCTS</B>
 
 <DD>
@@ -345,9 +363,7 @@ generate the corresponding signal.
 <DT><B>ICANON</B>
 
 <DD>
-Enable canonical mode.  This enables the special characters
-EOF, EOL, EOL2, ERASE, KILL, LNEXT, REPRINT, STATUS, and WERASE, and
-buffers by lines.  
+Enable canonical mode (described below).  
 <DT><B>XCASE</B>
 
 <DD>
@@ -461,7 +477,8 @@ Recognized when ICANON is set, and then not passed as input.
 
 <DD>
 (025, NAK, Ctrl-U, or Ctrl-X, or also @)
-Kill character. This erases the input since the last EOF or beginning-of-line.
+Kill character. 
+This erases the input since the last EOF or beginning-of-line.
 Recognized when ICANON is set, and then not passed as input.
 <DT><B>VEOF</B>
 
@@ -561,17 +578,11 @@ These symbolic subscript values are all different, except that
 VTIME, VMIN may have the same value as VEOL, VEOF, respectively.
 In non-canonical mode the special character meaning is replaced
 by the timeout meaning. 
-MIN (indexed using VMIN) represents the minimum number of characters
-that should be received to satisfy the read. 
-TIME (indexed using VTIME) is a decisecond-valued
-timer. When both are set, a read will wait until at least one character
-has been received, and then return as soon as either MIN characters
-have been received or time TIME has passed since the last character
-was received. If only MIN is set, the read will not return before
-MIN characters have been received. If only TIME is set, the read will
-return as soon as either at least one character has been received,
-or the timer times out. If neither is set, the read will return
-immediately, only giving the currently already available characters.
+For an explanation of VMIN and VTIME, see the description of 
+non-canonical mode below.
+<A NAME="lbAF">&nbsp;</A>
+<H3>Retrieving and changing terminal settings</H3>
+
 <P>
 
 <B>tcgetattr</B>()
@@ -605,6 +616,141 @@ the change occurs after all output written to the object referred by
 has been transmitted, and all input that has been received but not read
 will be discarded before the change is made.
 </DL>
+<A NAME="lbAG">&nbsp;</A>
+<H3>Canonical and non-canonical mode</H3>
+
+The setting of the
+<B>ICANON</B>
+
+canon flag in
+<I>c_lflag</I>
+
+determines whether the terminal is operating in canonical mode
+(<B>ICANON</B>
+
+set) or
+non-canonical mode
+(<B>ICANON</B>
+
+unset).
+By default,
+<B>ICANON</B>
+
+set.
+<P>
+In canonical mode:
+<DL COMPACT>
+<DT>*<DD>
+Input is made available line by line.
+An input line is available when one of the line delimiters
+is typed (NL, EOL, EOL2; or EOF at the start of line).
+Except in the case of EOF, the line delimiter is included
+in the buffer returned by
+<B><A HREF="../man2/read.2.html">read</A></B>(2).
+
+<DT>*<DD>
+Line editing is enabled (ERASE, KILL; 
+and if the 
+<B>IEXTEN</B>
+
+flag is set: WERASE, REPRINT, LNEXT).
+A 
+<B>read</B>()
+
+returns at most one line of input; if the
+<B>read</B>()
+
+requested fewer bytes than are available in the current line of input,
+then only as many bytes as requested are read,
+and the remaining characters will be available for a future
+<B>read</B>().
+
+</DL>
+<P>
+
+In non-canonical mode input is available immediately (without 
+the user having to type a line-delimiter character),
+and line editing is disabled.
+The settings of MIN 
+(<I>c_cc[VMIN]</I>)
+
+and
+(<I>c_cc[VTIME]</I>)
+
+determine the circumstances in which a
+<B><A HREF="../man2/read.2.html">read</A></B>(2)
+
+completes; there are four distinct cases:
+<DL COMPACT>
+<DT>*<DD>
+MIN == 0; TIME == 0:
+If data is available,
+<B>read</B>()
+
+returns immediately, with the lesser of the number of bytes
+available, or the number of bytes requested.
+If no data is available,
+<B>read</B>()
+
+returns 0.
+<DT>*<DD>
+MIN &gt; 0; TIME == 0:
+<B>read</B>()
+
+blocks until the lesser of MIN bytes or the number of bytes requested
+are available, and returns the lesser of these two values.
+<DT>*<DD>
+MIN == 0; TIME &gt; 0:
+TIME specifies the limit for a timer in tenths of a second.
+The timer is started when 
+<B>read</B>()
+
+is called.
+<B>read</B>()
+
+returns either when at least one byte of data is available,
+or when the timer expires.
+If the timer expires without any input becoming available,
+<B>read</B>()
+
+returns 0.
+<DT>*<DD>
+MIN &gt; 0; TIME &gt; 0:
+TIME specifies the limit for a timer in tenths of a second.
+Once an initial byte of input becomes available,
+the timer is restarted after each further byte is received.
+<B>read</B>()
+
+returns either when the lesser of the number of bytes requested or 
+MIN byte have been read,
+or when the inter-byte timeout expires.
+Because the timer is only started after the initial byte 
+becomes available, at least one byte will be read.
+</DL>
+<A NAME="lbAH">&nbsp;</A>
+<H3>Raw mode</H3>
+
+<P>
+
+<B>cfmakeraw</B>() sets the terminal to something like the 
+&quot;raw&quot; mode of the old Version 7 terminal driver:
+input is available character by character,
+echoing is disabled, and all special processing of 
+terminal input and output characters is disabled.
+The terminal attributes are set as follows:
+<PRE>
+
+    termios_p-&gt;c_iflag &amp;= ~(IGNBRK | BRKINT | PARMRK | ISTRIP
+                    | INLCR | IGNCR | ICRNL | IXON);
+    termios_p-&gt;c_oflag &amp;= ~OPOST;
+    termios_p-&gt;c_lflag &amp;= ~(ECHO | ECHONL | ICANON | ISIG | IEXTEN);
+    termios_p-&gt;c_cflag &amp;= ~(CSIZE | PARENB);
+    termios_p-&gt;c_cflag |= CS8;
+</PRE>
+
+<A NAME="lbAI">&nbsp;</A>
+<H3>Line control</H3>
+
 <P>
 
 <B>tcsendbreak</B>()
@@ -663,17 +809,18 @@ suspends output.
 <DT><B>TCOON</B><DD>
 restarts suspended output.
 <DT><B>TCIOFF</B><DD>
-transmits a STOP character, which stops the terminal device from transmitting data to the
-system.
+transmits a STOP character, which stops the terminal device from 
+transmitting data to the system.
 <DT><B>TCION</B><DD>
-transmits a START character, which starts the terminal device transmitting data to the
-system.
+transmits a START character, which starts the terminal device 
+transmitting data to the system.
 </DL>
 <P>
 
 The default on open of a terminal file is that neither its input nor its
 output is suspended.
-<P>
+<A NAME="lbAJ">&nbsp;</A>
+<H3>Line speed</H3>
 
 The baud rate functions are provided for getting and setting the values
 of the input and output baud rates in the <I>termios</I> structure.  The
@@ -687,19 +834,6 @@ The actual bit rate corresponding to <B>B38400</B> may be altered with
 
 The input and output baud rates are stored in the <I>termios</I>
 structure.
-<P>
-
-<B>cfmakeraw</B>() sets the terminal attributes as follows:
-<PRE>
-
-    termios_p-&gt;c_iflag &amp;= ~(IGNBRK | BRKINT | PARMRK | ISTRIP
-                    | INLCR | IGNCR | ICRNL | IXON);
-    termios_p-&gt;c_oflag &amp;= ~OPOST;
-    termios_p-&gt;c_lflag &amp;= ~(ECHO | ECHONL | ICANON | ISIG | IEXTEN);
-    termios_p-&gt;c_cflag &amp;= ~(CSIZE | PARENB);
-    termios_p-&gt;c_cflag |= CS8;
-</PRE>
-
 <P>
 
 <B>cfgetospeed</B>()
@@ -770,7 +904,7 @@ It takes the same arguments as
 <B>cfsetispeed</B>(),
 
 and sets both input and output speed.
-<A NAME="lbAE">&nbsp;</A>
+<A NAME="lbAK">&nbsp;</A>
 <H2>RETURN VALUE</H2>
 
 <P>
@@ -809,7 +943,7 @@ it may be necessary to follow this call with a further call to
 
 to check that all changes have been performed successfully.
 <P>
-<A NAME="lbAF">&nbsp;</A>
+<A NAME="lbAL">&nbsp;</A>
 <H2>NOTES</H2>
 
 Unix V7 and several later systems have a list of baud rates
@@ -843,10 +977,14 @@ behaves like
 
 
 
-<A NAME="lbAG">&nbsp;</A>
+<A NAME="lbAM">&nbsp;</A>
 <H2>SEE ALSO</H2>
 
 <B><A HREF="../man1/stty.1.html">stty</A></B>(1),
+
+<B><A HREF="../man4/console_ioctl.4.html">console_ioctl</A></B>(4),
+
+<B><A HREF="../man4/tty_ioctl.4.html">tty_ioctl</A></B>(4),
 
 <B><A HREF="../man7/feature_test_macros.7.html">feature_test_macros</A></B>(7),
 
@@ -860,14 +998,22 @@ behaves like
 <DT><A HREF="#lbAB">NAME</A><DD>
 <DT><A HREF="#lbAC">SYNOPSIS</A><DD>
 <DT><A HREF="#lbAD">DESCRIPTION</A><DD>
-<DT><A HREF="#lbAE">RETURN VALUE</A><DD>
-<DT><A HREF="#lbAF">NOTES</A><DD>
-<DT><A HREF="#lbAG">SEE ALSO</A><DD>
+<DL>
+<DT><A HREF="#lbAE">The termios structure</A><DD>
+<DT><A HREF="#lbAF">Retrieving and changing terminal settings</A><DD>
+<DT><A HREF="#lbAG">Canonical and non-canonical mode</A><DD>
+<DT><A HREF="#lbAH">Raw mode</A><DD>
+<DT><A HREF="#lbAI">Line control</A><DD>
+<DT><A HREF="#lbAJ">Line speed</A><DD>
+</DL>
+<DT><A HREF="#lbAK">RETURN VALUE</A><DD>
+<DT><A HREF="#lbAL">NOTES</A><DD>
+<DT><A HREF="#lbAM">SEE ALSO</A><DD>
 </DL>
 <HR>
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 02:33:03 GMT, April 20, 2020
+Time: 02:33:40 GMT, April 20, 2020
 </BODY>
 </HTML>

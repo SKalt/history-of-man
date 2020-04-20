@@ -1,11 +1,11 @@
 <!--
-Copyright (C) 1996 Andries Brouwer (aeb@cwi.nl)
+Copyright (C) 1996 Andries Brouwer &lt;aeb@cwi.nl&gt;
 -->
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
 <HTML><HEAD><TITLE>Man page of MMAP</TITLE>
 </HEAD><BODY>
 <H1>MMAP</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2004-12-08<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2006-12-04<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -27,36 +27,60 @@ mmap, munmap - map or unmap files or devices into memory
 <A NAME="lbAD">&nbsp;</A>
 <H2>DESCRIPTION</H2>
 
-The
 <B>mmap</B>()
 
-function asks to map
+creates a new mapping in the virtual address space of 
+the calling process.
+The starting address for the new mapping is specified in
+<I>start</I>.
+
+The
+<I>length</I>
+
+argument specifies the length of the mapping.
+<P>
+If
+<I>start</I>
+
+is NULL,
+then the kernel chooses the address at which to create the mapping;
+this is the most portable method of creating a new mapping.
+If 
+<I>start </I>
+
+is not NULL,
+then the kernel takes it as a hint about where to place the mapping;
+on Linux, the mapping will be created at the next higher page boundary.
+The address of the new mapping is returned as the result of the call.
+<P>
+The contents of a file mapping (as opposed to an anonymous mapping; see
+<B>MAP_ANONYMOUS</B>
+
+below), are initialised using 
 <I>length</I>
 
 bytes starting at offset
 <I>offset</I>
 
-from the file (or other object) specified by the file descriptor
-<I>fd</I>
+in the file (or other object) referred to by the file descriptor
+<I>fd</I>.
 
-into memory, preferably at address
-<I>start</I>.
+<I>offset</I>
 
-This latter address is a hint only, and is usually specified as 0.
-The actual place where the object is mapped is returned by
-<B>mmap</B>(),
+must be a multiple of the page size as returned by
+<I>sysconf(_SC_PAGE_SIZE)</I>.
 
-and is never 0.
 <P>
 
 The
 <I>prot</I>
 
-argument describes the desired memory protection (and must not
-conflict with the open mode of the file). It is either
+argument describes the desired memory protection of the mapping 
+(and must not conflict with the open mode of the file).
+It is either
 <B>PROT_NONE</B>
 
-or is the bitwise OR of one or more of the other PROT_* flags.
+or the bitwise OR of one or more of the following flags:
 <DL COMPACT>
 <DT><B>PROT_EXEC</B>
 
@@ -80,15 +104,58 @@ Pages may not be accessed.
 The
 <I>flags</I>
 
-parameter specifies the type of the mapped object, mapping options and
-whether modifications made to the mapped copy of the page are private to
-the process or are to be shared with other references.  
-It has bits
+argument determines whether updates to the mapping
+are visible to other processes mapping the same region,
+and whether updates are caried through to the underlying file.
+This behaviour is determined by including exactly one 
+of the following values in
+<I>flags</I>:
+
+<DL COMPACT>
+<DT><B>MAP_SHARED</B>
+
+<DD>
+Share this mapping.  
+Updates to the mapping are visible to other processes that map this file,
+and are carried through to the underlying file.
+The file may not actually be updated until
+<B><A HREF="../man2/msync.2.html">msync</A></B>(2)
+
+or
+<B><A HREF="../man2/munmap.2.html">munmap</A></B>(2)
+
+is called.
+<DT><B>MAP_PRIVATE</B>
+
+<DD>
+Create a private copy-on-write mapping.
+Updates to the mapping are not visible to other processes
+mapping the same file, and are not carried through to
+the underlying file.
+It is unspecified whether changes made to the file after the
+<B>mmap</B>()
+
+call are visible in the mapped region.
+</DL>
+<P>
+
+Both of these flags are described in POSIX.1-2001.
+<P>
+In addition, zero or more of the following values can be ORed in
+<I>flags</I>:
+
+
 <DL COMPACT>
 <DT><B>MAP_FIXED</B>
 
 <DD>
-Do not select a different address than the one specified.
+Don't interpret
+<I>start</I>
+
+as a hint: place the mapping at exactly that address.
+<I>start</I>
+
+must be a multiple of the page size.
 If the memory region specified by
 <I>start</I>
 
@@ -101,49 +168,8 @@ If the specified address cannot be used,
 <B>mmap</B>()
 
 will fail.
-If
-<B>MAP_FIXED </B>
-
-is specified,
-<I>start</I>
-
-must be a multiple of the page size.  
-Use of this option is discouraged.
-<DT><B>MAP_SHARED</B>
-
-<DD>
-Share this mapping with all other processes that map this object.
-Storing to the region is equivalent to writing to the file.
-The file may not actually be updated until
-<B><A HREF="../man2/msync.2.html">msync</A></B>(2)
-
-or
-<B><A HREF="../man2/munmap.2.html">munmap</A></B>(2)
-
-are called.
-<DT><B>MAP_PRIVATE</B>
-
-<DD>
-Create a private copy-on-write mapping.
-Stores to the region do not affect the original file.
-It is unspecified whether changes made to the file after the
-<B>mmap</B>()
-
-call are visible in the mapped region.
-</DL>
-<P>
-
-You must specify exactly one of 
-<B>MAP_SHARED </B>
-
-and 
-<B>MAP_PRIVATE</B>.
-
-<P>
-
-The above three flags are described in POSIX.1-2001.
-Linux also knows about the following non-standard flags:
-<DL COMPACT>
+Because requiring a fixed address for a mapping is less portable,
+the use of this option is discouraged.
 <DT><B>MAP_DENYWRITE</B>
 
 <DD>
@@ -190,29 +216,46 @@ This flag is ignored in older kernels.
 <DT><B>MAP_GROWSDOWN</B>
 
 <DD>
-Used for stacks. Indicates to the kernel VM system that the mapping
+Used for stacks. 
+Indicates to the kernel virtual memory system that the mapping
 should extend downwards in memory.
+<DT><B>MAP_ANON</B>
+
+<DD>
+Synonym for 
+<B>MAP_ANONYMOUS</B>.
+
+Deprecated.
 <DT><B>MAP_ANONYMOUS</B>
 
 <DD>
-The mapping is not backed by any file; the
+The mapping is not backed by any file;
+its contents are initialised to zero.
+The
 <I>fd</I>
 
 and
 <I>offset</I>
 
-arguments are ignored.  
-The use of this flag in conjunction with 
+arguments are ignored;
+however, some implementations require 
+<I>fd</I>
+
+to be -1 if 
+<B>MAP_ANONYMOUS </B>
+
+(or 
+<B>MAP_ANON</B>)
+
+is specified,
+and portable applications should ensure this.
+The use of 
+<B>MAP_ANONYMOUS</B>
+
+in conjunction with 
 <B>MAP_SHARED</B>
 
 is only supported on Linux since kernel 2.4.
-<DT><B>MAP_ANON</B>
-
-<DD>
-Alias for 
-<B>MAP_ANONYMOUS</B>.
-
-Deprecated.
 <DT><B>MAP_FILE</B>
 
 <DD>
@@ -244,41 +287,20 @@ that are already present in RAM.
 </DL>
 <P>
 
+Of the above flags, only
+<B>MAP_FIXED</B>
+
+is specified in POSIX.1-2001.
+However, most systems also support
+<B>MAP_ANONYMOUS</B>
+
+(or its synonym 
+<B>MAP_ANON</B>).
+
+<P>
+
 Some systems document the additional flags MAP_AUTOGROW, MAP_AUTORESRV,
 MAP_COPY, and MAP_LOCAL.
-<P>
-
-<I>fd</I>
-
-should be a valid file descriptor, unless 
-<B>MAP_ANONYMOUS </B>
-
-is set.
-If 
-<B>MAP_ANONYMOUS </B>
-
-is set, then 
-<I>fd</I>
-
-is ignored on Linux.
-However, some implementations require 
-<I>fd</I>
-
-to be -1 if 
-<B>MAP_ANONYMOUS </B>
-
-(or 
-<B>MAP_ANON</B>)
-
-is specified,
-and portable applications should ensure this.
-<P>
-
-<I>offset</I>
-
-should be a multiple of the page size as returned by
-<B><A HREF="../man2/getpagesize.2.html">getpagesize</A></B>(2).
-
 <P>
 
 Memory mapped by
@@ -357,7 +379,10 @@ returns a pointer to the mapped area.
 On error, the value
 <B>MAP_FAILED</B>
 
-(that is, (void *) -1) is returned, and
+(that is, 
+<I>(void *) -1)</I>
+
+is returned, and
 <I>errno</I>
 
 is set appropriately.
@@ -376,10 +401,11 @@ is set (probably to
 It is architecture dependent whether
 <B>PROT_READ</B>
 
-includes
+implies
 <B>PROT_EXEC</B>
 
-or not. Portable programs should always set
+or not. 
+Portable programs should always set
 <B>PROT_EXEC</B>
 
 if they intend to execute code in the new mapping.
@@ -626,6 +652,6 @@ B.O. Gallmeister, POSIX.4, O'Reilly, pp. 128-129 and 389-391.
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 02:32:54 GMT, April 20, 2020
+Time: 02:33:31 GMT, April 20, 2020
 </BODY>
 </HTML>

@@ -18,7 +18,9 @@ clone - create a child process
 <PRE>
 <B>#include &lt;<A HREF="file:///usr/include/sched.h">sched.h</A>&gt;</B>
 
-<B>int clone(int (*</B><I>fn</I><B>)(void *), void *</B><I>child_stack</I><B>, int </B><I>flags</I><B>, void *</B><I>arg</I><B>);</B>
+<B>int clone(int (*</B><I>fn</I><B>)(void *), void *</B><I>child_stack</I><B>,</B>
+<B>          int </B><I>flags</I><B>, void *</B><I>arg</I><B>, ... </B>
+<B>          /* pid_t *</B><I>pid</I><B>, struct user_desc *</B><I>tls</I><B>, pid_t *</B><I>ctid</I><B> */ );</B>
 
 <B>_syscall2(int, </B><I>clone</I><B>, int, </B><I>flags</I><B>, void *, </B><I>child_stack</I><B>)</B>
 
@@ -823,6 +825,34 @@ On x86,
 should not be called through vsyscall, but directly through
 <I>int $0x80</I>.
 
+<P>
+On IA-64, a different system call is used: 
+<PRE>
+
+<B>int clone2(int (*</B><I>fn</I><B>)(void *), </B>
+<B>           void *</B><I>child_stack_base</I><B>, size_t </B><I>stack_size</I><B>,</B>
+<B>           int </B><I>flags</I><B>, void *</B><I>arg</I><B>, ... </B>
+<B>           /* pid_t *</B><I>pid</I><B>, struct user_desc *</B><I>tls</I><B>, pid_t *</B><I>ctid</I><B> */ );</B>
+</PRE>
+
+<P>
+
+The
+<B>clone2</B>()
+
+system call operates in the same way as 
+<B>clone</B>(),
+
+except that
+<I>child_stack_base</I>
+
+points to the lowest address of the child's stack area,
+and
+<I>stack_size</I>
+
+specifies the size of the stack pointed to by
+<I>child_stack_base</I>.
+
 <A NAME="lbAJ">&nbsp;</A>
 <H2>CONFORMING TO</H2>
 
@@ -832,7 +862,7 @@ The
 and
 <B>sys_clone</B>
 
-calls are Linux-specific and should not be used in programs
+calls are Linux specific and should not be used in programs
 intended to be portable.
 <A NAME="lbAK">&nbsp;</A>
 <H2>BUGS</H2>
@@ -907,6 +937,6 @@ To get the truth, it may be necessary to use code such as the following
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 02:32:53 GMT, April 20, 2020
+Time: 02:33:30 GMT, April 20, 2020
 </BODY>
 </HTML>

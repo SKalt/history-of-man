@@ -81,8 +81,9 @@ character is followed by a colon, the option requires an argument, so
 <I>optarg</I>.
 
 Two colons mean an option takes
-an optional arg; if there is text in the current <I>argv</I>-element,
-it is returned in <I>optarg</I>, otherwise <I>optarg</I> is set to zero.
+an optional arg; if there is text in the current <I>argv</I>-element
+(i.e., in the same word as the option name itself, for example, &quot;-oarg&quot;), 
+then it is returned in <I>optarg</I>, otherwise <I>optarg</I> is set to zero.
 This is a GNU extension.  If
 <I>optstring</I>
 
@@ -279,6 +280,64 @@ version 2.01, but the support remains in GNU libc.
 <A NAME="lbAG">&nbsp;</A>
 <H2>EXAMPLE</H2>
 
+The following trivial example program uses
+<B>getopt</B>()
+
+to handle two program options: 
+<I>-n</I>,
+
+with no associated value; and
+<I>-t val</I>,
+
+which expects an associated value.
+<PRE>
+
+#include &lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/stdlib.h">stdlib.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;
+
+int
+main(int argc, char *argv[])
+{
+    int flags, opt;
+    int nsecs, tfnd;
+
+    nsecs = 0;
+    tfnd = 0;
+    flags = 0;
+    while ((opt = getopt(argc, argv, &quot;nt:&quot;)) != -1) {
+        switch (opt) {
+        case 'n':
+            flags = 1;
+            break;
+        case 't':
+            nsecs = atoi(optarg);
+            tfnd = 1;
+            break;
+        default: /* '?' */
+            fprintf(stderr, &quot;Usage: %s [-t nsecs] [-n] name\n&quot;,
+                    argv[1]);
+            exit(EXIT_FAILURE);
+        }
+    }
+
+    printf(&quot;flags=%d; tfnd=%d; optind=%d\n&quot;, flags, tfnd, optind);
+
+    if (optind &gt;= argc) {
+        fprintf(stderr, &quot;Expected argument after options\n&quot;);
+        exit(EXIT_FAILURE);
+    }
+
+    printf(&quot;name argument = %s\n&quot;, argv[optind]);
+
+    /* Other code omitted */
+
+    exit(EXIT_SUCCESS);
+}
+</PRE>
+
+<P>
+
 The following example program illustrates the use of
 <B>getopt_long</B>()
 
@@ -403,8 +462,13 @@ for this purpose as LEGACY.
 POSIX.1-2001 does not allow the declaration to appear in
 <I>&lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;</I>.
 
-<P>
 </DL>
+<A NAME="lbAJ">&nbsp;</A>
+<H2>SEE ALSO</H2>
+
+<B><A HREF="../man7/feature_test_macros.7.html">feature_test_macros</A></B>(7)
+
+<P>
 
 <HR>
 <A NAME="index">&nbsp;</A><H2>Index</H2>
@@ -417,11 +481,12 @@ POSIX.1-2001 does not allow the declaration to appear in
 <DT><A HREF="#lbAG">EXAMPLE</A><DD>
 <DT><A HREF="#lbAH">BUGS</A><DD>
 <DT><A HREF="#lbAI">CONFORMING TO</A><DD>
+<DT><A HREF="#lbAJ">SEE ALSO</A><DD>
 </DL>
 <HR>
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 02:32:59 GMT, April 20, 2020
+Time: 02:33:36 GMT, April 20, 2020
 </BODY>
 </HTML>
