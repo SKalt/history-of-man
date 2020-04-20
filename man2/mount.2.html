@@ -26,7 +26,7 @@ the source, must acknowledge the copyright and authors of this work.
 <HTML><HEAD><TITLE>Man page of MOUNT</TITLE>
 </HEAD><BODY>
 <H1>MOUNT</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2018-02-02<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2019-03-06<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -166,6 +166,8 @@ as described later in this page.
 
 
 
+
+
 <DL COMPACT>
 <DT><B>MS_DIRSYNC</B> (since Linux 2.5.19)
 
@@ -209,9 +211,7 @@ This mount option significantly reduces writes
 needed to update the inode's timestamps, especially mtime and atime.
 However, in the event of a system crash, the atime and mtime fields
 on disk might be out of date by up to 24 hours.
-</DL>
-<P>
-
+<DT><DD>
 Examples of workloads where this option could be of significant benefit
 include frequent random writes to preallocated files,
 as well as cases where the
@@ -229,7 +229,6 @@ is that
 
 will return the correctly updated atime, but the atime updates
 will be flushed to disk only in the cases listed above.)
-<DL COMPACT>
 <DT><B>MS_MANDLOCK</B>
 
 <DD>
@@ -243,7 +242,10 @@ Since Linux 4.5,
 this mount option requires the
 <B>CAP_SYS_ADMIN</B>
 
-capability.
+capability and a kernel configured with the
+<B>CONFIG_MANDATORY_FILE_LOCKING</B>
+
+option.
 <DT><B>MS_NOATIME</B>
 
 <DD>
@@ -356,26 +358,61 @@ was specified for all file opens to this filesystem).
 </DL>
 <P>
 
-From Linux 2.4 onward, the
+From Linux 2.4 onward, some of the above flags are
+settable on a per-mount basis,
+while others apply to the superblock of the mounted filesystem,
+meaning that all mounts of the same filesystem share those flags.
+(Previously, all of the flags were per-superblock.)
+<P>
+
+The per-mount-point flags are as follows:
+<DL COMPACT>
+<DT>*<DD>
+Since Linux 2.4:
 <B>MS_NODEV</B>, <B>MS_NOEXEC</B>, and <B>MS_NOSUID</B>
 
 flags are settable on a per-mount-point basis.
-From kernel 2.6.16 onward,
+<DT>*<DD>
+Since Linux 2.6.16:
 <B>MS_NOATIME</B>
 
 and
-<B>MS_NODIRATIME</B>
+<B>MS_NODIRATIME</B>.
 
-are also settable on a per-mount-point basis.
-The
-<B>MS_RELATIME</B>
+<DT>*<DD>
+Since Linux 2.6.20:
+<B>MS_RELATIME</B>.
 
-flag is also settable on a per-mount-point basis.
+</DL>
+<P>
+
+The following flags are per-superblock:
+<B>MS_DIRSYNC</B>,
+
+<B>MS_LAZYTIME</B>,
+
+<B>MS_MANDLOCK</B>,
+
+<B>MS_MS_SILENT</B>,
+
+and
+<B>MS_SYNCHRONOUS</B>.
+
+
+The initial settings of these flags are determined on the first
+mount of the filesystem, and will be shared by all subsequent mounts
+of the same filesystem.
+Subsequently, the settings of the flags can be changed
+via a remount operation (see below).
+Such changes will be visible via all mount points associated
+with the filesystem.
+<P>
+
 Since Linux 2.6.16,
 <B>MS_RDONLY</B>
 
 can be set or cleared on a per-mount-point basis as well as on
-the underlying filesystem.
+the underlying filesystem superblock.
 The mounted filesystem will be writable only if neither the filesystem
 nor the mountpoint are flagged as read-only.
 
@@ -422,11 +459,6 @@ arguments should match the values used in the original
 <B>mount</B>()
 
 call, except for those parameters that are being deliberately changed.
-Another exception is that
-<B>MS_BIND</B>
-
-has a different meaning for remount, and it should be included only if
-explicitly desired.
 <P>
 
 The following
@@ -434,6 +466,15 @@ The following
 
 can be changed:
 <B>MS_LAZYTIME</B>,
+
+
+
+
+
+
+
+
+
 
 <B>MS_MANDLOCK</B>,
 
@@ -451,14 +492,32 @@ can be changed:
 
 <B>MS_RDONLY</B>,
 
+<B>MS_STRICTATIME</B>
+
+(whose effect is to clear the
+<B>MS_NOATIME</B>
+
+and
+<B>MS_RELATIME</B>
+
+flags),
 and
 <B>MS_SYNCHRONOUS</B>.
 
 Attempts to change the setting of the
 
+
+
+
 <B>MS_DIRSYNC</B>
 
-flag during a remount are silently ignored.
+and
+<B>MS_SILENT</B>
+
+flags during a remount are silently ignored.
+Note that changes to per-superblock flags are visible via
+all mount points of the associated filesystem
+(because the per-superblock flags are shared by all mount points).
 <P>
 
 Since Linux 3.17,
@@ -482,7 +541,10 @@ then the remount operation preserves the existing values of these flags
 
 <P>
 
-Since Linux 2.6.26, this flag can be used with
+Since Linux 2.6.26, the
+<B>MS_RMOUNT</B>
+
+flag can be used with
 <B>MS_BIND</B>
 
 to modify only the per-mount-point flags.
@@ -495,7 +557,11 @@ Specifying
 as:
 <P>
 
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;MS_REMOUNT&nbsp;|&nbsp;MS_BIND&nbsp;|&nbsp;MS_RDONLY
+
+
+MS_REMOUNT | MS_BIND | MS_RDONLY
+
+
 <P>
 
 will make access through this mountpoint read-only, without affecting
@@ -530,12 +596,13 @@ and
 arguments are ignored.
 <P>
 
-The remaining bits in the
+The remaining bits (other than
+<B>MS_REC</B>,
+
+described below) in the
 <I>mountflags</I>
 
-argument are also ignored, with the exception of
-<B>MS_REC</B>.
-
+argument are also ignored.
 (The bind mount has the same mount options as
 the underlying mount point.)
 However, see the discussion of remounting above,
@@ -580,12 +647,14 @@ then the propagation type of an existing mount is changed.
 If more than one of these flags is specified, an error results.
 <P>
 
-The only flags that can be used with changing the propagation type are
+The only other flags that can be specified while changing
+the propagation type are
 <B>MS_REC</B>
 
-and
-<B>MS_SILENT</B>.
+(described below) and
+<B>MS_SILENT</B>
 
+(which is ignored).
 <P>
 
 The
@@ -624,19 +693,15 @@ that contains other members, convert it to a slave mount.
 If this is a shared mount point that is a member of a peer group
 that contains no other members, convert it to a private mount.
 Otherwise, the propagation type of the mount point is left unchanged.
-</DL>
-<P>
-
+<DT><DD>
 When a mount point is a slave,
 mount and unmount events propagate into this mount point from
 the (master) shared peer group of which it was formerly a member.
 Mount and unmount events under this mount point do not propagate to any peer.
-<P>
-
+<DT><DD>
 A mount point can be the slave of another peer group
 while at the same time sharing mount and unmount events
 with a peer group of which it is a member.
-<DL COMPACT>
 <DT><B>MS_UNBINDABLE</B>
 
 <DD>
@@ -653,7 +718,7 @@ and
 <B>MS_REC</B>
 
 flags) is performed on a directory subtree,
-any bind mounts within the subtree are automatically pruned
+any unbindable mounts within the subtree are automatically pruned
 (i.e., not replicated)
 when replicating that subtree to produce the target subtree.
 </DL>
@@ -787,6 +852,20 @@ Mounting a read-only filesystem was attempted without giving the
 <B>MS_RDONLY</B>
 
 flag.
+<DT><DD>
+The file system may be read-only for various reasons, including:
+it resides on a read-only optical disk;
+it is resides on a device with a physical switch that has been set to
+mark the device read-only;
+the filesystem implementation was compiled with read-only support;
+or errors were detected when initially mounting the filesystem,
+so that it was marked read-only
+and can't be remounted as read-write (until the errors are fixed).
+<DT><DD>
+Some filesystems instead return the error
+<B>EROFS</B>
+
+on an attempt to mount a read-only filesystem.
 <DT><B>EACCES</B>
 
 <DD>
@@ -967,6 +1046,17 @@ is out of range.
 
 <DD>
 The caller does not have the required privileges.
+<DT><B>EROFS</B>
+
+<DD>
+Mounting a read-only filesystem was attempted without giving the
+<B>MS_RDONLY</B>
+
+flag.
+See
+<B>EACCES</B>,
+
+above.
 </DL>
 <A NAME="lbAM">&nbsp;</A>
 <H2>VERSIONS</H2>
@@ -986,7 +1076,7 @@ The definitions of
 
 <B>MS_SLAVE</B>,
 
-<B>MS_STRICTATIME</B>
+<B>MS_STRICTATIME</B>,
 
 and
 <B>MS_UNBINDABLE</B>
@@ -1102,14 +1192,26 @@ The Linux-specific
 <I>/proc/[pid]/mounts</I>
 
 file exposes the list of mount points in the mount
-namespace of the process with the specified ID; see
+namespace of the process with the specified ID.
+The
+<I>/proc/[pid]/mountinfo</I>
+
+file exposes even more information about mount points,
+including the propagation type and mount ID information that makes it
+possible to discover the parental relationship between mount points.
+See
 <B><A HREF="../man5/proc.5.html">proc</A></B>(5)
 
-for details.
+and
+<B><A HREF="../man7/mount_namespaces.7.html">mount_namespaces</A></B>(7)
+
+for details of these files.
 <A NAME="lbAQ">&nbsp;</A>
 <H2>SEE ALSO</H2>
 
 <B><A HREF="../man1/mountpoint.1.html">mountpoint</A></B>(1),
+
+<B><A HREF="../man2/ioctl_iflags.2.html">ioctl_iflags</A></B>(2),
 
 <B><A HREF="../man2/umount.2.html">umount</A></B>(2),
 
@@ -1155,6 +1257,6 @@ for details.
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:49:03 GMT, April 20, 2020
+Time: 03:49:40 GMT, April 20, 2020
 </BODY>
 </HTML>

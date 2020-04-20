@@ -27,7 +27,7 @@ the source, must acknowledge the copyright and authors of this work.
 <HTML><HEAD><TITLE>Man page of SYSCALLS</TITLE>
 </HEAD><BODY>
 <H1>SYSCALLS</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2018-02-02<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2019-03-06<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -54,9 +54,9 @@ For details of direct invocation of a system call, see
 Often, but not always, the name of the wrapper function is the same
 as the name of the system call that it invokes.
 For example, glibc contains a function
-<B>truncate</B>()
+<B>chdir</B>()
 
-which invokes the underlying &quot;truncate&quot; system call.
+which invokes the underlying &quot;chdir&quot; system call.
 <P>
 
 Often the glibc wrapper function is quite thin, doing little work
@@ -72,7 +72,10 @@ appropriately after the system call has returned.
 which can be used to invoke system calls
 for which no wrapper function is provided.)
 Note: system calls indicate a failure by returning a negative error
-number to the caller;
+number to the caller on architectures without a separate error register/flag,
+as noted in
+<B><A HREF="../man2/syscall.2.html">syscall</A></B>(2);
+
 when this happens,
 the wrapper function negates the returned error number
 (to make it positive), copies it to
@@ -169,7 +172,7 @@ in both of the major kernel series is listed.
 </DL>
 <P>
 
-The list of system calls that are available as at kernel 4.11
+The list of system calls that are available as at kernel 4.19
 (or in a few cases only on older kernels) is as follows:
 
 
@@ -190,15 +193,33 @@ The list of system calls that are available as at kernel 4.11
 <TR VALIGN=top><TD><B><A HREF="../man2/adjtimex.2.html">adjtimex</A></B>(2)</TD><TD>1.0</TD><TD><BR></TD></TR>
 <TR VALIGN=top><TD><B><A HREF="../man2/alarm.2.html">alarm</A></B>(2)</TD><TD>1.0</TD><TD><BR></TD></TR>
 <TR VALIGN=top><TD><B><A HREF="../man2/alloc_hugepages.2.html">alloc_hugepages</A></B>(2)</TD><TD>2.5.36</TD><TD>Removed in 2.5.44<BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/arc_gettls.2.html">arc_gettls</A></B>(2)</TD><TD>3.9</TD><TD>ARC only<BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/arc_settls.2.html">arc_settls</A></B>(2)</TD><TD>3.9</TD><TD>ARC only<BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/arc_usr_cmpxchg.2.html">arc_usr_cmpxchg</A></B>(2)</TD><TD>4.9</TD><TD>ARC onlt<BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/arch_prctl.2.html">arch_prctl</A></B>(2)</TD><TD>2.6</TD><TD>x86_64, x86 since 4.12<BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/atomic_barrier.2.html">atomic_barrier</A></B>(2)</TD><TD>2.6.34</TD><TD>m68k only<BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/atomic_cmpxchg_32.2.html">atomic_cmpxchg_32</A></B>(2)</TD><TD>2.6.34</TD><TD>m68k only<BR></TD></TR>
 <TR VALIGN=top><TD><B><A HREF="../man2/bdflush.2.html">bdflush</A></B>(2)</TD><TD>1.2</TD><TD>
 Deprecated (does nothing)
 <BR>
 
 since 2.6
 <BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/bfin_spinlock.2.html">bfin_spinlock</A></B>(2)</TD><TD>2.6.22</TD><TD>
+Blackfin only (port removed
+<BR>
+
+in Linux 4.17)
+<BR></TD></TR>
 <TR VALIGN=top><TD><B><A HREF="../man2/bind.2.html">bind</A></B>(2)</TD><TD>2.0</TD><TD>See notes on <B><A HREF="../man2/socketcall.2.html">socketcall</A></B>(2)<BR></TD></TR>
 <TR VALIGN=top><TD><B><A HREF="../man2/bpf.2.html">bpf</A></B>(2)</TD><TD>3.18</TD><TD><BR></TD></TR>
 <TR VALIGN=top><TD><B><A HREF="../man2/brk.2.html">brk</A></B>(2)</TD><TD>1.0</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/breakpoint.2.html">breakpoint</A></B>(2)</TD><TD>2.2</TD><TD>
+ARM OABI only, defined with
+<BR>
+
+<B>__ARM_NR</B> prefix
+<BR></TD></TR>
 <TR VALIGN=top><TD><B><A HREF="../man2/cacheflush.2.html">cacheflush</A></B>(2)</TD><TD>1.2</TD><TD>Not on x86<BR></TD></TR>
 <TR VALIGN=top><TD><B><A HREF="../man2/capget.2.html">capget</A></B>(2)</TD><TD>2.2</TD><TD><BR></TD></TR>
 <TR VALIGN=top><TD><B><A HREF="../man2/capset.2.html">capset</A></B>(2)</TD><TD>2.2</TD><TD><BR></TD></TR>
@@ -217,13 +238,26 @@ version details
 <TR VALIGN=top><TD><B><A HREF="../man2/clock_gettime.2.html">clock_gettime</A></B>(2)</TD><TD>2.6</TD><TD><BR></TD></TR>
 <TR VALIGN=top><TD><B><A HREF="../man2/clock_nanosleep.2.html">clock_nanosleep</A></B>(2)</TD><TD>2.6</TD><TD><BR></TD></TR>
 <TR VALIGN=top><TD><B><A HREF="../man2/clock_settime.2.html">clock_settime</A></B>(2)</TD><TD>2.6</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/clone2.2.html">clone2</A></B>(2)</TD><TD>2.4</TD><TD>IA-64 only<BR></TD></TR>
 <TR VALIGN=top><TD><B><A HREF="../man2/clone.2.html">clone</A></B>(2)</TD><TD>1.0</TD><TD><BR></TD></TR>
 <TR VALIGN=top><TD><B><A HREF="../man2/close.2.html">close</A></B>(2)</TD><TD>1.0</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/cmpxchg_badaddr.2.html">cmpxchg_badaddr</A></B>(2)</TD><TD>2.6.36</TD><TD>
+Tile only (port removed
+<BR>
+
+in Linux 4.17)
+<BR></TD></TR>
 <TR VALIGN=top><TD><B><A HREF="../man2/connect.2.html">connect</A></B>(2)</TD><TD>2.0</TD><TD>See notes on <B><A HREF="../man2/socketcall.2.html">socketcall</A></B>(2)<BR></TD></TR>
 <TR VALIGN=top><TD><B><A HREF="../man2/copy_file_range.2.html">copy_file_range</A></B>(2)</TD><TD>4.5</TD><TD><BR></TD></TR>
 <TR VALIGN=top><TD><B><A HREF="../man2/creat.2.html">creat</A></B>(2)</TD><TD>1.0</TD><TD><BR></TD></TR>
 <TR VALIGN=top><TD><B><A HREF="../man2/create_module.2.html">create_module</A></B>(2)</TD><TD>1.0</TD><TD>Removed in 2.6<BR></TD></TR>
 <TR VALIGN=top><TD><B><A HREF="../man2/delete_module.2.html">delete_module</A></B>(2)</TD><TD>1.0</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/dma_memcpy.2.html">dma_memcpy</A></B>(2)</TD><TD>2.6.22</TD><TD>
+Blackfin only (port removed
+<BR>
+
+in Linux 4.17)
+<BR></TD></TR>
 <TR VALIGN=top><TD><B><A HREF="../man2/dup.2.html">dup</A></B>(2)</TD><TD>1.0</TD><TD><BR></TD></TR>
 <TR VALIGN=top><TD><B><A HREF="../man2/dup2.2.html">dup2</A></B>(2)</TD><TD>1.0</TD><TD><BR></TD></TR>
 <TR VALIGN=top><TD><B><A HREF="../man2/dup3.2.html">dup3</A></B>(2)</TD><TD>2.6.27</TD><TD><BR></TD></TR>
@@ -234,6 +268,12 @@ version details
 <TR VALIGN=top><TD><B><A HREF="../man2/epoll_wait.2.html">epoll_wait</A></B>(2)</TD><TD>2.6</TD><TD><BR></TD></TR>
 <TR VALIGN=top><TD><B><A HREF="../man2/eventfd.2.html">eventfd</A></B>(2)</TD><TD>2.6.22</TD><TD><BR></TD></TR>
 <TR VALIGN=top><TD><B><A HREF="../man2/eventfd2.2.html">eventfd2</A></B>(2)</TD><TD>2.6.27</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/execv.2.html">execv</A></B>(2)</TD><TD>2.0</TD><TD>
+SPARC/SPARC64 only, for
+<BR>
+
+compatability with SunOS
+<BR></TD></TR>
 <TR VALIGN=top><TD><B><A HREF="../man2/execve.2.html">execve</A></B>(2)</TD><TD>1.0</TD><TD><BR></TD></TR>
 <TR VALIGN=top><TD><B><A HREF="../man2/execveat.2.html">execveat</A></B>(2)</TD><TD>3.19</TD><TD><BR></TD></TR>
 <TR VALIGN=top><TD><B><A HREF="../man2/exit.2.html">exit</A></B>(2)</TD><TD>1.0</TD><TD><BR></TD></TR>
@@ -275,10 +315,32 @@ version details
 <TR VALIGN=top><TD><B><A HREF="../man2/get_mempolicy.2.html">get_mempolicy</A></B>(2)</TD><TD>2.6.6</TD><TD><BR></TD></TR>
 <TR VALIGN=top><TD><B><A HREF="../man2/get_robust_list.2.html">get_robust_list</A></B>(2)</TD><TD>2.6.17</TD><TD><BR></TD></TR>
 <TR VALIGN=top><TD><B><A HREF="../man2/get_thread_area.2.html">get_thread_area</A></B>(2)</TD><TD>2.6</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/get_tls.2.html">get_tls</A></B>(2)</TD><TD>4.15</TD><TD>
+ARM OABI only, has
+<BR>
+
+<B>__ARM_NR</B> prefix
+<BR></TD></TR>
 <TR VALIGN=top><TD><B><A HREF="../man2/getcpu.2.html">getcpu</A></B>(2)</TD><TD>2.6.19</TD><TD><BR></TD></TR>
 <TR VALIGN=top><TD><B><A HREF="../man2/getcwd.2.html">getcwd</A></B>(2)</TD><TD>2.2</TD><TD><BR></TD></TR>
 <TR VALIGN=top><TD><B><A HREF="../man2/getdents.2.html">getdents</A></B>(2)</TD><TD>2.0</TD><TD><BR></TD></TR>
 <TR VALIGN=top><TD><B><A HREF="../man2/getdents64.2.html">getdents64</A></B>(2)</TD><TD>2.4</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/getdomainname.2.html">getdomainname</A></B>(2)</TD><TD>2.2</TD><TD>
+SPARC, SPARC64; available
+<BR>
+
+as <B><A HREF="../man2/osf_getdomainname.2.html">osf_getdomainname</A></B>(2)
+<BR>
+
+on Alpha since Linux 2.0
+<BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/getdtablesize.2.html">getdtablesize</A></B>(2)</TD><TD>2.0</TD><TD>
+SPARC (removed in 2.6.26),
+<BR>
+
+available since Linux 2.0 on Alpha as
+<B><A HREF="../man2/osf_getdtablesize.2.html">osf_getdtablesize</A></B>(2)
+<BR></TD></TR>
 <TR VALIGN=top><TD><B><A HREF="../man2/getegid.2.html">getegid</A></B>(2)</TD><TD>1.0</TD><TD><BR></TD></TR>
 <TR VALIGN=top><TD><B><A HREF="../man2/getegid32.2.html">getegid32</A></B>(2)</TD><TD>2.4</TD><TD><BR></TD></TR>
 <TR VALIGN=top><TD><B><A HREF="../man2/geteuid.2.html">geteuid</A></B>(2)</TD><TD>1.0</TD><TD><BR></TD></TR>
@@ -287,6 +349,12 @@ version details
 <TR VALIGN=top><TD><B><A HREF="../man2/getgid32.2.html">getgid32</A></B>(2)</TD><TD>2.4</TD><TD><BR></TD></TR>
 <TR VALIGN=top><TD><B><A HREF="../man2/getgroups.2.html">getgroups</A></B>(2)</TD><TD>1.0</TD><TD><BR></TD></TR>
 <TR VALIGN=top><TD><B><A HREF="../man2/getgroups32.2.html">getgroups32</A></B>(2)</TD><TD>2.4</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/gethostname.2.html">gethostname</A></B>(2)</TD><TD>2.0</TD><TD>
+Alpha, was available on
+<BR>
+
+SPARC up to Linux 2.6.26
+<BR></TD></TR>
 <TR VALIGN=top><TD><B><A HREF="../man2/getitimer.2.html">getitimer</A></B>(2)</TD><TD>1.0</TD><TD><BR></TD></TR>
 <TR VALIGN=top><TD><B><A HREF="../man2/getpeername.2.html">getpeername</A></B>(2)</TD><TD>2.0</TD><TD>See notes on <B><A HREF="../man2/socketcall.2.html">socketcall</A></B>(2)<BR></TD></TR>
 <TR VALIGN=top><TD><B><A HREF="../man2/getpagesize.2.html">getpagesize</A></B>(2)</TD><TD>2.0</TD><TD>Not on x86<BR></TD></TR>
@@ -309,8 +377,11 @@ version details
 <TR VALIGN=top><TD><B><A HREF="../man2/gettimeofday.2.html">gettimeofday</A></B>(2)</TD><TD>1.0</TD><TD><BR></TD></TR>
 <TR VALIGN=top><TD><B><A HREF="../man2/getuid.2.html">getuid</A></B>(2)</TD><TD>1.0</TD><TD><BR></TD></TR>
 <TR VALIGN=top><TD><B><A HREF="../man2/getuid32.2.html">getuid32</A></B>(2)</TD><TD>2.4</TD><TD><BR></TD></TR>
-<TR VALIGN=top><TD><B><A HREF="../man2/getunwind.2.html">getunwind</A></B>(2)</TD><TD>2.4.8</TD><TD>ia64; deprecated<BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/getunwind.2.html">getunwind</A></B>(2)</TD><TD>2.4.8</TD><TD>IA-64 only; deprecated<BR></TD></TR>
 <TR VALIGN=top><TD><B><A HREF="../man2/getxattr.2.html">getxattr</A></B>(2)</TD><TD>2.6; 2.4.18</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/getxgid.2.html">getxgid</A></B>(2)</TD><TD>2.0</TD><TD>Alpha only; see NOTES<BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/getxpid.2.html">getxpid</A></B>(2)</TD><TD>2.0</TD><TD>Alpha only; see NOTES<BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/getxuid.2.html">getxuid</A></B>(2)</TD><TD>2.0</TD><TD>Alpha only; see NOTES<BR></TD></TR>
 <TR VALIGN=top><TD><B><A HREF="../man2/init_module.2.html">init_module</A></B>(2)</TD><TD>1.0</TD><TD><BR></TD></TR>
 <TR VALIGN=top><TD><B><A HREF="../man2/inotify_add_watch.2.html">inotify_add_watch</A></B>(2)</TD><TD>2.6.13</TD><TD><BR></TD></TR>
 <TR VALIGN=top><TD><B><A HREF="../man2/inotify_init.2.html">inotify_init</A></B>(2)</TD><TD>2.6.13</TD><TD><BR></TD></TR>
@@ -319,6 +390,7 @@ version details
 <TR VALIGN=top><TD><B><A HREF="../man2/io_cancel.2.html">io_cancel</A></B>(2)</TD><TD>2.6</TD><TD><BR></TD></TR>
 <TR VALIGN=top><TD><B><A HREF="../man2/io_destroy.2.html">io_destroy</A></B>(2)</TD><TD>2.6</TD><TD><BR></TD></TR>
 <TR VALIGN=top><TD><B><A HREF="../man2/io_getevents.2.html">io_getevents</A></B>(2)</TD><TD>2.6</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/io_pgetevents.2.html">io_pgetevents</A></B>(2)</TD><TD>4.18</TD><TD><BR></TD></TR>
 <TR VALIGN=top><TD><B><A HREF="../man2/io_setup.2.html">io_setup</A></B>(2)</TD><TD>2.6</TD><TD><BR></TD></TR>
 <TR VALIGN=top><TD><B><A HREF="../man2/io_submit.2.html">io_submit</A></B>(2)</TD><TD>2.6</TD><TD><BR></TD></TR>
 <TR VALIGN=top><TD><B><A HREF="../man2/ioctl.2.html">ioctl</A></B>(2)</TD><TD>1.0</TD><TD><BR></TD></TR>
@@ -328,7 +400,7 @@ version details
 <TR VALIGN=top><TD><B><A HREF="../man2/ioprio_set.2.html">ioprio_set</A></B>(2)</TD><TD>2.6.13</TD><TD><BR></TD></TR>
 <TR VALIGN=top><TD><B><A HREF="../man2/ipc.2.html">ipc</A></B>(2)</TD><TD>1.0</TD><TD><BR></TD></TR>
 <TR VALIGN=top><TD><B><A HREF="../man2/kcmp.2.html">kcmp</A></B>(2)</TD><TD>3.5</TD><TD><BR></TD></TR>
-<TR VALIGN=top><TD><B><A HREF="../man2/kern_features.2.html">kern_features</A></B>(2)</TD><TD>3.7</TD><TD>Sparc64<BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/kern_features.2.html">kern_features</A></B>(2)</TD><TD>3.7</TD><TD>SPARC64 only<BR></TD></TR>
 <TR VALIGN=top><TD><B><A HREF="../man2/kexec_file_load.2.html">kexec_file_load</A></B>(2)</TD><TD>3.17</TD><TD><BR></TD></TR>
 <TR VALIGN=top><TD><B><A HREF="../man2/kexec_load.2.html">kexec_load</A></B>(2)</TD><TD>2.6.13</TD><TD><BR></TD></TR>
 <TR VALIGN=top><TD><B><A HREF="../man2/keyctl.2.html">keyctl</A></B>(2)</TD><TD>2.6.10</TD><TD><BR></TD></TR>
@@ -354,6 +426,31 @@ version details
 <TR VALIGN=top><TD><B><A HREF="../man2/lstat64.2.html">lstat64</A></B>(2)</TD><TD>2.4</TD><TD><BR></TD></TR>
 <TR VALIGN=top><TD><B><A HREF="../man2/madvise.2.html">madvise</A></B>(2)</TD><TD>2.4</TD><TD><BR></TD></TR>
 <TR VALIGN=top><TD><B><A HREF="../man2/mbind.2.html">mbind</A></B>(2)</TD><TD>2.6.6</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/memory_ordering.2.html">memory_ordering</A></B>(2)</TD><TD>2.2</TD><TD>SPARC64 only<BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/metag_get_tls.2.html">metag_get_tls</A></B>(2)</TD><TD>3.9</TD><TD>
+Metag only (port removed
+<BR>
+
+in Linux 4.17)
+<BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/metag_set_fpu_flags.2.html">metag_set_fpu_flags</A></B>(2)</TD><TD>3.9</TD><TD>
+Metag only (port removed
+<BR>
+
+in Linux 4.17)
+<BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/metag_set_tls.2.html">metag_set_tls</A></B>(2)</TD><TD>3.9</TD><TD>
+Metag only (port removed
+<BR>
+
+in Linux 4.17)
+<BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/metag_setglobalbit.2.html">metag_setglobalbit</A></B>(2)</TD><TD>3.9</TD><TD>
+Metag only (port removed
+<BR>
+
+in Linux 4.17)
+<BR></TD></TR>
 <TR VALIGN=top><TD><B><A HREF="../man2/membarrier.2.html">membarrier</A></B>(2)</TD><TD>3.17</TD><TD><BR></TD></TR>
 <TR VALIGN=top><TD><B><A HREF="../man2/memfd_create.2.html">memfd_create</A></B>(2)</TD><TD>3.17</TD><TD><BR></TD></TR>
 <TR VALIGN=top><TD><B><A HREF="../man2/migrate_pages.2.html">migrate_pages</A></B>(2)</TD><TD>2.6.16</TD><TD><BR></TD></TR>
@@ -388,16 +485,34 @@ version details
 <TR VALIGN=top><TD><B><A HREF="../man2/munmap.2.html">munmap</A></B>(2)</TD><TD>1.0</TD><TD><BR></TD></TR>
 <TR VALIGN=top><TD><B><A HREF="../man2/name_to_handle_at.2.html">name_to_handle_at</A></B>(2)</TD><TD>2.6.39</TD><TD><BR></TD></TR>
 <TR VALIGN=top><TD><B><A HREF="../man2/nanosleep.2.html">nanosleep</A></B>(2)</TD><TD>2.0</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/newfstatat.2.html">newfstatat</A></B>(2)</TD><TD>2.6.16</TD><TD>See <B><A HREF="../man2/stat.2.html">stat</A></B>(2)<BR></TD></TR>
 <TR VALIGN=top><TD><B><A HREF="../man2/nfsservctl.2.html">nfsservctl</A></B>(2)</TD><TD>2.2</TD><TD>Removed in 3.1<BR></TD></TR>
 <TR VALIGN=top><TD><B><A HREF="../man2/nice.2.html">nice</A></B>(2)</TD><TD>1.0</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/old_adjtimex.2.html">old_adjtimex</A></B>(2)</TD><TD>2.0</TD><TD>ALPA only; see NOTES<BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/old_getrlimit.2.html">old_getrlimit</A></B>(2)</TD><TD>2.4</TD><TD>
+Old variant of <B><A HREF="../man2/getrlimit.2.html">getrlimit</A></B>(2)
+<BR>
+
+that used a different value
+<BR>
+
+for <B>RLIM_INFINITY</B>
+<BR></TD></TR>
 <TR VALIGN=top><TD><B><A HREF="../man2/oldfstat.2.html">oldfstat</A></B>(2)</TD><TD>1.0</TD><TD><BR></TD></TR>
 <TR VALIGN=top><TD><B><A HREF="../man2/oldlstat.2.html">oldlstat</A></B>(2)</TD><TD>1.0</TD><TD><BR></TD></TR>
 <TR VALIGN=top><TD><B><A HREF="../man2/oldolduname.2.html">oldolduname</A></B>(2)</TD><TD>1.0</TD><TD><BR></TD></TR>
 <TR VALIGN=top><TD><B><A HREF="../man2/oldstat.2.html">oldstat</A></B>(2)</TD><TD>1.0</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/oldumount.2.html">oldumount</A></B>(2)</TD><TD>2.4.116</TD><TD>
+Name of the old <B><A HREF="../man2/umount.2.html">umount</A></B>(2)
+<BR>
+
+syscall on Alpha
+<BR></TD></TR>
 <TR VALIGN=top><TD><B><A HREF="../man2/olduname.2.html">olduname</A></B>(2)</TD><TD>1.0</TD><TD><BR></TD></TR>
 <TR VALIGN=top><TD><B><A HREF="../man2/open.2.html">open</A></B>(2)</TD><TD>1.0</TD><TD><BR></TD></TR>
 <TR VALIGN=top><TD><B><A HREF="../man2/open_by_handle_at.2.html">open_by_handle_at</A></B>(2)</TD><TD>2.6.39</TD><TD><BR></TD></TR>
 <TR VALIGN=top><TD><B><A HREF="../man2/openat.2.html">openat</A></B>(2)</TD><TD>2.6.16</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/or1k_atomic.2.html">or1k_atomic</A></B>(2)</TD><TD>3.1</TD><TD>OpenRISC 1000 only<BR></TD></TR>
 <TR VALIGN=top><TD><B><A HREF="../man2/pause.2.html">pause</A></B>(2)</TD><TD>1.0</TD><TD><BR></TD></TR>
 <TR VALIGN=top><TD><B><A HREF="../man2/pciconfig_iobase.2.html">pciconfig_iobase</A></B>(2)</TD><TD>2.2.15; 2.4</TD><TD>Not on x86<BR></TD></TR>
 <TR VALIGN=top><TD><B><A HREF="../man2/pciconfig_read.2.html">pciconfig_read</A></B>(2)</TD><TD>2.0.26; 2.2</TD><TD>Not on x86<BR></TD></TR>
@@ -409,8 +524,8 @@ Was perf_counter_open() in
 2.6.31; renamed in 2.6.32
 <BR></TD></TR>
 <TR VALIGN=top><TD><B><A HREF="../man2/personality.2.html">personality</A></B>(2)</TD><TD>1.2</TD><TD><BR></TD></TR>
-<TR VALIGN=top><TD><B><A HREF="../man2/perfctr.2.html">perfctr</A></B>(2)</TD><TD>2.2</TD><TD>Sparc; removed in 2.6.34<BR></TD></TR>
-<TR VALIGN=top><TD><B><A HREF="../man2/perfmonctl.2.html">perfmonctl</A></B>(2)</TD><TD>2.4</TD><TD>ia64<BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/perfctr.2.html">perfctr</A></B>(2)</TD><TD>2.2</TD><TD>SPARC only; removed in 2.6.34<BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/perfmonctl.2.html">perfmonctl</A></B>(2)</TD><TD>2.4</TD><TD>IA-64 only<BR></TD></TR>
 <TR VALIGN=top><TD><B><A HREF="../man2/pipe.2.html">pipe</A></B>(2)</TD><TD>1.0</TD><TD><BR></TD></TR>
 <TR VALIGN=top><TD><B><A HREF="../man2/pipe2.2.html">pipe2</A></B>(2)</TD><TD>2.6.27</TD><TD><BR></TD></TR>
 <TR VALIGN=top><TD><B><A HREF="../man2/pivot_root.2.html">pivot_root</A></B>(2)</TD><TD>2.4</TD><TD><BR></TD></TR>
@@ -418,10 +533,20 @@ Was perf_counter_open() in
 <TR VALIGN=top><TD><B><A HREF="../man2/pkey_free.2.html">pkey_free</A></B>(2)</TD><TD>4.8</TD><TD><BR></TD></TR>
 <TR VALIGN=top><TD><B><A HREF="../man2/pkey_mprotect.2.html">pkey_mprotect</A></B>(2)</TD><TD>4.8</TD><TD><BR></TD></TR>
 <TR VALIGN=top><TD><B><A HREF="../man2/poll.2.html">poll</A></B>(2)</TD><TD>2.0.36; 2.2</TD><TD><BR></TD></TR>
-<TR VALIGN=top><TD><B><A HREF="../man2/ppc_rtas.2.html">ppc_rtas</A></B>(2)</TD><TD>2.6.2</TD><TD>PowerPC only<BR></TD></TR>
-<TR VALIGN=top><TD><B><A HREF="../man2/ppc_swapcontext.2.html">ppc_swapcontext</A></B>(2)</TD><TD>2.6.3</TD><TD>PowerPC only<BR></TD></TR>
 <TR VALIGN=top><TD><B><A HREF="../man2/ppoll.2.html">ppoll</A></B>(2)</TD><TD>2.6.16</TD><TD><BR></TD></TR>
 <TR VALIGN=top><TD><B><A HREF="../man2/prctl.2.html">prctl</A></B>(2)</TD><TD>2.2</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/pread.2.html">pread</A></B>(2)</TD><TD></TD><TD>
+Used for <B><A HREF="../man2/pread64.2.html">pread64</A></B>(2) on AVR32
+<BR>
+
+(port removed in Linux 4.12)
+<BR>
+
+and Blackfin (port removed
+<BR>
+
+in Linux 4.17)
+<BR></TD></TR>
 <TR VALIGN=top><TD><B><A HREF="../man2/pread64.2.html">pread64</A></B>(2)</TD><TD></TD><TD>
 Added as &quot;pread&quot; in 2.2;
 <BR>
@@ -435,6 +560,12 @@ renamed &quot;pread64&quot; in 2.6
 <TR VALIGN=top><TD><B><A HREF="../man2/process_vm_writev.2.html">process_vm_writev</A></B>(2)</TD><TD>3.2</TD><TD><BR></TD></TR>
 <TR VALIGN=top><TD><B><A HREF="../man2/pselect6.2.html">pselect6</A></B>(2)</TD><TD>2.6.16</TD><TD><BR></TD></TR>
 <TR VALIGN=top><TD><B><A HREF="../man2/ptrace.2.html">ptrace</A></B>(2)</TD><TD>1.0</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/pwrite.2.html">pwrite</A></B>(2)</TD><TD></TD><TD>
+Used for <B><A HREF="../man2/pwrite64.2.html">pwrite64</A></B>(2) on AVR32
+(port removed in Linux 4.12)
+and Blackfin (port removed
+in Linux 4.17)
+<BR></TD></TR>
 <TR VALIGN=top><TD><B><A HREF="../man2/pwrite64.2.html">pwrite64</A></B>(2)</TD><TD></TD><TD>
 Added as &quot;pwrite&quot; in 2.2;
 <BR>
@@ -463,7 +594,9 @@ renamed &quot;pwrite64&quot; in 2.6
 <TR VALIGN=top><TD><B><A HREF="../man2/renameat2.2.html">renameat2</A></B>(2)</TD><TD>3.15</TD><TD><BR></TD></TR>
 <TR VALIGN=top><TD><B><A HREF="../man2/request_key.2.html">request_key</A></B>(2)</TD><TD>2.6.10</TD><TD><BR></TD></TR>
 <TR VALIGN=top><TD><B><A HREF="../man2/restart_syscall.2.html">restart_syscall</A></B>(2)</TD><TD>2.6</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/riscv_flush_icache.2.html">riscv_flush_icache</A></B>(2)</TD><TD>4.15</TD><TD>RISC-V only<BR></TD></TR>
 <TR VALIGN=top><TD><B><A HREF="../man2/rmdir.2.html">rmdir</A></B>(2)</TD><TD>1.0</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/rseq.2.html">rseq</A></B>(2)</TD><TD>4.18</TD><TD><BR></TD></TR>
 <TR VALIGN=top><TD><B><A HREF="../man2/rt_sigaction.2.html">rt_sigaction</A></B>(2)</TD><TD>2.2</TD><TD><BR></TD></TR>
 <TR VALIGN=top><TD><B><A HREF="../man2/rt_sigpending.2.html">rt_sigpending</A></B>(2)</TD><TD>2.2</TD><TD><BR></TD></TR>
 <TR VALIGN=top><TD><B><A HREF="../man2/rt_sigprocmask.2.html">rt_sigprocmask</A></B>(2)</TD><TD>2.2</TD><TD><BR></TD></TR>
@@ -472,10 +605,18 @@ renamed &quot;pwrite64&quot; in 2.6
 <TR VALIGN=top><TD><B><A HREF="../man2/rt_sigsuspend.2.html">rt_sigsuspend</A></B>(2)</TD><TD>2.2</TD><TD><BR></TD></TR>
 <TR VALIGN=top><TD><B><A HREF="../man2/rt_sigtimedwait.2.html">rt_sigtimedwait</A></B>(2)</TD><TD>2.2</TD><TD><BR></TD></TR>
 <TR VALIGN=top><TD><B><A HREF="../man2/rt_tgsigqueueinfo.2.html">rt_tgsigqueueinfo</A></B>(2)</TD><TD>2.6.31</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/rtas.2.html">rtas</A></B>(2)</TD><TD>2.6.2</TD><TD>PowerPC/PowerPC64 only<BR></TD></TR>
 <TR VALIGN=top><TD><B><A HREF="../man2/s390_runtime_instr.2.html">s390_runtime_instr</A></B>(2)</TD><TD>3.7</TD><TD>s390 only<BR></TD></TR>
 <TR VALIGN=top><TD><B><A HREF="../man2/s390_pci_mmio_read.2.html">s390_pci_mmio_read</A></B>(2)</TD><TD>3.19</TD><TD>s390 only<BR></TD></TR>
 <TR VALIGN=top><TD><B><A HREF="../man2/s390_pci_mmio_write.2.html">s390_pci_mmio_write</A></B>(2)</TD><TD>3.19</TD><TD>s390 only<BR></TD></TR>
 <TR VALIGN=top><TD><B><A HREF="../man2/s390_sthyi.2.html">s390_sthyi</A></B>(2)</TD><TD>4.15</TD><TD>s390 only<BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/s390_guarded_storage.2.html">s390_guarded_storage</A></B>(2)</TD><TD>4.12</TD><TD>s390 only<BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/sched_get_affinity.2.html">sched_get_affinity</A></B>(2)</TD><TD>2.6</TD><TD>
+Name of <B><A HREF="../man2/sched_getaffinity.2.html">sched_getaffinity</A></B>(2)
+<BR>
+
+on SPARC and SPARC64
+<BR></TD></TR>
 <TR VALIGN=top><TD><B><A HREF="../man2/sched_get_priority_max.2.html">sched_get_priority_max</A></B>(2)</TD><TD>2.0</TD><TD><BR></TD></TR>
 <TR VALIGN=top><TD><B><A HREF="../man2/sched_get_priority_min.2.html">sched_get_priority_min</A></B>(2)</TD><TD>2.0</TD><TD><BR></TD></TR>
 <TR VALIGN=top><TD><B><A HREF="../man2/sched_getaffinity.2.html">sched_getaffinity</A></B>(2)</TD><TD>2.6</TD><TD><BR></TD></TR>
@@ -483,6 +624,12 @@ renamed &quot;pwrite64&quot; in 2.6
 <TR VALIGN=top><TD><B><A HREF="../man2/sched_getparam.2.html">sched_getparam</A></B>(2)</TD><TD>2.0</TD><TD><BR></TD></TR>
 <TR VALIGN=top><TD><B><A HREF="../man2/sched_getscheduler.2.html">sched_getscheduler</A></B>(2)</TD><TD>2.0</TD><TD><BR></TD></TR>
 <TR VALIGN=top><TD><B><A HREF="../man2/sched_rr_get_interval.2.html">sched_rr_get_interval</A></B>(2)</TD><TD>2.0</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/sched_set_affinity.2.html">sched_set_affinity</A></B>(2)</TD><TD>2.6</TD><TD>
+Name of <B><A HREF="../man2/sched_setaffinity.2.html">sched_setaffinity</A></B>(2)
+<BR>
+
+on SPARC and SPARC64
+<BR></TD></TR>
 <TR VALIGN=top><TD><B><A HREF="../man2/sched_setaffinity.2.html">sched_setaffinity</A></B>(2)</TD><TD>2.6</TD><TD><BR></TD></TR>
 <TR VALIGN=top><TD><B><A HREF="../man2/sched_setattr.2.html">sched_setattr</A></B>(2)</TD><TD>3.14</TD><TD><BR></TD></TR>
 <TR VALIGN=top><TD><B><A HREF="../man2/sched_setparam.2.html">sched_setparam</A></B>(2)</TD><TD>2.0</TD><TD><BR></TD></TR>
@@ -504,6 +651,12 @@ renamed &quot;pwrite64&quot; in 2.6
 <TR VALIGN=top><TD><B><A HREF="../man2/set_robust_list.2.html">set_robust_list</A></B>(2)</TD><TD>2.6.17</TD><TD><BR></TD></TR>
 <TR VALIGN=top><TD><B><A HREF="../man2/set_thread_area.2.html">set_thread_area</A></B>(2)</TD><TD>2.6</TD><TD><BR></TD></TR>
 <TR VALIGN=top><TD><B><A HREF="../man2/set_tid_address.2.html">set_tid_address</A></B>(2)</TD><TD>2.6</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/set_tls.2.html">set_tls</A></B>(2)</TD><TD>2.6.11</TD><TD>
+ARM OABI/EABI only (constant
+<BR>
+
+has <B>__ARM_NR</B> prefix)
+<BR></TD></TR>
 <TR VALIGN=top><TD><B><A HREF="../man2/setdomainname.2.html">setdomainname</A></B>(2)</TD><TD>1.0</TD><TD><BR></TD></TR>
 <TR VALIGN=top><TD><B><A HREF="../man2/setfsgid.2.html">setfsgid</A></B>(2)</TD><TD>1.2</TD><TD><BR></TD></TR>
 <TR VALIGN=top><TD><B><A HREF="../man2/setfsgid32.2.html">setfsgid32</A></B>(2)</TD><TD>2.4</TD><TD><BR></TD></TR>
@@ -513,10 +666,17 @@ renamed &quot;pwrite64&quot; in 2.6
 <TR VALIGN=top><TD><B><A HREF="../man2/setgid32.2.html">setgid32</A></B>(2)</TD><TD>2.4</TD><TD><BR></TD></TR>
 <TR VALIGN=top><TD><B><A HREF="../man2/setgroups.2.html">setgroups</A></B>(2)</TD><TD>1.0</TD><TD><BR></TD></TR>
 <TR VALIGN=top><TD><B><A HREF="../man2/setgroups32.2.html">setgroups32</A></B>(2)</TD><TD>2.4</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/sethae.2.html">sethae</A></B>(2)</TD><TD>2.0</TD><TD>Alph only; see NOTES<BR></TD></TR>
 <TR VALIGN=top><TD><B><A HREF="../man2/sethostname.2.html">sethostname</A></B>(2)</TD><TD>1.0</TD><TD><BR></TD></TR>
 <TR VALIGN=top><TD><B><A HREF="../man2/setitimer.2.html">setitimer</A></B>(2)</TD><TD>1.0</TD><TD><BR></TD></TR>
 <TR VALIGN=top><TD><B><A HREF="../man2/setns.2.html">setns</A></B>(2)</TD><TD>3.0</TD><TD><BR></TD></TR>
 <TR VALIGN=top><TD><B><A HREF="../man2/setpgid.2.html">setpgid</A></B>(2)</TD><TD>1.0</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/setpgrp.2.html">setpgrp</A></B>(2)</TD><TD>2.0</TD><TD>
+Alternative name for
+<BR>
+
+<B><A HREF="../man2/setpgid.2.html">setpgid</A></B>(2) on Alpha
+<BR></TD></TR>
 <TR VALIGN=top><TD><B><A HREF="../man2/setpriority.2.html">setpriority</A></B>(2)</TD><TD>1.0</TD><TD><BR></TD></TR>
 <TR VALIGN=top><TD><B><A HREF="../man2/setregid.2.html">setregid</A></B>(2)</TD><TD>1.0</TD><TD><BR></TD></TR>
 <TR VALIGN=top><TD><B><A HREF="../man2/setregid32.2.html">setregid32</A></B>(2)</TD><TD>2.4</TD><TD><BR></TD></TR>
@@ -552,9 +712,22 @@ renamed &quot;pwrite64&quot; in 2.6
 <TR VALIGN=top><TD><B><A HREF="../man2/socket.2.html">socket</A></B>(2)</TD><TD>2.0</TD><TD>See notes on <B><A HREF="../man2/socketcall.2.html">socketcall</A></B>(2)<BR></TD></TR>
 <TR VALIGN=top><TD><B><A HREF="../man2/socketcall.2.html">socketcall</A></B>(2)</TD><TD>1.0</TD><TD><BR></TD></TR>
 <TR VALIGN=top><TD><B><A HREF="../man2/socketpair.2.html">socketpair</A></B>(2)</TD><TD>2.0</TD><TD>See notes on <B><A HREF="../man2/socketcall.2.html">socketcall</A></B>(2)<BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/spill.2.html">spill</A></B>(2)</TD><TD>2.6.13</TD><TD>Xtensa only<BR></TD></TR>
 <TR VALIGN=top><TD><B><A HREF="../man2/splice.2.html">splice</A></B>(2)</TD><TD>2.6.17</TD><TD><BR></TD></TR>
-<TR VALIGN=top><TD><B><A HREF="../man2/spu_create.2.html">spu_create</A></B>(2)</TD><TD>2.6.16</TD><TD>PowerPC only<BR></TD></TR>
-<TR VALIGN=top><TD><B><A HREF="../man2/spu_run.2.html">spu_run</A></B>(2)</TD><TD>2.6.16</TD><TD>PowerPC only<BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/spu_create.2.html">spu_create</A></B>(2)</TD><TD>2.6.16</TD><TD>PowerPC/PowerPC64 only<BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/spu_run.2.html">spu_run</A></B>(2)</TD><TD>2.6.16</TD><TD>PowerPC/PowerPC64 only<BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/sram_alloc.2.html">sram_alloc</A></B>(2)</TD><TD>2.6.22</TD><TD>
+Blackfin (port removed
+<BR>
+
+in Linux 4.17)
+<BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/sram_free.2.html">sram_free</A></B>(2)</TD><TD>2.6.22</TD><TD>
+Blackfin (port removed
+<BR>
+
+in Linux 4.17)
+<BR></TD></TR>
 <TR VALIGN=top><TD><B><A HREF="../man2/ssetmask.2.html">ssetmask</A></B>(2)</TD><TD>1.0</TD><TD><BR></TD></TR>
 <TR VALIGN=top><TD><B><A HREF="../man2/stat.2.html">stat</A></B>(2)</TD><TD>1.0</TD><TD><BR></TD></TR>
 <TR VALIGN=top><TD><B><A HREF="../man2/stat64.2.html">stat64</A></B>(2)</TD><TD>2.4</TD><TD><BR></TD></TR>
@@ -562,7 +735,10 @@ renamed &quot;pwrite64&quot; in 2.6
 <TR VALIGN=top><TD><B><A HREF="../man2/statfs64.2.html">statfs64</A></B>(2)</TD><TD>2.6</TD><TD><BR></TD></TR>
 <TR VALIGN=top><TD><B><A HREF="../man2/statx.2.html">statx</A></B>(2)</TD><TD>4.11</TD><TD><BR></TD></TR>
 <TR VALIGN=top><TD><B><A HREF="../man2/stime.2.html">stime</A></B>(2)</TD><TD>1.0</TD><TD><BR></TD></TR>
-<TR VALIGN=top><TD><B><A HREF="../man2/subpage_prot.2.html">subpage_prot</A></B>(2)</TD><TD>2.6.25</TD><TD>PowerPC only<BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/subpage_prot.2.html">subpage_prot</A></B>(2)</TD><TD>2.6.25</TD><TD>PowerPC/PowerPC64 only<BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/swapcontext.2.html">swapcontext</A></B>(2)</TD><TD>2.6.3</TD><TD>PowerPC/PowerPC64 only<BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/switch_endian.2.html">switch_endian</A></B>(2)</TD><TD>4.1</TD><TD>PowerPC64 only<BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/swapcontext.2.html">swapcontext</A></B>(2)</TD><TD>2.6.3</TD><TD>PowerPC only<BR></TD></TR>
 <TR VALIGN=top><TD><B><A HREF="../man2/swapoff.2.html">swapoff</A></B>(2)</TD><TD>1.0</TD><TD><BR></TD></TR>
 <TR VALIGN=top><TD><B><A HREF="../man2/swapon.2.html">swapon</A></B>(2)</TD><TD>1.0</TD><TD><BR></TD></TR>
 <TR VALIGN=top><TD><B><A HREF="../man2/symlink.2.html">symlink</A></B>(2)</TD><TD>1.0</TD><TD><BR></TD></TR>
@@ -571,9 +747,17 @@ renamed &quot;pwrite64&quot; in 2.6
 <TR VALIGN=top><TD><B><A HREF="../man2/sync_file_range.2.html">sync_file_range</A></B>(2)</TD><TD>2.6.17</TD><TD><BR></TD></TR>
 <TR VALIGN=top><TD><B><A HREF="../man2/sync_file_range2.2.html">sync_file_range2</A></B>(2)</TD><TD>2.6.22</TD><TD><BR></TD></TR>
 <TR VALIGN=top><TD><B><A HREF="../man2/syncfs.2.html">syncfs</A></B>(2)</TD><TD>2.6.39</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/sys_debug_setcontext.2.html">sys_debug_setcontext</A></B>(2)</TD><TD>2.6.11</TD><TD>PowerPC only<BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/syscall.2.html">syscall</A></B>(2)</TD><TD>1.0</TD><TD>
+Still available on ARM OABI
+<BR>
+
+and MIPS O32 ABI
+<BR></TD></TR>
 <TR VALIGN=top><TD><B><A HREF="../man2/sysfs.2.html">sysfs</A></B>(2)</TD><TD>1.2</TD><TD><BR></TD></TR>
 <TR VALIGN=top><TD><B><A HREF="../man2/sysinfo.2.html">sysinfo</A></B>(2)</TD><TD>1.0</TD><TD><BR></TD></TR>
 <TR VALIGN=top><TD><B><A HREF="../man2/syslog.2.html">syslog</A></B>(2)</TD><TD>1.0</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/sysmips.2.html">sysmips</A></B>(2)</TD><TD>2.6.0</TD><TD>MIPS only<BR></TD></TR>
 <TR VALIGN=top><TD><B><A HREF="../man2/tee.2.html">tee</A></B>(2)</TD><TD>2.6.17</TD><TD><BR></TD></TR>
 <TR VALIGN=top><TD><B><A HREF="../man2/tgkill.2.html">tgkill</A></B>(2)</TD><TD>2.6</TD><TD><BR></TD></TR>
 <TR VALIGN=top><TD><B><A HREF="../man2/time.2.html">time</A></B>(2)</TD><TD>1.0</TD><TD><BR></TD></TR>
@@ -600,10 +784,12 @@ renamed &quot;pwrite64&quot; in 2.6
 <TR VALIGN=top><TD><B><A HREF="../man2/uselib.2.html">uselib</A></B>(2)</TD><TD>1.0</TD><TD><BR></TD></TR>
 <TR VALIGN=top><TD><B><A HREF="../man2/ustat.2.html">ustat</A></B>(2)</TD><TD>1.0</TD><TD><BR></TD></TR>
 <TR VALIGN=top><TD><B><A HREF="../man2/userfaultfd.2.html">userfaultfd</A></B>(2)</TD><TD>4.3</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/usr26.2.html">usr26</A></B>(2)</TD><TD>2.4.8.1</TD><TD>ARM OABI only<BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/usr32.2.html">usr32</A></B>(2)</TD><TD>2.4.8.1</TD><TD>ARM OABI only<BR></TD></TR>
 <TR VALIGN=top><TD><B><A HREF="../man2/utime.2.html">utime</A></B>(2)</TD><TD>1.0</TD><TD><BR></TD></TR>
 <TR VALIGN=top><TD><B><A HREF="../man2/utimensat.2.html">utimensat</A></B>(2)</TD><TD>2.6.22</TD><TD><BR></TD></TR>
 <TR VALIGN=top><TD><B><A HREF="../man2/utimes.2.html">utimes</A></B>(2)</TD><TD>2.2</TD><TD><BR></TD></TR>
-<TR VALIGN=top><TD><B><A HREF="../man2/utrap_install.2.html">utrap_install</A></B>(2)</TD><TD>2.2</TD><TD>Sparc only<BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/utrap_install.2.html">utrap_install</A></B>(2)</TD><TD>2.2</TD><TD>SPARC64 only<BR></TD></TR>
 <TR VALIGN=top><TD><B><A HREF="../man2/vfork.2.html">vfork</A></B>(2)</TD><TD>2.2</TD><TD><BR></TD></TR>
 <TR VALIGN=top><TD><B><A HREF="../man2/vhangup.2.html">vhangup</A></B>(2)</TD><TD>1.0</TD><TD><BR></TD></TR>
 <TR VALIGN=top><TD><B><A HREF="../man2/vm86old.2.html">vm86old</A></B>(2)</TD><TD>1.0</TD><TD>
@@ -617,6 +803,7 @@ Was &quot;vm86&quot;; renamed in
 <TR VALIGN=top><TD><B><A HREF="../man2/waitpid.2.html">waitpid</A></B>(2)</TD><TD>1.0</TD><TD><BR></TD></TR>
 <TR VALIGN=top><TD><B><A HREF="../man2/write.2.html">write</A></B>(2)</TD><TD>1.0</TD><TD><BR></TD></TR>
 <TR VALIGN=top><TD><B><A HREF="../man2/writev.2.html">writev</A></B>(2)</TD><TD>2.0</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B><A HREF="../man2/xtensa.2.html">xtensa</A></B>(2)</TD><TD>2.6.13</TD><TD>Xtensa only<BR></TD></TR>
 </TABLE>
 
 
@@ -729,7 +916,7 @@ older system calls were superseded by newer ones,
 and this has been treated somewhat unsystematically.
 On platforms with
 proprietary operating-system emulation,
-such as parisc, sparc, sparc64, and alpha,
+such as sparc, sparc64, and alpha,
 there are many additional system calls; mips64 also contains a full
 set of 32-bit system calls.
 <P>
@@ -923,6 +1110,11 @@ that corresponds directly to
 and similarly
 <I>__NR_mmap2</I>.
 
+s390x is the only 64-bit architecture that has
+<I>old_mmap</I>().
+
+
+
 
 
 
@@ -945,6 +1137,40 @@ and similarly
 
 </DL>
 <A NAME="lbAH">&nbsp;</A>
+<H3>Architecture-specific details: Alpha</H3>
+
+<DL COMPACT>
+<DT>*<DD>
+<B><A HREF="../man2/getxgid.2.html">getxgid</A></B>(2)
+
+returns a pair of GID and effective GID via registers
+<B>r0</B> and <B>r20</B>; it is provided
+instead of
+<B><A HREF="../man2/getgid.2.html">getgid</A></B>(2) and <B><A HREF="../man2/getegid.2.html">getegid</A></B>(2).
+<DT>*<DD>
+<B><A HREF="../man2/getxpid.2.html">getxpid</A></B>(2)
+
+returns a pair of PID and parent PID via registers
+<B>r0</B> and <B>r20</B>; it is provided instead of
+<B><A HREF="../man2/getpid.2.html">getpid</A></B>(2) and <B><A HREF="../man2/getppid.2.html">getppid</A></B>(2).
+<DT>*<DD>
+<B><A HREF="../man2/old_adjtimex.2.html">old_adjtimex</A></B>(2)
+
+is a variant of <B><A HREF="../man2/adjtimex.2.html">adjtimex</A></B>(2) that uses <I>struct timeval32</I>,
+for compatibility with OSF/1.
+<DT>*<DD>
+<B><A HREF="../man2/getxuid.2.html">getxuid</A></B>(2)
+
+returns a pair of GID and effective GID via registers
+<B>r0</B> and <B>r20</B>; it is provided instead of
+<B><A HREF="../man2/getuid.2.html">getuid</A></B>(2) and <B><A HREF="../man2/geteuid.2.html">geteuid</A></B>(2).
+<DT>*<DD>
+<B><A HREF="../man2/sethae.2.html">sethae</A></B>(2)
+
+is used for configuring the Host Address Extension register on
+low-cost Alphas in order to access address space beyond first 27 bits.
+</DL>
+<A NAME="lbAI">&nbsp;</A>
 <H2>SEE ALSO</H2>
 
 <B><A HREF="../man2/intro.2.html">intro</A></B>(2),
@@ -972,12 +1198,15 @@ and similarly
 <DT><A HREF="#lbAF">System call list</A><DD>
 </DL>
 <DT><A HREF="#lbAG">NOTES</A><DD>
-<DT><A HREF="#lbAH">SEE ALSO</A><DD>
+<DL>
+<DT><A HREF="#lbAH">Architecture-specific details: Alpha</A><DD>
+</DL>
+<DT><A HREF="#lbAI">SEE ALSO</A><DD>
 </DL>
 <HR>
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:49:05 GMT, April 20, 2020
+Time: 03:49:42 GMT, April 20, 2020
 </BODY>
 </HTML>

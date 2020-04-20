@@ -4,22 +4,35 @@
 <HTML><HEAD><TITLE>Man page of SET_THREAD_AREA</TITLE>
 </HEAD><BODY>
 <H1>SET_THREAD_AREA</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2017-09-15<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2019-03-06<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
 <H2>NAME</H2>
 
-get_thread_area, set_thread_area - set a GDT entry for thread-local storage
+get_thread_area, set_thread_area - manipulate thread-local storage information
 <A NAME="lbAC">&nbsp;</A>
 <H2>SYNOPSIS</H2>
 
 <PRE>
 <B>#include &lt;<A HREF="file:///usr/include/linux/unistd.h">linux/unistd.h</A>&gt;</B>
-<B>#include &lt;<A HREF="file:///usr/include/asm/ldt.h">asm/ldt.h</A>&gt;</B>
+
+<B>#if defined __i386__ || defined __x86_64__</B>
+<B># include &lt;<A HREF="file:///usr/include/asm/ldt.h">asm/ldt.h</A>&gt;</B>
 
 <B>int get_thread_area(struct user_desc *</B><I>u_info</I><B>);</B>
 <B>int set_thread_area(struct user_desc *</B><I>u_info</I><B>);</B>
+
+<B>#elif defined __m68k__</B>
+
+<B>int get_thread_area(void);</B>
+<B>int set_thread_area(unsigned long </B><I>tp</I><B>);</B>
+
+<B>#elif defined __mips__</B>
+
+<B>int set_thread_area(unsigned long </B><I>addr</I><B>);</B>
+
+<B>#endif</B>
 </PRE>
 
 <P>
@@ -30,7 +43,36 @@ There are no glibc wrappers for these system calls; see NOTES.
 <A NAME="lbAD">&nbsp;</A>
 <H2>DESCRIPTION</H2>
 
-Linux dedicates three global descriptor table (GDT) entries for
+These calls provide architecture-specific support for a thread-local storage
+implementation.
+At the moment,
+<B>set_thread_area</B>()
+
+is available on m68k, MIPS, and x86 (both 32-bit and 64-bit variants);
+<B>get_thread_area</B>()
+
+is available on m68k and x86.
+<P>
+
+On m68k and MIPS,
+<B>set_thread_area</B>()
+
+allows storing an arbitrary pointer (provided in the
+<B>tp</B>
+
+argument on m68k and in the
+<B>addr</B>
+
+argument on MIPS)
+in the kernel data structure associated with the calling thread;
+this pointer can later be retrieved using
+<B>get_thread_area</B>()
+
+(see also NOTES
+for information regarding obtaining the thread pointer on MIPS).
+<P>
+
+On x86, Linux dedicates three global descriptor table (GDT) entries for
 thread-local storage.
 For more information about the GDT, see the
 Intel Software Developer's Manual or the AMD Architecture Programming Manual.
@@ -52,6 +94,9 @@ struct user_desc {
 <BR>&nbsp;&nbsp;&nbsp;&nbsp;unsigned&nbsp;int&nbsp;&nbsp;limit_in_pages:1;
 <BR>&nbsp;&nbsp;&nbsp;&nbsp;unsigned&nbsp;int&nbsp;&nbsp;seg_not_present:1;
 <BR>&nbsp;&nbsp;&nbsp;&nbsp;unsigned&nbsp;int&nbsp;&nbsp;useable:1;
+#ifdef __x86_64__
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;unsigned&nbsp;int&nbsp;&nbsp;lm:1;
+#endif
 };
 
 
@@ -115,7 +160,7 @@ and
 
 are set to 1 and all of the other fields are 0.
 If an &quot;empty&quot; descriptor is passed to
-<B>set_thread_area,</B>
+<B>set_thread_area</B>(),
 
 the corresponding TLS entry will be cleared.
 See BUGS for additional details.
@@ -129,11 +174,24 @@ segments, although clearing a segment is still acceptable.
 <A NAME="lbAE">&nbsp;</A>
 <H2>RETURN VALUE</H2>
 
-These system calls
+On x86, these system calls
 return 0 on success, and -1 on failure, with
 <I>errno</I>
 
 set appropriately.
+<P>
+
+On MIPS and m68k,
+<B>set_thread_area</B>()
+
+always returns 0.
+On m68k,
+<B>get_thread_area</B>()
+
+returns the thread area pointer value
+(previously set via
+<B>set_thread_area</B>()).
+
 <A NAME="lbAF">&nbsp;</A>
 <H2>ERRORS</H2>
 
@@ -176,7 +234,10 @@ first appeared in Linux 2.5.32.
 
 <B>set_thread_area</B>()
 
-is Linux-specific and should not be used in programs that are intended
+and
+<B>get_thread_area</B>()
+
+are Linux-specific and should not be used in programs that are intended
 to be portable.
 <A NAME="lbAI">&nbsp;</A>
 <H2>NOTES</H2>
@@ -191,8 +252,9 @@ In the unlikely event that you want to call them directly, use
 <B><A HREF="../man2/arch_prctl.2.html">arch_prctl</A></B>(2)
 
 can interfere with
-<B>set_thread_area</B>().
+<B>set_thread_area</B>()
 
+on x86.
 See
 <B><A HREF="../man2/arch_prctl.2.html">arch_prctl</A></B>(2)
 
@@ -201,6 +263,20 @@ This is not normally a problem, as
 <B><A HREF="../man2/arch_prctl.2.html">arch_prctl</A></B>(2)
 
 is normally used only by 64-bit programs.
+<P>
+
+On MIPS, the current value of the thread area pointer can be obtained
+using the instruction:
+<P>
+
+
+
+rdhwr dest, $29
+
+
+<P>
+
+This instruction traps and is handled by kernel.
 <A NAME="lbAJ">&nbsp;</A>
 <H2>BUGS</H2>
 
@@ -242,7 +318,11 @@ TLS entries.
 
 <B><A HREF="../man2/arch_prctl.2.html">arch_prctl</A></B>(2),
 
-<B><A HREF="../man2/modify_ldt.2.html">modify_ldt</A></B>(2)
+<B><A HREF="../man2/modify_ldt.2.html">modify_ldt</A></B>(2),
+
+<B><A HREF="../man2/ptrace.2.html">ptrace</A></B>(2)
+
+(<B>PTRACE_GET_THREAD_AREA</B> and <B>PTRACE_SET_THREAD_AREA</B>)
 
 
 <P>
@@ -265,6 +345,6 @@ TLS entries.
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:49:02 GMT, April 20, 2020
+Time: 03:49:39 GMT, April 20, 2020
 </BODY>
 </HTML>

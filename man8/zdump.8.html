@@ -7,7 +7,7 @@ This page is in the public domain
 <HTML><HEAD><TITLE>Man page of ZDUMP</TITLE>
 </HEAD><BODY>
 <H1>ZDUMP</H1>
-Section: Linux System Administration (8)<BR>Updated: 2017-05-03<BR><A HREF="#index">Index</A>
+Section: Linux System Administration (8)<BR>Updated: 2019-03-06<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -17,39 +17,60 @@ zdump - timezone dumper
 <A NAME="lbAC">&nbsp;</A>
 <H2>SYNOPSIS</H2>
 
-<B>zdump</B> [<B>--version</B>] [<B>--help</B>] [<B>-v</B>] [<B>-c</B>
+<B>zdump</B>
 
-[<I>loyear</I><B>,</B>]<I>hiyear</I>] [<I>zonename</I>...]
+[
+<I>option</I>
 
+... ] [
+<I>timezone</I>
+
+... ]
 <A NAME="lbAD">&nbsp;</A>
 <H2>DESCRIPTION</H2>
 
+
+
+
+
+
+
+ds - -
 The
 <B>zdump</B>
 
 program prints the current time in each
-<I>zonename</I>
+<I>timezone</I>
 
 named on the command line.
-<P>
-
 <A NAME="lbAE">&nbsp;</A>
 <H2>OPTIONS</H2>
 
 <DL COMPACT>
-<DT><B>--version</B>
+<DT><B>version</B>
 
 <DD>
 Output version information and exit.
-<DT><B>--help</B>
+<DT><B>help</B>
 
 <DD>
 Output short usage message and exit.
-<DT><B>-v</B>
+<DT><B>i</B>
 
 <DD>
+Output a description of time intervals.  For each
+<I>timezone</I>
+
+on the command line, output an interval-format description of the
+timezone.  See
+
+below.
+<DT><B>v</B>
+
+<DD>
+Output a verbose description of time intervals.
 For each
-<I>zonename</I>
+<I>timezone</I>
 
 on the command line,
 print the time at the lowest possible time value,
@@ -58,27 +79,209 @@ the times both one second before and exactly at
 each detected time discontinuity,
 the time at one day less than the highest possible time value,
 and the time at the highest possible time value.
-Each line ends with
-<B>isdst=1</B>
+Each line is followed by
+<B>isdst=</B><I>D</I>
 
-if the given time is Daylight Saving Time or
-<B>isdst=0</B>
+where
+<I>D</I>
 
-otherwise.
-<DT><B>-c </B><I></I>[<I>loyear</I><B>,</B><I></I>]<I>hiyear</I>
+is positive, zero, or negative depending on whether
+the given time is daylight saving time, standard time,
+or an unknown time type, respectively.
+Each line is also followed by
+<B>gmtoff=</B><I>N</I>
+
+if the given local time is known to be
+<I>N</I>
+
+seconds east of Greenwich.
+<DT><B>V</B>
 
 <DD>
-Cut off the verbose output near the start of the given year(s).
-The output still includes the lowest possible time value
-and one day after it, and the highest possible time value
-preceded by the time value one day before it.
+Like
+<B>v</B>,
+
+except omit the times relative to the extreme time values.
+This generates output that is easier to compare to that of
+implementations with different time representations.
+<DT><B>c </B><I></I>[<I>loyear</I><B>,</B><I></I>]<I>hiyear</I>
+
+<DD>
+Cut off interval output at the given year(s).
+Cutoff times are computed using the proleptic Gregorian calendar with year 0
+and with Universal Time (UT) ignoring leap seconds.
+The lower bound is exclusive and the upper is inclusive; for example, a
+<I>loyear</I>
+
+of 1970 excludes a transition occurring at 1970-01-01 00:00:00 UTC but a
+<I>hiyear</I>
+
+of 1970 includes the transition.
+The default cutoff is
+<B>500,2500</B>.
+
+<DT><B>t </B><I></I>[<I>lotime</I><B>,</B><I></I>]<I>hitime</I>
+
+<DD>
+Cut off interval output at the given time(s),
+given in decimal seconds since 1970-01-01 00:00:00
+Coordinated Universal Time (UTC).
+The
+<I>timezone</I>
+
+determines whether the count includes leap seconds.
+As with
+<B>c</B>,
+
+the cutoff's lower bound is exclusive and its upper bound is inclusive.
 </DL>
 <A NAME="lbAF">&nbsp;</A>
+<H2>INTERVAL FORMAT</H2>
+
+The interval format is a compact text representation that is intended
+to be both human- and machine-readable.  It consists of an empty line,
+then a line
+
+where
+<I>string</I>
+
+is a double-quoted string giving the timezone, a second line
+
+describing the time interval before the first transition if any, and
+zero or more following lines
+
+one line for each transition time and following interval.  Fields are
+separated by single tabs.
+<P>
+
+Dates are in
+<I>yyyy</I>-<I>mm</I>-<I>dd</I>
+
+format and times are in 24-hour
+<I>hh</I>:<I>mm</I>:<I>ss</I>
+
+format where
+<I>hh</I>&lt;24.
+
+Times are in local time immediately after the transition.  A
+time interval description consists of a UT offset in signed
+&plusmn;<I>hhmmss</I>
+
+format, a time zone abbreviation, and an isdst flag.  An abbreviation
+that equals the UT offset is omitted; other abbreviations are
+double-quoted strings unless they consist of one or more alphabetic
+characters.  An isdst flag is omitted for standard time, and otherwise
+is a decimal integer that is unsigned and positive (typically 1) for
+daylight saving time and negative for unknown.
+<P>
+
+In times and in UT offsets with absolute value less than 100 hours,
+the seconds are omitted if they are zero, and
+the minutes are also omitted if they are also zero.  Positive UT
+offsets are east of Greenwich.  The UT offset 00 denotes a UT
+placeholder in areas where the actual offset is unspecified; by
+convention, this occurs when the UT offset is zero and the time zone
+abbreviation begins with
+
+or is
+
+<P>
+
+In double-quoted strings, escape sequences represent unusual
+characters.  The escape sequences are \s for space, and \&quot;, \\,
+\f, \n, \r, \t, and \v with their usual meaning in the C
+programming language.  E.g., the double-quoted string
+"
+&quot;CET\s\&quot;\\&quot;"
+ represents the character sequence "
+CET
+&quot;\"
+.<P>
+
+
+Here is an example of the output, with the leading empty line omitted.
+(This example is shown with tab stops set far enough apart so that the
+tabbed columns line up.)
+<PRE>
+
+
+TZ=&quot;Pacific/Honolulu&quot;
+-          -          -10:31:26  LMT
+1896-01-13 12:01:26   -10:30     HST
+1933-04-30 03         -09:30     HDT        1
+1933-05-21 11         -10:30     HST
+1942-02-09 03         -09:30     HDT        1
+1945-09-30 01         -10:30     HST
+1947-06-08 02:30      -10        HST
+
+</PRE>
+
+Here, local time begins 10 hours, 31 minutes and 26 seconds west of
+UT, and is a standard time abbreviated LMT.  Immediately after the
+first transition, the date is 1896-01-13 and the time is 12:01:26, and
+the following time interval is 10.5 hours west of UT, a standard time
+abbreviated HST.  Immediately after the second transition, the date is
+1933-04-30 and the time is 03:00:00 and the following time interval is
+9.5 hours west of UT, is abbreviated HDT, and is daylight saving time.
+Immediately after the last transition the date is 1947-06-08 and the
+time is 02:30:00, and the following time interval is 10 hours west of
+UT, a standard time abbreviated HST.
+<P>
+
+
+Here are excerpts from another example:
+<PRE>
+
+TZ=&quot;Europe/Astrakhan&quot;
+-          -          +03:12:12  LMT
+1924-04-30 23:47:48   +03
+1930-06-21 01         +04
+1981-04-01 01         +05                   1
+1981-09-30 23         +04
+...
+2014-10-26 01         +03
+2016-03-27 03         +04
+
+</PRE>
+
+This time zone is east of UT, so its UT offsets are positive.  Also,
+many of its time zone abbreviations are omitted since they duplicate
+the text of the UT offset.
+<A NAME="lbAG">&nbsp;</A>
+<H2>LIMITATIONS</H2>
+
+Time discontinuities are found by sampling the results returned by localtime
+at twelve-hour intervals.
+This works in all real-world cases;
+one can construct artificial time zones for which this fails.
+<P>
+
+In the
+<B>v</B>
+
+and
+<B>V</B>
+
+output,
+
+denotes the value returned by
+<B><A HREF="../man3/gmtime.3.html">gmtime</A></B>(3),
+
+which uses UTC for modern timestamps and some other UT flavor for
+timestamps that predate the introduction of UTC.
+No attempt is currently made to have the output use
+
+for newer and
+
+for older timestamps, partly because the exact date of the
+introduction of UTC is problematic.
+<A NAME="lbAH">&nbsp;</A>
 <H2>SEE ALSO</H2>
 
 <B><A HREF="../man5/tzfile.5.html">tzfile</A></B>(5),
 
 <B><A HREF="../man8/zic.8.html">zic</A></B>(8)
+
 
 
 <P>
@@ -90,12 +293,14 @@ preceded by the time value one day before it.
 <DT><A HREF="#lbAC">SYNOPSIS</A><DD>
 <DT><A HREF="#lbAD">DESCRIPTION</A><DD>
 <DT><A HREF="#lbAE">OPTIONS</A><DD>
-<DT><A HREF="#lbAF">SEE ALSO</A><DD>
+<DT><A HREF="#lbAF">INTERVAL FORMAT</A><DD>
+<DT><A HREF="#lbAG">LIMITATIONS</A><DD>
+<DT><A HREF="#lbAH">SEE ALSO</A><DD>
 </DL>
 <HR>
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:49:17 GMT, April 20, 2020
+Time: 03:49:54 GMT, April 20, 2020
 </BODY>
 </HTML>

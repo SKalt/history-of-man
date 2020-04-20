@@ -7,7 +7,7 @@ may be freely modified and distributed
 <HTML><HEAD><TITLE>Man page of FUTEX</TITLE>
 </HEAD><BODY>
 <H1>FUTEX</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2017-09-15<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2019-03-06<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -1188,7 +1188,7 @@ and
 <B>FUTEX_TRYLOCK_PI</B>
 
 pair with
-<B>FUTEX_UNLOCK_PI.</B>
+<B>FUTEX_UNLOCK_PI</B>.
 
 <B>FUTEX_UNLOCK_PI</B>
 
@@ -2254,6 +2254,7 @@ Child  (18535) 4
 #define _GNU_SOURCE
 #include &lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/errno.h">errno.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/stdatomic.h">stdatomic.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/stdlib.h">stdlib.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/sys/wait.h">sys/wait.h</A>&gt;
@@ -2283,22 +2284,19 @@ fwait(int *futexp)
 {
 <BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;s;
 <P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;__sync_bool_compare_and_swap(ptr,&nbsp;oldval,&nbsp;newval)&nbsp;is&nbsp;a&nbsp;gcc
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;built-in&nbsp;function.&nbsp;&nbsp;It&nbsp;atomically&nbsp;performs&nbsp;the&nbsp;equivalent&nbsp;of:
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;atomic_compare_exchange_strong(ptr,&nbsp;oldval,&nbsp;newval)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;atomically&nbsp;performs&nbsp;the&nbsp;equivalent&nbsp;of:
 <P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(*ptr&nbsp;==&nbsp;oldval)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(*ptr&nbsp;==&nbsp;*oldval)
 <BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*ptr&nbsp;=&nbsp;newval;
 <P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;It&nbsp;returns&nbsp;true&nbsp;if&nbsp;the&nbsp;test&nbsp;yielded&nbsp;true&nbsp;and&nbsp;*ptr&nbsp;was&nbsp;updated.
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;The&nbsp;alternative&nbsp;here&nbsp;would&nbsp;be&nbsp;to&nbsp;employ&nbsp;the&nbsp;equivalent&nbsp;atomic
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;machine-language&nbsp;instructions.&nbsp;&nbsp;For&nbsp;further&nbsp;information,&nbsp;see
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;the&nbsp;GCC&nbsp;Manual.&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;It&nbsp;returns&nbsp;true&nbsp;if&nbsp;the&nbsp;test&nbsp;yielded&nbsp;true&nbsp;and&nbsp;*ptr&nbsp;was&nbsp;updated.&nbsp;*/
 <P>
 <BR>&nbsp;&nbsp;&nbsp;&nbsp;while&nbsp;(1)&nbsp;{
 <P>
 <BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Is&nbsp;the&nbsp;futex&nbsp;available?&nbsp;*/
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(__sync_bool_compare_and_swap(futexp,&nbsp;1,&nbsp;0))
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;const&nbsp;int&nbsp;zero&nbsp;=&nbsp;0;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(atomic_compare_exchange_strong(futexp,&nbsp;&amp;zero,&nbsp;1))
 <BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;break;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Yes&nbsp;*/
 <P>
 <BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Futex&nbsp;is&nbsp;not&nbsp;available;&nbsp;wait&nbsp;*/
@@ -2318,10 +2316,10 @@ fpost(int *futexp)
 {
 <BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;s;
 <P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;__sync_bool_compare_and_swap()&nbsp;was&nbsp;described&nbsp;in&nbsp;comments&nbsp;above&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;atomic_compare_exchange_strong()&nbsp;was&nbsp;described&nbsp;in&nbsp;comments&nbsp;above&nbsp;*/
 <P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(__sync_bool_compare_and_swap(futexp,&nbsp;0,&nbsp;1))&nbsp;{
-<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;const&nbsp;int&nbsp;one&nbsp;=&nbsp;1;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(atomic_compare_exchange_strong(futexp,&nbsp;&amp;one,&nbsp;0))&nbsp;{
 <BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;s&nbsp;=&nbsp;futex(futexp,&nbsp;FUTEX_WAKE,&nbsp;1,&nbsp;NULL,&nbsp;NULL,&nbsp;0);
 <BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(s&nbsp;&nbsp;==&nbsp;-1)
 <BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;errExit(&quot;futex-FUTEX_WAKE&quot;);
@@ -2484,6 +2482,6 @@ Futex example library, futex-*.tar.bz2 at
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:49:02 GMT, April 20, 2020
+Time: 03:49:39 GMT, April 20, 2020
 </BODY>
 </HTML>

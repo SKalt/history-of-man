@@ -4,7 +4,7 @@
 <HTML><HEAD><TITLE>Man page of CLOCK_GETRES</TITLE>
 </HEAD><BODY>
 <H1>CLOCK_GETRES</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2017-09-15<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2019-03-06<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -169,14 +169,21 @@ and probably also architecture support for this flag in the
 <DT><B>CLOCK_MONOTONIC</B>
 
 <DD>
-Clock that cannot be set and represents monotonic time since
-some unspecified starting point.
-This clock is not affected by discontinuous jumps in the system time
+Clock that cannot be set and represents monotonic time since---as described
+by POSIX---&quot;some unspecified point in the past&quot;.
+On Linux, that point corresponds to the number of seconds that the system
+has been running since it was booted.
+<DT><DD>
+The
+<B>CLOCK_MONOTONIC</B>
+
+clock is not affected by discontinuous jumps in the system time
 (e.g., if the system administrator manually changes the clock),
 but is affected by the incremental adjustments performed by
 <B><A HREF="../man3/adjtime.3.html">adjtime</A></B>(3)
 
 and NTP.
+This clock does not count time that the system is suspended.
 <DT><B>CLOCK_MONOTONIC_COARSE</B> (since Linux 2.6.32; Linux-specific)
 
 <DD>
@@ -201,6 +208,7 @@ that is not subject to NTP adjustments or
 the incremental adjustments performed by
 <B><A HREF="../man3/adjtime.3.html">adjtime</A></B>(3).
 
+This clock does not count time that the system is suspended.
 <DT><B>CLOCK_BOOTTIME</B> (since Linux 2.6.39; Linux-specific)
 
 <DD>
@@ -262,6 +270,35 @@ specified is not supported on this system.
 
 
 
+<DT><B>EINVAL</B>
+
+<DD>
+(<B>clock_settime</B>()):
+
+<I>tp.tv_sec</I>
+
+is negative or
+<I>tp.tv_nsec</I>
+
+is outside the range [0..999,999,999].
+<DT><B>EINVAL</B> (since Linux 4.3)
+
+<DD>
+
+A call to
+<B>clock_settime</B>()
+
+with a
+<I>clk_id</I>
+
+of
+<B>CLOCK_REALTIME</B>
+
+attempted to set the time to a value less than
+the current value of the
+<B>CLOCK_MONOTONIC</B>
+
+clock.
 <DT><B>EPERM</B>
 
 <DD>
@@ -480,6 +517,6 @@ On Linux, these clocks are not settable
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:49:07 GMT, April 20, 2020
+Time: 03:49:44 GMT, April 20, 2020
 </BODY>
 </HTML>

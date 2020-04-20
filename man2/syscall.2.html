@@ -161,7 +161,7 @@ Care also must be taken so that the split follows endian conventions
 <P>
 
 Similar issues can occur on MIPS with the O32 ABI,
-on PowerPC with the 32-bit ABI, and on Xtensa.
+on PowerPC and parisc with the 32-bit ABI, and on Xtensa.
 
 
 <P>
@@ -204,7 +204,7 @@ such as
 
 <B><A HREF="../man2/preadv2.2.html">preadv2</A></B>(2),
 
-<B><A HREF="../man2/pwritev.2.html">pwritev</A></B>(2).
+<B><A HREF="../man2/pwritev.2.html">pwritev</A></B>(2),
 
 and
 <B><A HREF="../man2/pwritev2.2.html">pwritev2</A></B>(2).
@@ -224,42 +224,42 @@ so you might have to refer to
 <B><A HREF="../man7/vdso.7.html">vdso</A></B>(7)),
 
 the register used to indicate the system call number,
-the register used to return the system call result,
+the register(s) used to return the system call result,
 and the register used to signal an error.
 
 <TABLE>
-<TR VALIGN=top><TD>arch/ABI&nbsp;&nbsp;</TD><TD>instruction&nbsp;&nbsp;</TD><TD>syscall #&nbsp;&nbsp;</TD><TD>retval&nbsp;&nbsp;</TD><TD>error&nbsp;&nbsp;</TD><TD>Notes<BR></TD></TR>
-<TR VALIGN=top><TD COLSPAN=6><HR></TD></TR>
-<TR VALIGN=top><TD>alpha&nbsp;&nbsp;</TD><TD>callsys&nbsp;&nbsp;</TD><TD>v0&nbsp;&nbsp;</TD><TD>a0&nbsp;&nbsp;</TD><TD>a3&nbsp;&nbsp;</TD><TD>[1]<BR></TD></TR>
-<TR VALIGN=top><TD>arc&nbsp;&nbsp;</TD><TD>trap0&nbsp;&nbsp;</TD><TD>r8&nbsp;&nbsp;</TD><TD>r0&nbsp;&nbsp;</TD><TD>-&nbsp;&nbsp;</TD><TD><BR></TD></TR>
-<TR VALIGN=top><TD>arm/OABI&nbsp;&nbsp;</TD><TD>swi NR&nbsp;&nbsp;</TD><TD>-&nbsp;&nbsp;</TD><TD>a1&nbsp;&nbsp;</TD><TD>-&nbsp;&nbsp;</TD><TD>[2]<BR></TD></TR>
-<TR VALIGN=top><TD>arm/EABI&nbsp;&nbsp;</TD><TD>swi 0x0&nbsp;&nbsp;</TD><TD>r7&nbsp;&nbsp;</TD><TD>r0&nbsp;&nbsp;</TD><TD>-&nbsp;&nbsp;</TD><TD><BR></TD></TR>
-<TR VALIGN=top><TD>arm64&nbsp;&nbsp;</TD><TD>svc #0&nbsp;&nbsp;</TD><TD>x8&nbsp;&nbsp;</TD><TD>x0&nbsp;&nbsp;</TD><TD>-&nbsp;&nbsp;</TD><TD><BR></TD></TR>
-<TR VALIGN=top><TD>blackfin&nbsp;&nbsp;</TD><TD>excpt 0x0&nbsp;&nbsp;</TD><TD>P0&nbsp;&nbsp;</TD><TD>R0&nbsp;&nbsp;</TD><TD>-&nbsp;&nbsp;</TD><TD><BR></TD></TR>
-<TR VALIGN=top><TD>i386&nbsp;&nbsp;</TD><TD>int $0x80&nbsp;&nbsp;</TD><TD>eax&nbsp;&nbsp;</TD><TD>eax&nbsp;&nbsp;</TD><TD>-&nbsp;&nbsp;</TD><TD><BR></TD></TR>
-<TR VALIGN=top><TD>ia64&nbsp;&nbsp;</TD><TD>break 0x100000&nbsp;&nbsp;</TD><TD>r15&nbsp;&nbsp;</TD><TD>r8&nbsp;&nbsp;</TD><TD>r10&nbsp;&nbsp;</TD><TD>[1]<BR></TD></TR>
-<TR VALIGN=top><TD>m68k&nbsp;&nbsp;</TD><TD>trap #0&nbsp;&nbsp;</TD><TD>d0&nbsp;&nbsp;</TD><TD>d0&nbsp;&nbsp;</TD><TD>-&nbsp;&nbsp;</TD><TD><BR></TD></TR>
-<TR VALIGN=top><TD>microblaze&nbsp;&nbsp;</TD><TD>brki r14,8&nbsp;&nbsp;</TD><TD>r12&nbsp;&nbsp;</TD><TD>r3&nbsp;&nbsp;</TD><TD>-&nbsp;&nbsp;</TD><TD><BR></TD></TR>
-<TR VALIGN=top><TD>mips&nbsp;&nbsp;</TD><TD>syscall&nbsp;&nbsp;</TD><TD>v0&nbsp;&nbsp;</TD><TD>v0&nbsp;&nbsp;</TD><TD>a3&nbsp;&nbsp;</TD><TD>[1]<BR></TD></TR>
-<TR VALIGN=top><TD>nios2&nbsp;&nbsp;</TD><TD>trap&nbsp;&nbsp;</TD><TD>r2&nbsp;&nbsp;</TD><TD>r2&nbsp;&nbsp;</TD><TD>r7&nbsp;&nbsp;</TD><TD><BR></TD></TR>
-<TR VALIGN=top><TD>parisc&nbsp;&nbsp;</TD><TD>ble 0x100(%sr2, %r0)&nbsp;&nbsp;</TD><TD>r20&nbsp;&nbsp;</TD><TD>r28&nbsp;&nbsp;</TD><TD>-&nbsp;&nbsp;</TD><TD><BR></TD></TR>
-<TR VALIGN=top><TD>powerpc&nbsp;&nbsp;</TD><TD>sc&nbsp;&nbsp;</TD><TD>r0&nbsp;&nbsp;</TD><TD>r3&nbsp;&nbsp;</TD><TD>r0&nbsp;&nbsp;</TD><TD>[1]<BR></TD></TR>
-<TR VALIGN=top><TD>riscv&nbsp;&nbsp;</TD><TD>scall&nbsp;&nbsp;</TD><TD>a7&nbsp;&nbsp;</TD><TD>a0&nbsp;&nbsp;</TD><TD>-&nbsp;&nbsp;</TD><TD><BR></TD></TR>
-<TR VALIGN=top><TD>s390&nbsp;&nbsp;</TD><TD>svc 0&nbsp;&nbsp;</TD><TD>r1&nbsp;&nbsp;</TD><TD>r2&nbsp;&nbsp;</TD><TD>-&nbsp;&nbsp;</TD><TD>[3]<BR></TD></TR>
-<TR VALIGN=top><TD>s390x&nbsp;&nbsp;</TD><TD>svc 0&nbsp;&nbsp;</TD><TD>r1&nbsp;&nbsp;</TD><TD>r2&nbsp;&nbsp;</TD><TD>-&nbsp;&nbsp;</TD><TD>[3]<BR></TD></TR>
-<TR VALIGN=top><TD>superh&nbsp;&nbsp;</TD><TD>trap #0x17&nbsp;&nbsp;</TD><TD>r3&nbsp;&nbsp;</TD><TD>r0&nbsp;&nbsp;</TD><TD>-&nbsp;&nbsp;</TD><TD>[4]<BR></TD></TR>
-<TR VALIGN=top><TD>sparc/32&nbsp;&nbsp;</TD><TD>t 0x10&nbsp;&nbsp;</TD><TD>g1&nbsp;&nbsp;</TD><TD>o0&nbsp;&nbsp;</TD><TD>psr/csr&nbsp;&nbsp;</TD><TD>[1]<BR></TD></TR>
-<TR VALIGN=top><TD>sparc/64&nbsp;&nbsp;</TD><TD>t 0x6d&nbsp;&nbsp;</TD><TD>g1&nbsp;&nbsp;</TD><TD>o0&nbsp;&nbsp;</TD><TD>psr/csr&nbsp;&nbsp;</TD><TD>[1]<BR></TD></TR>
-<TR VALIGN=top><TD>tile&nbsp;&nbsp;</TD><TD>swint1&nbsp;&nbsp;</TD><TD>R10&nbsp;&nbsp;</TD><TD>R00&nbsp;&nbsp;</TD><TD>R01&nbsp;&nbsp;</TD><TD>[1]<BR></TD></TR>
-<TR VALIGN=top><TD>x86-64&nbsp;&nbsp;</TD><TD>syscall&nbsp;&nbsp;</TD><TD>rax&nbsp;&nbsp;</TD><TD>rax&nbsp;&nbsp;</TD><TD>-&nbsp;&nbsp;</TD><TD>[5]<BR></TD></TR>
-<TR VALIGN=top><TD>x32&nbsp;&nbsp;</TD><TD>syscall&nbsp;&nbsp;</TD><TD>rax&nbsp;&nbsp;</TD><TD>rax&nbsp;&nbsp;</TD><TD>-&nbsp;&nbsp;</TD><TD>[5]<BR></TD></TR>
-<TR VALIGN=top><TD>xtensa&nbsp;&nbsp;</TD><TD>syscall&nbsp;&nbsp;</TD><TD>a2&nbsp;&nbsp;</TD><TD>a2&nbsp;&nbsp;</TD><TD>-&nbsp;&nbsp;</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD>Arch/ABI&nbsp;&nbsp;</TD><TD>Instruction&nbsp;&nbsp;</TD><TD>System&nbsp;&nbsp;</TD><TD>Ret&nbsp;&nbsp;</TD><TD>Ret&nbsp;</TD><TD>Error&nbsp;&nbsp;</TD><TD>Notes<BR></TD></TR>
+<TR VALIGN=top><TD>&nbsp;&nbsp;</TD><TD>&nbsp;&nbsp;</TD><TD>call #&nbsp;&nbsp;</TD><TD>val&nbsp;&nbsp;</TD><TD>val2&nbsp;</TD><TD>&nbsp;&nbsp;</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD COLSPAN=7><HR></TD></TR>
+<TR VALIGN=top><TD>alpha&nbsp;&nbsp;</TD><TD>callsys&nbsp;&nbsp;</TD><TD>v0&nbsp;&nbsp;</TD><TD>v0&nbsp;&nbsp;</TD><TD>a4&nbsp;</TD><TD>a3&nbsp;&nbsp;</TD><TD>1, 6<BR></TD></TR>
+<TR VALIGN=top><TD>arc&nbsp;&nbsp;</TD><TD>trap0&nbsp;&nbsp;</TD><TD>r8&nbsp;&nbsp;</TD><TD>r0&nbsp;&nbsp;</TD><TD>-&nbsp;</TD><TD>-&nbsp;&nbsp;</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD>arm/OABI&nbsp;&nbsp;</TD><TD>swi NR&nbsp;&nbsp;</TD><TD>-&nbsp;&nbsp;</TD><TD>a1&nbsp;&nbsp;</TD><TD>-&nbsp;</TD><TD>-&nbsp;&nbsp;</TD><TD>2<BR></TD></TR>
+<TR VALIGN=top><TD>arm/EABI&nbsp;&nbsp;</TD><TD>swi 0x0&nbsp;&nbsp;</TD><TD>r7&nbsp;&nbsp;</TD><TD>r0&nbsp;&nbsp;</TD><TD>r1&nbsp;</TD><TD>-&nbsp;&nbsp;</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD>arm64&nbsp;&nbsp;</TD><TD>svc #0&nbsp;&nbsp;</TD><TD>x8&nbsp;&nbsp;</TD><TD>x0&nbsp;&nbsp;</TD><TD>x1&nbsp;</TD><TD>-&nbsp;&nbsp;</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD>blackfin&nbsp;&nbsp;</TD><TD>excpt 0x0&nbsp;&nbsp;</TD><TD>P0&nbsp;&nbsp;</TD><TD>R0&nbsp;&nbsp;</TD><TD>-&nbsp;</TD><TD>-&nbsp;&nbsp;</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD>i386&nbsp;&nbsp;</TD><TD>int $0x80&nbsp;&nbsp;</TD><TD>eax&nbsp;&nbsp;</TD><TD>eax&nbsp;&nbsp;</TD><TD>edx&nbsp;</TD><TD>-&nbsp;&nbsp;</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD>ia64&nbsp;&nbsp;</TD><TD>break 0x100000&nbsp;&nbsp;</TD><TD>r15&nbsp;&nbsp;</TD><TD>r8&nbsp;&nbsp;</TD><TD>r9&nbsp;</TD><TD>r10&nbsp;&nbsp;</TD><TD>1, 6<BR></TD></TR>
+<TR VALIGN=top><TD>m68k&nbsp;&nbsp;</TD><TD>trap #0&nbsp;&nbsp;</TD><TD>d0&nbsp;&nbsp;</TD><TD>d0&nbsp;&nbsp;</TD><TD>-&nbsp;</TD><TD>-&nbsp;&nbsp;</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD>microblaze&nbsp;&nbsp;</TD><TD>brki r14,8&nbsp;&nbsp;</TD><TD>r12&nbsp;&nbsp;</TD><TD>r3&nbsp;&nbsp;</TD><TD>-&nbsp;</TD><TD>-&nbsp;&nbsp;</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD>mips&nbsp;&nbsp;</TD><TD>syscall&nbsp;&nbsp;</TD><TD>v0&nbsp;&nbsp;</TD><TD>v0&nbsp;&nbsp;</TD><TD>v1&nbsp;</TD><TD>a3&nbsp;&nbsp;</TD><TD>1, 6<BR></TD></TR>
+<TR VALIGN=top><TD>nios2&nbsp;&nbsp;</TD><TD>trap&nbsp;&nbsp;</TD><TD>r2&nbsp;&nbsp;</TD><TD>r2&nbsp;&nbsp;</TD><TD>-&nbsp;</TD><TD>r7&nbsp;&nbsp;</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD>parisc&nbsp;&nbsp;</TD><TD>ble 0x100(%sr2, %r0)&nbsp;&nbsp;</TD><TD>r20&nbsp;&nbsp;</TD><TD>r28&nbsp;&nbsp;</TD><TD>-&nbsp;</TD><TD>-&nbsp;&nbsp;</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD>powerpc&nbsp;&nbsp;</TD><TD>sc&nbsp;&nbsp;</TD><TD>r0&nbsp;&nbsp;</TD><TD>r3&nbsp;&nbsp;</TD><TD>-&nbsp;</TD><TD>r0&nbsp;&nbsp;</TD><TD>1<BR></TD></TR>
+<TR VALIGN=top><TD>riscv&nbsp;&nbsp;</TD><TD>scall&nbsp;&nbsp;</TD><TD>a7&nbsp;&nbsp;</TD><TD>a0&nbsp;&nbsp;</TD><TD>a1&nbsp;</TD><TD>-&nbsp;&nbsp;</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD>s390&nbsp;&nbsp;</TD><TD>svc 0&nbsp;&nbsp;</TD><TD>r1&nbsp;&nbsp;</TD><TD>r2&nbsp;&nbsp;</TD><TD>r3&nbsp;</TD><TD>-&nbsp;&nbsp;</TD><TD>3<BR></TD></TR>
+<TR VALIGN=top><TD>s390x&nbsp;&nbsp;</TD><TD>svc 0&nbsp;&nbsp;</TD><TD>r1&nbsp;&nbsp;</TD><TD>r2&nbsp;&nbsp;</TD><TD>r3&nbsp;</TD><TD>-&nbsp;&nbsp;</TD><TD>3<BR></TD></TR>
+<TR VALIGN=top><TD>superh&nbsp;&nbsp;</TD><TD>trap #0x17&nbsp;&nbsp;</TD><TD>r3&nbsp;&nbsp;</TD><TD>r0&nbsp;&nbsp;</TD><TD>r1&nbsp;</TD><TD>-&nbsp;&nbsp;</TD><TD>4, 6<BR></TD></TR>
+<TR VALIGN=top><TD>sparc/32&nbsp;&nbsp;</TD><TD>t 0x10&nbsp;&nbsp;</TD><TD>g1&nbsp;&nbsp;</TD><TD>o0&nbsp;&nbsp;</TD><TD>o1&nbsp;</TD><TD>psr/csr&nbsp;&nbsp;</TD><TD>1, 6<BR></TD></TR>
+<TR VALIGN=top><TD>sparc/64&nbsp;&nbsp;</TD><TD>t 0x6d&nbsp;&nbsp;</TD><TD>g1&nbsp;&nbsp;</TD><TD>o0&nbsp;&nbsp;</TD><TD>o1&nbsp;</TD><TD>psr/csr&nbsp;&nbsp;</TD><TD>1, 6<BR></TD></TR>
+<TR VALIGN=top><TD>tile&nbsp;&nbsp;</TD><TD>swint1&nbsp;&nbsp;</TD><TD>R10&nbsp;&nbsp;</TD><TD>R00&nbsp;&nbsp;</TD><TD>-&nbsp;</TD><TD>R01&nbsp;&nbsp;</TD><TD>1<BR></TD></TR>
+<TR VALIGN=top><TD>x86-64&nbsp;&nbsp;</TD><TD>syscall&nbsp;&nbsp;</TD><TD>rax&nbsp;&nbsp;</TD><TD>rax&nbsp;&nbsp;</TD><TD>rdx&nbsp;</TD><TD>-&nbsp;&nbsp;</TD><TD>5<BR></TD></TR>
+<TR VALIGN=top><TD>x32&nbsp;&nbsp;</TD><TD>syscall&nbsp;&nbsp;</TD><TD>rax&nbsp;&nbsp;</TD><TD>rax&nbsp;&nbsp;</TD><TD>rdx&nbsp;</TD><TD>-&nbsp;&nbsp;</TD><TD>5<BR></TD></TR>
+<TR VALIGN=top><TD>xtensa&nbsp;&nbsp;</TD><TD>syscall&nbsp;&nbsp;</TD><TD>a2&nbsp;&nbsp;</TD><TD>a2&nbsp;&nbsp;</TD><TD>-&nbsp;</TD><TD>-&nbsp;&nbsp;</TD><TD><BR></TD></TR>
 </TABLE>
 
 <P>
 
 Notes:
-<DL COMPACT><DT><DD>
 <DL COMPACT>
 <DT>[1]<DD>
 On a few architectures,
@@ -300,25 +300,85 @@ and so on up to
 
 for 7-argument system calls.
 <DT>[5]<DD>
-The x32 ABI uses the same instruction as the x86-64 ABI and is used on
-the same processors.
-To differentiate between them, the bit mask
-<I>__X32_SYSCALL_BIT</I>
+The x32 ABI shares syscall table with x86-64 ABI, but there are some
+nuances:
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT>&bull;<DD>
+In order to indicate that a system call is called under the x32 ABI,
+an additional bit,
+<B>__X32_SYSCALL_BIT</B>,
 
-is bitwise-ORed into the system call number for system calls
-under the x32 ABI.
-Both system call tables are available though,
-so setting the bit is not a hard requirement.
+is bitwise-ORed with the system call number.
+The ABI used by a process affects some process behaviors,
+including signal handling or system call restarting.
+<DT>&bull;<DD>
+Since x32 has different sizes for
+<I>long</I>
+
+and pointer types, layouts of some (but not all;
+<I>struct timeval</I>
+
+or
+<I>struct rlimit</I>
+
+are 64-bit, for example) structures are different.
+In order to handle this,
+additional system calls are added to the system call table,
+starting from number 512
+(without the
+<B>__X32_SYSCALL_BIT</B>).
+
+For example,
+<B>__NR_readv</B>
+
+is defined as 19 for the x86-64 ABI and as
+<I>__X32_SYSCALL_BIT</I> | <I></I><B>515</B>
+
+for the x32 ABI.
+Most of these additional system calls are actually identical
+to the system calls used for providing i386 compat.
+There are some notable exceptions, however, such as
+<B><A HREF="../man2/preadv2.2.html">preadv2</A></B>(2),
+
+which uses
+<I>struct iovec</I>
+
+entities with 4-byte pointers and sizes (&quot;compat_iovec&quot; in kernel terms),
+but passes an 8-byte
+<I>pos</I>
+
+argument in a single register and not two, as is done in every other ABI.
 </DL>
 </DL>
 
+<DT>[6]<DD>
+Some architectures
+(namely, Alpha, IA-64, MIPS, SuperH, sparc/32, and sparc/64)
+use an additional register (&quot;Retval2&quot; in the above table)
+to pass back a second return value from the
+<B><A HREF="../man2/pipe.2.html">pipe</A></B>(2)
 
+system call;
+Alpha uses this technique in the architecture-specific
+<B><A HREF="../man2/getxpid.2.html">getxpid</A></B>(2),
+
+<B><A HREF="../man2/getxuid.2.html">getxuid</A></B>(2),
+
+and
+<B><A HREF="../man2/getxgid.2.html">getxgid</A></B>(2)
+
+system calls as well.
+Other architectures do not use the second return value register
+in the system call interface, even if it is defined in the System V ABI.
+
+</DL>
 <P>
 
 The second table shows the registers used to pass the system call arguments.
 
 <TABLE>
-<TR VALIGN=top><TD>arch/ABI</TD><TD>arg1&nbsp;&nbsp;</TD><TD>arg2&nbsp;&nbsp;</TD><TD>arg3&nbsp;&nbsp;</TD><TD>arg4&nbsp;&nbsp;</TD><TD>arg5&nbsp;&nbsp;</TD><TD>arg6&nbsp;&nbsp;</TD><TD>arg7&nbsp;&nbsp;</TD><TD>Notes<BR></TD></TR>
+<TR VALIGN=top><TD>Arch/ABI</TD><TD>arg1&nbsp;&nbsp;</TD><TD>arg2&nbsp;&nbsp;</TD><TD>arg3&nbsp;&nbsp;</TD><TD>arg4&nbsp;&nbsp;</TD><TD>arg5&nbsp;&nbsp;</TD><TD>arg6&nbsp;&nbsp;</TD><TD>arg7&nbsp;&nbsp;</TD><TD>Notes<BR></TD></TR>
 <TR VALIGN=top><TD COLSPAN=9><HR></TD></TR>
 <TR VALIGN=top><TD>alpha</TD><TD>a0&nbsp;&nbsp;</TD><TD>a1&nbsp;&nbsp;</TD><TD>a2&nbsp;&nbsp;</TD><TD>a3&nbsp;&nbsp;</TD><TD>a4&nbsp;&nbsp;</TD><TD>a5&nbsp;&nbsp;</TD><TD>-&nbsp;&nbsp;</TD><TD><BR></TD></TR>
 <TR VALIGN=top><TD>arc</TD><TD>r0&nbsp;&nbsp;</TD><TD>r1&nbsp;&nbsp;</TD><TD>r2&nbsp;&nbsp;</TD><TD>r3&nbsp;&nbsp;</TD><TD>r4&nbsp;&nbsp;</TD><TD>r5&nbsp;&nbsp;</TD><TD>-&nbsp;&nbsp;</TD><TD><BR></TD></TR>
@@ -330,7 +390,7 @@ The second table shows the registers used to pass the system call arguments.
 <TR VALIGN=top><TD>ia64</TD><TD>out0&nbsp;&nbsp;</TD><TD>out1&nbsp;&nbsp;</TD><TD>out2&nbsp;&nbsp;</TD><TD>out3&nbsp;&nbsp;</TD><TD>out4&nbsp;&nbsp;</TD><TD>out5&nbsp;&nbsp;</TD><TD>-&nbsp;&nbsp;</TD><TD><BR></TD></TR>
 <TR VALIGN=top><TD>m68k</TD><TD>d1&nbsp;&nbsp;</TD><TD>d2&nbsp;&nbsp;</TD><TD>d3&nbsp;&nbsp;</TD><TD>d4&nbsp;&nbsp;</TD><TD>d5&nbsp;&nbsp;</TD><TD>a0&nbsp;&nbsp;</TD><TD>-&nbsp;&nbsp;</TD><TD><BR></TD></TR>
 <TR VALIGN=top><TD>microblaze</TD><TD>r5&nbsp;&nbsp;</TD><TD>r6&nbsp;&nbsp;</TD><TD>r7&nbsp;&nbsp;</TD><TD>r8&nbsp;&nbsp;</TD><TD>r9&nbsp;&nbsp;</TD><TD>r10&nbsp;&nbsp;</TD><TD>-&nbsp;&nbsp;</TD><TD><BR></TD></TR>
-<TR VALIGN=top><TD>mips/o32</TD><TD>a0&nbsp;&nbsp;</TD><TD>a1&nbsp;&nbsp;</TD><TD>a2&nbsp;&nbsp;</TD><TD>a3&nbsp;&nbsp;</TD><TD>-&nbsp;&nbsp;</TD><TD>-&nbsp;&nbsp;</TD><TD>-&nbsp;&nbsp;</TD><TD>[1]<BR></TD></TR>
+<TR VALIGN=top><TD>mips/o32</TD><TD>a0&nbsp;&nbsp;</TD><TD>a1&nbsp;&nbsp;</TD><TD>a2&nbsp;&nbsp;</TD><TD>a3&nbsp;&nbsp;</TD><TD>-&nbsp;&nbsp;</TD><TD>-&nbsp;&nbsp;</TD><TD>-&nbsp;&nbsp;</TD><TD>1<BR></TD></TR>
 <TR VALIGN=top><TD>mips/n32,64</TD><TD>a0&nbsp;&nbsp;</TD><TD>a1&nbsp;&nbsp;</TD><TD>a2&nbsp;&nbsp;</TD><TD>a3&nbsp;&nbsp;</TD><TD>a4&nbsp;&nbsp;</TD><TD>a5&nbsp;&nbsp;</TD><TD>-&nbsp;&nbsp;</TD><TD><BR></TD></TR>
 <TR VALIGN=top><TD>nios2</TD><TD>r4&nbsp;&nbsp;</TD><TD>r5&nbsp;&nbsp;</TD><TD>r6&nbsp;&nbsp;</TD><TD>r7&nbsp;&nbsp;</TD><TD>r8&nbsp;&nbsp;</TD><TD>r9&nbsp;&nbsp;</TD><TD>-&nbsp;&nbsp;</TD><TD><BR></TD></TR>
 <TR VALIGN=top><TD>parisc</TD><TD>r26&nbsp;&nbsp;</TD><TD>r25&nbsp;&nbsp;</TD><TD>r24&nbsp;&nbsp;</TD><TD>r23&nbsp;&nbsp;</TD><TD>r22&nbsp;&nbsp;</TD><TD>r21&nbsp;&nbsp;</TD><TD>-&nbsp;&nbsp;</TD><TD><BR></TD></TR>
@@ -350,15 +410,12 @@ The second table shows the registers used to pass the system call arguments.
 <P>
 
 Notes:
-<DL COMPACT><DT><DD>
 <DL COMPACT>
 <DT>[1]<DD>
 The mips/o32 system call convention passes
 arguments 5 through 8 on the user stack.
-</DL>
-</DL>
 
-
+</DL>
 <P>
 
 Note that these tables don't cover the entire calling convention---some
@@ -416,6 +473,6 @@ main(int argc, char *argv[])
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:49:05 GMT, April 20, 2020
+Time: 03:49:42 GMT, April 20, 2020
 </BODY>
 </HTML>

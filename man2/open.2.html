@@ -710,8 +710,27 @@ When possible, the file is opened in nonblocking mode.
 Neither the
 <B>open</B>()
 
-nor any subsequent operations on the file descriptor which is
+nor any subsequent I/O operations on the file descriptor which is
 returned will cause the calling process to wait.
+<DT><DD>
+Note that ithe setting of this flag has no effect on the operation of
+<B><A HREF="../man2/poll.2.html">poll</A></B>(2),
+
+<B><A HREF="../man2/select.2.html">select</A></B>(2),
+
+<B><A HREF="../man7/epoll.7.html">epoll</A></B>(7),
+
+and similar,
+since those interfaces merely inform the caller about whether
+a file descriptor is &quot;ready&quot;,
+meaning that an I/O operation performed on
+the file descriptor with the
+<B>O_NONBLOCK</B>
+
+flag
+<I>clear</I>
+
+would not block.
 <DT><DD>
 Note that this flag has no effect for regular files and block devices;
 that is, I/O operations will (briefly) block when device activity
@@ -1407,7 +1426,10 @@ must be returned.)
 <B>O_CREAT</B>
 
 is not set and the named file does not exist.
-Or, a directory component in
+<DT><B>ENOENT</B>
+
+<DD>
+A directory component in
 <I>pathname</I>
 
 does not exist or is a dangling symbolic link.
@@ -1475,6 +1497,10 @@ no process has the FIFO open for reading.
 
 <DD>
 The file is a device special file and no corresponding device exists.
+<DT><B>ENXIO</B>
+
+<DD>
+The file is a UNIX domain socket.
 <DT><B>EOPNOTSUPP</B>
 
 <DD>
@@ -1670,9 +1696,10 @@ header files.
 Under Linux, the
 <B>O_NONBLOCK</B>
 
-flag indicates that one wants to open
+flag is sometimes used in cases where one wants to open
 but does not necessarily have the intention to read or write.
-This is typically used to open devices in order to get a file descriptor
+For example,
+this may be used to open a device in order to get a file descriptor
 for use with
 <B><A HREF="../man2/ioctl.2.html">ioctl</A></B>(2).
 
@@ -1745,11 +1772,23 @@ directory show the open file descriptors of the process with the PID
 The files in the
 <I>/proc/[pid]/fdinfo</I>
 
-directory show even more information about these files descriptors.
+directory show even more information about these file descriptors.
 See
 <B><A HREF="../man5/proc.5.html">proc</A></B>(5)
 
 for further details of both of these directories.
+<P>
+
+The Linux header file
+<B>&lt;<A HREF="file:///usr/include/asm/fcntl.h">asm/fcntl.h</A>&gt;</B>
+
+doesn't define
+<B>O_ASYNC</B>;
+
+the (BSD-derived)
+<B>FASYNC</B>
+
+synonym is defined instead.
 
 
 <A NAME="lbAL">&nbsp;</A>
@@ -1832,12 +1871,18 @@ and
 but not
 <B>O_RSYNC</B>.
 
-(Somewhat incorrectly, glibc defines
+Somewhat incorrectly, glibc defines
 <B>O_RSYNC</B>
 
 to have the same value as
-<B>O_SYNC</B>.)
+<B>O_SYNC</B>.
 
+(<B>O_RSYNC</B>
+
+is defined in the Linux header file
+<I>&lt;<A HREF="file:///usr/include/asm/fcntl.h">asm/fcntl.h</A>&gt;</I>
+
+on HP PA-RISC, but it is not used.)
 <P>
 
 <B>O_SYNC</B>
@@ -2308,14 +2353,6 @@ It is recommended that applications treat use of
 <B>O_DIRECT</B>
 
 as a performance option which is disabled by default.
-<P>
-
-<DL COMPACT><DT><DD>
-&quot;The thing that has always disturbed me about O_DIRECT is that the whole
-interface is just stupid, and was probably designed by a deranged monkey
-on some serious mind-controlling substances.&quot;---Linus
-</DL>
-
 <A NAME="lbAT">&nbsp;</A>
 <H2>BUGS</H2>
 
@@ -2448,6 +2485,6 @@ is ignored).
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:49:03 GMT, April 20, 2020
+Time: 03:49:41 GMT, April 20, 2020
 </BODY>
 </HTML>

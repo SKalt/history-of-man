@@ -26,7 +26,7 @@ the source, must acknowledge the copyright and authors of this work.
 <HTML><HEAD><TITLE>Man page of CAPABILITIES</TITLE>
 </HEAD><BODY>
 <H1>CAPABILITIES</H1>
-Section: Linux Programmer's Manual (7)<BR>Updated: 2018-02-02<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (7)<BR>Updated: 2019-03-06<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -79,6 +79,7 @@ Allow reading the audit log via a multicast netlink socket.
 
 <DD>
 Write records to kernel auditing log.
+
 <DT><B>CAP_BLOCK_SUSPEND</B> (since Linux 3.5)
 
 <DD>
@@ -637,9 +638,20 @@ and
 <DT><B>CAP_SYS_CHROOT</B>
 
 <DD>
-Use
-<B><A HREF="../man2/chroot.2.html">chroot</A></B>(2).
+<DL COMPACT><DT><DD>
 
+<DL COMPACT>
+<DT>*<DD>
+Use
+<B><A HREF="../man2/chroot.2.html">chroot</A></B>(2);
+
+<DT>*<DD>
+change mount namespaces using
+<B><A HREF="../man2/setns.2.html">setns</A></B>(2).
+
+
+</DL>
+</DL>
 
 <DT><B>CAP_SYS_MODULE</B>
 
@@ -682,7 +694,7 @@ and set scheduling policies and priorities for arbitrary processes
 
 <B><A HREF="../man2/sched_setparam.2.html">sched_setparam</A></B>(2),
 
-<B><A HREF="../man2/shed_setattr.2.html">shed_setattr</A></B>(2));
+<B><A HREF="../man2/sched_setattr.2.html">sched_setattr</A></B>(2));
 
 <DT>*<DD>
 set CPU affinity for arbitrary processes
@@ -1027,7 +1039,7 @@ To determine which existing capability might best be associated
 with your new feature, review the list of capabilities above in order
 to find a &quot;silo&quot; into which your new feature best fits.
 One approach to take is to determine if there are other features
-requiring capabilities that will always be use along with the new feature.
+requiring capabilities that will always be used along with the new feature.
 If the new feature is useless without these other features,
 you should use the same capability as the other features.
 <DT>*<DD>
@@ -1067,10 +1079,10 @@ silo into which other related future use cases might fit.
 <A NAME="lbAG">&nbsp;</A>
 <H3>Thread capability sets</H3>
 
-Each thread has three capability sets containing zero or more
+Each thread has the following capability sets containing zero or more
 of the above capabilities:
 <DL COMPACT>
-<DT><I>Permitted</I>:
+<DT><I>Permitted</I>
 
 <DD>
 This is a limiting superset for the effective
@@ -1087,7 +1099,7 @@ it can never reacquire that capability (unless it
 
 either a set-user-ID-root program, or
 a program whose associated file capabilities grant that capability).
-<DT><I>Inheritable</I>:
+<DT><I>Inheritable</I>
 
 <DD>
 This is a set of capabilities preserved across an
@@ -1103,12 +1115,26 @@ Because inheritable capabilities are not generally preserved across
 when running as a non-root user, applications that wish to run helper
 programs with elevated capabilities should consider using
 ambient capabilities, described below.
-<DT><I>Effective</I>:
+<DT><I>Effective</I>
 
 <DD>
 This is the set of capabilities used by the kernel to
 perform permission checks for the thread.
-<DT><I>Ambient</I> (since Linux 4.3):
+<DT><I>Bounding</I> (per-thread since Linux 2.6.25)
+
+<DD>
+The capability bounding set is a mechanism that can be used
+to limit the capabilities that are gained during
+<B><A HREF="../man2/execve.2.html">execve</A></B>(2).
+
+<DT><DD>
+Since Linux 2.6.25, this is a per-thread capability set.
+In older kernels, the capability bounding set was a system wide attribute
+shared by all threads on the system.
+<DT><DD>
+<DT><DD>
+For more details on the capability bounding set, see below.
+<DT><I>Ambient</I> (since Linux 4.3)
 
 <DD>
 
@@ -1133,6 +1159,13 @@ assigned to the effective set when
 <B><A HREF="../man2/execve.2.html">execve</A></B>(2)
 
 is called.
+If ambient capabilities cause a process's permitted and effective
+capabilities to increase during an
+<B><A HREF="../man2/execve.2.html">execve</A></B>(2),
+
+this does not trigger the secure-execution mode described in
+<B><A HREF="../man8/ld.so.8.html">ld.so</A></B>(8).
+
 </DL>
 <P>
 
@@ -1237,7 +1270,7 @@ inheritable flags is enabled.
 
 </DL>
 <A NAME="lbAI">&nbsp;</A>
-<H3>File capability mask versioning</H3>
+<H3>File capability extended attribute versioning</H3>
 
 To allow extensibility,
 the kernel supports a scheme to encode a version number inside the
@@ -1290,16 +1323,17 @@ while others have version 3 capabilities.
 <P>
 
 Before Linux 4.14,
-the only kind of capability mask that could be attached to a file was a
+the only kind of file capability extended attribute
+that could be attached to a file was a
 <B>VFS_CAP_REVISION_2</B>
 
-mask.
+attribute.
 Since Linux 4.14,
-the version of the capability mask that is attached to a file
-depends on the circumstances in which the
+the version of the
 <I>security.capability</I>
 
-extended attribute was created.
+extended attribute that is attached to a file
+depends on the circumstances in which the attribute was created.
 <P>
 
 Starting with Linux 4.14, a
@@ -1312,7 +1346,7 @@ a version 3
 attribute if both of the following are true:
 <DL COMPACT>
 <DT>(1)<DD>
-The thread writing the attribute resides in a noninitial namespace.
+The thread writing the attribute resides in a noninitial user namespace.
 (More precisely: the thread resides in a user namespace other
 than the one from which the underlying filesystem was mounted.)
 <DT>(2)<DD>
@@ -1326,9 +1360,6 @@ meaning that (a) the thread has the
 capability in its own user namespace;
 and (b) the UID and GID of the file inode have mappings in
 the writer's user namespace.
-
-
-
 </DL>
 <P>
 
@@ -1341,7 +1372,7 @@ extended attribute is created, the root user ID of the creating thread's
 user namespace is saved in the extended attribute.
 <P>
 
-By contrast, creating a
+By contrast, creating or modifying a
 <I>security.capability</I>
 
 extended attribute from a privileged
@@ -1350,10 +1381,48 @@ extended attribute from a privileged
 thread that resides in the
 namespace where the underlying filesystem was mounted
 (this normally means the initial user namespace)
-automatically results in a version 2
+automatically results in the creation of a version 2
 (<B>VFS_CAP_REVISION_2</B>)
 
 attribute.
+<P>
+
+Note that the creation of a version 3
+<I>security.capability</I>
+
+extended attribute is automatic.
+That is to say, when a user-space application writes
+(<B><A HREF="../man2/setxattr.2.html">setxattr</A></B>(2))
+
+a
+<I>security.capability</I>
+
+attribute in the version 2 format,
+the kernel will automatically create a version 3 attribute
+if the attribute is created in the circumstances described above.
+Correspondingly, when a version 3
+<I>security.capability</I>
+
+attribute is retrieved
+(<B><A HREF="../man2/getxattr.2.html">getxattr</A></B>(2))
+
+by a process that resides inside a user namespace that was created by the
+root user ID (or a descendant of that user namespace),
+the returned attribute is (automatically)
+simplified to appear as a version 2 attribute
+(i.e., the returned value is the size of a version 2 attribute and does
+not include the root user ID).
+These automatic translations mean that no changes are required to
+user-space tools (e.g.,
+<B><A HREF="../man1/setcap.1.html">setcap</A></B>(1)
+
+and
+<B><A HREF="../man1/getcap.1.html">getcap</A></B>(1))
+
+in order for those tools to be used to create and retrieve version 3
+<I>security.capability</I>
+
+attributes.
 <P>
 
 Note that a file can have either a version 2 or a version 3
@@ -1384,11 +1453,13 @@ the process using the following algorithm:
 P'(ambient)     = (file is privileged) ? 0 : P(ambient)
 <P>
 P'(permitted)   = (P(inheritable) &amp; F(inheritable)) |
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(F(permitted)&nbsp;&amp;&nbsp;cap_bset)&nbsp;|&nbsp;P'(ambient)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(F(permitted)&nbsp;&amp;&nbsp;P(bounding))&nbsp;|&nbsp;P'(ambient)
 <P>
 P'(effective)   = F(effective) ? P'(permitted) : P'(ambient)
 <P>
 P'(inheritable) = P(inheritable)    [i.e., unchanged]
+<P>
+P'(bounding)    = P(bounding)       [i.e., unchanged]
 
 
 <P>
@@ -1396,36 +1467,54 @@ P'(inheritable) = P(inheritable)    [i.e., unchanged]
 where:
 <DL COMPACT><DT><DD>
 <DL COMPACT>
-<DT>P<DD>
+<DT>P()<DD>
 denotes the value of a thread capability set before the
 <B><A HREF="../man2/execve.2.html">execve</A></B>(2)
 
-<DT>P'<DD>
+<DT>P'()<DD>
 denotes the value of a thread capability set after the
 <B><A HREF="../man2/execve.2.html">execve</A></B>(2)
 
-<DT>F<DD>
+<DT>F()<DD>
 denotes a file capability set
-<DT>cap_bset<DD>
-is the value of the capability bounding set (described below).
 </DL>
 </DL>
 
 <P>
 
-A privileged file is one that has capabilities or
+Note the following details relating to the above capability
+transformation rules:
+<DL COMPACT>
+<DT>*<DD>
+The ambient capability set is present only since Linux 4.3.
+When determining the transformation of the ambient set during
+<B><A HREF="../man2/execve.2.html">execve</A></B>(2),
+
+a privileged file is one that has capabilities or
 has the set-user-ID or set-group-ID bit set.
+<DT>*<DD>
+Prior to Linux 2.6.25,
+the bounding set was a system-wide attribute shared by all threads.
+That system-wide value was employed to calculate the new permitted set during
+<B><A HREF="../man2/execve.2.html">execve</A></B>(2)
+
+in the same manner as shown above for
+<I>P(bounding)</I>.
+
+</DL>
 <P>
 
 <I>Note</I>:
 
-the capability transitions described above may
-<I>not</I>
-
-be performed (i.e., file capabilities may be ignored) for the same reasons
+during the capability transitions described above,
+file capabilities may be ignored (treated as empty) for the same reasons
 that the set-user-ID and set-group-ID bits are ignored; see
 <B><A HREF="../man2/execve.2.html">execve</A></B>(2).
 
+File capabilities are similarly ignored if the kernel was booted with the
+<I>no_file_caps</I>
+
+option.
 <P>
 
 <I>Note</I>:
@@ -1491,62 +1580,99 @@ API.
 <A NAME="lbAL">&nbsp;</A>
 <H3>Capabilities and execution of programs by root</H3>
 
-In order to provide an all-powerful
-<I>root</I>
 
-using capability sets, during an
-<B><A HREF="../man2/execve.2.html">execve</A></B>(2):
 
+In order to mirror traditional UNIX semantics,
+the kernel performs special treatment of file capabilities when
+a process with UID 0 (root) executes a program and
+when a set-user-ID-root program is executed.
+<P>
+
+After having performed any changes to the process effective ID that
+were triggered by the set-user-ID mode bit of the binary---e.g.,
+switching the effective user ID to 0 (root) because
+a set-user-ID-root program was executed---the
+kernel calculates the file capability sets as follows:
 <DL COMPACT>
 <DT>1.<DD>
-If a set-user-ID-root program is being executed,
-or the real or effective user ID of the process is 0 (root)
-then the file inheritable and permitted sets are defined to be all ones
+If the real or effective user ID of the process is 0 (root),
+then the file inheritable and permitted sets are ignored;
+instead they are notionally considered to be all ones
 (i.e., all capabilities enabled).
+(There is one exception to this behavior, described below in
+<I>Set-user-ID-root programs that have file capabilities</I>.)
+
 <DT>2.<DD>
-If a set-user-ID-root program is being executed,
-or the effective user ID of the process is 0 (root)
-then the file effective bit is defined to be one (enabled).
+If the effective user ID of the process is 0 (root) or
+the file effective bit is in fact enabled,
+then the file effective bit is notionally defined to be one (enabled).
 </DL>
 <P>
 
-The upshot of the above rules,
-combined with the capabilities transformations described above,
-is as follows:
-<DL COMPACT>
-<DT>*<DD>
-When a process
-<B><A HREF="../man2/execve.2.html">execve</A></B>(2)s
+These notional values for the file's capability sets are then used
+as described above to calculate the transformation of the process's
+capabilities during
+<B><A HREF="../man2/execve.2.html">execve</A></B>(2).
 
-a set-user-ID-root program, or when a process with an effective UID of 0
-<B><A HREF="../man2/execve.2.html">execve</A></B>(2)s
-
-a program,
-it gains all capabilities in its permitted and effective capability sets,
-except those masked out by the capability bounding set.
-<DT>*<DD>
-When a process with a real UID of 0
-<B><A HREF="../man2/execve.2.html">execve</A></B>(2)s
-
-a program,
-it gains all capabilities in its permitted capability set,
-
-except those masked out by the capability bounding set.
-</DL>
 <P>
 
-The above steps yield semantics that are the same as those provided by
-traditional UNIX systems.
+Thus, when a process with nonzero UIDs
+<B><A HREF="../man2/execve.2.html">execve</A></B>(2)s
+
+a set-user-ID-root program that does not have capabilities attached,
+or when a process whose real and effective UIDs are zero
+<B><A HREF="../man2/execve.2.html">execve</A></B>(2)s
+
+a program, the calculation of the process's new
+permitted capabilities simplifies to:
+<P>
+
+
+
+P'(permitted)   = P(inheritable) | P(bounding)
+<P>
+P'(effective)   = P'(permitted)
+
+
+<P>
+
+Consequently, the process gains all capabilities in its permitted and
+effective capability sets,
+except those masked out by the capability bounding set.
+(In the calculation of P'(permitted),
+the P'(ambient) term can be simplified away because it is by
+definition a proper subset of P(inheritable).)
+<P>
+
+The special treatments of user ID 0 (root) described in this subsection
+can be disabled using the securebits mechanism described below.
+
 
 <A NAME="lbAM">&nbsp;</A>
 <H3>Set-user-ID-root programs that have file capabilities</H3>
 
-Executing a program that is both set-user-ID root and has
-file capabilities will cause the process to gain just the
-capabilities granted by the program
+There is one exception to the behavior described under
+<I>Capabilities and execution of programs by root</I>.
+
+If (a) the binary that is being executed has capabilities attached and
+(b) the real user ID of the process is
+<I>not</I>
+
+0 (root) and
+(c) the effective user ID of the process
+<I>is</I>
+
+0 (root), then the file capability bits are honored
+(i.e., they are not notionally considered to be all ones).
+The usual way in which this situation can arise is when executing
+a set-UID-root program that also has file capabilities.
+When such a program is executed,
+the process gains just the capabilities granted by the program
 (i.e., not all capabilities,
 as would occur when executing a set-user-ID-root program
 that does not have any associated file capabilities).
+<P>
+
 Note that one can assign empty capability sets to a program file,
 and thus it is possible to create a set-user-ID-root program that
 changes the effective and saved set-user-ID of the process
@@ -1600,49 +1726,6 @@ Depending on the kernel version, the capability bounding set is either
 a system-wide attribute, or a per-process attribute.
 <P>
 
-<B>Capability bounding set prior to Linux 2.6.25</B>
-
-<P>
-
-In kernels before 2.6.25, the capability bounding set is a system-wide
-attribute that affects all threads on the system.
-The bounding set is accessible via the file
-<I>/proc/sys/kernel/cap-bound</I>.
-
-(Confusingly, this bit mask parameter is expressed as a
-signed decimal number in
-<I>/proc/sys/kernel/cap-bound</I>.)
-
-<P>
-
-Only the
-<B>init</B>
-
-process may set capabilities in the capability bounding set;
-other than that, the superuser (more precisely: a process with the
-<B>CAP_SYS_MODULE</B>
-
-capability) may only clear capabilities from this set.
-<P>
-
-On a standard system the capability bounding set always masks out the
-<B>CAP_SETPCAP</B>
-
-capability.
-To remove this restriction (dangerous!), modify the definition of
-<B>CAP_INIT_EFF_SET</B>
-
-in
-<I>include/linux/capability.h</I>
-
-and rebuild the kernel.
-<P>
-
-The system-wide capability bounding set feature was added
-to Linux starting with kernel version 2.2.11.
-
-<P>
-
 <B>Capability bounding set from Linux 2.6.25 onward</B>
 
 <P>
@@ -1651,7 +1734,7 @@ From Linux 2.6.25, the
 <I>capability bounding set</I>
 
 is a per-thread attribute.
-(There is no longer a system-wide capability bounding set.)
+(The system-wide capability bounding set described below no longer exists.)
 <P>
 
 The bounding set is inherited at
@@ -1710,6 +1793,49 @@ Removing a capability from the bounding set does not remove it
 from the thread's inheritable set.
 However it does prevent the capability from being added
 back into the thread's inheritable set in the future.
+<P>
+
+<B>Capability bounding set prior to Linux 2.6.25</B>
+
+<P>
+
+In kernels before 2.6.25, the capability bounding set is a system-wide
+attribute that affects all threads on the system.
+The bounding set is accessible via the file
+<I>/proc/sys/kernel/cap-bound</I>.
+
+(Confusingly, this bit mask parameter is expressed as a
+signed decimal number in
+<I>/proc/sys/kernel/cap-bound</I>.)
+
+<P>
+
+Only the
+<B>init</B>
+
+process may set capabilities in the capability bounding set;
+other than that, the superuser (more precisely: a process with the
+<B>CAP_SYS_MODULE</B>
+
+capability) may only clear capabilities from this set.
+<P>
+
+On a standard system the capability bounding set always masks out the
+<B>CAP_SETPCAP</B>
+
+capability.
+To remove this restriction (dangerous!), modify the definition of
+<B>CAP_INIT_EFF_SET</B>
+
+in
+<I>include/linux/capability.h</I>
+
+and rebuild the kernel.
+<P>
+
+The system-wide capability bounding set feature was added
+to Linux starting with kernel version 2.2.11.
+
 
 
 <A NAME="lbAO">&nbsp;</A>
@@ -1778,7 +1904,8 @@ securebits flag described below.
 <A NAME="lbAP">&nbsp;</A>
 <H3>Programmatically adjusting capability sets</H3>
 
-A thread can retrieve and change its capability sets using the
+A thread can retrieve and change its permitted, effective, and inheritable
+capability sets using the
 <B><A HREF="../man2/capget.2.html">capget</A></B>(2)
 
 and
@@ -1836,14 +1963,23 @@ These flags are as follows:
 
 <DD>
 Setting this flag allows a thread that has one or more 0 UIDs to retain
-capabilities in its permitted and effective sets
+capabilities in its permitted set
 when it switches all of its UIDs to nonzero values.
 If this flag is not set,
-then such a UID switch causes the thread to lose all capabilities
-in those sets.
+then such a UID switch causes the thread to lose all permitted capabilities.
 This flag is always cleared on an
 <B><A HREF="../man2/execve.2.html">execve</A></B>(2).
 
+<DT><DD>
+Note that even with the
+<B>SECBIT_KEEP_CAPS</B>
+
+flag set, the effective capabilities of a thread are cleared when it
+switches its effective UID to a nonzero value.
+However,
+if the thread has set this flag and its effective UID is already nonzero,
+and the thread subsequently switches all other UIDs to nonzero values,
+then the effective capabilities will not be cleared.
 <DT><DD>
 The setting of the
 <B>SECBIT_KEEP_CAPS</B>
@@ -1925,6 +2061,13 @@ The
 <B>CAP_SETPCAP</B>
 
 capability is required to modify the flags.
+Note that the
+<B>SECBIT_*</B>
+
+constants are available only after including the
+<I>&lt;<A HREF="file:///usr/include/linux/securebits.h">linux/securebits.h</A>&gt;</I>
+
+header file.
 <P>
 
 The
@@ -1949,7 +2092,7 @@ is by executing a program with associated file capabilities:
 
 
 prctl(PR_SET_SECUREBITS,
-<TT>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT>/* SECBIT_KEEP_CAPS off */<BR>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;SECBIT_KEEP_CAPS&nbsp;off&nbsp;*/
 <BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;SECBIT_KEEP_CAPS_LOCKED&nbsp;|
 <BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;SECBIT_NO_SETUID_FIXUP&nbsp;|
 <BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;SECBIT_NO_SETUID_FIXUP_LOCKED&nbsp;|
@@ -1959,11 +2102,29 @@ prctl(PR_SET_SECUREBITS,
 <BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;is&nbsp;not&nbsp;required&nbsp;*/
 
 
-<A NAME="lbAR">&nbsp;</A>
-<H3>Interaction with user namespaces</H3>
 
-For a discussion of the interaction of capabilities and user namespaces, see
-<B><A HREF="../man7/user_namespaces.7.html">user_namespaces</A></B>(7).
+
+<A NAME="lbAR">&nbsp;</A>
+<H3>Per-user-namespace set-user-ID-root programs</H3>
+
+A set-user-ID program whose UID matches the UID that
+created a user namespace will confer capabilities
+in the process's permitted and effective sets
+when executed by any process inside that namespace
+or any descendant user namespace.
+<P>
+
+The rules about the transformation of the process's capabilities during the
+<B><A HREF="../man2/execve.2.html">execve</A></B>(2)
+
+are exactly as described in the subsections
+<I>Transformation of capabilities during execve()</I>
+
+and
+<I>Capabilities and execution of programs by root</I>,
+
+with the difference that, in the latter subsection, &quot;root&quot;
+is the UID of the creator of the user namespace.
 
 
 <A NAME="lbAS">&nbsp;</A>
@@ -2001,19 +2162,14 @@ Namespaced file capabilities are recorded as version 3 (i.e.,
 <I>security.capability</I>
 
 extended attributes.
-Such an attribute is automatically created when a process that resides
-in a noninitial user namespace associates
-(<B><A HREF="../man2/setxattr.2.html">setxattr</A></B>(2))
+Such an attribute is automatically created in the circumstances described
+above under &quot;File capability extended attribute versioning&quot;.
+When a version 3
+<I>security.capability</I>
 
-file capabilities with a file whose user ID matches
-the user ID of the creator of the namespace.
-In this case,
+extended attribute is created,
 the kernel records not just the capability masks in the extended attribute,
 but also the namespace root user ID.
-For further details, see
-<I>File capability mask versioning</I>,
-
-above.
 <P>
 
 As with a binary that has
@@ -2028,8 +2184,17 @@ file capabilities confers capabilities to a process during
 However, capabilities are conferred only if the binary is executed by
 a process that resides in a user namespace whose
 UID 0 maps to the root user ID that is saved in the extended attribute,
-or when executed by a process that resides in descendant of such a namespace.
+or when executed by a process that resides in a descendant of such a namespace.
+
+
 <A NAME="lbAT">&nbsp;</A>
+<H3>Interaction with user namespaces</H3>
+
+For further information on the interaction of
+capabilities and user namespaces, see
+<B><A HREF="../man7/user_namespaces.7.html">user_namespaces</A></B>(7).
+
+<A NAME="lbAU">&nbsp;</A>
 <H2>CONFORMING TO</H2>
 
 <P>
@@ -2038,7 +2203,7 @@ No standards govern capabilities, but the Linux capability implementation
 is based on the withdrawn POSIX.1e draft standard; see
 
 
-<A NAME="lbAU">&nbsp;</A>
+<A NAME="lbAV">&nbsp;</A>
 <H2>NOTES</H2>
 
 From kernel 2.5.27 to kernel 2.6.26,
@@ -2119,7 +2284,7 @@ starts out with this capability removed from its per-process bounding
 set, and that bounding set is inherited by all other processes
 created on the system.
 </DL>
-<A NAME="lbAV">&nbsp;</A>
+<A NAME="lbAW">&nbsp;</A>
 <H2>SEE ALSO</H2>
 
 <B><A HREF="../man1/capsh.1.html">capsh</A></B>(1),
@@ -2186,7 +2351,7 @@ in the Linux kernel source tree
 <DT><A HREF="#lbAF">Notes to kernel developers</A><DD>
 <DT><A HREF="#lbAG">Thread capability sets</A><DD>
 <DT><A HREF="#lbAH">File capabilities</A><DD>
-<DT><A HREF="#lbAI">File capability mask versioning</A><DD>
+<DT><A HREF="#lbAI">File capability extended attribute versioning</A><DD>
 <DT><A HREF="#lbAJ">Transformation of capabilities during execve()</A><DD>
 <DT><A HREF="#lbAK">Safety checking for capability-dumb binaries</A><DD>
 <DT><A HREF="#lbAL">Capabilities and execution of programs by root</A><DD>
@@ -2195,17 +2360,18 @@ in the Linux kernel source tree
 <DT><A HREF="#lbAO">Effect of user ID changes on capabilities</A><DD>
 <DT><A HREF="#lbAP">Programmatically adjusting capability sets</A><DD>
 <DT><A HREF="#lbAQ">The securebits flags: establishing a capabilities-only environment</A><DD>
-<DT><A HREF="#lbAR">Interaction with user namespaces</A><DD>
+<DT><A HREF="#lbAR">Per-user-namespace set-user-ID-root programs</A><DD>
 <DT><A HREF="#lbAS">Namespaced file capabilities</A><DD>
+<DT><A HREF="#lbAT">Interaction with user namespaces</A><DD>
 </DL>
-<DT><A HREF="#lbAT">CONFORMING TO</A><DD>
-<DT><A HREF="#lbAU">NOTES</A><DD>
-<DT><A HREF="#lbAV">SEE ALSO</A><DD>
+<DT><A HREF="#lbAU">CONFORMING TO</A><DD>
+<DT><A HREF="#lbAV">NOTES</A><DD>
+<DT><A HREF="#lbAW">SEE ALSO</A><DD>
 </DL>
 <HR>
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:49:16 GMT, April 20, 2020
+Time: 03:49:53 GMT, April 20, 2020
 </BODY>
 </HTML>

@@ -25,7 +25,7 @@ the source, must acknowledge the copyright and authors of this work.
 <HTML><HEAD><TITLE>Man page of SELECT</TITLE>
 </HEAD><BODY>
 <H1>SELECT</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2017-09-15<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2019-03-06<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -85,11 +85,12 @@ waiting until one or more of the file descriptors become &quot;ready&quot;
 for some class of I/O operation (e.g., input possible).
 A file descriptor is considered ready if it is possible to
 perform a corresponding I/O operation (e.g.,
-<B><A HREF="../man2/read.2.html">read</A></B>(2)
+<B><A HREF="../man2/read.2.html">read</A></B>(2),
 
-without blocking, or a sufficiently small
-<B><A HREF="../man2/write.2.html">write</A></B>(2)).
+or a sufficiently small
+<B><A HREF="../man2/write.2.html">write</A></B>(2))
 
+without blocking.
 <P>
 
 <B>select</B>()
@@ -195,7 +196,7 @@ clears a set.
 and
 <B>FD_CLR</B>()
 
-respectively add and remove a given file descriptor from a set.
+add and remove a given file descriptor from a set.
 <B>FD_ISSET</B>()
 
 tests to see if a file descriptor is part of the set;
@@ -529,6 +530,18 @@ Moreover, POSIX requires
 to be a valid file descriptor.
 <P>
 
+The operation of
+<B>select</B>()
+
+and
+<B>pselect</B>()
+
+is not affected by the
+<B>O_NONBLOCK</B>
+
+flag.
+<P>
+
 On some other UNIX systems,
 
 <B>select</B>()
@@ -681,10 +694,10 @@ On some UNIX systems,
 
 unblocks and returns, with an indication that the file descriptor is ready
 (a subsequent I/O operation will likely fail with an error,
-unless another the file descriptor reopened between the time
+unless another process reopens file descriptor between the time
 <B>select</B>()
 
-returned and the I/O operations was performed).
+returned and the I/O operation is performed).
 On Linux (and some other systems),
 closing the file descriptor in another thread has no effect on
 <B>select</B>().
@@ -789,6 +802,19 @@ To monitor file descriptors greater than 1023, use
 <B><A HREF="../man2/poll.2.html">poll</A></B>(2)
 
 instead.
+<P>
+
+The implementation of the
+<I>fd_set</I>
+
+arguments as value-result arguments means that they must be
+reinitialized on each call to
+<B>select</B>().
+
+This design error is avoided by
+<B><A HREF="../man2/poll.2.html">poll</A></B>(2),
+
+which uses separate structure fields for the input and output of the call.
 <P>
 
 According to POSIX,
@@ -973,6 +999,6 @@ For a tutorial with discussion and examples, see
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:49:04 GMT, April 20, 2020
+Time: 03:49:41 GMT, April 20, 2020
 </BODY>
 </HTML>

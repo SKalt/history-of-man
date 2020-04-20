@@ -83,7 +83,7 @@ A UNIX domain socket address is represented in the following structure:
 
 struct sockaddr_un {
 <BR>&nbsp;&nbsp;&nbsp;&nbsp;sa_family_t&nbsp;sun_family;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;AF_UNIX&nbsp;*/
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;char&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;sun_path[108];&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;pathname&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;char&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;sun_path[108];&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Pathname&nbsp;*/
 };
 
 
@@ -95,7 +95,7 @@ The
 field always contains
 <B>AF_UNIX</B>.
 
-On Linux
+On Linux,
 <I>sun_path</I>
 
 is 108 bytes in size; see also NOTES, below.
@@ -382,11 +382,98 @@ as the socket family.
 <DT><B>SO_PASSCRED</B>
 
 <DD>
-Enables the receiving of the credentials of the sending process in an
-ancillary message.
-When this option is set and the socket is not yet connected
+Enabling this socket option causes receipt of the credentials of
+the sending process in an
+<B>SCM_CREDENTIALS ancillary</B>
+
+message in each subsequently received message.
+The returned credentials are those specified by the sender using
+<B>SCM_CREDENTIALS</B>,
+
+or a default that includes the sender's PID, real user ID, and real group ID,
+if the sender did not specify
+<B>SCM_CREDENTIALS</B>
+
+ancillary data.
+<DT><DD>
+When this option is set and the socket is not yet connected,
 a unique name in the abstract namespace will be generated automatically.
-Expects an integer boolean flag.
+<DT><DD>
+The value given as an argument to
+<B><A HREF="../man2/setsockopt.2.html">setsockopt</A></B>(2)
+
+and returned as the result of
+<B><A HREF="../man2/getsockopt.2.html">getsockopt</A></B>(2)
+
+is an integer boolean flag.
+<DT><B>SO_PASSSEC</B>
+
+<DD>
+Enables receiving of the SELinux security label of the peer socket
+in an ancillary message of type
+<B>SCM_SECURITY</B>
+
+(see below).
+<DT><DD>
+The value given as an argument to
+<B><A HREF="../man2/setsockopt.2.html">setsockopt</A></B>(2)
+
+and returned as the result of
+<B><A HREF="../man2/getsockopt.2.html">getsockopt</A></B>(2)
+
+is an integer boolean flag.
+<DT><DD>
+The
+<B>SO_PASSSEC</B>
+
+option is supported for UNIX domain datagram sockets
+
+since Linux 2.6.18;
+support for UNIX domain stream sockets was added
+
+in Linux 4.2.
+<DT><B>SO_PEEK_OFF</B>
+
+<DD>
+See
+<B><A HREF="../man7/socket.7.html">socket</A></B>(7).
+
+<DT><B>SO_PEERCRED</B>
+
+<DD>
+This read-only socket option returns the
+credentials of the peer process connected to this socket.
+The returned credentials are those that were in effect at the time
+of the call to
+<B><A HREF="../man2/connect.2.html">connect</A></B>(2)
+
+or
+<B><A HREF="../man2/socketpair.2.html">socketpair</A></B>(2).
+
+<DT><DD>
+The argument to
+<B><A HREF="../man2/getsockopt.2.html">getsockopt</A></B>(2)
+
+is a pointer to a
+<I>ucred</I>
+
+structure; define the
+<B>_GNU_SOURCE</B>
+
+feature test macro to obtain the definition of that structure from
+<I>&lt;<A HREF="file:///usr/include/sys/socket.h">sys/socket.h</A>&gt;</I>.
+
+<DT><DD>
+The use of this option is possible only for connected
+<B>AF_UNIX</B>
+
+stream sockets and for
+<B>AF_UNIX</B>
+
+stream and datagram socket pairs created using
+<B><A HREF="../man2/socketpair.2.html">socketpair</A></B>(2).
+
+
 </DL>
 <A NAME="lbAJ">&nbsp;</A>
 <H3>Autobind feature</H3>
@@ -480,7 +567,7 @@ Ancillary data is sent and received using
 and
 <B><A HREF="../man2/recvmsg.2.html">recvmsg</A></B>(2).
 
-For historical reasons the ancillary message types listed below
+For historical reasons, the ancillary message types listed below
 are specified with a
 <B>SOL_SOCKET</B>
 
@@ -488,7 +575,7 @@ type even though they are
 <B>AF_UNIX</B>
 
 specific.
-To send them set the
+To send them, set the
 <I>cmsg_level</I>
 
 field of the struct
@@ -501,7 +588,7 @@ and the
 <I>cmsg_type</I>
 
 field to the type.
-For more information see
+For more information, see
 <B><A HREF="../man3/cmsg.3.html">cmsg</A></B>(3).
 
 <DL COMPACT>
@@ -510,9 +597,42 @@ For more information see
 <DD>
 Send or receive a set of open file descriptors from another process.
 The data portion contains an integer array of the file descriptors.
-The passed file descriptors behave as though they have been created with
-<B><A HREF="../man2/dup.2.html">dup</A></B>(2).
+<DT><DD>
+Commonly, this operation is referred to as &quot;passing a file descriptor&quot;
+to another process.
+However, more accurately,
+what is being passed is a reference to an open file description (see
+<B><A HREF="../man2/open.2.html">open</A></B>(2)),
 
+and in the receiving process it is likely that a different
+file descriptor number will be used.
+Semantically, this operation is equivalent to duplicating
+(<B><A HREF="../man2/dup.2.html">dup</A></B>(2))
+
+a file descriptor into the file descriptor table of another process.
+<DT><DD>
+If the buffer used to receive the ancillary data containing
+file descriptors is too small (or is absent),
+then the ancillary data is truncated (or discarded)
+and the excess file descriptors are automatically closed
+in the receiving process.
+<DT><DD>
+The kernel constant
+<B>SCM_MAX_FD</B>
+
+defines a limit on the number of file descriptors in the array.
+Attempting to send an array larger than this limit causes
+<B><A HREF="../man2/sendmsg.2.html">sendmsg</A></B>(2)
+
+to fail with the error
+<B>EINVAL</B>.
+
+<B>SCM_MAX_FD</B>
+
+has the value 253
+(or 255 in kernels
+
+before 2.6.38).
 <DT><B>SCM_CREDENTIALS</B>
 
 <DD>
@@ -530,9 +650,9 @@ as follows:
 
 
 struct ucred {
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;pid_t&nbsp;pid;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;process&nbsp;ID&nbsp;of&nbsp;the&nbsp;sending&nbsp;process&nbsp;*/
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;uid_t&nbsp;uid;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;user&nbsp;ID&nbsp;of&nbsp;the&nbsp;sending&nbsp;process&nbsp;*/
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;gid_t&nbsp;gid;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;group&nbsp;ID&nbsp;of&nbsp;the&nbsp;sending&nbsp;process&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;pid_t&nbsp;pid;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Process&nbsp;ID&nbsp;of&nbsp;the&nbsp;sending&nbsp;process&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;uid_t&nbsp;uid;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;User&nbsp;ID&nbsp;of&nbsp;the&nbsp;sending&nbsp;process&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;gid_t&nbsp;gid;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Group&nbsp;ID&nbsp;of&nbsp;the&nbsp;sending&nbsp;process&nbsp;*/
 };
 
 
@@ -547,8 +667,7 @@ header files) in order to obtain the definition
 of this structure.
 <DT><DD>
 The credentials which the sender specifies are checked by the kernel.
-A process with effective user ID 0 is allowed to specify values that do
-not match its own.
+A privileged process is allowed to specify values that do not match its own.
 The sender must specify its own process ID (unless it has the capability
 <B>CAP_SYS_ADMIN</B>),
 
@@ -559,14 +678,113 @@ and its real group ID, effective group ID, or saved set-group-ID
 (unless it has
 <B>CAP_SETGID</B>).
 
+<DT><DD>
 To receive a
 <I>struct ucred</I>
 
-message the
+message, the
 <B>SO_PASSCRED</B>
 
 option must be enabled on the socket.
+<DT><B>SCM_SECURITY</B>
+
+<DD>
+Receive the SELinux security context (the security label)
+of the peer socket.
+The received ancillary data is a null-terminated string containing
+the security context.
+The receiver should allocate at least
+<B>NAME_MAX</B>
+
+bytes in the data portion of the ancillary message for this data.
+<DT><DD>
+To receive the security context, the
+<B>SO_PASSSEC</B>
+
+option must be enabled on the socket (see above).
 </DL>
+<P>
+
+When sending ancillary data with
+<B><A HREF="../man2/sendmsg.2.html">sendmsg</A></B>(2),
+
+only one item of each of the above types may be included in the sent message.
+<P>
+
+At least one byte of real data should be sent when sending ancillary data.
+On Linux, this is required to successfully send ancillary data over
+a UNIX domain stream socket.
+When sending ancillary data over a UNIX domain datagram socket,
+it is not necessary on Linux to send any accompanying real data.
+However, portable applications should also include at least one byte
+of real data when sending ancillary data over a datagram socket.
+<P>
+
+When receiving from a stream socket,
+ancillary data forms a kind of barrier for the received data.
+For example, suppose that the sender transmits as follows:
+<P>
+
+<DL COMPACT><DT><DD>
+
+<DL COMPACT>
+<DT>1.<DD>
+<B><A HREF="../man2/sendmsg.2.html">sendmsg</A></B>(2)
+
+of four bytes, with no ancillary data.
+<DT>2.<DD>
+<B><A HREF="../man2/sendmsg.2.html">sendmsg</A></B>(2)
+
+of one byte, with ancillary data.
+<DT>3.<DD>
+<B><A HREF="../man2/sendmsg.2.html">sendmsg</A></B>(2)
+
+of four bytes, with no ancillary data.
+
+</DL>
+</DL>
+
+<P>
+
+Suppose that the receiver now performs
+<B><A HREF="../man2/recvmsg.2.html">recvmsg</A></B>(2)
+
+calls each with a buffer size of 20 bytes.
+The first call will receive five bytes of data,
+along with the ancillary data sent by the second
+<B><A HREF="../man2/sendmsg.2.html">sendmsg</A></B>(2)
+
+call.
+The next call will receive the remaining five bytes of data.
+<P>
+
+If the space allocated for receiving incoming ancillary data is too small
+then the ancillary data is truncated to the number of headers
+that will fit in the supplied buffer (or, in the case of an
+<B>SCM_RIGHTS</B>
+
+file descriptor list, the list of file descriptors may be truncated).
+If no buffer is provided for incoming ancillary data (i.e., the
+<I>msg_control</I>
+
+field of the
+<I>msghdr</I>
+
+structure supplied to
+<B><A HREF="../man2/recvmsg.2.html">recvmsg</A></B>(2)
+
+is NULL),
+then the incoming ancillary data is discarded.
+In both of these cases, the
+<B>MSG_CTRUNC</B>
+
+flag will be set in the
+<I>msg.msg_flags</I>
+
+value returned by
+<B><A HREF="../man2/recvmsg.2.html">recvmsg</A></B>(2).
+
+
 <A NAME="lbAM">&nbsp;</A>
 <H3>Ioctls</H3>
 
@@ -599,7 +817,7 @@ can be:
 For
 <B>SOCK_STREAM</B>
 
-socket the function returns the amount of queued unread data in the receive buffer.
+sockets, this call returns the number of unread bytes in the receive buffer.
 The socket must not be in LISTEN state, otherwise an error
 (<B>EINVAL</B>)
 
@@ -627,9 +845,9 @@ defined in
 For
 <B>SOCK_DGRAM</B>
 
-socket,
+sockets,
 the returned value is the same as
-for Internet domain datagram socket;
+for Internet domain datagram sockets;
 see
 <B><A HREF="../man7/udp.7.html">udp</A></B>(7).
 
@@ -1075,7 +1293,7 @@ main(int argc, char *argv[])
 <BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
 <P>
 <BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;result&nbsp;=&nbsp;0;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;for(;;)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;for&nbsp;(;;)&nbsp;{
 <P>
 <BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Wait&nbsp;for&nbsp;next&nbsp;data&nbsp;packet.&nbsp;*/
 <P>
@@ -1109,7 +1327,6 @@ main(int argc, char *argv[])
 <P>
 <BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;sprintf(buffer,&nbsp;&quot;%d&quot;,&nbsp;result);
 <BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ret&nbsp;=&nbsp;write(data_socket,&nbsp;buffer,&nbsp;BUFFER_SIZE);
-<P>
 <BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(ret&nbsp;==&nbsp;-1)&nbsp;{
 <BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;perror(&quot;write&quot;);
 <BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
@@ -1288,6 +1505,6 @@ see
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:49:17 GMT, April 20, 2020
+Time: 03:49:54 GMT, April 20, 2020
 </BODY>
 </HTML>

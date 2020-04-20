@@ -97,25 +97,6 @@ The pathname is returned as the function result and via the argument
 if present.
 <P>
 
-If the current directory is not below the root directory of the current
-process (e.g., because the process set a new filesystem root using
-<B><A HREF="../man2/chroot.2.html">chroot</A></B>(2)
-
-without changing its current directory into the new root),
-then, since Linux 2.6.36,
-
-the returned path will be prefixed with the string &quot;(unreachable)&quot;.
-Such behavior can also be caused by an unprivileged user by changing
-the current directory into another mount namespace.
-When dealing with paths from untrusted sources, callers of these
-functions should consider checking whether the returned path starts
-with '/' or '(' to avoid misinterpreting an unreachable path
-as a relative path.
-This is no longer true under some C libraries; see
-<B>NOTES</B>.
-
-<P>
-
 The
 <B>getcwd</B>()
 
@@ -360,11 +341,11 @@ is a GNU extension.
 <A NAME="lbAI">&nbsp;</A>
 <H2>NOTES</H2>
 
-Under Linux, the function
+Under Linux, these functions make use of the
 <B>getcwd</B>()
 
-is a system call (since 2.1.92).
-On older systems it would query
+system call (available since Linux 2.1.92).
+On older systems they would query
 <I>/proc/self/cwd</I>.
 
 If both system call and proc filesystem are missing, a
@@ -372,20 +353,6 @@ generic implementation is called.
 Only in that case can
 these calls fail under Linux with
 <B>EACCES</B>.
-
-<P>
-
-Since a Linux 2.6.36 change that added &quot;(unreachable)&quot;, the glibc
-<B>getcwd</B>()
-
-has failed to conform to POSIX and returned a relative path when the API
-contract requires an absolute path.
-With glibc 2.27 onwards this is corrected;
-calling
-<B>getcwd</B>()
-
-from such a path will now result in failure with
-<B>ENOENT</B>.
 
 <P>
 
@@ -397,7 +364,70 @@ directory (&quot;.&quot;) and calling
 
 to return is usually a faster and more reliable alternative when sufficiently
 many file descriptors are available, especially on platforms other than Linux.
+
 <A NAME="lbAJ">&nbsp;</A>
+<H3>C library/kernel differences</H3>
+
+On Linux, the kernel provides a
+<B>getcwd</B>()
+
+system call, which the functions described in this page will use if possible.
+The system call takes the same arguments as the library function
+of the same name, but is limited to returning at most
+<B>PATH_MAX</B>
+
+bytes.
+(Before Linux 3.12,
+
+the limit on the size of the returned pathname was the system page size.
+On many architectures,
+<B>PATH_MAX</B>
+
+and the system page size are both 4096 bytes,
+but a few architectures have a larger page size.)
+If the length of the pathname of the current working directory
+exceeds this limit, then the system call fails with the error
+<B>ENAMETOOLONG</B>.
+
+In this case, the library functions fall back to
+a (slower) alternative implementation that returns the full pathname.
+<P>
+
+Following a change in Linux 2.6.36,
+
+the pathname returned by the
+<B>getcwd</B>()
+
+system call will be prefixed with the string &quot;(unreachable)&quot;
+if the current directory is not below the root directory of the current
+process (e.g., because the process set a new filesystem root using
+<B><A HREF="../man2/chroot.2.html">chroot</A></B>(2)
+
+without changing its current directory into the new root).
+Such behavior can also be caused by an unprivileged user by changing
+the current directory into another mount namespace.
+When dealing with pathname from untrusted sources, callers of the
+functions described in this page
+should consider checking whether the returned pathname starts
+with '/' or '(' to avoid misinterpreting an unreachable path
+as a relative pathname.
+<A NAME="lbAK">&nbsp;</A>
+<H2>BUGS</H2>
+
+Since the Linux 2.6.36 change that added &quot;(unreachable)&quot; in the
+circumstances described above, the glibc implementation of
+<B>getcwd</B>()
+
+has failed to conform to POSIX and returned a relative pathname when the API
+contract requires an absolute pathname.
+With glibc 2.27 onwards this is corrected;
+calling
+<B>getcwd</B>()
+
+from such a pathname will now result in failure with
+<B>ENOENT</B>.
+
+<A NAME="lbAL">&nbsp;</A>
 <H2>SEE ALSO</H2>
 
 <B><A HREF="../man1/pwd.1.html">pwd</A></B>(1),
@@ -427,12 +457,16 @@ many file descriptors are available, especially on platforms other than Linux.
 <DT><A HREF="#lbAG">ATTRIBUTES</A><DD>
 <DT><A HREF="#lbAH">CONFORMING TO</A><DD>
 <DT><A HREF="#lbAI">NOTES</A><DD>
-<DT><A HREF="#lbAJ">SEE ALSO</A><DD>
+<DL>
+<DT><A HREF="#lbAJ">C library/kernel differences</A><DD>
+</DL>
+<DT><A HREF="#lbAK">BUGS</A><DD>
+<DT><A HREF="#lbAL">SEE ALSO</A><DD>
 </DL>
 <HR>
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:49:09 GMT, April 20, 2020
+Time: 03:49:46 GMT, April 20, 2020
 </BODY>
 </HTML>

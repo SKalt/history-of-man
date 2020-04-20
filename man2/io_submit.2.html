@@ -82,11 +82,15 @@ The fields of this structure are as follows:
 <DT><I>aio_data</I>
 
 <DD>
-This is an internal field used by the kernel.
-Do not modify this field after an
-<B><A HREF="../man2/io_submit.2.html">io_submit</A></B>(2)
+This data is copied into the
+<I>data</I>
 
-call.
+field of the
+<I>io_event</I>
+
+structure upon I/O completion (see
+<B><A HREF="../man2/io_getevents.2.html">io_getevents</A></B>(2)).
+
 <DT><I>aio_key</I>
 
 <DD>
@@ -178,7 +182,10 @@ in
 <DT><I>aio_lio_opcode</I>
 
 <DD>
-This defines the type of I/O to be performed by the iocb structure.
+This defines the type of I/O to be performed by the
+<I>iocb</I>
+
+structure.
 The
 valid values are defined by the enum defined in
 <I>linux/aio_abi.h</I>:
@@ -201,7 +208,7 @@ enum {
 
 <DD>
 This defines the requests priority.
-<DT><I>aio_filedes</I>
+<DT><I>aio_fildes</I>
 
 <DD>
 The file descriptor on which the I/O operation is to be performed.
@@ -222,15 +229,37 @@ This is the file offset at which the I/O operation is to be performed.
 <DT><I>aio_flags</I>
 
 <DD>
-This is the flag to be passed iocb structure.
-The only valid value is
-<B>IOCB_FLAG_RESFD</B>,
+This is the set of flags associated with the
+<I>iocb</I>
 
-which indicates that the asynchronous I/O control must signal the file
+structure.
+The valid values are:
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT><B>IOCB_FLAG_RESFD</B>
+
+<DD>
+Asynchronous I/O control must signal the file
 descriptor mentioned in
 <I>aio_resfd</I>
 
 upon completion.
+<DT><B>IOCB_FLAG_IOPRIO</B> (since Linux 4.18)
+
+<DD>
+
+Interpret the
+<I>aio_reqprio</I>
+
+field as an
+<B>IOPRIO_VALUE</B>
+
+as defined by
+<I>linux/ioprio.h</I>.
+
+</DL>
+</DL>
+
 <DT><I>aio_resfd</I>
 
 <DD>
@@ -269,15 +298,30 @@ The AIO context specified by <I>ctx_id</I> is invalid.
 The <I>iocb</I> at
 <I>*iocbpp[0]</I>
 
-is not properly initialized,
-or the operation specified is invalid for the file descriptor
-in the <I>iocb</I>.
+is not properly initialized, the operation specified is invalid for the file
+descriptor in the <I>iocb</I>, or the value in the
+<I>aio_reqprio</I>
+
+field is invalid.
 <DT><B>ENOSYS</B>
 
 <DD>
 <B>io_submit</B>()
 
 is not implemented on this architecture.
+<DT><B>EPERM</B>
+
+<DD>
+The
+<I>aio_reqprio</I>
+
+field is set with the class
+<B>IOPRIO_CLASS_RT</B>,
+
+but the submitting context does not have the
+<B>CAP_SYS_ADMIN</B>
+
+capability.
 </DL>
 <A NAME="lbAG">&nbsp;</A>
 <H2>VERSIONS</H2>
@@ -370,6 +414,6 @@ set to a (positive) value that indicates the error.
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:49:03 GMT, April 20, 2020
+Time: 03:49:40 GMT, April 20, 2020
 </BODY>
 </HTML>

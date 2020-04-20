@@ -25,7 +25,7 @@ License along with this manual; if not, see
 <HTML><HEAD><TITLE>Man page of PROC</TITLE>
 </HEAD><BODY>
 <H1>PROC</H1>
-Section: Linux Programmer's Manual (5)<BR>Updated: 2017-09-15<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (5)<BR>Updated: 2019-03-06<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -158,11 +158,116 @@ nonroot users into the
 <B><A HREF="../man5/sudoers.5.html">sudoers</A></B>(5)
 
 file.
+
 </DL>
 <A NAME="lbAE">&nbsp;</A>
+<H3>Overview</H3>
+
+Underneath
+<I>/proc</I>,
+
+there are the following general groups of files and subdirectories:
+<DL COMPACT>
+<DT><I>/proc/[pid]</I> subdirectories
+
+<DD>
+Each one of these subdirectories contains files and subdirectories
+exposing information about the process with the corresponding process ID.
+<DT><DD>
+Underneath each of the
+<I>/proc/[pid]</I>
+
+directories, a
+<I>task</I>
+
+subdirectory contains subdirectories of the form
+<I>task/[tid]</I>,
+
+which contain corresponding information about each of the threads
+in the process, where
+<I>tid</I>
+
+is the kernel thread ID of the thread.
+<DT><DD>
+The
+<I>/proc/[pid]</I>
+
+subdirectories are visible when iterating through
+<I>/proc</I>
+
+with
+<B><A HREF="../man2/getdents.2.html">getdents</A></B>(2)
+
+(and thus are visible when one uses
+<B><A HREF="../man1/ls.1.html">ls</A></B>(1)
+
+to view the contents of
+<I>/proc</I>).
+
+<DT><I>/proc/[tid]</I> subdirectories
+
+<DD>
+Each one of these subdirectories contains files and subdirectories
+exposing information about the thread with the corresponding thread ID.
+The contents of these directories are the same as the corresponding
+<I>/proc/[pid]/task/[tid]</I>
+
+directories.
+<DT><DD>
+The
+<I>/proc/[tid]</I>
+
+subdirectories are
+<I>not</I>
+
+visible when iterating through
+<I>/proc</I>
+
+with
+<B><A HREF="../man2/getdents.2.html">getdents</A></B>(2)
+
+(and thus are
+<I>not</I>
+
+visible when one uses
+<B><A HREF="../man1/ls.1.html">ls</A></B>(1)
+
+to view the contents of
+<I>/proc</I>).
+
+<DT><I>/proc/self</I>
+
+<DD>
+When a process accesses this magic symbolic link,
+it resolves to the process's own
+<I>/proc/[pid]</I>
+
+directory.
+<DT><I>/proc/thread-self</I>
+
+<DD>
+When a thread accesses this magic symbolic link,
+it resolves to the process's own
+<I>/proc/self/task/[tid]</I>
+
+directory.
+<DT><I>/proc/[a-z]*</I>
+
+<DD>
+Various other files and subdirectories under
+<I>/proc</I>
+
+expose system-wide information.
+</DL>
+<P>
+
+All of the above are described in more detail below.
+
+<A NAME="lbAF">&nbsp;</A>
 <H3>Files and directories</H3>
 
-The following list describes many of the files and directories under the
+The following list provides details of many of the files and directories
+under the
 <I>/proc</I>
 
 hierarchy.
@@ -172,19 +277,38 @@ hierarchy.
 <DD>
 There is a numerical subdirectory for each running process; the
 subdirectory is named by the process ID.
-<DT><DD>
 Each
 <I>/proc/[pid]</I>
 
-subdirectory contains the
-pseudo-files and directories described below.
-These files are normally owned by the effective user and
+subdirectory contains the pseudo-files and directories described below.
+<DT><DD>
+The files inside each
+<I>/proc/[pid]</I>
+
+directory are normally owned by the effective user and
 effective group ID of the process.
 However, as a security measure, the ownership is made
 <I>root:root</I>
 
 if the process's &quot;dumpable&quot; attribute is set to a value other than 1.
-This attribute may change for the following reasons:
+<DT><DD>
+Before Linux 4.11,
+
+<I>root:root</I>
+
+meant the &quot;global&quot; root user ID and group ID
+(i.e., UID 0 and GID 0 in the initial user namespace).
+Since Linux 4.11,
+if the process is in a noninitial user namespace that has a
+valid mapping for user (group) ID 0 inside the namespace, then
+the user (group) ownership of the files under
+<I>/proc/[pid]</I>
+
+is instead made the same as the root user (group) ID of the namespace.
+This means that inside a container,
+things work as expected for the container &quot;root&quot; user.
+<DT><DD>
+The process's &quot;dumpable&quot; attribute may change for the following reasons:
 <DL COMPACT><DT><DD>
 <DL COMPACT>
 <DT>*<DD>
@@ -208,7 +332,7 @@ The attribute was reset to the value in the file
 Resetting the &quot;dumpable&quot; attribute to 1 reverts the ownership of the
 <I>/proc/[pid]/*</I>
 
-files to the process's real UID and real GID.
+files to the process's effective UID and GID.
 <DT><I>/proc/[pid]/attr</I>
 
 <DD>
@@ -366,9 +490,10 @@ all subsequently created sockets will be labeled with this context.
 See
 <B><A HREF="../man7/sched.7.html">sched</A></B>(7).
 
-<DT><I>/proc/[pid]/auxv</I> (since 2.6.0-test7)
+<DT><I>/proc/[pid]/auxv</I> (since 2.6.0)
 
 <DD>
+
 This contains the contents of the ELF interpreter information passed
 to the process at exec time.
 The format is one <I>unsigned long</I> ID
@@ -596,7 +721,7 @@ Thus, to print out the environment of process 1, you would do:
 <DT><DD>
 
 
-$<B> strings /proc/1/environ</B>
+$<B> cat /proc/1/environ | tr '\000' '\n'</B>
 
 
 
@@ -1139,6 +1264,91 @@ The mask of events that are ignored for this mark
 For details on these fields, see
 <B><A HREF="../man2/fanotify_mark.2.html">fanotify_mark</A></B>(2).
 
+<DT><DD>
+For timerfd file descriptors (see
+<B><A HREF="../man2/timerfd.2.html">timerfd</A></B>(2)),
+
+we see (since Linux 3.17)
+
+the following fields:
+<DT><DD>
+
+
+pos:    0
+flags:  02004002
+mnt_id: 13
+clockid: 0
+ticks: 0
+settime flags: 03
+it_value: (7695568592, 640020877)
+it_interval: (0, 0)
+
+
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT><I>clockid</I>
+
+<DD>
+This is the numeric value of the clock ID
+(corresponding to one of the
+<B>CLOCK_*</B>
+
+constants defined via
+<I>&lt;<A HREF="file:///usr/include/time.h">time.h</A>&gt;</I>)
+
+that is used to mark the progress of the timer (in this example, 0 is
+<B>CLOCK_REALTIME</B>).
+
+<DT><I>ticks</I>
+
+<DD>
+This is the number of timer expirations that have occurred,
+(i.e., the value that
+<B><A HREF="../man2/read.2.html">read</A></B>(2)
+
+on it would return).
+<DT><I>settime flags</I>
+
+<DD>
+This field lists the flags with which the timerfd was last armed (see
+<B><A HREF="../man2/timerfd_settime.2.html">timerfd_settime</A></B>(2)),
+
+in octal
+(in this example, both
+<B>TFD_TIMER_ABSTIME</B>
+
+and
+<B>TFD_TIMER_CANCEL_ON_SET</B>
+
+are set).
+<DT><I>it_value</I>
+
+<DD>
+This field contains the amount of time until the timer will next expire,
+expressed in seconds and nanoseconds.
+This is always expressed as a relative value,
+regardless of whether the timer was created using the
+<B>TFD_TIMER_ABSTIME</B>
+
+flag.
+<DT><I>it_interval</I>
+
+<DD>
+This field contains the interval of the timer,
+in seconds and nanoseconds.
+(The
+<I>it_value</I>
+
+and
+<I>it_interval</I>
+
+fields contain the values that
+<B><A HREF="../man2/timerfd_gettime.2.html">timerfd_gettime</A></B>(2)
+
+on this file descriptor would return.)
+</DL>
+</DL>
+
 <DT><I>/proc/[pid]/gid_map</I> (since Linux 3.5)
 
 <DD>
@@ -1424,9 +1634,10 @@ There are additional helpful pseudo-paths:
 
 <DD>
 The initial process's (also known as the main thread's) stack.
-<DT><I>[stack:&lt;tid&gt;]</I> (since Linux 3.4)
+<DT><I>[stack:&lt;tid&gt;]</I> (from Linux 3.4 to 4.4)
 
 <DD>
+
 
 A thread's stack (where the
 <I>&lt;tid&gt;</I>
@@ -1436,6 +1647,8 @@ It corresponds to the
 <I>/proc/[pid]/task/[tid]/</I>
 
 path.
+This field was removed in Linux 4.5, since providing this information
+for a process with large numbers of threads is expensive.
 <DT><I>[vdso]</I>
 
 <DD>
@@ -1466,6 +1679,20 @@ short of running it through
 <B><A HREF="../man1/strace.1.html">strace</A></B>(1),
 
 or similar.
+<DT><DD>
+<I>pathname</I>
+
+is shown unescaped except for newline characters, which are replaced
+with an octal escape sequence.
+As a result, it is not possible to determine whether the original
+pathname contained a newline character or the literal
+<I>\e012</I>
+
+character sequence.
+<DT><DD>
+If the mapping is file-backed and the file has been deleted, the string
+&quot; (deleted)&quot; is appended to the pathname.
+Note that this is ambiguous too.
 <DT><DD>
 Under Linux 2.0, there is no field giving pathname.
 <DT><I>/proc/[pid]/mem</I>
@@ -1524,6 +1751,16 @@ mount ID: a unique ID for the mount (may be reused after
 parent ID: the ID of the parent mount
 (or of self for the root of this mount namespace's mount tree).
 <DT><DD>
+If a new mount is stacked on top of a previous existing mount
+(so that it hides the existing mount) at pathname P,
+then the parent of the new mount is the previous mount at that location.
+Thus, when looking at all the mounts stacked at a particular location,
+the top-most mount is the one that is not the parent
+of any other mount at the same location.
+(Note, however, that this top-most mount will be accessible only if
+the longest path subprefix of P that is a mount point
+is not itself hidden by a stacked mount.)
+<DT><DD>
 If the parent mount point lies outside the process's root directory (see
 <B><A HREF="../man2/chroot.2.html">chroot</A></B>(2)),
 
@@ -1558,7 +1795,9 @@ which forms the root of this mount.
 mount point: the pathname of the mount point relative
 to the process's root directory.
 <DT>(6)<DD>
-mount options: per-mount options.
+mount options: per-mount options (see
+<B><A HREF="../man2/mount.2.html">mount</A></B>(2)).
+
 <DT>(7)<DD>
 optional fields: zero or more fields of the form &quot;tag[:value]&quot;; see below.
 <DT>(8)<DD>
@@ -1568,7 +1807,9 @@ filesystem type: the filesystem type in the form &quot;type[.subtype]&quot;.
 <DT>(10)<DD>
 mount source: filesystem-specific information or &quot;none&quot;.
 <DT>(11)<DD>
-super options: per-superblock options.
+super options: per-superblock options (see
+<B><A HREF="../man2/mount.2.html">mount</A></B>(2)).
+
 </DL>
 </DL>
 
@@ -1848,6 +2089,14 @@ or
 <I>/proc/[pid]/oom_adj</I>
 
 will change the other with its scaled value.
+<DT><DD>
+The
+<B><A HREF="../man1/choom.1.html">choom</A></B>(1)
+
+program provides a command-line interface for adjusting the
+<I>oom_score_adj</I>
+
+value of a running process or a newly executed command.
 <DT><I>/proc/[pid]/pagemap</I> (since Linux 2.6.25)
 
 <DD>
@@ -1873,7 +2122,7 @@ The page is exclusively mapped.
 <DT>55 (since Linux 3.11)<DD>
 PTE is soft-dirty
 (see the kernel source file
-<I>Documentation/vm/soft-dirty.txt</I>).
+<I>Documentation/admin-guide/mm/soft-dirty.rst</I>).
 
 <DT>54-0<DD>
 If the page is present in RAM (bit 63), then these bits
@@ -2610,6 +2859,7 @@ VmPTE:<TT>&nbsp;&nbsp;</TT>      76 kB<BR>
 VmPMD:<TT>&nbsp;&nbsp;</TT>      12 kB<BR>
 VmSwap:<TT>&nbsp;</TT>       0 kB<BR>
 HugetlbPages:          0 kB<TT>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT><TT>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT># 4.4<BR>
+CoreDumping:<TT>&nbsp;&nbsp;&nbsp;&nbsp;</TT>0                       # 4.15<BR>
 Threads:        1
 SigQ:   0/3067
 SigPnd: 0000000000000000
@@ -2624,6 +2874,7 @@ CapBnd: ffffffffffffffff
 CapAmb:<TT>&nbsp;</TT>0000000000000000<BR>
 NoNewPrivs:     0
 Seccomp:        0
+Speculation_Store_Bypass:       vulnerable
 Cpus_allowed:   00000001
 Cpus_allowed_list:      0
 Mems_allowed:   1
@@ -2695,19 +2946,20 @@ Number of file descriptor slots currently allocated.
 
 Supplementary group list.
 <DT>*<DD>
-<I>NStgid :</I>
+<I>NStgid</I>:
 
 Thread group ID (i.e., PID) in each of the PID namespaces of which
 <I>[pid]</I>
 
 is a member.
 The leftmost entry shows the value with respect to the PID namespace
-of the reading process,
+of the process that mounted this procfs (or the root namespace
+if mounted by the kernel),
 followed by the value in successively nested inner namespaces.
 
 (Since Linux 4.1.)
 <DT>*<DD>
-<I>NSpid:</I>
+<I>NSpid</I>:
 
 Thread ID in each of the PID namespaces of which
 <I>[pid]</I>
@@ -2752,7 +3004,7 @@ Virtual memory size.
 <I>VmLck</I>:
 
 Locked memory size (see
-<B><A HREF="../man3/mlock.3.html">mlock</A></B>(3)).
+<B><A HREF="../man2/mlock.2.html">mlock</A></B>(2)).
 
 <DT>*<DD>
 <I>VmPin</I>:
@@ -2816,7 +3068,7 @@ Page table entries size (since Linux 2.6.10).
 <I>VmPMD</I>:
 
 
-Size of second-level page tables (since Linux 4.0).
+Size of second-level page tables (added in Linux 4.0; removed in Linux 4.15).
 <DT>*<DD>
 <I>VmSwap</I>:
 
@@ -2826,9 +3078,19 @@ shmem swap usage is not included (since Linux 2.6.34).
 <DT>*<DD>
 <I>HugetlbPages</I>:
 
-Size of hugetlb memory portions.
+Size of hugetlb memory portions
 
 (since Linux 4.4).
+<DT>*<DD>
+<I>CoreDumping</I>:
+
+Contains the value 1 if the process is currently dumping core,
+and 0 if it is not
+
+(since Linux 4.15).
+This information can be used by a monitoring process to avoid killing
+a process that is currently dumping core,
+which could result in a corrupted core dump file.
 <DT>*<DD>
 <I>Threads</I>:
 
@@ -2916,6 +3178,14 @@ This field is provided only if the kernel was built with the
 
 kernel configuration option enabled.
 <DT>*<DD>
+<I>Speculation_Store_Bypass</I>:
+
+
+Speculation flaw mitigation state
+(since Linux 4.17, see
+<B><A HREF="../man2/prctl.2.html">prctl</A></B>(2)).
+
+<DT>*<DD>
 <I>Cpus_allowed</I>:
 
 Mask of CPUs on which this process may run
@@ -2975,9 +3245,10 @@ Permission to access this file is governed by a ptrace access mode
 check; see
 <B><A HREF="../man2/ptrace.2.html">ptrace</A></B>(2).
 
-<DT><I>/proc/[pid]/task</I> (since Linux 2.6.0-test6)
+<DT><I>/proc/[pid]/task</I> (since Linux 2.6.0)
 
 <DD>
+
 This is a directory that contains one subdirectory
 for each thread in the process.
 The name of each subdirectory is the numerical thread ID
@@ -2986,6 +3257,7 @@ The name of each subdirectory is the numerical thread ID
 of the thread (see
 <B><A HREF="../man2/gettid.2.html">gettid</A></B>(2)).
 
+<DT><DD>
 Within each of these subdirectories, there is a set of
 files with the same names and contents as under the
 <I>/proc/[pid]</I>
@@ -3021,6 +3293,7 @@ or they might not exist in
 <I>/proc/[pid]</I>
 
 at all.
+<DT><DD>
 
 In a multithreaded process, the contents of the
 <I>/proc/[pid]/task</I>
@@ -3201,6 +3474,46 @@ Permission to access this file is governed by a ptrace access mode
 check; see
 <B><A HREF="../man2/ptrace.2.html">ptrace</A></B>(2).
 
+<DT><I>/proc/[tid]</I>
+
+<DD>
+There  is a numerical subdirectory for each running thread
+that is not a thread group leader
+(i.e., a thread whose thread ID is not the same as its process ID);
+the subdirectory is named by the thread ID.
+Each one of these subdirectories contains files and subdirectories
+exposing information about the thread with the thread ID
+<I>tid</I>.
+
+The contents of these directories are the same as the corresponding
+<I>/proc/[pid]/task/[tid]</I>
+
+directories.
+<DT><DD>
+The
+<I>/proc/[tid]</I>
+
+subdirectories are
+<I>not</I>
+
+visible when iterating through
+<I>/proc</I>
+
+with
+<B><A HREF="../man2/getdents.2.html">getdents</A></B>(2)
+
+(and thus are
+<I>not</I>
+
+visible when one uses
+<B><A HREF="../man1/ls.1.html">ls</A></B>(1)
+
+to view the contents of
+<I>/proc</I>).
+
+However, the pathnames of these directories are visible to
+(i.e., usable as arguments in)
+system calls that operate on pathnames.
 <DT><I>/proc/apm</I>
 
 <DD>
@@ -3609,7 +3922,7 @@ The bits are as follows:
 <DT><DD>
 For further details on the meanings of these bits,
 see the kernel source file
-<I>Documentation/vm/pagemap.txt</I>.
+<I>Documentation/admin-guide/mm/pagemap.rst</I>.
 
 Before kernel 2.6.29,
 
@@ -3970,6 +4283,15 @@ Amount of memory consumed in
 <B><A HREF="../man5/tmpfs.5.html">tmpfs</A></B>(5)
 
 filesystems.
+<DT><I>KReclaimable</I> %lu (since Linux 4.20)
+
+<DD>
+Kernel allocations that the kernel will attempt to reclaim
+under memory pressure.
+Includes
+<I>SReclaimable</I>
+
+(below), and other direct allocations with a shrinker.
 <DT><I>Slab</I> %lu
 
 <DD>
@@ -4029,7 +4351,7 @@ The limit is calculated according to the formula described under
 <I>/proc/sys/vm/overcommit_memory</I>.
 
 For further details, see the kernel source file
-<I>Documentation/vm/overcommit-accounting</I>.
+<I>Documentation/vm/overcommit-accounting.rst</I>.
 
 <DT><I>Committed_AS</I> %lu
 
@@ -4064,15 +4386,35 @@ Total size of vmalloc memory area.
 
 <DD>
 Amount of vmalloc area which is used.
+Since Linux 4.4,
+
+this field is no longer calculated, and is hard coded as 0.
+See
+<I>/proc/vmallocinfo</I>.
+
 <DT><I>VmallocChunk</I> %lu
 
 <DD>
 Largest contiguous block of vmalloc area which is free.
+Since Linux 4.4,
+
+this field is no longer calculated and is hard coded as 0.
+See
+<I>/proc/vmallocinfo</I>.
+
 <DT><I>HardwareCorrupted</I> %lu (since Linux 2.6.32)
 
 <DD>
 (<B>CONFIG_MEMORY_FAILURE</B> is required.)
 [To be documented.]
+<DT><I>LazyFree</I> %lu (since Linux 4.12)
+
+<DD>
+Shows the amount of memory marked by
+<B><A HREF="../man2/madvise.2.html">madvise</A></B>(2)
+
+<B>MADV_FREE</B>.
+
 <DT><I>AnonHugePages</I> %lu (since Linux 2.6.38)
 
 <DD>
@@ -4457,7 +4799,7 @@ the internal state of the socket.
 <DT><I>Path</I>:
 
 <DD>
-the bound path (if any) of the socket.
+the bound pathname (if any) of the socket.
 Sockets in the abstract namespace are included in the list,
 and are shown with a
 <I>Path</I>
@@ -4728,13 +5070,15 @@ in certain conditions.
 </DL>
 </DL>
 
-<DT><I>irq</I> (since Linux 2.6.0-test4)
+<DT><I>irq</I> (since Linux 2.6.0)
 
 <DD>
+
 (6) Time servicing interrupts.
-<DT><I>softirq</I> (since Linux 2.6.0-test4)
+<DT><I>softirq</I> (since Linux 2.6.0
 
 <DD>
+
 (7) Time servicing softirqs.
 <DT><I>steal</I> (since Linux 2.6.11)
 
@@ -5520,7 +5864,7 @@ man page.
 
 <DD>
 This file
-contains the path for the hotplug policy agent.
+contains the pathname for the hotplug policy agent.
 The default value in this file is
 <I>/sbin/hotplug</I>.
 
@@ -5586,7 +5930,7 @@ Enabled if nonzero.
 <DT><I>/proc/sys/kernel/modprobe</I>
 
 <DD>
-This file contains the path for the kernel module loader.
+This file contains the pathname for the kernel module loader.
 The default value is
 <I>/sbin/modprobe</I>.
 
@@ -6547,7 +6891,7 @@ is instead calculated as:
 <BR>&nbsp;&nbsp;&nbsp;&nbsp;CommitLimit&nbsp;=&nbsp;overcommit_kbytes&nbsp;+&nbsp;total_swap
 <DT><DD>
 See also the description of
-<I>/proc/sys/vm/admiin_reserve_kbytes</I>
+<I>/proc/sys/vm/admin_reserve_kbytes</I>
 
 and
 <I>/proc/sys/vm/user_reserve_kbytes</I>.
@@ -6816,8 +7160,9 @@ tty drivers and line disciplines.
 <DT><I>/proc/uptime</I>
 
 <DD>
-This file contains two numbers: the uptime of the system (seconds),
-and the amount of time spent in idle process (seconds).
+This file contains two numbers (values in seconds): the uptime of the
+system (including time spent in suspend) and the amount of time spent
+in the idle process.
 <DT><I>/proc/version</I>
 
 <DD>
@@ -7440,7 +7785,7 @@ Number of free CMA (Contiguous Memory Allocator) pages.
 <DD>
 
 See the kernel source file
-<I>Documentation/vm/transhuge.txt</I>.
+<I>Documentation/admin-guide/mm/transhuge.rst</I>.
 
 
 
@@ -7451,7 +7796,7 @@ See the kernel source file
 <DD>
 
 See the kernel source file
-<I>Documentation/vm/transhuge.txt</I>.
+<I>Documentation/admin-guide/mm/transhuge.rst</I>.
 
 
 
@@ -7462,7 +7807,7 @@ See the kernel source file
 <DD>
 
 See the kernel source file
-<I>Documentation/vm/transhuge.txt</I>.
+<I>Documentation/admin-guide/mm/transhuge.rst</I>.
 
 
 
@@ -7532,7 +7877,7 @@ See the kernel source file
 <DD>
 
 See the kernel source file
-<I>Documentation/vm/transhuge.txt</I>.
+<I>Documentation/admin-guide/mm/transhuge.rst</I>.
 
 
 
@@ -7543,7 +7888,7 @@ See the kernel source file
 <DD>
 
 See the kernel source file
-<I>Documentation/vm/transhuge.txt</I>.
+<I>Documentation/admin-guide/mm/transhuge.rst</I>.
 
 
 
@@ -7554,7 +7899,7 @@ See the kernel source file
 <DD>
 
 See the kernel source file
-<I>Documentation/vm/transhuge.txt</I>.
+<I>Documentation/admin-guide/mm/transhuge.rst</I>.
 
 
 
@@ -7565,7 +7910,7 @@ See the kernel source file
 <DD>
 
 See the kernel source file
-<I>Documentation/vm/transhuge.txt</I>.
+<I>Documentation/admin-guide/mm/transhuge.rst</I>.
 
 
 
@@ -7576,7 +7921,7 @@ See the kernel source file
 <DD>
 
 See the kernel source file
-<I>Documentation/vm/transhuge.txt</I>.
+<I>Documentation/admin-guide/mm/transhuge.rst</I>.
 
 
 
@@ -7587,7 +7932,7 @@ See the kernel source file
 <DD>
 
 See the kernel source file
-<I>Documentation/vm/transhuge.txt</I>.
+<I>Documentation/admin-guide/mm/transhuge.rst</I>.
 
 
 
@@ -7598,7 +7943,7 @@ See the kernel source file
 <DD>
 
 See the kernel source file
-<I>Documentation/vm/transhuge.txt</I>.
+<I>Documentation/admin-guide/mm/transhuge.rst</I>.
 
 
 
@@ -7685,15 +8030,22 @@ This file display information about memory zones.
 This is useful for analyzing virtual memory behavior.
 
 </DL>
-<A NAME="lbAF">&nbsp;</A>
+<A NAME="lbAG">&nbsp;</A>
 <H2>NOTES</H2>
 
-Many strings (i.e., the environment and command line) are in
-the internal format, with subfields terminated by null bytes ('\0'),
-so you
-may find that things are more readable if you use <I>od -c</I> or <I>tr
-&quot;\000&quot; &quot;\n&quot;</I> to read them.
-Alternatively, <I>echo `cat &lt;file&gt;`</I> works well.
+Many files contain strings (e.g., the environment and command line)
+that are in the internal format,
+with subfields terminated by null bytes ('\0').
+When inspecting such files, you may find that the results are more readable
+if you use a command of the following form to display them:
+<P>
+
+
+
+$<B> cat </B><I>file</I> | tr '\000' '\n'
+
+
+
 <P>
 
 This manual page is incomplete, possibly inaccurate, and is the kind
@@ -7701,7 +8053,7 @@ of thing that needs to be updated very often.
 
 
 
-<A NAME="lbAG">&nbsp;</A>
+<A NAME="lbAH">&nbsp;</A>
 <H2>SEE ALSO</H2>
 
 <B><A HREF="../man1/cat.1.html">cat</A></B>(1),
@@ -7712,9 +8064,13 @@ of thing that needs to be updated very often.
 
 <B><A HREF="../man1/free.1.html">free</A></B>(1),
 
+<B><A HREF="../man1/htop.1.html">htop</A></B>(1),
+
 <B><A HREF="../man1/init.1.html">init</A></B>(1),
 
 <B><A HREF="../man1/ps.1.html">ps</A></B>(1),
+
+<B><A HREF="../man1/pstree.1.html">pstree</A></B>(1),
 
 <B><A HREF="../man1/tr.1.html">tr</A></B>(1),
 
@@ -7761,7 +8117,7 @@ of thing that needs to be updated very often.
 <P>
 
 The Linux kernel source files:
-<I>Documentation/filesystems/proc.txt</I>
+<I>Documentation/filesystems/proc.txt</I>,
 
 <I>Documentation/sysctl/fs.txt</I>,
 
@@ -7781,15 +8137,16 @@ and
 <DT><A HREF="#lbAC">DESCRIPTION</A><DD>
 <DL>
 <DT><A HREF="#lbAD">Mount options</A><DD>
-<DT><A HREF="#lbAE">Files and directories</A><DD>
+<DT><A HREF="#lbAE">Overview</A><DD>
+<DT><A HREF="#lbAF">Files and directories</A><DD>
 </DL>
-<DT><A HREF="#lbAF">NOTES</A><DD>
-<DT><A HREF="#lbAG">SEE ALSO</A><DD>
+<DT><A HREF="#lbAG">NOTES</A><DD>
+<DT><A HREF="#lbAH">SEE ALSO</A><DD>
 </DL>
 <HR>
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:49:16 GMT, April 20, 2020
+Time: 03:49:53 GMT, April 20, 2020
 </BODY>
 </HTML>

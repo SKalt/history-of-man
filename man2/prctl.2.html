@@ -26,7 +26,7 @@ the source, must acknowledge the copyright and authors of this work.
 <HTML><HEAD><TITLE>Man page of PRCTL</TITLE>
 </HEAD><BODY>
 <H1>PRCTL</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2018-02-02<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2019-03-06<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -115,6 +115,19 @@ and
 <I>arg5</I>
 
 must be specified as 0.
+<DT><DD>
+Higher-level interfaces layered on top of the above operations are
+provided in the
+<B><A HREF="../man3/libcap.3.html">libcap</A></B>(3)
+
+library in the form of
+<B><A HREF="../man3/cap_get_ambient.3.html">cap_get_ambient</A></B>(3),
+
+<B><A HREF="../man3/cap_set_ambient.3.html">cap_set_ambient</A></B>(3),
+
+and
+<B><A HREF="../man3/cap_reset_ambient.3.html">cap_reset_ambient</A></B>(3).
+
 <DT><B>PR_CAPBSET_READ</B> (since Linux 2.6.25)
 
 <DD>
@@ -137,6 +150,13 @@ If the capability specified in
 
 is not valid, then the call fails with the error
 <B>EINVAL</B>.
+
+<DT><DD>
+A higher-level interface layered on top of this operation is provided in the
+<B><A HREF="../man3/libcap.3.html">libcap</A></B>(3)
+
+library in the form of
+<B><A HREF="../man3/cap_get_bound.3.html">cap_get_bound</A></B>(3).
 
 <DT><B>PR_CAPBSET_DROP</B> (since Linux 2.6.25)
 
@@ -167,6 +187,13 @@ does not represent a valid capability; or
 
 if file capabilities are not enabled in the kernel,
 in which case bounding sets are not supported.
+<DT><DD>
+A higher-level interface layered on top of this operation is provided in the
+<B><A HREF="../man3/libcap.3.html">libcap</A></B>(3)
+
+library in the form of
+<B><A HREF="../man3/cap_drop_bound.3.html">cap_drop_bound</A></B>(3).
+
 <DT><B>PR_SET_CHILD_SUBREAPER</B> (since Linux 3.4)
 
 <DD>
@@ -202,7 +229,8 @@ signal and will be able to
 
 on the process to discover its termination status.
 <DT><DD>
-The setting of this bit is not inherited by children created by
+The setting of the &quot;child subreaper&quot; attribute
+is not inherited by children created by
 <B><A HREF="../man2/fork.2.html">fork</A></B>(2)
 
 and
@@ -666,10 +694,8 @@ and
 
 arguments must be zero if unused.
 <DT><DD>
-
-Since Linux 3.10,
-this feature is available all the time.
 Before Linux 3.10,
+
 this feature is available only if the kernel is built with the
 <B>CONFIG_CHECKPOINT_RESTORE</B>
 
@@ -818,11 +844,18 @@ memory area for the ELF
 
 section).
 <DT><DD>
-The second limitation is that such transitions can be done only once
-in a process life time.
-Any further attempts will be rejected.
-This should help system administrators monitor unusual
-symbolic-link transitions over all processes running on a system.
+In Linux 4.9 and earlier, the
+
+<B>PR_SET_MM_EXE_FILE</B>
+
+operation can be performed only once in a process's lifetime;
+attempting to perform the operation a second time results in the error
+<B>EPERM</B>.
+
+This restriction was enforced for security reasons that were subsequently
+deemed specious,
+and the restriction was removed in Linux 4.10 because some
+user-space applications needed to perform this operation more than once.
 </DL>
 <P>
 
@@ -927,7 +960,11 @@ configuration option.
 You can check whether the CPU supports MPX by looking for the 'mpx'
 CPUID bit, like with the following command:
 <DT><DD>
-<TT>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT>cat /proc/cpuinfo | grep ' mpx '<BR>
+
+
+cat /proc/cpuinfo | grep ' mpx '
+
+
 <DT><DD>
 A thread may not switch in or out of long (64-bit) mode while MPX is
 enabled.
@@ -989,7 +1026,7 @@ the returned string will be null-terminated.
 Set the calling thread's
 <I>no_new_privs</I>
 
-bit to the value in
+attribute to the value in
 <I>arg2</I>.
 
 With
@@ -1005,8 +1042,11 @@ that could not have been done without the
 call (for example,
 rendering the set-user-ID and set-group-ID mode bits,
 and file capabilities non-functional).
-Once set, this bit cannot be unset.
-The setting of this bit is inherited by children created by
+Once set, this the
+<I>no_new_privs</I>
+
+attribute cannot be unset.
+The setting of this attribute is inherited by children created by
 <B><A HREF="../man2/fork.2.html">fork</A></B>(2)
 
 and
@@ -1020,7 +1060,7 @@ Since Linux 4.10,
 the value of a thread's
 <I>no_new_privs</I>
 
-bit can be viewed via the
+attribute can be viewed via the
 <I>NoNewPrivs</I>
 
 field in the
@@ -1045,7 +1085,7 @@ See also
 Return (as the function result) the value of the
 <I>no_new_privs</I>
 
-bit for the calling thread.
+attribute for the calling thread.
 A value of 0 indicates the regular
 <B><A HREF="../man2/execve.2.html">execve</A></B>(2)
 
@@ -1057,22 +1097,11 @@ will operate in the privilege-restricting mode described above.
 <DT><B>PR_SET_PDEATHSIG</B> (since Linux 2.1.57)
 
 <DD>
-Set the parent death signal
+Set the parent-death signal
 of the calling process to <I>arg2</I> (either a signal value
 in the range 1..maxsig, or 0 to clear).
 This is the signal that the calling process will get when its
 parent dies.
-This value is cleared for the child of a
-<B><A HREF="../man2/fork.2.html">fork</A></B>(2)
-
-and (since Linux 2.4.36 / 2.6.23)
-when executing a set-user-ID or set-group-ID binary,
-or a binary that has associated capabilities (see
-<B><A HREF="../man7/capabilities.7.html">capabilities</A></B>(7)).
-
-This value is preserved across
-<B><A HREF="../man2/execve.2.html">execve</A></B>(2).
-
 <DT><DD>
 <I>Warning</I>:
 
@@ -1086,6 +1115,48 @@ In other words, the signal will be sent when that thread terminates
 <B><A HREF="../man3/pthread_exit.3.html">pthread_exit</A></B>(3)),
 
 rather than after all of the threads in the parent process terminate.
+<DT><DD>
+The parent-death signal is sent upon subsequent termination of the parent
+thread and also upon termination of each subreaper process
+(see the description of
+<B>PR_SET_CHILD_SUBREAPER</B>
+
+above) to which the caller is subsequently reparented.
+If the parent thread and all ancestor subreapers have already terminated
+by the time of the
+<B>PR_SET_PDEATHSIG</B>
+
+operation, then no parent-death signal is sent to the caller.
+<DT><DD>
+The parent-death signal is process-directed (see
+<B><A HREF="../man7/signal.7.html">signal</A></B>(7))
+
+and, if the child installs a handler using the
+<B><A HREF="../man2/sigaction.2.html">sigaction</A></B>(2)
+
+<B>SA_SIGINFO</B>
+
+flag, the
+<I>si_pid</I>
+
+field of the
+<I>siginfo_t</I>
+
+argument of the handler contains the PID of the terminating parent process.
+<DT><DD>
+The parent-death signal setting is cleared for the child of a
+<B><A HREF="../man2/fork.2.html">fork</A></B>(2).
+
+It is also
+(since Linux 2.4.36 / 2.6.23)
+
+cleared when executing a set-user-ID or set-group-ID binary,
+or a binary that has associated capabilities (see
+<B><A HREF="../man7/capabilities.7.html">capabilities</A></B>(7));
+
+otherwise, this value is preserved across
+<B><A HREF="../man2/execve.2.html">execve</A></B>(2).
+
 <DT><B>PR_GET_PDEATHSIG</B> (since Linux 2.3.15)
 
 <DD>
@@ -1289,6 +1360,147 @@ the &quot;securebits&quot; flags of the calling thread.
 See
 <B><A HREF="../man7/capabilities.7.html">capabilities</A></B>(7).
 
+<DT><B>PR_GET_SPECULATION_CTRL</B> (since Linux 4.17)
+
+<DD>
+Returns the state of the speculation misfeature specified in
+<I>arg2</I>.
+
+Currently, the only permitted value for this argument is
+<B>PR_SPEC_STORE_BYPASS</B>
+
+(otherwise the call fails with the error
+<B>ENODEV</B>).
+
+<DT><DD>
+The return value uses bits 0-3 with the following meaning:
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT><B>PR_SPEC_PRCTL</B>
+
+<DD>
+Mitigation can be controlled per thread by
+<B>PR_SET_SPECULATION_CTRL</B>
+
+<DT><B>PR_SPEC_ENABLE</B>
+
+<DD>
+The speculation feature is enabled, mitigation is disabled.
+<DT><B>PR_SPEC_DISABLE</B>
+
+<DD>
+The speculation feature is disabled, mitigation is enabled
+<DT><B>PR_SPEC_FORCE_DISABLE</B>
+
+<DD>
+Same as
+<B>PR_SPEC_DISABLE</B>
+
+but cannot be undone.
+</DL>
+</DL>
+
+<DT><DD>
+If all bits are 0,
+then the CPU is not affected by the speculation misfeature.
+<DT><DD>
+If
+<B>PR_SPEC_PRCTL</B>
+
+is set, then per-thread control of the mitigation is available.
+If not set,
+<B>prctl</B>()
+
+for the speculation misfeature will fail.
+<DT><DD>
+The
+<I>arg3</I>,
+
+<I>arg4</I>,
+
+and
+<I>arg5</I>
+
+arguments must be specified as 0; otherwise the call fails with the error
+<B>EINVAL</B>.
+
+<DT><B>PR_SET_SPECULATION_CTRL</B> (since Linux 4.17)
+
+<DD>
+
+
+Sets the state of the speculation misfeature specified in
+<I>arg2</I>.
+
+Currently, the only permitted value for this argument is
+<B>PR_SPEC_STORE_BYPASS</B>
+
+(otherwise the call fails with the error
+<B>ENODEV</B>).
+
+This setting is a per-thread attribute.
+The
+<I>arg3</I>
+
+argument is used to hand in the control value,
+which is one of the following:
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT><B>PR_SPEC_ENABLE</B>
+
+<DD>
+The speculation feature is enabled, mitigation is disabled.
+<DT><B>PR_SPEC_DISABLE</B>
+
+<DD>
+The speculation feature is disabled, mitigation is enabled
+<DT><B>PR_SPEC_FORCE_DISABLE</B>
+
+<DD>
+Same as
+<B>PR_SPEC_DISABLE</B>
+
+but cannot be undone.
+A subsequent
+<B>prctl(..., PR_SPEC_ENABLE)</B>
+
+will fail with the error
+<B>EPERM</B>.
+
+</DL>
+</DL>
+
+<DT><DD>
+Any other value in
+<I>arg3</I>
+
+will result in the call failing with the error
+<B>ERANGE</B>.
+
+<DT><DD>
+The
+<I>arg4</I>
+
+and
+<I>arg5</I>
+
+arguments must be specified as 0; otherwise the call fails with the error
+<B>EINVAL</B>.
+
+<DT><DD>
+The speculation feature can also be controlled by the
+<B>spec_store_bypass_disable</B>
+
+boot parameter.
+This parameter may enforce a read-only policy which will result in the
+<B><A HREF="../man2/prctl.2.html">prctl</A></B>(2)
+
+call failing with the error
+<B>ENXIO</B>.
+
+For further details, see the kernel source file
+<I>Documentation/admin-guide/kernel-parameters.txt</I>.
+
 <DT><B>PR_SET_THP_DISABLE</B> (since Linux 3.15)
 
 <DD>
@@ -1476,9 +1688,10 @@ See
 <DD>
 Return (as the function result)
 the &quot;current&quot; timer slack value of the calling thread.
-<DT><B>PR_SET_TIMING</B> (since Linux 2.6.0-test4)
+<DT><B>PR_SET_TIMING</B> (since Linux 2.6.0)
 
 <DD>
+
 Set whether to use (normal, traditional) statistical process timing or
 accurate timestamp-based process timing, by passing
 <B>PR_TIMING_STATISTICAL</B>
@@ -1498,9 +1711,10 @@ is not currently implemented
 
 
 
-<DT><B>PR_GET_TIMING</B> (since Linux 2.6.0-test4)
+<DT><B>PR_GET_TIMING</B> (since Linux 2.6.0)
 
 <DD>
+
 Return (as the function result) which process timing method is currently
 in use.
 <DT><B>PR_SET_TSC</B> (since Linux 2.6.26, x86 only)
@@ -2003,6 +2217,15 @@ and
 <I>arg3</I>
 
 does not specify a valid capability.
+<DT><B>ENODEV</B>
+
+<DD>
+<I>option</I>
+
+was
+<B>PR_SET_SPECULATION_CTRL</B>
+
+the kernel or CPU does not support the requested speculation misfeature.
 <DT><B>ENXIO</B>
 
 <DD>
@@ -2016,6 +2239,19 @@ or
 
 and the kernel or the CPU does not support MPX management.
 Check that the kernel and processor have MPX support.
+<DT><B>ENXIO</B>
+
+<DD>
+<I>option</I>
+
+was
+<B>PR_SET_SPECULATION_CTRL</B>
+
+implies that the control of the selected speculation misfeature is not possible.
+See
+<B>PR_GET_SPECULATION_CTRL</B>
+
+for the bit fields to determine which option is available.
 <DT><B>EOPNOTSUPP</B>
 
 <DD>
@@ -2045,6 +2281,18 @@ or tried to set a flag whose corresponding locked flag was set
 (see
 <B><A HREF="../man7/capabilities.7.html">capabilities</A></B>(7)).
 
+<DT><B>EPERM</B>
+
+<DD>
+<I>option</I>
+
+is
+<B>PR_SET_SPECULATION_CTRL</B>
+
+wherein the speculation was disabled with
+<B>PR_SPEC_FORCE_DISABLE</B>
+
+and caller tried to enable it again.
 <DT><B>EPERM</B>
 
 <DD>
@@ -2106,6 +2354,40 @@ or the
 <B>PR_CAP_AMBIENT_LOWER</B>
 
 securebit has been set.
+<DT><B>ERANGE</B>
+
+<DD>
+<I>option</I>
+
+was
+<B>PR_SET_SPECULATION_CTRL</B>
+
+and
+<I>arg3</I>
+
+is neither
+<B>PR_SPEC_ENABLE</B>,
+
+<B>PR_SPEC_DISABLE</B>,
+
+nor
+<B>PR_SPEC_FORCE_DISABLE</B>.
+
+<DT><B>EINVAL</B>
+
+<DD>
+<I>option</I>
+
+was
+<B>PR_GET_SPECULATION_CTRL</B>
+
+or
+<B>PR_SET_SPECULATION_CTRL</B>
+
+and unused arguments to
+<B>prctl</B>()
+
+are not 0.
 </DL>
 <A NAME="lbAG">&nbsp;</A>
 <H2>VERSIONS</H2>
@@ -2164,6 +2446,6 @@ get or set the maximum stack size, and so on.
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:49:03 GMT, April 20, 2020
+Time: 03:49:41 GMT, April 20, 2020
 </BODY>
 </HTML>

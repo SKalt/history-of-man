@@ -7,7 +7,7 @@ This is in the public domain
 <HTML><HEAD><TITLE>Man page of LD.SO</TITLE>
 </HEAD><BODY>
 <H1>LD.SO</H1>
-Section: Linux Programmer's Manual (8)<BR>Updated: 2018-04-30<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (8)<BR>Updated: 2019-02-27<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -212,15 +212,17 @@ value in the auxiliary vector (see
 <H2>OPTIONS</H2>
 
 <DL COMPACT>
-<DT><B>--list</B>
+<DT><B>--audit</B><I> list</I>
 
 <DD>
-List all dependencies and how they are resolved.
-<DT><B>--verify</B>
+Use objects named in
+<I>list</I>
 
-<DD>
-Verify that program is dynamically linked and this dynamic linker can handle
-it.
+as auditors.
+The objects in
+<I>list</I>
+
+are delimited by colons.
 <DT><B>--inhibit-cache</B>
 
 <DD>
@@ -256,13 +258,43 @@ Ignore RPATH and RUNPATH information in object names in
 <I>list</I>.
 
 This option is ignored when running in secure-execution mode (see below).
-<DT><B>--audit</B><I> list</I>
-
-<DD>
-Use objects named in
+The objects in
 <I>list</I>
 
-as auditors.
+are delimited by colons or spaces.
+<DT><B>--list</B>
+
+<DD>
+List all dependencies and how they are resolved.
+<DT><B>--preload</B> <I>list</I> (since glibc 2.30)
+
+<DD>
+Preload the objects specified in
+<I>list</I>.
+
+The objects in
+<I>list</I>
+
+are delimited by colons or spaces.
+The objects are preloaded as explained in the description of the
+<B>LD_PRELOAD</B>
+
+environment variable below.
+<DT><DD>
+By contrast with
+<B>LD_PRELOAD</B>,
+
+the
+<B>--preload</B>
+
+option provides a way to perform preloading for a single executable
+without affecting preloading performed in any child process that executes
+a new program.
+<DT><B>--verify</B>
+
+<DD>
+Verify that program is dynamically linked and this dynamic linker can handle
+it.
 </DL>
 <A NAME="lbAG">&nbsp;</A>
 <H2>ENVIRONMENT</H2>
@@ -414,10 +446,14 @@ as shell variables!)
 <DD>
 A list of additional, user-specified, ELF shared
 objects to be loaded before all others.
+This feature can be used to selectively override functions
+in other shared objects.
+<DT><DD>
 The items of the list can be separated by spaces or colons,
 and there is no support for escaping either separator.
-This can be used to selectively override functions in other shared objects.
 The objects are searched for using the rules given under DESCRIPTION.
+Objects are searched for and added to the link map in the left-to-right
+order specified in the list.
 <DT><DD>
 In secure-execution mode,
 preload pathnames containing slashes are ignored.
@@ -448,6 +484,29 @@ as described above in
 
 
 
+
+<DT><DD>
+There are various methods of specifying libraries to be preloaded,
+and these are handled in the following order:
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT>(1)<DD>
+The
+<B>LD_PRELOAD</B>
+
+environment variable.
+<DT>(2)<DD>
+The
+<B>--preload</B>
+
+command-line option when invoking the dynamic linker directly.
+<DT>(3)<DD>
+The
+<I>/etc/ld.so.preload</I>
+
+file (described below).
+</DL>
+</DL>
 
 <DT><B>LD_TRACE_LOADED_OBJECTS</B>
 
@@ -985,6 +1044,6 @@ mtrr, pat, pbe, pge, pn, pse36, sep, ss, sse, sse2, tm
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:49:17 GMT, April 20, 2020
+Time: 03:49:54 GMT, April 20, 2020
 </BODY>
 </HTML>

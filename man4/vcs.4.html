@@ -25,7 +25,7 @@ License along with this manual; if not, see
 <HTML><HEAD><TITLE>Man page of VCS</TITLE>
 </HEAD><BODY>
 <H1>VCS</H1>
-Section: Linux Programmer's Manual (4)<BR>Updated: 2017-05-03<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (4)<BR>Updated: 2019-03-06<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -38,7 +38,7 @@ vcs, vcsa - virtual console memory
 <I>/dev/vcs0</I>
 
 is a character device with major number 7 and minor number
-0, usually of mode 0644 and owner root.tty.
+0, usually with mode 0644 and ownership root:tty.
 It refers to the memory of the currently
 displayed virtual console terminal.
 <P>
@@ -47,7 +47,7 @@ displayed virtual console terminal.
 
 are character devices for virtual console
 terminals, they have major number 7 and minor number 1 to 63, usually
-mode 0644 and owner root.tty.
+mode 0644 and ownership root:tty.
 <I>/dev/vcsa[0-63]</I>
 
 are the same, but
@@ -187,7 +187,8 @@ main(void)
 <BR>&nbsp;&nbsp;&nbsp;&nbsp;struct&nbsp;{unsigned&nbsp;char&nbsp;lines,&nbsp;cols,&nbsp;x,&nbsp;y;}&nbsp;scrn;
 <BR>&nbsp;&nbsp;&nbsp;&nbsp;unsigned&nbsp;short&nbsp;s;
 <BR>&nbsp;&nbsp;&nbsp;&nbsp;unsigned&nbsp;short&nbsp;mask;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;unsigned&nbsp;char&nbsp;ch,&nbsp;attrib;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;unsigned&nbsp;char&nbsp;attrib;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;ch;
 <P>
 <BR>&nbsp;&nbsp;&nbsp;&nbsp;fd&nbsp;=&nbsp;open(console,&nbsp;O_RDWR);
 <BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(fd&nbsp;&lt;&nbsp;0)&nbsp;{
@@ -205,16 +206,16 @@ main(void)
 <BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
 <BR>&nbsp;&nbsp;&nbsp;&nbsp;}
 <BR>&nbsp;&nbsp;&nbsp;&nbsp;(void)&nbsp;read(fd,&nbsp;&amp;scrn,&nbsp;4);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;(void)&nbsp;lseek(fd,&nbsp;4&nbsp;+&nbsp;2*(scrn.y*scrn.cols&nbsp;+&nbsp;scrn.x),&nbsp;0);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;(void)&nbsp;lseek(fd,&nbsp;4&nbsp;+&nbsp;2*(scrn.y*scrn.cols&nbsp;+&nbsp;scrn.x),&nbsp;SEEK_SET);
 <BR>&nbsp;&nbsp;&nbsp;&nbsp;(void)&nbsp;read(fd,&nbsp;&amp;s,&nbsp;2);
 <BR>&nbsp;&nbsp;&nbsp;&nbsp;ch&nbsp;=&nbsp;s&nbsp;&amp;&nbsp;0xff;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(attrib&nbsp;&amp;&nbsp;mask)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(s&nbsp;&amp;&nbsp;mask)
 <BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ch&nbsp;|=&nbsp;0x100;
 <BR>&nbsp;&nbsp;&nbsp;&nbsp;attrib&nbsp;=&nbsp;((s&nbsp;&amp;&nbsp;~mask)&nbsp;&gt;&gt;&nbsp;8);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;ch='%c'&nbsp;attrib=0x%02x\n&quot;,&nbsp;ch,&nbsp;attrib);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;attrib&nbsp;^=&nbsp;0x10;
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;(void)&nbsp;lseek(fd,&nbsp;-1,&nbsp;1);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;(void)&nbsp;write(fd,&nbsp;&amp;attrib,&nbsp;1);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;ch=0x%03x&nbsp;attrib=0x%02x\n&quot;,&nbsp;ch,&nbsp;attrib);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;s&nbsp;^=&nbsp;0x1000;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;(void)&nbsp;lseek(fd,&nbsp;-2,&nbsp;SEEK_CUR);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;(void)&nbsp;write(fd,&nbsp;&amp;s,&nbsp;2);
 <BR>&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_SUCCESS);
 }
 
@@ -245,6 +246,6 @@ main(void)
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:49:15 GMT, April 20, 2020
+Time: 03:49:52 GMT, April 20, 2020
 </BODY>
 </HTML>

@@ -7,7 +7,7 @@ This page is in the public domain
 <HTML><HEAD><TITLE>Man page of ZIC</TITLE>
 </HEAD><BODY>
 <H1>ZIC</H1>
-Section: Linux System Administration (8)<BR>Updated: 2010-02-25<BR><A HREF="#index">Index</A>
+Section: Linux System Administration (8)<BR>Updated: 2019-03-06<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -17,13 +17,31 @@ zic - timezone compiler
 <A NAME="lbAC">&nbsp;</A>
 <H2>SYNOPSIS</H2>
 
-<PRE>
-<B>zic</B> [<B>-v</B>] [<B>-d</B> <I>directory</I>] [<B>-l</B> <I>localtime</I>] [<B>-p</B> <I>posixrules</I>]
-    [<B>-L</B> <I>leapsecondfilename</I>] [<B>-s</B>] [<B>-y</B> <I>command</I>] [<I>filename</I>...]
-</PRE>
+<B>zic</B>
 
+[
+<I>option</I>
+
+... ] [
+<I>filename</I>
+
+... ]
 <A NAME="lbAD">&nbsp;</A>
 <H2>DESCRIPTION</H2>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -38,13 +56,20 @@ If a
 <I>filename</I>
 
 is
-<B>-</B>,
 
 standard input is read.
-<P>
+<A NAME="lbAE">&nbsp;</A>
+<H2>OPTIONS</H2>
 
-These options are available:
 <DL COMPACT>
+<DT><B>--version</B>
+
+<DD>
+Output version information and exit.
+<DT><B>--help</B>
+
+<DD>
+Output short usage message and exit.
 <DT><B>-d </B><I>directory</I>
 
 <DD>
@@ -53,32 +78,32 @@ in the standard directory named below.
 <DT><B>-l </B><I>timezone</I>
 
 <DD>
-Use the given timezone as local time.
+Use
+<I>timezone</I>
+
+as local time.
 <B>zic</B>
 
 will act as if the input contained a link line of the form
-</DL>
 <P>
-
 <BR>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
 Link<TT>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT><I>timezone</I><TT>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT><TT>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT>localtime<BR>
-<DL COMPACT>
 <DT><B>-p </B><I>timezone</I>
 
 <DD>
-Use the given timezone's rules when handling POSIX-format
+Use
+<I>timezone</I>'s
+
+rules when handling POSIX-format
 timezone environment variables.
 <B>zic</B>
 
 will act as if the input contained a link line of the form
-</DL>
 <P>
-
 <BR>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
 Link<TT>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT><I>timezone</I><TT>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT><TT>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT>posixrules<BR>
-<DL COMPACT>
 <DT><B>-L </B><I>leapsecondfilename</I>
 
 <DD>
@@ -88,32 +113,93 @@ no leap second information appears in output files.
 <DT><B>-v</B>
 
 <DD>
-Complain if a year that appears in a data file is outside the range
+Be more verbose, and complain about the following situations:
+<DL COMPACT><DT><DD>
+<P>
+
+The input specifies a link to a link.
+<P>
+
+A year that appears in a data file is outside the range
 of years representable by
 <B><A HREF="../man2/time.2.html">time</A></B>(2)
 
 values.
+<P>
+
+A time of 24:00 or more appears in the input.
+Pre-1998 versions of
+<B>zic</B>
+
+prohibit 24:00, and pre-2007 versions prohibit times greater than 24:00.
+<P>
+
+A rule goes past the start or end of the month.
+Pre-2004 versions of
+<B>zic</B>
+
+prohibit this.
+<P>
+
+The output file does not contain all the information about the
+long-term future of a timezone, because the future cannot be summarized as
+an extended POSIX TZ string.  For example, as of 2013 this problem
+occurs for Iran's daylight-saving rules for the predicted future, as
+these rules are based on the Iranian calendar, which cannot be
+represented.
+<P>
+
+The output contains data that may not be handled properly by client
+code designed for older
+<B>zic</B>
+
+output formats.  These compatibility issues affect only timestamps
+before 1970 or after the start of 2038.
+<P>
+
+A time zone abbreviation has fewer than 3 characters.
+POSIX requires at least 3.
+<P>
+
+An output file name contains a byte that is not an ASCII letter,
+
+
+or
+
+or it contains a file name component that contains more than 14 bytes
+or that starts with
+
+</DL>
+
 <DT><B>-s</B>
 
 <DD>
 Limit time values stored in output files to values that are the same
 whether they're taken to be signed or unsigned.
 You can use this option to generate SVVS-compatible files.
-<DT><B>-y </B><I>command</I>
-
-<DD>
-Use the given
-<I>command</I>
-
-rather than
-<B>yearistype</B>
-
-when checking year types (see below).
 </DL>
 <P>
 
+Input files should be text files, that is, they should be a series of
+zero or more lines, each ending in a newline byte and containing at
+most 511 bytes, and without any NUL bytes.  The input text's encoding
+is typically UTF-8 or ASCII; it should have a unibyte representation
+for the POSIX Portable Character Set (PPCS)
+&lt;<A HREF="http://pubs.opengroup.org/onlinepubs/9699919799/basedefs/V1_chap06.html">http://pubs.opengroup.org/onlinepubs/9699919799/basedefs/V1_chap06.html</A>&gt;
+and the encoding's non-unibyte characters should consist entirely of
+non-PPCS bytes.  Non-PPCS characters typically occur only in comments:
+although output file names and time zone abbreviations can contain
+nearly any character, other software will work better if these are
+limited to the restricted syntax described under the
+<B>-v</B>
+
+option.
+<P>
+
 Input lines are made up of fields.
-Fields are separated from one another by any number of white space characters.
+Fields are separated from one another by one or more white space characters.
+The white space characters are space, form feed, carriage return, newline,
+tab, and vertical tab.
 Leading and trailing white space on input lines is ignored.
 An unquoted sharp character (#) in the input introduces a comment which extends
 to the end of the line the sharp character appears on.
@@ -124,17 +210,33 @@ Nonblank lines are expected to be of one of three types:
 rule lines, zone lines, and link lines.
 <P>
 
+Names must be in English and are case insensitive.
+They appear in several contexts, and include month and weekday names
+and keywords such as
+<B>maximum</B>,
+
+<B>only</B>,
+
+<B>Rolling</B>,
+
+and
+<B>Zone</B>.
+
+A name can be abbreviated by omitting all but an initial prefix; any
+abbreviation must be unambiguous in context.
+<P>
+
 A rule line has the form
 <PRE>
 <BR>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
 
-Rule  NAME  FROM  TO    TYPE  IN   ON       AT    SAVE  LETTER/S
+Rule  NAME  FROM  TO    TYPE  IN   ON       AT     SAVE   LETTER/S
 
 For example:
 <BR>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-Rule  US    1967  1973  -     Apr  lastSun  2:00  1:00  D
+Rule  US    1967  1973  -     Apr  lastSun  2:00w  1:00   D
 
 </PRE>
 
@@ -143,20 +245,29 @@ The fields that make up a rule line are:
 <DT><B>NAME</B>
 
 <DD>
-Gives the (arbitrary) name of the set of rules this rule is part of.
+Gives the name of the rule set that contains this line.
+The name must start with a character that is neither
+an ASCII digit nor
+
+nor
+
+To allow for future extensions,
+an unquoted name should not contain characters from the set
+
 <DT><B>FROM</B>
 
 <DD>
 Gives the first year in which the rule applies.
-Any integer year can be supplied; the Gregorian calendar is assumed.
+Any signed integer year can be supplied; the proleptic Gregorian calendar
+is assumed, with year 0 preceding year 1.
 The word
-<I>minimum</I>
+<B>minimum</B>
 
-(or an abbreviation) means the minimum year representable as an integer.
+(or an abbreviation) means the indefinite past.
 The word
-<I>maximum</I>
+<B>maximum</B>
 
-(or an abbreviation) means the maximum year representable as an integer.
+(or an abbreviation) means the indefinite future.
 Rules can describe times that are not representable as time values,
 with the unrepresentable times ignored; this allows rules to be portable
 among hosts with differing time value types.
@@ -165,14 +276,14 @@ among hosts with differing time value types.
 <DD>
 Gives the final year in which the rule applies.
 In addition to
-<I>minimum</I>
+<B>minimum</B>
 
 and
-<I>maximum</I>
+<B>maximum</B>
 
 (as above),
 the word
-<I>only</I>
+<B>only</B>
 
 (or an abbreviation)
 may be used to repeat the value of the
@@ -182,40 +293,12 @@ field.
 <DT><B>TYPE</B>
 
 <DD>
-Gives the type of year in which the rule applies.
-If
-<B>TYPE</B>
+should be
 
-is
-<B>-</B>,
+and is present for compatibility with older versions of
+<B>zic</B>
 
-then the rule applies in all years between
-<B>FROM</B>
-
-and
-<B>TO</B>
-
-inclusive.
-If
-<B>TYPE</B>
-
-is something else, then
-<I>zic</I>
-
-executes the command
-<BR>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-<B>yearistype</B>
-
-<I>year</I>
-
-<I>type</I>
-
-<BR>
-
-to check the type of a year:
-an exit status of zero is taken to mean that the year is of the given type;
-an exit status of one is taken to mean that the year is not of the given type.
+in which it could contain year types.
 <DT><B>IN</B>
 
 <DD>
@@ -227,7 +310,6 @@ Month names may be abbreviated.
 Gives the day on which the rule takes effect.
 Recognized forms include:
 <PRE>
-</DL>
 
 
 5        the fifth of the month
@@ -239,57 +321,67 @@ Sun&lt;=25  last Sunday on or before the 25th
 
 
 <P>
+A weekday name (e.g.,
+<B>Sunday</B>)
 
-Names of days of the week may be abbreviated or spelled out in full.
+or a weekday name preceded by
+
+(e.g.,
+<B>lastSunday</B>)
+
+may be abbreviated or spelled out in full.
 Note that there must be no spaces within the
 <B>ON</B>
 
 field.
-<DL COMPACT>
 <DT><B>AT</B>
 
 <DD>
 Gives the time of day at which the rule takes effect.
 Recognized forms include:
 <PRE>
-</DL>
 
 
-2        time in hours
-2:00     time in hours and minutes
-15:00    24-hour format time (for times after noon)
-1:28:14  time in hours, minutes, and seconds
--        equivalent to 0
+2            time in hours
+2:00         time in hours and minutes
+01:28:14     time in hours, minutes, and seconds
+15:00        24-hour format time (for times after noon)
+260:00       260 hours after 00:00
+-2:30        2.5 hours before 00:00
+-            equivalent to 0
 </PRE>
 
 
 <P>
-
 where hour 0 is midnight at the start of the day,
 and hour 24 is midnight at the end of the day.
 Any of these forms may be followed by the letter
-<I>w</I>
+<B>w</B>
 
 if the given time is local
 
 time,
-<I>s</I>
+<B>s</B>
 
 if the given time is local
 
 time, or
-<I>u</I>
+<B>u</B>
 
 (or
-<I>g</I>
+<B>g</B>
 
 or
-<I>z</I>)
+<B>z</B>)
 
 if the given time is universal time;
 in the absence of an indicator,
 wall clock time is assumed.
-<DL COMPACT>
+The intent is that a rule line describes the instants when a
+clock/calendar set to the type of time specified in the
+<B>AT</B>
+
+field would show the specified date and time of day.
 <DT><B>SAVE</B>
 
 <DD>
@@ -300,12 +392,24 @@ This field has the same format as the
 
 field
 (although, of course, the
-<I>w</I>
+<B>w</B>
 
 and
-<I>s</I>
+<B>s</B>
 
 suffixes are not used).
+Negative offsets are allowed; in Ireland, for example, daylight saving
+time is observed in winter and has a negative offset relative to
+Irish Standard Time.
+The offset is merely added to standard time; for example,
+<B>zic</B>
+
+does not distinguish a 10:30 standard time plus an 0:30
+<B>SAVE</B>
+
+from a 10:00 standard time plus a 1:00
+<B>SAVE</B>.
+
 <DT><B>LETTER/S</B>
 
 <DD>
@@ -319,9 +423,8 @@ in
 
 or
 
-of timezone abbreviations to be used when this rule is in effect.
+of time zone abbreviations to be used when this rule is in effect.
 If this field is
-<B>-</B>,
 
 the variable part is null.
 </DL>
@@ -329,16 +432,15 @@ the variable part is null.
 
 A zone line has the form
 <P>
-
 <PRE>
 <BR>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-Zone  NAME                UTCOFF  RULES/SAVE  FORMAT  [UNTIL]
+Zone  NAME        UTOFF  RULES   FORMAT  [UNTIL]
 
 For example:
 
 <BR>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Zone                 Australia/Adelaide  9:30    AusCST1971 Oct 31 2:00
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Zone         Asia/Amman     2:00    JordanEE%sT2017 Oct 27 01:00
 
 </PRE>
 
@@ -349,11 +451,17 @@ The fields that make up a zone line are:
 <DD>
 The name of the timezone.
 This is the name used in creating the time conversion information file for the
-zone.
-<DT><B>UTCOFF</B>
+timezone.
+It should not contain a file name component
+
+or
+
+a file name component is a maximal substring that does not contain
+
+<DT><B>UTOFF</B>
 
 <DD>
-The amount of time to add to UTC to get standard time in this zone.
+The amount of time to add to UT to get standard time.
 This field has the same format as the
 <B>AT</B>
 
@@ -361,40 +469,70 @@ and
 <B>SAVE</B>
 
 fields of rule lines;
-begin the field with a minus sign if time must be subtracted from UTC.
-<DT><B>RULES/SAVE</B>
+begin the field with a minus sign if time must be subtracted from UT.
+<DT><B>RULES</B>
 
 <DD>
-The name of the rule(s) that apply in the timezone or,
-alternately, an amount of time to add to local standard time.
+The name of the rules that apply in the timezone or,
+alternatively, a field in the same format as a rule-line SAVE column,
+giving of the amount of time to be added to local standard time
+effect, and whether the resulting time is standard or daylight saving.
 If this field is
-<B>-</B>,
+<B>-</B>
 
-then standard time always applies in the timezone.
+then standard time always applies.
+When an amount of time is given, only the sum of standard time and
+this amount matters.
 <DT><B>FORMAT</B>
 
 <DD>
-The format for timezone abbreviations in this timezone.
+The format for time zone abbreviations.
 The pair of characters
 <B>%s</B>
 
 is used to show where the
 
-of the timezone abbreviation goes.
-Alternately,
+of the time zone abbreviation goes.
+Alternatively, a format can use the pair of characters
+<B>%z</B>
+
+to stand for the UT offset in the form
+&plusmn;<I>hh</I>,
+
+&plusmn;<I>hhmm</I>,
+
+or
+&plusmn;<I>hhmmss</I>,
+
+using the shortest form that does not lose information, where
+<I>hh</I>,
+
+<I>mm</I>,
+
+and
+<I>ss</I>
+
+are the hours, minutes, and seconds east (+) or west (-) of UT.
+Alternatively,
 a slash (/)
 separates standard and daylight abbreviations.
+To conform to POSIX, a time zone abbreviation should contain only
+alphanumeric ASCII characters,
+
+and
+
 <DT><B>UNTIL</B>
 
 <DD>
-The time at which the UTC offset or the rule(s) change for a location.
-It is specified as a year, a month, a day, and a time of day.
+The time at which the UT offset or the rule(s) change for a location.
+It takes the form of YEAR [MONTH [DAY [TIME]]].
 If this is specified,
-the timezone information is generated from the given UTC offset
-and rule change until the time specified.
+the time zone information is generated from the given UT offset
+and rule change until the time specified, which is interpreted using
+the rules in effect just before the transition.
 The month, day, and time of day have the same format as the IN, ON, and AT
-columns of a rule; trailing columns can be omitted, and default to the
-earliest possible value for the missing columns.
+fields of a rule; trailing fields can be omitted, and default to the
+earliest possible value for the missing fields.
 <DT><DD>
 The next line must be a
 
@@ -403,24 +541,27 @@ string
 
 and the name are omitted, as the continuation line will
 place information starting at the time specified as the
-<B>UNTIL</B>
 
-field in the previous line in the file used by the previous line.
-Continuation lines may contain an
-<B>UNTIL</B>
+information in the previous line in the file used by the previous line.
+Continuation lines may contain
 
-field, just as zone lines do, indicating that the next line is a further
+information, just as zone lines do, indicating that the next line is a further
 continuation.
 </DL>
 <P>
 
-A link line has the form
+If a zone changes at the same instant that a rule would otherwise take
+effect in the earlier zone or continuation line, the rule is ignored.
+In a single zone it is an error if two rules take effect at the same
+instant, or if two zone changes take effect at the same instant.
 <P>
 
+A link line has the form
+<P>
 <PRE>
 <BR>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-Link  LINK-FROM        LINK-TO
+Link  TARGET           LINK-NAME
 
 For example:
 
@@ -430,20 +571,27 @@ For example:
 </PRE>
 
 The
-<B>LINK-FROM</B>
+<B>TARGET</B>
 
 field should appear as the
 <B>NAME</B>
 
-field in some zone line;
-the
-<B>LINK-TO</B>
+field in some zone line.
+The
+<B>LINK-NAME</B>
 
-field is used as an alternate name for that zone.
+field is used as an alternative name for that zone;
+it has the same syntax as a zone line's
+<B>NAME</B>
+
+field.
 <P>
 
 Except for continuation lines,
 lines may appear in any order in the input.
+However, the behavior is unspecified if multiple zone or link lines
+define the same name, or if the source of one link line is the target
+of another.
 <P>
 
 Lines in the file that describes leap seconds have the following form:
@@ -456,7 +604,7 @@ Leap  YEAR  MONTH  DAY  HH:MM:SS  CORR  R/S
 For example:
 <BR>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-Leap  1974  Dec    31   23:59:60  +     S
+Leap  2016  Dec    31   23:59:60  +     S
 
 </PRE>
 
@@ -481,17 +629,6 @@ if a second was added
 or
 
 if a second was skipped.
-
-
-
-
-
-
-
-
-
-
-
 The
 <B>R/S</B>
 
@@ -504,16 +641,86 @@ or
 
 if the leap second time given by the other fields should be interpreted as
 local wall clock time.
-<A NAME="lbAE">&nbsp;</A>
+<A NAME="lbAF">&nbsp;</A>
+<H2>EXTENDED EXAMPLE</H2>
+
+Here is an extended example of
+<B>zic</B>
+
+input, intended to illustrate many of its features.
+In this example, the EU rules are for the European Union
+and for its predecessor organization, the European Communities.
+<BR>
+
+
+<PRE>
+
+
+# Rule  NAME  FROM  TO    TYPE  IN   ON       AT    SAVE  LETTER/S
+Rule    Swiss 1941  1942  -     May  Mon&gt;=1   1:00  1:00  S
+Rule    Swiss 1941  1942  -     Oct  Mon&gt;=1   2:00  0     -
+
+Rule    EU    1977  1980  -     Apr  Sun&gt;=1   1:00u 1:00  S
+Rule    EU    1977  only  -     Sep  lastSun  1:00u 0     -
+Rule    EU    1978  only  -     Oct   1       1:00u 0     -
+Rule    EU    1979  1995  -     Sep  lastSun  1:00u 0     -
+Rule    EU    1981  max   -     Mar  lastSun  1:00u 1:00  S
+Rule    EU    1996  max   -     Oct  lastSun  1:00u 0     -
+
+
+# Zone  NAME           UTOFF    RULES  FORMAT  [UNTIL]
+Zone    Europe/Zurich  0:34:08  -      LMT     1853 Jul 16
+                       0:29:46  -      BMT     1894 Jun
+                       1:00     Swiss  CE%sT   1981
+                       1:00     EU     CE%sT
+
+Link    Europe/Zurich  Europe/Vaduz
+
+</PRE>
+
+In this example, the timezone is named Europe/Zurich but it has an alias
+as Europe/Vaduz.  This example says that Zurich was 34 minutes and 8
+seconds east of UT until 1853-07-16 at 00:00, when the legal offset
+was changed to 7&#176;26&#180;22.50sd; although this works out to
+0:29:45.50, the input format cannot represent fractional seconds so it
+is rounded here.  After 1894-06-01 at 00:00 the UT offset became one hour
+and Swiss daylight saving rules (defined with lines beginning with
+
+apply.  From 1981 to the present, EU daylight saving rules have
+applied, and the UTC offset has remained at one hour.
+<P>
+
+In 1941 and 1942, daylight saving time applied from the first Monday
+in May at 01:00 to the first Monday in October at 02:00.
+The pre-1981 EU daylight-saving rules have no effect
+here, but are included for completeness.  Since 1981, daylight
+saving has begun on the last Sunday in March at 01:00 UTC.
+Until 1995 it ended the last Sunday in September at 01:00 UTC,
+but this changed to the last Sunday in October starting in 1996.
+<P>
+
+For purposes of display,
+
+and
+
+were initially used, respectively.  Since
+Swiss rules and later EU rules were applied, the time zone abbreviation
+has been CET for standard time and CEST for daylight saving
+time.
+<A NAME="lbAG">&nbsp;</A>
 <H2>FILES</H2>
 
 <DL COMPACT>
-<DT><I>/usr/local/etc/zoneinfo</I>
+<DT><I>/etc/localtime</I>
 
 <DD>
-Standard directory used for created files.
+Default local timezone file.
+<DT><I>/usr/share/zoneinfo</I>
+
+<DD>
+Default timezone information directory.
 </DL>
-<A NAME="lbAF">&nbsp;</A>
+<A NAME="lbAH">&nbsp;</A>
 <H2>NOTES</H2>
 
 For areas with more than two types of local time,
@@ -522,12 +729,27 @@ you may need to use local standard time in the
 
 field of the earliest transition time's rule to ensure that
 the earliest transition time recorded in the compiled file is correct.
-<A NAME="lbAG">&nbsp;</A>
+<P>
+
+If,
+for a particular timezone,
+a clock advance caused by the start of daylight saving
+coincides with and is equal to
+a clock retreat caused by a change in UT offset,
+<B>zic</B>
+
+produces a single transition to daylight saving at the new UT offset
+(without any change in wall clock time).
+To get separate transitions
+use multiple zone continuation lines
+specifying transition instants using universal time.
+<A NAME="lbAI">&nbsp;</A>
 <H2>SEE ALSO</H2>
 
 <B><A HREF="../man5/tzfile.5.html">tzfile</A></B>(5),
 
 <B><A HREF="../man8/zdump.8.html">zdump</A></B>(8)
+
 
 
 <P>
@@ -538,14 +760,16 @@ the earliest transition time recorded in the compiled file is correct.
 <DT><A HREF="#lbAB">NAME</A><DD>
 <DT><A HREF="#lbAC">SYNOPSIS</A><DD>
 <DT><A HREF="#lbAD">DESCRIPTION</A><DD>
-<DT><A HREF="#lbAE">FILES</A><DD>
-<DT><A HREF="#lbAF">NOTES</A><DD>
-<DT><A HREF="#lbAG">SEE ALSO</A><DD>
+<DT><A HREF="#lbAE">OPTIONS</A><DD>
+<DT><A HREF="#lbAF">EXTENDED EXAMPLE</A><DD>
+<DT><A HREF="#lbAG">FILES</A><DD>
+<DT><A HREF="#lbAH">NOTES</A><DD>
+<DT><A HREF="#lbAI">SEE ALSO</A><DD>
 </DL>
 <HR>
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:49:17 GMT, April 20, 2020
+Time: 03:49:54 GMT, April 20, 2020
 </BODY>
 </HTML>

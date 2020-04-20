@@ -26,7 +26,7 @@ the source, must acknowledge the copyright and authors of this work.
 <HTML><HEAD><TITLE>Man page of PIPE</TITLE>
 </HEAD><BODY>
 <H1>PIPE</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2017-11-26<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2019-03-06<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -39,6 +39,13 @@ pipe, pipe2 - create pipe
 <PRE>
 <B>#include &lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;</B>
 
+/* On Alpha, IA-64, MIPS, SuperH, and SPARC/SPARC64; see NOTES */
+<B>struct fd_pair {</B>
+<B>    long fd[2];</B>
+<B>};</B>
+<B>struct fd_pair pipe();</B>
+
+/* On all other architectures */
 <B>int pipe(int </B><I>pipefd</I><B>[2]);</B>
 
 <B>#define _GNU_SOURCE</B>             /* See <A HREF="../man7/feature_test_macros.7.html">feature_test_macros</A>(7) */
@@ -168,7 +175,8 @@ setting of a pipe file descriptor using
 Set the
 <B>O_NONBLOCK</B>
 
-file status flag on the two new open file descriptions.
+file status flag on the open file descriptions
+referred to by the new file descriptors.
 Using this flag saves extra calls to
 <B><A HREF="../man2/fcntl.2.html">fcntl</A></B>(2)
 
@@ -244,6 +252,28 @@ was added to Linux in version 2.6.27;
 glibc support is available starting with
 version 2.9.
 <A NAME="lbAH">&nbsp;</A>
+<H2>NOTES</H2>
+
+
+
+The SystemV ABI on some architectures allows the use of more than one register
+for returning multiple values; several architectures
+(namely, Alpha, IA-64, MIPS, SuperH, and SPARC/SPARC64)
+(ab)use this feature in order to implement the
+<B>pipe</B>()
+
+system call in a functional manner:
+the call doesn't take any arguments and returns
+a pair of file descriptors as the return value on success.
+The glibc
+<B>pipe</B>()
+
+wrapper function transparently deals with this.
+See
+<B><A HREF="../man2/syscall.2.html">syscall</A></B>(2)
+
+for information regarding registers used for storing second file descriptor.
+<A NAME="lbAI">&nbsp;</A>
 <H2>CONFORMING TO</H2>
 
 <B>pipe</B>():
@@ -254,7 +284,7 @@ POSIX.1-2001, POSIX.1-2008.
 <B>pipe2</B>()
 
 is Linux-specific.
-<A NAME="lbAI">&nbsp;</A>
+<A NAME="lbAJ">&nbsp;</A>
 <H2>EXAMPLE</H2>
 
 
@@ -275,7 +305,7 @@ The parent then writes the string contained in the program's
 command-line argument to the pipe,
 and the child reads this string a byte at a time from the pipe
 and echoes it on standard output.
-<A NAME="lbAJ">&nbsp;</A>
+<A NAME="lbAK">&nbsp;</A>
 <H3>Program source</H3>
 
 
@@ -328,7 +358,7 @@ main(int argc, char *argv[])
 <BR>&nbsp;&nbsp;&nbsp;&nbsp;}
 }
 
-<A NAME="lbAK">&nbsp;</A>
+<A NAME="lbAL">&nbsp;</A>
 <H2>SEE ALSO</H2>
 
 <B><A HREF="../man2/fork.2.html">fork</A></B>(2),
@@ -360,17 +390,18 @@ main(int argc, char *argv[])
 <DT><A HREF="#lbAE">RETURN VALUE</A><DD>
 <DT><A HREF="#lbAF">ERRORS</A><DD>
 <DT><A HREF="#lbAG">VERSIONS</A><DD>
-<DT><A HREF="#lbAH">CONFORMING TO</A><DD>
-<DT><A HREF="#lbAI">EXAMPLE</A><DD>
+<DT><A HREF="#lbAH">NOTES</A><DD>
+<DT><A HREF="#lbAI">CONFORMING TO</A><DD>
+<DT><A HREF="#lbAJ">EXAMPLE</A><DD>
 <DL>
-<DT><A HREF="#lbAJ">Program source</A><DD>
+<DT><A HREF="#lbAK">Program source</A><DD>
 </DL>
-<DT><A HREF="#lbAK">SEE ALSO</A><DD>
+<DT><A HREF="#lbAL">SEE ALSO</A><DD>
 </DL>
 <HR>
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:49:03 GMT, April 20, 2020
+Time: 03:49:41 GMT, April 20, 2020
 </BODY>
 </HTML>

@@ -25,7 +25,7 @@ the source, must acknowledge the copyright and authors of this work.
 <HTML><HEAD><TITLE>Man page of WRITE</TITLE>
 </HEAD><BODY>
 <H1>WRITE</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2018-02-02<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2019-03-06<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -116,15 +116,32 @@ see NOTES for the upper limit on Linux.
 <A NAME="lbAE">&nbsp;</A>
 <H2>RETURN VALUE</H2>
 
-On success, the number of bytes written is returned (zero indicates
-nothing was written).
-It is not an error if this number is smaller than the number of bytes
-requested; this may happen for example because the disk device was filled.
-See also NOTES.
+On success, the number of bytes written is returned.
+On error, -1 is returned, and <I>errno</I> is set
+to indicate the cause of the error.
 <P>
 
-On error, -1 is returned, and <I>errno</I> is set
-appropriately.
+Note that a successful
+<B>write</B>()
+
+may transfer fewer than
+<I>count</I>
+
+bytes.
+Such partial writes can occur for various reasons;
+for example, because there was insufficient space on the disk device
+to write all of the requested bytes, or because a blocked
+<B>write</B>()
+
+to a socket, pipe, or similar was interrupted by a signal handler
+after it had transferred some, but before it had transferred all
+of the requested bytes.
+In the event of a partial write, the caller can make another
+<B>write</B>()
+
+call to transfer the remaining bytes.
+The subsequent call will either transfer further bytes or
+may result in an error (e.g., if the disk is now full).
 <P>
 
 If <I>count</I> is zero and
@@ -368,6 +385,17 @@ On Linux,
 returning the number of bytes actually transferred.
 
 (This is true on both 32-bit and 64-bit systems.)
+<P>
+
+An error return value while performing
+<B>write</B>()
+
+using direct I/O does not mean the
+entire write has failed. Partial data may be written
+and the data at the file offset on which the
+<B>write</B>()
+
+was attempted should be considered inconsistent.
 <A NAME="lbAI">&nbsp;</A>
 <H2>BUGS</H2>
 
@@ -461,6 +489,6 @@ This problem was fixed in Linux 3.14.
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:49:05 GMT, April 20, 2020
+Time: 03:49:43 GMT, April 20, 2020
 </BODY>
 </HTML>

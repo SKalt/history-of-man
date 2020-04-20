@@ -25,7 +25,7 @@ the source, must acknowledge the copyright and authors of this work.
 <HTML><HEAD><TITLE>Man page of RENAME</TITLE>
 </HEAD><BODY>
 <H1>RENAME</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2017-09-15<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2019-03-06<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -52,14 +52,6 @@ rename, renameat, renameat2 - change the name or location of a file
 
 <P>
 
-<I>Note</I>:
-
-There is no glibc wrapper for
-<B>renameat2</B>();
-
-see NOTES.
-<P>
-
 
 Feature Test Macro Requirements for glibc (see
 <B><A HREF="../man7/feature_test_macros.7.html">feature_test_macros</A></B>(7)):
@@ -77,7 +69,16 @@ Feature Test Macro Requirements for glibc (see
 _POSIX_C_SOURCE&nbsp;&gt;=&nbsp;200809L
 <DT>Before glibc 2.10:<DD>
 _ATFILE_SOURCE
+</DL>
+</DL>
 
+<P>
+
+<B>renameat2</B>():
+
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT>_GNU_SOURCE<DD>
 </DL>
 </DL>
 
@@ -285,6 +286,36 @@ already exists.
 can't be employed together with
 <B>RENAME_EXCHANGE</B>.
 
+<DT><DD>
+<B>RENAME_NOREPLACE</B>
+
+requires support from the underlying filesystem.
+Support for various filesystems was added as follows:
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT>*<DD>
+ext4 (Linux 3.15);
+
+<DT>*<DD>
+btrfs, shmem, and cifs (Linux 3.17);
+<DT>*<DD>
+xfs (Linux 4.0);
+
+
+
+
+
+<DT>*<DD>
+Support for many other filesystems was added in Linux 4.9, including
+etx2, minix, reiserfs, jfs, vfat, and bpf.
+
+
+
+
+
+</DL>
+</DL>
+
 <DT><B>RENAME_WHITEOUT</B> (since Linux 3.18)
 
 <DD>
@@ -319,6 +350,15 @@ The whole operation needs to be done atomically.
 <DT><DD>
 When not part of a union/overlay,
 the whiteout appears as a character device with a {0,0} device number.
+
+(Note that other union/overlay implementations may employ different methods
+for storing whiteout entries; specifically, BSD union mount employs
+a separate inode type,
+<B>DT_WHT</B>,
+
+which, while supported by some filesystems available in Linux,
+such as CODA and XFS, is ignored by the kernel's whiteout support code,
+as of Linux 4.19, at least.)
 <DT><DD>
 <B>RENAME_WHITEOUT</B>
 
@@ -337,11 +377,17 @@ can't be employed together with
 
 requires support from the underlying filesystem.
 Among the filesystems that provide that support are
-shmem (since Linux 3.18),
+tmpfs (since Linux 3.18),
 
 ext4 (since Linux 3.18),
 
-and XFS (since Linux 4.1).
+XFS (since Linux 4.1),
+
+f2fs (since Linux 4.2).
+
+btrfs (since Linux 4.7),
+
+and ubifs (since Linux 4.9).
 
 </DL>
 <A NAME="lbAG">&nbsp;</A>
@@ -666,8 +712,7 @@ library support was added to glibc in version 2.4.
 
 <B>renameat2</B>()
 
-was added to Linux in kernel 3.15.
-
+was added to Linux in kernel 3.15; library support was added in glibc 2.28.
 <A NAME="lbAJ">&nbsp;</A>
 <H2>CONFORMING TO</H2>
 
@@ -686,12 +731,6 @@ POSIX.1-2008.
 is Linux-specific.
 <A NAME="lbAK">&nbsp;</A>
 <H2>NOTES</H2>
-
-Glibc does not provide a wrapper for the
-<B>renameat2</B>()
-
-system call; call it using
-<B><A HREF="../man2/syscall.2.html">syscall</A></B>(2).
 
 
 <A NAME="lbAL">&nbsp;</A>
@@ -778,6 +817,6 @@ for a similar problem.
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:49:04 GMT, April 20, 2020
+Time: 03:49:41 GMT, April 20, 2020
 </BODY>
 </HTML>
