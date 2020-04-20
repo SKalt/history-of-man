@@ -87,7 +87,7 @@ Thus, to print out the environment of process 1, you would do:
 <DD>
 Under Linux 2.2 and later, this file is a symbolic link
 containing the actual path name of the executed command.
-This symbolic link can be dereferenced normally - attempting to open 
+This symbolic link can be dereferenced normally; attempting to open 
 it will open the executable.  You can even type
 <I>/proc/[number]/exe</I>
 
@@ -333,9 +333,9 @@ address of a system call, and can be looked up in a namelist if you
 need a textual name.  (If you have an up-to-date /etc/psdatabase, then
 try <I>ps -l</I> to see the WCHAN field in action.)
 <DT><I>nswap</I> %lu<DD>
-Number of pages swapped - not maintained.
+Number of pages swapped (not maintained).
 <DT><I>cnswap</I> %lu<DD>
-Cumulative <I>nswap</I> for child processes - not maintained.
+Cumulative <I>nswap</I> for child processes (not maintained).
 <DT><I>exit_signal</I> %d<DD>
 Signal to be sent to parent when we die.
 <DT><I>processor</I> %d<DD>
@@ -869,25 +869,57 @@ entries include:
 <DL COMPACT><DT><DD>
 <DL COMPACT>
 <DT><I>cpu  3357 0 4313 1362393</I><DD>
-The number of jiffies (1/100ths of a second) that the system spent in
-user mode, user mode with low priority (nice), system mode, and the
-idle task, respectively.  The last value should be 100 times the
+The amount of time, measured in units of
+USER_HZ (1/100ths of a second on most architecures),
+that the system spent in user mode,
+user mode with low priority (nice), system mode, and the
+idle task, respectively.
+
+
+The last value should be USER_HZ times the
 second entry in the uptime pseudo-file.
+<P>
+In Linux 2.6 this line includes three additional columns:
+<I>iowait</I>
+
+- time waiting for I/O to complete (since 2.5.41);
+<I>irq</I>
+
+- time servicing interrupts (since 2.6.0-test4);
+<I>softirq</I>
+
+- time servicing softirqs (since 2.6.0-test4).
+
+
 <DT><I>page 5741 1808</I><DD>
 The number of pages the system paged in and the number that were paged
 out (from disk).
 <DT><I>swap 1 0</I><DD>
 The number of swap pages that have been brought in and out.
-<DT><I>intr 1462898</I><DD>
-The number of interrupts received from the system boot.
+<DT>
+<DD>
+<I>intr 1462898</I>
+This line shows counts of interrupts serviced since boot time,
+for each of the possible system interrupts.
+The first column is the total of all interrupts serviced;
+each subsequent column is the total for a particular interrupt.
 <DT><I>disk_io: (2,0):(31,30,5764,1,2) (3,0):</I>...<DD>
 (major,minor):(noinfo, read_io_ops, blks_read, write_io_ops, blks_written)
+<BR>
+
+(Linux 2.4 only)
 <DT><I>ctxt 115315</I><DD>
 The number of context switches that the system underwent.
 <DT><I>btime 769041601</I><DD>
 boot time, in seconds since the epoch (January 1, 1970).
 <DT><I>processes 86031</I><DD>
 Number of forks since boot.
+<DT><I>procs_running 6</I><DD>
+Number of processes in runnable state.
+(Linux 2.5.45 onwards.)
+<DT><I>procs_blocked 2</I><DD>
+Number of processes blocked waiting for I/O to complete.
+(Linux 2.5.45 onwards.)
 </DL>
 </DL>
 
@@ -924,16 +956,14 @@ This directory may be empty.
 <DT><I>/proc/sys/dev</I>
 
 <DD>
-This directory contains device specific information (eg dev/cdrom/info).  
+This directory contains device specific information (eg dev/cdrom/info).
 On
 some systems, it may be empty.
 <DT><I>/proc/sys/fs</I>
 
 <DD>
-This contains the subdirectory
-
-
-<I>binfmt_misc</I>
+This contains the subdirectories
+<I>binfmt_misc</I> and <I>mqueue</I>,
 
 and files
 <I>dentry-state</I>, <I>dir-notify-enable</I>, <I>dquot-nr</I>, <I>file-max</I>, 
@@ -1097,6 +1127,56 @@ This file can be used to enable or disable file leases
 on a system-wide basis.
 If this file contains the value 0, leases are disabled.
 A non-zero value enables leases.
+<DT><I>/proc/sys/fs/mqueue</I> (since Linux 2.6.6)
+
+<DD>
+This directory contains files 
+<I>msg_max</I>, <I>msgsize_max</I>, and <I>queues_max</I>,
+
+controlling the resources used by POSIX message queues.
+<DT><I>/proc/sys/fs/mqueue/msg_max</I>
+
+<DD>
+This file can be used to view and change the ceiling value for the 
+maximum number of messages in a queue.
+This value acts as a ceiling on the
+<I>attr.mq_maxmsg</I>
+
+argument given to
+<B><A HREF="../man3/mq_open.3.html">mq_open</A></B>(3).
+
+The default and minimum value for
+<I>msg_max</I>
+
+is 10; the upper limit is 
+<I>(131072 / sizeof(void&nbsp;*))</I>
+
+(32768 on Linux/86).
+<DT><I>/proc/sys/fs/mqueue/msgsize_max</I>
+
+<DD>
+This file can be used to view and change the ceiling on the 
+maximum message size.
+This value acts as a ceiling on the
+<I>attr.mq_msgsize</I>
+
+argument given to
+<B><A HREF="../man3/mq_open.3.html">mq_open</A></B>(3).
+
+The default and minimum value for
+<I>msgsize_max</I>
+
+is 8192 bytes; the upper limit is INT_MAX
+(2147483647 on Linux/86).
+<DT><I>/proc/sys/fs/mqueue/queues_max</I>
+
+<DD>
+This file can be used to view and change the system-wide limit on the 
+number of message queues that can be created.
+The default value for
+<I>queues_max</I>
+
+is 256; it can be changed to any value in the range 0 to INT_MAX.
 <DT><I>/proc/sys/fs/overflowgid</I> and <I>/proc/sys/fs/overflowuid</I>
 
 <DD>
@@ -1106,7 +1186,139 @@ The default is 65534.
 Some filesystems only support 16-bit UIDs and GIDs, although in Linux
 UIDs and GIDs are 32 bits. When one of these filesystems is mounted
 with writes enabled, any UID or GID that would exceed 65535 is translated
-to the overflow value before being written to disk.  
+to the overflow value before being written to disk.
+<DT><I>/proc/sys/fs/super-max </I>
+
+<DD>
+This file 
+controls the maximum number of superblocks, and
+thus the maximum number of mounted filesystems the kernel
+can have. You only need to increase super-max if you need to
+mount more filesystems than the current value in super-max
+allows you to.
+<DT><I>/proc/sys/fs/super-nr</I>
+
+<DD>
+This file 
+contains the number of filesystems currently mounted.
+<DT><I>/proc/sys/kernel</I>
+
+<DD>
+This directory contains files
+<I>acct</I>, <I>cad_pid</I>, <I>cap-bound</I>, 
+
+<I>core_pattern</I>, <I>core_uses_pid</I>, 
+
+<I>ctrl-alt-del</I>, <I>dentry-state</I>, <I>domainname</I>, 
+
+<I>hotplug</I>, <I>hostname</I>, 
+
+<I>htab-reclaim</I> (PowerPC only), 
+
+<I>java-appletviewer</I> (binfmt_java, obsolete), 
+
+<DT><I>/proc/sys/fs/mqueue/</I>
+
+<DD>
+<P>
+<DT><I>/proc/sys/fs/overflowgid</I> and <I>/proc/sys/fs/overflowuid</I>
+
+<DD>
+These files
+allow you to change the value of the fixed UID and GID.
+The default is 65534.
+Some filesystems only support 16-bit UIDs and GIDs, although in Linux
+UIDs and GIDs are 32 bits. When one of these filesystems is mounted
+with writes enabled, any UID or GID that would exceed 65535 is translated
+to the overflow value before being written to disk.
+<DT><I>/proc/sys/fs/super-max </I>
+
+<DD>
+This file 
+controls the maximum number of superblocks, and
+thus the maximum number of mounted filesystems the kernel
+can have. You only need to increase super-max if you need to
+mount more filesystems than the current value in super-max
+allows you to.
+<DT><I>/proc/sys/fs/super-nr</I>
+
+<DD>
+This file 
+contains the number of filesystems currently mounted.
+<DT><I>/proc/sys/kernel</I>
+
+<DD>
+This directory contains files
+<I>acct</I>, <I>cad_pid</I>, <I>cap-bound</I>, 
+
+<I>core_pattern</I>, <I>core_uses_pid</I>, 
+
+<I>ctrl-alt-del</I>, <I>dentry-state</I>, <I>domainname</I>, 
+
+<I>hotplug</I>, <I>hostname</I>, 
+
+<I>htab-reclaim</I> (PowerPC only), 
+
+<I>java-appletviewer</I> (binfmt_java, obsolete), 
+
+<DT><I>/proc/sys/fs/mqueue/</I>
+
+<DD>
+<P>
+<DT><I>/proc/sys/fs/overflowgid</I> and <I>/proc/sys/fs/overflowuid</I>
+
+<DD>
+These files
+allow you to change the value of the fixed UID and GID.
+The default is 65534.
+Some filesystems only support 16-bit UIDs and GIDs, although in Linux
+UIDs and GIDs are 32 bits. When one of these filesystems is mounted
+with writes enabled, any UID or GID that would exceed 65535 is translated
+to the overflow value before being written to disk.
+<DT><I>/proc/sys/fs/super-max </I>
+
+<DD>
+This file 
+controls the maximum number of superblocks, and
+thus the maximum number of mounted filesystems the kernel
+can have. You only need to increase super-max if you need to
+mount more filesystems than the current value in super-max
+allows you to.
+<DT><I>/proc/sys/fs/super-nr</I>
+
+<DD>
+This file 
+contains the number of filesystems currently mounted.
+<DT><I>/proc/sys/kernel</I>
+
+<DD>
+This directory contains files
+<I>acct</I>, <I>cad_pid</I>, <I>cap-bound</I>, 
+
+<I>core_pattern</I>, <I>core_uses_pid</I>, 
+
+<I>ctrl-alt-del</I>, <I>dentry-state</I>, <I>domainname</I>, 
+
+<I>hotplug</I>, <I>hostname</I>, 
+
+<I>htab-reclaim</I> (PowerPC only), 
+
+<I>java-appletviewer</I> (binfmt_java, obsolete), 
+
+<DT><I>/proc/sys/fs/mqueue/</I>
+
+<DD>
+<P>
+<DT><I>/proc/sys/fs/overflowgid</I> and <I>/proc/sys/fs/overflowuid</I>
+
+<DD>
+These files
+allow you to change the value of the fixed UID and GID.
+The default is 65534.
+Some filesystems only support 16-bit UIDs and GIDs, although in Linux
+UIDs and GIDs are 32 bits. When one of these filesystems is mounted
+with writes enabled, any UID or GID that would exceed 65535 is translated
+to the overflow value before being written to disk.
 <DT><I>/proc/sys/fs/super-max </I>
 
 <DD>
@@ -1732,6 +1944,6 @@ kernel source documentation files written by Rik van Riel.
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 02:14:00 GMT, April 20, 2020
+Time: 02:14:25 GMT, April 20, 2020
 </BODY>
 </HTML>

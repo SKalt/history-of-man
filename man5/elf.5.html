@@ -14,7 +14,7 @@ Section: File Formats (5)<BR><A HREF="#index">Index</A>
 
 <B>elf</B>
 
- - format of ELF executable binary files
+ - format of Executable and Linking Format (ELF) files
 
 <A NAME="lbAC">&nbsp;</A>
 <H2>SYNOPSIS</H2>
@@ -295,6 +295,12 @@ E.g.:
 <DL COMPACT>
 <P>
 
+<DT><B>ELFOSABI_NONE</B>
+
+
+<DD>
+Same as ELFOSABI_SYSV
+
 <DT><B>ELFOSABI_SYSV</B>
 
 
@@ -521,7 +527,7 @@ MIPS RS3000 (big-endian only).
 
 
 <DD>
-HPPA.
+HP/PA.
 
 <DT><B>EM_SPARC32PLUS</B>
 
@@ -535,11 +541,29 @@ SPARC with enhanced instruction set.
 <DD>
 PowerPC.
 
+<DT><B>EM_PPC64</B>
 
 
+<DD>
+PowerPC 64-bit.
+
+<DT><B>EM_S390</B>
 
 
+<DD>
+IBM S/390
 
+<DT><B>EM_ARM</B>
+
+
+<DD>
+Advanced RISC Machines
+
+<DT><B>EM_SH</B>
+
+
+<DD>
+Renesas SuperH
 
 <DT><B>EM_SPARCV9</B>
 
@@ -547,9 +571,17 @@ PowerPC.
 <DD>
 SPARC v9 64-bit.
 
+<DT><B>EM_IA_64</B>
 
 
+<DD>
+Intel Itanium
 
+<DT><B>EM_X86_64</B>
+
+
+<DD>
+AMD x86-64
 
 <DT><B>EM_VAX</B>
 
@@ -1176,6 +1208,9 @@ typedef struct {
 </PRE>
 </BLOCKQUOTE>
 
+<P>
+
+No real differences exist between the 32-bit and 64-bit section headers.
 <DL COMPACT>
 <P>
 
@@ -1901,6 +1936,10 @@ typedef struct {
 </PRE>
 </BLOCKQUOTE>
 
+<P>
+
+The 32-bit and 64-bit versions have the same members, just in a different 
+order.
 <DL COMPACT>
 <P>
 
@@ -2044,42 +2083,32 @@ There are macros for packing and unpacking the binding and type fields:
 <DL COMPACT>
 <P>
 
-<DT><B>
-</B>
-
 Fn ELF32_ST_BIND info
 
-<DD>
-
-<DD>or
+or
 Fn ELF64_ST_BIND info
 
 extract a binding from an st_info value.
-<DT><B>
-</B>
+<P>
 
-Fn ELF64_ST_TYPE info
-
-<DD>
-
-<DD>or
 Fn ELF32_ST_TYPE info
 
+or
+Fn ELF64_ST_TYPE info
+
+<BR>
+
 extract a type from an st_info value.
-<DT><B>
-</B>
+<P>
 
 Fn ELF32_ST_INFO bind type
 
-<DD>
-
-<DD>or
+or
 Fn ELF64_ST_INFO bind type
 
-convert a binding and a type into an st_info value.
-</DL>
-<P>
+<BR>
 
+convert a binding and a type into an st_info value.
 </DL>
 <P>
 
@@ -2203,6 +2232,218 @@ stored into the relocatable field.
 </DL>
 <P>
 
+<P>
+
+The .dynamic section contains a series of structures that hold relevant 
+dynamic linking information.  The d_tag member controls the interpretation 
+of d_un.
+
+<BLOCKQUOTE>
+<PRE>
+typedef struct {
+        Elf32_Sword     d_tag;
+        union {
+           Elf32_Word   d_val;
+           Elf32_Addr   d_ptr;
+        } d_un;
+} Elf32_Dyn;
+extern Elf32_Dyn _DYNAMIC[];
+</PRE>
+</BLOCKQUOTE>
+
+
+<BLOCKQUOTE>
+<PRE>
+typedef struct {
+        Elf64_Sxword    d_tag;
+        union {
+           Elf64_Xword  d_val;
+           Elf64_Addr   d_ptr;
+        } d_un;
+} Elf64_Dyn;
+extern Elf64_Dyn _DYNAMIC[];
+</PRE>
+</BLOCKQUOTE>
+
+<DL COMPACT>
+<P>
+
+<DT><B>d_tag</B>
+
+
+<DD>
+This member may have any of the following values:
+<DL COMPACT>
+<P>
+
+<DT><B>DT_NULL</B>
+
+
+<DD>
+Marks end of dynamic section
+<DT><B>DT_NEEDED</B>
+
+
+<DD>
+String table offset to name of a needed library
+<DT><B>DT_PLTRELSZ</B>
+
+
+<DD>
+Size in bytes of PLT relocs
+<DT><B>DT_PLTGOT</B>
+
+
+<DD>
+Address of PLT and/or GOT
+<DT><B>DT_HASH</B>
+
+
+<DD>
+Address of symbol hash table
+<DT><B>DT_STRTAB</B>
+
+
+<DD>
+Address of string table
+<DT><B>DT_SYMTAB</B>
+
+
+<DD>
+Address of symbol table
+<DT><B>DT_RELA</B>
+
+
+<DD>
+Address of Rela relocs table
+<DT><B>DT_RELASZ</B>
+
+
+<DD>
+Size in bytes of Rela table
+<DT><B>DT_RELAENT</B>
+
+
+<DD>
+Size in bytes of a Rela table entry
+<DT><B>DT_STRSZ</B>
+
+
+<DD>
+Size in bytes of string table
+<DT><B>DT_SYMENT</B>
+
+
+<DD>
+Size in bytes of a symbol table entry
+<DT><B>DT_INIT</B>
+
+
+<DD>
+Address of the initialization function
+<DT><B>DT_FINI</B>
+
+
+<DD>
+Address of the termination function
+<DT><B>DT_SONAME</B>
+
+
+<DD>
+String table offset to name of shared object
+<DT><B>DT_RPATH</B>
+
+
+<DD>
+String table offset to library search path (deprecated)
+<DT><B>DT_SYMBOLIC</B>
+
+
+<DD>
+Alert linker to search this shared object before the executable for symbols
+<DT><B>DT_REL</B>
+
+
+<DD>
+Address of Rel relocs table
+<DT><B>DT_RELSZ</B>
+
+
+<DD>
+Size in bytes of Rel table
+<DT><B>DT_RELENT</B>
+
+
+<DD>
+Size in bytes of a Rel table entry
+<DT><B>DT_PLTREL</B>
+
+
+<DD>
+Type of reloc the PLT refers (Rela or Rel)
+<DT><B>DT_DEBUG</B>
+
+
+<DD>
+Undefined use for debugging
+<DT><B>DT_TEXTREL</B>
+
+
+<DD>
+Absence of this indicates no relocs should apply to a non-writable segment
+<DT><B>DT_JMPREL</B>
+
+
+<DD>
+Address of reloc entries solely for the PLT
+<DT><B>DT_BIND_NOW</B>
+
+
+<DD>
+Instruct dynamic linker to process all relocs before transferring control to 
+the executable
+<DT><B>DT_RUNPATH</B>
+
+
+<DD>
+String table offset to library search path
+<DT><B>DT_LOPROC</B>
+
+
+<DD>
+Start of processor-specific semantics
+<DT><B>DT_HIPROC</B>
+
+
+<DD>
+End of processor-specific semantics
+</DL>
+<P>
+
+<DT><B>d_val</B>
+
+
+<DD>
+This member represents integer values with various interpretations.
+<DT><B>d_ptr</B>
+
+
+<DD>
+This member represents program virtual addresses.  When interpreting 
+these addresses, the actual address should be computed based on the 
+original file value and memory base address.  Files do not contain 
+relocation entries to fixup these addresses.
+<DT><B>_DYNAMIC</B>
+
+
+<DD>
+Array containing all the dynamic structures in the .dynamic section.  
+This is automatically populated by the linker.
+</DL>
+<P>
+
+</DL>
+</DL>
 <A NAME="lbAE">&nbsp;</A>
 <H2>SEE ALSO</H2>
 
@@ -2283,6 +2524,6 @@ manpage.
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 02:11:22 GMT, April 20, 2020
+Time: 02:14:25 GMT, April 20, 2020
 </BODY>
 </HTML>

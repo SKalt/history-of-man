@@ -29,30 +29,35 @@ getgrent, setgrent, endgrent - get group file entry
 <A NAME="lbAD">&nbsp;</A>
 <H2>DESCRIPTION</H2>
 
-The <B>getgrent()</B> function returns a pointer to a structure containing
-the group information from <I>/etc/group</I>.  The first time it is called
+The <B>getgrent()</B>
+function returns a pointer to a structure containing
+the broken-out fields of a record in the group database
+(e.g., the local group file 
+<I>/etc/group</I>,
+
+NIS, and LDAP).
+The first time it is called
 it returns the first entry; thereafter, it returns successive entries.
 <P>
 
-The <B>setgrent()</B> function rewinds the file pointer to the beginning 
-of the <I>/etc/group</I> file.
+The <B>setgrent()</B> function rewinds to the beginning 
+of the group database, to allow repeated scans.
 <P>
 
-The <B>endgrent()</B> function closes the <I>/etc/group</I> file.
+The <B>endgrent()</B> function is used to close the group database
+after all processing has been performed.
 <P>
 
 The <I>group</I> structure is defined in <I>&lt;<A HREF="file:///usr/include/grp.h">grp.h</A>&gt;</I> as follows:
 <P>
 <DL COMPACT><DT><DD>
 <PRE>
-
 struct group {
-        char    *gr_name;        /* group name */
-        char    *gr_passwd;      /* group password */
-        gid_t   gr_gid;          /* group id */
-        char    **gr_mem;        /* group members */
+    char   *gr_name;       /* group name */
+    char   *gr_passwd;     /* group password */
+    gid_t   gr_gid;        /* group id */
+    char  **gr_mem;        /* group members */
 };
-
 </PRE>
 
 </DL>
@@ -60,14 +65,21 @@ struct group {
 <A NAME="lbAE">&nbsp;</A>
 <H2>RETURN VALUE</H2>
 
-The <B>getgrent()</B> function returns the group information structure, 
+The <B>getgrent()</B> function returns a pointer to a
+<I>group </I>
+
+structure, 
 or NULL if there are no more entries or an error occurs.
 <P>
 
 Upon error,
 <I>errno</I>
 
-may be set. If you want to check its value, set it to zero before the call.
+may be set.
+If one wants to check
+<I>errno</I>
+
+after the call, it should be set to zero before the call.
 <A NAME="lbAF">&nbsp;</A>
 <H2>ERRORS</H2>
 
@@ -88,11 +100,15 @@ The calling process already has too many open files.
 
 <DD>
 Too many open files in the system.
-<DT>
+<DT><B>ENOMEM</B>
+
 <DD>
-<B>ENOMEM</B>
 
 Insufficient memory to allocate group information structure.
+<DT><B>ERANGE</B>
+
+<DD>
+Insufficient buffer space supplied.
 </DL>
 <A NAME="lbAG">&nbsp;</A>
 <H2>FILES</H2>
@@ -101,7 +117,7 @@ Insufficient memory to allocate group information structure.
 <DT><I>/etc/group</I>
 
 <DD>
-<BR>&nbsp;group&nbsp;database&nbsp;file
+local group database file
 </DL>
 <A NAME="lbAH">&nbsp;</A>
 <H2>CONFORMING TO</H2>
@@ -116,7 +132,9 @@ SVID 3, BSD 4.3, POSIX 1003.1-2003.
 
 <B><A HREF="../man3/getgrgid.3.html">getgrgid</A></B>(3),
 
-<B><A HREF="../man3/getgrnam.3.html">getgrnam</A></B>(3)
+<B><A HREF="../man3/getgrnam.3.html">getgrnam</A></B>(3),
+
+<B><A HREF="../man3/putgrent.3.html">putgrent</A></B>(3)
 
 <P>
 
@@ -136,6 +154,6 @@ SVID 3, BSD 4.3, POSIX 1003.1-2003.
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 02:10:37 GMT, April 20, 2020
+Time: 02:14:22 GMT, April 20, 2020
 </BODY>
 </HTML>

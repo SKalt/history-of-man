@@ -171,9 +171,10 @@ catch this signal instead, in which case the relevant system call (e.g.,
 fails with the error
 <B>EFBIG</B>.
 
-<DT><B>RLIMIT_LOCKS</B>
+<DT><B>RLIMIT_LOCKS</B> (Early Linux 2.4 only)
 
 <DD>
+
 A limit on the combined number of
 <B>flock</B>()
 
@@ -181,8 +182,6 @@ locks and
 <B>fcntl()</B>
 
 leases that this process may establish.
-(Early Linux 2.4 only.)
-
 <DT><B>RLIMIT_MEMLOCK</B>
 
 <DD>
@@ -230,7 +229,40 @@ memory that could be locked by a privileged process.
 Since Linux 2.6.9, no limits are placed on the amount of memory
 that a privileged process may lock, and this limit instead governs
 the amount of memory that an unprivileged process may lock.
+<DT><B>RLIMIT_MSGQUEUE</B> (Since Linux 2.6.8)
 
+<DD>
+Specifies the limit on the number of bytes that can be allocated
+for POSIX message queues for the real user ID of the calling process.
+This limit is enforced for
+<B><A HREF="../man3/mq_open.3.html">mq_open</A></B>(3).
+
+
+Each message queue that the user creates counts (until it is removed)
+against this limit according to the formula:
+<PRE>
+
+    bytes = attr.mq_maxmsg * sizeof(struct msg_msg *) +
+            attr.mq_maxmsg * attr.mq_msgsize)
+
+</PRE>
+
+where 
+<I>attr</I>
+
+is the 
+<I>mq_attr</I>
+
+structure specified as the fourth argument to
+<B>mq_open</B>().
+
+<P>
+The first addend in the formula, which includes
+<I>sizeof(struct msg_msg *)</I>
+
+(4 bytes on Linux/x86), ensures that the user cannot
+create an unlimited number of zero-length messages (such messages
+nevertheless each consume some system memory for bookkeeping overhead).
 <DT><B>RLIMIT_NOFILE</B>
 
 <DD>
@@ -258,16 +290,17 @@ fails with the error
 <DD>
 Specifies the limit (in pages) of the process's resident set
 (the number of virtual pages resident in RAM).
-This limit only has effect in Linux 2.4.x, and there only
+This limit only has effect in Linux 2.4.x, x &lt; 30, and there only
 affects calls to
 <B>madvise</B>()
 
 specifying
-<B>MADVISE_WILLNEED</B>.
+<B>MADV_WILLNEED</B>.
 
 
 
-<DT><B>RLIMIT_SIGPENDING</B>
+
+<DT><B>RLIMIT_SIGPENDING</B> (Since Linux 2.6.8)
 
 <DD>
 Specifies the limit on the number of signals
@@ -282,7 +315,6 @@ it is always possible to use
 
 to queue one instance of any of the signals that are not already
 queued to the process.
-(Since Linux 2.6.8.)
 
 
 <DT><B>RLIMIT_STACK</B>
@@ -370,8 +402,10 @@ derives from BSD and is not specified in POSIX.1-2001;
 it is nevertheless present on most implementations.
 <B>RLIMIT_SIGPENDING</B>
 
-is Linux specific.
+and
+<B>RLIMIT_MSGQUEUE</B>
 
+are Linux specific.
 <A NAME="lbAI">&nbsp;</A>
 <H2>SEE ALSO</H2>
 
@@ -423,6 +457,6 @@ is Linux specific.
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 02:13:54 GMT, April 20, 2020
+Time: 02:14:18 GMT, April 20, 2020
 </BODY>
 </HTML>

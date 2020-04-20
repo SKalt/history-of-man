@@ -29,23 +29,23 @@ vfork - create a child process and block parent
 
 (From XPG4 / SUSv2 / POSIX draft.)
 The
-<I>vfork</I>()
+<B>vfork</B>()
 
 function has the same effect as
-<I>fork</I>(),
+<B>fork</B>(),
 
 except that the behaviour is undefined if the process created by
-<I>vfork</I>()
+<B>vfork</B>()
 
 either modifies any data other than a variable of type pid_t used
 to store the return value from
-<I>vfork</I>(),
+<B>vfork</B>(),
 
 or returns from the function in which
-<I>vfork</I>()
+<B>vfork</B>()
 
 was called, or calls any other function before successfully calling
-<I>_exit</I>()
+<B>_exit</B>()
 
 or one of the
 <I>exec</I>
@@ -58,7 +58,7 @@ family of functions.
 <DT><B>EAGAIN</B>
 
 <DD>
-Too many processes - try again.
+Too many processes; try again.
 <DT><B>ENOMEM</B>
 
 <DD>
@@ -67,7 +67,7 @@ There is insufficient swap space for the new process.
 <A NAME="lbAF">&nbsp;</A>
 <H2>LINUX DESCRIPTION</H2>
 
-<B>vfork</B>,
+<B>vfork</B>(),
 
 just like
 <B><A HREF="../man2/fork.2.html">fork</A></B>(2),
@@ -78,7 +78,7 @@ For details and return value and errors, see
 
 <P>
 
-<B>vfork()</B>
+<B>vfork</B>()
 
 is a special case of
 <B><A HREF="../man2/clone.2.html">clone</A></B>(2).
@@ -86,11 +86,11 @@ is a special case of
 It is used to create new processes without copying the page tables of
 the parent process.  It may be useful in performance sensitive applications
 where a child will be created which then immediately issues an
-<I>execve()</I>.
+<B>execve</B>()<B>.</B>
 
 <P>
 
-<B>vfork()</B>
+<B>vfork</B>()
 
 differs from fork in that the parent is suspended until the child makes
 a call to
@@ -100,14 +100,14 @@ or
 <B><A HREF="../man2/_exit.2.html">_exit</A></B>(2).
 
 The child shares all memory with its parent, including the stack, until
-<I>execve()</I>
+<B>execve</B>()
 
 is issued by the child.  The child must not return from the
 current function or call
-<I>exit()</I>,
+<B>exit</B>(),
 
 but may call
-<I>_exit()</I>.
+<B>_exit</B>().
 
 <P>
 
@@ -117,31 +117,34 @@ arrive after the child releases the parent.
 <H2>HISTORIC DESCRIPTION</H2>
 
 Under Linux,
-<I>fork</I>()
+<B>fork</B>()
 
 is implemented using copy-on-write pages, so the only penalty incurred by
-<I>fork</I>()
+<B>fork</B>()
 
 is the time and memory required to duplicate the parent's page tables,
 and to create a unique task structure for the child.
 However, in the bad old days a
-<I>fork()</I>
+<B>fork</B>()
 
 would require making a complete copy of the caller's data space,
 often needlessly, since usually immediately afterwards an
-<I>exec</I>()
+<B>exec</B>()
 
 is done. Thus, for greater efficiency, BSD introduced the
-<B>vfork</B>
+<B>vfork</B>()
 
 system call, that did not fully copy the address space of
 the parent process, but borrowed the parent's memory and thread
 of control until a call to
-<I>execve</I>()
+<B>execve</B>()
 
 or an exit occurred. The parent process was suspended while the
 child was using its resources.
-The use of vfork was tricky - for example, not modifying data
+The use of
+<B>vfork</B>()
+
+was tricky: for example, not modifying data
 in the parent process depended on knowing which variables are
 held in a register.
 <A NAME="lbAH">&nbsp;</A>
@@ -151,14 +154,14 @@ It is rather unfortunate that Linux revived this spectre from the past.
 The BSD manpage states:
 &quot;This system call will be eliminated when proper system sharing mechanisms
 are implemented. Users should not depend on the memory sharing semantics of
-<I>vfork</I>
+<B>vfork</B>()
 
 as it will, in that case, be made synonymous to
-<I>fork</I>.&quot;
+<B>fork</B>().&quot;
 <P>
 Formally speaking, the standard description given above does not allow
 one to use
-<I>vfork</I>()
+<B>vfork</B>()
 
 since a following
 <I>exec</I>
@@ -169,7 +172,7 @@ Details of the signal handling are obscure and differ between systems.
 The BSD manpage states:
 &quot;To avoid a possible deadlock situation, processes that are children
 in the middle of a
-<I>vfork</I>
+<B>vfork</B>()
 
 are never sent SIGTTOU or SIGTTIN signals; rather, output or
 <I>ioctl</I>s
@@ -180,25 +183,25 @@ Currently (Linux 2.3.25),
 <B><A HREF="../man1/strace.1.html">strace</A></B>(1)
 
 cannot follow
-<I>vfork()</I>
+<B>vfork</B>()
 
 and requires a kernel patch.
 <A NAME="lbAI">&nbsp;</A>
 <H2>HISTORY</H2>
 
 The
-<I>vfork</I>()
+<B>vfork</B>()
 
 system call appeared in 3.0BSD.
 
 
 In BSD 4.4 it was made synonymous to
-<I>fork</I>(),
+<B>fork</B>()
 
 but NetBSD introduced it again,
 cf. <A HREF="http://www.netbsd.org/Documentation/kernel/vfork.html">http://www.netbsd.org/Documentation/kernel/vfork.html</A> .
 In Linux, it has been equivalent to
-<I>fork</I>()
+<B>fork</B>()
 
 until 2.2.0-pre6 or so. Since 2.2.0-pre9 (on i386, somewhat later on
 other architectures) it is an independent system call. Support was
@@ -207,22 +210,22 @@ added in glibc 2.0.112.
 <H2>CONFORMING TO</H2>
 
 The
-<B>vfork</B>
+<B>vfork</B>()
 
 call may be a bit similar to calls with the same name in other
 operating systems. The requirements put on
-<B>vfork</B>
+<B>vfork</B>()
 
 by the standards are weaker than those put on
-<B>fork</B>,
+<B>fork</B>(),
 
 so an implementation where the two are synonymous
 is compliant. In particular, the programmer cannot
 rely on the parent remaining blocked until a call of
-<I>execve()</I>
+<B>execve</B>()
 
 or
-<I>_exit()</I>
+<B>_exit</B>()
 
 and cannot rely on any specific behaviour w.r.t. shared memory.
 
@@ -257,6 +260,6 @@ and cannot rely on any specific behaviour w.r.t. shared memory.
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 02:10:10 GMT, April 20, 2020
+Time: 02:14:20 GMT, April 20, 2020
 </BODY>
 </HTML>

@@ -30,16 +30,22 @@ getpwent, setpwent, endpwent - get password file entry
 <H2>DESCRIPTION</H2>
 
 The <B>getpwent()</B> function returns a pointer to a structure containing
-the broken out fields of a line from <I>/etc/passwd</I>.  The first time it 
+the broken-out fields of a record from the password database
+(e.g., the local password file 
+<I>/etc/passwd</I>,
+
+NIS, and LDAP).
+The first time it 
 is called it returns the first entry; thereafter, it returns successive 
 entries.
 <P>
 
-The <B>setpwent()</B> function rewinds the file pointer to the beginning 
-of the <I>/etc/passwd</I> file.
+The <B>setpwent()</B> function rewinds to the beginning 
+of the password database.
 <P>
 
-The <B>endpwent()</B> function closes the <I>/etc/passwd</I> file.
+The <B>endpwent()</B> function is used to close the password database
+after all processing has been performed.
 <P>
 
 The <I>passwd</I> structure is defined in <I>&lt;<A HREF="file:///usr/include/pwd.h">pwd.h</A>&gt;</I> as follows:
@@ -47,13 +53,13 @@ The <I>passwd</I> structure is defined in <I>&lt;<A HREF="file:///usr/include/pw
 <DL COMPACT><DT><DD>
 <PRE>
 struct passwd {
-      char    *pw_name;      /* user name */
-      char    *pw_passwd;    /* user password */
-      uid_t   pw_uid;        /* user id */
-      gid_t   pw_gid;        /* group id */
-      char    *pw_gecos;     /* real name */
-      char    *pw_dir;       /* home directory */
-      char    *pw_shell;     /* shell program */
+    char   *pw_name;       /* user name */
+    char   *pw_passwd;     /* user password */
+    uid_t   pw_uid;        /* user id */
+    gid_t   pw_gid;        /* group id */
+    char   *pw_gecos;      /* real name */
+    char   *pw_dir;        /* home directory */
+    char   *pw_shell;      /* shell program */
 };
 </PRE>
 
@@ -62,16 +68,50 @@ struct passwd {
 <A NAME="lbAE">&nbsp;</A>
 <H2>RETURN VALUE</H2>
 
-The <B>getpwent()</B> function returns the <I>passwd</I> structure, or NULL if 
+The <B>getpwent()</B> function returns a pointer to a 
+<I>passwd</I>
+
+structure, or NULL if 
 there are no more entries or an error occurs.
+If an error occurs,
+<I>errno</I>
+
+is set appropriately.
+If one wants to check
+<I>errno</I>
+
+after the call, it should be set to zero before the call.
 <A NAME="lbAF">&nbsp;</A>
 <H2>ERRORS</H2>
 
 <DL COMPACT>
+<DT><DT><B>EINTR</B>
+
+<DD>
+<DD>
+A signal was caught.
+<DT><B>EIO</B>
+
+<DD>
+I/O error.
+<DT><B>EMFILE</B>
+
+<DD>
+The maximum number (OPEN_MAX) of files was open already in the calling process.
+<DT><B>ENFILE</B>
+
+<DD>
+The maximum number of files was open already in the system.
 <DT><B>ENOMEM</B>
 
 <DD>
+
 Insufficient memory to allocate passwd structure.
+
+<DT><B>ERANGE</B>
+
+<DD>
+Insufficient buffer space supplied.
 </DL>
 <A NAME="lbAG">&nbsp;</A>
 <H2>FILES</H2>
@@ -80,7 +120,7 @@ Insufficient memory to allocate passwd structure.
 <DT><I>/etc/passwd</I>
 
 <DD>
-password database file
+local password database file
 </DL>
 <A NAME="lbAH">&nbsp;</A>
 <H2>CONFORMING TO</H2>
@@ -121,6 +161,6 @@ SVID 3, BSD 4.3
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 02:10:39 GMT, April 20, 2020
+Time: 02:14:22 GMT, April 20, 2020
 </BODY>
 </HTML>

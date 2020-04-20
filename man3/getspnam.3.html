@@ -72,29 +72,38 @@ visible in the password file. When computers got faster and people
 got more security-conscious, this was no longer acceptable.
 Julianne Frances Haugh implemented the shadow password suite
 that keeps the encrypted passwords in
+the shadow password database
+(e.g., the local shadow password file 
 <I>/etc/shadow</I>,
 
+NIS, and LDAP),
 readable only by root.
 <P>
 
-The access routines described below resemble those for
-<I>/etc/passwd</I>.
+The functions described below resemble those for
+the traditional password database
+(e.g., see
+<B><A HREF="../man3/getpwnam.3.html">getpwnam</A></B>(3)
 
-This shadow password setup has been superseded by PAM
-(pluggable authentication modules), and the file
-<I>/etc/nsswitch.conf</I>
+and
+<B><A HREF="../man3/getpwent.3.html">getpwent</A></B>(3)).
 
-now describes the sources to be used.
+
+
+
+
+
+
+
+
 <P>
 
 The
 <B>getspnam()</B>
 
 function returns a pointer to a structure containing
-the broken out fields of a line from
-<I>/etc/shadow</I>
-
-for the entry that matches the user name
+the broken-out fields of the record in the shadow password database
+that matches the user name
 <I>name</I>.
 
 <P>
@@ -102,7 +111,8 @@ for the entry that matches the user name
 The
 <B>getspent()</B>
 
-function returns a pointer to the next entry in the shadow password file.
+function returns a pointer to the next entry in the shadow password
+database.
 The position in the input stream is initialized by
 <B>setspent()</B>.
 
@@ -131,13 +141,17 @@ The
 function parses the supplied string
 <I>s</I>
 
-into a struct spwd.
+into a struct
+<I>spwd</I>.
+
 <P>
 
 The
 <B>putspent()</B>
 
-function writes the contents of the supplied struct spwd
+function writes the contents of the supplied struct
+<I>spwd</I>
+
 *<I>p</I>
 
 as a text line in the shadow password file format to the stream
@@ -150,9 +164,10 @@ are written as an empty string.
 The
 <B>lckpwdf()</B>
 
-function is intended to protect against multiple access of the shadow
-password database. It tries to acquire a lock, and returns 0 on success,
--1 on failure (lock not obtained within 15 seconds).
+function is intended to protect against multiple simultaneous accesses 
+of the shadow password database.
+It tries to acquire a lock, and returns 0 on success,
+or -1 on failure (lock not obtained within 15 seconds).
 The
 <B>ulckpwdf()</B>
 
@@ -164,25 +179,25 @@ password file. Only programs that use
 will notice the lock.
 <P>
 
-These were the routines that formed the original shadow API.
+These were the functions that formed the original shadow API.
 They are widely available.
 
 
 <A NAME="lbAE">&nbsp;</A>
 <H3>Reentrant versions</H3>
 
-Analogous to the &quot;reentrant&quot; routines for the password file, glibc
-also has reentrant versions here.
+Analogous to the reentrant functions for the password database, glibc
+also has reentrant functions for the shadow password database.
 The
 <B>getspnam_r()</B>
 
 function is like
 <B>getspnam()</B>
 
-but stores the retrieved shadow passwd structure in the space pointed to by
+but stores the retrieved shadow password structure in the space pointed to by
 <I>spbuf</I>.
 
-This shadow passwd structure contains pointers to strings, and these strings
+This shadow password structure contains pointers to strings, and these strings
 are stored in the buffer
 <I>buf</I>
 
@@ -203,7 +218,7 @@ The functions
 and
 <B>sgetspent_r()</B>
 
-are completely analogous.
+are similarly analogous to their non-reentrant counterparts.
 <P>
 
 Some non-glibc systems also have functions with these names,
@@ -212,31 +227,34 @@ often with different prototypes.
 <A NAME="lbAF">&nbsp;</A>
 <H3>Structure</H3>
 
-The shadow passwd structure is defined in <I>&lt;<A HREF="file:///usr/include/shadow.h">shadow.h</A>&gt;</I> as follows:
+The shadow password structure is defined in <I>&lt;<A HREF="file:///usr/include/shadow.h">shadow.h</A>&gt;</I> as follows:
 <P>
+<DL COMPACT><DT><DD>
 <PRE>
 struct spwd {
     char *sp_namp;         /* Login name */
     char *sp_pwdp;         /* Encrypted password */
-    long sp_lstchg;        /* Date of last change */
-    long sp_min;           /* Min #days between changes */
-    long sp_max;           /* Max #days between changes */
-    long sp_warn;          /* #days before pwd expires
+    long  sp_lstchg;       /* Date of last change */
+    long  sp_min;          /* Min #days between changes */
+    long  sp_max;          /* Max #days between changes */
+    long  sp_warn;         /* #days before pwd expires
                               to warn user to change it */
-    long sp_inact;         /* #days after pwd expires
+    long  sp_inact;        /* #days after pwd expires
                               until account is disabled */
-    long sp_expire;        /* #days since 1970-01-01
+    long  sp_expire;       /* #days since 1970-01-01
                               until account is disabled */
     unsigned long sp_flag; /* Reserved */
 };
 </PRE>
 
+</DL>
+
 <A NAME="lbAG">&nbsp;</A>
 <H2>RETURN VALUE</H2>
 
-Routines return NULL if no more entries are available or if an
-error occurs during processing.
-Routines which have <B>int</B> as the return value return 0 for
+The functions that return a pointer return NULL if no more entries
+are available or if an error occurs during processing.
+The functions which have <B>int</B> as the return value return 0 for
 success and -1 for failure.
 <P>
 
@@ -245,7 +263,7 @@ and may be overwritten by subsequent calls to these functions.
 <P>
 
 The reentrant functions return zero on success.
-In case of error, an error value is returned.
+In case of error, an error number is returned.
 <A NAME="lbAH">&nbsp;</A>
 <H2>ERRORS</H2>
 
@@ -262,7 +280,7 @@ Supplied buffer is too small.
 <DT><I>/etc/shadow</I>
 
 <DD>
-shadow password database file
+local shadow password database file
 <DT><I>/etc/.pwd.lock</I>
 
 <DD>
@@ -278,7 +296,9 @@ password file.
 <A NAME="lbAJ">&nbsp;</A>
 <H2>CONFORMING TO</H2>
 
-<P>
+The shadow password database and its associated API are 
+not specified in POSIX.1-2001.
+However, many other systems provide a similar API.
 <A NAME="lbAK">&nbsp;</A>
 <H2>SEE ALSO</H2>
 
@@ -312,6 +332,6 @@ password file.
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 02:13:58 GMT, April 20, 2020
+Time: 02:14:23 GMT, April 20, 2020
 </BODY>
 </HTML>

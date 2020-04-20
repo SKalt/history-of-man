@@ -22,16 +22,16 @@ accept - accept a connection on a socket
 <B>#include &lt;<A HREF="file:///usr/include/sys/socket.h">sys/socket.h</A>&gt;</B>
 
 <P>
-<B>int accept(int </B><I>s</I><B>, struct sockaddr *</B><I>addr</I><B>, socklen_t *</B><I>addrlen</I><B>);</B>
+<B>int accept(int </B><I>sockfd</I><B>, struct sockaddr *</B><I>addr</I><B>, socklen_t *</B><I>addrlen</I><B>);</B>
 
 <A NAME="lbAD">&nbsp;</A>
 <H2>DESCRIPTION</H2>
 
 <P>
 The
-<B>accept</B>
+<B>accept</B>()
 
-function is used with connection-based socket types
+system call is used with connection-based socket types
 (<B>SOCK_STREAM</B>,
 
 <B>SOCK_SEQPACKET</B>
@@ -40,26 +40,17 @@ and
 <B>SOCK_RDM</B>).
 
 It extracts the first connection request on the queue of pending
-connections, creates a new connected socket with mostly the same properties as
-<I>s</I>,
-
-and allocates a new file descriptor for the socket, which is returned.
-The newly created socket is no longer in the listening state.
+connections, creates a new connected socket, and returns a new file
+descriptor referring to that socket.
+The newly created socket is not in the listening state.
 The original socket
-<I>s</I>
+<I>sockfd</I>
 
-is unaffected by this call. Note that any per file descriptor flags 
-(everything that can be set with the 
-<B>F_SETFL</B>
-
-fcntl, like non blocking or async state) are not inherited across
-an
-<I>accept</I>.
-
+is unaffected by this call.
 <P>
 
 The argument
-<I>s</I>
+<I>sockfd</I>
 
 is a socket that has been created with
 <B><A HREF="../man2/socket.2.html">socket</A></B>(2),
@@ -74,20 +65,23 @@ and is listening for connections after a
 The argument
 <I>addr</I>
 
-is a pointer to a sockaddr structure. This structure is filled in
-with the address of the connecting entity,
-as known to the communications layer.  The exact format of the
-address passed in the
+is a pointer to a 
+<I>sockaddr</I>
+
+structure.
+This structure is filled in with the address of the peer socket,
+as known to the communications layer.
+The exact format of the address returned
 <I>addr</I>
 
-parameter is determined by the socket's family (see
+is determined by the socket's address family (see
 <B><A HREF="../man2/socket.2.html">socket</A></B>(2)
 
 and the respective protocol man pages).
 The
 <I>addrlen</I>
 
-argument is a value-result parameter: it should initially contain the
+argument is a value-result argument: it should initially contain the
 size of the structure pointed to by
 <I>addr</I>;
 
@@ -101,13 +95,13 @@ is NULL nothing is filled in.
 If no pending
 connections are present on the queue, and the socket is not marked as
 non-blocking,
-<B>accept</B>
+<B>accept</B>()
 
 blocks the caller until a connection is present.  If the socket is marked
 non-blocking and no pending connections are present on the queue,
-<B>accept</B>
+<B>accept</B>()
 
-returns EAGAIN. 
+fails with the error EAGAIN. 
 <P>
 
 In order to be notified of incoming connections on a socket, you can use
@@ -118,7 +112,7 @@ or
 
 A readable event will be delivered when a new connection is attempted and you
 may then call
-<B>accept</B>
+<B>accept</B>()
 
 to get a socket for that connection.  Alternatively, you can set the socket
 to deliver
@@ -133,7 +127,7 @@ for details.
 For certain protocols which require an explicit confirmation,
 such as
 DECNet,
-<B>accept</B>
+<B>accept</B>()
 
 can be thought of as merely dequeuing the next connection request and not
 implying confirmation.  Confirmation can be implied by
@@ -155,16 +149,16 @@ or
 
 return a readability event because the connection might have been
 removed by an asynchronous network error or another thread before
-<B>accept</B>
+<B>accept</B>()
 
 is called.
 If this happens then the call will block waiting for the next
 connection to arrive.
 To ensure that
-<B>accept</B>
+<B>accept</B>()
 
 never blocks, the passed socket
-<I>s</I>
+<I>sockfd</I>
 
 needs to have the
 <B>O_NONBLOCK</B>
@@ -176,7 +170,7 @@ flag set (see
 <H2>RETURN VALUE</H2>
 
 On success,
-<B>accept</B>
+<B>accept</B>()
 
 returns a non-negative integer that is a descriptor
 for the accepted socket.
@@ -188,16 +182,16 @@ is set appropriately.
 <H2>ERROR HANDLING</H2>
 
 Linux 
-<B>accept </B>
+<B>accept</B>()
 
 passes already-pending network errors on the new socket 
 as an error code from 
-<B>accept</B>.
+<B>accept</B>().
 
 This behaviour differs from other BSD socket
 implementations. For reliable operation the application should detect
 the network errors defined for the protocol after 
-<B>accept </B>
+<B>accept</B>()
 
 and treat
 them like 
@@ -224,7 +218,7 @@ and
 <A NAME="lbAH">&nbsp;</A>
 <H2>ERRORS</H2>
 
-<B>accept</B>
+<B>accept</B>()
 
 shall fail if:
 <DL COMPACT>
@@ -271,7 +265,7 @@ The referenced socket is not of type
 </DL>
 <P>
 
-<B>accept</B>
+<B>accept</B>()
 
 may fail if:
 <DL COMPACT>
@@ -281,7 +275,7 @@ may fail if:
 The
 <I>addr</I>
 
-parameter is not in a writable part of the user address space.
+argument is not in a writable part of the user address space.
 <DT><B>ENOBUFS, ENOMEM</B>
 
 <DD>
@@ -296,7 +290,7 @@ Protocol error.
 <P>
 
 Linux
-<B>accept</B>
+<B>accept</B>()
 
 may fail if:
 <DL COMPACT>
@@ -325,10 +319,10 @@ may be seen during a trace.
 <A NAME="lbAI">&nbsp;</A>
 <H2>CONFORMING TO</H2>
 
-SVr4, 4.4BSD (the
-<B>accept</B>
+SVr4, 4.4BSD
+(<B>accept</B>()
 
-function first appeared in BSD 4.2).
+first appeared in 4.2BSD).
 The BSD man page documents five possible error returns
 (EBADF, ENOTSOCK, EOPNOTSUPP, EWOULDBLOCK, EFAULT).
 SUSv3 documents errors EAGAIN, EBADF, ECONNABORTED, EINTR, EINVAL, EMFILE,
@@ -336,17 +330,29 @@ ENFILE, ENOBUFS, ENOMEM, ENOTSOCK, EOPNOTSUPP, EPROTO, EWOULDBLOCK. In
 addition, SUSv2 documents EFAULT and ENOSR.
 <P>
 
-Linux accept does _not_ inherit socket flags like
-<B>O_NONBLOCK</B>.
+On Linux, the new socket returned by
+<B>accept () </B>
 
-This behaviour differs from other BSD socket implementations.
-Portable programs should not rely on this behaviour and always set
-all required flags on the socket returned from accept.
+does <I>not</I> inherit file status flags such as
+<B>O_NONBLOCK</B>
+
+and
+<B>O_ASYNC</B>
+
+from the listening socket.
+This behaviour differs from the canonical BSD sockets implementation.
+
+
+Portable programs should not rely on inheritance or non-inheritance 
+of file status flags and always explicitly set all required flags on 
+the socket returned from 
+<B>accept</B>().
+
 <A NAME="lbAJ">&nbsp;</A>
 <H2>NOTE</H2>
 
 The third argument of
-<B>accept</B>
+<B>accept</B>()
 
 was originally declared as an `int *' (and is that under libc4 and libc5
 and on many other systems like BSD 4.*, SunOS 4, SGI); a POSIX 1003.1g draft
@@ -404,6 +410,6 @@ stupid thing, so they silently just renamed their blunder).&quot;
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 02:13:54 GMT, April 20, 2020
+Time: 02:14:18 GMT, April 20, 2020
 </BODY>
 </HTML>

@@ -37,12 +37,12 @@ clone - create a child process
 <A NAME="lbAD">&nbsp;</A>
 <H2>DESCRIPTION</H2>
 
-<B>clone </B>
+<B>clone</B>()
 
-creates a new process, just like
+creates a new process, in a manner similar to
 <B><A HREF="../man2/fork.2.html">fork</A></B>(2).
 
-<B>clone</B>
+<B>clone</B>()
 
 is a library function layered on top
 of the underlying 
@@ -70,13 +70,13 @@ the description of
 below.)
 <P>
 The main use of
-<B>clone</B>
+<B>clone</B>()
 
 is to implement threads: multiple threads of control in a program that
 run concurrently in a shared memory space.
 <P>
 When the child process is created with
-<B>clone</B>,
+<B>clone</B>(),
 
 it executes the function
 application
@@ -125,7 +125,7 @@ it is not possible for the child process to execute in the
 same stack as the calling process.  The calling process must therefore
 set up memory space for the child stack and pass a pointer to this
 space to
-<B>clone</B>.
+<B>clone</B>().
 
 Stacks grow downwards on all processors that run Linux
 (except the HP PA processors), so
@@ -206,7 +206,7 @@ working directory, and the umask.  Any call to
 or
 <B><A HREF="../man2/umask.2.html">umask</A></B>(2)
 
-performed by the calling process or the child process also takes effect in the
+performed by the calling process or the child process also affects the
 other process.
 <P>
 If 
@@ -214,7 +214,7 @@ If
 
 is not set, the child process works on a copy of the file system
 information of the calling process at the time of the
-<B>clone</B>
+<B>clone</B>()
 
 call.
 Calls to
@@ -232,21 +232,33 @@ If
 <B>CLONE_FILES</B>
 
 is set, the calling process and the child processes share the same file
-descriptor table.  File descriptors always refer to the same files in
-the calling process and in the child process.  Any file descriptor created by
-the calling process or by the child process is also valid in the other
-process.  Similarly, if one of the processes closes a file descriptor,
-or changes its associated flags, the other process is also affected.
+descriptor table.
+Any file descriptor created by the calling process or by the child 
+process is also valid in the other process.
+Similarly, if one of the processes closes a file descriptor,
+or changes its associated flags (using the
+<B><A HREF="../man2/fcntl.2.html">fcntl</A></B>(2)
+
+<B>F_SETFD</B>
+
+operation), the other process is also affected.
 <P>
 If
 <B>CLONE_FILES</B>
 
 is not set, the child process inherits a copy of all file descriptors
 opened in the calling process at the time of
-<B>clone</B>.
+<B>clone</B>().
 
-Operations on file descriptors performed later by either the calling process or
-the child process do not affect the other process.
+(The duplicated file descriptors in the child refer to the
+same open file descriptions (see 
+<B><A HREF="../man2/open.2.html">open</A></B>(2))
+
+as the corresponding file descriptors in the calling process.)
+Subsequent operations that open or close file descriptors,
+or change file descriptor flags,
+performed by either the calling 
+process or the child process do not affect the other process.
 <DT><B>CLONE_NEWNS</B> (since Linux 2.4.19)
 
 <DD>
@@ -323,7 +335,7 @@ If
 
 is not set, the child process inherits a copy of the signal handlers
 of the calling process at the time
-<B>clone</B>
+<B>clone</B>()
 
 is called.  Calls to
 <B><A HREF="../man2/sigaction.2.html">sigaction</A></B>(2)
@@ -422,7 +434,7 @@ If
 
 is not set, the child process runs in a separate copy of the memory
 space of the calling process at the time of
-<B>clone</B>.
+<B>clone</B>().
 
 Memory writes or file mappings/unmappings performed by one of the
 processes do not affect the other, as with
@@ -539,7 +551,7 @@ then any thread in the group can
 
 for that child.
 <P>
-Since Linux 2.6,
+Since Linux 2.5.35,
 <I>flags</I>
 
 must also include
@@ -644,7 +656,6 @@ The address involved may be changed by the
 
 system call. This is used by threading libraries.
 <P>
-<P>
 </DL>
 <A NAME="lbAE">&nbsp;</A>
 <H3>sys_clone</H3>
@@ -666,10 +677,10 @@ and
 <I>child_stack</I>
 
 arguments, which have the same meaning as for 
-<B>clone</B>.
+<B>clone</B>().
 
 (Note that the order of these arguments differs from
-<B>clone</B>.)
+<B>clone</B>().)
 
 <P>
 Another difference for 
@@ -761,7 +772,7 @@ were specified in
 
 <DD>
 Returned by 
-<B>clone </B>
+<B>clone</B>()
 
 when a zero value is specified for 
 <I>child_stack</I>.
@@ -790,10 +801,10 @@ was specified by a process other than process 0.
 <H2>AVAILABILITY</H2>
 
 There is no entry for
-<B>clone</B>
+<B>clone</B>()
 
 in libc5.  glibc2 provides
-<B>clone</B>
+<B>clone</B>()
 
 as described in this manual page.
 <P>
@@ -817,7 +828,7 @@ flag (as in kernel 2.6).
 <H2>CONFORMING TO</H2>
 
 The
-<B>clone</B>
+<B>clone</B>()
 
 and
 <B>sys_clone</B>
@@ -897,6 +908,6 @@ To get the truth, it may be necessary to use code such as the following
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 02:13:54 GMT, April 20, 2020
+Time: 02:14:18 GMT, April 20, 2020
 </BODY>
 </HTML>
