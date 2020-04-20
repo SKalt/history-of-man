@@ -5,13 +5,13 @@ Copyright (C) 1993 Rickard E. Faith &lt;faith@cs.unc.edu&gt;
 <HTML><HEAD><TITLE>Man page of MOUNT</TITLE>
 </HEAD><BODY>
 <H1>MOUNT</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2008-07-17<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2008-10-06<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
 <H2>NAME</H2>
 
-mount, umount, umount2 - mount and unmount file systems
+mount - mount file system
 <A NAME="lbAC">&nbsp;</A>
 <H2>SYNOPSIS</H2>
 
@@ -21,15 +21,10 @@ mount, umount, umount2 - mount and unmount file systems
 <B>int mount(const char *</B><I>source</I><B>, const char *</B><I>target</I><B>,</B>
 <B>          const char *</B><I>filesystemtype</I><B>, unsigned long </B><I>mountflags</I><B>,</B>
 <B>          const void *</B><I>data</I><B>);</B>
-
-<B>int umount(const char *</B><I>target</I><B>);</B>
-
-<B>int umount2(const char *</B><I>target</I><B>, int </B><I>flags</I><B>);</B>
 </PRE>
 
 <A NAME="lbAD">&nbsp;</A>
 <H2>DESCRIPTION</H2>
-
 
 <B>mount</B>()
 
@@ -41,19 +36,10 @@ or a dummy) to the directory specified by
 <I>target</I>.
 
 <P>
-<B>umount</B>()
-
-and
-<B>umount2</B>()
-
-remove the attachment of the (topmost) file system mounted on
-<I>target</I>.
-
-<P>
 Appropriate privilege (Linux: the
 <B>CAP_SYS_ADMIN</B>
 
-capability) is required to mount and unmount file systems.
+capability) is required to mount file systems.
 <P>
 Since Linux 2.4 a single file system can be visible at
 multiple mount points, and multiple mounts can be stacked
@@ -66,7 +52,8 @@ Values for the
 argument supported by the kernel are listed in
 <I>/proc/filesystems</I>
 
-(like &quot;minix&quot;, &quot;ext2&quot;, &quot;msdos&quot;, &quot;proc&quot;, &quot;nfs&quot;, &quot;iso9660&quot; etc.).
+(like &quot;minix&quot;, &quot;ext2&quot;, &quot;ext3&quot;, &quot;jfs&quot;, &quot;xfs&quot;, &quot;reiserfs&quot;,
+&quot;msdos&quot;, &quot;proc&quot;, &quot;nfs&quot;, &quot;iso9660&quot; etc.).
 Further types may become available when the appropriate modules
 are loaded.
 <P>
@@ -118,13 +105,12 @@ Up until Linux 2.6.26,
 
 was also ignored
 
-(the bind mound has the same mount options as
+(the bind mount has the same mount options as
 the underlying mount point).
 Since Linux 2.6.26, the
 <B>MS_RDONLY</B>
 
 flag is honored when making a bind mount.
-Since Linux 2.6.2
 <DT><B>MS_DIRSYNC</B> (since Linux 2.5.19)
 
 <DD>
@@ -258,6 +244,17 @@ and, additionally, before kernel 2.4.10, the following could also be changed:
 
 <B>MS_NOEXEC</B>.
 
+<DT><B>MS_SILENT</B> (since Linux 2.6.17)
+
+<DD>
+Suppress the display of certain
+(<I>printk</I>())
+
+warning messages in the kernel log.
+This flag supersedes the misnamed and obsolete
+<B>MS_VERBOSE</B>
+
+flag (available since Linux 2.4.12), which has the same meaning.
 <DT><B>MS_SYNCHRONOUS</B>
 
 <DD>
@@ -299,64 +296,6 @@ See
 <B><A HREF="../man8/mount.8.html">mount</A></B>(8)
 
 for details of the options available for each filesystem type.
-<P>
-
-
-
-
-Linux 2.1.116 added the
-<B>umount2</B>()
-
-system call, which, like
-<B>umount</B>(),
-
-unmounts a target, but allows additional
-<I>flags</I>
-
-controlling the behavior of the operation:
-<DL COMPACT>
-<DT><B>MNT_FORCE</B> (since Linux 2.1.116)
-
-<DD>
-Force unmount even if busy.
-This can cause data loss.
-(Only for NFS mounts.)
-
-
-
-<DT><B>MNT_DETACH</B> (since Linux 2.4.11)
-
-<DD>
-Perform a lazy unmount: make the mount point unavailable for
-new accesses, and actually perform the unmount when the mount point
-ceases to be busy.
-<DT><B>MNT_EXPIRE</B> (since Linux 2.6.8)
-
-<DD>
-Mark the mount point as expired.
-If a mount point is not currently in use, then an initial call to
-<B>umount2</B>()
-
-with this flag fails with the error
-<B>EAGAIN</B>,
-
-but marks the mount point as expired.
-The mount point remains expired as long as it isn't accessed
-by any process.
-A second
-<B>umount2</B>()
-
-call specifying
-<B>MNT_EXPIRE</B>
-
-unmounts an expired mount point.
-This flag cannot be specified with either
-<B>MNT_FORCE</B>
-
-or
-<B>MNT_DETACH</B>.
-
-</DL>
 <A NAME="lbAE">&nbsp;</A>
 <H2>RETURN VALUE</H2>
 
@@ -394,16 +333,6 @@ is located on a filesystem mounted with the
 option.
 
 
-<DT><B>EAGAIN</B>
-
-<DD>
-A call to
-<B>umount2</B>()
-
-specifying
-<B>MNT_EXPIRE</B>
-
-successfully marked an unbusy file system as expired.
 <DT><B>EBUSY</B>
 
 <DD>
@@ -420,7 +349,6 @@ because
 
 is still busy (it is the working directory of some task,
 the mount point of another device, has open files, etc.).
-Or, it could not be unmounted because it is busy.
 <DT><B>EFAULT</B>
 
 <DD>
@@ -447,26 +375,10 @@ was attempted, but
 <I>source</I>
 
 was not a mount point, or was '/'.
-Or, an unmount was attempted, but
-<I>target</I>
-
-was not a mount point.
-Or,
-<B>umount2</B>()
-
-was called with
-<B>MNT_EXPIRE</B>
-
-and either
-<B>MNT_DETACH</B>
-
-or
-<B>MNT_FORCE</B>.
-
 <DT><B>ELOOP</B>
 
 <DD>
-Too many link encountered during pathname resolution.
+Too many links encountered during pathname resolution.
 Or, a move was attempted, while
 <I>target</I>
 
@@ -507,8 +419,12 @@ is not a block device (and a device was required).
 <DT><B>ENOTDIR</B>
 
 <DD>
-The second argument, or a prefix of the first argument, is not
-a directory.
+<I>target</I>,
+
+or a prefix of
+<I>source</I>,
+
+is not a directory.
 <DT><B>ENXIO</B>
 
 <DD>
@@ -524,27 +440,10 @@ The caller does not have the required privileges.
 <A NAME="lbAG">&nbsp;</A>
 <H2>CONFORMING TO</H2>
 
-These functions are Linux-specific and should not be used in
+This function is Linux-specific and should not be used in
 programs intended to be portable.
 <A NAME="lbAH">&nbsp;</A>
 <H2>NOTES</H2>
-
-<A NAME="lbAI">&nbsp;</A>
-<H3>Linux Notes</H3>
-
-The original
-<B>umount</B>()
-
-function was called as <I>umount(device)</I> and would return
-<B>ENOTBLK</B>
-
-when called with something other than a block device.
-In Linux 0.98p4 a call <I>umount(dir)</I> was added, in order to
-support anonymous devices.
-In Linux 2.3.99-pre7 the call <I>umount(device)</I> was removed,
-leaving only <I>umount(dir)</I> (since now devices can be mounted
-in more than one place, so specifying the device does not suffice).
-<P>
 
 The original
 <B>MS_SYNC</B>
@@ -569,8 +468,63 @@ would fail with
 Since Linux 2.4 the set-user-ID and set-group-ID bits are
 just silently ignored in this case.
 
+<A NAME="lbAI">&nbsp;</A>
+<H3>Per-process Namespaces</H3>
+
+Starting with kernel 2.4.19, Linux provides per-process namespaces.
+A namespace is the set of file system mounts that are visible to a process.
+Namespaces can be (and usually are) shared between multiple processes,
+and changes to the namespace (i.e., mounts and unmounts) by one process
+are visible to all other processes sharing the same namespace.
+(The pre-2.4.19 Linux situation can be considered as one in which there
+was a single namespace was shared by every process on the system.)
+<P>
+A child process created by
+<B><A HREF="../man2/fork.2.html">fork</A></B>(2)
+
+shares its parent's namespace;
+the namespace is preserved across an
+<B><A HREF="../man2/execve.2.html">execve</A></B>(2).
+
+<P>
+A process can obtain a private namespace if:
+it was created using the
+<B>clone</B>()
+
+<B>CLONE_NEWNS</B>
+
+flag,
+in which case its new namespace is initialized to be a
+<I>copy</I>
+
+of the namespace of the process that called
+<B>clone</B>();
+
+or it calls
+<B><A HREF="../man2/unshare.2.html">unshare</A></B>(2)
+
+with the
+<B>CLONE_NEWNS</B>
+
+flag,
+which causes the caller's namespace to obtain a private copy
+of the namespace that it was previously sharing with other processes,
+so that future mounts and unmounts by the caller are invisible
+to other processes (except child processes that the caller
+subsequently creates) and vice versa.
+<P>
+The Linux-specific
+<I>/proc/PID/self</I>
+
+file exposes the list of mount points in the namespace of the process with
+the specified ID; see
+<B><A HREF="../man5/proc.5.html">proc</A></B>(5)
+
+for details.
 <A NAME="lbAJ">&nbsp;</A>
 <H2>SEE ALSO</H2>
+
+<B><A HREF="../man2/umount.2.html">umount</A></B>(2),
 
 <B><A HREF="../man7/path_resolution.7.html">path_resolution</A></B>(7),
 
@@ -591,7 +545,7 @@ just silently ignored in this case.
 <DT><A HREF="#lbAG">CONFORMING TO</A><DD>
 <DT><A HREF="#lbAH">NOTES</A><DD>
 <DL>
-<DT><A HREF="#lbAI">Linux Notes</A><DD>
+<DT><A HREF="#lbAI">Per-process Namespaces</A><DD>
 </DL>
 <DT><A HREF="#lbAJ">SEE ALSO</A><DD>
 </DL>
@@ -599,6 +553,6 @@ just silently ignored in this case.
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 02:58:22 GMT, April 20, 2020
+Time: 02:58:57 GMT, April 20, 2020
 </BODY>
 </HTML>

@@ -5,7 +5,7 @@ Copyright (C) 1994, 1995 by Daniel Quinlan (quinlan@yggdrasil.com)
 <HTML><HEAD><TITLE>Man page of PROC</TITLE>
 </HEAD><BODY>
 <H1>PROC</H1>
-Section: Linux Programmer's Manual (5)<BR>Updated: 2008-09-02<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (5)<BR>Updated: 2008-10-06<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -432,10 +432,30 @@ For more information on mount propagation see:
 <I>Documentation/filesystems/sharedsubtree.txt</I>
 
 in the kernel source tree.
+<DT><I>/proc/[pid]/mounts</I> (since Linux 2.4.19)
+
+<DD>
+This is a list of all the file systems currently mounted in the
+process's namespace.
+The format of this file is documented in
+<B><A HREF="../man5/fstab.5.html">fstab</A></B>(5).
+
+Since kernel version 2.6.15, this file is pollable:
+after opening the file for reading, a change in this file
+(i.e., a file system mount or unmount) causes
+<B><A HREF="../man2/select.2.html">select</A></B>(2)
+
+to mark the file descriptor as readable, and
+<B><A HREF="../man2/poll.2.html">poll</A></B>(2)
+
+and
+<B><A HREF="../man2/epoll_wait.2.html">epoll_wait</A></B>(2)
+
+mark the file as having an error condition.
 <DT><I>/proc/[pid]/mountstats</I> (since Linux 2.6.17)
 
 <DD>
-This file system exports information (statistics, configuration information)
+This file exports information (statistics, configuration information)
 about the mount points in the process's name space.
 Lines in this file have the form:
 <PRE>
@@ -464,12 +484,6 @@ information via this field.
 
 <DT><DD>
 This file is only readable by the owner of the process.
-
-
-
-
-
-
 <DT><I>/proc/[pid]/numa_maps</I> (since Linux 2.6.14)
 
 <DD>
@@ -1430,22 +1444,16 @@ kernel.
 <DT><I>/proc/mounts</I>
 
 <DD>
-This is a list of all the file systems currently mounted on the system.
+Before kernel 2.4.19, this file was a list
+of all the file systems currently mounted on the system.
+With the introduction of per-process namespaces in
+Linux 2.4.19, this file became a link to
+<I>/proc/self/mounts</I>,
+
+which lists the mount points of the process's own namespace.
 The format of this file is documented in
 <B><A HREF="../man5/fstab.5.html">fstab</A></B>(5).
 
-Since kernel version 2.6.15, this file is pollable:
-after opening the file for reading, a change in this file
-(i.e., a file system mount or unmount) causes
-<B><A HREF="../man2/select.2.html">select</A></B>(2)
-
-to mark the file descriptor as readable, and
-<B><A HREF="../man2/poll.2.html">poll</A></B>(2)
-
-and
-<B><A HREF="../man2/epoll_wait.2.html">epoll_wait</A></B>(2)
-
-mark the file as having an error condition.
 <DT><I>/proc/modules</I>
 
 <DD>
@@ -2213,7 +2221,7 @@ contains the number of file systems currently mounted.
 
 <DD>
 This directory contains files controlling a range of kernel parameters,
-a described below.
+as described below.
 <DT><I>/proc/sys/kernel/acct</I>
 
 <DD>
@@ -2437,7 +2445,7 @@ If the
 <I>/proc/sys/kernel/panic</I>
 
 file is also non-zero then the machine will be rebooted.
-<DT><I>/proc/sys/kernel/pid_max ( since Linux 2.5.34)</I>
+<DT><I>/proc/sys/kernel/pid_max</I>( since Linux 2.5.34)
 
 <DD>
 This file specifies the value at which PIDs wrap around
@@ -2474,7 +2482,7 @@ The four values in this file are
 
 <I>minimum_console_level</I>,
 
-<BR>&nbsp;and
+and
 <I>default_console_loglevel</I>.
 
 These values influence
@@ -2979,6 +2987,6 @@ The kernel source files:
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 02:58:34 GMT, April 20, 2020
+Time: 02:59:09 GMT, April 20, 2020
 </BODY>
 </HTML>

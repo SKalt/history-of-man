@@ -5,7 +5,7 @@ Copyright 1993 David Metcalfe (david@prism.demon.co.uk)
 <HTML><HEAD><TITLE>Man page of CTIME</TITLE>
 </HEAD><BODY>
 <H1>CTIME</H1>
-Section: Linux Programmer's Manual (3)<BR>Updated: 2008-08-29<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2008-09-26<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -183,7 +183,8 @@ The reentrant version
 <B>ctime_r</B>()
 
 does the same, but stores the
-string in a user-supplied buffer of length at least 26.
+string in a user-supplied buffer
+which should have room for at least 26 bytes.
 It need not
 set <I>tzname</I>.
 <P>
@@ -241,7 +242,7 @@ The
 <B>asctime_r</B>()
 
 function does the same, but stores the string in
-a user-supplied buffer of length at least 26.
+a user-supplied buffer which should have room for at least 26 bytes.
 <P>
 
 The
@@ -250,16 +251,58 @@ The
 function converts a broken-down time structure, expressed
 as local time, to calendar time representation.
 The function ignores
-the specified contents of the structure members <I>tm_wday</I> and <I>tm_yday</I>
-and recomputes them from the other information in the broken-down time
-structure.
-If structure members are outside their valid interval, they will be
-normalized (so that, for example, 40 October is changed into 9 November).
+the values supplied by the caller in the
+<I>tm_wday</I>
+
+and
+<I>tm_yday</I>
+
+fields.
+The value specified in the
+<I>tm_isdst</I>
+
+field informs
+<B>mktime</B>()
+
+whether or not daylight saving time (DST)
+is in effect for the time supplied in the
+<I>tm</I>
+
+structure:
+a positive value means DST is in effect;
+zero means that DST is not in effect;
+and a negative value means that
+<B>mktime</B>()
+
+should (use timezone information and system databases to)
+attempt to determine whether DST is in effect at the specified time.
+<P>
+The
+<B>mktime</B>()
+
+function modifies the fields of the
+<I>tm</I>
+
+structure as follows:
+<I>tm_wday</I>
+
+and
+<I>tm_yday</I>
+
+are set to values determined from the contents of the other fields;
+if structure members are outside their valid interval, they will be
+normalized (so that, for example, 40 October is changed into 9 November);
+<I>tm_isdst</I>
+
+is set (regardless of its initial value)
+to a positive value or to 0, respectively,
+to indicate whether DST is or is not in effect at the specified time.
 Calling
 <B>mktime</B>()
 
 also sets the external variable <I>tzname</I> with
 information about the current timezone.
+<P>
 If the specified broken-down
 time cannot be represented as calendar time (seconds since the Epoch),
 <B>mktime</B>()
@@ -268,7 +311,7 @@ returns a value of
 <I>(time_t)&nbsp;-1</I>
 
 and does not alter the
-<I>tm_wday</I> and <I>tm_yday</I> members of the broken-down time structure.
+members of the broken-down time structure.
 <A NAME="lbAE">&nbsp;</A>
 <H2>RETURN VALUE</H2>
 
@@ -434,6 +477,6 @@ should be called before
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 02:58:26 GMT, April 20, 2020
+Time: 02:59:01 GMT, April 20, 2020
 </BODY>
 </HTML>

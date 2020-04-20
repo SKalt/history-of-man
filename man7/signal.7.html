@@ -5,13 +5,13 @@ Copyright (c) 1993 by Thomas Koenig (ig25@rz.uni-karlsruhe.de)
 <HTML><HEAD><TITLE>Man page of SIGNAL</TITLE>
 </HEAD><BODY>
 <H1>SIGNAL</H1>
-Section: Linux Programmer's Manual (7)<BR>Updated: 2008-08-21<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (7)<BR>Updated: 2008-10-05<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
 <H2>NAME</H2>
 
-signal - list of available signals
+signal - overview of signals
 <A NAME="lbAC">&nbsp;</A>
 <H2>DESCRIPTION</H2>
 
@@ -58,11 +58,121 @@ or catch the signal with a
 
 a programmer-defined function that is automatically invoked
 when the signal is delivered.
+(By default, the signal handler is invoked on the
+normal process stack.
+It is possible to arrange that the signal handler
+uses an alternate stack; see
+<B><A HREF="../man2/sigaltstack.2.html">sigaltstack</A></B>(2)
+
+for a discussion of how to do this and when it might be useful.)
 <P>
 The signal disposition is a per-process attribute:
 in a multithreaded application, the disposition of a
 particular signal is the same for all threads.
+<P>
+A child created via
+<B><A HREF="../man2/fork.2.html">fork</A></B>(2)
+
+inherits a copy of its parent's signal dispositions.
+During an
+<B><A HREF="../man2/execve.2.html">execve</A></B>(2),
+
+the dispositions of handled signals are reset to the default;
+the dispositions of ignored signals are left unchanged.
 <A NAME="lbAE">&nbsp;</A>
+<H3>Sending a Signal</H3>
+
+The following system calls and library functions allow
+the caller to send a signal:
+<DL COMPACT>
+<DT><B><A HREF="../man3/raise.3.html">raise</A></B>(3)
+
+<DD>
+Sends a signal to the calling thread.
+<DT><B><A HREF="../man2/kill.2.html">kill</A></B>(2)
+
+<DD>
+Sends a signal to a specified process,
+to all members of a specified process group,
+or to all processes on the system.
+<DT><B><A HREF="../man2/killpg.2.html">killpg</A></B>(2)
+
+<DD>
+Sends a signal to all of the members of a specified process group.
+<DT><B><A HREF="../man3/pthread_kill.3.html">pthread_kill</A></B>(3)
+
+<DD>
+Sends a signal to a specified POSIX thread in the same process as
+the caller.
+<DT><B><A HREF="../man2/tgkill.2.html">tgkill</A></B>(2)
+
+<DD>
+Sends a signal to a specified thread within a specific process.
+(This is the system call used to implement
+<B><A HREF="../man3/pthread_kill.3.html">pthread_kill</A></B>(3).)
+
+<DT><B><A HREF="../man2/sigqueue.2.html">sigqueue</A></B>(2)
+
+<DD>
+Sends a real-time signal with accompanying data to a specified process.
+</DL>
+<A NAME="lbAF">&nbsp;</A>
+<H3>Waiting for a Signal to be Caught</H3>
+
+The following system calls suspend execution of the calling process
+or thread until a signal is caught
+(or an unhandled signal terminates the process):
+<DL COMPACT>
+<DT><B><A HREF="../man2/pause.2.html">pause</A></B>(2)
+
+<DD>
+Suspends execution until any signal is caught.
+<DT><B><A HREF="../man2/sigsuspend.2.html">sigsuspend</A></B>(2)
+
+<DD>
+Temporarily changes the signal mask (see below) and suspends
+execution until one of the unmasked signals is caught.
+</DL>
+<A NAME="lbAG">&nbsp;</A>
+<H3>Synchronously Accepting a Signal</H3>
+
+Rather than asynchronously catching a signal via a signal handler,
+it is possible to synchronously accept the signal, that is,
+to block execution until the signal is delivered,
+at which point the kernel returns information about the
+signal to the caller.
+There are two general ways to do this:
+<DL COMPACT>
+<DT>*<DD>
+<B><A HREF="../man2/sigwaitinfo.2.html">sigwaitinfo</A></B>(2),
+
+<B><A HREF="../man2/sigtimedwait.2.html">sigtimedwait</A></B>(2),
+
+and
+<B><A HREF="../man3/sigwait.3.html">sigwait</A></B>(3)
+
+suspend execution until one of the signals in a specified
+set is delivered.
+Each of these calls returns information about the delivered signal.
+<DT>*<DD>
+<B><A HREF="../man2/signalfd.2.html">signalfd</A></B>(2)
+
+returns a file descriptor that can be used to read information
+about signals that are delivered to the caller.
+Each
+<B><A HREF="../man2/read.2.html">read</A></B>(2)
+
+from this file descriptor blocks until one of the signals
+in the set specified in the
+<B><A HREF="../man2/signalfd.2.html">signalfd</A></B>(2)
+
+call is delivered to the caller.
+The buffer returned by
+<B><A HREF="../man2/read.2.html">read</A></B>(2)
+
+contains a structure describing the signal.
+</DL>
+<A NAME="lbAH">&nbsp;</A>
 <H3>Signal Mask and Pending Signals</H3>
 
 A signal may be
@@ -85,6 +195,14 @@ In a traditional single-threaded application,
 <B><A HREF="../man2/sigprocmask.2.html">sigprocmask</A></B>(2)
 
 can be used to manipulate the signal mask.
+<P>
+A child created via
+<B><A HREF="../man2/fork.2.html">fork</A></B>(2)
+
+inherits a copy of its parent's signal mask;
+the signal mask is preserved across
+<B><A HREF="../man2/execve.2.html">execve</A></B>(2).
+
 <P>
 A signal may be generated (and thus pending)
 for a process as a whole (e.g., when sent using
@@ -114,7 +232,15 @@ using
 This set will consist of the union of the set of pending
 process-directed signals and the set of signals pending for
 the calling thread.
-<A NAME="lbAF">&nbsp;</A>
+<P>
+A child created via
+<B><A HREF="../man2/fork.2.html">fork</A></B>(2)
+
+initially has an empty pending signal set;
+the pending signal set is preserved across an
+<B><A HREF="../man2/execve.2.html">execve</A></B>(2).
+
+<A NAME="lbAI">&nbsp;</A>
 <H3>Standard Signals</H3>
 
 Linux supports the standard signals listed below.
@@ -236,7 +362,7 @@ by default on those other Unix systems where it appears.
 
 (which is not specified in POSIX.1-2001) is ignored by default
 on several other Unix systems.
-<A NAME="lbAG">&nbsp;</A>
+<A NAME="lbAJ">&nbsp;</A>
 <H3>Real-time Signals</H3>
 
 Linux supports real-time signals as originally defined in the POSIX.1b
@@ -372,7 +498,7 @@ signals; see
 <B><A HREF="../man2/setrlimit.2.html">setrlimit</A></B>(2)
 
 for further details.
-<A NAME="lbAH">&nbsp;</A>
+<A NAME="lbAK">&nbsp;</A>
 <H3>Async-signal-safe functions</H3>
 
 <P>
@@ -549,7 +675,7 @@ utimes()
 </PRE>
 
 
-<A NAME="lbAI">&nbsp;</A>
+<A NAME="lbAL">&nbsp;</A>
 <H3>Interruption of System Calls and Library Functions by Signal Handlers</H3>
 
 If a signal handler is invoked while a system call or library
@@ -770,7 +896,7 @@ The
 
 function is also never restarted if interrupted by a handler,
 but gives a success return: the number of seconds remaining to sleep.
-<A NAME="lbAJ">&nbsp;</A>
+<A NAME="lbAM">&nbsp;</A>
 <H3>Interruption of System Calls and Library Functions by Stop Signals</H3>
 
 On Linux, even in the absence of signal handlers,
@@ -832,11 +958,11 @@ Linux 2.4 and earlier:
 </DL>
 </DL>
 
-<A NAME="lbAK">&nbsp;</A>
+<A NAME="lbAN">&nbsp;</A>
 <H2>CONFORMING TO</H2>
 
 POSIX.1, except as noted.
-<A NAME="lbAL">&nbsp;</A>
+<A NAME="lbAO">&nbsp;</A>
 <H2>BUGS</H2>
 
 <B>SIGIO</B>
@@ -850,7 +976,7 @@ the build process of some software still thinks that
 signal 29 is
 <B>SIGLOST</B>.
 
-<A NAME="lbAM">&nbsp;</A>
+<A NAME="lbAP">&nbsp;</A>
 <H2>SEE ALSO</H2>
 
 <B><A HREF="../man1/kill.1.html">kill</A></B>(1),
@@ -920,21 +1046,24 @@ signal 29 is
 <DT><A HREF="#lbAC">DESCRIPTION</A><DD>
 <DL>
 <DT><A HREF="#lbAD">Signal Dispositions</A><DD>
-<DT><A HREF="#lbAE">Signal Mask and Pending Signals</A><DD>
-<DT><A HREF="#lbAF">Standard Signals</A><DD>
-<DT><A HREF="#lbAG">Real-time Signals</A><DD>
-<DT><A HREF="#lbAH">Async-signal-safe functions</A><DD>
-<DT><A HREF="#lbAI">Interruption of System Calls and Library Functions by Signal Handlers</A><DD>
-<DT><A HREF="#lbAJ">Interruption of System Calls and Library Functions by Stop Signals</A><DD>
+<DT><A HREF="#lbAE">Sending a Signal</A><DD>
+<DT><A HREF="#lbAF">Waiting for a Signal to be Caught</A><DD>
+<DT><A HREF="#lbAG">Synchronously Accepting a Signal</A><DD>
+<DT><A HREF="#lbAH">Signal Mask and Pending Signals</A><DD>
+<DT><A HREF="#lbAI">Standard Signals</A><DD>
+<DT><A HREF="#lbAJ">Real-time Signals</A><DD>
+<DT><A HREF="#lbAK">Async-signal-safe functions</A><DD>
+<DT><A HREF="#lbAL">Interruption of System Calls and Library Functions by Signal Handlers</A><DD>
+<DT><A HREF="#lbAM">Interruption of System Calls and Library Functions by Stop Signals</A><DD>
 </DL>
-<DT><A HREF="#lbAK">CONFORMING TO</A><DD>
-<DT><A HREF="#lbAL">BUGS</A><DD>
-<DT><A HREF="#lbAM">SEE ALSO</A><DD>
+<DT><A HREF="#lbAN">CONFORMING TO</A><DD>
+<DT><A HREF="#lbAO">BUGS</A><DD>
+<DT><A HREF="#lbAP">SEE ALSO</A><DD>
 </DL>
 <HR>
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 02:58:35 GMT, April 20, 2020
+Time: 02:59:10 GMT, April 20, 2020
 </BODY>
 </HTML>

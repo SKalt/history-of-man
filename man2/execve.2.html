@@ -5,7 +5,7 @@ Copyright (c) 1992 Drew Eckhardt (drew@cs.colorado.edu), March 28, 1992
 <HTML><HEAD><TITLE>Man page of EXECVE</TITLE>
 </HEAD><BODY>
 <H1>EXECVE</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2008-08-07<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2008-10-04<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -370,23 +370,35 @@ that is in force at the time of the
 <B>execve</B>()
 
 call.
+(Architectures with no memory management unit are excepted:
+they maintain the limit that was in effect before kernel 2.6.23.)
+This change allows programs to have a much larger
+argument and/or environment list.
 
 
 
-For
-these architectures, the total size is limited to 1/4 of the allowed
-stack size, the limit per string is 32 pages (the kernel constant
+
+
+
+For these architectures, the total size is limited to 1/4 of the allowed
+stack size.
+(Imposing the 1/4-limit
+ensures that the new program always has some stack space.)
+
+
+Since Linux 2.6.25,
+the kernel places a floor of 32 pages on this size limit,
+so that, even when
+<B>RLIMIT_STACK</B>
+
+is set very low,
+applications are guaranteed to have at least as much argument and
+environment space as was provided by Linux 2.6.23 and earlier.
+(This guarantee was not provided in Linux 2.6.23 and 2.6.24.)
+Additionally, the limit per string is 32 pages (the kernel constant
 <B>MAX_ARG_STRLEN</B>),
 
 and the maximum number of strings is 0x7FFFFFFF.
-(This change allows programs to have a much larger
-argument and/or environment list.
-Imposing the 1/4-limit
-ensures that the new program always has some stack space.)
-Architectures with no memory management unit are excepted:
-they maintain the limit that was in effect before kernel 2.6.23.
-
-
 <A NAME="lbAG">&nbsp;</A>
 <H2>RETURN VALUE</H2>
 
@@ -598,6 +610,20 @@ on most other Unix systems doing this will result in an error
 
 
 
+<P>
+POSIX.1-2001 says that values returned by
+<B><A HREF="../man3/sysconf.3.html">sysconf</A></B>(3)
+
+should be invariant over the lifetime of a process.
+However, since Linux 2.6.23, if the
+<B>RLIMIT_STACK</B>
+
+resource limit changes, then the value reported by
+<B>_SC_ARG_MAX</B>
+
+will also change,
+to reflect the fact that the limit on space for holding
+command-line arguments and environment variables has changed.
 
 
 
@@ -773,6 +799,6 @@ argv[4]: world
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 02:58:21 GMT, April 20, 2020
+Time: 02:58:55 GMT, April 20, 2020
 </BODY>
 </HTML>
