@@ -26,7 +26,7 @@ the source, must acknowledge the copyright and authors of this work.
 <HTML><HEAD><TITLE>Man page of QUOTACTL</TITLE>
 </HEAD><BODY>
 <H1>QUOTACTL</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2010-06-16<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2016-05-09<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -246,6 +246,48 @@ a privileged user
 (<B>CAP_SYS_ADMIN</B>)
 
 can retrieve the quotas of any user.
+<DT><B>Q_GETNEXTQUOTA</B> (since Linux 4.6)
+
+<DD>
+
+This operation is the same as
+<B>Q_GETQUOTA</B>,
+
+but it returns quota information for the next ID greater than or equal to
+<I>id</I>
+
+that has a quota set.
+<P>
+The
+<I>addr</I>
+
+argument is a pointer to a
+<I>nextdqblk</I>
+
+structure whose fields are as for the
+<I>dqblk</I>,
+
+except for the addition of a
+<I>dqb_id</I>
+
+field that is used to return the ID for which
+quota information is being returned:
+<P>
+<PRE>
+struct nextdqblk {
+    uint64_t dqb_bhardlimit;
+    uint64_t dqb_bsoftlimit;
+    uint64_t dqb_curspace;
+    uint64_t dqb_ihardlimit;
+    uint64_t dqb_isoftlimit;
+    uint64_t dqb_curinodes;
+    uint64_t dqb_btime;
+    uint64_t dqb_itime;
+    uint32_t dqb_valid;
+    uint32_t dqb_id;
+};
+</PRE>
+
 <DT><B>Q_SETQUOTA</B>
 
 <DD>
@@ -275,7 +317,7 @@ operations in the previous quota interfaces.
 This operation requires privilege
 (<B>CAP_SYS_ADMIN</B>).
 
-<DT><B>Q_GETINFO</B>
+<DT><B>Q_GETINFO</B> (since Linux 2.4.22)
 
 <DD>
 Get information (like grace times) about quotafile.
@@ -344,7 +386,7 @@ The
 <I>id</I>
 
 argument is ignored.
-<DT><B>Q_SETINFO</B>
+<DT><B>Q_SETINFO</B> (since Linux 2.4.22)
 
 <DD>
 Set information about quotafile.
@@ -377,7 +419,7 @@ argument is ignored.
 This operation requires privilege
 (<B>CAP_SYS_ADMIN</B>).
 
-<DT><B>Q_GETFMT</B>
+<DT><B>Q_GETFMT</B> (since Linux 2.4.22)
 
 <DD>
 Get quota format used on the specified filesystem.
@@ -401,7 +443,7 @@ and
 <I>id</I>
 
 arguments are ignored.
-<DT><B>Q_GETSTATS</B>
+<DT><B>Q_GETSTATS</B> (supported up to Linux 2.4.21)
 
 <DD>
 Get statistics and other generic information about the quota subsystem.
@@ -422,8 +464,8 @@ and
 <I>id</I>
 
 arguments are ignored.
-This operation is obsolete and not supported by recent kernels.
-
+<P>
+This operation is obsolete and was removed in Linux 2.4.22.
 Files in
 <I>/proc/sys/fs/quota/</I>
 
@@ -499,6 +541,17 @@ a privileged user
 (<B>CAP_SYS_ADMIN</B>)
 
 may retrieve the quotas of any user.
+<DT><B>Q_XGETNEXTQUOTA</B> (since Linux 4.6)
+
+<DD>
+
+This operation is the same as
+<B>Q_XGETQUOTA</B>,
+
+but it returns quota information for the next ID greater than or equal to
+<I>id</I>
+
+that has a quota set.
 <DT><B>Q_XSETQLIM</B>
 
 <DD>
@@ -560,6 +613,33 @@ is set to indicate the error.
 <H2>ERRORS</H2>
 
 <DL COMPACT>
+<DT><B>EACCES</B>
+
+<DD>
+<I>cmd</I>
+
+is
+<B>Q_QUOTAON</B>,
+
+and the quota file pointed to by
+<I>addr</I>
+
+exists, but is not a regular file or
+is not on the filesystem pointed to by
+<I>special</I>.
+
+<DT><B>EBUSY</B>
+
+<DD>
+<I>cmd</I>
+
+is
+<B>Q_QUOTAON</B>,
+
+but another
+<B>Q_QUOTAON</B>
+
+had already been performed.
 <DT><B>EFAULT</B>
 
 <DD>
@@ -578,6 +658,15 @@ or
 <I>type</I>
 
 is invalid.
+<DT><B>EINVAL</B>
+
+<DD>
+<I>cmd</I>
+
+is
+<B>Q_QUOTAON</B>,
+
+but the specified quota file is corrupted.
 <DT><B>ENOENT</B>
 
 <DD>
@@ -608,77 +697,44 @@ The caller lacked the required privilege
 (<B>CAP_SYS_ADMIN</B>)
 
 for the specified operation.
-<DT><B>ESRCH</B>
+<DT><B>ERANGE</B>
 
 <DD>
-No disk quota is found for the indicated user.
-Quotas have not been turned on for this filesystem.
-</DL>
-<P>
-
-If
 <I>cmd</I>
 
 is
 <B>Q_SETQUOTA</B>,
 
-<B>quotactl</B>()
-
-may also set
-<I>errno</I>
-
-to:
-<DL COMPACT>
-<DT><B>ERANGE</B>
+but the specified limits are out of the range allowed by the quota format.
+<DT><B>ESRCH</B>
 
 <DD>
-Specified limits are out of range allowed by quota format.
-</DL>
-<P>
+No disk quota is found for the indicated user.
+Quotas have not been turned on for this filesystem.
+<DT><B>ESRCH</B>
 
-If
+<DD>
 <I>cmd</I>
 
 is
 <B>Q_QUOTAON</B>,
 
-<B>quotactl</B>()
-
-may also set
-<I>errno</I>
-
-to:
-<DL COMPACT>
-<DT><B>EACCES</B>
-
-<DD>
-The quota file pointed to by
-<I>addr</I>
-
-exists, but is not a regular file; or,
-the quota file pointed to by
-<I>addr</I>
-
-exists, but is not on the filesystem pointed to by
-<I>special</I>.
-
-<DT><B>EBUSY</B>
-
-<DD>
-<B>Q_QUOTAON</B>
-
-attempted, but another
-<B>Q_QUOTAON</B>
-
-had already been performed.
-<DT><B>EINVAL</B>
-
-<DD>
-The quota file is corrupted.
+but the specified quota format was not found.
 <DT><B>ESRCH</B>
 
 <DD>
-Specified quota format was not found.
+<I>cmd</I>
+
+is
+<B>Q_GETNEXTQUOTA</B>
+
+or
+<B>Q_XGETNEXTQUOTA</B>,
+
+but there is no ID greater than or equal to
+<I>id</I>
+
+that has an active quota.
 </DL>
 <A NAME="lbAG">&nbsp;</A>
 <H2>SEE ALSO</H2>
@@ -707,6 +763,6 @@ Specified quota format was not found.
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:42:23 GMT, April 20, 2020
+Time: 03:42:56 GMT, April 20, 2020
 </BODY>
 </HTML>

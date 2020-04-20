@@ -322,33 +322,9 @@ See also
 <DT><I>/proc/[pid]/cgroup</I> (since Linux 2.6.24)
 
 <DD>
+See
+<B><A HREF="../man7/cgroups.7.html">cgroups</A></B>(7).
 
-This file describes control groups to which the process/task belongs.
-For each cgroup hierarchy there is one entry containing
-colon-separated fields of the form:
-<PRE>
-
-    5:cpuacct,cpu,cpuset:/daemons
-</PRE>
-
-<DT><DD>
-The colon-separated fields are, from left to right:
-<DL COMPACT><DT><DD>
-<DL COMPACT>
-<DT>1.<DD>
-hierarchy ID number
-<DT>2.<DD>
-set of subsystems bound to the hierarchy
-<DT>3.<DD>
-control group in the hierarchy to which the process belongs
-</DL>
-</DL>
-
-<DT><DD>
-This file is present only if the
-<B>CONFIG_CGROUPS</B>
-
-kernel configuration option is enabled.
 <DT><I>/proc/[pid]/clear_refs</I> (since Linux 2.6.22)
 
 <DD>
@@ -1329,8 +1305,18 @@ and
 
 <DD>
 
+
 This file contains information about mount points.
-It contains lines of the form:
+It supplies various information
+(e.g., propagation state, root of mount for bind mounts,
+identifier for each mount and its parent) that is missing from the (older)
+<I>/proc/[pid]/mounts</I>
+
+file, and fixes various other problems with that file
+(e.g., nonextensibility,
+failure to distinguish per-mount versus per-superblock options).
+<P>
+The file contains lines of the form:
 <PRE>
 
 36 35 98:0 /mnt1 /mnt2 rw,noatime master:1 - ext3 /dev/root rw,errors=continue
@@ -1342,30 +1328,33 @@ The numbers in parentheses are labels for the descriptions below:
 <DL COMPACT><DT><DD>
 <DL COMPACT>
 <DT>(1)<DD>
-mount ID: unique identifier of the mount (may be reused after
+mount ID: a unique ID for the mount (may be reused after
 <B><A HREF="../man2/umount.2.html">umount</A></B>(2)).
 
 <DT>(2)<DD>
-parent ID: ID of parent mount (or of self for the top of the mount tree).
+parent ID: the ID of the parent mount
+(or of self for the top of the mount tree).
 <DT>(3)<DD>
-major:minor: value of
+major:minor: the value of
 <I>st_dev</I>
 
-for files on filesystem (see
+for files on this filesystem (see
 <B><A HREF="../man2/stat.2.html">stat</A></B>(2)).
 
 <DT>(4)<DD>
-root: root of the mount within the filesystem.
+root: the pathname of the directory in the filesystem
+which forms the root of this mount.
 <DT>(5)<DD>
-mount point: mount point relative to the process's root.
+mount point: ithe pathname of the mount point relative
+to the process's root directory.
 <DT>(6)<DD>
 mount options: per-mount options.
 <DT>(7)<DD>
-optional fields: zero or more fields of the form &quot;tag[:value]&quot;.
+optional fields: zero or more fields of the form &quot;tag[:value]&quot;; see below.
 <DT>(8)<DD>
-separator: marks the end of the optional fields.
+separator: the end of the optional fields is marked by a single hyphen.
 <DT>(9)<DD>
-filesystem type: name of filesystem in the form &quot;type[.subtype]&quot;.
+filesystem type: the filesystem type in the form &quot;type[.subtype]&quot;.
 <DT>(10)<DD>
 mount source: filesystem-specific information or &quot;none&quot;.
 <DT>(11)<DD>
@@ -1374,7 +1363,6 @@ super options: per-superblock options.
 </DL>
 
 <DT><DD>
-Parsers should ignore all unrecognized optional fields.
 Currently, the possible optional fields are:
 <DL COMPACT><DT><DD>
 <DL COMPACT>
@@ -1389,6 +1377,8 @@ mount is unbindable
 </DL>
 </DL>
 
+<DT><DD>
+Parsers should ignore all unrecognized optional fields.
 <DT><DD>
 (*) X is the closest dominant peer group under the process's root.
 If X is the immediate master of the mount,
@@ -2746,6 +2736,12 @@ They may be accessed through
 
 and
 <B><A HREF="../man8/setpci.8.html">setpci</A></B>(8).
+
+<DT><I>/proc/cgroups</I> (since Linux 2.6.24)
+
+<DD>
+See
+<B><A HREF="../man7/cgroups.7.html">cgroups</A></B>(7).
 
 <DT><I>/proc/cmdline</I>
 
@@ -4630,6 +4626,12 @@ and was replaced by a per-thread bounding set; see
 <B><A HREF="../man7/capabilities.7.html">capabilities</A></B>(7).
 
 <DT><I>/proc/sys/kernel/core_pattern</I>
+
+<DD>
+See
+<B><A HREF="../man5/core.5.html">core</A></B>(5).
+
+<DT><I>/proc/sys/kernel/core_pipe_limit</I>
 
 <DD>
 See
@@ -6813,6 +6815,6 @@ and
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:42:35 GMT, April 20, 2020
+Time: 03:43:08 GMT, April 20, 2020
 </BODY>
 </HTML>
