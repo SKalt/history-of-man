@@ -26,24 +26,28 @@ the source, must acknowledge the copyright and authors of this work.
 <HTML><HEAD><TITLE>Man page of CHMOD</TITLE>
 </HEAD><BODY>
 <H1>CHMOD</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2010-09-26<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2014-02-21<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
 <H2>NAME</H2>
 
-chmod, fchmod - change permissions of a file
+chmod, fchmod, fchmodat - change permissions of a file
 <A NAME="lbAC">&nbsp;</A>
 <H2>SYNOPSIS</H2>
 
+<PRE>
 <B>#include &lt;<A HREF="file:///usr/include/sys/stat.h">sys/stat.h</A>&gt;</B>
 
-<P>
-<B>int chmod(const char *</B><I>path</I><B>, mode_t </B><I>mode</I><B>);</B>
-
+<B>int chmod(const char *</B><I>pathname</I><B>, mode_t </B><I>mode</I><B>);</B>
 <BR>
-
 <B>int fchmod(int </B><I>fd</I><B>, mode_t </B><I>mode</I><B>);</B>
+
+<B>#include &lt;<A HREF="file:///usr/include/fcntl.h">fcntl.h</A>&gt;</B>           /* Definition of AT_* constants */
+<B>#include &lt;<A HREF="file:///usr/include/sys/stat.h">sys/stat.h</A>&gt;</B>
+
+<B>int fchmodat(int </B><I>dirfd</I><B>, const char *</B><I>pathname</I><B>, mode_t </B><I>mode</I><B>, int </B><I>flags</I><B>);</B>
+</PRE>
 
 <P>
 
@@ -66,18 +70,40 @@ _XOPEN_SOURCE&nbsp;&amp;&amp;&nbsp;_XOPEN_SOURCE_EXTENDED
 </DL>
 
 
+<P>
+<B>fchmodat</B>():
+
+
+
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT>Since glibc 2.10:<DD>
+_XOPEN_SOURCE&nbsp;&gt;=&nbsp;700 || _POSIX_C_SOURCE&nbsp;&gt;=&nbsp;200809L
+<DT>Before glibc 2.10:<DD>
+_ATFILE_SOURCE
+</DL>
+</DL>
+
+
+
 
 <A NAME="lbAD">&nbsp;</A>
 <H2>DESCRIPTION</H2>
 
-These system calls change the permissions of a file.
+The
+<B>chmod</B>()
+
+and
+<B>fchmod</B>()
+
+system calls change the permissions of a file.
 They differ only in how the file is specified:
 <DL COMPACT>
 <DT>*<DD>
 <B>chmod</B>()
 
 changes the permissions of the file specified whose pathname is given in
-<I>path</I>,
+<I>pathname</I>,
 
 which is dereferenced if it is a symbolic link.
 <DT>*<DD>
@@ -198,7 +224,80 @@ already open files, because the access control is done on the server, but
 open files are maintained by the client.
 Widening the permissions may be
 delayed for other clients if attribute caching is enabled on them.
+
+
 <A NAME="lbAE">&nbsp;</A>
+<H3>fchmodat()</H3>
+
+The
+<B>fchmodat</B>()
+
+system call operates in exactly the same way as
+<B>chmod</B>(),
+
+except for the differences described here.
+<P>
+If the pathname given in
+<I>pathname</I>
+
+is relative, then it is interpreted relative to the directory
+referred to by the file descriptor
+<I>dirfd</I>
+
+(rather than relative to the current working directory of
+the calling process, as is done by
+<B>chmod</B>()
+
+for a relative pathname).
+<P>
+If
+<I>pathname</I>
+
+is relative and
+<I>dirfd</I>
+
+is the special value
+<B>AT_FDCWD</B>,
+
+then
+<I>pathname</I>
+
+is interpreted relative to the current working
+directory of the calling process (like
+<B>chmod</B>()<B>).</B>
+
+<P>
+If
+<I>pathname</I>
+
+is absolute, then
+<I>dirfd</I>
+
+is ignored.
+<P>
+<I>flags</I>
+
+can either be 0, or include the following flag:
+<DL COMPACT>
+<DT><B>AT_SYMLINK_NOFOLLOW</B>
+
+<DD>
+If
+<I>pathname</I>
+
+is a symbolic link, do not dereference it:
+instead operate on the link itself.
+This flag is not currently implemented.
+</DL>
+<P>
+
+See
+<B><A HREF="../man2/openat.2.html">openat</A></B>(2)
+
+for an explanation of the need for
+<B>fchmodat</B>().
+
+<A NAME="lbAF">&nbsp;</A>
 <H2>RETURN VALUE</H2>
 
 On success, zero is returned.
@@ -206,10 +305,12 @@ On error, -1 is returned, and
 <I>errno</I>
 
 is set appropriately.
-<A NAME="lbAF">&nbsp;</A>
+<A NAME="lbAG">&nbsp;</A>
 <H2>ERRORS</H2>
 
-Depending on the filesystem, other errors can be returned.
+Depending on the filesystem,
+errors other than those listed below can be returned.
+<P>
 The more general errors for
 <B>chmod</B>()
 
@@ -225,7 +326,7 @@ Search permission is denied on a component of the path prefix.
 <DT><B>EFAULT</B>
 
 <DD>
-<I>path</I>
+<I>pathname</I>
 
 points outside your accessible address space.
 <DT><B>EIO</B>
@@ -236,12 +337,12 @@ An I/O error occurred.
 
 <DD>
 Too many symbolic links were encountered in resolving
-<I>path</I>.
+<I>pathname</I>.
 
 <DT><B>ENAMETOOLONG</B>
 
 <DD>
-<I>path</I>
+<I>pathname</I>
 
 is too long.
 <DT><B>ENOENT</B>
@@ -296,24 +397,97 @@ See above.
 <DD>
 See above.
 </DL>
-<A NAME="lbAG">&nbsp;</A>
+<P>
+
+The same errors that occur for
+<B>chmod</B>()
+
+can also occur for
+<B>fchmodat</B>().
+
+The following additional errors can occur for
+<B>fchmodat</B>():
+
+<DL COMPACT>
+<DT><B>EBADF</B>
+
+<DD>
+<I>dirfd</I>
+
+is not a valid file descriptor.
+<DT><B>EINVAL</B>
+
+<DD>
+Invalid flag specified in
+<I>flags</I>.
+
+<DT><B>ENOTDIR</B>
+
+<DD>
+<I>pathname</I>
+
+is relative and
+<I>dirfd</I>
+
+is a file descriptor referring to a file other than a directory.
+<DT><B>ENOTSUP</B>
+
+<DD>
+<I>flags</I>
+
+specified
+<B>AT_SYMLINK_NOFOLLOW</B>,
+
+which is not supported.
+</DL>
+<A NAME="lbAH">&nbsp;</A>
+<H2>VERSIONS</H2>
+
+<B>fchmodat</B>()
+
+was added to Linux in kernel 2.6.16;
+library support was added to glibc in version 2.4.
+<A NAME="lbAI">&nbsp;</A>
 <H2>CONFORMING TO</H2>
 
-4.4BSD, SVr4, POSIX.1-2001.
-<A NAME="lbAH">&nbsp;</A>
+<B>chmod</B>(),
+
+<B>fchmod</B>():
+
+4.4BSD, SVr4, POSIX.1-2001i, POSIX.1-2008.
+<P>
+<B>fchmodat</B>():
+
+POSIX.1-2008.
+<A NAME="lbAJ">&nbsp;</A>
+<H2>NOTES</H2>
+
+The GNU C library
+<B>fchmodat</B>()
+
+wrapper function implements the POSIX-specified
+interface described in this page.
+This interface differs from the underlying Linux system call, which does
+<I>not</I>
+
+have a
+<I>flags</I>
+
+argument.
+<A NAME="lbAK">&nbsp;</A>
 <H2>SEE ALSO</H2>
 
 <B><A HREF="../man2/chown.2.html">chown</A></B>(2),
 
 <B><A HREF="../man2/execve.2.html">execve</A></B>(2),
 
-<B><A HREF="../man2/fchmodat.2.html">fchmodat</A></B>(2),
-
 <B><A HREF="../man2/open.2.html">open</A></B>(2),
 
 <B><A HREF="../man2/stat.2.html">stat</A></B>(2),
 
-<B><A HREF="../man7/path_resolution.7.html">path_resolution</A></B>(7)
+<B><A HREF="../man7/path_resolution.7.html">path_resolution</A></B>(7),
+
+<B><A HREF="../man7/symlink.7.html">symlink</A></B>(7)
 
 <P>
 
@@ -323,15 +497,20 @@ See above.
 <DT><A HREF="#lbAB">NAME</A><DD>
 <DT><A HREF="#lbAC">SYNOPSIS</A><DD>
 <DT><A HREF="#lbAD">DESCRIPTION</A><DD>
-<DT><A HREF="#lbAE">RETURN VALUE</A><DD>
-<DT><A HREF="#lbAF">ERRORS</A><DD>
-<DT><A HREF="#lbAG">CONFORMING TO</A><DD>
-<DT><A HREF="#lbAH">SEE ALSO</A><DD>
+<DL>
+<DT><A HREF="#lbAE">fchmodat()</A><DD>
+</DL>
+<DT><A HREF="#lbAF">RETURN VALUE</A><DD>
+<DT><A HREF="#lbAG">ERRORS</A><DD>
+<DT><A HREF="#lbAH">VERSIONS</A><DD>
+<DT><A HREF="#lbAI">CONFORMING TO</A><DD>
+<DT><A HREF="#lbAJ">NOTES</A><DD>
+<DT><A HREF="#lbAK">SEE ALSO</A><DD>
 </DL>
 <HR>
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:25:36 GMT, April 20, 2020
+Time: 03:26:09 GMT, April 20, 2020
 </BODY>
 </HTML>

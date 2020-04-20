@@ -26,29 +26,33 @@ the source, must acknowledge the copyright and authors of this work.
 <HTML><HEAD><TITLE>Man page of CHOWN</TITLE>
 </HEAD><BODY>
 <H1>CHOWN</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2014-01-05<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2014-02-21<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
 <H2>NAME</H2>
 
-chown, fchown, lchown - change ownership of a file
+chown, fchown, lchown, fchownat - change ownership of a file
 <A NAME="lbAC">&nbsp;</A>
 <H2>SYNOPSIS</H2>
 
+<PRE>
 <B>#include &lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;</B>
 
-<P>
-<B>int chown(const char *</B><I>path</I><B>, uid_t </B><I>owner</I><B>, gid_t </B><I>group</I><B>);</B>
-
+<B>int chown(const char *</B><I>pathname</I><B>, uid_t </B><I>owner</I><B>, gid_t </B><I>group</I><B>);</B>
 <BR>
-
 <B>int fchown(int </B><I>fd</I><B>, uid_t </B><I>owner</I><B>, gid_t </B><I>group</I><B>);</B>
-
 <BR>
+<B>int lchown(const char *</B><I>pathname</I><B>, uid_t </B><I>owner</I><B>, gid_t </B><I>group</I><B>);</B>
 
-<B>int lchown(const char *</B><I>path</I><B>, uid_t </B><I>owner</I><B>, gid_t </B><I>group</I><B>);</B>
+<B>#include &lt;<A HREF="file:///usr/include/fcntl.h">fcntl.h</A>&gt;           </B>/* Definition of AT_* constants */
+<B>#include &lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;</B>
 
+<B>int fchownat(int </B><I>dirfd</I><B>, const char *</B><I>pathname</I><B>,</B>
+<B>             uid_t </B><I>owner</I><B>, gid_t </B><I>group</I><B>, int </B><I>flags</I><B>);</B>
+</PRE>
+
+<P>
 <P>
 
 Feature Test Macro Requirements for glibc (see
@@ -70,19 +74,41 @@ _XOPEN_SOURCE&nbsp;&amp;&amp;&nbsp;_XOPEN_SOURCE_EXTENDED
 || /* Since glibc 2.12: */ _POSIX_C_SOURCE&nbsp;&gt;=&nbsp;200809L
 </DL>
 
+<P>
+<B>fchownat</B>():
+
+
+
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT>Since glibc 2.10:<DD>
+_XOPEN_SOURCE&nbsp;&gt;=&nbsp;700 || _POSIX_C_SOURCE&nbsp;&gt;=&nbsp;200809L
+<DT>Before glibc 2.10:<DD>
+_ATFILE_SOURCE
+</DL>
+</DL>
+
 
 
 <A NAME="lbAD">&nbsp;</A>
 <H2>DESCRIPTION</H2>
 
 These system calls change the owner and group of a file.
-They differ only in how the file is specified:
+The
+<B>chown</B>(),
+
+<B>fchown</B>(),
+
+and
+<B>lchown</B>()
+
+system calls differ only in how the file is specified:
 <DL COMPACT>
 <DT>*<DD>
 <B>chown</B>()
 
 changes the ownership of the file specified by
-<I>path</I>,
+<I>pathname</I>,
 
 which is dereferenced if it is a symbolic link.
 <DT>*<DD>
@@ -146,6 +172,112 @@ bit indicates mandatory locking, and is not cleared by a
 <B>chown</B>().
 
 <A NAME="lbAE">&nbsp;</A>
+<H3>fchownat()</H3>
+
+The
+<B>fchownat</B>()
+
+system call operates in exactly the same way as
+<B>chown</B>(),
+
+except for the differences described here.
+<P>
+If the pathname given in
+<I>pathname</I>
+
+is relative, then it is interpreted relative to the directory
+referred to by the file descriptor
+<I>dirfd</I>
+
+(rather than relative to the current working directory of
+the calling process, as is done by
+<B>chown</B>()
+
+for a relative pathname).
+<P>
+If
+<I>pathname</I>
+
+is relative and
+<I>dirfd</I>
+
+is the special value
+<B>AT_FDCWD</B>,
+
+then
+<I>pathname</I>
+
+is interpreted relative to the current working
+directory of the calling process (like
+<B>chown</B>()<B>).</B>
+
+<P>
+If
+<I>pathname</I>
+
+is absolute, then
+<I>dirfd</I>
+
+is ignored.
+<P>
+The
+<I>flags</I>
+
+argument is a bit mask created by ORing together
+0 or more of the following values;
+<DL COMPACT>
+<DT><B>AT_EMPTY_PATH</B> (since Linux 2.6.39)
+
+<DD>
+
+If
+<I>pathname</I>
+
+is an empty string, operate on the file referred to by
+<I>dirfd</I>
+
+(which may have been obtained using the
+<B><A HREF="../man2/open.2.html">open</A></B>(2)
+
+<B>O_PATH</B>
+
+flag).
+In this case,
+<I>dirfd</I>
+
+can refer to any type of file, not just a directory.
+This flag is Linux-specific; define
+<B>_GNU_SOURCE</B>
+
+
+to obtain its definition.
+<P>
+<DT><B>AT_SYMLINK_NOFOLLOW</B>
+
+<DD>
+If
+<I>pathname</I>
+
+is a symbolic link, do not dereference it:
+instead operate on the link itself, like
+<B>lchown</B>().
+
+(By default,
+<B>fchownat</B>()
+
+dereferences symbolic links, like
+<B>chown</B>().)
+
+</DL>
+<P>
+
+See
+<B><A HREF="../man2/openat.2.html">openat</A></B>(2)
+
+for an explanation of the need for
+<B>fchownat</B>().
+
+<A NAME="lbAF">&nbsp;</A>
 <H2>RETURN VALUE</H2>
 
 On success, zero is returned.
@@ -153,10 +285,12 @@ On error, -1 is returned, and
 <I>errno</I>
 
 is set appropriately.
-<A NAME="lbAF">&nbsp;</A>
+<A NAME="lbAG">&nbsp;</A>
 <H2>ERRORS</H2>
 
-Depending on the filesystem, other errors can be returned.
+Depending on the filesystem,
+errors other than those listed below can be returned.
+<P>
 The more general errors for
 <B>chown</B>()
 
@@ -172,19 +306,19 @@ Search permission is denied on a component of the path prefix.
 <DT><B>EFAULT</B>
 
 <DD>
-<I>path</I>
+<I>pathname</I>
 
 points outside your accessible address space.
 <DT><B>ELOOP</B>
 
 <DD>
 Too many symbolic links were encountered in resolving
-<I>path</I>.
+<I>pathname</I>.
 
 <DT><B>ENAMETOOLONG</B>
 
 <DD>
-<I>path</I>
+<I>pathname</I>
 
 is too long.
 <DT><B>ENOENT</B>
@@ -237,10 +371,57 @@ See above.
 <DD>
 See above.
 </DL>
-<A NAME="lbAG">&nbsp;</A>
+<P>
+
+The same errors that occur for
+<B>chown</B>()
+
+can also occur for
+<B>fchownat</B>().
+
+The following additional errors can occur for
+<B>fchownat</B>():
+
+<DL COMPACT>
+<DT><B>EBADF</B>
+
+<DD>
+<I>dirfd</I>
+
+is not a valid file descriptor.
+<DT><B>EINVAL</B>
+
+<DD>
+Invalid flag specified in
+<I>flags</I>.
+
+<DT><B>ENOTDIR</B>
+
+<DD>
+<I>pathname</I>
+
+is relative and
+<I>dirfd</I>
+
+is a file descriptor referring to a file other than a directory.
+</DL>
+<A NAME="lbAH">&nbsp;</A>
+<H2>VERSIONS</H2>
+
+<B>fchownat</B>()
+
+was added to Linux in kernel 2.6.16;
+library support was added to glibc in version 2.4.
+<A NAME="lbAI">&nbsp;</A>
 <H2>CONFORMING TO</H2>
 
-4.4BSD, SVr4, POSIX.1-2001.
+<B>chown</B>(),
+
+<B>fchown</B>(),
+
+<B>lchown</B>():
+
+4.4BSD, SVr4, POSIX.1-2001, POSIX.1-2008.
 <P>
 The 4.4BSD version can be
 used only by the superuser (that is, ordinary users cannot give away files).
@@ -250,7 +431,11 @@ used only by the superuser (that is, ordinary users cannot give away files).
 
 
 
-<A NAME="lbAH">&nbsp;</A>
+<P>
+<B>fchownat</B>():
+
+POSIX.1-2008.
+<A NAME="lbAJ">&nbsp;</A>
 <H2>NOTES</H2>
 
 The original Linux
@@ -381,7 +566,7 @@ has got the same syscall number, and
 <B>chown</B>()
 
 got the newly introduced number.
-<A NAME="lbAI">&nbsp;</A>
+<A NAME="lbAK">&nbsp;</A>
 <H2>EXAMPLE</H2>
 
 <P>
@@ -394,7 +579,7 @@ or as a username (which is converted to a user ID by using
 <B><A HREF="../man3/getpwnam.3.html">getpwnam</A></B>(3)
 
 to perform a lookup in the system password file).
-<A NAME="lbAJ">&nbsp;</A>
+<A NAME="lbAL">&nbsp;</A>
 <H3>Program source</H3>
 
 <PRE>
@@ -436,12 +621,10 @@ main(int argc, char *argv[])
 }
 </PRE>
 
-<A NAME="lbAK">&nbsp;</A>
+<A NAME="lbAM">&nbsp;</A>
 <H2>SEE ALSO</H2>
 
 <B><A HREF="../man2/chmod.2.html">chmod</A></B>(2),
-
-<B><A HREF="../man2/fchownat.2.html">fchownat</A></B>(2),
 
 <B><A HREF="../man2/flock.2.html">flock</A></B>(2),
 
@@ -457,20 +640,24 @@ main(int argc, char *argv[])
 <DT><A HREF="#lbAB">NAME</A><DD>
 <DT><A HREF="#lbAC">SYNOPSIS</A><DD>
 <DT><A HREF="#lbAD">DESCRIPTION</A><DD>
-<DT><A HREF="#lbAE">RETURN VALUE</A><DD>
-<DT><A HREF="#lbAF">ERRORS</A><DD>
-<DT><A HREF="#lbAG">CONFORMING TO</A><DD>
-<DT><A HREF="#lbAH">NOTES</A><DD>
-<DT><A HREF="#lbAI">EXAMPLE</A><DD>
 <DL>
-<DT><A HREF="#lbAJ">Program source</A><DD>
+<DT><A HREF="#lbAE">fchownat()</A><DD>
 </DL>
-<DT><A HREF="#lbAK">SEE ALSO</A><DD>
+<DT><A HREF="#lbAF">RETURN VALUE</A><DD>
+<DT><A HREF="#lbAG">ERRORS</A><DD>
+<DT><A HREF="#lbAH">VERSIONS</A><DD>
+<DT><A HREF="#lbAI">CONFORMING TO</A><DD>
+<DT><A HREF="#lbAJ">NOTES</A><DD>
+<DT><A HREF="#lbAK">EXAMPLE</A><DD>
+<DL>
+<DT><A HREF="#lbAL">Program source</A><DD>
+</DL>
+<DT><A HREF="#lbAM">SEE ALSO</A><DD>
 </DL>
 <HR>
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:25:36 GMT, April 20, 2020
+Time: 03:26:09 GMT, April 20, 2020
 </BODY>
 </HTML>

@@ -25,13 +25,13 @@ the source, must acknowledge the copyright and authors of this work.
 <HTML><HEAD><TITLE>Man page of ACCESS</TITLE>
 </HEAD><BODY>
 <H1>ACCESS</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2013-09-13<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2014-02-21<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
 <H2>NAME</H2>
 
-access - check real user's permissions for a file
+access, faccessat - check user's permissions for a file
 <A NAME="lbAC">&nbsp;</A>
 <H2>SYNOPSIS</H2>
 
@@ -39,7 +39,35 @@ access - check real user's permissions for a file
 <B>#include &lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;</B>
 
 <B>int access(const char *</B><I>pathname</I><B>, int </B><I>mode</I><B>);</B>
+
+<B>#include &lt;<A HREF="file:///usr/include/fcntl.h">fcntl.h</A>&gt;           </B>/* Definition of AT_* constants */
+<B>#include &lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;</B>
+
+<B>int faccessat(int </B><I>dirfd</I><B>, const char *</B><I>pathname</I><B>, int </B><I>mode</I><B>, int </B><I>flags</I><B>);</B>
 </PRE>
+
+<P>
+
+Feature Test Macro Requirements for glibc (see
+<B><A HREF="../man7/feature_test_macros.7.html">feature_test_macros</A></B>(7)):
+
+
+<P>
+<B>faccessat</B>():
+
+
+
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT>Since glibc 2.10:<DD>
+_XOPEN_SOURCE&nbsp;&gt;=&nbsp;700 || _POSIX_C_SOURCE&nbsp;&gt;=&nbsp;200809L
+<DT>Before glibc 2.10:<DD>
+_ATFILE_SOURCE
+</DL>
+</DL>
+
+
+
 
 <A NAME="lbAD">&nbsp;</A>
 <H2>DESCRIPTION</H2>
@@ -91,6 +119,86 @@ then an
 check is successful for a regular file if execute permission
 is enabled for any of the file owner, group, or other.
 <A NAME="lbAE">&nbsp;</A>
+<H3>faccessat ()</H3>
+
+The
+<B>faccessat</B>()
+
+system call operates in exactly the same way as
+<B>access</B>(),
+
+except for the differences described here.
+<P>
+If the pathname given in
+<I>pathname</I>
+
+is relative, then it is interpreted relative to the directory
+referred to by the file descriptor
+<I>dirfd</I>
+
+(rather than relative to the current working directory of
+the calling process, as is done by
+<B>access</B>()
+
+for a relative pathname).
+<P>
+If
+<I>pathname</I>
+
+is relative and
+<I>dirfd</I>
+
+is the special value
+<B>AT_FDCWD</B>,
+
+then
+<I>pathname</I>
+
+is interpreted relative to the current working
+directory of the calling process (like
+<B>access</B>()<B>).</B>
+
+<P>
+If
+<I>pathname</I>
+
+is absolute, then
+<I>dirfd</I>
+
+is ignored.
+<P>
+<I>flags</I>
+
+is constructed by ORing together zero or more of the following values:
+<DL COMPACT>
+<DT><B>AT_EACCESS</B>
+
+<DD>
+Perform access checks using the effective user and group IDs.
+By default,
+<B>faccessat</B>()
+
+uses the real IDs (like
+<B>access</B>()<B>).</B>
+
+<DT><B>AT_SYMLINK_NOFOLLOW</B>
+
+<DD>
+If
+<I>pathname</I>
+
+is a symbolic link, do not dereference it:
+instead return information about the link itself.
+</DL>
+<P>
+
+See
+<B><A HREF="../man2/openat.2.html">openat</A></B>(2)
+
+for an explanation of the need for
+<B>faccessat</B>().
+
+<A NAME="lbAF">&nbsp;</A>
 <H2>RETURN VALUE</H2>
 
 On success (all requested permissions granted, or
@@ -114,10 +222,13 @@ and the file does not exist, or some other error occurred),
 <I>errno</I>
 
 is set appropriately.
-<A NAME="lbAF">&nbsp;</A>
+<A NAME="lbAG">&nbsp;</A>
 <H2>ERRORS</H2>
 
 <B>access</B>()
+
+and
+<B>faccessat</B>()
 
 shall fail if:
 <DL COMPACT>
@@ -166,6 +277,9 @@ Write permission was requested for a file on a read-only filesystem.
 
 <B>access</B>()
 
+and
+<B>faccessat</B>()
+
 may fail if:
 <DL COMPACT>
 <DT><B>EFAULT</B>
@@ -194,21 +308,59 @@ Insufficient kernel memory was available.
 Write access was requested to an executable which is being
 executed.
 </DL>
-<A NAME="lbAG">&nbsp;</A>
+<P>
+
+The following additional errors can occur for
+<B>faccessat</B>():
+
+<DL COMPACT>
+<DT><B>EBADF</B>
+
+<DD>
+<I>dirfd</I>
+
+is not a valid file descriptor.
+<DT><B>EINVAL</B>
+
+<DD>
+Invalid flag specified in
+<I>flags</I>.
+
+<DT><B>ENOTDIR</B>
+
+<DD>
+<I>pathname</I>
+
+is relative and
+<I>dirfd</I>
+
+is a file descriptor referring to a file other than a directory.
+</DL>
+<A NAME="lbAH">&nbsp;</A>
+<H2>VERSIONS</H2>
+
+<B>faccessat</B>()
+
+was added to Linux in kernel 2.6.16;
+library support was added to glibc in version 2.4.
+<A NAME="lbAI">&nbsp;</A>
 <H2>CONFORMING TO</H2>
 
-SVr4, 4.3BSD, POSIX.1-2001.
-<A NAME="lbAH">&nbsp;</A>
+<B>access</B>():
+
+SVr4, 4.3BSD, POSIX.1-2001, POSIX.1-2008.
+<P>
+<B>faccessat</B>():
+
+POSIX.1-2008.
+<A NAME="lbAJ">&nbsp;</A>
 <H2>NOTES</H2>
 
 <P>
 
 <B>Warning</B>:
 
-Using
-<B>access</B>()
-
-to check if a user is authorized to, for example,
+Using these calls to check if a user is authorized to, for example,
 open a file before actually doing so using
 <B><A HREF="../man2/open.2.html">open</A></B>(2)
 
@@ -234,9 +386,7 @@ with the flag
 
 <P>
 
-<B>access</B>()
-
-returns an error if any of the access types in
+These calls return an error if any of the access types in
 <I>mode</I>
 
 is denied, even if some of the other access types in
@@ -275,14 +425,35 @@ Similarly, a DOS file may be found to be &quot;executable,&quot; but the
 call will still fail.
 <P>
 
-<B>access</B>()
-
+These calls
 may not work correctly on NFSv2 filesystems with UID mapping enabled,
 because UID mapping is done on the server and hidden from the client,
 which checks permissions.  (NFS versions 3 and higher perform the check on
 the server.)
 Similar problems can occur to FUSE mounts.
-<A NAME="lbAI">&nbsp;</A>
+
+
+<A NAME="lbAK">&nbsp;</A>
+<H3>faccessat ()</H3>
+
+The raw
+<B>faccessat</B>()
+
+system call takes only the first three arguments.
+The
+<B>AT_EACCESS</B>
+
+and
+<B>AT_SYMLINK_NOFOLLOW</B>
+
+flags are actually implemented within the glibc wrapper function for
+<B>faccessat</B>().
+
+If either of these flags is specified, then the wrapper function employs
+<B><A HREF="../man2/fstatat.2.html">fstatat</A></B>(2)
+
+to determine access permissions.
+<A NAME="lbAL">&nbsp;</A>
 <H2>BUGS</H2>
 
 In kernel 2.4 (and earlier) there is some strangeness in the handling of
@@ -317,27 +488,23 @@ Early 2.6 kernels (up to and including 2.6.3)
 also behaved in the same way as kernel 2.4.
 <P>
 In kernels before 2.6.20,
-<B>access</B>()
-
-ignored the effect of the
+these calls ignored the effect of the
 <B>MS_NOEXEC</B>
 
 flag if it was used to
 <B><A HREF="../man2/mount.2.html">mount</A></B>(2)
 
 the underlying filesystem.
-Since kernel 2.6.20,
-<B>access</B>()
+Since kernel 2.6.20, the
+<B>MS_NOEXEC</B>
 
-honors this flag.
-<A NAME="lbAJ">&nbsp;</A>
+is honored
+<A NAME="lbAM">&nbsp;</A>
 <H2>SEE ALSO</H2>
 
 <B><A HREF="../man2/chmod.2.html">chmod</A></B>(2),
 
 <B><A HREF="../man2/chown.2.html">chown</A></B>(2),
-
-<B><A HREF="../man2/faccessat.2.html">faccessat</A></B>(2),
 
 <B><A HREF="../man2/open.2.html">open</A></B>(2),
 
@@ -351,7 +518,9 @@ honors this flag.
 
 <B><A HREF="../man7/credentials.7.html">credentials</A></B>(7),
 
-<B><A HREF="../man7/path_resolution.7.html">path_resolution</A></B>(7)
+<B><A HREF="../man7/path_resolution.7.html">path_resolution</A></B>(7),
+
+<B><A HREF="../man7/symlink.7.html">symlink</A></B>(7)
 
 <P>
 
@@ -361,17 +530,24 @@ honors this flag.
 <DT><A HREF="#lbAB">NAME</A><DD>
 <DT><A HREF="#lbAC">SYNOPSIS</A><DD>
 <DT><A HREF="#lbAD">DESCRIPTION</A><DD>
-<DT><A HREF="#lbAE">RETURN VALUE</A><DD>
-<DT><A HREF="#lbAF">ERRORS</A><DD>
-<DT><A HREF="#lbAG">CONFORMING TO</A><DD>
-<DT><A HREF="#lbAH">NOTES</A><DD>
-<DT><A HREF="#lbAI">BUGS</A><DD>
-<DT><A HREF="#lbAJ">SEE ALSO</A><DD>
+<DL>
+<DT><A HREF="#lbAE">faccessat ()</A><DD>
+</DL>
+<DT><A HREF="#lbAF">RETURN VALUE</A><DD>
+<DT><A HREF="#lbAG">ERRORS</A><DD>
+<DT><A HREF="#lbAH">VERSIONS</A><DD>
+<DT><A HREF="#lbAI">CONFORMING TO</A><DD>
+<DT><A HREF="#lbAJ">NOTES</A><DD>
+<DL>
+<DT><A HREF="#lbAK">faccessat ()</A><DD>
+</DL>
+<DT><A HREF="#lbAL">BUGS</A><DD>
+<DT><A HREF="#lbAM">SEE ALSO</A><DD>
 </DL>
 <HR>
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:25:36 GMT, April 20, 2020
+Time: 03:26:08 GMT, April 20, 2020
 </BODY>
 </HTML>

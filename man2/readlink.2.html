@@ -34,22 +34,29 @@ SUCH DAMAGE.
 <HTML><HEAD><TITLE>Man page of READLINK</TITLE>
 </HEAD><BODY>
 <H1>READLINK</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2013-10-26<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2014-02-21<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
 <H2>NAME</H2>
 
-readlink - read value of a symbolic link
+readlink, readlinkat - read value of a symbolic link
 <A NAME="lbAC">&nbsp;</A>
 <H2>SYNOPSIS</H2>
 
+<PRE>
 <B>#include &lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;</B>
 
-<P>
-<B>ssize_t readlink(const char *</B><I>path</I><B>, char *</B><I>buf</I><B>, size_t </B><I>bufsiz</I><B>);</B>
+<B>ssize_t readlink(const char *</B><I>pathname</I><B>, char *</B><I>buf</I><B>, size_t </B><I>bufsiz</I><B>);</B>
 
-<P>
+<B>#include &lt;<A HREF="file:///usr/include/fcntl.h">fcntl.h</A>&gt;           </B>/* Definition of AT_* constants */
+<B>#include &lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;</B>
+
+<B>int readlinkat(int </B><I>dirfd</I><B>, const char *</B><I>pathname</I><B>,</B>
+<B>               char *</B><I>buf</I><B>, size_t </B><I>bufsiz</I><B>);</B>
+
+</PRE>
+
 
 Feature Test Macro Requirements for glibc (see
 <B><A HREF="../man7/feature_test_macros.7.html">feature_test_macros</A></B>(7)):
@@ -64,6 +71,21 @@ _BSD_SOURCE || _XOPEN_SOURCE&nbsp;&gt;=&nbsp;500 ||
 _XOPEN_SOURCE&nbsp;&amp;&amp;&nbsp;_XOPEN_SOURCE_EXTENDED || _POSIX_C_SOURCE&nbsp;&gt;=&nbsp;200112L
 </DL>
 
+<P>
+<B>readlinkat</B>():
+
+
+
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT>Since glibc 2.10:<DD>
+_XOPEN_SOURCE&nbsp;&gt;=&nbsp;700 || _POSIX_C_SOURCE&nbsp;&gt;=&nbsp;200809L
+<DT>Before glibc 2.10:<DD>
+_ATFILE_SOURCE
+</DL>
+</DL>
+
+
 
 <A NAME="lbAD">&nbsp;</A>
 <H2>DESCRIPTION</H2>
@@ -71,7 +93,7 @@ _XOPEN_SOURCE&nbsp;&amp;&amp;&nbsp;_XOPEN_SOURCE_EXTENDED || _POSIX_C_SOURCE&nbs
 <B>readlink</B>()
 
 places the contents of the symbolic link
-<I>path</I>
+<I>pathname</I>
 
 in the buffer
 <I>buf</I>,
@@ -89,19 +111,91 @@ It will truncate the contents (to a length of
 
 characters), in case the buffer is too small to hold all of the contents.
 <A NAME="lbAE">&nbsp;</A>
-<H2>RETURN VALUE</H2>
+<H3>readlinkat()</H3>
 
-On success,
+The
+<B>readlinkat</B>()
+
+system call operates in exactly the same way as
+<B>readlink</B>(),
+
+except for the differences described here.
+<P>
+If the pathname given in
+<I>pathname</I>
+
+is relative, then it is interpreted relative to the directory
+referred to by the file descriptor
+<I>dirfd</I>
+
+(rather than relative to the current working directory of
+the calling process, as is done by
 <B>readlink</B>()
 
-returns the number of bytes placed in
+for a relative pathname).
+<P>
+If
+<I>pathname</I>
+
+is relative and
+<I>dirfd</I>
+
+is the special value
+<B>AT_FDCWD</B>,
+
+then
+<I>pathname</I>
+
+is interpreted relative to the current working
+directory of the calling process (like
+<B>readlink</B>()).
+
+<P>
+If
+<I>pathname</I>
+
+is absolute, then
+<I>dirfd</I>
+
+is ignored.
+<P>
+Since Linux 2.6.39,
+
+<I>pathname</I>
+
+can be an empty string,
+in which case the call operates on the file referred to by
+<I>dirfd</I>
+
+(which may have been obtained using the
+<B><A HREF="../man2/open.2.html">open</A></B>(2)
+
+<B>O_PATH</B>
+
+flag).
+In this case,
+<I>dirfd</I>
+
+can refer to any type of file, not just a directory.
+<P>
+
+See
+<B><A HREF="../man2/openat.2.html">openat</A></B>(2)
+
+for an explanation of the need for
+<B>readlinkat</B>().
+
+<A NAME="lbAF">&nbsp;</A>
+<H2>RETURN VALUE</H2>
+
+On success, these calls return the number of bytes placed in
 <I>buf</I>.
 
 On error, -1 is returned and
 <I>errno</I>
 
 is set to indicate the error.
-<A NAME="lbAF">&nbsp;</A>
+<A NAME="lbAG">&nbsp;</A>
 <H2>ERRORS</H2>
 
 <DL COMPACT>
@@ -158,15 +252,50 @@ Insufficient kernel memory was available.
 <DD>
 A component of the path prefix is not a directory.
 </DL>
-<A NAME="lbAG">&nbsp;</A>
+<P>
+
+The following additional errors can occur for
+<B>readlinkat</B>():
+
+<DL COMPACT>
+<DT><B>EBADF</B>
+
+<DD>
+<I>dirfd</I>
+
+is not a valid file descriptor.
+<DT><B>ENOTDIR</B>
+
+<DD>
+<I>pathname</I>
+
+is relative and
+<I>dirfd</I>
+
+is a file descriptor referring to a file other than a directory.
+</DL>
+<A NAME="lbAH">&nbsp;</A>
+<H2>VERSIONS</H2>
+
+<B>readlinkat</B>()
+
+was added to Linux in kernel 2.6.16;
+library support was added to glibc in version 2.4.
+<A NAME="lbAI">&nbsp;</A>
 <H2>CONFORMING TO</H2>
+
+<B>readlink</B>():
 
 4.4BSD
 (<B>readlink</B>()
 
 first appeared in 4.2BSD),
-POSIX.1-2001.
-<A NAME="lbAH">&nbsp;</A>
+POSIX.1-2001, POSIX.1-2008.
+<P>
+<B>readlinkat</B>():
+
+POSIX.1-2008.
+<A NAME="lbAJ">&nbsp;</A>
 <H2>NOTES</H2>
 
 In versions of glibc up to and including glibc 2.4, the return type of
@@ -192,10 +321,16 @@ on the link.
 However, the number of bytes written by
 <B>readlink</B>()
 
+and
+<B>readlinkat</B>()
+
 should be checked to make sure that the size of the
 symbolic link did not increase between the calls.
 Dynamically allocating the buffer for
 <B>readlink</B>()
+
+and
+<B>readlinkat</B>()
 
 also addresses a common portability problem when using
 <I>PATH_MAX</I>
@@ -203,7 +338,7 @@ also addresses a common portability problem when using
 for the buffer size,
 as this constant is not guaranteed to be defined per POSIX
 if the system does not have such limit.
-<A NAME="lbAI">&nbsp;</A>
+<A NAME="lbAK">&nbsp;</A>
 <H2>EXAMPLE</H2>
 
 The following program allocates the buffer needed by
@@ -265,14 +400,12 @@ main(int argc, char *argv[])
 }
 </PRE>
 
-<A NAME="lbAJ">&nbsp;</A>
+<A NAME="lbAL">&nbsp;</A>
 <H2>SEE ALSO</H2>
 
 <B><A HREF="../man1/readlink.1.html">readlink</A></B>(1),
 
 <B><A HREF="../man2/lstat.2.html">lstat</A></B>(2),
-
-<B><A HREF="../man2/readlinkat.2.html">readlinkat</A></B>(2),
 
 <B><A HREF="../man2/stat.2.html">stat</A></B>(2),
 
@@ -290,17 +423,21 @@ main(int argc, char *argv[])
 <DT><A HREF="#lbAB">NAME</A><DD>
 <DT><A HREF="#lbAC">SYNOPSIS</A><DD>
 <DT><A HREF="#lbAD">DESCRIPTION</A><DD>
-<DT><A HREF="#lbAE">RETURN VALUE</A><DD>
-<DT><A HREF="#lbAF">ERRORS</A><DD>
-<DT><A HREF="#lbAG">CONFORMING TO</A><DD>
-<DT><A HREF="#lbAH">NOTES</A><DD>
-<DT><A HREF="#lbAI">EXAMPLE</A><DD>
-<DT><A HREF="#lbAJ">SEE ALSO</A><DD>
+<DL>
+<DT><A HREF="#lbAE">readlinkat()</A><DD>
+</DL>
+<DT><A HREF="#lbAF">RETURN VALUE</A><DD>
+<DT><A HREF="#lbAG">ERRORS</A><DD>
+<DT><A HREF="#lbAH">VERSIONS</A><DD>
+<DT><A HREF="#lbAI">CONFORMING TO</A><DD>
+<DT><A HREF="#lbAJ">NOTES</A><DD>
+<DT><A HREF="#lbAK">EXAMPLE</A><DD>
+<DT><A HREF="#lbAL">SEE ALSO</A><DD>
 </DL>
 <HR>
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:25:38 GMT, April 20, 2020
+Time: 03:26:11 GMT, April 20, 2020
 </BODY>
 </HTML>

@@ -10,7 +10,7 @@ of the modification is added to the header.
 <HTML><HEAD><TITLE>Man page of PACKET</TITLE>
 </HEAD><BODY>
 <H1>PACKET</H1>
-Section: Linux Programmer's Manual (7)<BR>Updated: 2014-01-28<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (7)<BR>Updated: 2014-02-26<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -392,6 +392,11 @@ becomes backlogged.
 <B>PACKET_FANOUT_RND</B>
 
 selects the socket using a pseudo-random number generator.
+<B>PACKET_FANOUT_QM</B>
+
+
+(available since Linux 3.14)
+selects the socket using the recorded queue_mapping of the received skb.
 <P>
 Fanout modes can take additional options.
 IP fragmentation causes packets from the same flow to have different
@@ -562,9 +567,17 @@ integer option before creating the ring.
 <DD>
 
 By default, packets sent through packet sockets pass through the kernel's
-qdisc (traffic control) layer.
-This can be bypassed by setting this integer option to 1;
-this is useful for usage scenarios similar to pktgen.
+qdisc (traffic control) layer, which is fine for the vast majority of use
+cases.
+For traffic generator appliances using packet sockets
+that intend to brute-force flood the network---for example,
+to test devices under load in a similar
+fashion to pktgen---this layer can be bypassed by setting
+this integer option to 1.
+A side-effects is that packet buffering in the qdisc layer is avoided,
+which will lead to increased drops when network
+device transmit queues are busy;
+therefore, use at your own risk.
 </DL>
 <A NAME="lbAG">&nbsp;</A>
 <H3>Ioctls</H3>
@@ -838,6 +851,6 @@ include file for physical layer protocols.
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:25:50 GMT, April 20, 2020
+Time: 03:26:23 GMT, April 20, 2020
 </BODY>
 </HTML>

@@ -25,20 +25,48 @@ the source, must acknowledge the copyright and authors of this work.
 <HTML><HEAD><TITLE>Man page of UNLINK</TITLE>
 </HEAD><BODY>
 <H1>UNLINK</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2011-09-15<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2014-02-21<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
 <H2>NAME</H2>
 
-unlink - delete a name and possibly the file it refers to
+unlink, unlinkat - delete a name and possibly the file it refers to
 <A NAME="lbAC">&nbsp;</A>
 <H2>SYNOPSIS</H2>
 
+<PRE>
 <B>#include &lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;</B>
 
-<P>
 <B>int unlink(const char *</B><I>pathname</I><B>);</B>
+
+<B>#include &lt;<A HREF="file:///usr/include/fcntl.h">fcntl.h</A>&gt;           </B>/* Definition of AT_* constants */
+<B>#include &lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;</B>
+
+<B>int unlinkat(int </B><I>dirfd</I><B>, const char *</B><I>pathname</I><B>, int </B><I>flags</I><B>);</B>
+</PRE>
+
+<P>
+
+Feature Test Macro Requirements for glibc (see
+<B><A HREF="../man7/feature_test_macros.7.html">feature_test_macros</A></B>(7)):
+
+
+<P>
+<B>unlinkat</B>():
+
+
+
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT>Since glibc 2.10:<DD>
+_XOPEN_SOURCE&nbsp;&gt;=&nbsp;700 || _POSIX_C_SOURCE&nbsp;&gt;=&nbsp;200809L
+<DT>Before glibc 2.10:<DD>
+_ATFILE_SOURCE
+</DL>
+</DL>
+
+
 
 <A NAME="lbAD">&nbsp;</A>
 <H2>DESCRIPTION</H2>
@@ -60,6 +88,110 @@ If the name referred to a socket, fifo or device the name for it is
 removed but processes which have the object open may continue to use
 it.
 <A NAME="lbAE">&nbsp;</A>
+<H3>unlinkat()</H3>
+
+The
+<B>unlinkat</B>()
+
+system call operates in exactly the same way as either
+<B>unlink</B>()
+
+or
+<B><A HREF="../man2/rmdir.2.html">rmdir</A></B>(2)
+
+(depending on whether or not
+<I>flags</I>
+
+includes the
+<B>AT_REMOVEDIR</B>
+
+flag)
+except for the differences described here.
+<P>
+If the pathname given in
+<I>pathname</I>
+
+is relative, then it is interpreted relative to the directory
+referred to by the file descriptor
+<I>dirfd</I>
+
+(rather than relative to the current working directory of
+the calling process, as is done by
+<B>unlink</B>()
+
+and
+<B><A HREF="../man2/rmdir.2.html">rmdir</A></B>(2)
+
+for a relative pathname).
+<P>
+If the pathname given in
+<I>pathname</I>
+
+is relative and
+<I>dirfd</I>
+
+is the special value
+<B>AT_FDCWD</B>,
+
+then
+<I>pathname</I>
+
+is interpreted relative to the current working
+directory of the calling process (like
+<B>unlink</B>()
+
+and
+<B><A HREF="../man2/rmdir.2.html">rmdir</A></B>(2)).
+
+<P>
+If the pathname given in
+<I>pathname</I>
+
+is absolute, then
+<I>dirfd</I>
+
+is ignored.
+<P>
+<I>flags</I>
+
+is a bit mask that can either be specified as 0, or by ORing
+together flag values that control the operation of
+<B>unlinkat</B>().
+
+Currently only one such flag is defined:
+<DL COMPACT>
+<DT><B>AT_REMOVEDIR</B>
+
+<DD>
+By default,
+<B>unlinkat</B>()
+
+performs the equivalent of
+<B>unlink</B>()
+
+on
+<I>pathname</I>.
+
+If the
+<B>AT_REMOVEDIR</B>
+
+flag is specified, then
+performs the equivalent of
+<B><A HREF="../man2/rmdir.2.html">rmdir</A></B>(2)
+
+on
+<I>pathname</I>.
+
+</DL>
+<P>
+
+See
+<B><A HREF="../man2/openat.2.html">openat</A></B>(2)
+
+for an explanation of the need for
+<B>unlinkat</B>().
+
+<A NAME="lbAF">&nbsp;</A>
 <H2>RETURN VALUE</H2>
 
 On success, zero is returned.
@@ -67,7 +199,7 @@ On error, -1 is returned, and
 <I>errno</I>
 
 is set appropriately.
-<A NAME="lbAF">&nbsp;</A>
+<A NAME="lbAG">&nbsp;</A>
 <H2>ERRORS</H2>
 
 <DL COMPACT>
@@ -182,18 +314,79 @@ capability).
 
 refers to a file on a read-only filesystem.
 </DL>
-<A NAME="lbAG">&nbsp;</A>
+<P>
+
+The same errors that occur for
+<B>unlink</B>()
+
+and
+<B><A HREF="../man2/rmdir.2.html">rmdir</A></B>(2)
+
+can also occur for
+<B>unlinkat</B>().
+
+The following additional errors can occur for
+<B>unlinkat</B>():
+
+<DL COMPACT>
+<DT><B>EBADF</B>
+
+<DD>
+<I>dirfd</I>
+
+is not a valid file descriptor.
+<DT><B>EINVAL</B>
+
+<DD>
+An invalid flag value was specified in
+<I>flags</I>.
+
+<DT><B>EISDIR</B>
+
+<DD>
+<I>pathname</I>
+
+refers to a directory, and
+<B>AT_REMOVEDIR</B>
+
+was not specified in
+<I>flags</I>.
+
+<DT><B>ENOTDIR</B>
+
+<DD>
+<I>pathname</I>
+
+is relative and
+<I>dirfd</I>
+
+is a file descriptor referring to a file other than a directory.
+</DL>
+<A NAME="lbAH">&nbsp;</A>
+<H2>VERSIONS</H2>
+
+<B>unlinkat</B>()
+
+was added to Linux in kernel 2.6.16;
+library support was added to glibc in version 2.4.
+<A NAME="lbAI">&nbsp;</A>
 <H2>CONFORMING TO</H2>
 
-SVr4, 4.3BSD, POSIX.1-2001.
+<B>unlink</B>():
+
+SVr4, 4.3BSD, POSIX.1-2001, POSIX.1-2008.
 
 
-<A NAME="lbAH">&nbsp;</A>
+<P>
+<B>unlinkat</B>():
+
+POSIX.1-2008.
+<A NAME="lbAJ">&nbsp;</A>
 <H2>BUGS</H2>
 
 Infelicities in the protocol underlying NFS can cause the unexpected
 disappearance of files which are still being used.
-<A NAME="lbAI">&nbsp;</A>
+<A NAME="lbAK">&nbsp;</A>
 <H2>SEE ALSO</H2>
 
 <B><A HREF="../man1/rm.1.html">rm</A></B>(1),
@@ -209,8 +402,6 @@ disappearance of files which are still being used.
 <B><A HREF="../man2/rename.2.html">rename</A></B>(2),
 
 <B><A HREF="../man2/rmdir.2.html">rmdir</A></B>(2),
-
-<B><A HREF="../man2/unlinkat.2.html">unlinkat</A></B>(2),
 
 <B><A HREF="../man3/mkfifo.3.html">mkfifo</A></B>(3),
 
@@ -228,16 +419,20 @@ disappearance of files which are still being used.
 <DT><A HREF="#lbAB">NAME</A><DD>
 <DT><A HREF="#lbAC">SYNOPSIS</A><DD>
 <DT><A HREF="#lbAD">DESCRIPTION</A><DD>
-<DT><A HREF="#lbAE">RETURN VALUE</A><DD>
-<DT><A HREF="#lbAF">ERRORS</A><DD>
-<DT><A HREF="#lbAG">CONFORMING TO</A><DD>
-<DT><A HREF="#lbAH">BUGS</A><DD>
-<DT><A HREF="#lbAI">SEE ALSO</A><DD>
+<DL>
+<DT><A HREF="#lbAE">unlinkat()</A><DD>
+</DL>
+<DT><A HREF="#lbAF">RETURN VALUE</A><DD>
+<DT><A HREF="#lbAG">ERRORS</A><DD>
+<DT><A HREF="#lbAH">VERSIONS</A><DD>
+<DT><A HREF="#lbAI">CONFORMING TO</A><DD>
+<DT><A HREF="#lbAJ">BUGS</A><DD>
+<DT><A HREF="#lbAK">SEE ALSO</A><DD>
 </DL>
 <HR>
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:25:39 GMT, April 20, 2020
+Time: 03:26:12 GMT, April 20, 2020
 </BODY>
 </HTML>

@@ -26,36 +26,35 @@ the source, must acknowledge the copyright and authors of this work.
 <HTML><HEAD><TITLE>Man page of STAT</TITLE>
 </HEAD><BODY>
 <H1>STAT</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2013-10-25<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2014-02-21<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
 <H2>NAME</H2>
 
-stat, fstat, lstat - get file status
+stat, fstat, lstat, fstatat - get file status
 <A NAME="lbAC">&nbsp;</A>
 <H2>SYNOPSIS</H2>
 
+<PRE>
 <B>#include &lt;<A HREF="file:///usr/include/sys/types.h">sys/types.h</A>&gt;</B>
-
 <BR>
-
 <B>#include &lt;<A HREF="file:///usr/include/sys/stat.h">sys/stat.h</A>&gt;</B>
-
 <BR>
-
 <B>#include &lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;</B>
 
-<P>
-<B>int stat(const char *</B><I>path</I><B>, struct stat *</B><I>buf</I><B>);</B>
-
+<B>int stat(const char *</B><I>pathname</I><B>, struct stat *</B><I>buf</I><B>);</B>
 <BR>
-
 <B>int fstat(int </B><I>fd</I><B>, struct stat *</B><I>buf</I><B>);</B>
-
 <BR>
+<B>int lstat(const char *</B><I>pathname</I><B>, struct stat *</B><I>buf</I><B>);</B>
 
-<B>int lstat(const char *</B><I>path</I><B>, struct stat *</B><I>buf</I><B>);</B>
+<B>#include &lt;<A HREF="file:///usr/include/fcntl.h">fcntl.h</A>&gt;           </B>/* Definition of AT_* constants */
+<B>#include &lt;<A HREF="file:///usr/include/sys/stat.h">sys/stat.h</A>&gt;</B>
+
+<B>int fstatat(int </B><I>dirfd</I><B>, const char *</B><I>pathname</I><B>, struct stat *</B><I>buf</I><B>,</B>
+<B>            int </B><I>flags</I><B>);</B>
+</PRE>
 
 <P>
 
@@ -76,6 +75,20 @@ _XOPEN_SOURCE&nbsp;&amp;&amp;&nbsp;_XOPEN_SOURCE_EXTENDED
 || /* Since glibc 2.10: */ _POSIX_C_SOURCE&nbsp;&gt;=&nbsp;200112L
 </DL>
 
+<P>
+<B>fstatat</B>():
+
+
+
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT>Since glibc 2.10:<DD>
+_XOPEN_SOURCE&nbsp;&gt;=&nbsp;700 || _POSIX_C_SOURCE&nbsp;&gt;=&nbsp;200809L
+<DT>Before glibc 2.10:<DD>
+_ATFILE_SOURCE
+</DL>
+</DL>
+
 
 
 <A NAME="lbAD">&nbsp;</A>
@@ -85,25 +98,34 @@ _XOPEN_SOURCE&nbsp;&amp;&amp;&nbsp;_XOPEN_SOURCE_EXTENDED
 
 These functions return information about a file.
 No permissions are required on the file itself, but---in the case of
-<B>stat</B>()
+<B>stat</B>(),
+
+<B>fstatat</B>(),
 
 and
 <B>lstat</B>()---execute
 
 (search) permission is required on all of the directories in
-<I>path</I>
+<I>pathname</I>
 
 that lead to the file.
 <P>
 
 <B>stat</B>()
 
-stats the file pointed to by
-<I>path</I>
+and
+<B>fstatat</B>()
+
+stat the file pointed to by
+<I>pathname</I>
 
 and fills in
-<I>buf</I>.
+<I>buf</I>;
 
+the differences for
+<B>fstatat</B>()
+
+are described below.
 <P>
 <B>lstat</B>()
 
@@ -111,7 +133,7 @@ is identical to
 <B>stat</B>(),
 
 except that if
-<I>path</I>
+<I>pathname</I>
 
 is a symbolic link, then the link itself is stat-ed,
 not the file that it refers to.
@@ -390,7 +412,132 @@ on a directory means that a file
 in that directory can be renamed or deleted only by the owner
 of the file, by the owner of the directory, and by a privileged
 process.
+
+
 <A NAME="lbAE">&nbsp;</A>
+<H3>fstatat ()</H3>
+
+The
+<B>fstatat</B>()
+
+system call operates in exactly the same way as
+<B>stat</B>(),
+
+except for the differences described here.
+<P>
+If the pathname given in
+<I>pathname</I>
+
+is relative, then it is interpreted relative to the directory
+referred to by the file descriptor
+<I>dirfd</I>
+
+(rather than relative to the current working directory of
+the calling process, as is done by
+<B>stat</B>()
+
+for a relative pathname).
+<P>
+If
+<I>pathname</I>
+
+is relative and
+<I>dirfd</I>
+
+is the special value
+<B>AT_FDCWD</B>,
+
+then
+<I>pathname</I>
+
+is interpreted relative to the current working
+directory of the calling process (like
+<B>stat</B>()).
+
+<P>
+If
+<I>pathname</I>
+
+is absolute, then
+<I>dirfd</I>
+
+is ignored.
+<P>
+<I>flags</I>
+
+can either be 0, or include one or more of the following flags ORed:
+<DL COMPACT>
+<DT><B>AT_EMPTY_PATH</B> (since Linux 2.6.39)
+
+<DD>
+
+If
+<I>pathname</I>
+
+is an empty string, operate on the file referred to by
+<I>dirfd</I>
+
+(which may have been obtained using the
+<B><A HREF="../man2/open.2.html">open</A></B>(2)
+
+<B>O_PATH</B>
+
+flag).
+In this case,
+<I>dirfd</I>
+
+can refer to any type of file, not just a directory.
+This flag is Linux-specific; define
+<B>_GNU_SOURCE</B>
+
+
+to obtain its definition.
+<DT><B>AT_NO_AUTOMOUNT</B> (since Linux 2.6.38)
+
+<DD>
+Don't automount the terminal (&quot;basename&quot;) component of
+<I>pathname</I>
+
+if it is a directory that is an automount point.
+This allows the caller to gather attributes of an automount point
+(rather than the location it would mount).
+This flag can be used in tools that scan directories
+to prevent mass-automounting of a directory of automount points.
+The
+<B>AT_NO_AUTOMOUNT</B>
+
+flag has no effect if the mount point has already been mounted over.
+This flag is Linux-specific; define
+<B>_GNU_SOURCE</B>
+
+
+to obtain its definition.
+<DT><B>AT_SYMLINK_NOFOLLOW</B>
+
+<DD>
+If
+<I>pathname</I>
+
+is a symbolic link, do not dereference it:
+instead return information about the link itself, like
+<B>lstat</B>().
+
+(By default,
+<B>fstatat</B>()
+
+dereferences symbolic links, like
+<B>stat</B>().)
+
+</DL>
+<P>
+
+See
+<B><A HREF="../man2/openat.2.html">openat</A></B>(2)
+
+for an explanation of the need for
+<B>fstatat</B>().
+
+<A NAME="lbAF">&nbsp;</A>
 <H2>RETURN VALUE</H2>
 
 On success, zero is returned.
@@ -398,7 +545,7 @@ On error, -1 is returned, and
 <I>errno</I>
 
 is set appropriately.
-<A NAME="lbAF">&nbsp;</A>
+<A NAME="lbAG">&nbsp;</A>
 <H2>ERRORS</H2>
 
 <DL COMPACT>
@@ -407,7 +554,7 @@ is set appropriately.
 <DD>
 Search permission is denied for one of the directories
 in the path prefix of
-<I>path</I>.
+<I>pathname</I>.
 
 (See also
 <B><A HREF="../man7/path_resolution.7.html">path_resolution</A></B>(7).)
@@ -429,17 +576,17 @@ Too many symbolic links encountered while traversing the path.
 <DT><B>ENAMETOOLONG</B>
 
 <DD>
-<I>path</I>
+<I>pathname</I>
 
 is too long.
 <DT><B>ENOENT</B>
 
 <DD>
 A component of
-<I>path</I>
+<I>pathname</I>
 
 does not exist, or
-<I>path</I>
+<I>pathname</I>
 
 is an empty string.
 <DT><B>ENOMEM</B>
@@ -450,13 +597,13 @@ Out of memory (i.e., kernel memory).
 
 <DD>
 A component of the path prefix of
-<I>path</I>
+<I>pathname</I>
 
 is not a directory.
 <DT><B>EOVERFLOW</B>
 
 <DD>
-<I>path</I>
+<I>pathname</I>
 
 or
 <I>fd</I>
@@ -482,10 +629,51 @@ on a file whose size exceeds
 
 bytes.
 </DL>
-<A NAME="lbAG">&nbsp;</A>
+<P>
+
+The following additional errors can occur for
+<B>fstatat</B>():
+
+<DL COMPACT>
+<DT><B>EBADF</B>
+
+<DD>
+<I>dirfd</I>
+
+is not a valid file descriptor.
+<DT><B>EINVAL</B>
+
+<DD>
+Invalid flag specified in
+<I>flags</I>.
+
+<DT><B>ENOTDIR</B>
+
+<DD>
+<I>pathname</I>
+
+is relative and
+<I>dirfd</I>
+
+is a file descriptor referring to a file other than a directory.
+</DL>
+<A NAME="lbAH">&nbsp;</A>
+<H2>VERSIONS</H2>
+
+<B>fstatat</B>()
+
+was added to Linux in kernel 2.6.16;
+library support was added to glibc in version 2.4.
+<A NAME="lbAI">&nbsp;</A>
 <H2>CONFORMING TO</H2>
 
-These system calls conform to SVr4, 4.3BSD, POSIX.1-2001.
+<B>stat</B>(),
+
+<B>fstat</B>(),
+
+<B>lstat</B>():
+
+SVr4, 4.3BSD, POSIX.1-2001, POSIX.1.2008.
 
 
 
@@ -494,6 +682,10 @@ These system calls conform to SVr4, 4.3BSD, POSIX.1-2001.
 
 
 
+<P>
+<B>fstatat</B>():
+
+POSIX.1-2008.
 <P>
 According to POSIX.1-2001,
 <B>lstat</B>()
@@ -598,7 +790,7 @@ prescribes the synonyms
 
 <B>S_IXUSR</B>.
 
-<A NAME="lbAH">&nbsp;</A>
+<A NAME="lbAJ">&nbsp;</A>
 <H3>Other systems</H3>
 
 Values that have been (or are) in use on various systems:
@@ -662,7 +854,7 @@ directory is a context dependent file (HP-UX)
 
 <P>
 A sticky command appeared in Version 32V AT&amp;T UNIX.
-<A NAME="lbAI">&nbsp;</A>
+<A NAME="lbAK">&nbsp;</A>
 <H2>NOTES</H2>
 
 On Linux,
@@ -685,7 +877,7 @@ does not return the file size in the
 <I>st_size</I>
 
 field; instead the field is returned with the value 0.
-<A NAME="lbAJ">&nbsp;</A>
+<A NAME="lbAL">&nbsp;</A>
 <H3>Timestamp fields</H3>
 
 Older kernels and older standards did not support nanosecond timestamp
@@ -738,7 +930,7 @@ ext4 (since Linux 2.6.23).
 Nanosecond timestamps are not supported in ext2, ext3, and Resierfs.
 On filesystems that do not support subsecond timestamps,
 the nanosecond fields are returned with the value 0.
-<A NAME="lbAK">&nbsp;</A>
+<A NAME="lbAM">&nbsp;</A>
 <H3>Underlying kernel interface</H3>
 
 Over time, increases in the size of the
@@ -803,7 +995,14 @@ and
 
 
 
-<A NAME="lbAL">&nbsp;</A>
+<P>
+The underlying system call employed by the glibc
+<B>fstatat</B>()
+
+wrapper function is actually called
+<B>fstatat64</B>().
+
+<A NAME="lbAN">&nbsp;</A>
 <H2>EXAMPLE</H2>
 
 The following program calls
@@ -873,7 +1072,7 @@ main(int argc, char *argv[])
 }
 </PRE>
 
-<A NAME="lbAM">&nbsp;</A>
+<A NAME="lbAO">&nbsp;</A>
 <H2>SEE ALSO</H2>
 
 <B><A HREF="../man2/access.2.html">access</A></B>(2),
@@ -881,8 +1080,6 @@ main(int argc, char *argv[])
 <B><A HREF="../man2/chmod.2.html">chmod</A></B>(2),
 
 <B><A HREF="../man2/chown.2.html">chown</A></B>(2),
-
-<B><A HREF="../man2/fstatat.2.html">fstatat</A></B>(2),
 
 <B><A HREF="../man2/readlink.2.html">readlink</A></B>(2),
 
@@ -900,24 +1097,28 @@ main(int argc, char *argv[])
 <DT><A HREF="#lbAB">NAME</A><DD>
 <DT><A HREF="#lbAC">SYNOPSIS</A><DD>
 <DT><A HREF="#lbAD">DESCRIPTION</A><DD>
-<DT><A HREF="#lbAE">RETURN VALUE</A><DD>
-<DT><A HREF="#lbAF">ERRORS</A><DD>
-<DT><A HREF="#lbAG">CONFORMING TO</A><DD>
 <DL>
-<DT><A HREF="#lbAH">Other systems</A><DD>
+<DT><A HREF="#lbAE">fstatat ()</A><DD>
 </DL>
-<DT><A HREF="#lbAI">NOTES</A><DD>
+<DT><A HREF="#lbAF">RETURN VALUE</A><DD>
+<DT><A HREF="#lbAG">ERRORS</A><DD>
+<DT><A HREF="#lbAH">VERSIONS</A><DD>
+<DT><A HREF="#lbAI">CONFORMING TO</A><DD>
 <DL>
-<DT><A HREF="#lbAJ">Timestamp fields</A><DD>
-<DT><A HREF="#lbAK">Underlying kernel interface</A><DD>
+<DT><A HREF="#lbAJ">Other systems</A><DD>
 </DL>
-<DT><A HREF="#lbAL">EXAMPLE</A><DD>
-<DT><A HREF="#lbAM">SEE ALSO</A><DD>
+<DT><A HREF="#lbAK">NOTES</A><DD>
+<DL>
+<DT><A HREF="#lbAL">Timestamp fields</A><DD>
+<DT><A HREF="#lbAM">Underlying kernel interface</A><DD>
+</DL>
+<DT><A HREF="#lbAN">EXAMPLE</A><DD>
+<DT><A HREF="#lbAO">SEE ALSO</A><DD>
 </DL>
 <HR>
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:25:39 GMT, April 20, 2020
+Time: 03:26:12 GMT, April 20, 2020
 </BODY>
 </HTML>

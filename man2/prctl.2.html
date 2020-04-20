@@ -26,7 +26,7 @@ the source, must acknowledge the copyright and authors of this work.
 <HTML><HEAD><TITLE>Man page of PRCTL</TITLE>
 </HEAD><BODY>
 <H1>PRCTL</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2014-02-10<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2014-02-22<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -339,7 +339,7 @@ For more information, see the kernel source file
 <DT><B>PR_GET_NO_NEW_PRIVS</B> (since Linux 3.5)
 
 <DD>
-Return the value of the
+Return (as the function result) the value of the
 <I>no_new_privs</I>
 
 bit for the current process.
@@ -502,7 +502,8 @@ For further information, see the kernel source file
 <DT><B>PR_GET_SECCOMP</B> (since Linux 2.6.23)
 
 <DD>
-Return the secure computing mode of the calling thread.
+Return (as the function result)
+the secure computing mode of the calling thread.
 If the caller is not in secure computing mode, this operation returns 0;
 if the caller is in strict secure computing mode, then the
 <B>prctl</B>()
@@ -641,7 +642,8 @@ The timer slack values are preserved across
 <DT><B>PR_GET_TIMERSLACK</B> (since Linux 2.6.28)
 
 <DD>
-Return the current timer slack value of the calling thread.
+Return (as the function result)
+the current timer slack value of the calling thread.
 <DT><B>PR_SET_TIMING</B> (since Linux 2.6.0-test4)
 
 <DD>
@@ -818,6 +820,7 @@ arguments must be zero.
 <DT><B>PR_SET_MM</B> (since Linux 3.3)
 
 <DD>
+
 Modify certain kernel memory map descriptor fields
 of the calling process.
 Usually these fields are set by the kernel and dynamic loader (see
@@ -907,67 +910,89 @@ The requirements for the address are the same as for the
 <B>PR_SET_MM_START_BRK</B>
 
 option.
+</DL>
+<P>
 
+The following options are available since Linux 3.5.
 
+<DL COMPACT>
+<DT><B>PR_SET_MM_ARG_START</B>
 
+<DD>
+Set the address above which the program command line is placed.
+<DT><B>PR_SET_MM_ARG_END</B>
 
+<DD>
+Set the address below which the program command line is placed.
+<DT><B>PR_SET_MM_ENV_START</B>
 
+<DD>
+Set the address above which the program environment is placed.
+<DT><B>PR_SET_MM_ENV_END</B>
 
+<DD>
+Set the address below which the program environment is placed.
+<DT><DD>
+The address passed with
+<B>PR_SET_MM_ARG_START</B>,
 
+<B>PR_SET_MM_ARG_END</B>,
 
+<B>PR_SET_MM_ENV_START</B>,
 
+and
+<B>PR_SET_MM_ENV_END</B>
 
+should belong to a process stack area.
+Thus, the corresponding memory area must be readable, writable, and
+(depending on the kernel configuration) have the
+<B>MAP_GROWSDOWN</B>
 
+attribute set (see
+<B><A HREF="../man2/mmap.2.html">mmap</A></B>(2)).
 
+<DT><B>PR_SET_MM_AUXV</B>
 
+<DD>
+Set a new auxiliary vector.
+The
+<I>arg3</I>
 
+argument should provide the address of the vector.
+The
+<I>arg4</I>
 
+is the size of the vector.
+<DT><B>PR_SET_MM_EXE_FILE</B>
 
+<DD>
 
+Supersede the
+<I>/proc/pid/exe</I>
 
+symbolic link with a new one pointing to a new executable file
+identified by the file descriptor provided in
+<I>arg3</I>
 
+argument.
+The file descriptor should be obtained with a regular
+<B><A HREF="../man2/open.2.html">open</A></B>(2)
 
+call.
+<DT><DD>
+To change the symbolic link, one needs to unmap all existing
+executable memory areas, including those created by the kernel itself
+(for example the kernel usually creates at least one executable
+memory area for the ELF
+<I>.text</I>
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+section).
+<DT><DD>
+The second limitation is that such transitions can be done only once
+in a process life time.
+Any further attempts will be rejected.
+This should help system administrators monitor unusual
+symbolic-link transitions over all processes running on a system.
 </DL>
 </DL>
 
@@ -986,6 +1011,8 @@ On success,
 <B>PR_CAPBSET_READ</B>,
 
 <B>PR_GET_TIMING</B>,
+
+<B>PR_GET_TIMERSLACK</B>,
 
 <B>PR_GET_SECUREBITS</B>,
 
@@ -1192,41 +1219,55 @@ and the caller does not have the
 <B>CAP_SYS_RESOURCE</B>
 
 capability.
+<DT><B>EACCES</B>
 
+<DD>
+<I>option</I>
 
+is
+<B>PR_SET_MM</B>,
 
+and
+<I>arg3</I>
 
+is
+<B>PR_SET_MM_EXE_FILE</B>,
 
+the file is not executable.
+<DT><B>EBUSY</B>
 
+<DD>
+<I>option</I>
 
+is
+<B>PR_SET_MM</B>,
 
+<I>arg3</I>
 
+is
+<B>PR_SET_MM_EXE_FILE</B>,
 
+and this the second attempt to change the
+<I>/proc/pid/exe</I>
 
+symbolic link, which is prohibited.
+<DT><B>EBADF</B>
 
+<DD>
+<I>option</I>
 
+is
+<B>PR_SET_MM</B>,
 
+<I>arg3</I>
 
+is
+<B>PR_SET_MM_EXE_FILE</B>,
 
+and the file descriptor passed in
+<I>arg4</I>
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+is not valid.
 
 
 
@@ -1287,6 +1328,6 @@ get or set the maximum stack size, and so on.
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:25:38 GMT, April 20, 2020
+Time: 03:26:10 GMT, April 20, 2020
 </BODY>
 </HTML>

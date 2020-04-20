@@ -1,5 +1,6 @@
 <!--
 Copyright (C) 1993 David Metcalfe (david@prism.demon.co.uk)
+Copyright (c) 2012, Mark R. Bannister &lt;cambridge@users.sourceforge.net&gt;
 %%%LICENSE_START(VERBATIM)
 Permission is granted to make and distribute verbatim copies of this
 manual provided the copyright notice and this permission notice are
@@ -21,18 +22,39 @@ professionally.
 Formatted or processed versions of this manual, if unaccompanied by
 the source, must acknowledge the copyright and authors of this work.
 %%%LICENSE_END
+%%%LICENSE_START(GPLv2+_DOC_FULL)
+This is free documentation; you can redistribute it and/or
+modify it under the terms of the GNU General Public License as
+published by the Free Software Foundation; either version 2 of
+the License, or (at your option) any later version.
+.\"
+The GNU General Public License's references to "object code"
+and "executables" are to be interpreted as the output of any
+document formatting or typesetting system, including
+intermediate and printed output.
+.\"
+This manual is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+.\"
+You should have received a copy of the GNU General Public
+License along with this manual; if not, see
+&lt;http://www.gnu.org/licenses/&gt;.
+%%%LICENSE_END
 -->
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
 <HTML><HEAD><TITLE>Man page of SCANDIR</TITLE>
 </HEAD><BODY>
 <H1>SCANDIR</H1>
-Section: Linux Programmer's Manual (3)<BR>Updated: 2013-04-19<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2014-02-21<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
 <H2>NAME</H2>
 
-scandir, alphasort, versionsort - scan a directory for matching entries
+scandir, scandirat, alphasort, versionsort - scan
+a directory for matching entries
 <A NAME="lbAC">&nbsp;</A>
 <H2>SYNOPSIS</H2>
 
@@ -47,6 +69,20 @@ scandir, alphasort, versionsort - scan a directory for matching entries
 <B>int alphasort(const void *</B><I>a</I><B>, const void *</B><I>b</I><B>);</B>
 
 <B>int versionsort(const void *</B><I>a</I><B>, const void *</B><I>b</I><B>);</B>
+
+<B>#include &lt;<A HREF="file:///usr/include/fcntl.h">fcntl.h</A>&gt;</B>          /* Definition of AT_* constants */
+<B>#include &lt;<A HREF="file:///usr/include/dirent.h">dirent.h</A>&gt;</B>
+
+</PRE>
+
+<B>int scandirat(int </B><I>dirfd</I><B>, const char *</B><I>dirp</I><B>,</B>
+
+<B>struct dirent ***</B><I>namelist</I><B>,</B>
+
+<PRE>
+<DL COMPACT><DT><DD><B>int (*</B><I>filter</I><B>)(const struct dirent *),</B>
+<B>int (*</B><I>compar</I><B>)(const struct dirent **, const struct dirent **));</B>
+</DL>
 </PRE>
 
 <P>
@@ -60,10 +96,28 @@ Feature Test Macro Requirements for glibc (see
 
 <B>alphasort</B>():
 
+<BR>
+
+<DL COMPACT><DT><DD>
+
+
 _BSD_SOURCE || _SVID_SOURCE
 <BR>
 
+|| /* Since glibc 2.10: */
+<DL COMPACT><DT><DD>
+(_POSIX_C_SOURCE&nbsp;&gt;=&nbsp;200809L || _XOPEN_SOURCE&nbsp;&gt;=&nbsp;700)
+</DL>
+
+
+</DL>
+
+<P>
 <B>versionsort</B>():
+
+_GNU_SOURCE
+<P>
+<B>scandirat</B>():
 
 _GNU_SOURCE
 <A NAME="lbAD">&nbsp;</A>
@@ -106,6 +160,62 @@ the latter using
 
 on the strings <I>(*a)-&gt;d_name</I> and <I>(*b)-&gt;d_name</I>.
 <A NAME="lbAE">&nbsp;</A>
+<H3>scandirat()</H3>
+
+The
+<B>scandirat</B>()
+
+function operates in exactly the same way as
+<B>scandir</B>(),
+
+except for the differences described here.
+<P>
+If the pathname given in
+<I>dirp</I>
+
+is relative, then it is interpreted relative to the directory
+referred to by the file descriptor
+<I>dirfd</I>
+
+(rather than relative to the current working directory of
+the calling process, as is done by
+<B>scandir</B>()
+
+for a relative pathname).
+<P>
+If
+<I>dirp</I>
+
+is relative and
+<I>dirfd</I>
+
+is the special value
+<B>AT_FDCWD</B>,
+
+then
+<I>dirp</I>
+
+is interpreted relative to the current working
+directory of the calling process (like
+<B>scandir</B>()).
+
+<P>
+If
+<I>dirp</I>
+
+is absolute, then
+<I>dirfd</I>
+
+is ignored.
+<P>
+
+See
+<B><A HREF="../man2/openat.2.html">openat</A></B>(2)
+
+for an explanation of the need for
+<B>scandirat</B>().
+
+<A NAME="lbAF">&nbsp;</A>
 <H2>RETURN VALUE</H2>
 
 The
@@ -128,7 +238,7 @@ and
 functions return an integer less than, equal to,
 or greater than zero if the first argument is considered to be
 respectively less than, equal to, or greater than the second.
-<A NAME="lbAF">&nbsp;</A>
+<A NAME="lbAG">&nbsp;</A>
 <H2>ERRORS</H2>
 
 <DL COMPACT>
@@ -145,49 +255,69 @@ Insufficient memory to complete the operation.
 <DD>
 The path in <I>dirp</I> is not a directory.
 </DL>
-<A NAME="lbAG">&nbsp;</A>
+<P>
+
+The following additional errors can occur for
+<B>scandirat</B>():
+
+<DL COMPACT>
+<DT><B>EBADF</B>
+
+<DD>
+<I>dirfd</I>
+
+is not a valid file descriptor.
+<DT><B>ENOTDIR</B>
+
+<DD>
+<I>dirp</I>
+
+is a relative path and
+<I>dirfd</I>
+
+is a file descriptor referring to a file other than a directory.
+</DL>
+<A NAME="lbAH">&nbsp;</A>
 <H2>VERSIONS</H2>
 
 <B>versionsort</B>()
 
 was added to glibc in version 2.1.
-<A NAME="lbAH">&nbsp;</A>
+<P>
+<B>scandirat</B>()
+
+was added to glibc in version 2.15.
+<A NAME="lbAI">&nbsp;</A>
 <H2>CONFORMING TO</H2>
 
-<B>alphasort</B>()
+<B>alphasort</B>(),
 
-and
-<B>scandir</B>()
+<B>scandir</B>():
 
-are specified in POSIX.1-2008, and are widely available.
+4.3BSD, POSIX.1-2008.
+<P>
 <B>versionsort</B>()
 
-is a GNU extension.
-<P>
-
-The functions
-<B>scandir</B>()
-
 and
-<B>alphasort</B>()
+<B>scandirat</B>()
 
-are from 4.3BSD, and have been available under Linux since libc4.
-Libc4 and libc5 use the more precise prototype
-<P>
-<PRE>
-    int alphasort(const struct dirent ** a,
-                  const struct dirent **b);
-</PRE>
+are GNU extensions.
 
-<P>
-but glibc 2.0 returns to the imprecise BSD prototype.
-<P>
 
-The function
-<B>versionsort</B>()
 
-is a GNU extension, available since glibc 2.1.
-<P>
+
+
+
+
+
+
+
+
+
+
+
+<A NAME="lbAJ">&nbsp;</A>
+<H2>NOTES</H2>
 
 Since glibc 2.1,
 <B>alphasort</B>()
@@ -198,7 +328,7 @@ calls
 earlier it used
 <B><A HREF="../man3/strcmp.3.html">strcmp</A></B>(3).
 
-<A NAME="lbAI">&nbsp;</A>
+<A NAME="lbAK">&nbsp;</A>
 <H2>EXAMPLE</H2>
 
 <PRE>
@@ -225,7 +355,7 @@ main(void)
 }
 </PRE>
 
-<A NAME="lbAJ">&nbsp;</A>
+<A NAME="lbAL">&nbsp;</A>
 <H2>SEE ALSO</H2>
 
 <B><A HREF="../man3/closedir.3.html">closedir</A></B>(3),
@@ -237,8 +367,6 @@ main(void)
 <B><A HREF="../man3/readdir.3.html">readdir</A></B>(3),
 
 <B><A HREF="../man3/rewinddir.3.html">rewinddir</A></B>(3),
-
-<B><A HREF="../man3/scandirat.3.html">scandirat</A></B>(3),
 
 <B><A HREF="../man3/seekdir.3.html">seekdir</A></B>(3),
 
@@ -258,17 +386,21 @@ main(void)
 <DT><A HREF="#lbAB">NAME</A><DD>
 <DT><A HREF="#lbAC">SYNOPSIS</A><DD>
 <DT><A HREF="#lbAD">DESCRIPTION</A><DD>
-<DT><A HREF="#lbAE">RETURN VALUE</A><DD>
-<DT><A HREF="#lbAF">ERRORS</A><DD>
-<DT><A HREF="#lbAG">VERSIONS</A><DD>
-<DT><A HREF="#lbAH">CONFORMING TO</A><DD>
-<DT><A HREF="#lbAI">EXAMPLE</A><DD>
-<DT><A HREF="#lbAJ">SEE ALSO</A><DD>
+<DL>
+<DT><A HREF="#lbAE">scandirat()</A><DD>
+</DL>
+<DT><A HREF="#lbAF">RETURN VALUE</A><DD>
+<DT><A HREF="#lbAG">ERRORS</A><DD>
+<DT><A HREF="#lbAH">VERSIONS</A><DD>
+<DT><A HREF="#lbAI">CONFORMING TO</A><DD>
+<DT><A HREF="#lbAJ">NOTES</A><DD>
+<DT><A HREF="#lbAK">EXAMPLE</A><DD>
+<DT><A HREF="#lbAL">SEE ALSO</A><DD>
 </DL>
 <HR>
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:25:46 GMT, April 20, 2020
+Time: 03:26:19 GMT, April 20, 2020
 </BODY>
 </HTML>
