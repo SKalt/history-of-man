@@ -5,7 +5,7 @@ Copyright (c) 1992 Drew Eckhardt, March 28, 1992
 <HTML><HEAD><TITLE>Man page of GETRUSAGE</TITLE>
 </HEAD><BODY>
 <H1>GETRUSAGE</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2004-11-16<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2008-07-15<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -31,16 +31,35 @@ getrusage - get resource usage
 
 <B>getrusage</B>()
 
-returns current resource usages, for a <I>who</I>
-of either
-<B>RUSAGE_SELF</B>
+returns resource usage measures for
+<I>who</I>,
 
-or
-<B>RUSAGE_CHILDREN</B>.
+which can be one of the following:
+<DL COMPACT>
+<DT><B>RUSAGE_SELF</B>
 
-The former asks for resources used by the calling process,
-the latter for resources used by those of its children
-that have terminated and have been waited for.
+<DD>
+Return resource usage statistics for the calling process,
+which is the sum of resources used by all threads in the process.
+<DT><B>RUSAGE_CHILDREN</B>
+
+<DD>
+Return resource usage statistics for all children of the
+calling process that have terminated and been waited for.
+These statistics will include the resources used by grandchildren,
+and further removed descendants,
+if all of the intervening descendants waited on their terminated children.
+<DT><B>RUSAGE_THREAD</B> (since Linux 2.6.26)
+
+<DD>
+Return resource usage statistics for the calling thread.
+</DL>
+<P>
+
+The resource usages are returned in the structure pointed to by
+<I>usage</I>,
+
+which has the following form:
 <P>
 
 
@@ -104,6 +123,10 @@ but only specifies the fields
 and
 <I>ru_stime</I>.
 
+<P>
+<B>RUSAGE_THREAD</B>
+
+is Linux-specific.
 <A NAME="lbAH">&nbsp;</A>
 <H2>NOTES</H2>
 
@@ -156,6 +179,13 @@ and
 <I>ru_nivcsw</I>
 
 are also maintained.
+<P>
+See also the description of
+<I>/proc/PID/stat</I>
+
+in
+<B><A HREF="../man5/proc.5.html">proc</A></B>(5).
+
 <A NAME="lbAI">&nbsp;</A>
 <H2>SEE ALSO</H2>
 
@@ -165,9 +195,7 @@ are also maintained.
 
 <B><A HREF="../man2/wait.2.html">wait</A></B>(2),
 
-<B><A HREF="../man2/wait4.2.html">wait4</A></B>(2),
-
-<B><A HREF="../man7/time.7.html">time</A></B>(7)
+<B><A HREF="../man2/wait4.2.html">wait4</A></B>(2)
 
 <P>
 
@@ -187,6 +215,6 @@ are also maintained.
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 02:54:33 GMT, April 20, 2020
+Time: 02:55:08 GMT, April 20, 2020
 </BODY>
 </HTML>

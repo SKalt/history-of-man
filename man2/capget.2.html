@@ -4,13 +4,13 @@
 <HTML><HEAD><TITLE>Man page of CAPGET</TITLE>
 </HEAD><BODY>
 <H1>CAPGET</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2004-06-21<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2008-07-14<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
 <H2>NAME</H2>
 
-capget, capset - set/get capabilities
+capget, capset - set/get capabilities of thread(s)
 <A NAME="lbAC">&nbsp;</A>
 <H2>SYNOPSIS</H2>
 
@@ -29,11 +29,12 @@ capget, capset - set/get capabilities
 <A NAME="lbAD">&nbsp;</A>
 <H2>DESCRIPTION</H2>
 
-As of Linux 2.2, the power of the superuser (root) has been partitioned into
+As of Linux 2.2,
+the power of the superuser (root) has been partitioned into
 a set of discrete capabilities.
-Every thread has a set of effective capabilities identifying
+Each thread has a set of effective capabilities identifying
 which capabilities (if any) it may currently exercise.
-Every thread also has a set of inheritable capabilities that may be
+Each thread also has a set of inheritable capabilities that may be
 passed through an
 <B><A HREF="../man2/execve.2.html">execve</A></B>(2)
 
@@ -42,7 +43,7 @@ that it can make effective or inheritable.
 <P>
 
 These two functions are the raw kernel interface for getting and
-setting capabilities.
+setting thread capabilities.
 Not only are these system calls specific to Linux,
 but the kernel API is likely to change and use of
 these functions (in particular the format of the
@@ -68,26 +69,30 @@ and
 <H3>Current details</H3>
 
 Now that you have been warned, some current kernel details.
-The structs are defined as follows.
+The structures are defined as follows.
 <P>
 <PRE>
-#define _LINUX_CAPABILITY_VERSION  0x19980330
+#define _LINUX_CAPABILITY_VERSION_1  0x19980330
+#define _LINUX_CAPABILITY_U32S_1     1
+
+#define _LINUX_CAPABILITY_VERSION_2  0x20071026
+#define _LINUX_CAPABILITY_U32S_2     2
 
 typedef struct __user_cap_header_struct {
-    int version;
-    int pid;
+   __u32 version;
+   int pid;
 } *cap_user_header_t;
 
 typedef struct __user_cap_data_struct {
-    int effective;
-    int permitted;
-    int inheritable;
+   __u32 effective;
+   __u32 permitted;
+   __u32 inheritable;
 } *cap_user_data_t;
 </PRE>
 
 
 <P>
-The calls will return
+The calls will fail with the error
 <B>EINVAL</B>,
 
 and set the
@@ -96,12 +101,68 @@ and set the
 field of
 <I>hdrp</I>
 
-to
-<B>_LINUX_CAPABILITY_VERSION</B>
+to the kernel preferred value of
+<B>_LINUX_CAPABILITY_VERSION_?</B>
 
-when another version was specified.
+when an unsupported
+<I>version</I>
+
+value is specified.
+In this way, one can probe what the current
+preferred capability revision is.
+Kernels prior to 2.6.25 prefer
+32-bit capabilities with version
+<B>_LINUX_CAPABILITY_VERSION_1</B>,
+
+and kernels 2.6.25+ prefer 64-bit capabilities with version
+<B>_LINUX_CAPABILITY_VERSION_2</B>.
+
+Note, 64-bit capabilities use
+<I>datap</I>[0]
+
+and
+<I>datap</I>[1],
+
+whereas 32-bit capabilities only use
+<I>datap</I>[0].
+
 <P>
-The calls operate on the capabilities of the thread specified by the
+Another change affecting the behavior of these system calls is kernel
+support for file capabilities (VFS capability support).
+This support is currently a compile time option (added in kernel 2.6.24).
+<P>
+For
+<B>capget</B>()
+
+calls, one can probe the capabilities of any process by specifying its
+process ID with the
+<I>hdrp-&gt;pid</I>
+
+field value.
+<A NAME="lbAF">&nbsp;</A>
+<H3>With VFS Capability Support</H3>
+
+VFS Capability support creates a file-attribute method for adding
+capabilities to privileged executables.
+This privilege model obsoletes kernel support for one process
+asynchronously setting the capabilities of another.
+That is, with VFS support, for
+<B>capset</B>()
+
+calls the only permitted values for
+<I>hdrp-&gt;pid</I>
+
+are 0 or
+<B><A HREF="../man2/getpid.2.html">getpid</A></B>(2),
+
+which are equivalent.
+<A NAME="lbAG">&nbsp;</A>
+<H3>Without VFS Capability Support</H3>
+
+When the kernel does not support VFS capabilities,
+<B>capset</B>()
+
+calls can operate on the capabilities of the thread specified by the
 <I>pid</I>
 
 field of
@@ -137,7 +198,7 @@ to all members of the process group whose ID is -<I>pid</I>.
 For details on the data, see
 <B><A HREF="../man7/capabilities.7.html">capabilities</A></B>(7).
 
-<A NAME="lbAF">&nbsp;</A>
+<A NAME="lbAH">&nbsp;</A>
 <H2>RETURN VALUE</H2>
 
 On success, zero is returned.
@@ -145,7 +206,7 @@ On error, -1 is returned, and
 <I>errno</I>
 
 is set appropriately.
-<A NAME="lbAG">&nbsp;</A>
+<A NAME="lbAI">&nbsp;</A>
 <H2>ERRORS</H2>
 
 <DL COMPACT>
@@ -153,13 +214,13 @@ is set appropriately.
 
 <DD>
 Bad memory address.
-Neither of
 <I>hdrp</I>
 
-and
+must not be NULL.
 <I>datap</I>
 
-may be NULL.
+may only be NULL when the user is trying to determine the preferred
+capability version format supported by the kernel.
 <DT><B>EINVAL</B>
 
 <DD>
@@ -177,7 +238,11 @@ The caller attempted to use
 <B>capset</B>()
 
 to modify the capabilities of a thread other than itself,
-but lacked sufficient privilege; the
+but lacked sufficient privilege.
+For kernels supporting VFS
+capabilities, this is never permitted.
+For kernels lacking VFS
+support, the
 <B>CAP_SETPCAP</B>
 
 capability is required.
@@ -195,11 +260,11 @@ instead of 0.)
 <DD>
 No such thread.
 </DL>
-<A NAME="lbAH">&nbsp;</A>
+<A NAME="lbAJ">&nbsp;</A>
 <H2>CONFORMING TO</H2>
 
 These system calls are Linux-specific.
-<A NAME="lbAI">&nbsp;</A>
+<A NAME="lbAK">&nbsp;</A>
 <H2>NOTES</H2>
 
 The portable interface to the capability querying and setting
@@ -209,9 +274,8 @@ functions is provided by the
 library and is available here:
 <BR>
 
-<I><A HREF="ftp://ftp.kernel.org/pub/linux/libs/security/linux-privs">ftp://ftp.kernel.org/pub/linux/libs/security/linux-privs</A></I>
-
-<A NAME="lbAJ">&nbsp;</A>
+<A HREF="http://www.kernel.org/pub/linux/libs/security/linux-privs">http://www.kernel.org/pub/linux/libs/security/linux-privs</A>
+<A NAME="lbAL">&nbsp;</A>
 <H2>SEE ALSO</H2>
 
 <B><A HREF="../man2/clone.2.html">clone</A></B>(2),
@@ -230,17 +294,19 @@ library and is available here:
 <DT><A HREF="#lbAD">DESCRIPTION</A><DD>
 <DL>
 <DT><A HREF="#lbAE">Current details</A><DD>
+<DT><A HREF="#lbAF">With VFS Capability Support</A><DD>
+<DT><A HREF="#lbAG">Without VFS Capability Support</A><DD>
 </DL>
-<DT><A HREF="#lbAF">RETURN VALUE</A><DD>
-<DT><A HREF="#lbAG">ERRORS</A><DD>
-<DT><A HREF="#lbAH">CONFORMING TO</A><DD>
-<DT><A HREF="#lbAI">NOTES</A><DD>
-<DT><A HREF="#lbAJ">SEE ALSO</A><DD>
+<DT><A HREF="#lbAH">RETURN VALUE</A><DD>
+<DT><A HREF="#lbAI">ERRORS</A><DD>
+<DT><A HREF="#lbAJ">CONFORMING TO</A><DD>
+<DT><A HREF="#lbAK">NOTES</A><DD>
+<DT><A HREF="#lbAL">SEE ALSO</A><DD>
 </DL>
 <HR>
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 02:54:32 GMT, April 20, 2020
+Time: 02:55:08 GMT, April 20, 2020
 </BODY>
 </HTML>

@@ -5,7 +5,7 @@ Copyright (c) 1994,1995 Mike Battersby &lt;mib@deakin.edu.au&gt;
 <HTML><HEAD><TITLE>Man page of SIGACTION</TITLE>
 </HEAD><BODY>
 <H1>SIGACTION</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2008-07-04<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2008-07-08<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -62,7 +62,7 @@ is non-null, the previous action is saved in
 The
 <I>sigaction</I>
 
-structure is defined as something like
+structure is defined as something like:
 <P>
 
 <PRE>
@@ -133,7 +133,7 @@ pointer to a
 as its second argument and a pointer to a
 <I>ucontext_t</I>
 
-(cast to void *) as its third argument.
+(cast to <I>void&nbsp;*</I>) as its third argument.
 <P>
 
 <I>sa_mask</I>
@@ -214,13 +214,13 @@ On Linux, a
 
 signal is generated in this case;
 on some other implementations, it is not.
-<DT><B>SA_RESETHAND</B>
+<DT><B>SA_NODEFER</B>
 
 <DD>
-Restore the signal action to the default state once the signal handler
-has been called.
+Do not prevent the signal from being received from within its own signal
+handler.
 This flag is only meaningful when establishing a signal handler.
-<B>SA_ONESHOT</B>
+<B>SA_NOMASK</B>
 
 is an obsolete, non-standard synonym for this flag.
 <DT><B>SA_ONSTACK</B>
@@ -231,6 +231,15 @@ Call the signal handler on an alternate signal stack provided by
 
 If an alternate stack is not available, the default stack will be used.
 This flag is only meaningful when establishing a signal handler.
+<DT><B>SA_RESETHAND</B>
+
+<DD>
+Restore the signal action to the default state once the signal handler
+has been called.
+This flag is only meaningful when establishing a signal handler.
+<B>SA_ONESHOT</B>
+
+is an obsolete, non-standard synonym for this flag.
 <DT><B>SA_RESTART</B>
 
 <DD>
@@ -241,15 +250,6 @@ See
 <B><A HREF="../man7/signal.7.html">signal</A></B>(7)
 
 for a discussion of system call restarting.
-<DT><B>SA_NODEFER</B>
-
-<DD>
-Do not prevent the signal from being received from within its own signal
-handler.
-This flag is only meaningful when establishing a signal handler.
-<B>SA_NOMASK</B>
-
-is an obsolete, non-standard synonym for this flag.
 <DT><B>SA_SIGINFO</B> (since Linux 2.2)
 
 <DD>
@@ -272,10 +272,10 @@ This flag is only meaningful when establishing a signal handler.
 The
 <I>siginfo_t</I>
 
-parameter to
+argument to
 <I>sa_sigaction</I>
 
-is a struct with the following elements
+is a struct with the following elements:
 <P>
 
 <PRE>
@@ -283,6 +283,9 @@ siginfo_t {
     int      si_signo;    /* Signal number */
     int      si_errno;    /* An errno value */
     int      si_code;     /* Signal code */
+    int      si_trapno;   /* Trap number that caused
+                             hardware-generated signal
+                             (unused on most architectures) */
     pid_t    si_pid;      /* Sending process ID */
     uid_t    si_uid;      /* Real user ID of sending process */
     int      si_status;   /* Exit value or signal */
@@ -291,6 +294,8 @@ siginfo_t {
     sigval_t si_value;    /* Signal value */
     int      si_int;      /* POSIX.1b signal */
     void    *si_ptr;      /* POSIX.1b signal */
+    int      si_overrun;  /* Timer overrun count; POSIX.1b timers */
+    int      si_timerid;  /* Timer ID; POSIX.1b timers */
     void    *si_addr;     /* Memory location which caused fault */
     int      si_band;     /* Band event */
     int      si_fd;       /* File descriptor */
@@ -304,7 +309,7 @@ siginfo_t {
 are defined for all signals.
 (<I>si_errno</I>
 
-is unused on Linux.)
+is generally unused on Linux.)
 The rest of the struct may be a union, so that one should only
 read the fields that are meaningful for the given signal:
 <DL COMPACT>
@@ -316,9 +321,23 @@ fill in
 <I>si_pid</I> and <I>si_uid</I>.
 
 <DT>*<DD>
+POSIX.1b timers (since Linux 2.6) fill in
+<I>si_overrun</I>
+
+and
+<I>si_timerid</I>.
+
+The
+<I>si_timerid</I>
+
+field is an internal ID used by the kernel to identify
+the timer; it is not the same as the timer ID returned by
+<B><A HREF="../man3/timer_create.3.html">timer_create</A></B>(3).
+
+<DT>*<DD>
 <B>SIGCHLD</B>
 
-also fills in
+fills in
 <I>si_status</I>, <I>si_utime</I> and <I>si_stime</I>.
 
 
@@ -914,6 +933,6 @@ See
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 02:54:35 GMT, April 20, 2020
+Time: 02:55:10 GMT, April 20, 2020
 </BODY>
 </HTML>

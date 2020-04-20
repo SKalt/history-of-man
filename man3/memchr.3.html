@@ -5,13 +5,13 @@ Copyright 1993 David Metcalfe (david@prism.demon.co.uk)
 <HTML><HEAD><TITLE>Man page of MEMCHR</TITLE>
 </HEAD><BODY>
 <H1>MEMCHR</H1>
-Section: Linux Programmer's Manual (3)<BR>Updated: 2003-11-01<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2008-07-09<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
 <H2>NAME</H2>
 
-memchr, memrchr - scan memory for a character
+memchr, memrchr, rawmemchr - scan memory for a character
 <A NAME="lbAC">&nbsp;</A>
 <H2>SYNOPSIS</H2>
 
@@ -21,8 +21,20 @@ memchr, memrchr - scan memory for a character
 <B>void *memchr(const void *</B><I>s</I><B>, int </B><I>c</I><B>, size_t </B><I>n</I><B>);</B>
 
 <B>void *memrchr(const void *</B><I>s</I><B>, int </B><I>c</I><B>, size_t </B><I>n</I><B>);</B>
+
+<B>void *rawmemchr(const void *</B><I>s</I><B>, int </B><I>c</I><B>);</B>
 </PRE>
 
+<P>
+
+Feature Test Macro Requirements for glibc (see
+<B><A HREF="../man7/feature_test_macros.7.html">feature_test_macros</A></B>(7)):
+
+
+<P>
+<B>rawmemchr</B>():
+
+_GNU_SOURCE
 <A NAME="lbAD">&nbsp;</A>
 <H2>DESCRIPTION</H2>
 
@@ -43,7 +55,49 @@ function is like the
 
 function,
 except that it searches backwards from the end of the <I>n</I> bytes
-pointed to by <I>s</I> instead of forwards from the front.
+pointed to by <I>s</I> instead of forwards from the beginning.
+<P>
+The
+<B>rawmemchr</B>()
+
+function is similar to
+<B>memchr</B>():
+
+it assumes (i.e., the programmer knows for certain)
+that the character
+<I>c</I>
+
+lies somewhere in the string
+<I>s</I>,
+
+and so performs an optimized search
+for the character
+<I>c</I>
+
+(i.e., no checking for the terminating null byte, or use of an argument,
+<I>n</I>,
+
+to limit the range of the search).
+If the chararacter
+<I>c</I>
+
+is not in the string
+<I>s</I>,
+
+then
+<B>rawmemchr</B>()
+
+may proceeed to search beyond the end of the string,
+and the result is unspecified.
+The folowing call is a fast means of locating a string's
+terminating null byte:
+
+<PRE>
+
+char *p; rawmemchr(s,&nbsp;'\0');
+</PRE>
+
+
 <A NAME="lbAE">&nbsp;</A>
 <H2>RETURN VALUE</H2>
 
@@ -56,6 +110,12 @@ and
 functions return a pointer
 to the matching byte or NULL if the character does not occur in
 the given memory area.
+<P>
+The
+<B>rawmemchr</B>()
+
+function returns a pointer to the matching byte, if one is found.
+If no matching byte is found, the result is unspecified.
 <A NAME="lbAF">&nbsp;</A>
 <H2>CONFORMING TO</H2>
 
@@ -63,10 +123,16 @@ The
 <B>memchr</B>()
 
 function conforms to SVr4, 4.3BSD, C89, C99, POSIX.1-2001.
+<P>
 The
 <B>memrchr</B>()
 
 function is a GNU extension, available since glibc 2.1.91.
+<P>
+The
+<B>rawmemchr</B>()
+
+function is a GNU extension, available since glibc 2.1.
 <A NAME="lbAG">&nbsp;</A>
 <H2>SEE ALSO</H2>
 
@@ -104,6 +170,6 @@ function is a GNU extension, available since glibc 2.1.91.
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 02:54:42 GMT, April 20, 2020
+Time: 02:55:17 GMT, April 20, 2020
 </BODY>
 </HTML>

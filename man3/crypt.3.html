@@ -4,7 +4,7 @@
 <HTML><HEAD><TITLE>Man page of CRYPT</TITLE>
 </HEAD><BODY>
 <H1>CRYPT</H1>
-Section: Linux Programmer's Manual (3)<BR>Updated: 2001-12-23<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2008-07-10<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -146,31 +146,68 @@ function was not implemented, probably because of U.S.A. export restrictions.
 <A NAME="lbAG">&nbsp;</A>
 <H2>CONFORMING TO</H2>
 
-SVr4, 4.3BSD, POSIX.1-2001
+SVr4, 4.3BSD, POSIX.1-2001.
 <A NAME="lbAH">&nbsp;</A>
 <H2>NOTES</H2>
 
 <A NAME="lbAI">&nbsp;</A>
 <H3>Glibc Notes</H3>
 
-The glibc2 version of this function has the following additional features.
+The glibc2 version of this function supports additional
+encryption algorithms.
+<P>
 If
 <I>salt</I>
 
-is a character string starting with the three characters &quot;$1$&quot;
-followed by at most eight characters, and optionally terminated by &quot;$&quot;,
-then instead of using the DES machine, the glibc crypt function
-uses an MD5-based algorithm, and outputs up to 34 bytes,
-namely &quot;$1$&lt;salt&gt;$&lt;encoded&gt;&quot;, where
-&quot;&lt;salt&gt;&quot; stands for the up to 8 characters following &quot;$1$&quot; in the salt,
-and &quot;&lt;encoded&gt;&quot; is a further 22 characters.
-The characters in &quot;&lt;salt&gt;&quot; and &quot;&lt;encoded&gt;&quot; are drawn from the set
+is a character string starting with the characters &quot;$<I>id</I>$&quot;
+followed by a string terminated by &quot;$&quot;:
+<P>
+$<I>id</I>$<I>salt</I>$<I>encrypted</I>
+<P>
+then instead of using the DES machine,
+<I>id</I>
+
+identifies the encryption method used and this then determines how the rest
+of the password string is interpreted.
+The following values of
+<I>id</I>
+
+are supported:
+<DL COMPACT><DT><DD>
+<TABLE>
+<TR VALIGN=top><TD>ID  | Method</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD COLSPAN=2><HR></TD></TR>
+<TR VALIGN=top><TD>1   | MD5</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD>2a  | Blowfish (on some Linux distributions)</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD>5   | SHA-256 (since glibc 2.7)</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD>6   | SHA-512 (since glibc 2.7)</TD><TD><BR></TD></TR>
+</TABLE>
+
+</DL>
+
+<P>
+So $5$<I>salt</I>$<I>encrypted</I> is an SHA-256 encoded
+password and $6$<I>salt</I>$<I>encrypted</I> is an
+SHA-512 encoded one.
+<P>
+&quot;<I>salt</I>&quot; stands for the up to 16 characters
+following &quot;$<I>id</I>$&quot; in the salt.
+The encrypted part of the password string is the actual computed password.
+The size of this string is fixed:
+<TABLE>
+<TR VALIGN=top><TD>MD5     | 22 characters</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD>SHA-256 | 43 characters</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD>SHA-512 | 86 characters</TD><TD><BR></TD></TR>
+</TABLE>
+
+<P>
+The characters in &quot;<I>salt</I>&quot; and &quot;<I>encrypted</I>&quot; are drawn from the set
 [<B>a</B>-<B>zA</B>-<B>Z0</B>-<B>9./</B>].
-The entire
+In the SHA implementation the entire
 <I>key</I>
 
-is significant here (instead of only the first
-8 bytes).
+is significant (instead of only the first
+8 bytes in MD5).
 <A NAME="lbAJ">&nbsp;</A>
 <H2>SEE ALSO</H2>
 
@@ -207,6 +244,6 @@ is significant here (instead of only the first
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 02:54:38 GMT, April 20, 2020
+Time: 02:55:13 GMT, April 20, 2020
 </BODY>
 </HTML>

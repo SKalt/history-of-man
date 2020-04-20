@@ -5,7 +5,7 @@ Copyright (c) 1996 Andries Brouwer (aeb@cwi.nl)
 <HTML><HEAD><TITLE>Man page of ERRNO</TITLE>
 </HEAD><BODY>
 <H1>ERRNO</H1>
-Section: Linux Programmer's Manual (3)<BR>Updated: 2006-02-09<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2008-07-09<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -30,17 +30,34 @@ header file defines the integer variable
 
 which is set by system calls and some library functions in the event
 of an error to indicate what went wrong.
-Its value is significant only when the call
-returned an error (usually -1), and a function that does succeed
-is allowed to change
+Its value is significant only when the return value of
+the call indicated an error
+(i.e., -1 from most system calls;
+-1 or NULL from most library functions);
+a function that succeeds
+<I>is</I>
+
+allowed to change
 <I>errno</I>.
 
 <P>
-Sometimes, when -1 is also a valid successful return value
-one has to zero
+Valid error numbers are all non-zero; <I>errno</I> is never set to zero
+by any system call or library function.
+<P>
+For some system calls and library functions (e.g.,
+<B><A HREF="../man2/getpriority.2.html">getpriority</A></B>(2)),
+
+-1 is a valid return on success.
+In such cases, a successful return can be distinguished from an error
+return by setting
 <I>errno</I>
 
-before the call in order to detect possible errors.
+to zero before the call, and then,
+if the call returns a status that indicates that an error
+may have occurred, checking to see if
+<I>errno</I>
+
+has a non-zero value.
 <P>
 <I>errno</I> is defined by the ISO C standard to be a modifiable lvalue
 of type <I>int</I>, and must not be explicitly declared; <I>errno</I>
@@ -48,8 +65,6 @@ may be a macro.
 <I>errno</I> is thread-local; setting it in one thread
 does not affect its value in any other thread.
 <P>
-Valid error numbers are all non-zero; <I>errno</I> is never set to zero
-by any library function.
 All the error names specified by POSIX.1
 must have distinct values, with the exception of
 <B>EAGAIN</B>
@@ -678,6 +693,6 @@ and the declaration is needed.
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 02:54:39 GMT, April 20, 2020
+Time: 02:55:14 GMT, April 20, 2020
 </BODY>
 </HTML>

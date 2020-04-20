@@ -5,7 +5,7 @@ Copyright (C) 1994, 1995 by Daniel Quinlan (quinlan@yggdrasil.com)
 <HTML><HEAD><TITLE>Man page of PROC</TITLE>
 </HEAD><BODY>
 <H1>PROC</H1>
-Section: Linux Programmer's Manual (5)<BR>Updated: 2008-07-03<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (5)<BR>Updated: 2008-07-15<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -232,7 +232,7 @@ and you have a working filter.
 is approximately the same as
 <I>/dev/fd/N</I>
 
-in some UNIX and UNIX-like systems.
+in some Unix and Unix-like systems.
 Most Linux MAKEDEV scripts symbolically link
 <I>/dev/fd</I>
 
@@ -481,8 +481,6 @@ This file is only readable by the owner of the process.
 <DT><I>/proc/[number]/oom_adj</I> (since Linux 2.6.11)
 
 <DD>
-
-
 This file can be used to adjust the score used to select which process
 should be killed in an out-of-memory (OOM) situation.
 The kernel uses this value for a bit-shift operation of the process's
@@ -1180,6 +1178,43 @@ Often done via a boot manager such as
 or
 <B><A HREF="../man8/grub.8.html">grub</A></B>(8).
 
+<DT><I>/proc/config.gz</I> (since Linux 2.6)
+
+<DD>
+This file exposes the configuration options that were used
+to build the currently running kernel,
+in the same format as they would be shown in the
+<I>.config</I>
+
+file that resulted when configuring the kernel (using
+<I>make xconfig</I>,
+
+<I>make config</I>,
+
+or similar).
+The file contents are compressed; view or search them using
+<B><A HREF="../man1/zcat.1.html">zcat</A></B>(1),
+
+<B><A HREF="../man1/zgrep.1.html">zgrep</A></B>(1),
+
+etc.
+As long as no changes have been made to the following file,
+the contents of
+<I>/proc/config.gz</I>
+
+are the same as those provided by :
+
+<PRE>
+
+cat /lib/modules/$(uname -r$)/build/.config
+</PRE>
+
+
+<DT><DD>
+<I>/proc/config.gz</I>
+
+is only provided if the kernel is configured with
+<B>CONFIG_IKCONFIG_PROC</B>.
 
 <DT><I>/proc/cpuinfo</I>
 
@@ -1598,7 +1633,7 @@ sl  local_address rem_address   st tx_queue rx_queue tr rexmits  tm-&gt;when uid
 <DT><I>/proc/net/unix</I>
 
 <DD>
-Lists the UNIX domain sockets present within the system and their
+Lists the Unix domain sockets present within the system and their
 status.
 The format is:
 <PRE>
@@ -2177,37 +2212,8 @@ contains the number of file systems currently mounted.
 <DT><I>/proc/sys/kernel</I>
 
 <DD>
-This directory contains files
-<I>acct</I>, <I>cad_pid</I>, <I>cap-bound</I>, 
-
-<I>core_pattern</I>, <I>core_uses_pid</I>, 
-
-<I>ctrl-alt-del</I>, <I>dentry-state</I>, <I>domainname</I>, 
-
-<I>hotplug</I>, <I>hostname</I>, 
-
-<I>htab-reclaim</I> (PowerPC only), 
-
-<I>java-appletviewer</I> (binfmt_java, obsolete), 
-
-<I>java-interpreter</I> (binfmt_java, obsolete), <I>l2cr</I> (PowerPC only), 
-
-<I>modprobe</I>, <I>msgmax</I>, <I>msgmnb</I>, 
-
-<I>msgmni</I>, <I>osrelease</I>, <I>ostype</I>, <I>overflowgid</I>, <I>overflowuid</I>,
-
-<I>panic</I>, <I>panic_on_oops</I>, <I>pid_max</I>, 
-
-<I>powersave-nap</I> (PowerPC only), <I>printk</I>, <I>pty</I>, <I>random</I>, 
-
-<I>real-root-dev</I>, <I>reboot-cmd</I> (SPARC only), <I>rtsig-max</I>, 
-
-<I>rtsig-nr</I>, <I>sem</I>, <I>sg-big-buff</I>, 
-
-<I>shmall</I>, <I>shmmax</I>, <I>shmmni</I>, <I>sysrq</I>, <I>tainted</I>, <I>threads-max</I>,
-
-<I>version</I>, and <I>zero-paged</I> (PowerPC only).
-
+This directory contains files controlling a range of kernel parameters,
+a described below.
 <DT><I>/proc/sys/kernel/acct</I>
 
 <DD>
@@ -2236,13 +2242,12 @@ determines
 how often the kernel checks the amount of free space (value is in
 seconds).
 Default values are 4, 2 and 30.
-That is, suspend accounting if &lt;= 2% of space is free; resume it
-if &gt;= 4% of space is free; consider information about amount of free space
+That is, suspend accounting if 2% or less space is free; resume it
+if 4% or more space is free; consider information about amount of free space
 valid for 30 seconds.
-<DT>
-<DD>
-<I>/proc/sys/kernel/cap-bound</I> (from Linux 2.2 to 2.6.24)
+<DT><I>/proc/sys/kernel/cap-bound</I> (from Linux 2.2 to 2.6.24)
 
+<DD>
 This file holds the value of the kernel
 <I>capability bounding set</I>
 
@@ -2278,7 +2283,7 @@ sent to the
 <B><A HREF="../man8/init.8.html">init</A></B>(8)
 
 program to handle a graceful restart.
-When the value is &gt; 0, Linux's reaction to a Vulcan
+When the value is greater than zero, Linux's reaction to a Vulcan
 Nerve Pinch (tm) will be an immediate reboot, without even
 syncing its dirty buffers.
 Note: when a program (like dosemu) has the keyboard in &quot;raw&quot;
@@ -2418,10 +2423,10 @@ it indicates that the kernel should autoreboot after this number
 of seconds.
 When you use the
 software watchdog device driver, the recommended setting is 60.
-<DT><I>/proc/sys/kernel/panic_on_oops</I>
+<DT><I>/proc/sys/kernel/panic_on_oops</I> (since Linux 2.5.68)
 
 <DD>
-This file (new in Linux 2.5) controls the kernel's behavior when an oops
+This file controls the kernel's behavior when an oops
 or BUG is encountered.
 If this file contains 0, then the system
 tries to continue operation.
@@ -2432,12 +2437,10 @@ If the
 <I>/proc/sys/kernel/panic</I>
 
 file is also non-zero then the machine will be rebooted.
-<DT><I>/proc/sys/kernel/pid_max</I>
+<DT><I>/proc/sys/kernel/pid_max ( since Linux 2.5.34)</I>
 
 <DD>
-This file
-(new in Linux 2.5)
-specifies the value at which PIDs wrap around
+This file specifies the value at which PIDs wrap around
 (i.e., the value in this file is one greater than the maximum PID).
 The default value for this file, 32768,
 results in the same range of PIDs as on earlier kernels.
@@ -2669,8 +2672,7 @@ On some systems, it is not present.
 
 <DD>
 This directory contains files for memory management tuning, buffer and
-cache
-management.
+cache management.
 <DT><I>/proc/sys/vm/drop_caches</I> (since Linux 2.6.16)
 
 <DD>
@@ -2697,8 +2699,60 @@ first.
 
 <DD>
 
-If non-zero, this disable the new 32-bit memory-mapping layout;
+If non-zero, this disables the new 32-bit memory-mapping layout;
 the kernel will use the legacy (2.4) layout for all processes.
+<DT><I>/proc/sys/vm/oom_dump_tasks</I> (since Linux 2.6.25)
+
+<DD>
+
+Enables a system-wide task dump (excluding kernel threads) to be
+produced when the kernel performs an OOM-killing.
+The dump includes the following information
+for each task (thread, process):
+thread ID, real user ID, thread group ID (process ID),
+virtual memory size, resident set size,
+the CPU that the task is scheduled on,
+oom_adj score (see the description of
+<I>/proc/[number]/oom_adj</I>),
+
+and command name.
+This is helpful to determine why the OOM-killer was invoked
+and to identify the rogue task that caused it.
+<P>
+If this contains the value zero, this information is suppressed.
+On very large systems with thousands of tasks,
+it may not be feasible to dump the memory state information for each one.
+Such systems should not be forced to incur a performance penalty in
+OOM situations when the information may not be desired.
+<P>
+If this is set to non-zero, this information is shown whenever the
+OOM-killer actually kills a memory-hogging task.
+<P>
+The default value is 0.
+<DT><I>/proc/sys/vm/oom_kill_allocating_task</I> (since Linux 2.6.24)
+
+<DD>
+
+This enables or disables killing the OOM-triggering task in
+out-of-memory situations.
+<P>
+If this is set to zero, the OOM-killer will scan through the entire
+tasklist and select a task based on heuristics to kill.
+This normally selects a rogue memory-hogging task that
+frees up a large amount of memory when killed.
+<P>
+If this is set to non-zero, the OOM-killer simply kills the task that
+triggered the out-of-memory condition.
+This avoids a possibly expensive tasklist scan.
+<P>
+If
+<I>/proc/sys/vm/panic_on_oom</I>
+
+is non-zero, it takes precedence over whatever value is used in
+<I>/proc/sys/vm/oom_kill_allocating_task</I>.
+
+<P>
+The default value is 0.
 <DT><I>/proc/sys/vm/overcommit_memory</I>
 
 <DD>
@@ -2724,7 +2778,7 @@ In mode 0, calls of
 with
 <B>MAP_NORESERVE</B>
 
-set are not checked, and the default check is very weak,
+are not checked, and the default check is very weak,
 leading to the risk of getting a process &quot;OOM-killed&quot;.
 Under Linux 2.4 any non-zero value implies mode 1.
 In mode 2 (available since Linux 2.6), the total virtual address space
@@ -2739,6 +2793,42 @@ is the size of the physical memory, and r is the contents of the file
 See the description of
 <I>/proc/sys/vm/overcommit_memory</I>.
 
+<DT><I>/proc/sys/vm/panic_on_oom</I> (since Linux 2.6.18)
+
+<DD>
+
+This enables or disables a kernel panic in
+an out-of-memory situation.
+<P>
+If this file is set to the value 0,
+the kernel's OOM-killer will kill some rogue process.
+Usually, the OOM-killer is able to kill a rogue process and the
+system will survive.
+<P>
+If this file is set to the value 1,
+then the kernel normally panics when out-of-memory happens.
+However, if a process limits allocations to certain nodes
+using memory policies
+(<B><A HREF="../man2/mbind.2.html">mbind</A></B>(2)
+
+<B>MPOL_BIND</B>)
+
+or cpusets
+(<B><A HREF="../man7/cpuset.7.html">cpuset</A></B>(7))
+
+and those nodes reach memory exhaustion status,
+one process may be killed by the OOM-killer.
+No panic occurs in this case:
+because other nodes' memory may be free,
+this means the system as a whole may not have reached
+an out-of-memory situation yet.
+<P>
+If this file is set to the value 2,
+the kernel always panics when an out-of-memory condition occurs.
+<P>
+The default value is 0.
+1 and 2 are for failover of clustering.
+Select either according to your policy of failover.
 <DT><I>/proc/sysvipc</I>
 
 <DD>
@@ -2870,7 +2960,10 @@ of thing that needs to be updated very often.
 
 <BR>
 
-<I>/usr/src/linux/Documentation/filesystems/proc.txt</I>
+The kernel source files:
+<I>Documentation/filesystems/proc.txt</I>,
+
+<I>Documentation/sysctl/vm.txt</I>
 
 <P>
 
@@ -2886,6 +2979,6 @@ of thing that needs to be updated very often.
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 02:54:46 GMT, April 20, 2020
+Time: 02:55:21 GMT, April 20, 2020
 </BODY>
 </HTML>

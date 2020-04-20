@@ -5,7 +5,7 @@ Copyright (c) 2000 Andries Brouwer &lt;aeb@cwi.nl&gt;
 <HTML><HEAD><TITLE>Man page of SIGNAL</TITLE>
 </HEAD><BODY>
 <H1>SIGNAL</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2007-06-03<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2008-07-11<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -167,7 +167,7 @@ See
 <B><A HREF="../man7/signal.7.html">signal</A></B>(7)
 
 for a list of the async-signal-safe functions that can be
-safely called inside from inside a signal handler.
+safely called from inside a signal handler.
 <P>
 
 The use of
@@ -186,48 +186,148 @@ and, when
 is defined, also
 <I>sighandler_t</I>.
 
+Without use of such a type, the declaration of
+<B>signal</B>()
+
+is the somewhat harder to read:
+
+<PRE>
+
+<B>void ( *</B><I>signal</I><B>(int </B><I>signum</I><B>, void (*</B><I>handler</I><B>)(int)) ) (int);</B>
+</PRE>
+
+
 <A NAME="lbAI">&nbsp;</A>
 <H3>Portability</H3>
 
-The original Unix
+The only portable use of
 <B>signal</B>()
 
-would reset the handler to
+is to set a signal's disposition to
+<B>SIG_DFL</B>
+
+or
+<B>SIG_IGN</B>.
+
+The semantics when using
+<B>signal</B>()
+
+to establish a signal handler vary across systems
+(and POSIX.1 explicitly permits this variation);
+<B>do not use it for this purpose.</B>
+
+<P>
+POSIX.1 solved the portability mess by specifying
+<B><A HREF="../man2/sigaction.2.html">sigaction</A></B>(2),
+
+which provides explicit control of the semantics when a
+signal handler is invoked; use that interface instead of
+<B>signal</B>().
+
+<P>
+In the original Unix systems, when a handler that was established using
+<B>signal</B>()
+
+was invoked by the delivery of a signal,
+the disposition of the signal would be reset to
 <B>SIG_DFL</B>,
 
-and System V
-(and the Linux kernel and libc4,5) does the same.
-On the other hand, BSD does not reset the handler, but blocks
-new instances of this signal from occurring during a call of the handler.
-The glibc2 library follows the BSD behavior.
+and the system did not block delivery of further instances of the signal.
+System V also provides these semantics for
+<B>signal</B>().
+
+This was bad because the signal might be delivered again
+before the handler had a chance to reestablish itself.
+Furthermore, rapid deliveries of the same signal could
+result in recursive invocations of the handler.
 <P>
+BSD improved on this situation by changing the semantics of
+signal handling
+(but, unfortunately, silently changed the semantics
+when establishing a handler with
+<B>signal</B>()).
+
+On BSD, when a signal handler is invoked,
+the signal disposition is not reset,
+and further instances of the signal are blocked from
+being delivered while the handler is executing.
+<P>
+The situation on Linux is as follows:
+<DL COMPACT>
+<DT>*<DD>
+The kernel's
+<B>signal</B>()
+
+system call provides System V semantics.
+<DT>*<DD>
+By default, in glibc 2 and later, the
+<B>signal</B>()
+
+wrapper function does not invoke the kernel system call.
+Instead, it calls
+<B><A HREF="../man2/sigaction.2.html">sigaction</A></B>(2)
+
+using flags that supply BSD semantics.
+This default behavior is provided as long as the
+<B>_BSD_SOURCE</B>
+
+feature test macro is defined.
+By default,
+<B>_BSD_SOURCE</B>
+
+is defined;
+it is also implicitly defined if one defines
+<B>_GNU_SOURCE</B>,
+
+and can of course be explicitly defined.
+<P>
+On glibc 2 and later, if the
+<B>_BSD_SOURCE</B>
+
+feature test macro is not defined, then
+<B>signal</B>()
+
+provides System V semantics.
+(The default implicit definition of
+<B>_BSD_SOURCE</B>
+
+is not provided if one invokes
+<B><A HREF="../man1/gcc.1.html">gcc</A></B>(1)
+
+in one of its standard modes
+(<I>-std=xxx</I> or <I>-ansi</I>)
+
+or defines various other feature test macros such as
+<B>_POSIX_SOURCE</B>,
+
+<B>_XOPEN_SOURCE</B>,
+
+or
+<B>_SVID_SOURCE</B>;
+
+see
+<B><A HREF="../man7/feature_test_macros.7.html">feature_test_macros</A></B>(7).)
+
+
+
+
+
+<DT>*<DD>
+The
+<B>signal</B>()
+
+function in Linux libc4 and libc5 provide System V semantics.
 If one on a libc5 system includes
 <I>&lt;<A HREF="file:///usr/include/bsd/signal.h">bsd/signal.h</A>&gt;</I>
 
 instead of
-<I>&lt;<A HREF="file:///usr/include/signal.h">signal.h</A>&gt;</I>
+<I>&lt;<A HREF="file:///usr/include/signal.h">signal.h</A>&gt;</I>,
 
 then
 <B>signal</B>()
 
-is redefined as
-<B>__bsd_signal</B>()
-
-and
-<B>signal</B>()
-
-has the BSD semantics.
-This is not recommended.
-<P>
-If one on a glibc2 system defines a feature test
-macro such as
-<B>_XOPEN_SOURCE</B>
-
-or uses a separate
-<B><A HREF="../man3/sysv_signal.3.html">sysv_signal</A></B>(3)
-
-function, one obtains classical behavior.
-This is not recommended.
+provides BSD semantics.
+</DL>
 <A NAME="lbAJ">&nbsp;</A>
 <H2>SEE ALSO</H2>
 
@@ -290,6 +390,6 @@ This is not recommended.
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 02:54:35 GMT, April 20, 2020
+Time: 02:55:10 GMT, April 20, 2020
 </BODY>
 </HTML>
