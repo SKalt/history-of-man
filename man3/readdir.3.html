@@ -5,7 +5,7 @@ Copyright (C) 1993 David Metcalfe (david@prism.demon.co.uk)
 <HTML><HEAD><TITLE>Man page of READDIR</TITLE>
 </HEAD><BODY>
 <H1>READDIR</H1>
-Section: Linux Programmer's Manual (3)<BR>Updated: 1996-04-22<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2007-07-30<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -71,15 +71,14 @@ POSIX.1-2001 also documents the field
 <I>ino_t d_ino</I>
 
 as an XSI extension.
-<I>Use of other fields will harm the portability of your programs</I>.
-
+The other fields are unstandardized, and not present on all systems;
+see NOTES below for some further details.
 <P>
 
 The data returned by
 <B>readdir</B>()
 
-may be overwritten by subsequent
-calls to
+may be overwritten by subsequent calls to
 <B>readdir</B>()
 
 for the same directory stream.
@@ -112,6 +111,88 @@ Invalid directory stream descriptor <I>dir</I>.
 
 SVr4, 4.3BSD, POSIX.1-2001
 <A NAME="lbAH">&nbsp;</A>
+<H2>NOTES</H2>
+
+Only the fields
+<I>d_name</I>
+
+and
+<I>d_ino</I>
+
+are specified in POSIX.1-2001.
+The remaining fields are available on many, but not all systems.
+Under glibc,
+programs can check for the availability of the fields not defined
+in POSIX.1 by testing whether the macros
+<B>_DIRENT_HAVE_D_NAMLEN</B>,
+
+<B>_DIRENT_HAVE_D_RECLEN</B>,
+
+<B>_DIRENT_HAVE_D_OFF</B>,
+
+or
+<B>_DIRENT_HAVE_D_TYPE</B>
+
+are defined.
+<P>
+Other than Linux, the
+<I>d_type</I>
+
+field is available mainly only on BSD systems.
+This field makes it possible to avoid the expense of calling
+<B>stat</B>()
+
+if further
+actions depend on the type of the file.
+If the
+<B>_BSD_SOURCE</B>
+
+feature test macro is defined,
+then glibc defines the following macro constants
+for the value returned in
+<I>d_type</I>:
+
+<DL COMPACT>
+<DT><B>DT_UNKNOWN</B>
+
+<DD>
+The file type is unknown.
+
+
+<DT><B>DT_REG</B>
+
+<DD>
+This is a regular file.
+<DT><B>DT_DIR</B>
+
+<DD>
+This is a directory.
+<DT><B>DT_FIFO</B>
+
+<DD>
+This is a named pipe, or FIFO.
+<DT><B>DT_SOCK</B>
+
+<DD>
+This is a Unix domain socket.
+<DT><B>DT_CHR</B>
+
+<DD>
+This is a character device.
+<DT><B>DT_BLK</B>
+
+<DD>
+This is a block device.
+</DL>
+<P>
+
+If the file type could not be determined, the value
+<B>DT_UNKNOWN</B>
+
+is returned in
+<I>d_type</I>.
+
+<A NAME="lbAI">&nbsp;</A>
 <H2>SEE ALSO</H2>
 
 <B><A HREF="../man2/read.2.html">read</A></B>(2),
@@ -130,7 +211,9 @@ SVr4, 4.3BSD, POSIX.1-2001
 
 <B><A HREF="../man3/seekdir.3.html">seekdir</A></B>(3),
 
-<B><A HREF="../man3/telldir.3.html">telldir</A></B>(3)
+<B><A HREF="../man3/telldir.3.html">telldir</A></B>(3),
+
+<B><A HREF="../man7/feature_test_macros.7.html">feature_test_macros</A></B>(7)
 
 <P>
 
@@ -143,12 +226,13 @@ SVr4, 4.3BSD, POSIX.1-2001
 <DT><A HREF="#lbAE">RETURN VALUE</A><DD>
 <DT><A HREF="#lbAF">ERRORS</A><DD>
 <DT><A HREF="#lbAG">CONFORMING TO</A><DD>
-<DT><A HREF="#lbAH">SEE ALSO</A><DD>
+<DT><A HREF="#lbAH">NOTES</A><DD>
+<DT><A HREF="#lbAI">SEE ALSO</A><DD>
 </DL>
 <HR>
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 02:44:28 GMT, April 20, 2020
+Time: 02:45:02 GMT, April 20, 2020
 </BODY>
 </HTML>

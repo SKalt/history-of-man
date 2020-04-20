@@ -1,11 +1,719 @@
 <!--
 -->
-
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
-<HTML><HEAD><TITLE>Invalid Man Page</TITLE></HEAD>
-<BODY>
-<H1>Invalid Man Page</H1>
-The requested file /local/external/man-pages/man2/oldstat.2 is not a valid (unformatted) man page.
-If the file is a formatted man page, you could try to load the
-<A HREF="file:///local/external/man-pages/man2/oldstat.2">plain file</A>.
-</BODY></HTML>
+<HTML><HEAD><TITLE>Man page of STAT</TITLE>
+</HEAD><BODY>
+<H1>STAT</H1>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2007-07-26<BR><A HREF="#index">Index</A>
+<A HREF="../index.html">Return to Main Contents</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>NAME</H2>
+
+stat, fstat, lstat - get file status
+<A NAME="lbAC">&nbsp;</A>
+<H2>SYNOPSIS</H2>
+
+<B>#include &lt;<A HREF="file:///usr/include/sys/types.h">sys/types.h</A>&gt;</B>
+
+<BR>
+
+<B>#include &lt;<A HREF="file:///usr/include/sys/stat.h">sys/stat.h</A>&gt;</B>
+
+<BR>
+
+<B>#include &lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;</B>
+
+<P>
+<B>int stat(const char *</B><I>path</I><B>, struct stat *</B><I>buf</I><B>);</B>
+
+<BR>
+
+<B>int fstat(int </B><I>filedes</I><B>, struct stat *</B><I>buf</I><B>);</B>
+
+<BR>
+
+<B>int lstat(const char *</B><I>path</I><B>, struct stat *</B><I>buf</I><B>);</B>
+
+<P>
+
+Feature Test Macro Requirements for glibc (see
+<B><A HREF="../man7/feature_test_macros.7.html">feature_test_macros</A></B>(7)):
+
+
+<P>
+<B>lstat</B>():
+
+_BSD_SOURCE || _XOPEN_SOURCE&nbsp;&gt;=&nbsp;500
+<A NAME="lbAD">&nbsp;</A>
+<H2>DESCRIPTION</H2>
+
+<P>
+
+These functions return information about a file.
+No permissions are required on the file itself, but --- in the case of
+<B>stat</B>()
+
+and
+<B>lstat</B>()
+
+---
+execute (search) permission is required on all of the directories in
+<I>path</I>
+
+that lead to the file.
+<P>
+
+<B>stat</B>()
+
+stats the file pointed to by
+<I>path</I>
+
+and fills in
+<I>buf</I>.
+
+<P>
+<B>lstat</B>()
+
+is identical to
+<B>stat</B>(),
+
+except that if
+<I>path</I>
+
+is a symbolic link, then the link itself is stat-ed,
+not the file that it refers to.
+<P>
+<B>fstat</B>()
+
+is identical to
+<B>stat</B>(),
+
+except that the file to be stat-ed is specified by the file descriptor
+<I>filedes</I>.
+
+<P>
+
+All of these system calls return a
+<I>stat</I>
+
+structure, which contains the following fields:
+<P>
+
+<DL COMPACT><DT><DD>
+<PRE>
+struct stat {
+    dev_t     st_dev;     /* ID of device containing file */
+    ino_t     st_ino;     /* inode number */
+    mode_t    st_mode;    /* protection */
+    nlink_t   st_nlink;   /* number of hard links */
+    uid_t     st_uid;     /* user ID of owner */
+    gid_t     st_gid;     /* group ID of owner */
+    dev_t     st_rdev;    /* device ID (if special file) */
+    off_t     st_size;    /* total size, in bytes */
+    blksize_t st_blksize; /* blocksize for filesystem I/O */
+    blkcnt_t  st_blocks;  /* number of blocks allocated */
+    time_t    st_atime;   /* time of last access */
+    time_t    st_mtime;   /* time of last modification */
+    time_t    st_ctime;   /* time of last status change */
+};
+</PRE>
+
+</DL>
+
+<P>
+
+The
+<I>st_dev</I>
+
+field describes the device on which this file resides.
+<P>
+The
+<I>st_rdev</I>
+
+field describes the device that this file (inode) represents.
+<P>
+The
+<I>st_size</I>
+
+field gives the size of the file (if it is a regular
+file or a symbolic link) in bytes.
+The size of a symlink is the length of the pathname
+it contains, without a trailing null byte.
+<P>
+The
+<I>st_blocks</I>
+
+field indicates the number of blocks allocated to the file, 512-byte units.
+(This may be smaller than
+<I>st_size</I>/512
+
+when the file has holes.)
+<P>
+The
+<I>st_blksize</I>
+
+field gives the &quot;preferred&quot; blocksize for efficient file system I/O.
+(Writing to a file in smaller chunks may cause
+an inefficient read-modify-rewrite.)
+<P>
+
+Not all of the Linux filesystems implement all of the time fields.
+Some file system types allow mounting in such a way that file
+accesses do not cause an update of the
+<I>st_atime</I>
+
+field.
+(See `noatime' in
+<B><A HREF="../man8/mount.8.html">mount</A></B>(8).)
+
+<P>
+The field
+<I>st_atime</I>
+
+is changed by file accesses, for example, by
+<B><A HREF="../man2/execve.2.html">execve</A></B>(2),
+
+<B><A HREF="../man2/mknod.2.html">mknod</A></B>(2),
+
+<B><A HREF="../man2/pipe.2.html">pipe</A></B>(2),
+
+<B><A HREF="../man2/utime.2.html">utime</A></B>(2)
+
+and
+<B><A HREF="../man2/read.2.html">read</A></B>(2)
+
+(of more than zero bytes).
+Other routines, like
+<B><A HREF="../man2/mmap.2.html">mmap</A></B>(2),
+
+may or may not update
+<I>st_atime</I>.
+
+<P>
+The field
+<I>st_mtime</I>
+
+is changed by file modifications, for example, by
+<B><A HREF="../man2/mknod.2.html">mknod</A></B>(2),
+
+<B><A HREF="../man2/truncate.2.html">truncate</A></B>(2),
+
+<B><A HREF="../man2/utime.2.html">utime</A></B>(2)
+
+and
+<B><A HREF="../man2/write.2.html">write</A></B>(2)
+
+(of more than zero bytes).
+Moreover,
+<I>st_mtime</I>
+
+of a directory is changed by the creation or deletion of files
+in that directory.
+The
+<I>st_mtime</I>
+
+field is
+<I>not</I>
+
+changed for changes in owner, group, hard link count, or mode.
+<P>
+The field
+<I>st_ctime</I>
+
+is changed by writing or by setting inode information
+(i.e., owner, group, link count, mode, etc.).
+<P>
+
+The following POSIX macros are defined to check the file type using the
+<I>st_mode</I>
+
+field:
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT><B>S_ISREG</B>(m)
+
+<DD>
+is it a regular file?
+<DT><B>S_ISDIR</B>(m)
+
+<DD>
+directory?
+<DT><B>S_ISCHR</B>(m)
+
+<DD>
+character device?
+<DT><B>S_ISBLK</B>(m)
+
+<DD>
+block device?
+<DT><B>S_ISFIFO</B>(m)
+
+<DD>
+FIFO (named pipe)?
+<DT><B>S_ISLNK</B>(m)
+
+<DD>
+symbolic link? (Not in POSIX.1-1996.)
+<DT><B>S_ISSOCK</B>(m)
+
+<DD>
+socket? (Not in POSIX.1-1996.)
+</DL>
+</DL>
+
+<P>
+
+The following flags are defined for the
+<I>st_mode</I>
+
+field:
+<DL COMPACT><DT><DD>
+<TABLE>
+<TR VALIGN=top><TD><B>S_IFMT</B></TD><TD>0170000</TD><TD>bit mask for the file type bit fields<BR></TD></TR>
+<TR VALIGN=top><TD><B>S_IFSOCK</B></TD><TD>0140000</TD><TD>socket<BR></TD></TR>
+<TR VALIGN=top><TD><B>S_IFLNK</B></TD><TD>0120000</TD><TD>symbolic link<BR></TD></TR>
+<TR VALIGN=top><TD><B>S_IFREG</B></TD><TD>0100000</TD><TD>regular file<BR></TD></TR>
+<TR VALIGN=top><TD><B>S_IFBLK</B></TD><TD>0060000</TD><TD>block device<BR></TD></TR>
+<TR VALIGN=top><TD><B>S_IFDIR</B></TD><TD>0040000</TD><TD>directory<BR></TD></TR>
+<TR VALIGN=top><TD><B>S_IFCHR</B></TD><TD>0020000</TD><TD>character device<BR></TD></TR>
+<TR VALIGN=top><TD><B>S_IFIFO</B></TD><TD>0010000</TD><TD>FIFO<BR></TD></TR>
+<TR VALIGN=top><TD><B>S_ISUID</B></TD><TD>0004000</TD><TD>set UID bit<BR></TD></TR>
+<TR VALIGN=top><TD><B>S_ISGID</B></TD><TD>0002000</TD><TD>set-group-ID bit (see below)<BR></TD></TR>
+<TR VALIGN=top><TD><B>S_ISVTX</B></TD><TD>0001000</TD><TD>sticky bit (see below)<BR></TD></TR>
+<TR VALIGN=top><TD><B>S_IRWXU</B></TD><TD>00700</TD><TD>mask for file owner permissions<BR></TD></TR>
+<TR VALIGN=top><TD><B>S_IRUSR</B></TD><TD>00400</TD><TD>owner has read permission<BR></TD></TR>
+<TR VALIGN=top><TD><B>S_IWUSR</B></TD><TD>00200</TD><TD>owner has write permission<BR></TD></TR>
+<TR VALIGN=top><TD><B>S_IXUSR</B></TD><TD>00100</TD><TD>owner has execute permission<BR></TD></TR>
+<TR VALIGN=top><TD><B>S_IRWXG</B></TD><TD>00070</TD><TD>mask for group permissions<BR></TD></TR>
+<TR VALIGN=top><TD><B>S_IRGRP</B></TD><TD>00040</TD><TD>group has read permission<BR></TD></TR>
+<TR VALIGN=top><TD><B>S_IWGRP</B></TD><TD>00020</TD><TD>group has write permission<BR></TD></TR>
+<TR VALIGN=top><TD><B>S_IXGRP</B></TD><TD>00010</TD><TD>group has execute permission<BR></TD></TR>
+<TR VALIGN=top><TD><B>S_IRWXO</B></TD><TD>00007</TD><TD>mask for permissions for others (not in group)<BR></TD></TR>
+<TR VALIGN=top><TD><B>S_IROTH</B></TD><TD>00004</TD><TD>others have read permission<BR></TD></TR>
+<TR VALIGN=top><TD><B>S_IWOTH</B></TD><TD>00002</TD><TD>others have write permission<BR></TD></TR>
+<TR VALIGN=top><TD><B>S_IXOTH</B></TD><TD>00001</TD><TD>others have execute permission<BR></TD></TR>
+</TABLE>
+
+</DL>
+
+<P>
+
+The set-group-ID bit
+(<B>S_ISGID</B>)
+
+has several special uses.
+For a directory it indicates that BSD semantics is to be used
+for that directory: files created there inherit their group ID from
+the directory, not from the effective group ID of the creating process,
+and directories created there will also get the
+<B>S_ISGID</B>
+
+bit set.
+For a file that does not have the group execution bit
+(<B>S_IXGRP</B>)
+
+set,
+the set-group-ID bit indicates mandatory file/record locking.
+<P>
+
+The `sticky' bit
+(<B>S_ISVTX</B>)
+
+on a directory means that a file
+in that directory can be renamed or deleted only by the owner
+of the file, by the owner of the directory, and by a privileged
+process.
+<A NAME="lbAE">&nbsp;</A>
+<H2>RETURN VALUE</H2>
+
+On success, zero is returned.
+On error, -1 is returned, and
+<I>errno</I>
+
+is set appropriately.
+<A NAME="lbAF">&nbsp;</A>
+<H2>ERRORS</H2>
+
+<DL COMPACT>
+<DT><B>EACCES</B>
+
+<DD>
+Search permission is denied for one of the directories
+in the path prefix of
+<I>path</I>.
+
+(See also
+<B><A HREF="../man7/path_resolution.7.html">path_resolution</A></B>(7).)
+
+<DT><B>EBADF</B>
+
+<DD>
+<I>filedes</I>
+
+is bad.
+<DT><B>EFAULT</B>
+
+<DD>
+Bad address.
+<DT><B>ELOOP</B>
+
+<DD>
+Too many symbolic links encountered while traversing the path.
+<DT><B>ENAMETOOLONG</B>
+
+<DD>
+File name too long.
+<DT><B>ENOENT</B>
+
+<DD>
+A component of the path
+<I>path</I>
+
+does not exist, or the path is an empty string.
+<DT><B>ENOMEM</B>
+
+<DD>
+Out of memory (i.e., kernel memory).
+<DT><B>ENOTDIR</B>
+
+<DD>
+A component of the path is not a directory.
+</DL>
+<A NAME="lbAG">&nbsp;</A>
+<H2>CONFORMING TO</H2>
+
+These system calls conform to SVr4, 4.3BSD, POSIX.1-2001.
+
+
+
+
+
+
+
+
+<P>
+Use of the
+<I>st_blocks</I>
+
+and
+<I>st_blksize</I>
+
+fields may be less portable.
+(They were introduced in BSD.
+The interpretation differs between systems,
+and possibly on a single system when NFS mounts are involved.)
+<P>
+
+POSIX does not describe the
+<B>S_IFMT</B>,
+
+<B>S_IFSOCK</B>,
+
+<B>S_IFLNK</B>,
+
+<B>S_IFREG</B>,
+
+<B>S_IFBLK</B>,
+
+<B>S_IFDIR</B>,
+
+<B>S_IFCHR</B>,
+
+<B>S_IFIFO</B>,
+
+<B>S_ISVTX</B>
+
+bits, but instead demands the use of
+the macros
+<B>S_ISDIR</B>(),
+
+etc.
+The
+<B>S_ISLNK</B>()
+
+and
+<B>S_ISSOCK</B>()
+
+macros are not in
+POSIX.1-1996, but both are present in POSIX.1-2001;
+the former is from SVID 4, the latter from SUSv2.
+<P>
+
+Unix V7 (and later systems) had
+<B>S_IREAD</B>,
+
+<B>S_IWRITE</B>,
+
+<B>S_IEXEC</B>,
+
+where POSIX
+prescribes the synonyms
+<B>S_IRUSR</B>,
+
+<B>S_IWUSR</B>,
+
+<B>S_IXUSR</B>.
+
+<A NAME="lbAH">&nbsp;</A>
+<H3>Other Systems</H3>
+
+Values that have been (or are) in use on various systems:
+<TABLE>
+<TR VALIGN=top><TD>hex</TD><TD>name</TD><TD>ls</TD><TD>octal</TD><TD>description<BR></TD></TR>
+<TR VALIGN=top><TD>f000</TD><TD>S_IFMT</TD><TD></TD><TD>170000</TD><TD>mask for file type<BR></TD></TR>
+<TR VALIGN=top><TD>0000</TD><TD></TD><TD></TD><TD>000000</TD><TD>SCO out-of-service inode, BSD unknown type<BR></TD></TR>
+<TR VALIGN=top><TD></TD><TD></TD><TD></TD><TD></TD><TD>SVID-v2 and XPG2 have both 0 and 0100000<BR></TD></TR>
+<TR VALIGN=top><TD></TD><TD></TD><TD></TD><TD></TD><TD>for ordinary file<BR></TD></TR>
+<TR VALIGN=top><TD>1000</TD><TD>S_IFIFO</TD><TD>p|</TD><TD>010000</TD><TD>FIFO (named pipe)<BR></TD></TR>
+<TR VALIGN=top><TD>2000</TD><TD>S_IFCHR</TD><TD>c</TD><TD>020000</TD><TD>character special (V7)<BR></TD></TR>
+<TR VALIGN=top><TD>3000</TD><TD>S_IFMPC</TD><TD></TD><TD>030000</TD><TD>multiplexed character special (V7)<BR></TD></TR>
+<TR VALIGN=top><TD>4000</TD><TD>S_IFDIR</TD><TD>d/</TD><TD>040000</TD><TD>directory (V7)<BR></TD></TR>
+<TR VALIGN=top><TD>5000</TD><TD>S_IFNAM</TD><TD></TD><TD>050000</TD><TD>XENIX named special file<BR></TD></TR>
+<TR VALIGN=top><TD></TD><TD></TD><TD></TD><TD></TD><TD>with two subtypes, distinguished by <I>st_rdev</I> values 1, 2<BR></TD></TR>
+<TR VALIGN=top><TD>0001</TD><TD>S_INSEM</TD><TD>s</TD><TD>000001</TD><TD>XENIX semaphore subtype of IFNAM<BR></TD></TR>
+<TR VALIGN=top><TD>0002</TD><TD>S_INSHD</TD><TD>m</TD><TD>000002</TD><TD>XENIX shared data subtype of IFNAM<BR></TD></TR>
+<TR VALIGN=top><TD>6000</TD><TD>S_IFBLK</TD><TD>b</TD><TD>060000</TD><TD>block special (V7)<BR></TD></TR>
+<TR VALIGN=top><TD>7000</TD><TD>S_IFMPB</TD><TD></TD><TD>070000</TD><TD>multiplexed block special (V7)<BR></TD></TR>
+<TR VALIGN=top><TD>8000</TD><TD>S_IFREG</TD><TD>-</TD><TD>100000</TD><TD>regular (V7)<BR></TD></TR>
+<TR VALIGN=top><TD>9000</TD><TD>S_IFCMP</TD><TD></TD><TD>110000</TD><TD>VxFS compressed<BR></TD></TR>
+<TR VALIGN=top><TD>9000</TD><TD>S_IFNWK</TD><TD>n</TD><TD>110000</TD><TD>network special (HP-UX)<BR></TD></TR>
+<TR VALIGN=top><TD>a000</TD><TD>S_IFLNK</TD><TD>l@</TD><TD>120000</TD><TD>symbolic link (BSD)<BR></TD></TR>
+<TR VALIGN=top><TD>b000</TD><TD>S_IFSHAD</TD><TD></TD><TD>130000</TD><TD>Solaris shadow inode for ACL (not seen by userspace)<BR></TD></TR>
+<TR VALIGN=top><TD>c000</TD><TD>S_IFSOCK</TD><TD>s=</TD><TD>140000</TD><TD>socket (BSD; also &quot;S_IFSOC&quot; on VxFS)<BR></TD></TR>
+<TR VALIGN=top><TD>d000</TD><TD>S_IFDOOR</TD><TD>D&gt;</TD><TD>150000</TD><TD>Solaris door<BR></TD></TR>
+<TR VALIGN=top><TD>e000</TD><TD>S_IFWHT</TD><TD>w%</TD><TD>160000</TD><TD>BSD whiteout (not used for inode)<BR></TD></TR>
+<TR VALIGN=top><TD>0200</TD><TD>S_ISVTX</TD><TD></TD><TD>001000</TD><TD>`sticky bit': save swapped text even after use (V7)<BR></TD></TR>
+<TR VALIGN=top><TD></TD><TD></TD><TD></TD><TD></TD><TD>reserved (SVID-v2)<BR></TD></TR>
+<TR VALIGN=top><TD></TD><TD></TD><TD></TD><TD></TD><TD>On non-directories: don't cache this file (SunOS)<BR></TD></TR>
+<TR VALIGN=top><TD></TD><TD></TD><TD></TD><TD></TD><TD>On directories: restricted deletion flag (SVID-v4.2)<BR></TD></TR>
+<TR VALIGN=top><TD>0400</TD><TD>S_ISGID</TD><TD></TD><TD>002000</TD><TD>set-group-ID on execution (V7)<BR></TD></TR>
+<TR VALIGN=top><TD></TD><TD></TD><TD></TD><TD></TD><TD>for directories: use BSD semantics for<BR></TD></TR>
+<TR VALIGN=top><TD></TD><TD></TD><TD></TD><TD></TD><TD>propagation of GID<BR></TD></TR>
+<TR VALIGN=top><TD>0400</TD><TD>S_ENFMT</TD><TD></TD><TD>002000</TD><TD>SysV file locking enforcement (shared with S_ISGID)<BR></TD></TR>
+<TR VALIGN=top><TD>0800</TD><TD>S_ISUID</TD><TD></TD><TD>004000</TD><TD>set-user-ID on execution (V7)<BR></TD></TR>
+<TR VALIGN=top><TD>0800</TD><TD>S_CDF</TD><TD></TD><TD>004000</TD><TD>directory is a context dependent file (HP-UX)<BR></TD></TR>
+</TABLE>
+
+<P>
+A sticky command appeared in Version 32V AT&amp;T UNIX.
+<A NAME="lbAI">&nbsp;</A>
+<H2>NOTES</H2>
+
+<A NAME="lbAJ">&nbsp;</A>
+<H3>Linux Notes</H3>
+
+Since kernel 2.5.48, the
+<I>stat</I>
+
+structure supports nanosecond resolution for the three
+file timestamp fields.
+Glibc exposes the nanosecond component of each field using names either
+of the form
+<I>st_atim.tv_nsec</I>,
+
+if the
+<B>_BSD_SOURCE</B>
+
+or
+<B>_SVID_SOURCE</B>
+
+feature test macro is defined,
+or of the form
+<I>st_atimensec</I>,
+
+if neither of these macros is defined.
+On file systems that do not support sub-second timestamps,
+these nanosecond fields are returned with the value 0.
+<P>
+For most files under the
+<I>/proc</I>
+
+directory,
+<B>stat</B>()
+
+does not return the file size in the
+<I>st_size</I>
+
+field; instead the field is returned with the value 0.
+<A NAME="lbAK">&nbsp;</A>
+<H3>Underlying kernel interface</H3>
+
+Over time, increases in the size of the
+<I>stat</I>
+
+structure have led to three successive versions of
+<B>stat</B>():
+
+<I>sys_stat</I>()
+
+(slot
+<I>__NR_oldstat</I>),
+
+<I>sys_newstat</I>()
+
+(slot
+<I>__NR_stat</I>),
+
+and
+<I>sys_stat64()</I>
+
+(new in kernel 2.4; slot
+<I>__NR_stat64</I>).
+
+The glibc
+<B>stat</B>()
+
+wrapper function hides these details from applications,
+invoking the most recent version of the system call provided by the kernel,
+and repacking the returned information if required for old binaries.
+Similar remarks apply for
+<B><A HREF="../man2/fstat.2.html">fstat</A></B>(2)
+
+and
+<B><A HREF="../man2/lstat.2.html">lstat</A></B>(2).
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<A NAME="lbAL">&nbsp;</A>
+<H2>EXAMPLE</H2>
+
+The following program calls
+<B><A HREF="../man2/stat.2.html">stat</A></B>(2)
+
+and displays selected fields in the returned
+<I>stat</I>
+
+structure.
+<PRE>
+
+#include &lt;<A HREF="file:///usr/include/sys/types.h">sys/types.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/sys/stat.h">sys/stat.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/time.h">time.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/stdlib.h">stdlib.h</A>&gt;
+
+int
+main(int argc, char *argv[])
+{
+    struct stat sb;
+
+    if (argc != 2) {
+        fprintf(stderr, &quot;Usage: %s &lt;pathname&gt;\n&quot;, argv[0]);
+        exit(EXIT_FAILURE);
+    }
+
+    if (stat(argv[1], &amp;sb) == -1) {
+        perror(&quot;stat&quot;);
+        exit(EXIT_SUCCESS);
+    }
+
+    printf(&quot;File type:                &quot;);
+    switch (sb.st_mode &amp; S_IFMT) {
+    case S_IFBLK:  printf(&quot;block device\n&quot;);            break;
+    case S_IFCHR:  printf(&quot;character device\n&quot;);        break;
+    case S_IFDIR:  printf(&quot;directory\n&quot;);               break;
+    case S_IFIFO:  printf(&quot;FIFO/pipe\n&quot;);               break;
+    case S_IFLNK:  printf(&quot;symlink\n&quot;);                 break;
+    case S_IFREG:  printf(&quot;regular file\n&quot;);            break;
+    case S_IFSOCK: printf(&quot;socket\n&quot;);                  break;
+    default:       printf(&quot;unknown?\n&quot;);                break;
+    }
+
+    printf(&quot;I-node number:            %ld\n&quot;, (long) sb.st_ino);
+
+    printf(&quot;Mode:                     %lo (octal)\n&quot;,
+            (unsigned long) sb.st_mode);
+
+    printf(&quot;Link count:               %ld\n&quot;, (long) sb.st_nlink);
+    printf(&quot;Ownership:                UID=%ld   GID=%ld\n&quot;,
+            (long) sb.st_uid, (long) sb.st_gid);
+
+    printf(&quot;Preferred I/O block size: %ld bytes\n&quot;,
+            (long) sb.st_blksize);
+    printf(&quot;File size:                %lld bytes\n&quot;,
+            (long long) sb.st_size);
+    printf(&quot;Blocks allocated:         %lld\n&quot;,
+            (long long) sb.st_blocks);
+
+    printf(&quot;Last inode change:        %s&quot;, ctime(&amp;sb.st_ctime));
+    printf(&quot;Last file access:         %s&quot;, ctime(&amp;sb.st_atime));
+    printf(&quot;Last file modification:   %s&quot;, ctime(&amp;sb.st_mtime));
+
+    exit(EXIT_SUCCESS);
+}
+</PRE>
+
+<A NAME="lbAM">&nbsp;</A>
+<H2>SEE ALSO</H2>
+
+<B><A HREF="../man2/access.2.html">access</A></B>(2),
+
+<B><A HREF="../man2/chmod.2.html">chmod</A></B>(2),
+
+<B><A HREF="../man2/chown.2.html">chown</A></B>(2),
+
+<B><A HREF="../man2/fstatat.2.html">fstatat</A></B>(2),
+
+<B><A HREF="../man2/readlink.2.html">readlink</A></B>(2),
+
+<B><A HREF="../man2/utime.2.html">utime</A></B>(2),
+
+<B><A HREF="../man7/capabilities.7.html">capabilities</A></B>(7)
+
+
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">NAME</A><DD>
+<DT><A HREF="#lbAC">SYNOPSIS</A><DD>
+<DT><A HREF="#lbAD">DESCRIPTION</A><DD>
+<DT><A HREF="#lbAE">RETURN VALUE</A><DD>
+<DT><A HREF="#lbAF">ERRORS</A><DD>
+<DT><A HREF="#lbAG">CONFORMING TO</A><DD>
+<DL>
+<DT><A HREF="#lbAH">Other Systems</A><DD>
+</DL>
+<DT><A HREF="#lbAI">NOTES</A><DD>
+<DL>
+<DT><A HREF="#lbAJ">Linux Notes</A><DD>
+<DT><A HREF="#lbAK">Underlying kernel interface</A><DD>
+</DL>
+<DT><A HREF="#lbAL">EXAMPLE</A><DD>
+<DT><A HREF="#lbAM">SEE ALSO</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
+using the manual pages.<BR>
+Time: 02:44:50 GMT, April 20, 2020
+</BODY>
+</HTML>

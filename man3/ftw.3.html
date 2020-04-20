@@ -5,7 +5,7 @@ Copyright (c) 1993 Michael Haardt (michael@moria.de)
 <HTML><HEAD><TITLE>Man page of FTW</TITLE>
 </HEAD><BODY>
 <H1>FTW</H1>
-Section: Linux Programmer's Manual (3)<BR>Updated: 2006-05-24<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2007-07-26<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -440,17 +440,18 @@ argument when calling
 #include &lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/stdlib.h">stdlib.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/string.h">string.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/stdint.h">stdint.h</A>&gt;
 
 static int
 display_info(const char *fpath, const struct stat *sb,
              int tflag, struct FTW *ftwbuf)
 {
-    printf(&quot;%-3s %2d %7lld   %-40s %d %s\n&quot;,
+    printf(&quot;%-3s %2d %7jd   %-40s %d %s\n&quot;,
         (tflag == FTW_D) ?   &quot;d&quot;   : (tflag == FTW_DNR) ? &quot;dnr&quot; :
         (tflag == FTW_DP) ?  &quot;dp&quot;  : (tflag == FTW_F) ?   &quot;f&quot; :
-        (tflag == FTW_DP) ?  &quot;dp&quot;  : (tflag == FTW_SL) ?  &quot;sl&quot; :
+        (tflag == FTW_NS) ?  &quot;ns&quot;  : (tflag == FTW_SL) ?  &quot;sl&quot; :
         (tflag == FTW_SLN) ? &quot;sln&quot; : &quot;???&quot;,
-        ftwbuf-&gt;level, (long long) sb-&gt;st_size,
+        ftwbuf-&gt;level, (intmax_t) sb-&gt;st_size,
         fpath, ftwbuf-&gt;base, fpath + ftwbuf-&gt;base);
     return 0;           /* To tell nftw() to continue */
 }
@@ -465,7 +466,10 @@ main(int argc, char *argv[])
     if (argc &gt; 2 &amp;&amp; strchr(argv[2], 'p') != NULL)
         flags |= FTW_PHYS;
 
-    nftw((argc &lt; 2) ? &quot;.&quot; : argv[1], display_info, 20, flags);
+    if (nftw((argc &lt; 2) ? &quot;.&quot; : argv[1], display_info, 20, flags) == -1) {
+        perror(&quot;nftw&quot;);
+        exit(EXIT_FAILURE);
+    }
     exit(EXIT_SUCCESS);
 }
 </PRE>
@@ -502,6 +506,6 @@ main(int argc, char *argv[])
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 02:44:25 GMT, April 20, 2020
+Time: 02:44:59 GMT, April 20, 2020
 </BODY>
 </HTML>

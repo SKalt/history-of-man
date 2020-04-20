@@ -101,7 +101,7 @@ require all metadata to be synchronized with the disk.
 <A NAME="lbAE">&nbsp;</A>
 <H2>RETURN VALUE</H2>
 
-On success, zero is returned.
+On success, these system calls return zero.
 On error, -1 is returned, and
 <I>errno</I>
 
@@ -132,8 +132,45 @@ is bound to a special file which does not support synchronization.
 
 4.3BSD, POSIX.1-2001
 <A NAME="lbAH">&nbsp;</A>
+<H2>AVAILABILITY</H2>
+
+On POSIX systems on which
+<B>fdatasync</B>()
+
+is available,
+<B>_POSIX_SYNCHRONIZED_IO</B>
+
+is defined in
+<I>&lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;</I>
+
+to a value greater than 0.
+(See also
+<B><A HREF="../man3/sysconf.3.html">sysconf</A></B>(3).)
+
+
+
+
+<A NAME="lbAI">&nbsp;</A>
 <H2>NOTES</H2>
 
+Applications that access databases or log files often write a tiny
+data fragment (e.g., one line in a log file) and then call
+<B><A HREF="../man2/fsync.2.html">fsync</A></B>(2)
+
+immediately in order to ensure that the written data is physically
+stored on the harddisk.
+Unfortunately,
+<B><A HREF="../man2/fsync.2.html">fsync</A></B>(2)
+
+will always initiate two write operations: one for the newly written
+data and another one in order to update the modification time stored
+in the inode.
+If the modification time is not a part of the transaction
+concept
+<B>fdatasync</B>()
+
+can be used to avoid unnecessary inode disk write operations.
+<P>
 If the underlying hard disk has write caching enabled, then
 the data may not really be on permanent storage when
 <B>fsync</B>()
@@ -165,7 +202,15 @@ An alternative might be to use the
 flag to
 <B><A HREF="../man2/open.2.html">open</A></B>(2).
 
-<A NAME="lbAI">&nbsp;</A>
+<P>
+In Linux 2.2 and earlier,
+<B>fdatasync</B>()
+
+is equivalent to
+<B><A HREF="../man2/fsync.2.html">fsync</A></B>(2),
+
+and so has no performance advantage.
+<A NAME="lbAJ">&nbsp;</A>
 <H2>SEE ALSO</H2>
 
 <B><A HREF="../man2/bdflush.2.html">bdflush</A></B>(2),
@@ -195,13 +240,14 @@ flag to
 <DT><A HREF="#lbAE">RETURN VALUE</A><DD>
 <DT><A HREF="#lbAF">ERRORS</A><DD>
 <DT><A HREF="#lbAG">CONFORMING TO</A><DD>
-<DT><A HREF="#lbAH">NOTES</A><DD>
-<DT><A HREF="#lbAI">SEE ALSO</A><DD>
+<DT><A HREF="#lbAH">AVAILABILITY</A><DD>
+<DT><A HREF="#lbAI">NOTES</A><DD>
+<DT><A HREF="#lbAJ">SEE ALSO</A><DD>
 </DL>
 <HR>
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 02:44:16 GMT, April 20, 2020
+Time: 02:44:48 GMT, April 20, 2020
 </BODY>
 </HTML>

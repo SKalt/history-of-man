@@ -4,7 +4,7 @@
 <HTML><HEAD><TITLE>Man page of MALLOC</TITLE>
 </HEAD><BODY>
 <H1>MALLOC</H1>
-Section: Linux Programmer's Manual (3)<BR>Updated: 2007-06-25<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2007-09-15<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -39,6 +39,20 @@ elements of
 
 bytes each and returns a pointer to the allocated memory.
 The memory is set to zero.
+If
+<I>nmemb</I>
+
+or
+<I>size</I>
+
+is 0, then
+<B>calloc</B>()
+
+returns either NULL,
+
+or a unique pointer value that can later be successfully passed to
+<B>free</B>().
+
 <P>
 
 <B>malloc</B>()
@@ -48,6 +62,17 @@ allocates
 
 bytes and returns a pointer to the allocated memory.
 The memory is not cleared.
+If
+<I>size</I>
+
+is 0, then
+<B>malloc</B>()
+
+returns either NULL,
+
+or a unique pointer value that can later be successfully passed to
+<B>free</B>().
+
 <P>
 
 <B>free</B>()
@@ -64,7 +89,7 @@ or
 <B>realloc</B>().
 
 Otherwise, or if
-<B>free(</B><I>ptr</I><B>)</B>
+<I>free(ptr)</I>
 
 has already been called before, undefined behavior occurs.
 If
@@ -95,7 +120,7 @@ if
 
 is equal to zero,
 the call is equivalent to
-<B>free(</B><I>ptr</I><B>)</B><I>.</I>
+<I>free(ptr)</I>.
 
 Unless
 <I>ptr</I>
@@ -109,7 +134,7 @@ or
 <B>realloc</B>().
 
 If the area pointed to was moved, a
-<B>free(</B><I>ptr</I><B>)</B>
+<I>free(ptr)</I>
 
 is done.
 <A NAME="lbAE">&nbsp;</A>
@@ -155,6 +180,38 @@ C89, C99.
 <A NAME="lbAG">&nbsp;</A>
 <H2>NOTES</H2>
 
+Normally,
+<B>malloc</B>()
+
+allocates memory from the heap, and adjusts the size of the heap
+as required, using
+<B><A HREF="../man2/sbrk.2.html">sbrk</A></B>(2).
+
+When allocating blocks of memory larger than
+<B>MMAP_THRESHOLD</B>
+
+bytes, the glibc
+<B>malloc</B>()
+
+implementation allocates the memory as a private anonymous mapping using
+<B><A HREF="../man2/mmap.2.html">mmap</A></B>(2).
+
+<B>MMAP_THRESHOLD</B>
+
+is 128 kB by default, but is adjustable using
+<B><A HREF="../man3/mallopt.3.html">mallopt</A></B>(3).
+
+
+Allocations performed using
+<B><A HREF="../man2/mmap.2.html">mmap</A></B>(2)
+
+are unaffected by the
+<B>RLIMIT_DATA</B>
+
+resource limit (see
+<B><A HREF="../man2/getrlimit.2.html">getrlimit</A></B>(2)).
+
+<P>
 The Unix98 standard requires
 <B>malloc</B>(),
 
@@ -195,9 +252,11 @@ are almost always related to heap corruption, such as overflowing
 an allocated chunk or freeing the same pointer twice.
 <P>
 
-Recent versions of Linux libc (later than 5.4.23) and GNU libc (2.x)
-include a malloc implementation which is tunable via environment
-variables.
+Recent versions of Linux libc (later than 5.4.23) and glibc (2.x)
+include a
+<B>malloc</B>()
+
+implementation which is tunable via environment variables.
 When
 <B>MALLOC_CHECK_</B>
 
@@ -262,6 +321,11 @@ and
 
 <B><A HREF="../man2/brk.2.html">brk</A></B>(2),
 
+
+<B><A HREF="../man2/mmap.2.html">mmap</A></B>(2),
+
+<B><A HREF="../man3/alloca.3.html">alloca</A></B>(3),
+
 <B><A HREF="../man3/posix_memalign.3.html">posix_memalign</A></B>(3)
 
 <P>
@@ -282,6 +346,6 @@ and
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 02:44:27 GMT, April 20, 2020
+Time: 02:45:01 GMT, April 20, 2020
 </BODY>
 </HTML>

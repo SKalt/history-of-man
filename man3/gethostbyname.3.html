@@ -12,7 +12,9 @@ Section: Linux Programmer's Manual (3)<BR>Updated: 2007-07-26<BR><A HREF="#index
 <H2>NAME</H2>
 
 gethostbyname, gethostbyaddr, sethostent, gethostent, endhostent,
-herror, hstrerror - get network host entry
+herror, hstrerror,
+gethostbyname2, gethostbyname2_r, gethostbyname_r,
+gethostent_r - get network host entry
 <A NAME="lbAC">&nbsp;</A>
 <H2>SYNOPSIS</H2>
 
@@ -45,6 +47,10 @@ herror, hstrerror - get network host entry
 <B>        struct hostent *</B><I>ret</I><B>, char *</B><I>buf</I><B>, size_t </B><I>buflen</I><B>,</B>
 <B>        struct hostent **</B><I>result</I><B>, int *</B><I>h_errnop</I><B>);</B>
 
+<B>int gethostbyaddr_r(const void *</B><I>addr</I><B>, socklen_t </B><I>len</I><B>, int </B><I>type</I><B>,</B>
+<B>        struct hostent *</B><I>ret</I><B>, char *</B><I>buf</I><B>, size_t </B><I>buflen</I><B>,</B>
+<B>        struct hostent **</B><I>result</I><B>, int *</B><I>h_errnop</I><B>);</B>
+
 <B>int gethostbyname_r(const char *</B><I>name</I><B>,</B>
 <B>        struct hostent *</B><I>ret</I><B>, char *</B><I>buf</I><B>, size_t </B><I>buflen</I><B>,</B>
 <B>        struct hostent **</B><I>result</I><B>, int *</B><I>h_errnop</I><B>);</B>
@@ -65,6 +71,8 @@ Feature Test Macro Requirements for glibc (see
 <B>gethostbyname2</B>(),
 
 <B>gethostent_r</B>(),
+
+<B>gethostbyaddr_r</B>(),
 
 <B>gethostbyname_r</B>(),
 
@@ -431,33 +439,48 @@ but permits to specify the address family to which the address must belong.
 <P>
 
 Glibc2 also has reentrant versions
+<B>gethostent_r</B>(),
+
+<B>gethostbyaddr_r</B>(),
+
 <B>gethostbyname_r</B>()
 
 and
 <B>gethostbyname2_r</B>().
 
-These return 0 on success and non-zero on error.
-The result of the call
-is now stored in the struct with address
-<I>ret</I>.
+The caller supplies a
+<I>hostent</I>
 
-After the call,
-*<I>result</I>
+structure
+<I>ret</I>
 
-will be NULL on error or point to the result on success.
-Auxiliary data is stored in the buffer
+which will be filled in on success, and a temporary work buffer
 <I>buf</I>
 
-of length
+of size
 <I>buflen</I>.
 
-(If the buffer is too small, these functions will return
-<B>ERANGE</B>.)
+After the call,
+<I>result</I>
 
-No global variable
+will point to the result on success.  In case of an error
+or if no entry is found
+<I>result</I>
+
+will be NULL.
+The functions return 0 on success and a non-zero error number on failure.
+In addition to the errors returned by the non-reentrant
+versions of these functions, if
+<I>buf</I>
+
+is too small, the functions will return
+<B>ERANGE</B>,
+
+and the call should be retried with a larger buffer.
+The global variable
 <I>h_errno</I>
 
-is modified, but the address of a variable in which to store error numbers
+is not modified, but the address of a variable in which to store error numbers
 is passed in
 <I>h_errnop</I>.
 
@@ -510,6 +533,6 @@ is passed in
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 02:44:26 GMT, April 20, 2020
+Time: 02:44:59 GMT, April 20, 2020
 </BODY>
 </HTML>

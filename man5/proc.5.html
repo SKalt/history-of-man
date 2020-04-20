@@ -5,7 +5,7 @@ Copyright (C) 1994, 1995 by Daniel Quinlan (quinlan@yggdrasil.com)
 <HTML><HEAD><TITLE>Man page of PROC</TITLE>
 </HEAD><BODY>
 <H1>PROC</H1>
-Section: Linux Programmer's Manual (5)<BR>Updated: 2005-05-12<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (5)<BR>Updated: 2007-08-27<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -384,6 +384,7 @@ The nice value ranges from 19 (nicest) to -19 (not nice to others).
 
 
 <I>num_threads</I> %ld
+Number of threads in this process (since kernel 2.6).
 Before kernel 2.6, this field was hard coded to 0 as a placeholder
 for an earlier removed field.
 <DT><I>itrealvalue</I> %ld<DD>
@@ -616,11 +617,22 @@ is defined during kernel compilation.
 <DT><I>/proc/filesystems</I>
 
 <DD>
-A text listing of the filesystems which were compiled into the kernel.
-Incidentally, this is used by
-<B><A HREF="../man1/mount.1.html">mount</A></B>(1)
+A text listing of the filesystems which are supported by the kernel,
+namely filesystems which were compiled into the kernel or whose kernel
+modules are currently loaded. (See also
+<B><A HREF="../man5/fs.5.html">fs</A></B>(5).)
 
-to cycle through different filesystems when none is specified.
+If a filesystem is marked with &quot;nodev&quot;,
+this means that it does not require a block device to be mounted
+(e.g., virtual filesystem, network filesystem).
+<P>
+Incidentally, this file may be used by
+<B><A HREF="../man8/mount.8.html">mount</A></B>(8)
+
+when no filesystem is specified and it didn't manage to determine the
+filesystem type.
+Then filesystems contained in this file are tried
+(excepted those that are marked with &quot;nodev&quot;).
 <DT><I>/proc/fs</I>
 
 <DD>
@@ -1102,8 +1114,12 @@ In Linux 2.6 this line includes three additional columns:
 <I>softirq</I>
 
 - time servicing softirqs (since 2.6.0-test4).
+<P>
+Since Linux 2.6.11, there is an eighth column,
+<I>steal</I>
 
-
+- stolen time, which is the time spent in other operating systems when
+running in a virtualized environment
 <DT><I>page 5741 1808</I><DD>
 The number of pages the system paged in and the number that were paged
 out (from disk).
@@ -1539,8 +1555,9 @@ hostname of your box in exactly the same way as the commands
 <B><A HREF="../man1/domainname.1.html">domainname</A></B>(1)
 
 and
-<B><A HREF="../man1/hostname.1.html">hostname</A></B>(1),<B>that</B>is:
+<B><A HREF="../man1/hostname.1.html">hostname</A></B>(1),
 
+that is:
 <BR>
 
 <P>
@@ -1980,8 +1997,14 @@ and the amount of time spent in idle process (seconds).
 
 <DD>
 This string identifies the kernel version that is currently running.
-It includes the contents of /proc/sys/ostype, /proc/sys/osrelease and
-/proc/sys/version.
+It includes the contents of
+<I>/proc/sys/kernel/ostype</I>,
+
+<I>/proc/sys/kernel/osrelease</I>
+
+and
+<I>/proc/sys/kernel/version</I>.
+
 For example:
 <PRE>
 Linux version 1.0.9 (<A HREF="mailto:quinlan@phaze">quinlan@phaze</A>) #1 Sat May 14 01:51:54 EDT 1994
@@ -2024,8 +2047,6 @@ of thing that needs to be updated very often.
 
 <B><A HREF="../man1/free.1.html">free</A></B>(1),
 
-<B><A HREF="../man1/mount.1.html">mount</A></B>(1),
-
 <B><A HREF="../man1/ps.1.html">ps</A></B>(1),
 
 <B><A HREF="../man1/tr.1.html">tr</A></B>(1),
@@ -2058,6 +2079,8 @@ of thing that needs to be updated very often.
 
 <B><A HREF="../man8/lspci.8.html">lspci</A></B>(8),
 
+<B><A HREF="../man8/mount.8.html">mount</A></B>(8),
+
 <B><A HREF="../man8/netstat.8.html">netstat</A></B>(8),
 
 <B><A HREF="../man8/procinfo.8.html">procinfo</A></B>(8),
@@ -2082,6 +2105,6 @@ of thing that needs to be updated very often.
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 02:44:32 GMT, April 20, 2020
+Time: 02:45:05 GMT, April 20, 2020
 </BODY>
 </HTML>
