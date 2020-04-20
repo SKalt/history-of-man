@@ -1,6 +1,7 @@
 <!--
 Copyright (C) Andreas Gruenbacher, February 2001
 Copyright (C) Silicon Graphics Inc, September 2001
+Copyright (C) 2015 Heinrich Schuchardt &lt;xypron.glpk@gmx.de&gt;
 %%%LICENSE_START(GPLv2+_DOC_FULL)
 This is free documentation; you can redistribute it and/or
 modify it under the terms of the GNU General Public License as
@@ -26,7 +27,7 @@ License along with this manual; if not, see
 <HTML><HEAD><TITLE>Man page of LISTXATTR</TITLE>
 </HEAD><BODY>
 <H1>LISTXATTR</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2014-02-06<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2015-02-21<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -50,7 +51,9 @@ listxattr, llistxattr, flistxattr - list extended attribute names
 <A NAME="lbAD">&nbsp;</A>
 <H2>DESCRIPTION</H2>
 
-Extended attributes are name:value
+Extended attributes are
+<I>name</I>:<I>value</I>
+
 pairs associated with inodes (files, directories, symbolic links, etc.).
 They are extensions to the normal attributes which are associated
 with all inodes in the system (i.e., the
@@ -113,17 +116,24 @@ is interrogated in place of
 A single extended attribute
 <I>name</I>
 
-is a simple null-terminated string.
+is a null-terminated string.
 The name includes a namespace prefix; there may be several, disjoint
 namespaces associated with an individual inode.
 <P>
-
-An empty buffer of
+If
 <I>size</I>
 
-zero can be passed into these calls to return the current size of the
-list of extended attribute names, which can be used to estimate the
-size of a buffer which is sufficiently large to hold the list of names.
+is specified as zero, these calls return the current size of the
+list of extended attribute names (and leave
+<I>list</I>
+
+unchanged).
+This can be used to determine the size of the buffer that
+should be supplied in a subsequent call.
+(But, bear in mind that there is a possibility that the
+set of extended attributes may change between the two calls,
+so that it is still necessary to check the return status
+from the second call.)
 <A NAME="lbAE">&nbsp;</A>
 <H3>Example</H3>
 
@@ -144,8 +154,8 @@ user.name1\0system.name1\0user.name2\0
 
 <P>
 
-Filesystems like ext2, ext3 and XFS which implement POSIX ACLs using
-extended attributes, might return a
+Filesystems that implement POSIX ACLs using
+extended attributes might return a
 <I>list</I>
 
 like this:
@@ -209,6 +219,175 @@ These system calls are Linux-specific.
 
 
 <A NAME="lbAJ">&nbsp;</A>
+<H2>EXAMPLE</H2>
+
+The following program demonstrates the usage of
+<B>listxattr</B>()
+
+and
+<B><A HREF="../man2/getxattr.2.html">getxattr</A></B>(2).
+
+For the file whose pathname is provided as a command-line argument,
+it lists all extended file attributes and their values.
+<P>
+To keep the code simple, the program assumes that attribute keys and
+values are constant during the execution of the program.
+A production program should expect and handle changes during
+execution of the program.
+For example,
+the number of bytes required for attribute keys
+might increase between the two calls to
+<B>listxattr</B>().
+
+An application could handle this possibility using
+a loop that retries the call
+(perhaps up to a predetermined maximum number of attempts)
+with a larger buffer each time it fails with the error
+<B>ERANGE</B>.
+
+Calls to
+<B><A HREF="../man2/getxattr.2.html">getxattr</A></B>(2)
+
+could be handled similarly.
+<P>
+The following output was recorded by first creating a file, setting
+some extended file attributes,
+and then listing the attributes with the example program.
+<A NAME="lbAK">&nbsp;</A>
+<H3>Example output</H3>
+
+
+<PRE>
+$ <B>touch /tmp/foo</B>
+$ <B>setfattr -n user.fred -v chocolate /tmp/foo</B>
+$ <B>setfattr -n user.frieda -v bar /tmp/foo</B>
+$ <B>setfattr -n user.empty /tmp/foo</B>
+$ <B>./listxattr /tmp/foo</B>
+user.fred: chocolate
+user.frieda: bar
+user.empty: &lt;no value&gt;
+</PRE>
+
+
+<A NAME="lbAL">&nbsp;</A>
+<H3>Program source (listxattr.c)</H3>
+
+<PRE>
+#include &lt;<A HREF="file:///usr/include/malloc.h">malloc.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/stdlib.h">stdlib.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/string.h">string.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/sys/types.h">sys/types.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/sys/xattr.h">sys/xattr.h</A>&gt;
+
+int
+main(int argc, char *argv[])
+{
+    ssize_t buflen, keylen, vallen;
+    char *buf, *key, *val;
+
+    if (argc != 2) {
+        fprintf(stderr, &quot;Usage: %s path\n&quot;, argv[0]);
+        exit(EXIT_FAILURE);
+    }
+
+    /*
+     * Determine the length of the buffer needed.
+     */
+    buflen = listxattr(argv[1], NULL, 0);
+    if (buflen == -1) {
+        perror(&quot;listxattr&quot;);
+        exit(EXIT_FAILURE);
+    }
+    if (buflen == 0) {
+        printf(&quot;%s has no attributes.\n&quot;, argv[1]);
+        exit(EXIT_SUCCESS);
+    }
+
+    /*
+     * Allocate the buffer.
+     */
+    buf = malloc(buflen);
+    if (buf == NULL) {
+        perror(&quot;malloc&quot;);
+        exit(EXIT_FAILURE);
+    }
+
+    /*
+     * Copy the list of attribute keys to the buffer.
+     */
+    buflen = listxattr(argv[1], buf, buflen);
+    if (buflen == -1) {
+        perror(&quot;listxattr&quot;);
+        exit(EXIT_FAILURE);
+    }
+
+    /*
+     * Loop over the list of zero terminated strings with the
+     * attribute keys. Use the remaining buffer length to determine
+     * the end of the list.
+     */
+    key = buf;
+    while (buflen &gt; 0) {
+
+        /*
+         * Output attribute key.
+         */
+        printf(&quot;%s: &quot;, key);
+
+        /*
+         * Determine length of the value.
+         */
+        vallen = getxattr(argv[1], key, NULL, 0);
+        if (vallen == -1)
+            perror(&quot;getxattr&quot;);
+
+        if (vallen &gt; 0) {
+
+            /*
+             * Allocate value buffer.
+             * One extra byte is needed to append 0x00.
+             */
+            val = malloc(vallen + 1);
+            if (val == NULL) {
+                perror(&quot;malloc&quot;);
+                exit(EXIT_FAILURE);
+            }
+
+            /*
+             * Copy value to buffer.
+             */
+            vallen = getxattr(argv[1], key, val, vallen);
+            if (vallen == -1)
+                perror(&quot;getxattr&quot;);
+            else {
+                /*
+                 * Output attribute value.
+                 */
+                val[vallen] = 0;
+                printf(&quot;%s&quot;, val);
+            }
+
+            free(val);
+        } else if (vallen == 0)
+            printf(&quot;&lt;no value&gt;&quot;);
+
+        printf(&quot;\n&quot;);
+
+        /*
+         * Forward to next attribute key.
+         */
+        keylen = strlen(key) + 1;
+        buflen -= keylen;
+        key += keylen;
+    }
+
+    free(buf);
+    exit(EXIT_SUCCESS);
+}
+</PRE>
+
+<A NAME="lbAM">&nbsp;</A>
 <H2>SEE ALSO</H2>
 
 <B><A HREF="../man1/getfattr.1.html">getfattr</A></B>(1),
@@ -244,12 +423,17 @@ These system calls are Linux-specific.
 <DT><A HREF="#lbAG">ERRORS</A><DD>
 <DT><A HREF="#lbAH">VERSIONS</A><DD>
 <DT><A HREF="#lbAI">CONFORMING TO</A><DD>
-<DT><A HREF="#lbAJ">SEE ALSO</A><DD>
+<DT><A HREF="#lbAJ">EXAMPLE</A><DD>
+<DL>
+<DT><A HREF="#lbAK">Example output</A><DD>
+<DT><A HREF="#lbAL">Program source (listxattr.c)</A><DD>
+</DL>
+<DT><A HREF="#lbAM">SEE ALSO</A><DD>
 </DL>
 <HR>
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:36:31 GMT, April 20, 2020
+Time: 03:37:09 GMT, April 20, 2020
 </BODY>
 </HTML>

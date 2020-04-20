@@ -10,7 +10,7 @@ of the modification is added to the header.
 <HTML><HEAD><TITLE>Man page of SOCKET</TITLE>
 </HEAD><BODY>
 <H1>SOCKET</H1>
-Section: Linux Programmer's Manual (7)<BR>Updated: 2014-07-08<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (7)<BR>Updated: 2015-02-21<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -787,6 +787,8 @@ and so on.
 <DT><B>SO_REUSEADDR</B>
 
 <DD>
+
+
 Indicates that the rules used in validating addresses supplied in a
 <B><A HREF="../man2/bind.2.html">bind</A></B>(2)
 
@@ -803,6 +805,46 @@ When the listening socket is bound to
 with a specific port then it is not possible
 to bind to this port for any local address.
 Argument is an integer boolean flag.
+<DT><B>SO_REUSEPORT</B> (since Linux 3.9)
+
+<DD>
+Permits multiple
+<B>AF_INET</B>
+
+or
+<B>AF_INET6</B>
+
+sockets to be bound to an identical socket address.
+This option must be set on each socket (including the first socket)
+prior to calling
+<B><A HREF="../man2/bind.2.html">bind</A></B>(2)
+
+on the socket.
+To prevent port hijacking,
+all of the processes binding to the same address must have the same
+effective UID.
+This option can be employed with both TCP and UDP sockets.
+<P>
+For TCP sockets, this option allows
+<B><A HREF="../man2/accept.2.html">accept</A></B>(2)
+
+load distribution in a multi-threaded server to be improved by
+using a distinct listener socket for each thread.
+This provides improved load distribution as compared
+to traditional techniques such using a single
+<B><A HREF="../man2/accept.2.html">accept</A></B>(2)ing
+
+thread that distributes connections,
+or having multiple threads that compete to
+<B><A HREF="../man2/accept.2.html">accept</A></B>(2)
+
+from the same socket.
+<P>
+For UDP sockets,
+the use of this option can provide better distribution
+of incoming datagrams to multiple processes (or threads) as compared
+to the traditional technique of having multiple processes
+compete to receive datagrams on the same socket.
 <DT><B>SO_RXQ_OVFL</B> (since Linux 2.6.33)
 
 <DD>
@@ -1266,6 +1308,6 @@ library.
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:36:45 GMT, April 20, 2020
+Time: 03:37:23 GMT, April 20, 2020
 </BODY>
 </HTML>

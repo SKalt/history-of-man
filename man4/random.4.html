@@ -43,8 +43,8 @@ number of bits of noise in the entropy pool.
 From this entropy pool random numbers are created.
 <P>
 
-When read, the <I>/dev/random</I> device will only return random bytes
-within the estimated number of bits of noise in the entropy
+When read, the <I>/dev/random</I> device will return random bytes
+only within the estimated number of bits of noise in the entropy
 pool.
 <I>/dev/random</I> should be suitable for uses that need very
 high quality randomness such as one-time pad or key generation.
@@ -56,7 +56,7 @@ If
 is called for
 <I>/dev/random</I>
 
-with flag
+with the flag
 <B>O_NONBLOCK</B>,
 
 a subsequent
@@ -64,7 +64,7 @@ a subsequent
 
 will not block if the requested number of bytes is not available.
 Instead, the available bytes are returned.
-If no byte is available
+If no byte is available,
 <B><A HREF="../man2/read.2.html">read</A></B>(2)
 
 will return -1 and
@@ -94,13 +94,31 @@ has no effect when opening
 When calling
 <B><A HREF="../man2/read.2.html">read</A></B>(2)
 
-for device
-<I>/dev/urandom</I>
+for the device
+<I>/dev/urandom</I>,
 
 signals will not be handled until after the requested random bytes
 have been generated.
 <P>
+Since Linux 3.16,
 
+a
+<B><A HREF="../man2/read.2.html">read</A></B>(2)
+
+from
+<I>/dev/urandom</I>
+
+will return at most 32 MB.
+A
+<B><A HREF="../man2/read.2.html">read</A></B>(2)
+
+from
+<I>/dev/random</I>
+
+will return at most 512 bytes
+
+(340 bytes on Linux kernels before version 2.6.12).
+<P>
 Writing to <I>/dev/random</I> or <I>/dev/urandom</I> will update the
 entropy pool with the data written, but this will not result in a
 higher entropy count.
@@ -154,8 +172,8 @@ The amount of seed material required to generate a cryptographic key
 equals the effective key size of the key.
 For example, a 3072-bit RSA
 or Diffie-Hellman private key has an effective key size of 128 bits
-(it requires about 2^128 operations to break) so a key generator only
-needs 128 bits (16 bytes) of seed material from
+(it requires about 2^128 operations to break) so a key generator
+needs only 128 bits (16 bytes) of seed material from
 <I>/dev/random</I>.
 
 <P>
@@ -411,6 +429,6 @@ RFC&nbsp;1750, &quot;Randomness Recommendations for Security&quot;
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:36:44 GMT, April 20, 2020
+Time: 03:37:21 GMT, April 20, 2020
 </BODY>
 </HTML>

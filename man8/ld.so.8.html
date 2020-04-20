@@ -7,7 +7,7 @@ This is in the public domain
 <HTML><HEAD><TITLE>Man page of LD.SO</TITLE>
 </HEAD><BODY>
 <H1>LD.SO</H1>
-Section: Linux Programmer's Manual (8)<BR>Updated: 2014-12-31<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (8)<BR>Updated: 2015-02-21<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -210,71 +210,35 @@ it.
 
 <DD>
 Do not use /etc/ld.so.cache.
-<DT><B>--library-path PATH</B>
+<DT><B>--library-path</B><I> path</I>
 
 <DD>
-Use PATH instead of
+Use
+<I>path</I>
+
+instead of
 <B>LD_LIBRARY_PATH</B>
 
 environment variable setting (see below).
-<DT><B>--inhibit-rpath LIST</B>
+<DT><B>--inhibit-rpath</B><I> list</I>
 
 <DD>
-Ignore RPATH and RUNPATH information in object names in LIST.
+Ignore RPATH and RUNPATH information in object names in
+<I>list</I>.
+
 This option is ignored if
 <B>ld.so</B>
 
 is set-user-ID or set-group-ID.
-<DT><B>--audit LIST</B>
+<DT><B>--audit</B><I> list</I>
 
 <DD>
-Use objects named in LIST as auditors.
+Use objects named in
+<I>list</I>
+
+as auditors.
 </DL>
 <A NAME="lbAG">&nbsp;</A>
-<H2>HARDWARE CAPABILITIES</H2>
-
-Some libraries are compiled using hardware-specific instructions which do
-not exist on every CPU.
-Such libraries should be installed in directories whose names define the
-required hardware capabilities, such as
-<I>/usr/lib/sse2/</I>.
-
-The dynamic linker checks these directories against the hardware of the
-machine and selects the most suitable version of a given library.
-Hardware capability directories can be cascaded to combine CPU features.
-The list of supported hardware capability names depends on the CPU.
-The following names are currently recognized:
-<DL COMPACT>
-<DT><B>Alpha</B>
-
-<DD>
-ev4, ev5, ev56, ev6, ev67
-<DT><B>MIPS</B>
-
-<DD>
-loongson2e, loongson2f, octeon, octeon2
-<DT><B>PowerPC</B>
-
-<DD>
-4xxmac, altivec, arch_2_05, arch_2_06, booke, cellbe, dfp, efpdouble, efpsingle,
-fpu, ic_snoop, mmu, notb, pa6t, power4, power5, power5+, power6x, ppc32, ppc601,
-ppc64, smt, spe, ucache, vsx
-<DT><B>SPARC</B>
-
-<DD>
-flush, muldiv, stbar, swap, ultra3, v9, v9v, v9v2
-<DT><B>s390</B>
-
-<DD>
-dfp, eimm, esan3, etf3enh, g5, highgprs, hpage, ldisp, msa, stfle,
-z900, z990, z9-109, z10, zarch
-<DT><B>x86 (32-bit only)</B>
-
-<DD>
-acpi, apic, clflush, cmov, cx8, dts, fxsr, ht, i386, i486, i586, i686, mca, mmx,
-mtrr, pat, pbe, pge, pn, pse36, sep, ss, sse, sse2, tm
-</DL>
-<A NAME="lbAH">&nbsp;</A>
 <H2>ENVIRONMENT</H2>
 
 Among the more important environment variables are the following:
@@ -331,12 +295,6 @@ LinuxThreads and NPTL
 see
 <B><A HREF="../man7/pthreads.7.html">pthreads</A></B>(7).
 
-<DT><B>LD_BIND_NOT</B>
-
-<DD>
-(glibc since 2.2)
-Don't update the Global Offset Table (GOT) and Procedure Linkage Table (PLT)
-when resolving a symbol.
 <DT><B>LD_BIND_NOW</B>
 
 <DD>
@@ -554,10 +512,19 @@ For security reasons, since glibc 2.3.5,
 <B>LD_SHOW_AUXV</B>
 
 is ignored for set-user-ID/set-group-ID binaries.
+<DT><B>LD_TRACE_PRELINKING</B>
 
+<DD>
+(glibc since 2.4)
+Trace prelinking of the object whose name is assigned to
+this environment variable.
+(Use
+<B><A HREF="../man1/ldd.1.html">ldd</A></B>(1)
 
+to get a list of the objects that might be traced.)
+If the object name is not recognized,
 
-
+then all prelinking activity is traced.
 <DT><B>LD_USE_LOAD_BIAS</B>
 
 <DD>
@@ -606,7 +573,7 @@ to be used by
 
 when none is present.
 </DL>
-<A NAME="lbAI">&nbsp;</A>
+<A NAME="lbAH">&nbsp;</A>
 <H2>FILES</H2>
 
 
@@ -635,7 +602,7 @@ be loaded before the program.
 shared libraries
 
 </DL>
-<A NAME="lbAJ">&nbsp;</A>
+<A NAME="lbAI">&nbsp;</A>
 <H2>NOTES</H2>
 
 The
@@ -644,6 +611,50 @@ The
 functionality is available for executables compiled using libc version
 4.4.3 or greater.
 ELF functionality is available since Linux 1.1.52 and libc5.
+<A NAME="lbAJ">&nbsp;</A>
+<H3>Hardware capabilities</H3>
+
+Some libraries are compiled using hardware-specific instructions which do
+not exist on every CPU.
+Such libraries should be installed in directories whose names define the
+required hardware capabilities, such as
+<I>/usr/lib/sse2/</I>.
+
+The dynamic linker checks these directories against the hardware of the
+machine and selects the most suitable version of a given library.
+Hardware capability directories can be cascaded to combine CPU features.
+The list of supported hardware capability names depends on the CPU.
+The following names are currently recognized:
+<DL COMPACT>
+<DT><B>Alpha</B>
+
+<DD>
+ev4, ev5, ev56, ev6, ev67
+<DT><B>MIPS</B>
+
+<DD>
+loongson2e, loongson2f, octeon, octeon2
+<DT><B>PowerPC</B>
+
+<DD>
+4xxmac, altivec, arch_2_05, arch_2_06, booke, cellbe, dfp, efpdouble, efpsingle,
+fpu, ic_snoop, mmu, notb, pa6t, power4, power5, power5+, power6x, ppc32, ppc601,
+ppc64, smt, spe, ucache, vsx
+<DT><B>SPARC</B>
+
+<DD>
+flush, muldiv, stbar, swap, ultra3, v9, v9v, v9v2
+<DT><B>s390</B>
+
+<DD>
+dfp, eimm, esan3, etf3enh, g5, highgprs, hpage, ldisp, msa, stfle,
+z900, z990, z9-109, z10, zarch
+<DT><B>x86 (32-bit only)</B>
+
+<DD>
+acpi, apic, clflush, cmov, cx8, dts, fxsr, ht, i386, i486, i586, i686, mca, mmx,
+mtrr, pat, pbe, pge, pn, pse36, sep, ss, sse, sse2, tm
+</DL>
 <A NAME="lbAK">&nbsp;</A>
 <H2>SEE ALSO</H2>
 
@@ -683,16 +694,18 @@ ELF functionality is available since Linux 1.1.52 and libc5.
 <DT><A HREF="#lbAE">Rpath token expansion</A><DD>
 </DL>
 <DT><A HREF="#lbAF">OPTIONS</A><DD>
-<DT><A HREF="#lbAG">HARDWARE CAPABILITIES</A><DD>
-<DT><A HREF="#lbAH">ENVIRONMENT</A><DD>
-<DT><A HREF="#lbAI">FILES</A><DD>
-<DT><A HREF="#lbAJ">NOTES</A><DD>
+<DT><A HREF="#lbAG">ENVIRONMENT</A><DD>
+<DT><A HREF="#lbAH">FILES</A><DD>
+<DT><A HREF="#lbAI">NOTES</A><DD>
+<DL>
+<DT><A HREF="#lbAJ">Hardware capabilities</A><DD>
+</DL>
 <DT><A HREF="#lbAK">SEE ALSO</A><DD>
 </DL>
 <HR>
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:36:45 GMT, April 20, 2020
+Time: 03:37:23 GMT, April 20, 2020
 </BODY>
 </HTML>

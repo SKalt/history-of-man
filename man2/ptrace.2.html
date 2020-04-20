@@ -25,7 +25,7 @@ License along with this manual; if not, see
 <HTML><HEAD><TITLE>Man page of PTRACE</TITLE>
 </HEAD><BODY>
 <H1>PTRACE</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2015-01-22<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2015-02-21<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -1034,6 +1034,31 @@ Unlike
 <B>PTRACE_SEIZE</B>
 
 does not stop the process.
+Group-stops are reported as
+<B>PTRACE_EVENT_STOP</B>
+
+and
+<I>WSTOPSIG(status)</I>
+
+returns the stop signal.
+Automatically attached children stop with
+<B>PTRACE_EVENT_STOP</B>
+
+and
+<I>WSTOPSIG(status)</I>
+
+returns
+<B>SIGTRAP</B>
+
+instead of having
+<B>SIGSTOP</B>
+
+signal delivered to them.
+<B><A HREF="../man2/evecve.2.html">evecve</A></B>(2)
+
+does not deliver an extra
+<B>SIGTRAP</B>.
+
 Only a
 <B>PTRACE_SEIZE</B>d
 
@@ -1044,6 +1069,15 @@ and
 <B>PTRACE_LISTEN</B>
 
 commands.
+The &quot;seized&quot; behavior just described is inherited by
+children that are automatically attached using
+<B>PTRACE_O_TRACEFORK</B>,
+
+<B>PTRACE_O_TRACEVFORK</B>,
+
+and
+<B>PTRACE_O_TRACECLONE</B>.
+
 <I>addr</I>
 
 must be zero.
@@ -1802,15 +1836,8 @@ Stop induced by
 
 command, or group-stop, or initial ptrace-stop when a new child is attached
 (only if attached using
-<B>PTRACE_SEIZE</B>),
+<B>PTRACE_SEIZE</B>).
 
-or
-<B>PTRACE_EVENT_STOP</B>
-
-if
-<B>PTRACE_SEIZE</B>
-
-was used.
 <DT><B>PTRACE_EVENT_SECCOMP</B>
 
 <DD>
@@ -2490,7 +2517,14 @@ If the
 option is
 <I>not</I>
 
-in effect for the execing tracee, the kernel delivers an extra
+in effect for the execing tracee,
+and if the tracee was
+<B>PTRACE_ATTACH</B>ed
+
+rather that
+<B>PTRACE_SEIZE</B>d,
+
+the kernel delivers an extra
 <B>SIGTRAP</B>
 
 to the tracee after
@@ -2537,7 +2571,10 @@ to suppress is not easy.
 Setting the
 <B>PTRACE_O_TRACEEXEC</B>
 
-option and thus suppressing this extra
+option or using
+<B>PTRACE_SEIZE</B>
+
+and thus suppressing this extra
 <B>SIGTRAP</B>
 
 is the recommended approach.
@@ -2683,6 +2720,11 @@ In Linux kernels before 2.6.26,
 <B><A HREF="../man1/init.1.html">init</A></B>(1),
 
 the process with PID 1, may not be traced.
+<P>
+
+A tracees parent continues to be the tracer even if that tracer calls
+<B><A HREF="../man2/execve.2.html">execve</A></B>(2).
+
 <P>
 
 The layout of the contents of memory and the USER area are
@@ -2943,6 +2985,6 @@ attach.)
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:36:32 GMT, April 20, 2020
+Time: 03:37:10 GMT, April 20, 2020
 </BODY>
 </HTML>

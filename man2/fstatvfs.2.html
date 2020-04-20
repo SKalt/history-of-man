@@ -4,7 +4,7 @@
 <HTML><HEAD><TITLE>Man page of STATVFS</TITLE>
 </HEAD><BODY>
 <H1>STATVFS</H1>
-Section: Linux Programmer's Manual (3)<BR>Updated: 2013-09-26<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2015-02-21<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -43,17 +43,19 @@ structure defined approximately as follows:
 
 <PRE>
 struct statvfs {
-    unsigned long  f_bsize;    /* filesystem block size */
-    unsigned long  f_frsize;   /* fragment size */
-    fsblkcnt_t     f_blocks;   /* size of fs in f_frsize units */
-    fsblkcnt_t     f_bfree;    /* # free blocks */
-    fsblkcnt_t     f_bavail;   /* # free blocks for unprivileged users */
-    fsfilcnt_t     f_files;    /* # inodes */
-    fsfilcnt_t     f_ffree;    /* # free inodes */
-    fsfilcnt_t     f_favail;   /* # free inodes for unprivileged users */
-    unsigned long  f_fsid;     /* filesystem ID */
-    unsigned long  f_flag;     /* mount flags */
-    unsigned long  f_namemax;  /* maximum filename length */
+    unsigned long  f_bsize;    /* Filesystem block size */
+    unsigned long  f_frsize;   /* Fragment size */
+    fsblkcnt_t     f_blocks;   /* Size of fs in f_frsize units */
+    fsblkcnt_t     f_bfree;    /* Number of free blocks */
+    fsblkcnt_t     f_bavail;   /* Number of free blocks for
+                                  unprivileged users */
+    fsfilcnt_t     f_files;    /* Number of inodes */
+    fsfilcnt_t     f_ffree;    /* Number of free inodes */
+    fsfilcnt_t     f_favail;   /* Number of free inodes for
+                                  unprivileged users */
+    unsigned long  f_fsid;     /* Filesystem ID */
+    unsigned long  f_flag;     /* Mount flags */
+    unsigned long  f_namemax;  /* Maximum filename length */
 };
 </PRE>
 
@@ -75,20 +77,62 @@ Both used to be
 The field
 <I>f_flag</I>
 
-is a bit mask (of mount flags, see
-<B><A HREF="../man8/mount.8.html">mount</A></B>(8)).
+is a bit mask indicating various options that were employed
+when mounting this filesystem.
+It contains zero or more of the following flags:
 
-Bits defined by POSIX are
 <DL COMPACT>
-<DT><B>ST_RDONLY</B>
+<DT><B>ST_MANDLOCK</B>
 
 <DD>
-Read-only filesystem.
+Mandatory locking is permitted on the filesystem (see
+<B><A HREF="../man2/fcntl.2.html">fcntl</A></B>(2)).
+
+<DT><B>ST_NOATIME</B>
+
+<DD>
+Do not update access times; see
+<B><A HREF="../man2/mount.2.html">mount</A></B>(2).
+
+<DT><B>ST_NODEV</B>
+
+<DD>
+Disallow access to device special files on this filesystem.
+<DT><B>ST_NODIRATIME</B>
+
+<DD>
+Do not update directory access times; see
+<B><A HREF="../man2/mount.2.html">mount</A></B>(2).
+
+<DT><B>ST_NOEXEC</B>
+
+<DD>
+Execution of programs is disallowed on this filesystem.
 <DT><B>ST_NOSUID</B>
 
 <DD>
-Set-user-ID/set-group-ID bits are ignored by
-<B><A HREF="../man3/exec.3.html">exec</A></B>(3).
+The set-user-ID and set-group-ID bits are ignored by
+<B><A HREF="../man3/exec.3.html">exec</A></B>(3)
+
+for executable files on this filesystem
+<DT><B>ST_RDONLY</B>
+
+<DD>
+This filesystem is mounted read-only.
+<DT><B>ST_RELATIME</B>
+
+<DD>
+Update atime relative to mtime/ctime; see
+<B><A HREF="../man2/mount.2.html">mount</A></B>(2).
+
+<DT><B>ST_SYNCHRONOUS</B>
+
+<DD>
+Writes are synched to the filesystem immediately (see the description of
+<B>O_SYNC</B>
+
+in
+<B><A HREF="../man2/open.2.html">open</A></B>(2)).
 
 </DL>
 <P>
@@ -213,6 +257,20 @@ functions are thread-safe.
 <H2>CONFORMING TO</H2>
 
 POSIX.1-2001.
+<P>
+Only the
+<B>ST_NOSUID</B>
+
+and
+<B>ST_RDONLY</B>
+
+flags of the
+<I>f_flag</I>
+
+field are specified in POSIX.1.
+To obtain definitions of the remaining flags, one must define
+<B>_GNU_SOURCE</B>.
+
 <A NAME="lbAJ">&nbsp;</A>
 <H2>NOTES</H2>
 
@@ -224,7 +282,30 @@ and
 
 to support this library call.
 <P>
-The current glibc implementations of
+In glibc versions before 2.13,
+
+<B>statvfs</B>()
+
+populated the bits of the
+<I>f_flag</I>
+
+field by scanning the mount options shown in
+<I>/proc/mounts</I>.
+
+However, starting with Linux 2.6.36, the underlying
+<B><A HREF="../man2/statfs.2.html">statfs</A></B>(2)
+
+system call provides the necessary information via the
+<I>f_flags</I>
+
+field, and since glibc version 2.13, the
+<B>statvfs</B>()
+
+function will use information from that field rather than scanning
+<I>/proc/mounts</I>.
+
+<P>
+The glibc implementations of
 <P>
 <PRE>
    pathconf(path, _PC_REC_XFER_ALIGN);
@@ -241,8 +322,11 @@ respectively use the
 and
 <I>f_bsize</I>
 
-fields of the return value of
-<I>statvfs(path,buf)</I>.
+fields returned by a call to
+<B>statvfs</B>()
+
+with the argument
+<I>path</I>.
 
 <A NAME="lbAK">&nbsp;</A>
 <H2>SEE ALSO</H2>
@@ -272,6 +356,6 @@ fields of the return value of
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:36:30 GMT, April 20, 2020
+Time: 03:37:08 GMT, April 20, 2020
 </BODY>
 </HTML>

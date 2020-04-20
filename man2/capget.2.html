@@ -7,7 +7,7 @@ may be distributed as per GPL
 <HTML><HEAD><TITLE>Man page of CAPGET</TITLE>
 </HEAD><BODY>
 <H1>CAPGET</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2013-03-11<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2015-02-21<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -75,8 +75,14 @@ The structures are defined as follows.
 #define _LINUX_CAPABILITY_VERSION_1  0x19980330
 #define _LINUX_CAPABILITY_U32S_1     1
 
+        /* V2 added in Linux 2.6.25; deprecated */
 #define _LINUX_CAPABILITY_VERSION_2  0x20071026
 #define _LINUX_CAPABILITY_U32S_2     2
+
+        /* V3 added in Linux 2.6.26 */
+#define _LINUX_CAPABILITY_VERSION_3  0x20080522
+#define _LINUX_CAPABILITY_U32S_3     2
+
 
 typedef struct __user_cap_header_struct {
    __u32 version;
@@ -103,12 +109,12 @@ and
 fields are bit masks of the capabilities defined in
 <B><A HREF="../man7/capabilities.7.html">capabilities</A></B>(7).
 
-Note the
+Note that the
 <B>CAP_*</B>
 
 values are bit indexes and need to be bit-shifted before ORing into
 the bit fields.
-To define the structures for passing to the system call you have to use the
+To define the structures for passing to the system call, you have to use the
 <I>struct __user_cap_header_struct</I>
 
 and
@@ -118,12 +124,17 @@ names because the typedefs are only pointers.
 <P>
 Kernels prior to 2.6.25 prefer
 32-bit capabilities with version
-<B>_LINUX_CAPABILITY_VERSION_1</B>,
+<B>_LINUX_CAPABILITY_VERSION_1</B>.
 
-and kernels 2.6.25+ prefer 64-bit capabilities with version
+Linux 2.6.25 added 64-bit capability sets, with version
 <B>_LINUX_CAPABILITY_VERSION_2</B>.
 
-Note, 64-bit capabilities use
+There was, however, an API glitch, and Linux 2.6.26 added
+<B>_LINUX_CAPABILITY_VERSION_3</B>
+
+to fix the problem.
+<P>
+Note that 64-bit capabilities use
 <I>datap</I>[0]
 
 and
@@ -133,9 +144,10 @@ whereas 32-bit capabilities use only
 <I>datap</I>[0].
 
 <P>
-Another change affecting the behavior of these system calls is kernel
-support for file capabilities (VFS capability support).
-This support is currently a compile time option (added in kernel 2.6.24).
+On kernels that support file capabilities (VFS capability support),
+these system calls behave slightly differently.
+This support was added as an option in Linux 2.6.24,
+and became fixed (nonoptional) in Linux 2.6.33.
 <P>
 For
 <B>capget</B>()
@@ -333,6 +345,6 @@ library and is available here:
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:36:30 GMT, April 20, 2020
+Time: 03:37:08 GMT, April 20, 2020
 </BODY>
 </HTML>

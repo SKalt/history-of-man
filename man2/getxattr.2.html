@@ -26,7 +26,7 @@ License along with this manual; if not, see
 <HTML><HEAD><TITLE>Man page of GETXATTR</TITLE>
 </HEAD><BODY>
 <H1>GETXATTR</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2014-04-06<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2015-02-21<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -69,20 +69,22 @@ A complete overview of extended attributes concepts can be found in
 
 <B>getxattr</B>()
 
-retrieves the
-<I>value</I>
-
-of the extended attribute identified by
+retrieves the value of the extended attribute identified by
 <I>name</I>
 
 and associated with the given
 <I>path</I>
 
 in the filesystem.
-The length of the attribute
-<I>value</I>
+The attribute value is placed in the buffer pointed to by
+<I>value</I>;
 
-is returned.
+<I>size</I>
+
+specifies the size of that buffer.
+The return value of the call is the number of bytes placed in
+<I>value</I>.
+
 <P>
 
 <B>lgetxattr</B>()
@@ -113,30 +115,34 @@ is interrogated in place of
 An extended attribute
 <I>name</I>
 
-is a simple null-terminated string.
+is a null-terminated string.
 The name includes a namespace prefix; there may be several, disjoint
 namespaces associated with an individual inode.
 The value of an extended attribute is a chunk of arbitrary textual or
-binary data of specified length.
+binary data that was assigned using
+<B><A HREF="../man2/setxattr.2.html">setxattr</A></B>(2).
+
 <P>
 
-An empty buffer of
+If
 <I>size</I>
 
-zero can be passed into these calls to return the current size of the
-named extended attribute, which can be used to estimate the size of a
-buffer which is sufficiently large to hold the value associated with
-the extended attribute.
-<P>
+is specified as zero, these calls return the current size of the
+named extended attribute (and leave
+<I>value</I>
 
-The interface is designed to allow guessing of initial buffer
-sizes, and to enlarge buffers when the return value indicates
-that the buffer provided was too small.
+unchanged).
+This can be used to determine the size of the buffer that
+should be supplied in a subsequent call.
+(But, bear in mind that there is a possibility that the
+attribute value may change between the two calls,
+so that it is still necessary to check the return status
+from the second call.)
 <A NAME="lbAE">&nbsp;</A>
 <H2>RETURN VALUE</H2>
 
-On success, a nonnegative number is returned indicating the size of the
-extended attribute value.
+On success, these calls return a nonnegative value which is
+the size (in bytes) of the extended attribute value.
 On failure, -1 is returned and
 <I>errno</I>
 
@@ -195,6 +201,12 @@ These system calls are Linux-specific.
 
 
 <A NAME="lbAI">&nbsp;</A>
+<H2>EXAMPLE</H2>
+
+See
+<B><A HREF="../man2/listxattr.2.html">listxattr</A></B>(2).
+
+<A NAME="lbAJ">&nbsp;</A>
 <H2>SEE ALSO</H2>
 
 <B><A HREF="../man1/getfattr.1.html">getfattr</A></B>(1),
@@ -227,12 +239,13 @@ These system calls are Linux-specific.
 <DT><A HREF="#lbAF">ERRORS</A><DD>
 <DT><A HREF="#lbAG">VERSIONS</A><DD>
 <DT><A HREF="#lbAH">CONFORMING TO</A><DD>
-<DT><A HREF="#lbAI">SEE ALSO</A><DD>
+<DT><A HREF="#lbAI">EXAMPLE</A><DD>
+<DT><A HREF="#lbAJ">SEE ALSO</A><DD>
 </DL>
 <HR>
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:36:31 GMT, April 20, 2020
+Time: 03:37:09 GMT, April 20, 2020
 </BODY>
 </HTML>

@@ -1,5 +1,6 @@
 <!--
 Copyright (c) 1995 Michael Chastain (mec@duracef.shout.net), 22 July 1995.
+Copyright (c) 2015 Andrew Lutomirski
 %%%LICENSE_START(GPLv2+_DOC_FULL)
 This is free documentation; you can redistribute it and/or
 modify it under the terms of the GNU General Public License as
@@ -25,13 +26,13 @@ License along with this manual; if not, see
 <HTML><HEAD><TITLE>Man page of MODIFY_LDT</TITLE>
 </HEAD><BODY>
 <H1>MODIFY_LDT</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2012-07-13<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2015-02-21<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
 <H2>NAME</H2>
 
-modify_ldt - get or set ldt
+modify_ldt - get or set a per-process LDT entry
 <A NAME="lbAC">&nbsp;</A>
 <H2>SYNOPSIS</H2>
 
@@ -42,6 +43,7 @@ modify_ldt - get or set ldt
 </PRE>
 
 <P>
+
 <I>Note</I>:
 
 There is no glibc wrapper for this system call; see NOTES.
@@ -50,9 +52,12 @@ There is no glibc wrapper for this system call; see NOTES.
 
 <B>modify_ldt</B>()
 
-reads or writes the local descriptor table (ldt) for a process.
-The ldt is a per-process memory management table used by the i386 processor.
-For more information on this table, see an Intel 386 processor handbook.
+reads or writes the local descriptor table (LDT) for a process.
+The LDT
+is an array of segment descriptors that can be referenced by user code.
+Linux allows processes to configure a per-process (actually per-mm) LDT.
+For more information about the LDT, see the Intel Software Developer's
+Manual or the AMD Architecture Programming Manual.
 <P>
 
 When
@@ -61,22 +66,29 @@ When
 is 0,
 <B>modify_ldt</B>()
 
-reads the ldt into the memory pointed to by
+reads the LDT into the memory pointed to by
 <I>ptr</I>.
 
 The number of bytes read is the smaller of
 <I>bytecount</I>
 
-and the actual size of the ldt.
+and the actual size of the LDT, although the kernel may act as though
+the LDT is padded with additional trailing zero bytes.
+On success,
+<B>modify_ldt</B>()
+
+will return the number of bytes read.
 <P>
 
 When
 <I>func</I>
 
-is 1,
+is 1 or 0x11,
 <B>modify_ldt</B>()
 
-modifies one ldt entry.
+modifies the LDT entry indicated by
+<I>ptr-&gt;entry_number</I>.
+
 <I>ptr</I>
 
 points to a
@@ -87,11 +99,6 @@ and
 <I>bytecount</I>
 
 must equal the size of this structure.
-
-
-
-
-
 <P>
 The
 <I>user_desc</I>
@@ -119,12 +126,64 @@ struct user_desc {
 In Linux 2.4 and earlier, this structure was named
 <I>modify_ldt_ldt_s</I>.
 
+<P>
 
+The
+<I>contents</I>
 
+field is the segment type (data, expand-down data, non-conforming code, or
+conforming code).
+The other fields match their descriptions in the CPU manual, although
+<B>modify_ldt</B>()
 
+cannot set the hardware-defined &quot;accessed&quot; bit described in the CPU manual.
+<P>
 
+A
+<I>user_desc</I>
 
+is considered &quot;empty&quot; if
+<I>read_exec_only</I>
 
+and
+<I>seg_not_present</I>
+
+are set to 1 and all of the other fields are 0.
+An LDT entry can be cleared by setting it to an &quot;empty&quot;
+<I>user_desc</I>
+
+or, if
+<I>func</I>
+
+is 1, by setting both
+<I>base</I>
+
+and
+<I>limit</I>
+
+to 0.
+<P>
+
+A conforming code segment (i.e., one with
+<I>contents==3</I>)
+
+will be rejected if
+<I>func</I>
+
+is 1 or if
+<I>seg_not_present</I>
+
+is 0.
+<P>
+
+When
+<I>func</I>
+
+is 2,
+<B>modify_ldt</B>()
+
+will read zeros.
+This appears to be a leftover from Linux 2.4.
 <A NAME="lbAE">&nbsp;</A>
 <H2>RETURN VALUE</H2>
 
@@ -163,18 +222,18 @@ is 1 and
 <I>bytecount</I>
 
 is not equal to the size of the structure
-<I>modify_ldt_ldt_s</I>,
+<I>user_desc</I>,
 
 or
 <I>func</I>
 
-is 1 and the new ldt entry has invalid values.
+is 1 or 0x11 and the new LDT entry has invalid values.
 <DT><B>ENOSYS</B>
 
 <DD>
 <I>func</I>
 
-is neither 0 nor 1.
+is neither 0, 1, 2, nor 0x11.
 </DL>
 <A NAME="lbAG">&nbsp;</A>
 <H2>CONFORMING TO</H2>
@@ -187,8 +246,56 @@ to be portable.
 Glibc does not provide a wrapper for this system call; call it using
 <B><A HREF="../man2/syscall.2.html">syscall</A></B>(2).
 
+<P>
+
+<B>modify_ldt</B>()
+
+should not be used for thread-local storage, as it slows down context
+switches and only supports a limited number of threads.
+Threading libraries should use
+<B><A HREF="../man2/set_thread_area.2.html">set_thread_area</A></B>(2)
+
+or
+<B><A HREF="../man2/arch_prctl.2.html">arch_prctl</A></B>(2)
+
+instead, except on extremely old kernels that do not support those system
+calls.
+<P>
+
+The normal use for
+<B><A HREF="../man2/modify_ldt.2.html">modify_ldt</A></B>(2)
+
+is to run legacy 16-bit or segmented 32-bit code.
+Not all kernels allow 16-bit segments to be installed, however.
+<P>
+
+Even on 64-bit kernels,
+<B><A HREF="../man2/modify_ldt.2.html">modify_ldt</A></B>(2)
+
+cannot be used to create a long mode (i.e., 64-bit) code segment.
+The undocumented field &quot;lm&quot; in
+<I>user_desc</I>
+
+is not useful, and, despite its name,
+does not result in a long mode segment.
 <A NAME="lbAI">&nbsp;</A>
+<H2>BUGS</H2>
+
+On 64-bit kernels before Linux 3.19,
+
+setting the &quot;lm&quot; bit in
+<I>user_desc</I>
+
+prevents the descriptor from being considered empty.
+Keep in mind that the
+&quot;lm&quot; bit does not exist in the 32-bit headers, but these buggy kernels
+will still notice the bit even when set in a 32-bit process.
+<A NAME="lbAJ">&nbsp;</A>
 <H2>SEE ALSO</H2>
+
+<B><A HREF="../man2/arch_prctl.2.html">arch_prctl</A></B>(2),
+
+<B><A HREF="../man2/set_thread_area.2.html">set_thread_area</A></B>(2),
 
 <B><A HREF="../man2/vm86.2.html">vm86</A></B>(2)
 
@@ -204,12 +311,13 @@ Glibc does not provide a wrapper for this system call; call it using
 <DT><A HREF="#lbAF">ERRORS</A><DD>
 <DT><A HREF="#lbAG">CONFORMING TO</A><DD>
 <DT><A HREF="#lbAH">NOTES</A><DD>
-<DT><A HREF="#lbAI">SEE ALSO</A><DD>
+<DT><A HREF="#lbAI">BUGS</A><DD>
+<DT><A HREF="#lbAJ">SEE ALSO</A><DD>
 </DL>
 <HR>
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:36:32 GMT, April 20, 2020
+Time: 03:37:09 GMT, April 20, 2020
 </BODY>
 </HTML>

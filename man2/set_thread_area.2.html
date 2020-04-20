@@ -1,5 +1,6 @@
 <!--
 Copyright (C) 2003 Free Software Foundation, Inc.
+Copyright (C) 2015 Andrew Lutomirski
 %%%LICENSE_START(GPL_NOVERSION_ONELINE)
 This file is distributed according to the GNU General Public License.
 %%%LICENSE_END
@@ -8,35 +9,67 @@ This file is distributed according to the GNU General Public License.
 <HTML><HEAD><TITLE>Man page of SET_THREAD_AREA</TITLE>
 </HEAD><BODY>
 <H1>SET_THREAD_AREA</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2012-07-13<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2015-02-21<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
 <H2>NAME</H2>
 
-set_thread_area - set a thread local storage (TLS) area
+set_thread_area - set a GDT entry for thread-local storage
 <A NAME="lbAC">&nbsp;</A>
 <H2>SYNOPSIS</H2>
 
+<PRE>
 <B>#include &lt;<A HREF="file:///usr/include/linux/unistd.h">linux/unistd.h</A>&gt;</B>
-
-<BR>
-
 <B>#include &lt;<A HREF="file:///usr/include/asm/ldt.h">asm/ldt.h</A>&gt;</B>
 
-<P>
+<B>int get_thread_area(struct user_desc *</B><I>u_info</I><B>);</B>
 <B>int set_thread_area(struct user_desc *</B><I>u_info</I><B>);</B>
+</PRE>
 
 <P>
 <I>Note</I>:
 
-There is no glibc wrapper for this system call; see NOTES.
+There are no glibc wrappers for these system calls; see NOTES.
 <A NAME="lbAD">&nbsp;</A>
 <H2>DESCRIPTION</H2>
 
+Linux dedicates three global descriptor table (GDT) entries for
+thread-local storage.
+For more information about the GDT, see the
+Intel Software Developer's Manual or the AMD Architecture Programming Manual.
+<P>
+Both of these system calls take an argument that is a pointer
+to a structure of the following type:
+<P>
+
+struct user_desc {
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;unsigned&nbsp;int&nbsp;&nbsp;entry_number;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;unsigned&nbsp;long&nbsp;base_addr;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;unsigned&nbsp;int&nbsp;&nbsp;limit;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;unsigned&nbsp;int&nbsp;&nbsp;seg_32bit:1;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;unsigned&nbsp;int&nbsp;&nbsp;contents:2;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;unsigned&nbsp;int&nbsp;&nbsp;read_exec_only:1;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;unsigned&nbsp;int&nbsp;&nbsp;limit_in_pages:1;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;unsigned&nbsp;int&nbsp;&nbsp;seg_not_present:1;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;unsigned&nbsp;int&nbsp;&nbsp;useable:1;
+};
+
+<P>
+<B>get_thread_area</B>()
+
+reads the GDT entry indicated by
+<I>u_info-&gt;entry_number</I>
+
+and fills in the rest of the fields in
+<I>u_info</I>.
+
+<P>
 <B>set_thread_area</B>()
 
-sets an entry in the current thread's thread-local storage (TLS) array.
+sets a TLS entry in the GDT.
+<P>
+
 The TLS array entry set by
 <B>set_thread_area</B>()
 
@@ -47,7 +80,7 @@ passed in by the user.
 If this value is in bounds,
 <B>set_thread_area</B>()
 
-copies the TLS descriptor pointed to by
+writes the TLS descriptor pointed to by
 <I>u_info</I>
 
 into the thread's TLS array.
@@ -59,7 +92,7 @@ When
 is passed an
 <I>entry_number</I>
 
-of -1, it uses a free TLS entry.
+of -1, it searches for a free TLS entry.
 If
 <B>set_thread_area</B>()
 
@@ -67,12 +100,35 @@ finds a free TLS entry, the value of
 <I>u_info-&gt;entry_number</I>
 
 is set upon return to show which entry was changed.
+<P>
+
+A
+<I>user_desc</I>
+
+is considered &quot;empty&quot; if
+<I>read_exec_only</I>
+
+and
+<I>seg_not_present</I>
+
+are set to 1 and all of the other fields are 0.
+If an &quot;empty&quot; descriptor is passed to
+<B>set_thread_area,</B>
+
+the corresponding TLS entry will be cleared.
+See BUGS for additional details.
+<P>
+
+Since Linux 3.19,
+<B>set_thread_area</B>()
+
+cannot be used to write non-present segments, 16-bit segments, or code
+segments, although clearing a segment is still acceptable.
 <A NAME="lbAE">&nbsp;</A>
 <H2>RETURN VALUE</H2>
 
-<B>set_thread_area</B>()
-
-returns 0 on success, and -1 on failure, with
+These system calls
+return 0 on success, and -1 on failure, with
 <I>errno</I>
 
 set appropriately.
@@ -80,26 +136,39 @@ set appropriately.
 <H2>ERRORS</H2>
 
 <DL COMPACT>
-<DT><B>EINVAL</B>
-
-<DD>
-<I>u_info-&gt;entry_number</I> is out of bounds.
 <DT><B>EFAULT</B>
 
 <DD>
 <I>u_info</I> is an invalid pointer.
+<DT><B>EINVAL</B>
+
+<DD>
+<I>u_info-&gt;entry_number</I> is out of bounds.
+<DT><B>ENOSYS</B>
+
+<DD>
+<B><A HREF="../man2/get_thread_area.2.html">get_thread_area</A></B>(2)
+
+or
+<B><A HREF="../man2/set_thread_area.2.html">set_thread_area</A></B>(2)
+
+was invoked as a 64-bit system call.
 <DT><B>ESRCH</B>
 
 <DD>
+(<B>set_thread_area</B>())
+
 A free TLS entry could not be located.
 </DL>
 <A NAME="lbAG">&nbsp;</A>
 <H2>VERSIONS</H2>
 
-A version of
 <B>set_thread_area</B>()
 
 first appeared in Linux 2.5.29.
+<B>get_thread_area</B>()
+
+first appeared in Linux 2.5.32.
 <A NAME="lbAH">&nbsp;</A>
 <H2>CONFORMING TO</H2>
 
@@ -110,15 +179,68 @@ to be portable.
 <A NAME="lbAI">&nbsp;</A>
 <H2>NOTES</H2>
 
-Glibc does not provide a wrapper for this system call,
-since it is generally intended only for use by threading libraries.
-In the unlikely event that you want to call it directly, use
+Glibc does not provide wrappers for these system calls,
+since they are generally intended for use only by threading libraries.
+In the unlikely event that you want to call them directly, use
 <B><A HREF="../man2/syscall.2.html">syscall</A></B>(2).
 
+<P>
+
+<B><A HREF="../man2/arch_prctl.2.html">arch_prctl</A></B>(2)
+
+can interfere with
+<B><A HREF="../man2/set_thread_area.2.html">set_thread_area</A></B>(2).
+
+See
+<B><A HREF="../man2/arch_prctl.2.html">arch_prctl</A></B>(2)
+
+for more details.
+This is not normally a problem, as
+<B><A HREF="../man2/arch_prctl.2.html">arch_prctl</A></B>(2)
+
+is normally used only by 64-bit programs.
 <A NAME="lbAJ">&nbsp;</A>
+<H2>BUGS</H2>
+
+On 64-bit kernels before Linux 3.19,
+
+one of the padding bits in
+<I>user_desc</I>,
+
+if set, would prevent the descriptor from being considered empty (see
+<B><A HREF="../man2/modify_ldt.2.html">modify_ldt</A></B>(2)).
+
+As a result, the only reliable way to clear a TLS entry is to use
+<B><A HREF="../man3/memset.3.html">memset</A></B>(3)
+
+to zero the entire
+<I>user_desc</I>
+
+structure, including padding bits, and then to set the
+<I>read_exec_only</I>
+
+and
+<I>seg_not_present</I>
+
+bits.
+On Linux 3.19, a
+<I>user_desc</I>
+
+consisting entirely of zeros except for
+<I>entry_number</I>
+
+will also be interpreted as a request to clear a TLS entry, but this
+behaved differently on older kernels.
+<P>
+
+Prior to Linux 3.19, the DS and ES segment registers must not reference
+TLS entries.
+<A NAME="lbAK">&nbsp;</A>
 <H2>SEE ALSO</H2>
 
-<B><A HREF="../man2/get_thread_area.2.html">get_thread_area</A></B>(2)
+<B><A HREF="../man2/arch_prctl.2.html">arch_prctl</A></B>(2),
+
+<B><A HREF="../man2/modify_ldt.2.html">modify_ldt</A></B>(2)
 
 <P>
 
@@ -133,12 +255,13 @@ In the unlikely event that you want to call it directly, use
 <DT><A HREF="#lbAG">VERSIONS</A><DD>
 <DT><A HREF="#lbAH">CONFORMING TO</A><DD>
 <DT><A HREF="#lbAI">NOTES</A><DD>
-<DT><A HREF="#lbAJ">SEE ALSO</A><DD>
+<DT><A HREF="#lbAJ">BUGS</A><DD>
+<DT><A HREF="#lbAK">SEE ALSO</A><DD>
 </DL>
 <HR>
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:36:33 GMT, April 20, 2020
+Time: 03:37:10 GMT, April 20, 2020
 </BODY>
 </HTML>

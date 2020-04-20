@@ -146,17 +146,23 @@ in the location pointed to by
 <DT><B>PR_SET_DUMPABLE</B> (since Linux 2.3.20)
 
 <DD>
-Set the state of the flag determining whether core dumps are produced
-for the calling process upon delivery of a signal whose default behavior is
-to produce a core dump.
-(Normally, this flag is set for a process by default, but it is cleared
-when a set-user-ID or set-group-ID program is executed and also by
-various system calls that manipulate process UIDs and GIDs).
+Set the state of the &quot;dumpable&quot; flag,
+which determines whether core dumps are produced for the calling process
+upon delivery of a signal whose default behavior is to produce a core dump.
+<P>
 In kernels up to and including 2.6.12,
 <I>arg2</I>
 
-must be either 0 (process is not dumpable) or 1 (process is dumpable).
-Between kernels 2.6.13 and 2.6.17, the value 2 was also permitted,
+must be either 0
+(<B>SUID_DUMP_DISABLE</B>,
+
+process is not dumpable) or 1
+(<B>SUID_DUMP_USER</B>,
+
+process is dumpable).
+Between kernels 2.6.13 and 2.6.17,
+
+the value 2 was also permitted,
 which caused any binary which normally would not be dumped
 to be dumped readable by root only;
 for security reasons, this feature has been removed.
@@ -165,11 +171,72 @@ for security reasons, this feature has been removed.
 
 
 (See also the description of
-<I>/proc/sys/fs/suid_dumpable</I>
+<I>/proc/sys/fs/:suid_dumpable</I>
 
 in
 <B><A HREF="../man5/proc.5.html">proc</A></B>(5).)
 
+<P>
+Normally, this flag is set to 1.
+However, it is reset to the current value contained in the file
+<I>/proc/sys/fs/:suid_dumpable</I>
+
+(which by default has the value 0),
+if any of the following attributes of the process
+are changed by the operations listed below:
+
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT>*<DD>
+The effective user or group ID is changed.
+<DT>*<DD>
+The filesystem user or group ID is changed (see
+<B><A HREF="../man7/credentials.7.html">credentials</A></B>(7)).
+
+<DT>*<DD>
+The process's set of permitted capabilities (see
+<B><A HREF="../man7/capabilities.7.html">capabilities</A></B>(7))
+
+is changed such that its new set of capabilities is
+not a subset of its previous set of capabilities.
+</DL>
+</DL>
+
+<DT><DD>
+The operations that may trigger changes to the dumpable flag include:
+
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT>*<DD>
+execution
+(<B><A HREF="../man2/execve.2.html">execve</A></B>(2))
+
+of a set-user-ID or set-group-ID program,
+or a program that has capabilities (see
+<B><A HREF="../man7/capabilities.7.html">capabilities</A></B>(7));
+
+<DT>*<DD>
+<B><A HREF="../man2/capset.2.html">capset</A></B>(2);
+
+and
+<DT>*<DD>
+system calls that change process credentials
+(<B><A HREF="../man2/setuid.2.html">setuid</A></B>(2)
+
+<B><A HREF="../man2/setgid.2.html">setgid</A></B>(2),
+
+<B><A HREF="../man2/setresuid.2.html">setresuid</A></B>(2),
+
+<B><A HREF="../man2/setresgid.2.html">setresgid</A></B>(2),
+
+<B><A HREF="../man2/setgroups.2.html">setgroups</A></B>(2),
+
+and so on).
+
+</DL>
+</DL>
+
+<DT><DD>
 Processes that are not dumpable can not be attached via
 <B><A HREF="../man2/ptrace.2.html">ptrace</A></B>(2)
 
@@ -365,7 +432,10 @@ This value is cleared for the child of a
 <B><A HREF="../man2/fork.2.html">fork</A></B>(2)
 
 and (since Linux 2.4.36 / 2.6.23)
-when executing a set-user-ID or set-group-ID binary.
+when executing a set-user-ID or set-group-ID binary,
+or a binary that has associated capabilities (see
+<B><A HREF="../man7/capabilities.7.html">capabilities</A></B>(7)).
+
 This value is preserved across
 <B><A HREF="../man2/execve.2.html">execve</A></B>(2).
 
@@ -1632,6 +1702,6 @@ get or set the maximum stack size, and so on.
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:36:32 GMT, April 20, 2020
+Time: 03:37:10 GMT, April 20, 2020
 </BODY>
 </HTML>

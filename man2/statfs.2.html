@@ -26,7 +26,7 @@ the source, must acknowledge the copyright and authors of this work.
 <HTML><HEAD><TITLE>Man page of STATFS</TITLE>
 </HEAD><BODY>
 <H1>STATFS</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2014-06-13<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2015-02-21<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -48,10 +48,10 @@ statfs, fstatfs - get filesystem statistics
 <A NAME="lbAD">&nbsp;</A>
 <H2>DESCRIPTION</H2>
 
-The function
+The
 <B>statfs</B>()
 
-returns information about a mounted filesystem.
+system call returns information about a mounted filesystem.
 <I>path</I>
 
 is the pathname of any file within the mounted filesystem.
@@ -64,25 +64,22 @@ structure defined approximately as follows:
 <P>
 
 <PRE>
-#if __WORDSIZE == 32            /* System word size */
-# define __SWORD_TYPE           int
-#else /* __WORDSIZE == 64 */
-# define __SWORD_TYPE           long int
-#endif
-
 struct statfs {
-    __SWORD_TYPE f_type;    /* type of filesystem (see below) */
-    __SWORD_TYPE f_bsize;   /* optimal transfer block size */
-    fsblkcnt_t   f_blocks;  /* total data blocks in filesystem */
-    fsblkcnt_t   f_bfree;   /* free blocks in fs */
-    fsblkcnt_t   f_bavail;  /* free blocks available to
-                               unprivileged user */
-    fsfilcnt_t   f_files;   /* total file nodes in filesystem */
-    fsfilcnt_t   f_ffree;   /* free file nodes in fs */
-    fsid_t       f_fsid;    /* filesystem id */
-    __SWORD_TYPE f_namelen; /* maximum length of filenames */
-    __SWORD_TYPE f_frsize;  /* fragment size (since Linux 2.6) */
-    __SWORD_TYPE f_spare[5];
+    __fsword_t f_type;    /* Type of filesystem (see below) */
+    __fsword_t f_bsize;   /* Optimal transfer block size */
+    fsblkcnt_t f_blocks;  /* Total data blocks in filesystem */
+    fsblkcnt_t f_bfree;   /* Free blocks in filesystem */
+    fsblkcnt_t f_bavail;  /* Free blocks available to
+                             unprivileged user */
+    fsfilcnt_t f_files;   /* Total file nodes in filesystem */
+    fsfilcnt_t f_ffree;   /* Free file nodes in filesystem */
+    fsid_t     f_fsid;    /* Filesystem ID */
+    __fsword_t f_namelen; /* Maximum length of filenames */
+    __fsword_t f_frsize;  /* Fragment size (since Linux 2.6) */
+    __fsword_t f_flags;   /* Mount flags of filesystem
+                             (since Linux 2.6.36) */
+    __fsword_t f_spare[xxx];
+                    /* Padding bytes reserved for future use */
 };
 
 Filesystem types:
@@ -129,6 +126,7 @@ Filesystem types:
    NFS_SUPER_MAGIC       0x6969
    NILFS_SUPER_MAGIC     0x3434
    NTFS_SB_MAGIC         0x5346544e
+   OCFS2_SUPER_MAGIC     0x7461636f
    OPENPROM_SUPER_MAGIC  0x9fa1
    PIPEFS_MAGIC          0x50495045
    PROC_SUPER_MAGIC      0x9fa0
@@ -166,6 +164,67 @@ Most of these MAGIC constants are defined in
 
 and some are hardcoded in kernel sources.
 <P>
+The
+<I>f_flags</I>
+
+is a bit mask indicating mount options for the file system.
+It contains zero or more of the following bits:
+
+<DL COMPACT>
+<DT><B>ST_MANDLOCK</B>
+
+<DD>
+Mandatory locking is permitted on the filesystem (see
+<B><A HREF="../man2/fcntl.2.html">fcntl</A></B>(2)).
+
+<DT><B>ST_NOATIME</B>
+
+<DD>
+Do not update access times; see
+<B><A HREF="../man2/mount.2.html">mount</A></B>(2).
+
+<DT><B>ST_NODEV</B>
+
+<DD>
+Disallow access to device special files on this filesystem.
+<DT><B>ST_NODIRATIME</B>
+
+<DD>
+Do not update directory access times; see
+<B><A HREF="../man2/mount.2.html">mount</A></B>(2).
+
+<DT><B>ST_NOEXEC</B>
+
+<DD>
+Execution of programs is disallowed on this filesystem.
+<DT><B>ST_NOSUID</B>
+
+<DD>
+The set-user-ID and set-group-ID bits are ignored by
+<B><A HREF="../man3/exec.3.html">exec</A></B>(3)
+
+for executable files on this filesystem
+<DT><B>ST_RDONLY</B>
+
+<DD>
+This filesystem is mounted read-only.
+<DT><B>ST_RELATIME</B>
+
+<DD>
+Update atime relative to mtime/ctime; see
+<B><A HREF="../man2/mount.2.html">mount</A></B>(2).
+
+<DT><B>ST_SYNCHRONOUS</B>
+
+<DD>
+Writes are synched to the filesystem immediately (see the description of
+<B>O_SYNC</B>
+
+in
+<B><A HREF="../man2/open.2.html">open</A></B>(2)).
+
+</DL>
+<P>
 
 Nobody knows what
 <I>f_fsid</I>
@@ -174,6 +233,7 @@ is supposed to contain (but see below).
 <P>
 
 Fields that are undefined for a particular filesystem are set to 0.
+<P>
 <B>fstatfs</B>()
 
 returns the same information about an open file referenced by descriptor
@@ -286,6 +346,21 @@ was inspired by the 4.4BSD one
 <A NAME="lbAH">&nbsp;</A>
 <H2>NOTES</H2>
 
+The
+<I>__fsword_t</I>
+
+type used for various fields in the
+<I>statfs</I>
+
+structure definition is a glibc internal type,
+not intended for public use.
+This leaves the programmer in a bit of a conundrum when trying to copy
+or compare these fields to local variables in a program.
+Using
+<I>unsigned&nbsp;int</I>
+
+for such variables suffices on most systems.
+<P>
 The original Linux
 <B>statfs</B>()
 
@@ -444,6 +519,6 @@ for file descriptors created by
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:36:33 GMT, April 20, 2020
+Time: 03:37:11 GMT, April 20, 2020
 </BODY>
 </HTML>
