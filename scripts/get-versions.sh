@@ -5,6 +5,7 @@
 function get-man-pages-versions() {
   (
     cd-into-man-pages-dir &&
+      git checkout --force master &>/dev/null &&
       git pull &>/dev/null &&
       git --no-pager tag --list
   );

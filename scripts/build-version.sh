@@ -6,18 +6,18 @@ function extract-copyright-lines() {
   local file="${1:?file is required}"
   grep -ie '^\.\\" copyright' "$file" | sed 's/^.\\" //';
 }
-declare -f extract-copyright-lines
+export -f extract-copyright-lines
 
 function extract-license-text() {
   local file="${1:?file is required}"
   awk '/%%%LICENSE_START\(/,/%%%LICENSE_END/' "$file"  | sed 's/^.\\" //';
 }
-declare -f extract-license-text
+export -f extract-license-text
 
 function escape-html-content() {
   cat - | sed 's/&/\&amp;/g; s/</\&lt;/g; s/>/\&gt;/g;'
 }
-declare -f esacape-html-content
+export -f escape-html-content
 
 function html-comment-license() {
   local file="${1:?file is required}"
@@ -26,7 +26,7 @@ function html-comment-license() {
   extract-license-text    "$file" | escape-html-content;
   echo "-->";
 }
-declare -f html-comment-license;
+export -f html-comment-license;
 
 function build-file() {
   local file="${1:?file is required}"
@@ -39,9 +39,9 @@ function build-file() {
 export -f build-file;
 
 function get-changed-file-names() {
-  local filter="${1:?filter is required}"
-  local prev_ref="${1:?prev ref is required}";
-  local next_ref="${2:?next ref is required}";
+  local filter="${1:?filter is required}";
+  local prev_ref="${2:?prev ref is required}";
+  local next_ref="${3:?next ref is required}";
   (
     cd-into-man-pages-dir     &&
     git --no-pager diff        \
@@ -99,6 +99,10 @@ function get-all-file-names() { ( cd-into-man-pages-dir && echo ./man?/*; ); }
 function parallel-build-files() {
   (
     parallel --jobs 100% --bar \
+      --env extract-copyright-lines \
+      --env extract-license-text \
+      --env escape-html-content \
+      --env html-comment-license \
       build-file "$MAN_PAGES_REPO_DIR"/{} "$HISTORY_SUBREPO_DIR"/{}.html \
       ::: "$@" 2>&1;
   ) | tee /dev/stderr | log-debug
@@ -138,7 +142,7 @@ function build-first-version(){
 
 function set-man-pages-version() {
   local ref="${1:?ref is required}";
-  (cd "$MAN_PAGES_REPO_DIR" && git checkout --force "$ref") 2>&1 | log-debug
+  (cd-into-man-pages-dir && git checkout --force "$ref") 2>&1 | log-debug
 }
 
 function tag-build() {
@@ -152,9 +156,7 @@ function tag-build() {
       git config user.name 'anon' &&
       git config user.email 'anon@mous.org' &&
       git commit -m "$version ~ $version_date" &&
-      git tag "$version" &&
-      git prune &&
-      git gc
+      git tag "$version"
   ) | tee /dev/stderr | log-debug
 }
 
@@ -172,10 +174,10 @@ function clean-build-dir() {
 
 
 function build-version() {
+  log-debug "build-version args $*";
   local prev_version='';
   local version='';
   local version_date='';
-
   case "$#" in
     1) version="${1:?version argument is required}";;
     2) prev_version="$1"; version="${2:?version argument is required}";;
@@ -199,10 +201,6 @@ function build-version() {
   fi
 
   tag-build "$version" "$version_date";
-  # result=$?
-  # # set-man-pages-version "master";
-  # cd "$REPO_ROOT" || return $result;
-  # return $result;
 }
 
 build-version "$@"

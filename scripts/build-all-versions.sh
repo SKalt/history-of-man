@@ -9,12 +9,13 @@ function main() {
   done
   local max="${#versions[@]}";
   local version="${versions[0]}"
+  log-debug "max=$max; version=$version"
   log-info "processing version 1 / $max: $version"
   "$REPO_ROOT"/scripts/build-version.sh "$version"
 
   local prev_version="$version"
   for ((i = 1 ; i < "$max" ; i++)); do
-    version="${ALL_VERSIONS[$i]}"
+    version="${versions[$i]}"
     log-info "processing version $i / $max: $version"
     "$REPO_ROOT"/scripts/build-version.sh "$prev_version" "$version"
   done
