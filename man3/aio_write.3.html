@@ -5,7 +5,7 @@ Copyright (c) 2003 Andries Brouwer (aeb@cwi.nl)
 <HTML><HEAD><TITLE>Man page of AIO_WRITE</TITLE>
 </HEAD><BODY>
 <H1>AIO_WRITE</H1>
-Section: Linux Programmer's Manual (3)<BR>Updated: 2003-11-14<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2010-10-02<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -28,18 +28,34 @@ Link with <I>-lrt</I>.
 The
 <B>aio_write</B>()
 
-function requests an asynchronous &quot;n = write(fd, buf, count)&quot;
-with fd, buf, count given by
-<I>aiocbp-&gt;aio_fildes</I>,
+function queues the I/O request described by the buffer pointed to by
+<I>aiocb</I>.
 
-<I>aiocbp-&gt;aio_buf</I>,
+This function is the asynchronous analog of
+<B><A HREF="../man2/write.2.html">write</A></B>(2).
 
-<I>aiocbp-&gt;aio_nbytes</I>,
+The arguments of the call
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;write(fd,&nbsp;buf,&nbsp;count)
+<P>
+correspond (in order) to the fields
+<I>aio_fildes</I>,
 
-respectively.
-The return status n can be retrieved upon completion using
-<B><A HREF="../man3/aio_return.3.html">aio_return</A></B>(3).
+<I>aio_buf</I>,
 
+and
+<I>aio_nbytes</I>
+
+of the structure pointed to by
+<I>aiocbp</I>.
+
+(See
+<B><A HREF="../man7/aio.7.html">aio</A></B>(7)
+
+for a description of the
+<I>aiocb</I>
+
+structure.)
 <P>
 
 If
@@ -49,12 +65,15 @@ is not set, the data is written starting at the
 absolute file offset
 <I>aiocbp-&gt;aio_offset</I>,
 
-regardless of the current file position.
+regardless of the current file offset.
 If
 <B>O_APPEND</B>
 
-is set, the data is written at the end of the file.
-After this request, the value of the current file position is unspecified.
+is set, data is written at the end of the file in the same order as
+<B>aio_write</B>()
+
+calls are made.
+After the call, the value of the current file offset is unspecified.
 <P>
 
 The &quot;asynchronous&quot; means that this call returns as soon as the
@@ -63,6 +82,16 @@ when the call returns.
 One tests for completion using
 <B><A HREF="../man3/aio_error.3.html">aio_error</A></B>(3).
 
+The return status of a completed I/O operation can be obtained
+<B><A HREF="../man3/aio_return.3.html">aio_return</A></B>(3).
+
+Asynchronous notification of I/O completion can be obtained by setting
+<I>aiocbp-&gt;aio_sigevent</I>
+
+appropriately; see
+<B><A HREF="../man7/sigevent.7.html">sigevent</A></B>(7)
+
+for details.
 <P>
 
 If
@@ -91,7 +120,7 @@ is returned, and
 <I>errno</I>
 
 is set appropriately.
-If an error is first detected later, it will
+If an error is only detected later, it will
 be reported via
 <B><A HREF="../man3/aio_return.3.html">aio_return</A></B>(3)
 
@@ -140,21 +169,32 @@ are invalid.
 This function is not supported.
 </DL>
 <A NAME="lbAG">&nbsp;</A>
+<H2>VERSIONS</H2>
+
+The
+<B>aio_write</B>()
+
+function is available since glibc 2.1.
+<A NAME="lbAH">&nbsp;</A>
 <H2>CONFORMING TO</H2>
 
-POSIX.1-2001.
-<A NAME="lbAH">&nbsp;</A>
+POSIX.1-2001, POSIX.1-2008.
+<A NAME="lbAI">&nbsp;</A>
 <H2>NOTES</H2>
 
 It is a good idea to zero out the control block before use.
-This control block must not be changed while the write operation
+The control block must not be changed while the write operation
 is in progress.
 The buffer area being written out
 
-must not be accessed during the operation or undefined results may
-occur.
+must not be accessed during the operation or undefined results may occur.
 The memory areas involved must remain valid.
-<A NAME="lbAI">&nbsp;</A>
+<P>
+Simultaneous I/O operations specifying the same
+<I>aiocb</I>
+
+structure produce undefined results.
+<A NAME="lbAJ">&nbsp;</A>
 <H2>SEE ALSO</H2>
 
 <B><A HREF="../man3/aio_cancel.3.html">aio_cancel</A></B>(3),
@@ -167,7 +207,9 @@ The memory areas involved must remain valid.
 
 <B><A HREF="../man3/aio_return.3.html">aio_return</A></B>(3),
 
-<B><A HREF="../man3/aio_suspend.3.html">aio_suspend</A></B>(3)
+<B><A HREF="../man3/aio_suspend.3.html">aio_suspend</A></B>(3),
+
+<B><A HREF="../man7/aio.7.html">aio</A></B>(7)
 
 <P>
 
@@ -179,14 +221,15 @@ The memory areas involved must remain valid.
 <DT><A HREF="#lbAD">DESCRIPTION</A><DD>
 <DT><A HREF="#lbAE">RETURN VALUE</A><DD>
 <DT><A HREF="#lbAF">ERRORS</A><DD>
-<DT><A HREF="#lbAG">CONFORMING TO</A><DD>
-<DT><A HREF="#lbAH">NOTES</A><DD>
-<DT><A HREF="#lbAI">SEE ALSO</A><DD>
+<DT><A HREF="#lbAG">VERSIONS</A><DD>
+<DT><A HREF="#lbAH">CONFORMING TO</A><DD>
+<DT><A HREF="#lbAI">NOTES</A><DD>
+<DT><A HREF="#lbAJ">SEE ALSO</A><DD>
 </DL>
 <HR>
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:07:36 GMT, April 20, 2020
+Time: 03:08:06 GMT, April 20, 2020
 </BODY>
 </HTML>

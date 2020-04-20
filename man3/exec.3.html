@@ -5,13 +5,13 @@ Copyright (c) 1991 The Regents of the University of California.
 <HTML><HEAD><TITLE>Man page of EXEC</TITLE>
 </HEAD><BODY>
 <H1>EXEC</H1>
-Section: Linux Programmer's Manual (3)<BR>Updated: 2009-02-22<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2010-09-25<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
 <H2>NAME</H2>
 
-execl, execlp, execle, execv, execvp - execute a file
+execl, execlp, execle, execv, execvp, execvpe - execute a file
 <A NAME="lbAC">&nbsp;</A>
 <H2>SYNOPSIS</H2>
 
@@ -43,6 +43,24 @@ execl, execlp, execle, execv, execvp - execute a file
 
 <B>int execvp(const char *</B><I>file</I><B>, char *const </B><I>argv</I><B>[]);</B>
 
+<BR>
+
+<B>int execvpe(const char *</B><I>file</I><B>, char *const </B><I>argv</I><B>[],</B>
+
+<BR>
+
+<B>           char *const </B><I>envp</I><B>[]);</B>
+
+<P>
+
+Feature Test Macro Requirements for glibc (see
+<B><A HREF="../man7/feature_test_macros.7.html">feature_test_macros</A></B>(7)):
+
+
+<P>
+<B>execvpe</B>():
+
+_GNU_SOURCE
 <A NAME="lbAD">&nbsp;</A>
 <H2>DESCRIPTION</H2>
 
@@ -60,7 +78,7 @@ The functions described in this manual page are front-ends for
 for further details about the replacement of the current process image.)
 <P>
 
-The initial argument for these functions is the pathname of a file which is
+The initial argument for these functions is the name of a file that is
 to be executed.
 <P>
 
@@ -97,10 +115,12 @@ pointer, and, since these are variadic functions, this pointer must be cast
 <P>
 
 The
-<B>execv</B>()
+<B>execv</B>(),
+
+<B>execvp</B>(),
 
 and
-<B>execvp</B>()
+<B>execvpe</B>()
 
 functions provide an array of pointers to null-terminated strings that
 represent the argument list available to the new program.
@@ -115,14 +135,16 @@ be terminated by a NULL pointer.
 The
 <B>execle</B>()
 
-function also specifies the environment of the executed process by following
-the NULL
-pointer that terminates the list of arguments in the argument list or the
-pointer to the
-<I>argv</I>
+and
+<B>execvpe</B>()
 
-array with an additional argument.
-This additional
+functions allow the caller to specify the environment of the
+executed program via the argument
+<I>envp</I>.
+
+The
+<I>envp</I>
+
 argument is an array of pointers to null-terminated strings and
 <I>must</I>
 
@@ -131,30 +153,44 @@ The other functions take the environment for the new process
 image from the external variable
 <I>environ</I>
 
-in the current process.
+in the calling process.
 <A NAME="lbAE">&nbsp;</A>
 <H3>Special semantics for execlp() and execvp()</H3>
 
 <P>
 
-The functions
-<B>execlp</B>()
+The
+<B>execlp</B>(),
+
+<B>execvp</B>(),
 
 and
-<B>execvp</B>()
+<B>execvpe</B>()
 
-will duplicate the actions of the shell in searching for an executable file
+functions duplicate the actions of the shell in
+searching for an executable file
 if the specified filename does not contain a slash (/) character.
-The search path is the path specified in the environment by the
+The file is sought in the colon-separated list of directory pathnames
+specified in the
 <B>PATH</B>
 
-variable.
-If this variable isn't specified, the default path
-&quot;:/bin:/usr/bin&quot; is used.
-In addition, certain
-errors are treated specially.
-<P>
+environment variable.
+If this variable isn't defined, the path list defaults to
+the current directory followed by the list of directories returned by
+<I>confstr(_CS_PATH)</I>.
 
+(This
+<B><A HREF="../man3/confstr.3.html">confstr</A></B>(3)
+
+call typically returns the value &quot;/bin:/usr/bin&quot;.)
+<P>
+If the specified filename includes a slash character, then
+<B>PATH</B>
+
+is ignored, and the file at the specified pathname is executed.
+<P>
+In addition, certain errors are treated specially.
+<P>
 If permission is denied for a file (the attempted
 <B><A HREF="../man2/execve.2.html">execve</A></B>(2)
 
@@ -170,7 +206,6 @@ set to
 <B>EACCES</B>.
 
 <P>
-
 If the header of a file isn't recognized (the attempted
 <B><A HREF="../man2/execve.2.html">execve</A></B>(2)
 
@@ -185,31 +220,43 @@ with the path of the file as its first argument.
 <A NAME="lbAF">&nbsp;</A>
 <H2>RETURN VALUE</H2>
 
-If any of the
+The
 <B>exec</B>()
 
-functions returns, an error will have occurred.
+functions only return if an error has have occurred.
 The return value is -1, and
 <I>errno</I>
 
-will be set to indicate the error.
+is set to indicate the error.
 <A NAME="lbAG">&nbsp;</A>
 <H2>ERRORS</H2>
 
 All of these functions may fail and set
 <I>errno</I>
 
-for any of the errors specified for the library function
+for any of the errors specified for
 <B><A HREF="../man2/execve.2.html">execve</A></B>(2).
 
 <A NAME="lbAH">&nbsp;</A>
+<H2>VERSIONS</H2>
+
+The
+<B>execvpe</B>()
+
+function first appeared in glibc 2.11.
+<A NAME="lbAI">&nbsp;</A>
 <H2>CONFORMING TO</H2>
 
-POSIX.1-2001.
-<A NAME="lbAI">&nbsp;</A>
+POSIX.1-2001, POSIX.1-2008.
+<P>
+The
+<B>execvpe</B>()
+
+function is a GNU extension.
+<A NAME="lbAJ">&nbsp;</A>
 <H2>NOTES</H2>
 
-On some other systems the default path (used when the environment
+On some other systems, the default path (used when the environment
 does not contain the variable <B>PATH</B>) has the current working
 directory listed after
 <I>/bin</I>
@@ -255,7 +302,7 @@ and
 upon which they returned.
 They now return if any error other than the ones
 described above occurs.
-<A NAME="lbAJ">&nbsp;</A>
+<A NAME="lbAK">&nbsp;</A>
 <H2>SEE ALSO</H2>
 
 <B><A HREF="../man1/sh.1.html">sh</A></B>(1),
@@ -283,14 +330,15 @@ described above occurs.
 </DL>
 <DT><A HREF="#lbAF">RETURN VALUE</A><DD>
 <DT><A HREF="#lbAG">ERRORS</A><DD>
-<DT><A HREF="#lbAH">CONFORMING TO</A><DD>
-<DT><A HREF="#lbAI">NOTES</A><DD>
-<DT><A HREF="#lbAJ">SEE ALSO</A><DD>
+<DT><A HREF="#lbAH">VERSIONS</A><DD>
+<DT><A HREF="#lbAI">CONFORMING TO</A><DD>
+<DT><A HREF="#lbAJ">NOTES</A><DD>
+<DT><A HREF="#lbAK">SEE ALSO</A><DD>
 </DL>
 <HR>
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:07:39 GMT, April 20, 2020
+Time: 03:08:08 GMT, April 20, 2020
 </BODY>
 </HTML>
