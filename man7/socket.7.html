@@ -260,12 +260,127 @@ with the socket level set to
 <B>SOL_SOCKET </B>
 
 for all sockets:
+
+
+
+
 <DL COMPACT>
+<DT><B>SO_ACCEPTCONN</B>
+
+<DD>
+Returns a value indicating whether or not this socket has been marked
+to accept connections with
+<B>listen</B>().
+
+The value 0 indicates that this is not a listening socket,
+the value 1 indicates that this is a listening socket.
+Can only be read
+with 
+<B>getsockopt</B>().
+
+<DT><B>SO_BSDCOMPAT</B>
+
+<DD>
+Enable BSD bug-to-bug compatibility. 
+This is used by the UDP protocol module in Linux 2.0 and 2.2.
+If enabled ICMP errors received for a UDP socket will not be passed
+to the user program. 
+In later kernel versions, support for this option has been phased out:
+Linux 2.4 silently ignores it, and Linux 2.6 generates a kernel warning
+(printk()) if a program uses this option.
+Linux 2.0 also enabled BSD bug-to-bug compatibility 
+options (random header changing, skipping of the broadcast flag) for raw
+sockets with this option, but that was removed in Linux 2.2. 
+<DT><B>SO_BINDTODEVICE</B>
+
+<DD>
+Bind this socket to a particular device like "eth0",
+as specified in the passed interface name. If the
+name is an empty string or the option length is zero, the socket device
+binding is removed. The passed option is a variable-length null terminated
+interface name string with the maximum size of 
+<B>IFNAMSIZ</B>.
+
+If a socket is bound to an interface,
+only packets received from that particular interface are processed by the 
+socket. Note that this only works for some socket types, particularly
+<B>AF_INET</B>
+
+sockets. It is not supported for packet sockets (use normal 
+<B><A HREF="../man8/bind.8.html">bind</A></B>(8)
+
+there).
+<DT><B>SO_BROADCAST</B>
+
+<DD>
+Set or get the broadcast flag. When enabled, datagram sockets
+receive packets sent to a broadcast address and they are allowed to send 
+packets to a broadcast address.
+This option has no effect on stream-oriented sockets.
+<DT><B>SO_DEBUG </B>
+
+<DD>
+Enable socket debugging. Only allowed for processes with the
+<B>CAP_NET_ADMIN</B>
+
+capability or an effective user ID of 0.
+<DT><B>SO_ERROR</B>
+
+<DD>
+Get and clear the pending socket error. Only valid as a 
+<B>getsockopt</B>().
+
+Expects an integer. 
+<DT><B>SO_DONTROUTE</B>
+
+<DD>
+Don't send via a gateway, only send to directly connected hosts.
+The same effect can be achieved by setting the 
+<B>MSG_DONTROUTE</B>
+
+flag on a socket 
+<B><A HREF="../man2/send.2.html">send</A></B>(2)
+
+operation. Expects an integer boolean flag. 
 <DT><B>SO_KEEPALIVE</B>
 
 <DD>
 Enable sending of keep-alive messages on connection-oriented sockets. 
 Expects an integer boolean flag. 
+<DT><B>SO_LINGER</B>
+
+<DD>
+Sets or gets the 
+<B>SO_LINGER </B>
+
+option. The argument is a 
+<I>linger </I>
+
+structure.
+<P>
+
+<PRE>
+struct linger {
+    int l_onoff;    /* linger active */
+    int l_linger;   /* how many seconds to linger for */
+};
+</PRE>
+
+
+<DT><DD>
+When enabled, a 
+<B><A HREF="../man2/close.2.html">close</A></B>(2)
+
+or
+<B><A HREF="../man2/shutdown.2.html">shutdown</A></B>(2)
+
+will not return until all queued messages for the socket have been
+successfully sent or the linger timeout has been reached. Otherwise,
+the call returns immediately and the closing is done in the background.
+When the socket is closed as part of
+<B><A HREF="../man2/exit.2.html">exit</A></B>(2),
+
+it always lingers in the background.
 <DT><B>SO_OOBINLINE</B>
 
 <DD>
@@ -277,6 +392,61 @@ Otherwise out-of-band data is only passed when the
 flag is set during receiving. 
 
 
+<DT><B>SO_PASSCRED</B>
+
+<DD>
+Enable or disable the receiving of the
+<B>SCM_CREDENTIALS</B>
+
+control message. For more information see 
+<B><A HREF="../man7/unix.7.html">unix</A></B>(7).
+
+<DT><B>SO_PEERCRED</B>
+
+<DD>
+Return the credentials of the foreign process connected to this socket. 
+This is only possible for connected
+<B>PF_UNIX </B>
+
+stream sockets and
+<B>PF_UNIX </B>
+
+stream and datagram socket pairs created using
+<B><A HREF="../man2/socketpair.2.html">socketpair</A></B>(2);
+
+see 
+<B><A HREF="../man7/unix.7.html">unix</A></B>(7).
+
+The returned credentials are those that were in effect at the time
+of the call to
+<B><A HREF="../man2/connect.2.html">connect</A></B>(2)
+
+or
+<B><A HREF="../man2/socketpair.2.html">socketpair</A></B>(2).
+
+Argument is a
+<I>ucred </I>
+
+structure. 
+Only valid as a 
+<B>getsockopt</B>().
+
+<DT><B>SO_PRIORITY</B>
+
+<DD>
+Set the protocol-defined priority for all packets to be sent on 
+this socket.
+Linux uses this value to order the networking queues: 
+packets with a higher priority may be processed first depending 
+on the selected device queueing discipline. 
+For
+<B><A HREF="../man7/ip.7.html">ip</A></B>(7),
+
+this also sets the IP type-of-service (TOS) field for outgoing packets.  
+Setting a priority outside the range 0 to 6 requires the
+<B>CAP_NET_ADMIN</B>
+
+capability.
 <DT><B>SO_RCVLOWAT</B> and <B>SO_SNDLOWAT</B>
 
 <DD>
@@ -338,164 +508,6 @@ set to EAGAIN or EWOULDBLOCK
 just as if the socket was specified to be nonblocking.
 If the timeout is set to zero (the default)
 then the operation will never timeout.
-<DT><B>SO_BSDCOMPAT</B>
-
-<DD>
-Enable BSD bug-to-bug compatibility. 
-This is used by the UDP protocol module in Linux 2.0 and 2.2.
-If enabled ICMP errors received for a UDP socket will not be passed
-to the user program. 
-In later kernel versions, support for this option has been phased out:
-Linux 2.4 silently ignores it, and Linux 2.6 generates a kernel warning
-(printk()) if a program uses this option.
-Linux 2.0 also enabled BSD bug-to-bug compatibility 
-options (random header changing, skipping of the broadcast flag) for raw
-sockets with this option, but that was removed in Linux 2.2. 
-<DT><B>SO_PASSCRED</B>
-
-<DD>
-Enable or disable the receiving of the
-<B>SCM_CREDENTIALS</B>
-
-control message. For more information see 
-<B><A HREF="../man7/unix.7.html">unix</A></B>(7).
-
-<DT><B>SO_PEERCRED</B>
-
-<DD>
-Return the credentials of the foreign process connected to this socket. 
-This is only possible for connected
-<B>PF_UNIX </B>
-
-stream sockets and
-<B>PF_UNIX </B>
-
-stream and datagram socket pairs created using
-<B><A HREF="../man2/socketpair.2.html">socketpair</A></B>(2);
-
-see 
-<B><A HREF="../man7/unix.7.html">unix</A></B>(7).
-
-The returned credentials are those that were in effect at the time
-of the call to
-<B><A HREF="../man2/connect.2.html">connect</A></B>(2)
-
-or
-<B><A HREF="../man2/socketpair.2.html">socketpair</A></B>(2).
-
-Argument is a
-<I>ucred </I>
-
-structure. 
-Only valid as a 
-<B>getsockopt</B>().
-
-<DT><B>SO_BINDTODEVICE</B>
-
-<DD>
-Bind this socket to a particular device like "eth0",
-as specified in the passed interface name. If the
-name is an empty string or the option length is zero, the socket device
-binding is removed. The passed option is a variable-length null terminated
-interface name string with the maximum size of 
-<B>IFNAMSIZ</B>.
-
-If a socket is bound to an interface,
-only packets received from that particular interface are processed by the 
-socket. Note that this only works for some socket types, particularly
-<B>AF_INET</B>
-
-sockets. It is not supported for packet sockets (use normal 
-<B><A HREF="../man8/bind.8.html">bind</A></B>(8)
-
-there).
-<DT><B>SO_DEBUG </B>
-
-<DD>
-Enable socket debugging. Only allowed for processes with the
-<B>CAP_NET_ADMIN</B>
-
-capability or an effective user ID of 0.
-<DT><B>SO_REUSEADDR</B>
-
-<DD>
-Indicates that the rules used in validating addresses supplied in a 
-<B><A HREF="../man2/bind.2.html">bind</A></B>(2)
-
-call should allow reuse of local addresses. For
-<B>PF_INET</B>
-
-sockets this
-means that a socket may bind, except when there
-is an active listening socket bound to the address.
-When the listening socket is bound to
-<B>INADDR_ANY</B>
-
-with a specific port then it is not possible
-to bind to this port for any local address.
-<DT><B>SO_TYPE</B>
-
-<DD>
-Gets the socket type as an integer (like 
-<B>SOCK_STREAM</B>).
-
-Can only be read
-with 
-<B>getsockopt</B>().
-
-
-
-<DT><B>SO_ACCEPTCONN</B>
-
-<DD>
-Returns a value indicating whether or not this socket has been marked
-to accept connections with
-<B>listen</B>().
-
-The value 0 indicates that this is not a listening socket,
-the value 1 indicates that this is a listening socket.
-Can only be read
-with 
-<B>getsockopt</B>().
-
-<DT><B>SO_DONTROUTE</B>
-
-<DD>
-Don't send via a gateway, only send to directly connected hosts.
-The same effect can be achieved by setting the 
-<B>MSG_DONTROUTE</B>
-
-flag on a socket 
-<B><A HREF="../man2/send.2.html">send</A></B>(2)
-
-operation. Expects an integer boolean flag. 
-<DT><B>SO_BROADCAST</B>
-
-<DD>
-Set or get the broadcast flag. When enabled, datagram sockets
-receive packets sent to a broadcast address and they are allowed to send 
-packets to a broadcast address.
-This option has no effect on stream-oriented sockets.
-<DT><B>SO_SNDBUF </B>
-
-<DD>
-Sets or gets the maximum socket send buffer in bytes.  
-The kernel doubles this value (to allow space for bookkeeping overhead) 
-when it is set using
-
-<B>setsockopt</B>(),
-
-and this doubled value is returned by
-<B>getsockopt</B>().
-
-The default value is set by the 
-<B>wmem_default </B>
-
-sysctl and the maximum allowed value is set by the 
-<B>wmem_max</B>
-
-sysctl.   
-The minimum (doubled) value for this option is 2048.
 <DT><B>SO_RCVBUF</B>
 
 <DD>
@@ -516,69 +528,69 @@ sysctl and the maximum allowed value is set by the
 
 sysctl.   
 The minimum (doubled) value for this option is 256.
-<DT><B>SO_LINGER</B>
+<DT><B>SO_RCVBUFFORCE</B> (since Linux 2.6.14)
 
 <DD>
-Sets or gets the 
-<B>SO_LINGER </B>
+Using this socket option, a privileged
+(<B>CAP_NET_ADMIN</B>)
 
-option. The argument is a 
-<I>linger </I>
+process can perform the same task as 
+<B>SO_RCVBUF</B>,
 
-structure.
-</DL>
-<P>
+but the 
+<B>rmem_max</B>
 
-<DL COMPACT><DT><DD>
-<PRE>
-
-struct linger {
-    int   l_onoff;    /* linger active */
-    int   l_linger;   /* how many seconds to linger for */
-};
-
-</PRE>
-
-</DL>
-
-<DL COMPACT>
-<DT><DD>
-When enabled, a 
-<B><A HREF="../man2/close.2.html">close</A></B>(2)
-
-or
-<B><A HREF="../man2/shutdown.2.html">shutdown</A></B>(2)
-
-will not return until all queued messages for the socket have been
-successfully sent or the linger timeout has been reached. Otherwise,
-the call returns immediately and the closing is done in the background.
-When the socket is closed as part of
-<B><A HREF="../man2/exit.2.html">exit</A></B>(2),
-
-it always lingers in the background.
-<DT><B>SO_PRIORITY</B>
+limit can be overridden.
+<DT><B>SO_REUSEADDR</B>
 
 <DD>
-Set the protocol-defined priority for all packets to be sent on 
-this socket.
-Linux uses this value to order the networking queues: 
-packets with a higher priority may be processed first depending 
-on the selected device queueing discipline. 
-For
-<B><A HREF="../man7/ip.7.html">ip</A></B>(7),
+Indicates that the rules used in validating addresses supplied in a 
+<B><A HREF="../man2/bind.2.html">bind</A></B>(2)
 
-this also sets the IP type-of-service (TOS) field for outgoing packets.  
-Setting a priority outside the range 0 to 6 requires the
-<B>CAP_NET_ADMIN</B>
+call should allow reuse of local addresses. For
+<B>PF_INET</B>
 
-capability.
-<DT><B>SO_ERROR</B>
+sockets this
+means that a socket may bind, except when there
+is an active listening socket bound to the address.
+When the listening socket is bound to
+<B>INADDR_ANY</B>
+
+with a specific port then it is not possible
+to bind to this port for any local address.
+<DT><B>SO_SNDBUF </B>
 
 <DD>
-Get and clear the pending socket error. Only valid as a 
+Sets or gets the maximum socket send buffer in bytes.  
+The kernel doubles this value (to allow space for bookkeeping overhead) 
+when it is set using
+
+<B>setsockopt</B>(),
+
+and this doubled value is returned by
 <B>getsockopt</B>().
 
-Expects an integer. 
+The default value is set by the 
+<B>wmem_default </B>
+
+sysctl and the maximum allowed value is set by the 
+<B>wmem_max</B>
+
+sysctl.   
+The minimum (doubled) value for this option is 2048.
+<DT><B>SO_SNDBUFFORCE</B> (since Linux 2.6.14)
+
+<DD>
+Using this socket option, a privileged
+(<B>CAP_NET_ADMIN</B>)
+
+process can perform the same task as 
+<B>SO_SNDBUF</B>,
+
+but the 
+<B>wmem_max</B>
+
+limit can be overridden.
 <DT><B>SO_TIMESTAMP</B>
 
 <DD>
@@ -600,6 +612,16 @@ See
 <B><A HREF="../man3/cmsg.3.html">cmsg</A></B>(3)
 
 for details on control messages.
+<DT><B>SO_TYPE</B>
+
+<DD>
+Gets the socket type as an integer (like 
+<B>SOCK_STREAM</B>).
+
+Can only be read
+with 
+<B>getsockopt</B>().
+
 </DL>
 <A NAME="lbAG">&nbsp;</A>
 <H2>SIGNALS</H2>
@@ -722,12 +744,11 @@ These operations can be accessed using
 <B><A HREF="../man2/ioctl.2.html">ioctl</A></B>(2):
 
 <P>
-<DL COMPACT><DT><DD>
+
 <PRE>
 <I>error</I><B> = ioctl(</B><I>ip_socket</I><B>, </B><I>ioctl_type</I><B>, </B><I>&amp;value_result</I><B>);</B>
 </PRE>
 
-</DL>
 
 <P>
 <DL COMPACT>
@@ -923,6 +944,6 @@ a protocol specific setting, and could not be read or written.
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 02:23:58 GMT, April 20, 2020
+Time: 02:24:25 GMT, April 20, 2020
 </BODY>
 </HTML>

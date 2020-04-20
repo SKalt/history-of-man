@@ -4,7 +4,7 @@
 <HTML><HEAD><TITLE>Man page of SELECT</TITLE>
 </HEAD><BODY>
 <H1>SELECT</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2001-02-09<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2006-03-11<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -14,68 +14,55 @@ select, pselect, FD_CLR, FD_ISSET, FD_SET, FD_ZERO - synchronous I/O multiplexin
 <A NAME="lbAC">&nbsp;</A>
 <H2>SYNOPSIS</H2>
 
+<PRE>
 /* According to POSIX 1003.1-2001 */
 <BR>
-
 <B>#include &lt;<A HREF="file:///usr/include/sys/select.h">sys/select.h</A>&gt;</B>
 
-<P>
 /* According to earlier standards */
 <BR>
-
 <B>#include &lt;<A HREF="file:///usr/include/sys/time.h">sys/time.h</A>&gt;</B>
-
 <BR>
-
 <B>#include &lt;<A HREF="file:///usr/include/sys/types.h">sys/types.h</A>&gt;</B>
-
 <BR>
-
 <B>#include &lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;</B>
 
-<P>
-<B>int select(int </B><I>n</I><B>, fd_set *</B><I>readfds</I><B>,
-fd_set *</B><I>writefds</I><B>, fd_set *</B><I>exceptfds</I><B>,
-struct timeval *</B><I>timeout</I><B>);
-<P>
-int pselect(int </B><I>n</I><B>, fd_set *</B><I>readfds</I><B>,
-fd_set *</B><I>writefds</I><B>, fd_set *</B><I>exceptfds</I><B>,
-const struct timespec *</B><I>timeout</I><B>, const sigset_t *</B><I>sigmask</I><B>);
-<P>
+<B>int select(int </B><I>n</I><B>, fd_set *</B><I>readfds</I><B>, fd_set *</B><I>writefds</I><B>, 
+           fd_set *</B><I>exceptfds</I><B>, struct timeval *</B><I>timeout</I><B>);
+
 void FD_CLR(int </B><I>fd</I><B>, fd_set *</B><I>set</I><B>);</B>
-
 <BR>
-
 <B>int FD_ISSET(int </B><I>fd</I><B>, fd_set *</B><I>set</I><B>);</B>
-
 <BR>
-
 <B>void FD_SET(int </B><I>fd</I><B>, fd_set *</B><I>set</I><B>);</B>
-
 <BR>
-
 <B>void FD_ZERO(fd_set *</B><I>set</I><B>);</B>
 
+<B>#define _XOPEN_SOURCE 600</B>
+<B>#include &lt;<A HREF="file:///usr/include/sys/select.h">sys/select.h</A>&gt;</B>
+
+<B>int pselect(int </B><I>n</I><B>, fd_set *</B><I>readfds</I><B>, fd_set *</B><I>writefds</I><B>, 
+           fd_set *</B><I>exceptfds</I><B>, const struct timespec *</B><I>timeout</I><B>, 
+           const sigset_t *</B><I>sigmask</I><B>);
+</B></PRE>
 
 <A NAME="lbAD">&nbsp;</A>
 <H2>DESCRIPTION</H2>
 
-The functions
 <B>select</B>()
 
 and
 <B>pselect</B>()
 
-wait for a number of file descriptors to change status.
+wait for one or more file descriptors to change status.
 <P>
 
-Their function is identical, with three differences:
+Their operation is identical, with three differences:
 <DL COMPACT>
 <DT>(i)<DD>
-The
 <B>select</B>()
 
-function uses a timeout that is a
+uses a timeout that is a
 <I>struct timeval</I>
 
 (with seconds and microseconds), while
@@ -86,24 +73,22 @@ uses a
 
 (with seconds and nanoseconds).
 <DT>(ii)<DD>
-The
 <B>select</B>()
 
-function may update the
+may update the
 <I>timeout</I>
 
-parameter to indicate how much time was left. The
+argument to indicate how much time was left.
 <B>pselect</B>()
 
-function does not change this parameter.
+does not change this argument.
 <DT>(iii)<DD>
-The
 <B>select</B>()
 
-function has no
+has no
 <I>sigmask</I>
 
-parameter, and behaves as
+argument, and behaves as
 <B>pselect</B>()
 
 called with NULL
@@ -181,20 +166,51 @@ first replaces the current signal mask by the one pointed to by
 <I>sigmask</I>,
 
 then does the `select' function, and then restores the original
-signal mask again.
+signal mask.
 <P>
 
-The idea of
+Other than the difference in the precision of the
+<I>timeout</I>
+
+argument, the following 
 <B>pselect</B>()
 
-is that if one wants to wait for an event, either a signal
-or something on a file descriptor, an atomic test is needed to prevent
-race conditions. (Suppose the signal handler sets a global flag and
+call:
+<PRE>
+
+    ready = pselect(n, &amp;readfds, &amp;writefds, &amp;exceptfds, 
+                    timeout, &amp;sigmask);
+
+</PRE>
+
+is equivalent to
+<I>atomically</I>
+
+executing the following calls:
+<PRE>
+
+    sigset_t origmask;
+
+    sigprocmask(SIG_SETMASK, &amp;sigmask, &amp;origmask);
+    ready = select(nfds, &amp;readfds, &amp;writefds, &amp;exceptfds, timeout);
+    sigprocmask(SIG_SETMASK, &amp;origmask, NULL);
+</PRE>
+
+<P>
+
+The reason that 
+<B>pselect</B>()
+
+is needed is that if one wants to wait for either a signal
+or for a file descriptor to become ready, then
+an atomic test is needed to prevent race conditions. 
+(Suppose the signal handler sets a global flag and
 returns. Then a test of this global flag followed by a call of
 <B>select</B>()
 
 could hang indefinitely if the signal arrived just after the test
-but just before the call. On the other hand,
+but just before the call. 
+By contrast,
 <B>pselect</B>()
 
 allows one to first block signals, handle the signals that have come in,
@@ -205,10 +221,6 @@ with the desired
 <I>sigmask</I>,
 
 avoiding the race.)
-Since Linux today does not have a
-<B>pselect</B>()
-
-system call, the current glibc2 routine still contains this race.
 <A NAME="lbAE">&nbsp;</A>
 <H3>The timeout</H3>
 
@@ -217,7 +229,7 @@ The time structures involved are defined in
 
 and look like
 <P>
-<DL COMPACT><DT><DD>
+
 <PRE>
 struct timeval { 
     long    tv_sec;         /* seconds */
@@ -225,12 +237,11 @@ struct timeval {
 };
 </PRE>
 
-</DL>
 
 <P>
 and
 <P>
-<DL COMPACT><DT><DD>
+
 <PRE>
 struct timespec {
     long    tv_sec;         /* seconds */
@@ -238,7 +249,6 @@ struct timespec {
 };
 </PRE>
 
-</DL>
 
 <P>
 (However, see below on the POSIX 1003.1-2001 versions.)
@@ -256,14 +266,16 @@ zero, and a non-null
 as a fairly portable way to sleep with subsecond precision.
 <P>
 
-On Linux, the function
+On Linux, 
 <B>select</B>()
 
 modifies
 <I>timeout</I>
 
 to reflect the amount of time not slept; most other implementations
-do not do this.  This causes problems both when Linux code which reads
+do not do this.
+(POSIX.1-2001 permits either behaviour.)
+This causes problems both when Linux code which reads
 <I>timeout</I>
 
 is ported to other operating systems, and when code is ported to Linux
@@ -375,25 +387,19 @@ main(void) {
 <A NAME="lbAI">&nbsp;</A>
 <H2>CONFORMING TO</H2>
 
-4.4BSD (the
-<B>select</B>()
+4.4BSD 
+(<B>select</B>()
 
-function first appeared in 4.2BSD).  Generally portable to/from
+first appeared in 4.2BSD).  Generally portable to/from
 non-BSD systems supporting clones of the BSD socket layer (including
 System V variants).  However, note that the System V variant typically
 sets the timeout variable before exit, but the BSD variant does not.
 <P>
 
-The
 <B>pselect</B>()
 
-function is defined in IEEE Std 1003.1g-2000 (POSIX.1g), and part of
+is defined in IEEE Std 1003.1g-2000 (POSIX.1g), and in
 POSIX 1003.1-2001.
-It is found in glibc2.1 and later.
-Glibc2.0 has a function with this name, that however does not take a
-<I>sigmask</I>
-
-parameter.
 <A NAME="lbAJ">&nbsp;</A>
 <H2>NOTES</H2>
 
@@ -467,14 +473,68 @@ is defined, under glibc 2.2.2-2.2.4 it gives it when
 is defined and has a value of 600 or larger.
 No doubt, since POSIX 1003.1-2001, it should give the prototype by default.
 <A NAME="lbAK">&nbsp;</A>
-<H2>BUGS</H2>
+<H2>VERSIONS</H2>
 
 <B>pselect</B>()
 
-is currently emulated with a user-space wrapper that has a race condition.
-For reliable (and more portable) signal trapping, use the self-pipe trick.
-(Where a signal handler writes to a pipe whose other end is read by the
-main loop.)
+was added to Linux in kernel 2.6.16.
+<P>
+Prior to this,
+<B>pselect</B>()
+
+was emulated in glibc (but see BUGS).
+<A NAME="lbAL">&nbsp;</A>
+<H2>LINUX NOTES</H2>
+
+The Linux
+<B>pselect</B>()
+
+system call modifies its 
+<I>timeout </I>
+
+argument.
+However, the glibc wrapper function hides this behaviour
+by using a local variable for the timeout argument that
+is passed to the system call.
+Thus, the glibc 
+<B>pselect</B>()
+
+function does not modify its timeout argument;
+this is the behaviour required by POSIX.1-2001.
+<A NAME="lbAM">&nbsp;</A>
+<H2>BUGS</H2>
+
+Glibc 2.0 provided a version of
+<B>pselect</B>()
+
+that did not take a 
+<I>sigmask </I>
+
+argument.
+<P>
+Since version 2.1, glibc has provided an emulation of
+<B>pselect</B>()
+
+that is implemented using 
+<B><A HREF="../man2/sigprocmask.2.html">sigprocmask</A></B>(2)
+
+and
+<B>select</B>().
+
+This implementation remains vulnerable to the very race condition that
+<B>pselect</B>()
+
+was designed to prevent.
+On systems that lack
+<B>pselect</B>()
+
+reliable (and more portable) signal trapping can be achieved 
+using the self-pipe trick 
+(where a signal handler writes a byte to a pipe whose other end
+is monitored by 
+<B>select</B>()
+
+in the main program.)
 <P>
 Under Linux,
 <B>select</B>()
@@ -482,12 +542,16 @@ Under Linux,
 may report a socket file descriptor as &quot;ready for reading&quot;, while
 nevertheless a subsequent read blocks. This could for example
 happen when data has arrived but upon examination has wrong
-checksum and is discarded. There may be other circumstances.
+checksum and is discarded. There may be other circumstances
+in which a file descriptor is spuriously reported as ready.
 
 
 Thus it may be safer to use O_NONBLOCK on sockets that should not block.
 
-<A NAME="lbAL">&nbsp;</A>
+
+
+
+<A NAME="lbAN">&nbsp;</A>
 <H2>SEE ALSO</H2>
 
 For a tutorial with discussion and examples, see
@@ -528,13 +592,15 @@ For vaguely related stuff, see
 <DT><A HREF="#lbAH">EXAMPLE</A><DD>
 <DT><A HREF="#lbAI">CONFORMING TO</A><DD>
 <DT><A HREF="#lbAJ">NOTES</A><DD>
-<DT><A HREF="#lbAK">BUGS</A><DD>
-<DT><A HREF="#lbAL">SEE ALSO</A><DD>
+<DT><A HREF="#lbAK">VERSIONS</A><DD>
+<DT><A HREF="#lbAL">LINUX NOTES</A><DD>
+<DT><A HREF="#lbAM">BUGS</A><DD>
+<DT><A HREF="#lbAN">SEE ALSO</A><DD>
 </DL>
 <HR>
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 02:23:47 GMT, April 20, 2020
+Time: 02:24:14 GMT, April 20, 2020
 </BODY>
 </HTML>

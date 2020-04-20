@@ -23,6 +23,15 @@ For a list of the 164 syscalls present in Linux 2.0, see <A HREF="../man2/syscal
 In most cases, it is unnecessary to invoke a system call directly, but there
 are times when the Standard C library does not implement a nice function call
 for you.
+In this case, the programmer must manually invoke the system call using
+either one of the _syscall macros, or
+<B>syscall</B>().
+
+The latter technique is described in
+<B><A HREF="../man2/syscall.2.html">syscall</A></B>(2).
+
+This page describes the _syscall macros, and includes some notes
+on when to use one or other mechanism.
 <A NAME="lbAE">&nbsp;</A>
 <H3>Synopsis</H3>
 
@@ -143,9 +152,24 @@ When defining a system call, the argument types MUST be passed by-value
 or by-pointer (for aggregates like structs).
 <P>
 The preferred way to invoke system calls that glibc does not know
-about yet, is via
+about yet is via
 <B><A HREF="../man2/syscall.2.html">syscall</A></B>(2).
 
+However, this mechanism can only be used if using a libc
+(such as glibc) that supports
+<B><A HREF="../man2/syscall.2.html">syscall</A></B>(2),
+
+and if the 
+<I>&lt;<A HREF="file:///usr/include/sys/syscall.h">sys/syscall.h</A>&gt;</I>
+
+header file contains the required SYS_foo definition.
+Otherwise, the use of a _syscall macro is required.
+<P>
+Some architectures, notably ia64, do not provide the _syscall macros.
+On these architectures,
+<B><A HREF="../man2/syscall.2.html">syscall</A></B>(2)
+
+must be used.
 <A NAME="lbAJ">&nbsp;</A>
 <H2>CONFORMING TO</H2>
 
@@ -214,6 +238,6 @@ Version 7, the ancestral Unix from Bell Labs.
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 02:23:46 GMT, April 20, 2020
+Time: 02:24:12 GMT, April 20, 2020
 </BODY>
 </HTML>

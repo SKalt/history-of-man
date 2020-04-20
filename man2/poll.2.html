@@ -5,49 +5,56 @@ Copyright (C) 1997 Andries Brouwer (aeb@cwi.nl)
 <HTML><HEAD><TITLE>Man page of POLL</TITLE>
 </HEAD><BODY>
 <H1>POLL</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 1997-12-07<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2006-03-13<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
 <H2>NAME</H2>
 
-poll - wait for some event on a file descriptor
+poll, ppoll - wait for some event on a file descriptor
 <A NAME="lbAC">&nbsp;</A>
 <H2>SYNOPSIS</H2>
 
+<PRE>
 <B>#include &lt;<A HREF="file:///usr/include/sys/poll.h">sys/poll.h</A>&gt;</B>
 
-<P>
-<B>int poll(struct pollfd *</B><I>ufds</I><B>, nfds_t </B><I>nfds</I><B>, int </B><I>timeout</I><B>);</B>
+<B>int poll(struct pollfd *</B><I>fds</I><B>, nfds_t </B><I>nfds</I><B>, int </B><I>timeout</I><B>);</B>
+
+<B>#define _GNU_SOURCE</B>
+<B>#include &lt;<A HREF="file:///usr/include/sys/poll.h">sys/poll.h</A>&gt;</B>
+
+<B>int ppoll(struct pollfd *</B><I>fds</I><B>, nfds_t </B><I>nfds</I><B>, </B>
+<B>        const struct timespec *</B><I>timeout</I><B>, const sigset_t *</B><I>sigmask</I><B>);</B>
+</PRE>
 
 <A NAME="lbAD">&nbsp;</A>
 <H2>DESCRIPTION</H2>
 
 <B>poll</B>()
 
-is a variation on the theme of 
-<B>select</B>().
+performs a similar task to
+<B><A HREF="../man2/select.2.html">select</A></B>(2):
 
-It specifies an array of
+it waits for one of a set of file descriptors to become ready
+to perform I/O.
+<P>
+The set of file descriptors to be monitored is specified in the
+<I>fds</I>
+
+argument, which is an array of
 <I>nfds</I>
 
-structures of type
-<BR>
-
+structures of the following form:
 <PRE>
 
     struct pollfd {
-        int fd;           /* file descriptor */
+        int   fd;         /* file descriptor */
         short events;     /* requested events */
         short revents;    /* returned events */
     };
 
 </PRE>
 
-and a
-<I>timeout</I>
-
-in milliseconds. A negative value means infinite timeout.
 The field
 <I>fd</I>
 
@@ -61,12 +68,17 @@ The field
 <I>revents</I>
 
 is an output parameter, filled by the kernel with the events that
-actually occurred, either of the type requested, or of one of the
-types
-<B>POLLERR</B>
+actually occurred.
+The bits returned in
+<I>revents</I>
 
-or
-<B>POLLHUP</B>
+can include any of those specified in 
+<I>events</I>,
+
+or one of the values
+<B>POLLERR</B>,
+
+<B>POLLHUP</B>,
 
 or
 <B>POLLNVAL</B>.
@@ -79,11 +91,17 @@ field, and will be set in the
 
 field whenever the corresponding condition is true.)
 If none of the events requested (and no error) has occurred for any
-of the file descriptors, the kernel waits for
-<I>timeout</I>
+of the file descriptors, then
+<B>poll</B>()
 
-milliseconds for one of these events to occur.
-The following possible bits in these masks are defined in &lt;<A HREF="file:///usr/include/sys/poll.h">sys/poll.h</A>&gt;:
+blocks until one of the events occurs.
+The bits that may be set/returned in
+<I>events</I>
+
+and
+<I>revents</I>
+
+are defined in &lt;<A HREF="file:///usr/include/sys/poll.h">sys/poll.h</A>&gt;:
 <BR>
 
 <PRE>
@@ -91,9 +109,10 @@ The following possible bits in these masks are defined in &lt;<A HREF="file:///u
     #define POLLIN      0x0001    /* There is data to read */
     #define POLLPRI     0x0002    /* There is urgent data to read */
     #define POLLOUT     0x0004    /* Writing now will not block */
-    #define POLLERR     0x0008    /* Error condition */
-    #define POLLHUP     0x0010    /* Hung up */
-    #define POLLNVAL    0x0020    /* Invalid request: fd not open */
+    #define POLLERR     0x0008    /* Error condition (output only) */
+    #define POLLHUP     0x0010    /* Hung up (output only) */
+    #define POLLNVAL    0x0020    /* Invalid request: fd not open 
+                                     (output only) */
 
 </PRE>
 
@@ -121,7 +140,106 @@ Finally, Linux knows about:
     #endif
 </PRE>
 
+<P>
+
+The 
+<I>timeout</I>
+
+argument specifies an upper limit on the time for which
+<B>poll</B>()
+
+will block, in milliseconds.
+Specifying a negative value in
+<I>timeout</I>
+
+means an infinite timeout.
 <A NAME="lbAE">&nbsp;</A>
+<H3>ppoll()</H3>
+
+The relationship between 
+<B>poll</B>()
+
+and 
+<B>ppoll</B>()
+
+is analogous to the relationship between
+<B>select</B>()
+
+and
+<B>pselect</B>():
+
+like
+<B>pselect</B>(),
+
+<B>ppoll</B>()
+
+allows an application to safely wait until either a file descriptor
+becomes ready or until a signal is caught.
+<P>
+
+Other than the difference in the 
+<I>timeout</I>
+
+argument, the following 
+<B>ppoll</B>()
+
+call:
+<PRE>
+
+    ready = ppoll(&amp;fds, nfds, timeout, &amp;sigmask);
+
+</PRE>
+
+is equivalent to
+<I>atomically</I>
+
+executing the following calls:
+<PRE>
+
+    sigset_t origmask;
+
+    sigprocmask(SIG_SETMASK, &amp;sigmask, &amp;origmask);
+    ready = ppoll(&amp;fds, nfds, timeout);
+    sigprocmask(SIG_SETMASK, &amp;origmask, NULL);
+</PRE>
+
+<P>
+
+See the description of
+<B><A HREF="../man2/pselect.2.html">pselect</A></B>(2)
+
+for an explanation of why
+<B>ppoll</B>()
+
+is necessary.
+<P>
+The
+<I>timeout</I>
+
+argument specifies an upper limit on the amount of time that 
+<B>ppoll</B>()
+
+will block.
+This argument is a pointer to a structure of the following form:
+
+<PRE>
+
+struct timespec {
+    long    tv_sec;         /* seconds */
+    long    tv_nsec;        /* nanoseconds */
+};
+</PRE>
+
+
+<P>
+If
+<I>timeout</I>
+
+is specified as NULL, then 
+<B>ppoll</B>()
+
+can block indefinitely.
+<A NAME="lbAF">&nbsp;</A>
 <H2>RETURN VALUE</H2>
 
 On success, a positive number is returned; this is
@@ -134,7 +252,7 @@ descriptors were ready. On error, -1 is returned, and
 <I>errno</I>
 
 is set appropriately.
-<A NAME="lbAF">&nbsp;</A>
+<A NAME="lbAG">&nbsp;</A>
 <H2>ERRORS</H2>
 
 <DL COMPACT>
@@ -163,18 +281,42 @@ value exceeds the RLIMIT_NOFILE value.
 <DD>
 There was no space to allocate file descriptor tables.
 </DL>
-<A NAME="lbAG">&nbsp;</A>
+<A NAME="lbAH">&nbsp;</A>
+<H2>LINUX NOTES</H2>
+
+The Linux
+<B>ppoll</B>()
+
+system call modifies its 
+<I>timeout </I>
+
+argument.
+However, the glibc wrapper function hides this behaviour
+by using a local variable for the timeout argument that
+is passed to the system call.
+Thus, the glibc 
+<B>ppoll</B>()
+
+function does not modify its timeout argument.
+<A NAME="lbAI">&nbsp;</A>
 <H2>BUGS</H2>
 
-See the BUGS section of
+See the discussion of spurious readiness notifications under the
+BUGS section of
 <B><A HREF="../man2/select.2.html">select</A></B>(2).
 
-<A NAME="lbAH">&nbsp;</A>
+<A NAME="lbAJ">&nbsp;</A>
 <H2>CONFORMING TO</H2>
 
-XPG4-UNIX.
-<A NAME="lbAI">&nbsp;</A>
-<H2>AVAILABILITY</H2>
+<B>poll</B>()
+
+conforms to POSIX.1-2001.
+<B>ppoll</B>()
+
+is Linux specific.
+
+<A NAME="lbAK">&nbsp;</A>
+<H2>VERSIONS</H2>
 
 The
 <B>poll</B>()
@@ -184,13 +326,22 @@ The
 <B>poll</B>()
 
 library call was introduced in libc 5.4.28
-(and provides emulation using select if your kernel does not
+(and provides emulation using select() if your kernel does not
 have a 
 <B>poll</B>()
 
 system call).
-<A NAME="lbAJ">&nbsp;</A>
-<H2>AVAILABILITY</H2>
+<P>
+The
+<B>ppoll</B>()
+
+system call was added to Linux in kernel 2.6.16.
+The
+<B>ppoll</B>()
+
+library call was added in glibc 2.4.
+<A NAME="lbAL">&nbsp;</A>
+<H2>NOTES</H2>
 
 Some implementations define the non-standard constant
 <B>INFTIM</B>
@@ -199,7 +350,7 @@ with the value -1 for use as a
 <I>timeout</I>.
 
 This constant is not provided in glibc.
-<A NAME="lbAK">&nbsp;</A>
+<A NAME="lbAM">&nbsp;</A>
 <H2>SEE ALSO</H2>
 
 <B><A HREF="../man2/select.2.html">select</A></B>(2),
@@ -214,18 +365,22 @@ This constant is not provided in glibc.
 <DT><A HREF="#lbAB">NAME</A><DD>
 <DT><A HREF="#lbAC">SYNOPSIS</A><DD>
 <DT><A HREF="#lbAD">DESCRIPTION</A><DD>
-<DT><A HREF="#lbAE">RETURN VALUE</A><DD>
-<DT><A HREF="#lbAF">ERRORS</A><DD>
-<DT><A HREF="#lbAG">BUGS</A><DD>
-<DT><A HREF="#lbAH">CONFORMING TO</A><DD>
-<DT><A HREF="#lbAI">AVAILABILITY</A><DD>
-<DT><A HREF="#lbAJ">AVAILABILITY</A><DD>
-<DT><A HREF="#lbAK">SEE ALSO</A><DD>
+<DL>
+<DT><A HREF="#lbAE">ppoll()</A><DD>
+</DL>
+<DT><A HREF="#lbAF">RETURN VALUE</A><DD>
+<DT><A HREF="#lbAG">ERRORS</A><DD>
+<DT><A HREF="#lbAH">LINUX NOTES</A><DD>
+<DT><A HREF="#lbAI">BUGS</A><DD>
+<DT><A HREF="#lbAJ">CONFORMING TO</A><DD>
+<DT><A HREF="#lbAK">VERSIONS</A><DD>
+<DT><A HREF="#lbAL">NOTES</A><DD>
+<DT><A HREF="#lbAM">SEE ALSO</A><DD>
 </DL>
 <HR>
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 02:23:47 GMT, April 20, 2020
+Time: 02:24:13 GMT, April 20, 2020
 </BODY>
 </HTML>

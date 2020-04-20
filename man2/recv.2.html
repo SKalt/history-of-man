@@ -163,60 +163,56 @@ and
 for more information.
 The payload of the original packet that caused the error
 is passed as normal data via
-<B>msg_iovec</B>.
+<I>msg_iovec</I>.
 
 The original destination address of the datagram that caused the error
 is supplied via
-<B>msg_name</B>.
+<I>msg_name</I>.
 
 <DT><DD>
 For local errors, no address is passed (this can be checked with the
 <I>cmsg_len</I>
 
 member of the
-<B>cmsghdr</B>).
+<I>cmsghdr</I>).
 
 For error receives, the
 <B>MSG_ERRQUEUE</B>
 
 is set in the
-<B>msghdr</B>.
+<I>msghdr</I>.
 
 After an error has been passed, the pending socket error
 is regenerated based on the next queued error and will be passed
 on the next socket operation.
 <P>
 The error is supplied in a 
-<B>sock_extended_err</B>
+<I>sock_extended_err</I>
 
 structure:
-<DT><DD>
-<DL COMPACT><DT><DD>
 
 <PRE>
 
-#define SO_EE_ORIGIN_NONE       0
-#define SO_EE_ORIGIN_LOCAL      1
-#define SO_EE_ORIGIN_ICMP       2
-#define SO_EE_ORIGIN_ICMP6      3
+#define SO_EE_ORIGIN_NONE    0
+#define SO_EE_ORIGIN_LOCAL   1
+#define SO_EE_ORIGIN_ICMP    2
+#define SO_EE_ORIGIN_ICMP6   3
 
 struct sock_extended_err
 {
-    u_int32_t       ee_errno;   /* error number */
-    u_int8_t        ee_origin;  /* where the error originated */ 
-    u_int8_t        ee_type;    /* type */
-    u_int8_t        ee_code;    /* code */
-    u_int8_t        ee_pad;
-    u_int32_t       ee_info;    /* additional information */
-    u_int32_t       ee_data;    /* other data */  
+    u_int32_t ee_errno;   /* error number */
+    u_int8_t  ee_origin;  /* where the error originated */ 
+    u_int8_t  ee_type;    /* type */
+    u_int8_t  ee_code;    /* code */
+    u_int8_t  ee_pad;
+    u_int32_t ee_info;    /* additional information */
+    u_int32_t ee_data;    /* other data */  
     /* More data may follow */ 
 };
 
 struct sockaddr *SO_EE_OFFENDER(struct sock_extended_err *);
-
 </PRE>
 
-</DL>
 
 <DT><DD>
 <B>ee_errno </B>
@@ -250,14 +246,14 @@ can be checked with the
 <I>cmsg_len </I>
 
 member of the 
-<B>cmsghdr</B>).
+<I>cmsghdr</I>).
 
 For error receives,
 the 
 <B>MSG_ERRQUEUE </B>
 
 is set in the 
-<B>msghdr</B>.
+<I>msghdr</I>.
 
 After an error has been passed, the pending socket error
 is regenerated based on the next queued error and will be passed
@@ -300,26 +296,21 @@ structure to minimize the number of directly supplied parameters.  This
 structure has the following form, as defined in
 <I>&lt;<A HREF="file:///usr/include/sys/socket.h">sys/socket.h</A>&gt;</I>:
 
-<DL COMPACT>
-<DT><DD>
-<DL COMPACT><DT><DD>
+
 <PRE>
 
 struct msghdr {
-    void         * msg_name;     /* optional address */
-    socklen_t    msg_namelen;    /* size of address */
-    struct iovec * msg_iov;      /* scatter/gather array */
-    size_t       msg_iovlen;     /* # elements in msg_iov */
-    void         * msg_control;  /* ancillary data, see below */
-    socklen_t    msg_controllen; /* ancillary data buffer len */
-    int          msg_flags;      /* flags on received message */
+    void         *msg_name;       /* optional address */
+    socklen_t     msg_namelen;    /* size of address */
+    struct iovec *msg_iov;        /* scatter/gather array */
+    size_t        msg_iovlen;     /* # elements in msg_iov */
+    void         *msg_control;    /* ancillary data, see below */
+    socklen_t     msg_controllen; /* ancillary data buffer len */
+    int           msg_flags;      /* flags on received message */
 };
-
 </PRE>
 
-</DL>
 
-</DL>
 <P>
 
 Here
@@ -362,22 +353,18 @@ of the control message sequence.
 <P>
 
 The messages are of the form:
-<P>
 
-<DL COMPACT><DT><DD>
 <PRE>
 
 struct cmsghdr {
-    socklen_t   cmsg_len;   /* data byte count, including hdr */
-    int         cmsg_level; /* originating protocol */
-    int         cmsg_type;  /* protocol-specific type */
+    socklen_t cmsg_len;     /* data byte count, including hdr */
+    int       cmsg_level;   /* originating protocol */
+    int       cmsg_type;    /* protocol-specific type */
 /* followed by
-    u_char      cmsg_data[]; */
+    u_char    cmsg_data[]; */
 };
-
 </PRE>
 
-</DL>
 
 <P>
 
@@ -511,7 +498,7 @@ and
 
 flags.
 <A NAME="lbAH">&nbsp;</A>
-<H2>NOTE</H2>
+<H2>NOTES</H2>
 
 The prototypes given above follow glibc2.
 The Single Unix Specification agrees, except that it has return values
@@ -531,6 +518,21 @@ argument is `int *' in 4.x BSD, libc4 and libc5.
 The present  `socklen_t *' was invented by POSIX.
 See also
 <B><A HREF="../man2/accept.2.html">accept</A></B>(2).
+
+<P>
+According to POSIX.1-2001, the
+<I>msg_controllen</I>
+
+field of the
+<I>msghdr</I>
+
+structure should be typed as
+<I>socklen_t</I>,
+
+but glibc currently (2.4) types it as 
+<I>size_t</I>.
+
+
 
 <A NAME="lbAI">&nbsp;</A>
 <H2>SEE ALSO</H2>
@@ -560,13 +562,13 @@ See also
 <DT><A HREF="#lbAE">RETURN VALUE</A><DD>
 <DT><A HREF="#lbAF">ERRORS</A><DD>
 <DT><A HREF="#lbAG">CONFORMING TO</A><DD>
-<DT><A HREF="#lbAH">NOTE</A><DD>
+<DT><A HREF="#lbAH">NOTES</A><DD>
 <DT><A HREF="#lbAI">SEE ALSO</A><DD>
 </DL>
 <HR>
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 02:23:47 GMT, April 20, 2020
+Time: 02:24:13 GMT, April 20, 2020
 </BODY>
 </HTML>
