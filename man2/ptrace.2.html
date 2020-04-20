@@ -25,7 +25,7 @@ License along with this manual; if not, see
 <HTML><HEAD><TITLE>Man page of PTRACE</TITLE>
 </HEAD><BODY>
 <H1>PTRACE</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2018-04-30<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2019-10-10<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -1258,6 +1258,131 @@ of the
 
 is ignored; in other words,
 this ptrace operation can't be used to allocate a free TLS entry.)
+<DT><B>PTRACE_GET_SYSCALL_INFO</B> (since Linux 5.3)
+
+<DD>
+
+Retrieve information about the system call that caused the stop.
+The information is placed into the buffer pointed by the
+<I>data</I>
+
+argument, which should be a pointer to a buffer of type
+<I>struct ptrace_syscall_info</I>.
+
+The
+<I>addr</I>
+
+argument contains the size of the buffer pointed to
+by the
+<I>data</I>
+
+argument (i.e.,
+<I>sizeof(struct ptrace_syscall_info)</I>).
+
+The return value contains the number of bytes available
+to be written by the kernel.
+If the size of the data to be written by the kernel exceeds the size
+specified by the
+<I>addr</I>
+
+argument, the output data is truncated.
+<DT><DD>
+The
+<I>ptrace_syscall_info</I>
+
+structure contains the following fields:
+<DT><DD>
+
+
+struct ptrace_syscall_info {
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;__u8&nbsp;op;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Type&nbsp;of&nbsp;system&nbsp;call&nbsp;stop&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;__u32&nbsp;arch;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;AUDIT_ARCH_*&nbsp;value;&nbsp;see&nbsp;<A HREF="../man2/seccomp.2.html">seccomp</A>(2)&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;__u64&nbsp;instruction_pointer;&nbsp;/*&nbsp;CPU&nbsp;instruction&nbsp;pointer&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;__u64&nbsp;stack_pointer;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;CPU&nbsp;stack&nbsp;pointer&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;union&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;struct&nbsp;{&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;op&nbsp;==&nbsp;PTRACE_SYSCALL_INFO_ENTRY&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;__u64&nbsp;nr;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;System&nbsp;call&nbsp;number&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;__u64&nbsp;args[6];&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;System&nbsp;call&nbsp;arguments&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}&nbsp;entry;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;struct&nbsp;{&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;op&nbsp;==&nbsp;PTRACE_SYSCALL_INFO_EXIT&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;__s64&nbsp;rval;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;System&nbsp;call&nbsp;return&nbsp;value&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;__u8&nbsp;is_error;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;System&nbsp;call&nbsp;error&nbsp;flag;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Boolean:&nbsp;does&nbsp;rval&nbsp;contain
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;an&nbsp;error&nbsp;value&nbsp;(-ERRCODE)&nbsp;or
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;a&nbsp;nonerror&nbsp;return&nbsp;value?&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}&nbsp;exit;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;struct&nbsp;{&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;op&nbsp;==&nbsp;PTRACE_SYSCALL_INFO_SECCOMP&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;__u64&nbsp;nr;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;System&nbsp;call&nbsp;number&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;__u64&nbsp;args[6];&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;System&nbsp;call&nbsp;arguments&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;__u32&nbsp;ret_data;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;SECCOMP_RET_DATA&nbsp;portion
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;of&nbsp;SECCOMP_RET_TRACE
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;return&nbsp;value&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}&nbsp;seccomp;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;};
+};
+
+
+<DT><DD>
+The
+<I>op</I>,
+
+<I>arch</I>,
+
+<I>instruction_pointer</I>,
+
+and
+<I>stack_pointer</I>
+
+fields are defined for all kinds of ptrace system call stops.
+The rest of the structure is a union; one should read only those fields
+that are meaningful for the kind of system call stop specified by the
+<I>op</I>
+
+field.
+<DT><DD>
+The
+<I>op</I>
+
+field has one of the following values (defined in
+<I>&lt;<A HREF="file:///usr/include/linux/ptrace.h">linux/ptrace.h</A>&gt;)</I>
+
+indicating what type of stop occurred and
+which part of the union is filled:
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT><B>PTRACE_SYSCALL_INFO_ENTRY</B>
+
+<DD>
+The
+<I>entry</I>
+
+component of the union contains information relating to a
+system call entry stop.
+<DT><B>PTRACE_SYSCALL_INFO_EXIT</B>
+
+<DD>
+The
+<I>exit</I>
+
+component of the union contains information relating to a
+system call exit stop.
+<DT><B>PTRACE_SYSCALL_INFO_SECCOMP</B>
+
+<DD>
+The
+<I>exit</I>
+
+component of the union contains information relating to a
+<B>PTRACE_EVENT_SECCOMP</B>
+
+stop.
+<DT><B>PTRACE_SYSCALL_INFO_NONE</B>
+
+<DD>
+No component of the union contains relevant information.
+</DL>
+</DL>
+
 
 </DL>
 <A NAME="lbAE">&nbsp;</A>
@@ -3776,6 +3901,6 @@ to zero.
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:50:52 GMT, April 20, 2020
+Time: 03:51:31 GMT, April 20, 2020
 </BODY>
 </HTML>
