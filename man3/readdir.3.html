@@ -5,22 +5,22 @@ Copyright (C) 1993 David Metcalfe (david@prism.demon.co.uk)
 <HTML><HEAD><TITLE>Man page of READDIR</TITLE>
 </HEAD><BODY>
 <H1>READDIR</H1>
-Section: Linux Programmer's Manual (3)<BR>Updated: 2008-06-20<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2008-07-04<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
 <H2>NAME</H2>
 
-readdir - read a directory
+readdir, readdir_r - read a directory
 <A NAME="lbAC">&nbsp;</A>
 <H2>SYNOPSIS</H2>
 
 <PRE>
-<B>#include &lt;<A HREF="file:///usr/include/sys/types.h">sys/types.h</A>&gt;</B>
-
 <B>#include &lt;<A HREF="file:///usr/include/dirent.h">dirent.h</A>&gt;</B>
 
 <B>struct dirent *readdir(DIR *</B><I>dir</I><B>);</B>
+
+<B>int readdir(DIR *</B><I>dir</I><B>, struct dirent *</B><I>entry</I><B>, struct dirent **</B><I>result</I><B>);</B>
 </PRE>
 
 <A NAME="lbAD">&nbsp;</A>
@@ -32,7 +32,7 @@ The
 function returns a pointer to a <I>dirent</I> structure
 representing the next directory entry in the directory stream pointed
 to by <I>dir</I>.
-It returns NULL on reaching the end-of-file or if
+It returns NULL on reaching the end of the directory stream or if
 an error occurred.
 <P>
 
@@ -81,6 +81,27 @@ may be overwritten by subsequent calls to
 <B>readdir</B>()
 
 for the same directory stream.
+<P>
+The
+<B>readdir_r</B>()
+
+function is a reentrant version of
+<B>readdir</B>().
+
+It reads the next directory entry from the directory stream
+<I>dir</I>,
+
+and returns it in the caller-allocated buffer pointed to by
+<I>entry</I>.
+
+(See NOTES for information on allocating this buffer.)
+A pointer to the returned item is placed in
+<I>*result</I>;
+
+if the end of the directory stream was encountered,
+then NULL is instead returned in
+<I>*result</I>.
+
 <A NAME="lbAE">&nbsp;</A>
 <H2>RETURN VALUE</H2>
 
@@ -91,11 +112,23 @@ function returns a pointer to a
 <I>dirent</I>
 
 structure, or
-NULL if an error occurs or end-of-file is reached.
+NULL if an error occurs or end of the directory stream is reached.
 On error,
 <I>errno</I>
 
 is set appropriately.
+<P>
+The
+<B>readdir_r</B>()
+
+function returns 0 on success.
+On error, it returns a positive error number.
+If the end of the directory stream is reached,
+<B>readdir_r</B>()
+
+returns 0, and returns NULL in
+<I>*result</I>.
+
 <A NAME="lbAF">&nbsp;</A>
 <H2>ERRORS</H2>
 
@@ -195,6 +228,36 @@ If the file type could not be determined, the value
 is returned in
 <I>d_type</I>.
 
+<P>
+Since POSIX.1 does not specify the size of the
+<I>d_name</I>
+
+field, and other non-standard fields may precede that field within the
+<I>dirent</I>
+
+structure, portable applications that use
+<B>readdir_r</B>()
+
+should allocate the buffer whose address is passed in
+<I>entry</I>
+
+as follows:
+
+<PRE>
+
+len = offsetof(struct dirent, d_name) +
+          pathconf(dirpath, _PC_NAME_MAX) + 1
+entryp = malloc(len);
+
+</PRE>
+
+
+(POSIX.1 requires that
+<I>d_name</I>
+
+is the last field in a
+<I>struct dirent</I>.)
+
 <A NAME="lbAI">&nbsp;</A>
 <H2>SEE ALSO</H2>
 
@@ -205,6 +268,8 @@ is returned in
 <B><A HREF="../man3/dirfd.3.html">dirfd</A></B>(3),
 
 <B><A HREF="../man3/ftw.3.html">ftw</A></B>(3),
+
+<B><A HREF="../man3/offsetof.3.html">offsetof</A></B>(3),
 
 <B><A HREF="../man3/opendir.3.html">opendir</A></B>(3),
 
@@ -236,6 +301,6 @@ is returned in
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 02:54:08 GMT, April 20, 2020
+Time: 02:54:42 GMT, April 20, 2020
 </BODY>
 </HTML>

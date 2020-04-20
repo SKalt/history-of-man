@@ -5,7 +5,7 @@ Copyright (c) 1993 by Thomas Koenig (ig25@rz.uni-karlsruhe.de)
 <HTML><HEAD><TITLE>Man page of SIGNAL</TITLE>
 </HEAD><BODY>
 <H1>SIGNAL</H1>
-Section: Linux Programmer's Manual (7)<BR>Updated: 2008-06-02<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (7)<BR>Updated: 2008-07-07<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -121,8 +121,10 @@ Linux supports the standard signals listed below.
 Several signal numbers
 are architecture-dependent, as indicated in the &quot;Value&quot; column.
 (Where three values are given, the first one is usually valid for
-alpha and sparc, the middle one for i386, ppc and sh, and
-the last one for mips.
+alpha and sparc,
+the middle one for ix86, ia64, ppc, s390, arm and sh,
+and the last one for mips.
+
 A - denotes that a signal is absent on the corresponding architecture.)
 <P>
 First the signals described in the original POSIX.1-1990 standard.
@@ -389,7 +391,8 @@ If a signal interrupts the execution of an unsafe function, and
 
 calls an unsafe function, then the behavior of the program is undefined.
 <P>
-POSIX.1-2003 requires an implementation to guarantee that the following
+POSIX.1-2004 (also known as POSIX.1-2001 Technical Corrigendum 2)
+requires an implementation to guarantee that the following
 functions can be safely called inside a signal handler:
 
 <P>
@@ -488,6 +491,7 @@ sigset()
 sigsuspend()
 sleep()
 socket()
+sockatmark()
 socketpair()
 stat()
 symlink()
@@ -516,10 +520,293 @@ write()
 
 
 <A NAME="lbAI">&nbsp;</A>
+<H3>Interruption of System Calls and Library Functions by Signal Handlers</H3>
+
+If a signal handler is invoked while a system call or library
+function call is blocked, then either:
+<DL COMPACT>
+<DT>*<DD>
+the call is automatically restarted after the signal handler returns; or
+<DT>*<DD>
+the call fails with the error
+<B>EINTR</B>.
+
+</DL>
+<P>
+
+Which of these two behaviors occurs depends on the interface and
+whether or not the signal handler was established using the
+<B>SA_RESTART</B>
+
+flag (see
+<B><A HREF="../man2/sigaction.2.html">sigaction</A></B>(2)).
+
+The details vary across Unix systems;
+below, are the details for Linux.
+<P>
+If a blocked call to one of the following interfaces is interrupted
+by a signal handler, then the call will be automatically restarted
+after the signal handler returns if the
+<B>SA_RESTART</B>
+
+flag was used; otherwise the call will fail with the error
+<B>EINTR</B>:
+
+
+
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT>*<DD>
+<B><A HREF="../man2/read.2.html">read</A></B>(2),
+
+<B><A HREF="../man2/readv.2.html">readv</A></B>(2),
+
+<B><A HREF="../man2/write.2.html">write</A></B>(2),
+
+<B><A HREF="../man2/writev.2.html">writev</A></B>(2),
+
+and
+<B><A HREF="../man2/ioctl.2.html">ioctl</A></B>(2)
+
+calls on &quot;slow&quot; devices.
+A &quot;slow&quot; device is one where the I/O call may block for an
+indefinite time, for example, a terminal, pipe, or socket.
+(A disk is not a slow device according to this definition.)
+If an I/O call on a slow device has already transferred some
+data by the time it is interrupted by a signal handler,
+then the call will return a success status
+(normally, the number of bytes transferred).
+<DT>*<DD>
+<B><A HREF="../man2/open.2.html">open</A></B>(2),
+
+if it can block (e.g., when opening a FIFO; see
+<B><A HREF="../man7/fifo.7.html">fifo</A></B>(7)).
+
+<DT>*<DD>
+<B><A HREF="../man2/wait.2.html">wait</A></B>(2),
+
+<B><A HREF="../man2/wait3.2.html">wait3</A></B>(2),
+
+<B><A HREF="../man2/wait4.2.html">wait4</A></B>(2),
+
+<B><A HREF="../man2/waitid.2.html">waitid</A></B>(2),
+
+and
+<B><A HREF="../man2/waitpid.2.html">waitpid</A></B>(2).
+
+<DT>*<DD>
+Socket interfaces:
+
+
+
+
+<B><A HREF="../man2/accept.2.html">accept</A></B>(2),
+
+<B><A HREF="../man2/connect.2.html">connect</A></B>(2),
+
+<B><A HREF="../man2/recv.2.html">recv</A></B>(2),
+
+<B><A HREF="../man2/recvfrom.2.html">recvfrom</A></B>(2),
+
+<B><A HREF="../man2/recvmsg.2.html">recvmsg</A></B>(2),
+
+<B><A HREF="../man2/send.2.html">send</A></B>(2),
+
+<B><A HREF="../man2/sendto.2.html">sendto</A></B>(2),
+
+and
+<B><A HREF="../man2/sendmsg.2.html">sendmsg</A></B>(2).
+
+<DT>*<DD>
+File locking interfaces:
+<B><A HREF="../man2/flock.2.html">flock</A></B>(2)
+
+and
+<B><A HREF="../man2/fcntl.2.html">fcntl</A></B>(2)
+
+<B>F_SETLKW</B>.
+
+<DT>*<DD>
+POSIX message queue interfaces:
+<B><A HREF="../man3/mq_receive.3.html">mq_receive</A></B>(3),
+
+<B><A HREF="../man3/mq_timedreceive.3.html">mq_timedreceive</A></B>(3),
+
+<B><A HREF="../man3/mq_send.3.html">mq_send</A></B>(3),
+
+and
+<B><A HREF="../man3/mq_timedsend.3.html">mq_timedsend</A></B>(3).
+
+<DT>*<DD>
+<B><A HREF="../man2/futex.2.html">futex</A></B>(2)
+
+<B>FUTEX_WAIT</B>
+
+(since Linux 2.6.22; beforehand, always failed with
+<B>EINTR</B>).
+
+<DT>*<DD>
+POSIX semaphore interfaces:
+<B><A HREF="../man3/sem_wait.3.html">sem_wait</A></B>(3)
+
+and
+<B><A HREF="../man3/sem_timedwait.3.html">sem_timedwait</A></B>(3)
+
+(since Linux 2.6.22; beforehand, always failed with
+<B>EINTR</B>).
+
+</DL>
+</DL>
+
+<P>
+
+The following interfaces are never restarted after
+being interrupted by a signal handler,
+regardless of the use of
+<B>SA_RESTART</B>;
+
+they always fail with the error
+<B>EINTR</B>
+
+when interrupted by a signal handler:
+
+
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT>*<DD>
+Interfaces used to wait for signals:
+<B><A HREF="../man2/pause.2.html">pause</A></B>(2),
+
+<B><A HREF="../man2/sigsuspend.2.html">sigsuspend</A></B>(2),
+
+<B><A HREF="../man2/sigtimedwait.2.html">sigtimedwait</A></B>(2),
+
+and
+<B><A HREF="../man2/sigwaitinfo.2.html">sigwaitinfo</A></B>(2).
+
+<DT>*<DD>
+File descriptor multiplexing interfaces:
+<B><A HREF="../man2/epoll_wait.2.html">epoll_wait</A></B>(2),
+
+<B><A HREF="../man2/epoll_pwait.2.html">epoll_pwait</A></B>(2),
+
+<B><A HREF="../man2/poll.2.html">poll</A></B>(2),
+
+<B><A HREF="../man2/ppoll.2.html">ppoll</A></B>(2),
+
+<B><A HREF="../man2/select.2.html">select</A></B>(2),
+
+and
+<B><A HREF="../man2/pselect.2.html">pselect</A></B>(2).
+
+<DT>*<DD>
+System V IPC interfaces:
+
+<B><A HREF="../man2/msgrcv.2.html">msgrcv</A></B>(2),
+
+<B><A HREF="../man2/msgsnd.2.html">msgsnd</A></B>(2),
+
+<B><A HREF="../man2/semop.2.html">semop</A></B>(2),
+
+and
+<B><A HREF="../man2/semtimedop.2.html">semtimedop</A></B>(2).
+
+<DT>*<DD>
+Sleep interfaces:
+<B><A HREF="../man2/clock_nanosleep.2.html">clock_nanosleep</A></B>(2),
+
+<B><A HREF="../man2/nanosleep.2.html">nanosleep</A></B>(2),
+
+and
+<B><A HREF="../man3/usleep.3.html">usleep</A></B>(3).
+
+<DT>*<DD>
+<B><A HREF="../man2/read.2.html">read</A></B>(2)
+
+from an
+<B><A HREF="../man7/inotify.7.html">inotify</A></B>(7)
+
+file descriptor.
+<DT>*<DD>
+<B><A HREF="../man2/io_getevents.2.html">io_getevents</A></B>(2).
+
+</DL>
+</DL>
+
+<P>
+
+The
+<B><A HREF="../man3/sleep.3.html">sleep</A></B>(3)
+
+function is also never restarted if interrupted by a handler,
+but gives a success return: the number of seconds remaining to sleep.
+<A NAME="lbAJ">&nbsp;</A>
+<H3>Interruption of System Calls and Library Functions by Stop Signals</H3>
+
+On Linux, even in the absence of signal handlers,
+certain blocking interfaces can fail with the error
+<B>EINTR</B>
+
+after the process is stopped by one of the stop signals
+and then resumed via
+<B>SIGCONT</B>.
+
+This behavior is not sanctioned by POSIX.1, and doesn't occur
+on other systems.
+<P>
+The Linux interfaces that display this behavior are:
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT>*<DD>
+<B><A HREF="../man2/epoll_wait.2.html">epoll_wait</A></B>(2),
+
+<B><A HREF="../man2/epoll_pwait.2.html">epoll_pwait</A></B>(2).
+
+<DT>*<DD>
+<B><A HREF="../man2/semop.2.html">semop</A></B>(2),
+
+<B><A HREF="../man2/semtimedop.2.html">semtimedop</A></B>(2).
+
+<DT>*<DD>
+<B><A HREF="../man2/sigtimedwait.2.html">sigtimedwait</A></B>(2),
+
+<B><A HREF="../man2/sigwaitinfo.2.html">sigwaitinfo</A></B>(2).
+
+<DT>*<DD>
+<B><A HREF="../man2/read.2.html">read</A></B>(2)
+
+from an
+<B><A HREF="../man7/inotify.7.html">inotify</A></B>(7)
+
+file descriptor.
+<DT>*<DD>
+Linux 2.6.21 and earlier:
+<B><A HREF="../man2/futex.2.html">futex</A></B>(2)
+
+<B>FUTEX_WAIT</B>,
+
+<B><A HREF="../man3/sem_timedwait.3.html">sem_timedwait</A></B>(3),
+
+<B><A HREF="../man3/sem_wait.3.html">sem_wait</A></B>(3).
+
+<DT>*<DD>
+Linux 2.6.8 and earlier:
+<B><A HREF="../man2/msgrcv.2.html">msgrcv</A></B>(2),
+
+<B><A HREF="../man2/msgsnd.2.html">msgsnd</A></B>(2).
+
+<DT>*<DD>
+Linux 2.4 and earlier:
+<B><A HREF="../man2/nanosleep.2.html">nanosleep</A></B>(2).
+
+</DL>
+</DL>
+
+<A NAME="lbAK">&nbsp;</A>
 <H2>CONFORMING TO</H2>
 
-POSIX.1
-<A NAME="lbAJ">&nbsp;</A>
+POSIX.1, except as noted.
+<A NAME="lbAL">&nbsp;</A>
 <H2>BUGS</H2>
 
 <B>SIGIO</B>
@@ -533,10 +820,12 @@ the build process of some software still thinks that
 signal 29 is
 <B>SIGLOST</B>.
 
-<A NAME="lbAK">&nbsp;</A>
+<A NAME="lbAM">&nbsp;</A>
 <H2>SEE ALSO</H2>
 
 <B><A HREF="../man1/kill.1.html">kill</A></B>(1),
+
+<B><A HREF="../man2/getrlimit.2.html">getrlimit</A></B>(2),
 
 <B><A HREF="../man2/kill.2.html">kill</A></B>(2),
 
@@ -549,6 +838,8 @@ signal 29 is
 <B><A HREF="../man2/sgetmask.2.html">sgetmask</A></B>(2),
 
 <B><A HREF="../man2/sigaction.2.html">sigaction</A></B>(2),
+
+<B><A HREF="../man2/sigaltstack.2.html">sigaltstack</A></B>(2),
 
 <B><A HREF="../man2/signal.2.html">signal</A></B>(2),
 
@@ -564,13 +855,21 @@ signal 29 is
 
 <B><A HREF="../man2/sigwaitinfo.2.html">sigwaitinfo</A></B>(2),
 
+<B><A HREF="../man3/abort.3.html">abort</A></B>(3),
+
 <B><A HREF="../man3/bsd_signal.3.html">bsd_signal</A></B>(3),
+
+<B><A HREF="../man3/longjmp.3.html">longjmp</A></B>(3),
 
 <B><A HREF="../man3/raise.3.html">raise</A></B>(3),
 
 <B><A HREF="../man3/sigvec.3.html">sigvec</A></B>(3),
 
 <B><A HREF="../man3/sigset.3.html">sigset</A></B>(3),
+
+<B><A HREF="../man3/sigsetops.3.html">sigsetops</A></B>(3),
+
+<B><A HREF="../man3/sigvec.3.html">sigvec</A></B>(3),
 
 <B><A HREF="../man3/sigwait.3.html">sigwait</A></B>(3),
 
@@ -597,15 +896,17 @@ signal 29 is
 <DT><A HREF="#lbAF">Standard Signals</A><DD>
 <DT><A HREF="#lbAG">Real-time Signals</A><DD>
 <DT><A HREF="#lbAH">Async-signal-safe functions</A><DD>
+<DT><A HREF="#lbAI">Interruption of System Calls and Library Functions by Signal Handlers</A><DD>
+<DT><A HREF="#lbAJ">Interruption of System Calls and Library Functions by Stop Signals</A><DD>
 </DL>
-<DT><A HREF="#lbAI">CONFORMING TO</A><DD>
-<DT><A HREF="#lbAJ">BUGS</A><DD>
-<DT><A HREF="#lbAK">SEE ALSO</A><DD>
+<DT><A HREF="#lbAK">CONFORMING TO</A><DD>
+<DT><A HREF="#lbAL">BUGS</A><DD>
+<DT><A HREF="#lbAM">SEE ALSO</A><DD>
 </DL>
 <HR>
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 02:54:12 GMT, April 20, 2020
+Time: 02:54:47 GMT, April 20, 2020
 </BODY>
 </HTML>
