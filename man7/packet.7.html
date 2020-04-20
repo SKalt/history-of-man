@@ -10,7 +10,7 @@ of the modification is added to the header.
 <HTML><HEAD><TITLE>Man page of PACKET</TITLE>
 </HEAD><BODY>
 <H1>PACKET</H1>
-Section: Linux Programmer's Manual (7)<BR>Updated: 2014-02-26<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (7)<BR>Updated: 2014-04-28<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -417,10 +417,35 @@ rolls over to the next available one.
 <DT><B>PACKET_LOSS</B> (with <B>PACKET_TX_RING</B>)
 
 <DD>
-If set, do not silently drop a packet on transmission error, but
-return it with status set to
-<B>TP_STATUS_WRONG_FORMAT</B>.
+When a malformed packet is encountered on a transmit ring,
+the default is to reset its
+<I>tp_status</I>
 
+to
+<B>TP_STATUS_WRONG_FORMAT</B>
+
+and abort the transmission immediately.
+The malformed packet blocks itself and subsequently enqueued packets from
+being sent.
+The format error must be fixed, the associated
+<I>tp_status</I>
+
+reset to
+<B>TP_STATUS_SEND_REQUEST</B>,
+
+and the transmission process restarted via
+<B><A HREF="../man2/send.2.html">send</A></B>(2).
+
+However, if
+<B>PACKET_LOSS</B>
+
+is set, any malformed packet will be skipped, its
+<I>tp_status</I>
+
+reset to
+<B>TP_STATUS_AVAILABLE</B>,
+
+and the transmission process continued.
 <DT><B>PACKET_RESERVE</B> (with <B>PACKET_RX_RING</B>)
 
 <DD>
@@ -461,17 +486,26 @@ through the
 <I>tp_status</I>
 
 field.
-The packet socket owns all slots with status
+The packet socket owns all slots with
+<I>tp_status</I>
+
+equal to
 <B>TP_STATUS_KERNEL</B>.
 
 After filling a slot, it changes the status of the slot to transfer
 ownership to the application.
-During normal operation, the new status is
-<B>TP_STATUS_USER</B>,
+During normal operation, the new
+<I>tp_status</I>
 
-to signal that a correctly received packet has been stored.
+value has at least the
+<B>TP_STATUS_USER</B>
+
+bit set to signal that a received packet has been stored.
 When the application has finished processing a packet, it transfers
-ownership of the slot back to the socket by setting the status to
+ownership of the slot back to the socket by setting
+<I>tp_status</I>
+
+equal to
 <B>TP_STATUS_KERNEL</B>.
 
 Packet sockets implement multiple variants of the packet ring.
@@ -519,10 +553,16 @@ This option is similar to
 <B>PACKET_RX_RING</B>
 
 and takes the same arguments.
-The application writes packets into slots with status
+The application writes packets into slots with
+<I>tp_status</I>
+
+equal to
 <B>TP_STATUS_AVAILABLE</B>
 
-and schedules them for transmission by changing the status to
+and schedules them for transmission by changing
+<I>tp_status</I>
+
+to
 <B>TP_STATUS_SEND_REQUEST</B>.
 
 When packets are ready to be transmitted, the application calls
@@ -543,10 +583,13 @@ or
 <B><A HREF="../man2/sendmsg.2.html">sendmsg</A></B>(2),
 
 then that overrides the socket default.
-On successful transmission, the socket resets the slot to
+On successful transmission, the socket resets
+<I>tp_status</I>
+
+to
 <B>TP_STATUS_AVAILABLE</B>.
 
-It discards packets silently on error unless
+It immediately aborts the transmission on error unless
 <B>PACKET_LOSS</B>
 
 is set.
@@ -825,6 +868,19 @@ The
 
 include file for physical layer protocols.
 <P>
+The Linux kernel source tree.
+<I>/Documentation/networking/filter.txt</I>
+
+describes how to apply Berkeley Packet Filters to packet sockets.
+<I>/tools/testing/selftests/net/psock_tpacket.c</I>
+
+contains example source code for all available versions of
+<B>PACKET_RX_RING</B>
+
+and
+<B>PACKET_TX_RING</B>.
+
+<P>
 
 <HR>
 <A NAME="index">&nbsp;</A><H2>Index</H2>
@@ -851,6 +907,6 @@ include file for physical layer protocols.
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:28:45 GMT, April 20, 2020
+Time: 03:29:16 GMT, April 20, 2020
 </BODY>
 </HTML>

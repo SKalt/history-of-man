@@ -26,7 +26,7 @@ the source, must acknowledge the copyright and authors of this work.
 <HTML><HEAD><TITLE>Man page of SEMGET</TITLE>
 </HEAD><BODY>
 <H1>SEMGET</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2012-05-31<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2014-04-28<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -55,7 +55,7 @@ semget - get a System V semaphore set identifier
 The
 <B>semget</B>()
 
-system call returns the System V semaphore set identifier
+system call returns the System&nbsp;V semaphore set identifier
 associated with the argument
 <I>key</I>.
 
@@ -125,17 +125,6 @@ not meaningful for semaphores, and write permissions mean permission
 to alter semaphore values).
 <P>
 
-The values of the semaphores in a newly created set are indeterminate.
-(POSIX.1-2001 is explicit on this point.)
-Although Linux, like many other implementations,
-initializes the semaphore values to 0,
-a portable application cannot rely on this:
-it should explicitly initialize the semaphores to the desired values.
-
-
-
-<P>
-
 When creating a new semaphore set,
 <B>semget</B>()
 
@@ -191,7 +180,7 @@ The argument
 can be 0
 (a don't care)
 when a semaphore set is not being created.
-Otherwise
+Otherwise,
 <I>nsems</I>
 
 must be greater than 0
@@ -207,7 +196,7 @@ verified.
 <H2>RETURN VALUE</H2>
 
 If successful, the return value will be the semaphore set identifier
-(a nonnegative integer), otherwise -1
+(a nonnegative integer), otherwise, -1
 is returned, with
 <I>errno</I>
 
@@ -215,7 +204,7 @@ indicating the error.
 <A NAME="lbAF">&nbsp;</A>
 <H2>ERRORS</H2>
 
-On failure
+On failure,
 <I>errno</I>
 
 will be set to one of the following:
@@ -234,17 +223,16 @@ capability.
 <DT><B>EEXIST</B>
 
 <DD>
-A semaphore set exists for
-<I>key</I>
-
-and
-<I>semflg</I>
-
-specified both
 <B>IPC_CREAT</B>
 
 and
-<B>IPC_EXCL</B>.
+<B>IPC_EXCL</B>
+
+were specified in
+<I>shmflg</I>,
+
+but a semaphore set already exists for
+<I>key</I>.
 
 
 
@@ -256,12 +244,15 @@ and
 
 is less than 0 or greater than the limit on the number
 of semaphores per semaphore set
-(<B>SEMMSL</B>),
+(<B>SEMMSL</B>).
 
-or a semaphore set corresponding to
+<DT><B>EINVAL</B>
+
+<DD>
+A semaphore set corresponding to
 <I>key</I>
 
-already exists, and
+already exists, but
 <I>nsems</I>
 
 is larger than the number of semaphores in that set.
@@ -303,6 +294,39 @@ SVr4, POSIX.1-2001.
 <A NAME="lbAH">&nbsp;</A>
 <H2>NOTES</H2>
 
+<P>
+
+The values of the semaphores in a newly created set are indeterminate.
+(POSIX.1-2001 and POSIX.1-2008 are explicit on this point,
+although POSIX.1-2008 notes that a future version of the standard
+may require an implementation to initialize the semaphores to 0.)
+Although Linux, like many other implementations,
+initializes the semaphore values to 0,
+a portable application cannot rely on this:
+it should explicitly initialize the semaphores to the desired values.
+
+
+
+Initialization can be done using
+<B><A HREF="../man2/semctl.2.html">semctl</A></B>(2)
+
+<B>SETVAL</B>
+
+or
+<B>SETALL</B>
+
+operation.
+(Where multiple peers do not know who will be the first to
+initialize the set, checking for a nonzero
+<I>sem_otime</I>
+
+in the associated data structure retrieved by a
+<B><A HREF="../man2/semctl.2.html">semctl</A></B>(2)
+
+<B>IPC_STAT</B>
+
+operation can be used to avoid races.)
+<P>
 The inclusion of
 <I>&lt;<A HREF="file:///usr/include/sys/types.h">sys/types.h</A>&gt;</I>
 
@@ -327,7 +351,7 @@ type.
 If this special value is used for
 <I>key</I>,
 
-the system call ignores everything but the least significant 9 bits of
+the system call ignores all but the least significant 9 bits of
 <I>semflg</I>
 
 and creates a new semaphore set (on success).
@@ -341,7 +365,7 @@ call:
 <DT><B>SEMMNI</B>
 
 <DD>
-System wide maximum number of semaphore sets: policy dependent
+System-wide limit on the number of semaphore sets: policy dependent
 (on Linux, this limit can be read and modified via the fourth field of
 <I>/proc/sys/kernel/sem</I>).
 
@@ -349,21 +373,23 @@ System wide maximum number of semaphore sets: policy dependent
 <DT><B>SEMMSL</B>
 
 <DD>
-Maximum number of semaphores per semid: implementation dependent
+Maximum number of semaphores per semaphore ID: implementation dependent
 (on Linux, this limit can be read and modified via the first field of
 <I>/proc/sys/kernel/sem</I>).
 
 <DT><B>SEMMNS</B>
 
 <DD>
-System wide maximum number of semaphores: policy dependent
+System-wide limit on the number of semaphores: policy dependent
 (on Linux, this limit can be read and modified via the second field of
 <I>/proc/sys/kernel/sem</I>).
 
-Values greater than
-<B>SEMMSL * SEMMNI</B>
+Note that number of semaphores system-wide is also limited by the product of
+<B>SEMMSL</B>
 
-makes it irrelevant.
+and
+<B>SEMMNI</B>.
+
 </DL>
 <A NAME="lbAI">&nbsp;</A>
 <H2>BUGS</H2>
@@ -375,33 +401,6 @@ was perhaps unfortunate,
 <B>IPC_NEW</B>
 
 would more clearly show its function.
-<P>
-
-The semaphores in a set are not initialized by
-<B>semget</B>().
-
-
-
-In order to initialize the semaphores,
-<B><A HREF="../man2/semctl.2.html">semctl</A></B>(2)
-
-must be used to perform a
-<B>SETVAL</B>
-
-or a
-<B>SETALL</B>
-
-operation on the semaphore set.
-(Where multiple peers do not know who will be the first to
-initialize the set, checking for a nonzero
-<I>sem_otime</I>
-
-in the associated data structure retrieved by a
-<B><A HREF="../man2/semctl.2.html">semctl</A></B>(2)
-
-<B>IPC_STAT</B>
-
-operation can be used to avoid races.)
 <A NAME="lbAJ">&nbsp;</A>
 <H2>SEE ALSO</H2>
 
@@ -436,6 +435,6 @@ operation can be used to avoid races.)
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:28:33 GMT, April 20, 2020
+Time: 03:29:03 GMT, April 20, 2020
 </BODY>
 </HTML>

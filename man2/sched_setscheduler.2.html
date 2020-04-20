@@ -1,31 +1,32 @@
 <!--
-Copyright (C) Tom Bjorkholm, Markus Kuhn &amp; David A. Wheeler 1996-1999
-%%%LICENSE_START(GPLv2+_DOC_FULL)
-This is free documentation; you can redistribute it and/or
-modify it under the terms of the GNU General Public License as
-published by the Free Software Foundation; either version 2 of
-the License, or (at your option) any later version.
+Copyright (C) 2014 Michael Kerrisk &lt;mtk.manpages@gmail.com&gt;
+%%%LICENSE_START(VERBATIM)
+Permission is granted to make and distribute verbatim copies of this
+manual provided the copyright notice and this permission notice are
+preserved on all copies.
 .\"
-The GNU General Public License's references to "object code"
-and "executables" are to be interpreted as the output of any
-document formatting or typesetting system, including
-intermediate and printed output.
+Permission is granted to copy and distribute modified versions of this
+manual under the conditions for verbatim copying, provided that the
+entire resulting derived work is distributed under the terms of a
+permission notice identical to this one.
 .\"
-This manual is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
+Since the Linux kernel and libraries are constantly changing, this
+manual page may be incorrect or out-of-date.  The author(s) assume no
+responsibility for errors or omissions, or for damages resulting from
+the use of the information contained herein.  The author(s) may not
+have taken the same level of care in the production of this manual,
+which is licensed free of charge, as they might when working
+professionally.
 .\"
-You should have received a copy of the GNU General Public
-License along with this manual; if not, see
-&lt;http://www.gnu.org/licenses/&gt;.
+Formatted or processed versions of this manual, if unaccompanied by
+the source, must acknowledge the copyright and authors of this work.
 %%%LICENSE_END
 -->
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
 <HTML><HEAD><TITLE>Man page of SCHED_SETSCHEDULER</TITLE>
 </HEAD><BODY>
 <H1>SCHED_SETSCHEDULER</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2013-09-17<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2014-04-28<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -45,26 +46,46 @@ set and get scheduling policy/parameters
 
 <B>int sched_getscheduler(pid_t </B><I>pid</I><B>);</B>
 
-<B>struct sched_param {
-    ...
-    int </B><I>sched_priority</I><B>;
-    ...
-};
-</B></PRE>
+</PRE>
 
 <A NAME="lbAD">&nbsp;</A>
 <H2>DESCRIPTION</H2>
 
+The
 <B>sched_setscheduler</B>()
 
-sets both the scheduling policy and the associated parameters for the
+system call
+sets both the scheduling policy and parameters for the
 thread whose ID is specified in <I>pid</I>.
 If <I>pid</I> equals zero, the
 scheduling policy and parameters of the calling thread will be set.
+<P>
+The scheduling parameters are specified in the
+<I>param</I>
+
+argument, which is a pointer to a structure of the following form:
+<P>
+<PRE>
+struct sched_param {
+    ...
+    int sched_priority;
+    ...
+};
+</PRE>
+
+<P>
+In the current implementation, the structure contains only one field,
+<I>sched_priority</I>.
+
 The interpretation of
-the argument <I>param</I> depends on the selected policy.
+<I>param</I>
+
+depends on the selected policy.
+<P>
 Currently, Linux supports the following &quot;normal&quot;
-(i.e., non-real-time) scheduling policies:
+(i.e., non-real-time) scheduling policies as values that may be specified in
+<I>policy</I>:
+
 <DL COMPACT>
 <DT><B>SCHED_OTHER</B>
 
@@ -86,9 +107,21 @@ low priority background jobs.
 </DL>
 <P>
 
-The following &quot;real-time&quot; policies are also supported,
+For each of the above policies,
+<I>param-&gt;sched_priority</I>
+
+must be 0.
+<P>
+Various &quot;real-time&quot; policies are also supported,
 for special time-critical applications that need precise control over
-the way in which runnable threads are selected for execution:
+the way in which runnable threads are selected for execution.
+For the rules governing when a process may use these policies, see
+<B><A HREF="../man7/sched.7.html">sched</A></B>(7).
+
+The real-time policies that may be specified in
+<I>policy</I>
+
+are:
 <DL COMPACT>
 <DT><B>SCHED_FIFO</B>
 
@@ -101,204 +134,21 @@ a round-robin policy.
 </DL>
 <P>
 
-The semantics of each of these policies are detailed below.
-<P>
-<B>sched_getscheduler</B>()
+For each of the above policies,
+<I>param-&gt;sched_priority</I>
 
-queries the scheduling policy currently applied to the thread
-identified by <I>pid</I>.
-If <I>pid</I> equals zero, the policy of the
-calling thread will be retrieved.
-
-<A NAME="lbAE">&nbsp;</A>
-<H3>Scheduling policies</H3>
-
-The scheduler is the kernel component that decides which runnable thread
-will be executed by the CPU next.
-Each thread has an associated scheduling policy and a <I>static</I>
-scheduling priority, <I>sched_priority</I>; these are the settings
-that are modified by
-<B>sched_setscheduler</B>().
-
-The scheduler makes it decisions based on knowledge of the scheduling
-policy and static priority of all threads on the system.
-<P>
-For threads scheduled under one of the normal scheduling policies
-(<B>SCHED_OTHER</B>, <B>SCHED_IDLE</B>, <B>SCHED_BATCH</B>),
-<I>sched_priority</I> is not used in scheduling
-decisions (it must be specified as 0).
-<P>
-Processes scheduled under one of the real-time policies
-(<B>SCHED_FIFO</B>, <B>SCHED_RR</B>) have a
-<I>sched_priority</I> value in the range 1 (low) to 99 (high).
-(As the numbers imply, real-time threads always have higher priority
-than normal threads.)
-Note well: POSIX.1-2001 requires an implementation to support only a
-minimum 32 distinct priority levels for the real-time policies,
-and some systems supply just this minimum.
-Portable programs should use
+specifies a scheduling priority for the thread.
+This is a number on the range returned by calling
 <B><A HREF="../man2/sched_get_priority_min.2.html">sched_get_priority_min</A></B>(2)
 
 and
-<B><A HREF="../man2/sched_get_priority_max.2.html">sched_get_priority_max</A></B>(2)
+<B><A HREF="../man2/sched_get_priority_min.2.html">sched_get_priority_min</A></B>(2)
 
-to find the range of priorities supported for a particular policy.
+with the specified
+<I>policy</I>.
+
+On Linux, these system calls return, respectively, 1 and 99.
 <P>
-Conceptually, the scheduler maintains a list of runnable
-threads for each possible <I>sched_priority</I> value.
-In order to determine which thread runs next, the scheduler looks for
-the nonempty list with the highest static priority and selects the
-thread at the head of this list.
-<P>
-A thread's scheduling policy determines
-where it will be inserted into the list of threads
-with equal static priority and how it will move inside this list.
-<P>
-All scheduling is preemptive: if a thread with a higher static
-priority becomes ready to run, the currently running thread
-will be preempted and
-returned to the wait list for its static priority level.
-The scheduling policy determines the
-ordering only within the list of runnable threads with equal static
-priority.
-<A NAME="lbAF">&nbsp;</A>
-<H3>SCHED_FIFO: First in-first out scheduling</H3>
-
-<B>SCHED_FIFO</B> can be used only with static priorities higher than
-0, which means that when a <B>SCHED_FIFO</B> threads becomes runnable,
-it will always immediately preempt any currently running
-<B>SCHED_OTHER</B>, <B>SCHED_BATCH</B>, or <B>SCHED_IDLE</B> thread.
-<B>SCHED_FIFO</B> is a simple scheduling
-algorithm without time slicing.
-For threads scheduled under the
-<B>SCHED_FIFO</B> policy, the following rules apply:
-<DL COMPACT>
-<DT>*<DD>
-A <B>SCHED_FIFO</B> thread that has been preempted by another thread of
-higher priority will stay at the head of the list for its priority and
-will resume execution as soon as all threads of higher priority are
-blocked again.
-<DT>*<DD>
-When a <B>SCHED_FIFO</B> thread becomes runnable, it
-will be inserted at the end of the list for its priority.
-<DT>*<DD>
-A call to
-<B>sched_setscheduler</B>()
-
-or
-<B><A HREF="../man2/sched_setparam.2.html">sched_setparam</A></B>(2)
-
-will put the
-<B>SCHED_FIFO</B> (or <B>SCHED_RR</B>) thread identified by
-<I>pid</I> at the start of the list if it was runnable.
-As a consequence, it may preempt the currently running thread if
-it has the same priority.
-(POSIX.1-2001 specifies that the thread should go to the end
-of the list.)
-
-
-<DT>*<DD>
-A thread calling
-<B><A HREF="../man2/sched_yield.2.html">sched_yield</A></B>(2)
-
-will be put at the end of the list.
-</DL>
-<P>
-
-No other events will move a thread
-scheduled under the <B>SCHED_FIFO</B> policy in the wait list of
-runnable threads with equal static priority.
-<P>
-A <B>SCHED_FIFO</B>
-thread runs until either it is blocked by an I/O request, it is
-preempted by a higher priority thread, or it calls
-<B><A HREF="../man2/sched_yield.2.html">sched_yield</A></B>(2).
-
-<A NAME="lbAG">&nbsp;</A>
-<H3>SCHED_RR: Round-robin scheduling</H3>
-
-<B>SCHED_RR</B> is a simple enhancement of <B>SCHED_FIFO</B>.
-Everything
-described above for <B>SCHED_FIFO</B> also applies to <B>SCHED_RR</B>,
-except that each thread is allowed to run only for a maximum time
-quantum.
-If a <B>SCHED_RR</B> thread has been running for a time
-period equal to or longer than the time quantum, it will be put at the
-end of the list for its priority.
-A <B>SCHED_RR</B> thread that has
-been preempted by a higher priority thread and subsequently resumes
-execution as a running thread will complete the unexpired portion of
-its round-robin time quantum.
-The length of the time quantum can be
-retrieved using
-<B><A HREF="../man2/sched_rr_get_interval.2.html">sched_rr_get_interval</A></B>(2).
-
-
-
-
-<A NAME="lbAH">&nbsp;</A>
-<H3>SCHED_OTHER: Default Linux time-sharing scheduling</H3>
-
-<B>SCHED_OTHER</B> can be used at only static priority 0.
-<B>SCHED_OTHER</B> is the standard Linux time-sharing scheduler that is
-intended for all threads that do not require the special
-real-time mechanisms.
-The thread to run is chosen from the static
-priority 0 list based on a <I>dynamic</I> priority that is determined only
-inside this list.
-The dynamic priority is based on the nice value (set by
-<B><A HREF="../man2/nice.2.html">nice</A></B>(2)
-
-or
-<B><A HREF="../man2/setpriority.2.html">setpriority</A></B>(2))
-
-and increased for each time quantum the thread is ready to run,
-but denied to run by the scheduler.
-This ensures fair progress among all <B>SCHED_OTHER</B> threads.
-
-<A NAME="lbAI">&nbsp;</A>
-<H3>SCHED_BATCH: Scheduling batch processes</H3>
-
-(Since Linux 2.6.16.)
-<B>SCHED_BATCH</B> can be used only at static priority 0.
-This policy is similar to <B>SCHED_OTHER</B> in that it schedules
-the thread according to its dynamic priority
-(based on the nice value).
-The difference is that this policy
-will cause the scheduler to always assume
-that the thread is CPU-intensive.
-Consequently, the scheduler will apply a small scheduling
-penalty with respect to wakeup behaviour,
-so that this thread is mildly disfavored in scheduling decisions.
-<P>
-
-
-
-
-This policy is useful for workloads that are noninteractive,
-but do not want to lower their nice value,
-and for workloads that want a deterministic scheduling policy without
-interactivity causing extra preemptions (between the workload's tasks).
-
-<A NAME="lbAJ">&nbsp;</A>
-<H3>SCHED_IDLE: Scheduling very low priority jobs</H3>
-
-(Since Linux 2.6.23.)
-<B>SCHED_IDLE</B> can be used only at static priority 0;
-the process nice value has no influence for this policy.
-<P>
-This policy is intended for running jobs at extremely low
-priority (lower even than a +19 nice value with the
-<B>SCHED_OTHER</B>
-
-or
-<B>SCHED_BATCH</B>
-
-policies).
-
-<A NAME="lbAK">&nbsp;</A>
-<H3>Resetting scheduling policy for child processes</H3>
-
 Since Linux 2.6.32, the
 <B>SCHED_RESET_ON_FORK</B>
 
@@ -312,205 +162,18 @@ As a result of including this flag, children created by
 <B><A HREF="../man2/fork.2.html">fork</A></B>(2)
 
 do not inherit privileged scheduling policies.
-This feature is intended for media-playback applications,
-and can be used to prevent applications evading the
-<B>RLIMIT_RTTIME</B>
-
-resource limit (see
-<B><A HREF="../man2/getrlimit.2.html">getrlimit</A></B>(2))
-
-by creating multiple child processes.
-<P>
-More precisely, if the
-<B>SCHED_RESET_ON_FORK</B>
-
-flag is specified,
-the following rules apply for subsequently created children:
-<DL COMPACT>
-<DT>*<DD>
-If the calling thread has a scheduling policy of
-<B>SCHED_FIFO</B>
-
-or
-<B>SCHED_RR</B>,
-
-the policy is reset to
-<B>SCHED_OTHER</B>
-
-in child processes.
-<DT>*<DD>
-If the calling process has a negative nice value,
-the nice value is reset to zero in child processes.
-</DL>
-<P>
-
-After the
-<B>SCHED_RESET_ON_FORK</B>
-
-flag has been enabled,
-it can be reset only if the thread has the
-<B>CAP_SYS_NICE</B>
-
-capability.
-This flag is disabled in child processes created by
-<B><A HREF="../man2/fork.2.html">fork</A></B>(2).
-
-<P>
-The
-<B>SCHED_RESET_ON_FORK</B>
-
-flag is visible in the policy value returned by
-<B>sched_getscheduler</B>()
-
-
-<A NAME="lbAL">&nbsp;</A>
-<H3>Privileges and resource limits</H3>
-
-In Linux kernels before 2.6.12, only privileged
-(<B>CAP_SYS_NICE</B>)
-
-threads can set a nonzero static priority (i.e., set a real-time
-scheduling policy).
-The only change that an unprivileged thread can make is to set the
-<B>SCHED_OTHER</B>
-
-policy, and this can be done only if the effective user ID of the caller of
-<B>sched_setscheduler</B>()
-
-matches the real or effective user ID of the target thread
-(i.e., the thread specified by
-<I>pid</I>)
-
-whose policy is being changed.
-<P>
-Since Linux 2.6.12, the
-<B>RLIMIT_RTPRIO</B>
-
-resource limit defines a ceiling on an unprivileged thread's
-static priority for the
-<B>SCHED_RR</B>
-
-and
-<B>SCHED_FIFO</B>
-
-policies.
-The rules for changing scheduling policy and priority are as follows:
-<DL COMPACT>
-<DT>*<DD>
-If an unprivileged thread has a nonzero
-<B>RLIMIT_RTPRIO</B>
-
-soft limit, then it can change its scheduling policy and priority,
-subject to the restriction that the priority cannot be set to a
-value higher than the maximum of its current priority and its
-<B>RLIMIT_RTPRIO</B>
-
-soft limit.
-<DT>*<DD>
-If the
-<B>RLIMIT_RTPRIO</B>
-
-soft limit is 0, then the only permitted changes are to lower the priority,
-or to switch to a non-real-time policy.
-<DT>*<DD>
-Subject to the same rules,
-another unprivileged thread can also make these changes,
-as long as the effective user ID of the thread making the change
-matches the real or effective user ID of the target thread.
-<DT>*<DD>
-Special rules apply for the
-<B>SCHED_IDLE</B>.
-
-In Linux kernels before 2.6.39,
-an unprivileged thread operating under this policy cannot
-change its policy, regardless of the value of its
-<B>RLIMIT_RTPRIO</B>
-
-resource limit.
-In Linux kernels since 2.6.39,
-
-an unprivileged thread can switch to either the
-<B>SCHED_BATCH</B>
-
-or the
-<B>SCHED_NORMAL</B>
-
-policy so long as its nice value falls within the range permitted by its
-<B>RLIMIT_NICE</B>
-
-resource limit (see
-<B><A HREF="../man2/getrlimit.2.html">getrlimit</A></B>(2)).
-
-</DL>
-<P>
-
-Privileged
-(<B>CAP_SYS_NICE</B>)
-
-threads ignore the
-<B>RLIMIT_RTPRIO</B>
-
-limit; as with older kernels,
-they can make arbitrary changes to scheduling policy and priority.
 See
-<B><A HREF="../man2/getrlimit.2.html">getrlimit</A></B>(2)
+<B><A HREF="../man7/sched.7.html">sched</A></B>(7)
 
-for further information on
-<B>RLIMIT_RTPRIO</B>.
-
-<A NAME="lbAM">&nbsp;</A>
-<H3>Response time</H3>
-
-A blocked high priority thread waiting for the I/O has a certain
-response time before it is scheduled again.
-The device driver writer
-can greatly reduce this response time by using a &quot;slow interrupt&quot;
-interrupt handler.
-
-
-<A NAME="lbAN">&nbsp;</A>
-<H3>Miscellaneous</H3>
-
-Child processes inherit the scheduling policy and parameters across a
-<B><A HREF="../man2/fork.2.html">fork</A></B>(2).
-
-The scheduling policy and parameters are preserved across
-<B><A HREF="../man2/execve.2.html">execve</A></B>(2).
-
+for details.
 <P>
-Memory locking is usually needed for real-time processes to avoid
-paging delays; this can be done with
-<B><A HREF="../man2/mlock.2.html">mlock</A></B>(2)
-
-or
-<B><A HREF="../man2/mlockall.2.html">mlockall</A></B>(2).
-
-<P>
-Since a nonblocking infinite loop in a thread scheduled under
-<B>SCHED_FIFO</B> or <B>SCHED_RR</B> will block all threads with lower
-priority forever, a software developer should always keep available on
-the console a shell scheduled under a higher static priority than the
-tested application.
-This will allow an emergency kill of tested
-real-time applications that do not block or terminate as expected.
-See also the description of the
-<B>RLIMIT_RTTIME</B>
-
-resource limit in
-<B><A HREF="../man2/getrlimit.2.html">getrlimit</A></B>(2).
-
-<P>
-POSIX systems on which
-<B>sched_setscheduler</B>()
-
-and
 <B>sched_getscheduler</B>()
 
-are available define
-<B>_POSIX_PRIORITY_SCHEDULING</B>
-
-in <I>&lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;</I>.
-<A NAME="lbAO">&nbsp;</A>
+returns the current scheduling policy of the thread
+identified by <I>pid</I>.
+If <I>pid</I> equals zero, the policy of the
+calling thread will be retrieved.
+<A NAME="lbAE">&nbsp;</A>
 <H2>RETURN VALUE</H2>
 
 On success,
@@ -521,11 +184,11 @@ On success,
 <B>sched_getscheduler</B>()
 
 returns the policy for the thread (a nonnegative integer).
-On error, -1 is returned, and
+On error, both calls return -1, and
 <I>errno</I>
 
 is set appropriately.
-<A NAME="lbAP">&nbsp;</A>
+<A NAME="lbAF">&nbsp;</A>
 <H2>ERRORS</H2>
 
 <DL COMPACT>
@@ -544,14 +207,30 @@ The calling thread does not have appropriate privileges.
 <DD>
 The thread whose ID is <I>pid</I> could not be found.
 </DL>
-<A NAME="lbAQ">&nbsp;</A>
+<A NAME="lbAG">&nbsp;</A>
 <H2>CONFORMING TO</H2>
 
 POSIX.1-2001 (but see BUGS below).
 The <B>SCHED_BATCH</B> and <B>SCHED_IDLE</B> policies are Linux-specific.
-<A NAME="lbAR">&nbsp;</A>
+<A NAME="lbAH">&nbsp;</A>
 <H2>NOTES</H2>
 
+Further details of the semantics of all of the above &quot;normal&quot;
+and &quot;real-time&quot; scheduling  policies can be found in
+<B><A HREF="../man7/sched.7.html">sched</A></B>(7).
+
+<P>
+POSIX systems on which
+<B>sched_setscheduler</B>()
+
+and
+<B>sched_getscheduler</B>()
+
+are available define
+<B>_POSIX_PRIORITY_SCHEDULING</B>
+
+in <I>&lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;</I>.
+<P>
 POSIX.1 does not detail the permissions that an unprivileged
 thread requires in order to call
 <B>sched_setscheduler</B>(),
@@ -590,72 +269,7 @@ instead of the
 <B>sched_*</B>(2)
 
 system calls.)
-<P>
-
-Originally, Standard Linux was intended as a general-purpose operating
-system being able to handle background processes, interactive
-applications, and less demanding real-time applications (applications that
-need to usually meet timing deadlines).
-Although the Linux kernel 2.6
-allowed for kernel preemption and the newly introduced <A HREF="../man1/O.1.html">O</A>(1) scheduler
-ensures that the time needed to schedule is fixed and deterministic
-irrespective of the number of active tasks, true real-time computing
-was not possible up to kernel version 2.6.17.
-<A NAME="lbAS">&nbsp;</A>
-<H3>Real-time features in the mainline Linux kernel</H3>
-
-
-
-From kernel version 2.6.18 onward, however, Linux is gradually
-becoming equipped with real-time capabilities,
-most of which are derived from the former
-<I>realtime-preempt</I>
-
-patches developed by Ingo Molnar, Thomas Gleixner,
-Steven Rostedt, and others.
-Until the patches have been completely merged into the
-mainline kernel
-(this is expected to be around kernel version 2.6.30),
-they must be installed to achieve the best real-time performance.
-These patches are named:
-
-<PRE>
-
-patch-<I>kernelversion</I>-rt<I>patchversion</I>
-</PRE>
-
-
-<P>
-
-and can be downloaded from
-
-
-<P>
-Without the patches and prior to their full inclusion into the mainline
-kernel, the kernel configuration offers only the three preemption classes
-<B>CONFIG_PREEMPT_NONE</B>,
-
-<B>CONFIG_PREEMPT_VOLUNTARY</B>,
-
-and
-<B>CONFIG_PREEMPT_DESKTOP</B>
-
-which respectively provide no, some, and considerable
-reduction of the worst-case scheduling latency.
-<P>
-With the patches applied or after their full inclusion into the mainline
-kernel, the additional configuration item
-<B>CONFIG_PREEMPT_RT</B>
-
-becomes available.
-If this is selected, Linux is transformed into a regular
-real-time operating system.
-The FIFO and RR scheduling policies that can be selected using
-<B>sched_setscheduler</B>()
-
-are then used to run a thread
-with true real-time priority and a minimum worst-case scheduling latency.
-<A NAME="lbAT">&nbsp;</A>
+<A NAME="lbAI">&nbsp;</A>
 <H2>BUGS</H2>
 
 POSIX says that on success,
@@ -667,22 +281,10 @@ Linux
 
 does not conform to this requirement,
 since it always returns 0 on success.
-<A NAME="lbAU">&nbsp;</A>
+<A NAME="lbAJ">&nbsp;</A>
 <H2>SEE ALSO</H2>
 
 
-
-<B><A HREF="../man1/chrt.1.html">chrt</A></B>(1),
-
-<B><A HREF="../man2/getpriority.2.html">getpriority</A></B>(2),
-
-<B><A HREF="../man2/mlock.2.html">mlock</A></B>(2),
-
-<B><A HREF="../man2/mlockall.2.html">mlockall</A></B>(2),
-
-<B><A HREF="../man2/munlock.2.html">munlock</A></B>(2),
-
-<B><A HREF="../man2/munlockall.2.html">munlockall</A></B>(2),
 
 <B><A HREF="../man2/nice.2.html">nice</A></B>(2),
 
@@ -692,11 +294,15 @@ since it always returns 0 on success.
 
 <B><A HREF="../man2/sched_getaffinity.2.html">sched_getaffinity</A></B>(2),
 
+<B><A HREF="../man2/sched_getattr.2.html">sched_getattr</A></B>(2),
+
 <B><A HREF="../man2/sched_getparam.2.html">sched_getparam</A></B>(2),
 
 <B><A HREF="../man2/sched_rr_get_interval.2.html">sched_rr_get_interval</A></B>(2),
 
 <B><A HREF="../man2/sched_setaffinity.2.html">sched_setaffinity</A></B>(2),
+
+<B><A HREF="../man2/sched_setattr.2.html">sched_setattr</A></B>(2),
 
 <B><A HREF="../man2/sched_setparam.2.html">sched_setparam</A></B>(2),
 
@@ -706,18 +312,10 @@ since it always returns 0 on success.
 
 <B><A HREF="../man7/capabilities.7.html">capabilities</A></B>(7),
 
-<B><A HREF="../man7/cpuset.7.html">cpuset</A></B>(7)
+<B><A HREF="../man7/cpuset.7.html">cpuset</A></B>(7),
 
+<B><A HREF="../man7/sched.7.html">sched</A></B>(7)
 
-<P>
-
-<I>Programming for the real world - POSIX.4</I>
-
-by Bill O. Gallmeister, O'Reilly &amp; Associates, Inc., ISBN 1-56592-074-0.
-<P>
-
-The Linux kernel source file
-<I>Documentation/scheduler/sched-rt-group.txt</I>
 
 <P>
 
@@ -727,32 +325,17 @@ The Linux kernel source file
 <DT><A HREF="#lbAB">NAME</A><DD>
 <DT><A HREF="#lbAC">SYNOPSIS</A><DD>
 <DT><A HREF="#lbAD">DESCRIPTION</A><DD>
-<DL>
-<DT><A HREF="#lbAE">Scheduling policies</A><DD>
-<DT><A HREF="#lbAF">SCHED_FIFO: First in-first out scheduling</A><DD>
-<DT><A HREF="#lbAG">SCHED_RR: Round-robin scheduling</A><DD>
-<DT><A HREF="#lbAH">SCHED_OTHER: Default Linux time-sharing scheduling</A><DD>
-<DT><A HREF="#lbAI">SCHED_BATCH: Scheduling batch processes</A><DD>
-<DT><A HREF="#lbAJ">SCHED_IDLE: Scheduling very low priority jobs</A><DD>
-<DT><A HREF="#lbAK">Resetting scheduling policy for child processes</A><DD>
-<DT><A HREF="#lbAL">Privileges and resource limits</A><DD>
-<DT><A HREF="#lbAM">Response time</A><DD>
-<DT><A HREF="#lbAN">Miscellaneous</A><DD>
-</DL>
-<DT><A HREF="#lbAO">RETURN VALUE</A><DD>
-<DT><A HREF="#lbAP">ERRORS</A><DD>
-<DT><A HREF="#lbAQ">CONFORMING TO</A><DD>
-<DT><A HREF="#lbAR">NOTES</A><DD>
-<DL>
-<DT><A HREF="#lbAS">Real-time features in the mainline Linux kernel</A><DD>
-</DL>
-<DT><A HREF="#lbAT">BUGS</A><DD>
-<DT><A HREF="#lbAU">SEE ALSO</A><DD>
+<DT><A HREF="#lbAE">RETURN VALUE</A><DD>
+<DT><A HREF="#lbAF">ERRORS</A><DD>
+<DT><A HREF="#lbAG">CONFORMING TO</A><DD>
+<DT><A HREF="#lbAH">NOTES</A><DD>
+<DT><A HREF="#lbAI">BUGS</A><DD>
+<DT><A HREF="#lbAJ">SEE ALSO</A><DD>
 </DL>
 <HR>
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:28:32 GMT, April 20, 2020
+Time: 03:29:03 GMT, April 20, 2020
 </BODY>
 </HTML>

@@ -26,7 +26,7 @@ the source, must acknowledge the copyright and authors of this work.
 <HTML><HEAD><TITLE>Man page of SHMGET</TITLE>
 </HEAD><BODY>
 <H1>SHMGET</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2014-04-17<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2014-04-28<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -52,7 +52,7 @@ shmget - allocates a System V shared memory segment
 
 <B>shmget</B>()
 
-returns the identifier of the System V shared memory segment
+returns the identifier of the System&nbsp;V shared memory segment
 associated with the value of the argument
 <I>key</I>.
 
@@ -122,7 +122,7 @@ is composed of:
 <DT><B>IPC_CREAT</B>
 
 <DD>
-to create a new segment.
+Create a new segment.
 If this flag is not used, then
 <B>shmget</B>()
 
@@ -131,20 +131,11 @@ the user has permission to access the segment.
 <DT><B>IPC_EXCL</B>
 
 <DD>
-used with <B>IPC_CREAT</B> to ensure failure if the segment already exists.
-<DT><I>mode_flags</I>
+This flag is used with
+<B>IPC_CREAT</B>
 
-<DD>
-(least significant 9 bits)
-specifying the permissions granted to the owner, group, and world.
-These bits have the same format, and the same
-meaning, as the
-<I>mode</I>
-
-argument of
-<B><A HREF="../man2/open.2.html">open</A></B>(2).
-
-Presently, the execute permissions are not used by the system.
+to ensure that this call creates the segment.
+If the segment already exists, the call fails.
 <DT><B>SHM_HUGETLB</B> (since Linux 2.6)
 
 <DD>
@@ -179,6 +170,20 @@ in
 
 
 </DL>
+<P>
+
+In addition to the above flags, the least significant 9 bits of
+<I>shmflg</I>
+
+specify the permissions granted to the owner, group, and others.
+These bits have the same format, and the same
+meaning, as the
+<I>mode</I>
+
+argument of
+<B><A HREF="../man2/open.2.html">open</A></B>(2).
+
+Presently, execute permissions are not used by the system.
 <P>
 
 When a new shared memory segment is created,
@@ -265,15 +270,37 @@ capability.
 <DT><B>EEXIST</B>
 
 <DD>
-<B>IPC_CREAT | IPC_EXCL</B>
+<B>IPC_CREAT</B>
 
-was specified and the segment exists.
+and
+<B>IPC_EXCL</B>
+
+were specified in
+<I>shmflg</I>,
+
+but a shared memory segment already exists for
+<I>key</I>.
+
 <DT><B>EINVAL</B>
 
 <DD>
-A new segment was to be created and <I>size</I> &lt; <B>SHMMIN</B>
-or <I>size</I> &gt; <B>SHMMAX</B>, or no new segment was to be created,
-a segment with given key existed, but <I>size</I> is greater than the size
+A new segment was to be created and
+<I>size</I>
+
+is less than
+<B>SHMIN</B>
+
+or greater than
+<B>SHMMAX</B>.
+
+<DT><B>EINVAL</B>
+
+<DD>
+(The call did not create a new segment and)
+a segment for the given
+<I>key</I>
+
+exists, but <I>size</I> is greater than the size
 of that segment.
 <DT><B>ENFILE</B>
 
@@ -322,7 +349,10 @@ SVr4, POSIX.1-2001.
 <P>
 <B>SHM_HUGETLB</B>
 
-is a nonportable Linux extension.
+and
+<B>SHM_NORESERVE</B>
+
+are Linux extensions.
 <A NAME="lbAH">&nbsp;</A>
 <H2>NOTES</H2>
 
@@ -350,10 +380,10 @@ type.
 If this special value is used for
 <I>key</I>,
 
-the system call ignores everything but the least significant 9 bits of
+the system call ignores all but the least significant 9 bits of
 <I>shmflg</I>
 
-and creates a new shared memory segment (on success).
+and creates a new shared memory segment.
 <P>
 
 The following limits on shared memory segment resources affect the
@@ -364,13 +394,21 @@ call:
 <DT><B>SHMALL</B>
 
 <DD>
-System wide maximum of shared memory pages.
-Since Linux 2.2, the default value for this limit is
+System-wide limit on the number of shared memory pages.
+Since Linux 2.4, the default value for this limit is
 <P>
 <BR>&nbsp;&nbsp;&nbsp;&nbsp;SHMMAX&nbsp;/&nbsp;PAGE_SIZE&nbsp;*&nbsp;(SHMMNI&nbsp;/&nbsp;16)
 <P>
-Assuming a 4kB page size, this formula yields (since Linux 2.4) the value
-2^20 (2,097,152).
+If
+<B>SHMMAX</B>
+
+and
+<B>SHMMNI</B>
+
+are not modified, this yields a limit for the
+total memory used by all shared memory segments of 8 GB:
+With a 4kB page size, this formula yields the value 2^21 (2,097,152),
+with 8kB page size, it yields 2^20 (1048576).
 <P>
 On Linux, this limit can be read and modified via
 <I>/proc/sys/kernel/shmall</I>.
@@ -395,7 +433,7 @@ is the effective minimum size).
 <DT><B>SHMMNI</B>
 
 <DD>
-System wide maximum number of shared memory segments.
+System-wide limit on the number of shared memory segments.
 In Linux 2.2, the default value for this limit was 128;
 since Linux 2.4, the default value is 4096.
 <P>
@@ -415,7 +453,7 @@ number of shared memory segments
 <A NAME="lbAI">&nbsp;</A>
 <H3>Linux notes</H3>
 
-Until version 2.3.30 Linux would return
+Until version 2.3.30, Linux would return
 <B>EIDRM</B>
 
 for a
@@ -471,6 +509,6 @@ would more clearly show its function.
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:28:33 GMT, April 20, 2020
+Time: 03:29:03 GMT, April 20, 2020
 </BODY>
 </HTML>

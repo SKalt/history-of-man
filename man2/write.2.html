@@ -25,7 +25,7 @@ the source, must acknowledge the copyright and authors of this work.
 <HTML><HEAD><TITLE>Man page of WRITE</TITLE>
 </HEAD><BODY>
 <H1>WRITE</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2013-01-27<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2014-05-04<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -271,6 +271,53 @@ then the call fails with the error
 if it is interrupted after at least one byte has been written,
 the call succeeds, and returns the number of bytes written.
 <A NAME="lbAI">&nbsp;</A>
+<H2>BUGS</H2>
+
+According to POSIX.1-2008/SUSv4 Section XSI 2.9.7
+(&quot;Thread Interactions with Regular File Operations&quot;):
+<P>
+<DL COMPACT><DT><DD>
+All of the following functions shall be atomic with respect to
+each other in the effects specified in POSIX.1-2008 when they
+operate on regular files or symbolic links: ...
+</DL>
+
+<P>
+Among the APIs subsequently listed are
+<B>write</B>()
+
+and
+<B><A HREF="../man2/writev.2.html">writev</A></B>(2).
+
+And among the effects that should be atomic across threads (and processes)
+are updates of the file offset.
+However, on Linux before version 3.14,
+this was not the case: if two processes that share
+an open file description (see
+<B><A HREF="../man2/open.2.html">open</A></B>(2))
+
+perform a
+<B>write</B>()
+
+(or
+<B><A HREF="../man2/writev.2.html">writev</A></B>(2))
+
+at the same time, then the I/O operations were not atomic
+with respect updating the file offset,
+with the result that the blocks of data output by the two processes
+might (incorrectly) overlap.
+This problem was fixed in Linux 3.14.
+
+
+
+
+
+
+
+
+
+
+<A NAME="lbAJ">&nbsp;</A>
 <H2>SEE ALSO</H2>
 
 <B><A HREF="../man2/close.2.html">close</A></B>(2),
@@ -307,12 +354,13 @@ the call succeeds, and returns the number of bytes written.
 <DT><A HREF="#lbAF">ERRORS</A><DD>
 <DT><A HREF="#lbAG">CONFORMING TO</A><DD>
 <DT><A HREF="#lbAH">NOTES</A><DD>
-<DT><A HREF="#lbAI">SEE ALSO</A><DD>
+<DT><A HREF="#lbAI">BUGS</A><DD>
+<DT><A HREF="#lbAJ">SEE ALSO</A><DD>
 </DL>
 <HR>
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:28:34 GMT, April 20, 2020
+Time: 03:29:04 GMT, April 20, 2020
 </BODY>
 </HTML>

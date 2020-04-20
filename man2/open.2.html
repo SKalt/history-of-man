@@ -113,14 +113,15 @@ creates a new
 <I>open file description</I>,
 
 an entry in the system-wide table of open files.
-This entry records the file offset and the file status flags
-(modifiable via the
-<B><A HREF="../man2/fcntl.2.html">fcntl</A></B>(2)
+(This object is variously also called an &quot;open file object&quot;,
+a &quot;file handle&quot;, an &quot;open file table entry&quot;,
+or---in kernel-developer parlance---a
+<I>struct file</I>.
 
-<B>F_SETFL</B>
-
-operation).
-A file descriptor is a reference to one of these entries;
+The term &quot;open file description&quot; is used by POSIX.)
+The open file description records the file offset and the file status flags
+(see below).
+A file descriptor is a reference to an open file description;
 this reference is unaffected if
 <I>pathname</I>
 
@@ -273,7 +274,7 @@ plus
 <B><A HREF="../man2/execve.2.html">execve</A></B>(2).
 
 Depending on the order of execution,
-the race may lead to the file desriptor returned by
+the race may lead to the file descriptor returned by
 <B>open</B>()
 
 being unintentionally leaked to the program executed by the child process
@@ -932,7 +933,7 @@ If the file is a FIFO or terminal device file, the
 <B>O_TRUNC</B>
 
 flag is ignored.
-Otherwise the effect of
+Otherwise, the effect of
 <B>O_TRUNC</B>
 
 is unspecified.
@@ -966,7 +967,7 @@ If the pathname given in
 <I>pathname</I>
 
 is relative, then it is interpreted relative to the directory
-relative to by the file descriptor
+referred to by the file descriptor
 <I>dirfd</I>
 
 (rather than relative to the current working directory of
@@ -1783,7 +1784,16 @@ operation in
 Under Linux 2.4, transfer sizes, and the alignment of the user buffer
 and the file offset must all be multiples of the logical block size
 of the filesystem.
-Under Linux 2.6, alignment to 512-byte boundaries suffices.
+Since Linux 2.6.0, alignment to the logical block size of the
+underlying storage (typically 512 bytes) suffices.
+The logical block size can be determined using the
+<B><A HREF="../man2/ioctl.2.html">ioctl</A></B>(2)
+
+<B>BLKSSZGET</B>
+
+operation or from the shell using the command:
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;blockdev&nbsp;--getss
 <P>
 
 <B>O_DIRECT</B>
@@ -2019,6 +2029,6 @@ functionality.
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:28:32 GMT, April 20, 2020
+Time: 03:29:02 GMT, April 20, 2020
 </BODY>
 </HTML>
