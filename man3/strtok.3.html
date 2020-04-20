@@ -1,4 +1,5 @@
 <!--
+Copyright (C) 2005 Michael Kerrisk (mtk-manpages@gmx.net)
 Copyright (C) 1996 Andries Brouwer (aeb@cwi.nl)
 -->
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
@@ -18,63 +19,137 @@ strtok, strtok_r - extract tokens from strings
 <PRE>
 <B>#include &lt;<A HREF="file:///usr/include/string.h">string.h</A>&gt;</B>
 
-<B>char *strtok(char *</B><I>s</I><B>, const char *</B><I>delim</I><B>);</B>
+<B>char *strtok(char *</B><I>str</I><B>, const char *</B><I>delim</I><B>);</B>
 
-<B>char *strtok_r(char *</B><I>s</I><B>, const char *</B><I>delim</I><B>, char **</B><I>ptrptr</I><B>);</B>
+<B>char *strtok_r(char *</B><I>str</I><B>, const char *</B><I>delim</I><B>, char **</B><I>saveptr</I><B>);</B>
 </PRE>
 
 <A NAME="lbAD">&nbsp;</A>
 <H2>DESCRIPTION</H2>
 
-A `token' is a nonempty string of characters not occurring in
-the string <I>delim</I>, followed by \0 or by a character occurring
-in <I>delim</I>.
+The <B>strtok</B>() function parses a string into a sequence of tokens. 
+On the first call to <B>strtok</B>() the string to be parsed should be
+specified in <I>str</I>.
+In each subsequent call that should parse the same string, 
+<I>str</I> should be NULL.
 <P>
-
-The <B>strtok</B>() function can be used to parse the string <I>s</I>
-into tokens. The first call to <B>strtok</B>() should have <I>s</I>
-as its first argument. Subsequent calls should have the first argument
-set to NULL. Each call returns a pointer to the next token, or NULL
-when no more tokens are found.
+The <I>delim</I> argument specifies a set of characters that
+delimit the tokens in the parsed string.
+The caller may specify different strings in <I>delim</I> in successive 
+calls that parse the same string.
 <P>
-
-If a token ends with a delimiter, this delimiting character is
-overwritten with a \0 and a pointer to the next character is
-saved for the next call to <B>strtok</B>().
-The delimiter string <I>delim</I> may be different for each call.
+Each call to <B>strtok</B>() returns a pointer to a 
+null-terminated string containing the next token.
+This string does not include the delimiting character.
+If no more tokens are found, <B>strtok</B>() returns NULL.
 <P>
-
+A sequence of two or more contiguous delimiter characters in 
+the parsed string is considered to be a single delimiter.
+Delimiter characters at the start or end of the string are ignored.
+Put another way: the tokens returned by <B>strtok</B>() 
+are always non-empty strings.
+<P>
 The 
 <B>strtok_r</B>()
 
-function is a reentrant version of the
-<B>strtok</B>()
+function is a reentrant version
+<B>strtok</B>().
 
-function, which instead of using its own static buffer, requires a pointer
-to a user allocated char*. This pointer, the
-<I>ptrptr</I>
+The <I>saveptr</I> argument is a pointer to a 
+<I>char *</I> variable that is used internally by
+<B>strtok_r</B>()
 
-parameter, must be the same while parsing the same string.
+in order to maintain context between successive calls that parse the
+same string.
+<P>
+On the first call to 
+<B>strtok_r</B>(),
 
+<I>str</I>
 
+should point to the string to be parsed, and the value of 
+<I>saveptr</I>
 
+is ignored.
+In subsequent calls, <I>str</I> should be NULL, and
+<I>saveptr</I> should be unchanged since the previous call.
+<P>
+Different strings may be parsed concurrently using sequences of calls to
+<B>strtok_r</B>()
 
-
-
-
-
-
-
-
-
-
-
-
-
+that specify different <I>saveptr</I> arguments.
 <A NAME="lbAE">&nbsp;</A>
+<H2>EXAMPLES</H2>
+
+The following program uses nested loops that employ
+<B>strtok_r</B>()
+
+to break a string into a two-level hierarchy of tokens.
+The first command-line argument specifies the string to be parsed.
+The second argument specifies the delimiter character(s)
+to be used to separate that string into &quot;major&quot; tokens.
+The third argument specifies the delimiter character(s)
+to be used to separate the &quot;major&quot; tokens into subtokens.
+<P>
+
+<PRE>
+#include &lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/stdlib.h">stdlib.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/string.h">string.h</A>&gt;
+
+int
+main(int argc, char *argv[])
+{
+    char *str1, *str2, *token, *subtoken;
+    char *saveptr1, *saveptr2;
+    int j;
+
+    if (argc != 4) {
+        fprintf(stderr, &quot;Usage: %s string delim subdelim\n&quot;, 
+                argv[0]);
+        exit(EXIT_FAILURE);
+    } 
+
+    for (j = 1, str1 = argv[1]; ; j++, str1 = NULL) {
+        token = strtok_r(str1, argv[2], &amp;saveptr1);
+        if (token == NULL)
+            break;
+        printf(&quot;%d: %s, j, token);
+
+        for (str2 = token; ; str2 = NULL) {
+            subtoken = strtok_r(str2, argv[3], &amp;saveptr2);
+            if (subtoken == NULL)
+                break;
+            printf(&quot;	 --&gt; %s, subtoken);
+        } 
+    } 
+
+    exit(EXIT_SUCCESS);
+} /* main */
+</PRE>
+
+<P>
+
+An example of the output produced by this program is the following:
+<P>
+
+<PRE>
+$ ./a.out 'a/bbb///cc;xxx:yyy:' ':;' '/'
+1: a/bbb///cc
+         --&gt; a
+         --&gt; bbb
+         --&gt; cc
+2: xxx
+         --&gt; xxx
+3: yyy
+         --&gt; yyy
+</PRE>
+
+<A NAME="lbAF">&nbsp;</A>
 <H2>BUGS</H2>
 
-Never use these functions. If you do, note that:
+Avoid using these functions.
+If you do use them, note that:
 <P>
 
 <DL COMPACT><DT><DD>
@@ -96,25 +171,25 @@ function uses a static buffer while parsing, so it's not thread safe. Use
 if this matters to you.
 </DL>
 
-<A NAME="lbAF">&nbsp;</A>
+<A NAME="lbAG">&nbsp;</A>
 <H2>RETURN VALUE</H2>
 
-The <B>strtok</B>() function returns a pointer to the next token, or
-NULL if there are no more tokens.
-<A NAME="lbAG">&nbsp;</A>
+The <B>strtok</B>() and <B>strtok_r</B>()functions returns a pointer to 
+the next token, or NULL if there are no more tokens.
+<A NAME="lbAH">&nbsp;</A>
 <H2>CONFORMING TO</H2>
 
 <DL COMPACT>
 <DT><B>strtok</B>()
 
 <DD>
-SVID 3, POSIX, 4.3BSD, ISO 9899
+SVID 3, POSIX.1-2001, 4.3BSD, ISO 9899
 <DT><B>strtok_r</B>()
 
 <DD>
-POSIX.1c
+POSIX.1-2001
 </DL>
-<A NAME="lbAH">&nbsp;</A>
+<A NAME="lbAI">&nbsp;</A>
 <H2>SEE ALSO</H2>
 
 <B><A HREF="../man3/index.3.html">index</A></B>(3),
@@ -141,15 +216,16 @@ POSIX.1c
 <DT><A HREF="#lbAB">NAME</A><DD>
 <DT><A HREF="#lbAC">SYNOPSIS</A><DD>
 <DT><A HREF="#lbAD">DESCRIPTION</A><DD>
-<DT><A HREF="#lbAE">BUGS</A><DD>
-<DT><A HREF="#lbAF">RETURN VALUE</A><DD>
-<DT><A HREF="#lbAG">CONFORMING TO</A><DD>
-<DT><A HREF="#lbAH">SEE ALSO</A><DD>
+<DT><A HREF="#lbAE">EXAMPLES</A><DD>
+<DT><A HREF="#lbAF">BUGS</A><DD>
+<DT><A HREF="#lbAG">RETURN VALUE</A><DD>
+<DT><A HREF="#lbAH">CONFORMING TO</A><DD>
+<DT><A HREF="#lbAI">SEE ALSO</A><DD>
 </DL>
 <HR>
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 02:17:42 GMT, April 20, 2020
+Time: 02:18:13 GMT, April 20, 2020
 </BODY>
 </HTML>

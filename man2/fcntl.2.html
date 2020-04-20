@@ -760,16 +760,8 @@ or
 that conflicts with a lease established via
 <B>F_SETLEASE</B>,
 
-the system call is blocked by the kernel, unless the
-<B>O_NONBLOCK</B>
-
-flag was specified to
-<B>open</B>(),
-
-in which case the system call will return with the error
-<B>EWOULDBLOCK</B>.
-
-The kernel notifies the lease holder by sending it a signal
+the system call is blocked by the kernel and
+the kernel notifies the lease holder by sending it a signal
 (SIGIO by default).
 The lease holder should respond to receipt of this signal by doing
 whatever cleanup is required in preparation for the file to be
@@ -806,6 +798,35 @@ then the kernel forcibly removes or downgrades the lease holder's lease.
 Once the lease has been voluntarily or forcibly removed or downgraded,
 and assuming the lease breaker has not unblocked its system call,
 the kernel permits the lease breaker's system call to proceed.
+<P>
+If the lease breaker's blocked
+<B>open</B>()
+
+or 
+<B>truncate</B>()
+
+is interrupted by a signal handler, 
+then the system call fails with the error 
+<B>EINTR</B>,
+
+but the other steps still occur as described above.
+If the lease breaker is killed by a signal while blocked in 
+<B>open</B>()
+
+or 
+<B>truncate</B>(),
+
+then the other steps still occur as described above.
+If the lease breaker specifies the 
+<B>O_NONBLOCK </B>
+
+flag when calling 
+<B>open</B>(),
+
+then the call immediately fails with the error 
+<B>EWOULDBLOCK</B>,
+
+but the other steps still occur as described above.
 <P>
 The default signal used to notify the lease holder is SIGIO,
 but this can be changed using the
@@ -1188,6 +1209,6 @@ See also locks.txt, mandatory.txt, and dnotify.txt in
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 02:17:32 GMT, April 20, 2020
+Time: 02:18:03 GMT, April 20, 2020
 </BODY>
 </HTML>
