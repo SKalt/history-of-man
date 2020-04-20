@@ -1,4 +1,5 @@
 <!--
+Copyright (C) 2007 Michael Kerrisk &lt;mtk-manpages@gmx.net&gt;
 -->
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
 <HTML><HEAD><TITLE>Man page of READV</TITLE>
@@ -17,9 +18,9 @@ readv, writev - read or write data into multiple buffers
 <PRE>
 <B>#include &lt;<A HREF="file:///usr/include/sys/uio.h">sys/uio.h</A>&gt;</B>
 
-<B>ssize_t readv(int </B><I>fd</I><B>, const struct iovec *</B><I>vector</I><B>, int </B><I>count</I><B>);</B>
+<B>ssize_t readv(int </B><I>fd</I><B>, const struct iovec *</B><I>iov</I><B>, int </B><I>iovcnt</I><B>);</B>
 
-<B>ssize_t writev(int </B><I>fd</I><B>, const struct iovec *</B><I>vector</I><B>, int </B><I>count</I><B>);</B>
+<B>ssize_t writev(int </B><I>fd</I><B>, const struct iovec *</B><I>iov</I><B>, int </B><I>iovcnt</I><B>);</B>
 </PRE>
 
 <A NAME="lbAD">&nbsp;</A>
@@ -29,40 +30,43 @@ The
 <B>readv</B>()
 
 function reads
-<I>count</I>
+<I>iovcnt</I>
 
-blocks from the file associated with the file descriptor
+buffers from the file associated with the file descriptor
 <I>fd</I>
 
-into the multiple buffers described by
-<I>vector</I>.
+into the buffers described by
+<I>iov</I>
 
+(&quot;scatter input&quot;).
 <P>
 
 The
 <B>writev</B>()
 
-function writes at most
-<I>count</I>
+function writes
+<I>iovcnt</I>
 
-blocks described by
-<I>vector</I>
+buffers of data described by
+<I>iov</I>
 
 to the file associated with the file descriptor
-<I>fd</I>.
+<I>fd</I>
 
+(&quot;gather output&quot;).
 <P>
 
 The pointer
-<I>vector</I>
+<I>iov</I>
 
-points to a
-<I>struct iovec</I>
+points to an array of 
+<I>iovec</I>
 
+structures,
 defined in
 <I>&lt;<A HREF="file:///usr/include/sys/uio.h">sys/uio.h</A>&gt;</I>
 
-as
+as:
 <P>
 
 <BR>
@@ -70,15 +74,12 @@ as
 
 <PRE>
 struct iovec {
-    void *iov_base;   /* Starting address */
-    size_t iov_len;   /* Number of bytes */
+    void  *iov_base;    /* Starting address */
+    size_t iov_len;     /* Number of bytes to transfer */
 };
 </PRE>
 
 
-<P>
-
-Buffers are processed in the order specified.
 <P>
 
 The
@@ -97,6 +98,58 @@ function works just like
 <B><A HREF="../man2/write.2.html">write</A></B>(2)
 
 except that multiple buffers are written out.
+<P>
+
+Buffers are processed in array order.
+This means that
+<B>readv</B>()
+
+completely fills
+<I>iov</I>[0]
+
+before proceeding to 
+<I>iov</I>[1],
+
+and so on.
+(If there is insufficient data, then not all buffers pointed to by
+<I>iov</I>
+
+may be filled.)
+Similarly,
+<B>writev</B>()
+
+writes out the entire contents of
+<I>iov</I>[0]
+
+before proceeding to 
+<I>iov</I>[1],
+
+and so on.
+<P>
+
+The data transfers performed by
+<B>readv</B>()
+
+and
+<B>writev</B>()
+
+are atomic: the data written by
+<B>writev</B>()
+
+is written as a single block that is not intermingled with output
+from writes in other processes (but see
+<B><A HREF="../man7/pipe.7.html">pipe</A></B>(7)
+
+for an exception);
+analogously,
+<B>readv</B>()
+
+is guaranteed to read a contiguous block of data from the file,
+regardless of read operations performed in other threads or processes
+that have file descriptors referring to the same open file description
+(see 
+<B><A HREF="../man2/open.2.html">open</A></B>(2)).
+
 <A NAME="lbAE">&nbsp;</A>
 <H2>RETURN VALUE</H2>
 
@@ -129,7 +182,7 @@ values overflows an
 <I>ssize_t</I>
 
 value.
-Or, the vector count <I>count</I> is less than zero or greater than the
+Or, the vector count <I>iovcnt</I> is less than zero or greater than the
 permitted maximum.
 </DL>
 <A NAME="lbAG">&nbsp;</A>
@@ -142,7 +195,7 @@ and
 <B>writev</B>()
 
 functions first appeared in 4.2BSD), POSIX.1-2001.
-Linux libc5 used <I>size_t</I> as the type of the <I>count</I> parameter,
+Linux libc5 used <I>size_t</I> as the type of the <I>iovcnt</I> parameter,
 and <I>int</I> as return type for these functions.
 
 
@@ -151,7 +204,7 @@ and <I>int</I> as return type for these functions.
 
 POSIX.1-2001 allows an implementation to place a limit on
 the number of items that can be passed in
-<I>vector</I>.
+<I>iov</I>.
 
 An implementation can advertise its limit by defining
 <B>IOV_MAX</B>
@@ -172,7 +225,7 @@ In the case of
 
 the wrapper function allocates a temporary buffer large enough
 for all of the items specified by
-<I>vector</I>,
+<I>iov</I>,
 
 passes that buffer in a call to
 <B>read</B>(),
@@ -181,7 +234,7 @@ copies data from the buffer to the locations specified by the
 <I>iov_base</I>
 
 fields of the elements of
-<I>vector</I>,
+<I>iov</I>,
 
 and then frees the buffer.
 The wrapper function for
@@ -202,6 +255,29 @@ or
 which operate on file descriptors, with the functions from the stdio
 library; the results will be undefined and probably not what you want.
 <A NAME="lbAJ">&nbsp;</A>
+<H2>EXAMPLE</H2>
+
+The following code sample demonstrates the use of
+<B>writev</B>():
+
+<P>
+
+<PRE>
+char *str0 = &quot;hello &quot;;
+char *str1 = &quot;world\n&quot;;
+struct iovec iov[2];
+ssize_t nwritten;
+
+iov[0].iov_base = str0;
+iov[0].iov_len = strlen(str0);
+iov[1].iov_base = str1;
+iov[1].iov_len = strlen(str1);
+
+nwritten = writev(STDOUT_FILENO, iov, 2);
+</PRE>
+
+
+<A NAME="lbAK">&nbsp;</A>
 <H2>SEE ALSO</H2>
 
 <B><A HREF="../man2/read.2.html">read</A></B>(2),
@@ -221,12 +297,13 @@ library; the results will be undefined and probably not what you want.
 <DT><A HREF="#lbAG">CONFORMING TO</A><DD>
 <DT><A HREF="#lbAH">LINUX NOTES</A><DD>
 <DT><A HREF="#lbAI">BUGS</A><DD>
-<DT><A HREF="#lbAJ">SEE ALSO</A><DD>
+<DT><A HREF="#lbAJ">EXAMPLE</A><DD>
+<DT><A HREF="#lbAK">SEE ALSO</A><DD>
 </DL>
 <HR>
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 02:35:34 GMT, April 20, 2020
+Time: 02:36:08 GMT, April 20, 2020
 </BODY>
 </HTML>

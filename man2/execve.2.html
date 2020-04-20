@@ -29,18 +29,30 @@ execve - execute program
 
 <B>execve</B>() executes the program pointed to by <I>filename</I>.
 <I>filename</I> must be either a binary executable, or a script
-starting with a line of the form &quot;<B>#! </B><I>interpreter </I>[arg]&quot;.
-In the latter case, the interpreter must be a valid pathname for an
-executable which is not itself a script, which will be invoked as
-<B>interpreter</B> [arg] <I>filename</I>.
+starting with a line of the form:
+<P>
+
+<PRE>
+<B>#! </B><I>interpreter </I>[optional-arg]
+</PRE>
+
+
+<P>
+For details of the latter case, see &quot;Interpreter scripts&quot; below.
 <P>
 <I>argv</I> is an array of argument strings passed to the new program.
 <I>envp</I> is an array of strings, conventionally of the form
 <B>key=value</B>, which are passed as environment to the new program.
 Both <I>argv</I> and <I>envp</I> must be terminated by a null pointer.
 The argument vector and environment can be accessed by the
-called program's main function, when it is defined as <B>int main(int
-argc, char *argv[], char *envp[])</B>.
+called program's main function, when it is defined as:
+<P>
+
+<PRE>
+int main(int argc, char *argv[], char *envp[]).
+</PRE>
+
+
 <P>
 <B>execve</B>() does not return on success, and the text, data, bss, and
 stack of the calling process are overwritten by that of the program
@@ -50,7 +62,17 @@ If the current program is being ptraced, a <B>SIGTRAP</B> is sent to it
 after a successful <B>execve</B>().
 <P>
 If the set-user-ID bit is set on the program file pointed to by
-<I>filename</I>, and the calling process is not being ptraced,
+<I>filename</I>, 
+and the underlying file system is not mounted 
+<I>nosuid</I>
+
+(the
+<B>MS_NOSUID</B>
+
+flag for
+<B><A HREF="../man2/mount.2.html">mount</A></B>(2)),
+
+and the calling process is not being ptraced,
 then the effective user ID of the calling process is changed
 to that of the owner of the program file.
 Similarly, when the set-group-ID
@@ -84,15 +106,6 @@ All process attributes are preserved during an
 
 except the following:
 <DL COMPACT>
-<DT>*<DD>
-File descriptors that are marked close-on-exec are closed
-(see the description of
-<B>FD_CLOEXEC</B>
-
-in
-<B><A HREF="../man2/fcntl.2.html">fcntl</A></B>(2)).
-
-
 <DT>*<DD>
 The set of pending signals is cleared
 (<B><A HREF="../man2/sigpending.2.html">sigpending</A></B>(2)).
@@ -191,7 +204,7 @@ The termination signal is reset to SIGCHLD
 Note the following further points:
 <DL COMPACT>
 <DT>*<DD>
-All threads other than calling thread are destroyed during an
+All threads other than the calling thread are destroyed during an
 <B>execve</B>().
 
 Mutexes, condition variables, and other pthreads objects are not preserved.
@@ -217,15 +230,99 @@ For the handling of capabilities during
 see
 <B><A HREF="../man7/capabilities.7.html">capabilities</A></B>(7).
 
+<DT>*<DD>
+By default, file descriptors remain open across an 
+<B>execve</B>().
+
+File descriptors that are marked close-on-exec are closed
+; see the description of
+<B>FD_CLOEXEC</B>
+
+in
+<B><A HREF="../man2/fcntl.2.html">fcntl</A></B>(2).
+
+(If a file descriptor is closed, this will cause the release
+of all record locks obtained on the underlying file by this process.
+See
+<B><A HREF="../man2/fcntl.2.html">fcntl</A></B>(2)
+
+for details.)
+POSIX.1-2001 says that if file descriptors 0, 1, and 2 would 
+otherwise be closed after a successful
+<B>execve</B>(),
+
+and the process would gain privilege because the set-user_ID or
+set-group_ID permission bit was set on the executed file,
+then the system may open an unspecified file for each of these
+file descriptors.
+As a general principle, no portable program, whether privileged or not,
+can assume that these three file descriptors will remain 
+closed across an
+<B>execve</B>().
+
+
+
+
 </DL>
 <A NAME="lbAE">&nbsp;</A>
+<H3>Interpreter scripts</H3>
+
+An interpreter script is a text file that has execute 
+permission enabled and whose first line is of the form:
+<P>
+
+<PRE>
+<B>#! </B><I>interpreter </I>[optional-arg]
+</PRE>
+
+
+<P>
+The 
+<I>interpreter </I>
+
+must be a valid pathname for an
+executable which is not itself a script.
+If the 
+<I>filename</I>
+
+argument of
+<B>execve</B>()
+
+specifies an interpreter script, then 
+<I>interpreter</I>
+
+will be invoked with the following arguments:
+<P>
+
+<PRE>
+<I>interpreter</I> [optional-arg] <I>filename</I> arg...
+</PRE>
+
+
+<P>
+where
+<I>arg...</I>
+
+is the series of words pointed to by the 
+<I>argv</I>
+
+argument of 
+<B>execve</B>().
+
+<P>
+For portable use,
+<I>optional-arg</I>
+
+should either be absent, or be specified as a single word (i.e., it
+should not contain white space); see NOTES below.
+<A NAME="lbAF">&nbsp;</A>
 <H2>RETURN VALUE</H2>
 
 On success, <B>execve</B>() does not return, on error -1 is returned, and
 <I>errno</I>
 
 is set appropriately.
-<A NAME="lbAF">&nbsp;</A>
+<A NAME="lbAG">&nbsp;</A>
 <H2>ERRORS</H2>
 
 <DL COMPACT>
@@ -350,7 +447,7 @@ file has the set-user-ID or set-group-ID bit set.
 <DD>
 Executable was open for writing by one or more processes.
 </DL>
-<A NAME="lbAG">&nbsp;</A>
+<A NAME="lbAH">&nbsp;</A>
 <H2>CONFORMING TO</H2>
 
 SVr4, 4.3BSD, POSIX.1-2001.
@@ -360,7 +457,7 @@ but is otherwise compatible.
 
 
 
-<A NAME="lbAH">&nbsp;</A>
+<A NAME="lbAI">&nbsp;</A>
 <H2>NOTES</H2>
 
 Set-user-ID and set-group-ID processes can not be <B>ptrace</B>()d.
@@ -370,7 +467,7 @@ Linux ignores the set-user-ID and set-group-ID bits on scripts.
 The result of mounting a filesystem
 <I>nosuid</I>
 
-vary between Linux kernel versions:
+varies across Linux kernel versions:
 some will refuse execution of set-user-ID and set-group-ID
 executables when this would
 give the user powers she did not have already (and return EPERM),
@@ -381,6 +478,43 @@ successfully.
 <P>
 A maximum line length of 127 characters is allowed for the first line in
 a #! executable shell script.
+<P>
+The semantics of the
+<I>optional-arg</I>
+
+argument of an interpreter script vary across implementations.
+On Linux, the entire string following the 
+<I>interpreter</I>
+
+name is passed as a single argument to the interpreter,
+and this string can include white space.
+However, behavior differs on some other systems.
+Some systems
+
+use the first white space to terminate 
+<I>optional-arg</I>.
+
+On some systems,
+
+an interpreter script can have multiple arguments,
+and white spaces in
+<I>optional-arg</I>
+
+are used to delimit the arguments.
+<P>
+On Linux, 
+<I>argv</I>
+
+and
+<I>envp</I>
+
+can be specified as NULL,
+which has the same effect as specifying these arguments
+as pointers to lists containing a single NULL pointer.
+<B>Do not take advantage of this misfeature!</B>
+
+It is non-standard and non-portable:
+on most other Unix systems doing this will result in an error.
 
 
 
@@ -388,7 +522,13 @@ a #! executable shell script.
 
 
 
-<A NAME="lbAI">&nbsp;</A>
+
+
+
+
+
+
+<A NAME="lbAJ">&nbsp;</A>
 <H2>HISTORICAL</H2>
 
 With Unix V6 the argument list of an
@@ -404,7 +544,108 @@ argument list was not directly usable in a further
 
 call.
 Since Unix V7 both are NULL.
-<A NAME="lbAJ">&nbsp;</A>
+<A NAME="lbAK">&nbsp;</A>
+<H2>EXAMPLE</H2>
+
+The following program is designed to execed by the second program below.
+It just echoes its command-line one  per line.
+<P>
+
+<PRE>
+/* myecho.c */
+
+#include &lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/stdlib.h">stdlib.h</A>&gt;
+
+int
+main(int argc, char *argv[])
+{
+    int j;
+
+    for (j = 0; j &lt; argc; j++)
+        printf(&quot;argv[%d]: %s\n&quot;, j, argv[j]);
+
+    exit(EXIT_SUCCESS);
+}
+</PRE>
+
+
+<P>
+This program can be used to exec the program named in its command-line
+argument:
+
+<PRE>
+
+/* execve.c */
+
+#include &lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/stdlib.h">stdlib.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/assert.h">assert.h</A>&gt;
+
+int
+main(int argc, char *argv[])
+{
+    char *newargv[] = { NULL, &quot;hello&quot;, &quot;world&quot;, NULL };
+    char *newenviron[] = { NULL };
+
+    assert(argc == 2);  /* argv[1] identifies 
+                           program to exec */
+    newargv[0] = argv[1];
+
+    execve(argv[1], newargv, newenviron);
+    perror(&quot;execve&quot;);   /* execve() only returns on error */
+    exit(EXIT_FAILURE);
+}
+</PRE>
+
+
+<P>
+We can use the second program to exec the first as follows:
+<P>
+
+<PRE>
+$ cc myecho.c -o myecho
+$ cc execve.c -o execve
+$ ./exceve ./myecho
+argv[0]: ./myecho
+argv[1]: hello
+argv[2]: world
+</PRE>
+
+
+<P>
+We can also use these programs to demonstrate the use of a script
+interpreter.
+To do this we create a script whose &quot;interpreter&quot; is our
+<I>myecho</I>
+
+program:
+<P>
+
+<PRE>
+$ cat &gt; script.sh
+#! ./myecho script-arg
+^D
+$ chmod +x script.sh
+</PRE>
+
+
+<P>
+We can then use our program to exec the script:
+<P>
+
+<PRE>
+$ ./execve ./script.sh
+argv[0]: ./myecho
+argv[1]: script-arg
+argv[2]: ./script.sh
+argv[3]: hello
+argv[4]: world
+</PRE>
+
+
+<A NAME="lbAL">&nbsp;</A>
 <H2>SEE ALSO</H2>
 
 <B><A HREF="../man2/chmod.2.html">chmod</A></B>(2),
@@ -431,17 +672,21 @@ Since Unix V7 both are NULL.
 <DT><A HREF="#lbAB">NAME</A><DD>
 <DT><A HREF="#lbAC">SYNOPSIS</A><DD>
 <DT><A HREF="#lbAD">DESCRIPTION</A><DD>
-<DT><A HREF="#lbAE">RETURN VALUE</A><DD>
-<DT><A HREF="#lbAF">ERRORS</A><DD>
-<DT><A HREF="#lbAG">CONFORMING TO</A><DD>
-<DT><A HREF="#lbAH">NOTES</A><DD>
-<DT><A HREF="#lbAI">HISTORICAL</A><DD>
-<DT><A HREF="#lbAJ">SEE ALSO</A><DD>
+<DL>
+<DT><A HREF="#lbAE">Interpreter scripts</A><DD>
+</DL>
+<DT><A HREF="#lbAF">RETURN VALUE</A><DD>
+<DT><A HREF="#lbAG">ERRORS</A><DD>
+<DT><A HREF="#lbAH">CONFORMING TO</A><DD>
+<DT><A HREF="#lbAI">NOTES</A><DD>
+<DT><A HREF="#lbAJ">HISTORICAL</A><DD>
+<DT><A HREF="#lbAK">EXAMPLE</A><DD>
+<DT><A HREF="#lbAL">SEE ALSO</A><DD>
 </DL>
 <HR>
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 02:35:32 GMT, April 20, 2020
+Time: 02:36:06 GMT, April 20, 2020
 </BODY>
 </HTML>
