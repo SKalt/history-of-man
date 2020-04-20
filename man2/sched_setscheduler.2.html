@@ -25,7 +25,7 @@ License along with this manual; if not, see
 <HTML><HEAD><TITLE>Man page of SCHED_SETSCHEDULER</TITLE>
 </HEAD><BODY>
 <H1>SCHED_SETSCHEDULER</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2013-02-12<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2013-09-17<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -58,9 +58,9 @@ set and get scheduling policy/parameters
 <B>sched_setscheduler</B>()
 
 sets both the scheduling policy and the associated parameters for the
-process whose ID is specified in <I>pid</I>.
+thread whose ID is specified in <I>pid</I>.
 If <I>pid</I> equals zero, the
-scheduling policy and parameters of the calling process will be set.
+scheduling policy and parameters of the calling thread will be set.
 The interpretation of
 the argument <I>param</I> depends on the selected policy.
 Currently, Linux supports the following &quot;normal&quot;
@@ -88,7 +88,7 @@ low priority background jobs.
 
 The following &quot;real-time&quot; policies are also supported,
 for special time-critical applications that need precise control over
-the way in which runnable processes are selected for execution:
+the way in which runnable threads are selected for execution:
 <DL COMPACT>
 <DT><B>SCHED_FIFO</B>
 
@@ -105,25 +105,25 @@ The semantics of each of these policies are detailed below.
 <P>
 <B>sched_getscheduler</B>()
 
-queries the scheduling policy currently applied to the process
+queries the scheduling policy currently applied to the thread
 identified by <I>pid</I>.
 If <I>pid</I> equals zero, the policy of the
-calling process will be retrieved.
+calling thread will be retrieved.
 
 <A NAME="lbAE">&nbsp;</A>
 <H3>Scheduling policies</H3>
 
-The scheduler is the kernel component that decides which runnable process
+The scheduler is the kernel component that decides which runnable thread
 will be executed by the CPU next.
-Each process has an associated scheduling policy and a <I>static</I>
+Each thread has an associated scheduling policy and a <I>static</I>
 scheduling priority, <I>sched_priority</I>; these are the settings
 that are modified by
 <B>sched_setscheduler</B>().
 
 The scheduler makes it decisions based on knowledge of the scheduling
-policy and static priority of all processes on the system.
+policy and static priority of all threads on the system.
 <P>
-For processes scheduled under one of the normal scheduling policies
+For threads scheduled under one of the normal scheduling policies
 (<B>SCHED_OTHER</B>, <B>SCHED_IDLE</B>, <B>SCHED_BATCH</B>),
 <I>sched_priority</I> is not used in scheduling
 decisions (it must be specified as 0).
@@ -131,8 +131,8 @@ decisions (it must be specified as 0).
 Processes scheduled under one of the real-time policies
 (<B>SCHED_FIFO</B>, <B>SCHED_RR</B>) have a
 <I>sched_priority</I> value in the range 1 (low) to 99 (high).
-(As the numbers imply, real-time processes always have higher priority
-than normal processes.)
+(As the numbers imply, real-time threads always have higher priority
+than normal threads.)
 Note well: POSIX.1-2001 requires an implementation to support only a
 minimum 32 distinct priority levels for the real-time policies,
 and some systems supply just this minimum.
@@ -145,41 +145,41 @@ and
 to find the range of priorities supported for a particular policy.
 <P>
 Conceptually, the scheduler maintains a list of runnable
-processes for each possible <I>sched_priority</I> value.
-In order to determine which process runs next, the scheduler looks for
+threads for each possible <I>sched_priority</I> value.
+In order to determine which thread runs next, the scheduler looks for
 the nonempty list with the highest static priority and selects the
-process at the head of this list.
+thread at the head of this list.
 <P>
-A process's scheduling policy determines
-where it will be inserted into the list of processes
+A thread's scheduling policy determines
+where it will be inserted into the list of threads
 with equal static priority and how it will move inside this list.
 <P>
-All scheduling is preemptive: if a process with a higher static
-priority becomes ready to run, the currently running process
+All scheduling is preemptive: if a thread with a higher static
+priority becomes ready to run, the currently running thread
 will be preempted and
 returned to the wait list for its static priority level.
 The scheduling policy determines the
-ordering only within the list of runnable processes with equal static
+ordering only within the list of runnable threads with equal static
 priority.
 <A NAME="lbAF">&nbsp;</A>
 <H3>SCHED_FIFO: First in-first out scheduling</H3>
 
 <B>SCHED_FIFO</B> can be used only with static priorities higher than
-0, which means that when a <B>SCHED_FIFO</B> processes becomes runnable,
+0, which means that when a <B>SCHED_FIFO</B> threads becomes runnable,
 it will always immediately preempt any currently running
-<B>SCHED_OTHER</B>, <B>SCHED_BATCH</B>, or <B>SCHED_IDLE</B> process.
+<B>SCHED_OTHER</B>, <B>SCHED_BATCH</B>, or <B>SCHED_IDLE</B> thread.
 <B>SCHED_FIFO</B> is a simple scheduling
 algorithm without time slicing.
-For processes scheduled under the
+For threads scheduled under the
 <B>SCHED_FIFO</B> policy, the following rules apply:
 <DL COMPACT>
 <DT>*<DD>
-A <B>SCHED_FIFO</B> process that has been preempted by another process of
+A <B>SCHED_FIFO</B> thread that has been preempted by another thread of
 higher priority will stay at the head of the list for its priority and
-will resume execution as soon as all processes of higher priority are
+will resume execution as soon as all threads of higher priority are
 blocked again.
 <DT>*<DD>
-When a <B>SCHED_FIFO</B> process becomes runnable, it
+When a <B>SCHED_FIFO</B> thread becomes runnable, it
 will be inserted at the end of the list for its priority.
 <DT>*<DD>
 A call to
@@ -189,29 +189,29 @@ or
 <B><A HREF="../man2/sched_setparam.2.html">sched_setparam</A></B>(2)
 
 will put the
-<B>SCHED_FIFO</B> (or <B>SCHED_RR</B>) process identified by
+<B>SCHED_FIFO</B> (or <B>SCHED_RR</B>) thread identified by
 <I>pid</I> at the start of the list if it was runnable.
-As a consequence, it may preempt the currently running process if
+As a consequence, it may preempt the currently running thread if
 it has the same priority.
-(POSIX.1-2001 specifies that the process should go to the end
+(POSIX.1-2001 specifies that the thread should go to the end
 of the list.)
 
 
 <DT>*<DD>
-A process calling
+A thread calling
 <B><A HREF="../man2/sched_yield.2.html">sched_yield</A></B>(2)
 
 will be put at the end of the list.
 </DL>
 <P>
 
-No other events will move a process
+No other events will move a thread
 scheduled under the <B>SCHED_FIFO</B> policy in the wait list of
-runnable processes with equal static priority.
+runnable threads with equal static priority.
 <P>
 A <B>SCHED_FIFO</B>
-process runs until either it is blocked by an I/O request, it is
-preempted by a higher priority process, or it calls
+thread runs until either it is blocked by an I/O request, it is
+preempted by a higher priority thread, or it calls
 <B><A HREF="../man2/sched_yield.2.html">sched_yield</A></B>(2).
 
 <A NAME="lbAG">&nbsp;</A>
@@ -220,14 +220,14 @@ preempted by a higher priority process, or it calls
 <B>SCHED_RR</B> is a simple enhancement of <B>SCHED_FIFO</B>.
 Everything
 described above for <B>SCHED_FIFO</B> also applies to <B>SCHED_RR</B>,
-except that each process is allowed to run only for a maximum time
+except that each thread is allowed to run only for a maximum time
 quantum.
-If a <B>SCHED_RR</B> process has been running for a time
+If a <B>SCHED_RR</B> thread has been running for a time
 period equal to or longer than the time quantum, it will be put at the
 end of the list for its priority.
-A <B>SCHED_RR</B> process that has
-been preempted by a higher priority process and subsequently resumes
-execution as a running process will complete the unexpired portion of
+A <B>SCHED_RR</B> thread that has
+been preempted by a higher priority thread and subsequently resumes
+execution as a running thread will complete the unexpired portion of
 its round-robin time quantum.
 The length of the time quantum can be
 retrieved using
@@ -241,9 +241,9 @@ retrieved using
 
 <B>SCHED_OTHER</B> can be used at only static priority 0.
 <B>SCHED_OTHER</B> is the standard Linux time-sharing scheduler that is
-intended for all processes that do not require the special
+intended for all threads that do not require the special
 real-time mechanisms.
-The process to run is chosen from the static
+The thread to run is chosen from the static
 priority 0 list based on a <I>dynamic</I> priority that is determined only
 inside this list.
 The dynamic priority is based on the nice value (set by
@@ -252,9 +252,9 @@ The dynamic priority is based on the nice value (set by
 or
 <B><A HREF="../man2/setpriority.2.html">setpriority</A></B>(2))
 
-and increased for each time quantum the process is ready to run,
+and increased for each time quantum the thread is ready to run,
 but denied to run by the scheduler.
-This ensures fair progress among all <B>SCHED_OTHER</B> processes.
+This ensures fair progress among all <B>SCHED_OTHER</B> threads.
 
 <A NAME="lbAI">&nbsp;</A>
 <H3>SCHED_BATCH: Scheduling batch processes</H3>
@@ -262,14 +262,14 @@ This ensures fair progress among all <B>SCHED_OTHER</B> processes.
 (Since Linux 2.6.16.)
 <B>SCHED_BATCH</B> can be used only at static priority 0.
 This policy is similar to <B>SCHED_OTHER</B> in that it schedules
-the process according to its dynamic priority
+the thread according to its dynamic priority
 (based on the nice value).
 The difference is that this policy
 will cause the scheduler to always assume
-that the process is CPU-intensive.
+that the thread is CPU-intensive.
 Consequently, the scheduler will apply a small scheduling
 penalty with respect to wakeup behaviour,
-so that this process is mildly disfavored in scheduling decisions.
+so that this thread is mildly disfavored in scheduling decisions.
 <P>
 
 
@@ -327,7 +327,7 @@ flag is specified,
 the following rules apply for subsequently created children:
 <DL COMPACT>
 <DT>*<DD>
-If the calling process has a scheduling policy of
+If the calling thread has a scheduling policy of
 <B>SCHED_FIFO</B>
 
 or
@@ -347,7 +347,7 @@ After the
 <B>SCHED_RESET_ON_FORK</B>
 
 flag has been enabled,
-it can be reset only if the process has the
+it can be reset only if the thread has the
 <B>CAP_SYS_NICE</B>
 
 capability.
@@ -368,16 +368,16 @@ flag is visible in the policy value returned by
 In Linux kernels before 2.6.12, only privileged
 (<B>CAP_SYS_NICE</B>)
 
-processes can set a nonzero static priority (i.e., set a real-time
+threads can set a nonzero static priority (i.e., set a real-time
 scheduling policy).
-The only change that an unprivileged process can make is to set the
+The only change that an unprivileged thread can make is to set the
 <B>SCHED_OTHER</B>
 
 policy, and this can be done only if the effective user ID of the caller of
 <B>sched_setscheduler</B>()
 
-matches the real or effective user ID of the target process
-(i.e., the process specified by
+matches the real or effective user ID of the target thread
+(i.e., the thread specified by
 <I>pid</I>)
 
 whose policy is being changed.
@@ -385,7 +385,7 @@ whose policy is being changed.
 Since Linux 2.6.12, the
 <B>RLIMIT_RTPRIO</B>
 
-resource limit defines a ceiling on an unprivileged process's
+resource limit defines a ceiling on an unprivileged thread's
 static priority for the
 <B>SCHED_RR</B>
 
@@ -396,7 +396,7 @@ policies.
 The rules for changing scheduling policy and priority are as follows:
 <DL COMPACT>
 <DT>*<DD>
-If an unprivileged process has a nonzero
+If an unprivileged thread has a nonzero
 <B>RLIMIT_RTPRIO</B>
 
 soft limit, then it can change its scheduling policy and priority,
@@ -413,22 +413,22 @@ soft limit is 0, then the only permitted changes are to lower the priority,
 or to switch to a non-real-time policy.
 <DT>*<DD>
 Subject to the same rules,
-another unprivileged process can also make these changes,
-as long as the effective user ID of the process making the change
-matches the real or effective user ID of the target process.
+another unprivileged thread can also make these changes,
+as long as the effective user ID of the thread making the change
+matches the real or effective user ID of the target thread.
 <DT>*<DD>
 Special rules apply for the
 <B>SCHED_IDLE</B>.
 
 In Linux kernels before 2.6.39,
-an unprivileged process operating under this policy cannot
+an unprivileged thread operating under this policy cannot
 change its policy, regardless of the value of its
 <B>RLIMIT_RTPRIO</B>
 
 resource limit.
 In Linux kernels since 2.6.39,
 
-an unprivileged process can switch to either the
+an unprivileged thread can switch to either the
 <B>SCHED_BATCH</B>
 
 or the
@@ -446,7 +446,7 @@ resource limit (see
 Privileged
 (<B>CAP_SYS_NICE</B>)
 
-processes ignore the
+threads ignore the
 <B>RLIMIT_RTPRIO</B>
 
 limit; as with older kernels,
@@ -460,7 +460,7 @@ for further information on
 <A NAME="lbAM">&nbsp;</A>
 <H3>Response time</H3>
 
-A blocked high priority process waiting for the I/O has a certain
+A blocked high priority thread waiting for the I/O has a certain
 response time before it is scheduled again.
 The device driver writer
 can greatly reduce this response time by using a &quot;slow interrupt&quot;
@@ -485,8 +485,8 @@ or
 <B><A HREF="../man2/mlockall.2.html">mlockall</A></B>(2).
 
 <P>
-Since a nonblocking infinite loop in a process scheduled under
-<B>SCHED_FIFO</B> or <B>SCHED_RR</B> will block all processes with lower
+Since a nonblocking infinite loop in a thread scheduled under
+<B>SCHED_FIFO</B> or <B>SCHED_RR</B> will block all threads with lower
 priority forever, a software developer should always keep available on
 the console a shell scheduled under a higher static priority than the
 tested application.
@@ -519,7 +519,7 @@ returns zero.
 On success,
 <B>sched_getscheduler</B>()
 
-returns the policy for the process (a nonnegative integer).
+returns the policy for the thread (a nonnegative integer).
 On error, -1 is returned, and
 <I>errno</I>
 
@@ -537,11 +537,11 @@ or <I>param</I> does not make sense for the <I>policy</I>.
 <DT><B>EPERM</B>
 
 <DD>
-The calling process does not have appropriate privileges.
+The calling thread does not have appropriate privileges.
 <DT><B>ESRCH</B>
 
 <DD>
-The process whose ID is <I>pid</I> could not be found.
+The thread whose ID is <I>pid</I> could not be found.
 </DL>
 <A NAME="lbAQ">&nbsp;</A>
 <H2>CONFORMING TO</H2>
@@ -552,13 +552,13 @@ The <B>SCHED_BATCH</B> and <B>SCHED_IDLE</B> policies are Linux-specific.
 <H2>NOTES</H2>
 
 POSIX.1 does not detail the permissions that an unprivileged
-process requires in order to call
+thread requires in order to call
 <B>sched_setscheduler</B>(),
 
 and details vary across systems.
 For example, the Solaris 7 manual page says that
-the real or effective user ID of the calling process must
-match the real user ID or the save set-user-ID of the target process.
+the real or effective user ID of the caller must
+match the real user ID or the save set-user-ID of the target.
 <P>
 
 The scheduling policy and parameters are in fact per-thread
@@ -652,7 +652,7 @@ real-time operating system.
 The FIFO and RR scheduling policies that can be selected using
 <B>sched_setscheduler</B>()
 
-are then used to run a process
+are then used to run a thread
 with true real-time priority and a minimum worst-case scheduling latency.
 <A NAME="lbAT">&nbsp;</A>
 <H2>BUGS</H2>
@@ -752,6 +752,6 @@ The Linux kernel source file
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:21:41 GMT, April 20, 2020
+Time: 03:22:16 GMT, April 20, 2020
 </BODY>
 </HTML>

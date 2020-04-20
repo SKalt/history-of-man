@@ -26,19 +26,18 @@ the source, must acknowledge the copyright and authors of this work.
 <HTML><HEAD><TITLE>Man page of SETFSGID</TITLE>
 </HEAD><BODY>
 <H1>SETFSGID</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2010-11-22<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2013-08-08<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
 <H2>NAME</H2>
 
-setfsgid - set group identity used for file system checks
+setfsgid - set group identity used for filesystem checks
 <A NAME="lbAC">&nbsp;</A>
 <H2>SYNOPSIS</H2>
 
-<B>#include &lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;</B>
+<B>#include &lt;<A HREF="file:///usr/include/sys/fsuid.h">sys/fsuid.h</A>&gt;</B>
 
-/* glibc uses &lt;<A HREF="file:///usr/include/sys/fsuid.h">sys/fsuid.h</A>&gt; */
 <P>
 <B>int setfsgid(uid_t </B><I>fsgid</I><B>);</B>
 
@@ -48,16 +47,15 @@ setfsgid - set group identity used for file system checks
 The system call
 <B>setfsgid</B>()
 
-sets the group ID that the Linux kernel uses to check for all accesses
-to the file system.
+changes the value of the caller's filesystem group ID---the
+group ID that the Linux kernel uses to check for all accesses
+to the filesystem.
 Normally, the value of
-<I>fsgid</I>
-
+the filesystem group ID
 will shadow the value of the effective group ID.
 In fact, whenever the
 effective group ID is changed,
-<I>fsgid</I>
-
+the filesystem group ID
 will also be changed to the new value of the effective group ID.
 <P>
 Explicit calls to
@@ -78,21 +76,13 @@ is a security hole that can expose it to unwanted signals.
 will succeed only if the caller is the superuser or if
 <I>fsgid</I>
 
-matches either the real group ID, effective group ID,
-saved set-group-ID, or the current value of
-<I>fsgid</I>.
-
+matches either the caller's real group ID, effective group ID,
+saved set-group-ID, or current the filesystem user ID.
 <A NAME="lbAE">&nbsp;</A>
 <H2>RETURN VALUE</H2>
 
-On success, the previous value of
-<I>fsgid</I>
-
-is returned.
-On error, the current value of
-<I>fsgid</I>
-
-is returned.
+On both success and failure,
+this call returns the previous filesystem group ID of the caller.
 <A NAME="lbAF">&nbsp;</A>
 <H2>VERSIONS</H2>
 
@@ -120,6 +110,16 @@ the system call.
 Note that at the time this system call was introduced, a process
 could send a signal to a process with the same effective user ID.
 Today signal permission handling is slightly different.
+See
+<B><A HREF="../man2/setfsuid.2.html">setfsuid</A></B>(2)
+
+for a discussion of why the use of both
+<B><A HREF="../man2/setfsuid.2.html">setfsuid</A></B>(2)
+
+and
+<B>setfsgid</B>()
+
+is nowadays unneeded.
 <P>
 The original Linux
 <B>setfsgid</B>()
@@ -136,7 +136,18 @@ wrapper function transparently deals with the variation across kernel versions.
 <A NAME="lbAI">&nbsp;</A>
 <H2>BUGS</H2>
 
-No error messages of any kind are returned to the caller.
+No error indications of any kind are returned to the caller,
+and the fact that both successful and unsuccessful calls return
+the same value makes it impossible to directly determine
+whether the call succeeded or failed.
+Instead, the caller must resort to looking at the return value
+from a further call such as
+<I>setfsgid(-1)</I>
+
+(which will always fail), in order to determine if a preceding call to
+<B>setfsgid</B>()
+
+changed the filesystem group ID.
 At the very
 least,
 <B>EPERM</B>
@@ -175,6 +186,6 @@ capability).
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:21:41 GMT, April 20, 2020
+Time: 03:22:16 GMT, April 20, 2020
 </BODY>
 </HTML>

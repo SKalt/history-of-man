@@ -25,7 +25,7 @@ the source, must acknowledge the copyright and authors of this work.
 <HTML><HEAD><TITLE>Man page of OPEN</TITLE>
 </HEAD><BODY>
 <H1>OPEN</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2013-07-21<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2013-08-09<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -182,7 +182,7 @@ as if with
 
 <B>O_APPEND</B>
 
-may lead to corrupted files on NFS file systems if more than one process
+may lead to corrupted files on NFS filesystems if more than one process
 appends data to a file at once.
 
 
@@ -249,7 +249,7 @@ The owner (user ID) of the file is set to the effective user ID
 of the process.
 The group ownership (group ID) is set either to
 the effective group ID of the process or to the group ID of the
-parent directory (depending on file system type and mount options,
+parent directory (depending on filesystem type and mount options,
 and the mode of the parent directory, see the mount options
 <I>bsdgroups</I>
 
@@ -453,7 +453,7 @@ and need to avoid reliance on NFS support for
 <B>O_EXCL</B>,
 
 can create a unique file on
-the same file system (e.g., incorporating hostname and PID), and use
+the same filesystem (e.g., incorporating hostname and PID), and use
 <B><A HREF="../man2/link.2.html">link</A></B>(2)
 
 to make a link to the lockfile.
@@ -508,7 +508,7 @@ when the file is
 
 This flag is intended for use by indexing or backup programs,
 where its use can significantly reduce the amount of disk activity.
-This flag may not be effective on all file systems.
+This flag may not be effective on all filesystems.
 One example is NFS, where the server maintains the access time.
 
 
@@ -567,7 +567,7 @@ in conjunction with mandatory file locks and with file leases, see
 
 
 Obtain a file descriptor that can be used for two purposes:
-to indicate a location in the file-system tree and
+to indicate a location in the filesystem tree and
 to perform operations that act purely at the file descriptor level.
 The file itself is not opened, and other file operations (e.g.,
 <B><A HREF="../man2/read.2.html">read</A></B>(2),
@@ -578,7 +578,9 @@ The file itself is not opened, and other file operations (e.g.,
 
 <B><A HREF="../man2/fchown.2.html">fchown</A></B>(2),
 
-<B><A HREF="../man2/fgetxattr.2.html">fgetxattr</A></B>(2))
+<B><A HREF="../man2/fgetxattr.2.html">fgetxattr</A></B>(2),
+
+<B><A HREF="../man2/mmap.2.html">mmap</A></B>(2))
 
 fail with the error
 <B>EBADF</B>.
@@ -767,7 +769,7 @@ Where
 <B>O_CREAT</B>
 
 is specified, the file does not exist, and the user's quota of disk
-blocks or inodes on the file system has been exhausted.
+blocks or inodes on the filesystem has been exhausted.
 <DT><B>EEXIST</B>
 
 <DD>
@@ -799,6 +801,16 @@ While blocked waiting to complete an open of a slow device
 the call was interrupted by a signal handler; see
 <B><A HREF="../man7/signal.7.html">signal</A></B>(7).
 
+<DT><B>EINVAL</B>
+
+<DD>
+The filesystem does not support the
+<B>O_DIRECT</B>
+
+flag. See
+<B>NOTES</B>
+
+for more information.
 <DT><B>EISDIR</B>
 
 <DD>
@@ -929,7 +941,7 @@ did not match the owner of the file and the caller was not privileged
 <DD>
 <I>pathname</I>
 
-refers to a file on a read-only file system and write access was
+refers to a file on a read-only filesystem and write access was
 requested.
 <DT><B>ETXTBSY</B>
 
@@ -1078,7 +1090,7 @@ and
 to the same numerical value as
 <B>O_SYNC</B>.
 
-Most Linux file systems don't actually implement the POSIX
+Most Linux filesystems don't actually implement the POSIX
 <B>O_SYNC</B>
 
 semantics, which require all metadata updates of a write
@@ -1100,7 +1112,7 @@ cannot create them; use
 instead.
 <P>
 
-On NFS file systems with UID mapping enabled,
+On NFS filesystems with UID mapping enabled,
 <B>open</B>()
 
 may
@@ -1152,12 +1164,12 @@ The
 flag may impose alignment restrictions on the length and address
 of user-space buffers and the file offset of I/Os.
 In Linux alignment
-restrictions vary by file system and kernel version and might be
+restrictions vary by filesystem and kernel version and might be
 absent entirely.
-However there is currently no file system-independent
+However there is currently no filesystem-independent
 interface for an application to discover these restrictions for a given
-file or file system.
-Some file systems provide their own interfaces
+file or filesystem.
+Some filesystems provide their own interfaces
 for doing so, for example the
 <B>XFS_IOC_DIOINFO</B>
 
@@ -1168,7 +1180,7 @@ operation in
 
 Under Linux 2.4, transfer sizes, and the alignment of the user buffer
 and the file offset must all be multiples of the logical block size
-of the file system.
+of the filesystem.
 Under Linux 2.6, alignment to 512-byte boundaries suffices.
 <P>
 
@@ -1236,7 +1248,7 @@ a flag of the same name, but without alignment restrictions.
 
 support was added under Linux in kernel version 2.4.10.
 Older Linux kernels simply ignore this flag.
-Some file systems may not implement the flag and
+Some filesystems may not implement the flag and
 <B>open</B>()
 
 will fail with
@@ -1250,7 +1262,7 @@ Applications should avoid mixing
 
 and normal I/O to the same file,
 and especially to overlapping byte regions in the same file.
-Even when the file system correctly handles the coherency issues in
+Even when the filesystem correctly handles the coherency issues in
 this situation, overall I/O throughput is likely to be slower than
 using either mode alone.
 Likewise, applications should avoid mixing
@@ -1262,7 +1274,7 @@ of files with direct I/O to the same files.
 The behaviour of
 <B>O_DIRECT</B>
 
-with NFS will differ from local file systems.
+with NFS will differ from local filesystems.
 Older kernels, or
 kernels configured in certain ways, may not support this combination.
 The NFS protocol does not support passing the flag to the server, so
@@ -1385,6 +1397,6 @@ to enable this flag.
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:21:40 GMT, April 20, 2020
+Time: 03:22:15 GMT, April 20, 2020
 </BODY>
 </HTML>
