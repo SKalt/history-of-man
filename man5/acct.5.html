@@ -1,17 +1,17 @@
 <!--
-Copyright (c) 1995 Dirk Eddelbuettel (Dirk.Eddelbuettel@qed.econ.queensu.ca)
+Copyright (C) 2008, Michael Kerrisk &lt;mtk.manpages@gmail.com&gt;
 -->
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
 <HTML><HEAD><TITLE>Man page of ACCT</TITLE>
 </HEAD><BODY>
 <H1>ACCT</H1>
-Section: Linux Programmer's Manual (5)<BR>Updated: 2003-11-01<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (5)<BR>Updated: 2008-06-15<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
 <H2>NAME</H2>
 
-acct - execution accounting file
+acct - process accounting file
 <A NAME="lbAC">&nbsp;</A>
 <H2>SYNOPSIS</H2>
 
@@ -20,32 +20,183 @@ acct - execution accounting file
 <A NAME="lbAD">&nbsp;</A>
 <H2>DESCRIPTION</H2>
 
-If the kernel was compiled with the process accounting option enabled,
-the system call
+If the kernel is built with the process accounting option enabled
+(CONFIG_BSD_PROCESS_ACCT), then calling
+<B><A HREF="../man2/acct.2.html">acct</A></B>(2)
+
+starts process accounting, for example:
 <P>
 
-acct(&quot;/somewhere/accountingfile&quot;);
+acct(&quot;/var/log/pacct&quot;);
 
 <P>
-will start the process accounting.
-Each time a process terminates
-a record for this process is appended to the accounting file.
-The accounting structure
-<I>struct acct</I>
+When process accounting is enabled, the kernel writes a record
+to the accounting file as each process on the system terminates.
+This record contains information about the terminated process,
+and is defined in
+<I>&lt;<A HREF="file:///usr/include/sys/acct.h">sys/acct.h</A>&gt;</I>
 
-is also described in the file
-<I>/usr/include/linux/acct.h</I>.
+as follows:
+<P>
 
+<PRE>
+#define ACCT_COMM 16
+
+typedef u_int16_t comp_t;
+
+struct acct {
+    char ac_flag;           /* Accounting flags */
+    u_int16_t ac_uid;       /* Accounting user ID */
+    u_int16_t ac_gid;       /* Accounting group ID */
+    u_int16_t ac_tty;       /* Controlling terminal */
+    u_int32_t ac_btime;     /* Process creation time
+                               (seconds since the Epoch) */
+    comp_t    ac_utime;     /* User CPU time */
+    comp_t    ac_stime;     /* System CPU time */
+    comp_t    ac_etime;     /* Elapsed time */
+    comp_t    ac_mem;       /* Average memory usage (kB) */
+    comp_t    ac_io;        /* Characters transferred (unused) */
+    comp_t    ac_rw;        /* Blocks read or written (unused) */
+    comp_t    ac_minflt;    /* Minor page faults */
+    comp_t    ac_majflt;    /* Major page faults */
+    comp_t    ac_swaps;     /* Number of swaps (unused) */
+    u_int32_t ac_exitcode;  /* Process termination status
+                                  (see <A HREF="../man2/wait.2.html">wait</A>(2)) */
+    char      ac_comm[ACCT_COMM+1];
+                            /* Command name (basename of last
+                               executed command; null-terminated) */
+    char      ac_pad[<I>X</I>];    /* padding bytes */
+};
+
+enum {          /* Bits that may be set in ac_flag field */
+    AFORK = 0x01,           /* Has executed fork, but no exec */
+    ASU   = 0x02,           /* Used superuser privileges */
+    ACORE = 0x08,           /* Dumped core */
+    AXSIG = 0x10            /* Killed by a signal */
+};
+</PRE>
+
+
+<P>
+
+The
+<I>comp_t</I>
+
+data type is a floating point value consisting of a 3-bit, base-8 exponent,
+and a 13-bit mantissa.
+A value,
+<I>c</I>,
+
+of this type can be converted to a (long) integer as follows:
+<PRE>
+
+    v = (c &amp; 0x1fff) &lt;&lt; (((c &gt;&gt; 13) &amp; 0x7) * 3);
+</PRE>
+
+<P>
+
+The
+<I>ac_utime</I>,
+
+<I>ac_stime</I>,
+
+and
+<I>ac_etime</I>
+
+fields measure time in &quot;clock ticks&quot;; divide these values by
+<I>sysconf(_SC_CLK_TCK)</I>
+
+to convert them to seconds.
 <A NAME="lbAE">&nbsp;</A>
+<H3>Version 3 Accounting File Format</H3>
+
+Since kernel 2.6.8,
+an optional alternative version of the accounting file can be produced
+if the CONFIG_BSD_PROCESS_ACCT_V3 option is set when building the kernel.
+With this option is set,
+the records written to the accounting file contain additional fields,
+and the width of
+<I>c_uid</I>
+
+and
+<I>ac_gid</I>
+
+fields is widened from 16 to 32 bits
+(in line with the increased size of UID and GIDs in Linux 2.4 and later).
+The records are defined as follows:
+<P>
+
+<PRE>
+struct acct_v3 {
+    char      ac_flag;      /* Flags */
+    char      ac_version;   /* Always set to ACCT_VERSION (3) */
+    u_int16_t ac_tty;       /* Controlling terminal */
+    u_int32_t ac_exitcode;  /* Process termination status */
+    u_int32_t ac_uid;       /* Real user ID */
+    u_int32_t ac_gid;       /* Real group ID */
+    u_int32_t ac_pid;       /* Process ID */
+    u_int32_t ac_ppid;      /* Parent process ID */
+    u_int32_t ac_btime;     /* Process creation time */
+    float     ac_etime;     /* Elapsed time */
+    comp_t    ac_utime;     /* User CPU time */
+    comp_t    ac_stime;     /* System time */
+    comp_t    ac_mem;       /* Average memory usage (kB) */
+    comp_t    ac_io;        /* Characters transferred (unused) */
+    comp_t    ac_rw;        /* Blocks read or written
+                               (unused) */
+    comp_t    ac_minflt;    /* Minor page faults */
+    comp_t    ac_majflt;    /* Major page faults */
+    comp_t    ac_swaps;     /* Number of swaps (unused) */
+    char      ac_comm[ACCT_COMM]; /* Command name */
+};
+
+</PRE>
+
+
+<A NAME="lbAF">&nbsp;</A>
+<H2>VERSIONS</H2>
+
+The
+<I>acct_v3</I>
+
+structure is defined in glibc since version 2.6.
+<A NAME="lbAG">&nbsp;</A>
+<H2>CONFORMING TO</H2>
+
+Process accounting originated on BSD.
+Although it is present on most systems, it is not standardized,
+and the details vary somewhat between systems.
+<A NAME="lbAH">&nbsp;</A>
+<H2>NOTES</H2>
+
+Records in the accounting file are ordered by termination time of
+the process.
+<P>
+In kernels up to and including 2.6.9,
+a separate accounting record is written for each thread created using
+the the NPTL threading library;
+since Linux 2.6.10,
+a single accounting record is written for the entire process
+on termination of the last thread in the process.
+<P>
+The
+<I>proc/sys/kernel/acct</I>
+
+file, described in
+<B><A HREF="../man5/proc.5.html">proc</A></B>(5),
+
+defines settings that control the behavior of process accounting
+when disk space runs low.
+<A NAME="lbAI">&nbsp;</A>
 <H2>SEE ALSO</H2>
 
 <B><A HREF="../man1/lastcomm.1.html">lastcomm</A></B>(1),
 
-<B><A HREF="../man1/sa.1.html">sa</A></B>(1),
-
 <B><A HREF="../man2/acct.2.html">acct</A></B>(2),
 
-<B><A HREF="../man8/accton.8.html">accton</A></B>(8)
+<B><A HREF="../man8/accton.8.html">accton</A></B>(8),
+
+<B><A HREF="../man8/sa.8.html">sa</A></B>(8)
 
 <P>
 
@@ -55,12 +206,18 @@ is also described in the file
 <DT><A HREF="#lbAB">NAME</A><DD>
 <DT><A HREF="#lbAC">SYNOPSIS</A><DD>
 <DT><A HREF="#lbAD">DESCRIPTION</A><DD>
-<DT><A HREF="#lbAE">SEE ALSO</A><DD>
+<DL>
+<DT><A HREF="#lbAE">Version 3 Accounting File Format</A><DD>
+</DL>
+<DT><A HREF="#lbAF">VERSIONS</A><DD>
+<DT><A HREF="#lbAG">CONFORMING TO</A><DD>
+<DT><A HREF="#lbAH">NOTES</A><DD>
+<DT><A HREF="#lbAI">SEE ALSO</A><DD>
 </DL>
 <HR>
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 02:53:14 GMT, April 20, 2020
+Time: 02:53:43 GMT, April 20, 2020
 </BODY>
 </HTML>

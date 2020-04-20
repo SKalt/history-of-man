@@ -1,17 +1,19 @@
 <!--
-Copyright 2000 Sam Varshavchik &lt;mrsam@courier-mta.com&gt;
+Copyright (c) 2007, 2008 Michael Kerrisk &lt;mtk.manpages@gmail.com&gt;
+Copyright 2000, Sam Varshavchik &lt;mrsam@courier-mta.com&gt;
 -->
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
 <HTML><HEAD><TITLE>Man page of GETADDRINFO</TITLE>
 </HEAD><BODY>
 <H1>GETADDRINFO</H1>
-Section: Linux Programmer's Manual (3)<BR>Updated: 2008-02-26<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2008-06-18<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
 <H2>NAME</H2>
 
-getaddrinfo, freeaddrinfo, gai_strerror - network address and service translation
+getaddrinfo, freeaddrinfo, gai_strerror - network address and
+service translation
 <A NAME="lbAC">&nbsp;</A>
 <H2>SYNOPSIS</H2>
 
@@ -38,15 +40,19 @@ Given
 and
 <I>service</I>,
 
+which identify an Internet host and a service,
 <B>getaddrinfo</B>()
 
-returns one or more structures containing values that can be used by the
+returns one or more
+<I>addrinfo</I>
+
+structures, each of which contains an Internet address
+that can be specified in a call to
 <B><A HREF="../man2/bind.2.html">bind</A></B>(2)
 
-and
-<B><A HREF="../man2/connect.2.html">connect</A></B>(2)
+or
+<B><A HREF="../man2/connect.2.html">connect</A></B>(2).
 
-system calls to create a client or a server socket.
 The
 <B>getaddrinfo</B>()
 
@@ -61,14 +67,16 @@ and
 functions into a single interface, but unlike the latter functions,
 <B>getaddrinfo</B>()
 
-is reentrant
-and allows programs to eliminate IPv4-versus-IPv6 dependencies.
+is reentrant and allows programs to eliminate IPv4-versus-IPv6 dependencies.
 <P>
 
 The
 <I>addrinfo</I>
 
-structure used by this function contains the following members:
+structure used by
+<B>getaddrinfo</B>()
+
+contains the following fields:
 <P>
 
 <PRE>
@@ -87,48 +95,23 @@ struct addrinfo {
 
 <P>
 
-<B>getaddrinfo</B>()
-
-sets
-<I>res</I>
-
-to point to a dynamically allocated linked list of
-<I>addrinfo</I>
-
-structures, linked by the
-<I>ai_next</I>
-
-member.
-There are several reasons why
-the linked list may have more than one
-<I>addrinfo</I>
-
-structure, including: if the network host is
-multi-homed; or if the same service
-is available from multiple socket protocols (one
-<B>SOCK_STREAM</B>
-
-address and another
-<B>SOCK_DGRAM</B>
-
-address, for example).
-<P>
-
 The
 <I>hints</I>
 
-parameter points to an
+argument points to an
 <I>addrinfo</I>
 
 structure that specifies criteria for selecting the socket address
 structures returned in the list pointed to by
 <I>res</I>.
 
-If this parameter is not NULL it points to an
+If
+<I>hints</I>
+
+is not NULL it points to an
 <I>addrinfo</I>
 
-structure
-whose
+structure whose
 <I>ai_family</I>,
 
 <I>ai_socktype</I>,
@@ -136,30 +119,67 @@ whose
 and
 <I>ai_protocol</I>
 
-members specify the preferred socket type.
+specify criteria that limit the set of socket addresses returned by
+<B>getaddrinfo</B>(),
+
+as follows:
+<DL COMPACT>
+<DT><I>ai_family</I>
+
+<DD>
+This field specifies the desired address family for the returned addresses.
+Valid values for this field include
+<B>AF_INET</B>
+
+and
+<B>AF_INET6</B>.
+
+The value
 <B>AF_UNSPEC</B>
 
-in
-<I>ai_family</I>
+indicates that
+<B>getaddrinfo</B>()
 
-specifies any protocol family (either IPv4 or IPv6, for example).
-0 in
-<I>ai_socktype</I>
+should return socket addresses for any address family
+(either IPv4 or IPv6, for example) that can be used with
+<I>node</I>
+
+and
+<I>service</I>.
+
+<DT><I>ai_socktype</I>
+
+<DD>
+This field specifies the preferred socket type, for example
+<B>SOCK_STREAM</B>
 
 or
-<I>ai_protocol</I>
+<B>SOCK_DGRAM</B>.
 
-specifies that any socket type or protocol is acceptable as well.
-The
-<I>ai_flags</I>
+Specifying 0 in this field indicates that socket addresses of any type
+can be returned by
+<B>getaddrinfo</B>().
 
-member
-specifies additional options, defined below.
+<DT><I>ai_protocol</I>
+
+<DD>
+This field specifies the protocol for the returned socket addresses.
+Specifying 0 in this field indicates that socket addresses with
+any protocol can be returned by
+<B>getaddrinfo</B>().
+
+<DT><I>ai_flags</I>
+
+<DD>
+This field specifies additional options, described below.
 Multiple flags are specified by logically OR-ing them together.
-All the other members in the
+</DL>
+<P>
+
+All the other fields in the structure pointed to by
 <I>hints</I>
 
-parameter must contain either 0, or a null pointer.
+must contain either 0 or a null pointer, as appropriate.
 Specifying
 <I>hints</I>
 
@@ -182,18 +202,15 @@ to
 <B>(AI_V4MAPPED&nbsp;|&nbsp;AI_ADDRCONFIG)</B>.
 
 <P>
-
-The
-<I>node</I>
-
-or
-<I>service</I>
-
-parameter, but not both, may be NULL.
 <I>node</I>
 
 specifies either a numerical network address
-(dotted-decimal format for IPv4, hexadecimal format for IPv6)
+(for IPv4, numbers-and-dots notation as supported by
+<B><A HREF="../man3/inet_aton.3.html">inet_aton</A></B>(3);
+
+for IPv6, hexadecimal string format as supported by
+<B><A HREF="../man3/inet_pton.3.html">inet_pton</A></B>(3)),
+
 or a network hostname, whose network addresses are looked up and resolved.
 If
 <I>hints.ai_flags</I>
@@ -201,105 +218,223 @@ If
 contains the
 <B>AI_NUMERICHOST</B>
 
-flag then the
+flag then
 <I>node</I>
 
-parameter must be a numerical network address.
+must be a numerical network address.
 The
 <B>AI_NUMERICHOST</B>
 
 flag suppresses any potentially lengthy network host address lookups.
 <P>
 
+If the
+<B>AI_PASSIVE</B>
+
+flag is specified in
+<I>hints.ai_flags</I>,
+
+and
+<I>node</I>
+
+is NULL,
+then the returned socket addresses will be suitable for
+<B><A HREF="../man2/bind.2.html">bind</A></B>(2)ing
+
+a socket that will
+<B><A HREF="../man2/accept.2.html">accept</A></B>(2)
+
+connections.
+The returned socket address will contain the &quot;wildcard address&quot;
+(<B>INADDR_ANY</B>
+
+for IPv4 addresses,
+<B>IN6ADDR_ANY_INIT</B>
+
+for IPv6 address).
+The wildcard address is used by applications (typically servers)
+that intend to accept connections on any of the hosts's network addresses.
+If
+<I>node</I>
+
+is not NULL, then the
+AI_PASSIVE
+flag is ignored.
+<P>
+
+If the
+<B>AI_PASSIVE</B>
+
+flag is not set in
+<I>hints.ai_flags</I>,
+
+then the returned socket addresses will be suitable for use with
+<B><A HREF="../man2/connect.2.html">connect</A></B>(2),
+
+<B><A HREF="../man2/sendto.2.html">sendto</A></B>(2),
+
+or
+<B><A HREF="../man2/sendmsg.2.html">sendmsg</A></B>(2).
+
+If
+<I>node</I>
+
+is NULL,
+then the network address will be set to the loopback interface address
+(<B>INADDR_LOOPBACK</B>
+
+for IPv4 addresses,
+<B>IN6ADDR_LOOPBACK_INIT</B>
+
+for IPv6 address);
+this is used by applications that intend to communicate
+with peers running on the same host.
+<P>
+
+<I>service</I>
+
+sets the port in each returned address structure.
+If this argument is a service name (see
+<B><A HREF="../man5/services.5.html">services</A></B>(5)),
+
+it is translated to the corresponding port number.
+This argument can also be specified as a decimal number,
+which is simply converted to binary.
+If
+<I>service</I>
+
+is NULL, then the port number of the returned socket addresses
+will be left uninitialized.
+If
+<B>AI_NUMERICSERV</B>
+
+is specified in
+<I>hints.ai_flags</I>
+
+and
+<I>service</I>
+
+is not NULL, then
+<I>service</I>
+
+must point to a string containing a numeric port number.
+This flag is used to inhibit the invocation of a name resolution service
+in cases where it is known not to be required.
+<P>
+
+Either
+<I>node</I>
+
+or
+<I>service</I>,
+
+but not both, may be NULL.
+<P>
+
 The
 <B>getaddrinfo</B>()
 
-function creates a linked list of
+function allocates and initializes a linked list of
 <I>addrinfo</I>
 
-structures, one for each network address subject to any restrictions
-imposed by the
-<I>hints</I>
+structures, one for each network address that matches
+<I>node</I>
 
-parameter.
-The
-<I>ai_canonname</I>
+and
+<I>service</I>,
 
-field of the first of these
+subject to any restrictions imposed by
+<I>hints</I>,
+
+and returns a pointer to the start of the list in
+<I>res</I>.
+
+The items in the linked list are linked by the
+<I>ai_next</I>
+
+field.
+There are several reasons why
+the linked list may have more than one
 <I>addrinfo</I>
 
-structures is set to point to the official name of the host, if
+structure, including: the network host is multi-homed; or the same service
+is available from multiple socket protocols (one
+<B>SOCK_STREAM</B>
+
+address and another
+<B>SOCK_DGRAM</B>
+
+address, for example).
+<P>
+
+If
 <I>hints.ai_flags</I>
 
 includes the
 <B>AI_CANONNAME</B>
 
-flag.
+flag, then the
+<I>ai_canonname</I>
+
+field of the first of the
+<I>addrinfo</I>
+
+structures in the returned list is set to point to the
+official name of the host.
 
 
 
 
-<I>ai_family</I>,
+<P>
+The remaining fields of each returned
+<I>addrinfo</I>
+
+structure are initialized as follows:
+<DL COMPACT>
+<DT>*<DD>
+The
+<I>ai_family</I>
 
 <I>ai_socktype</I>,
 
 and
 <I>ai_protocol</I>
 
-specify the socket creation parameters (i.e., these fields have
-the same meaning as the corresponding parameters of
+fields return the socket creation parameters (i.e., these fields have
+the same meaning as the corresponding arguments of
 <B><A HREF="../man2/socket.2.html">socket</A></B>(2)).
 
-A pointer to the socket address is placed in the
-<I>ai_addr</I>
+For example,
+<I>ai_family</I>
 
-member, and the length of the socket address, in bytes,
-is placed in the
-<I>ai_addrlen</I>
-
-member.
-<P>
-
-The
-<B>getaddrinfo</B>()
-
-function returns socket addresses in either IPv4 or IPv6
-address family
-(<I>ai_family</I>
-
-will be set to either
+might return
 <B>AF_INET</B>
 
 or
-<B>AF_INET6</B>).
+<B>AF_INET6</B>;
 
-<P>
+<I>ai_socktype</I>
 
-If
-<I>node</I>
+might return
+<B>SOCK_DGRAM</B>
 
-is NULL,
-the
-network address in each socket structure is initialized according to the
-<B>AI_PASSIVE</B>
+or
+<B>SOCK_STREAM</B>;
 
-flag, which is set in
-<I>hints.ai_flags</I>.
+and
+<I>ai_protocol</I>
 
-The network address in each socket structure will be left unspecified
-if
-<B>AI_PASSIVE</B>
+returns the protocol for the socket.
+<DT>*<DD>
+A pointer to the socket address is placed in the
+<I>ai_addr</I>
 
-flag is set.
-This is used by server applications, which intend to accept
-client connections on any network address.
-The network address will be set to the loopback interface address
-if the
-<B>AI_PASSIVE</B>
+field, and the length of the socket address, in bytes,
+is placed in the
+<I>ai_addrlen</I>
 
-flag is not set.
-This is used by client applications, which intend to connect
-to a server running on the same network host.
+field.
+</DL>
 <P>
 
 If
@@ -351,30 +486,6 @@ is ignored if
 <B>AI_V4MAPPED</B>
 
 is not also specified.
-<P>
-
-<I>service</I>
-
-sets the port number in the network address of each socket structure.
-If
-<I>service</I>
-
-is NULL the port number will be left uninitialized.
-If
-<B>AI_NUMERICSERV</B>
-
-is specified in
-<I>hints.ai_flags</I>
-
-and
-<I>service</I>
-
-is not NULL, then
-<I>service</I>
-
-must point to a string containing a numeric port number.
-This flag is used to inhibit the invocation of a name resolution service
-in cases where it is known not to be required.
 <P>
 
 The
@@ -481,6 +592,7 @@ returns 0 if it succeeds, or one of the following non-zero error codes:
 <DT><B>EAI_ADDRFAMILY</B>
 
 <DD>
+
 The specified network host does not have any network addresses in the
 requested address family.
 <DT><B>EAI_AGAIN</B>
@@ -501,7 +613,7 @@ The name server returned a permanent failure indication.
 <DT><B>EAI_FAMILY</B>
 
 <DD>
-The requested address family is not supported at all.
+The requested address family is not supported.
 <DT><B>EAI_MEMORY</B>
 
 <DD>
@@ -509,6 +621,7 @@ Out of memory.
 <DT><B>EAI_NODATA</B>
 
 <DD>
+
 The specified network host exists, but does not have any
 network addresses defined.
 <DT><B>EAI_NONAME</B>
@@ -544,7 +657,7 @@ It may be available through another socket type.
 <DT><B>EAI_SOCKTYPE</B>
 
 <DD>
-The requested socket type is not supported at all.
+The requested socket type is not supported.
 <DT><B>EAI_SYSTEM</B>
 
 <DD>
@@ -806,7 +919,15 @@ main(int argc, char *argv[])
 
 
 
-<B><A HREF="../man3/getnameinfo.3.html">getnameinfo</A></B>(3)
+<B><A HREF="../man3/gethostbyname.3.html">gethostbyname</A></B>(3),
+
+<B><A HREF="../man3/getnameinfo.3.html">getnameinfo</A></B>(3),
+
+<B><A HREF="../man3/inet.3.html">inet</A></B>(3),
+
+<B><A HREF="../man7/hostname.7.html">hostname</A></B>(7),
+
+<B><A HREF="../man7/ip.7.html">ip</A></B>(7)
 
 <P>
 
@@ -829,6 +950,6 @@ main(int argc, char *argv[])
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 02:53:08 GMT, April 20, 2020
+Time: 02:53:37 GMT, April 20, 2020
 </BODY>
 </HTML>

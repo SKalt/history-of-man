@@ -5,7 +5,7 @@ Copyright (C) 2003 Free Software Foundation, Inc.
 <HTML><HEAD><TITLE>Man page of IO_GETEVENTS</TITLE>
 </HEAD><BODY>
 <H1>IO_GETEVENTS</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2003-02-21<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2008-06-18<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -43,28 +43,26 @@ and the operation blocks.
 <A NAME="lbAE">&nbsp;</A>
 <H2>RETURN VALUE</H2>
 
-<P>
-
 On success,
 <B>io_getevents</B>()
 
 returns the number of events read: 0 if no events are
-available or &lt; <I>min_nr</I> if the <I>timeout</I> has elapsed;
-on failure, it returns one of the errors listed under ERRORS.
+available, or less than <I>min_nr</I> if the <I>timeout</I> has elapsed.
+For the failure return, see NOTES.
 <A NAME="lbAF">&nbsp;</A>
 <H2>ERRORS</H2>
 
 <DL COMPACT>
+<DT><B>EFAULT</B>
+
+<DD>
+Either <I>events</I> or <I>timeout</I> is an invalid pointer.
 <DT><B>EINVAL</B>
 
 <DD>
 <I>ctx_id</I> is invalid.
 <I>min_nr</I> is out of range or <I>nr</I> is
 out of range.
-<DT><B>EFAULT</B>
-
-<DD>
-Either <I>events</I> or <I>timeout</I> is an invalid pointer.
 <DT><B>ENOSYS</B>
 
 <DD>
@@ -88,17 +86,41 @@ The asynchronous I/O system calls first appeared in Linux 2.5, August 2002.
 is Linux-specific and should not be used in
 programs that are intended to be portable.
 <A NAME="lbAI">&nbsp;</A>
+<H2>NOTES</H2>
+
+Glibc does not provide a wrapper function for this system call.
+<P>
+The wrapper provided in
+<I>libaio</I>
+
+for
+<B>io_getevents</B>()
+
+does not follow the usual C library conventions for indicating error:
+on error it returns a negated error number
+(the negative of one of the values listed in ERRORS).
+If the system call is invoked via
+<B><A HREF="../man2/syscall.2.html">syscall</A></B>(2),
+
+then the return value follows the usual conventions for
+indicating an error: -1, with
+<I>errno</I>
+
+set to a (positive) value that indicates the error.
+<A NAME="lbAJ">&nbsp;</A>
 <H2>SEE ALSO</H2>
 
 <P>
+
+<B><A HREF="../man2/io_cancel.2.html">io_cancel</A></B>(2),
+
+<B><A HREF="../man2/io_destroy.2.html">io_destroy</A></B>(2),
 
 <B><A HREF="../man2/io_setup.2.html">io_setup</A></B>(2),
 
 <B><A HREF="../man2/io_submit.2.html">io_submit</A></B>(2),
 
-<B><A HREF="../man2/io_cancel.2.html">io_cancel</A></B>(2),
-
-<B><A HREF="../man2/io_destroy.2.html">io_destroy</A></B>(2)
+<B><A HREF="../man7/time.7.html">time</A></B>(7)
 
 
 
@@ -119,12 +141,13 @@ programs that are intended to be portable.
 <DT><A HREF="#lbAF">ERRORS</A><DD>
 <DT><A HREF="#lbAG">VERSIONS</A><DD>
 <DT><A HREF="#lbAH">CONFORMING TO</A><DD>
-<DT><A HREF="#lbAI">SEE ALSO</A><DD>
+<DT><A HREF="#lbAI">NOTES</A><DD>
+<DT><A HREF="#lbAJ">SEE ALSO</A><DD>
 </DL>
 <HR>
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 02:53:02 GMT, April 20, 2020
+Time: 02:53:31 GMT, April 20, 2020
 </BODY>
 </HTML>

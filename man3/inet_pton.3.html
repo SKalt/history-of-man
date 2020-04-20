@@ -5,19 +5,17 @@ Copyright 2000 Sam Varshavchik &lt;mrsam@courier-mta.com&gt;
 <HTML><HEAD><TITLE>Man page of INET_PTON</TITLE>
 </HEAD><BODY>
 <H1>INET_PTON</H1>
-Section: Linux Programmer's Manual (3)<BR>Updated: 2000-12-18<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2008-06-18<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
 <H2>NAME</H2>
 
-inet_pton - Create a network address structure
+inet_pton - convert IPv4 and IPv6 addresses from text to binary form
 <A NAME="lbAC">&nbsp;</A>
 <H2>SYNOPSIS</H2>
 
 <PRE>
-<B>#include &lt;<A HREF="file:///usr/include/sys/types.h">sys/types.h</A>&gt;</B>
-<B>#include &lt;<A HREF="file:///usr/include/sys/socket.h">sys/socket.h</A>&gt;</B>
 <B>#include &lt;<A HREF="file:///usr/include/arpa/inet.h">arpa/inet.h</A>&gt;</B>
 
 <B>int inet_pton(int </B><I>af</I><B>, const char *</B><I>src</I><B>, void *</B><I>dst</I><B>);</B>
@@ -37,18 +35,16 @@ copies
 the network address structure to
 <I>dst</I>.
 
+The
+<I>af</I>
+
+argument must be either
+<B>AF_INET</B>
+
+or
+<B>AF_INET6</B>.
+
 <P>
-
-<B>inet_pton</B>()
-
-extends the
-<B><A HREF="../man3/inet_addr.3.html">inet_addr</A></B>(3)
-
-function to support multiple address families,
-<B><A HREF="../man3/inet_addr.3.html">inet_addr</A></B>(3)
-
-is now considered to be deprecated in favor of
-<B>inet_pton</B>().
 
 The following address families are currently supported:
 <DL COMPACT>
@@ -58,9 +54,11 @@ The following address families are currently supported:
 <I>src</I>
 
 points to a character string containing an IPv4 network address in
-the dotted-quad format, &quot;<I>ddd.ddd.ddd.ddd</I>&quot;.
-The address is converted
-to a
+dotted-decimal format, &quot;<I>ddd.ddd.ddd.ddd</I>&quot;, where
+<I>ddd</I>
+
+is a decimal number of up to three digits in the range 0 to 255.
+The address is converted to a
 <I>struct in_addr</I>
 
 and copied to
@@ -69,16 +67,14 @@ and copied to
 which must be
 <I>sizeof(struct in_addr)</I>
 
-bytes long.
+(4) bytes (32 bits) long.
 <DT><B>AF_INET6</B>
 
 <DD>
 <I>src</I>
 
-points to a character string containing an IPv6 network address in
-any allowed IPv6 address format.
-The address is converted
-to a
+points to a character string containing an IPv6 network address.
+The address is converted to a
 <I>struct in6_addr</I>
 
 and copied to
@@ -87,39 +83,80 @@ and copied to
 which must be
 <I>sizeof(struct in6_addr)</I>
 
-bytes long.
+(16) bytes (128 bits) long.
+The allowed formats for IPv6 addresses follow these rules:
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT>1.<DD>
+The preferred format is
+<I>x.x.x.x.x.x.x.x</I>.
+
+This form consists of eight hexadecimal numbers,
+each of which expresses a 16-bit value (i.e., each
+<I>x</I>
+
+can be up to 4 hex digits).
+<DT>2.<DD>
+A series of contiguous zero values in the preferred format
+can be abbreviated to
+<I>::</I>.
+
+Only one instance of
+<I>::</I>
+
+can occur in an address.
+For example, the loopback address
+<I>0:0:0:0:0:0:0:1</I>
+
+can be abbreviated as
+<I>::1</I>.
+
+The wildcard address, consisting of all zeroes, can be written as
+<I>::</I>.
+
+<DT>3.<DD>
+An alternate format is useful for expressing IPv4-mapped IPv6 addresses.
+This form is written as
+<I>x:x:x:x:x:x:d.d.d.d</I>,
+
+where the six leading
+<I>x</I>s
+
+are hexadecimal values that define the six most-significant
+16-bit pieces of the address (i.e., 96 bits), and the
+<I>d</I>s
+
+express a value in dotted-decimal notation that
+defines the least significant 32 bits of the address.
+An example of such an address is
+<I>::FFFF:204.152.189.116</I>.
+
 </DL>
-<P>
+</DL>
 
-Certain legacy hex and octal formats of
-<B>AF_INET</B>
-
-addresses are not supported by
-<B>inet_pton</B>(),
-
-which rejects them.
+<DT><DD>
+See RFC 2373 for further details on the representation of IPv6 addresses.
+</DL>
 <A NAME="lbAE">&nbsp;</A>
 <H2>RETURN VALUE</H2>
 
 <B>inet_pton</B>()
 
-returns a negative value and sets
-<I>errno</I>
-
-to
-<B>EAFNOSUPPORT</B>
-
-if
-<I>af</I>
-
-does not contain a valid address family.
+returns 1 on success (network address was successfully converted).
 0 is returned if
 <I>src</I>
 
 does not contain a character string representing a valid network
 address in the specified address family.
-A positive value is returned if the network address was successfully
-converted.
+If
+<I>af</I>
+
+does not contain a valid address family, -1 is returned and
+<I>errno</I>
+
+is set to
+<B>EAFNOSUPPORT</B>.
+
 <A NAME="lbAF">&nbsp;</A>
 <H2>CONFORMING TO</H2>
 
@@ -130,12 +167,108 @@ POSIX.1-2001.
 <B>AF_INET6</B>
 
 does not recognize IPv4 addresses.
-An explicit IPv6-mapped IPv4 address must be supplied in
+An explicit IPv4-mapped IPv6 address must be supplied in
 <I>src</I>
 
 instead.
 <A NAME="lbAH">&nbsp;</A>
+<H2>NOTES</H2>
+
+Unlike
+<B><A HREF="../man3/inet_aton.3.html">inet_aton</A></B>(3)
+
+and
+<B><A HREF="../man3/inet_addr.3.html">inet_addr</A></B>(3),
+
+<B>inet_pton</B>()
+
+supports IPv6 addresses.
+On the other hand,
+<B>inet_pton</B>()
+
+only accepts IPv4 addresses in dotted-decimal notation, whereas
+<B><A HREF="../man3/inet_aton.3.html">inet_aton</A></B>(3)
+
+and
+<B><A HREF="../man3/inet_addr.3.html">inet_addr</A></B>(3)
+
+allow the more general numbers-and-dots notation (hexadecimal
+and octal number formats, and formats that don't require all
+four bytes to be explicitly written).
+For an interface that handles both IPv6 addresses, and IPv4
+addresses in numbers-and-dots notation, see
+<B><A HREF="../man3/getaddrinfo.3.html">getaddrinfo</A></B>(3).
+
+<A NAME="lbAI">&nbsp;</A>
+<H2>EXAMPLE</H2>
+
+The program below demonstrates the use of
+<B>inet_pton</B>()
+
+and
+<B><A HREF="../man3/inet_ntop.3.html">inet_ntop</A></B>(3).
+
+Here are some example runs:
+
+<PRE>
+
+$ ./a.out i6 0:0:0:0:0:0:0:0
+::
+$ ./a.out i6 1:0:0:0:0:0:0:8
+1::8
+$ ./a.out i6 0:0:0:0:0:FFFF:204.152.189.116
+::ffff:204.152.189.116
+
+</PRE>
+
+
+<PRE>
+#include &lt;<A HREF="file:///usr/include/arpa/inet.h">arpa/inet.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/stdlib.h">stdlib.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/string.h">string.h</A>&gt;
+
+int
+main(int argc, char *argv[])
+{
+    unsigned char buf[sizeof(struct in6_addr)];
+    int domain, s;
+    char str[INET6_ADDRSTRLEN];
+
+    if (argc != 3) {
+        fprintf(stderr, &quot;Usage: %s {i4|i6|&lt;num&gt;} string\n&quot;, argv[0]);
+        exit(EXIT_FAILURE);
+    }
+
+    domain = (strcmp(argv[1], &quot;i4&quot;) == 0) ? AF_INET :
+             (strcmp(argv[1], &quot;i6&quot;) == 0) ? AF_INET6 : atoi(argv[1]);
+
+    s = inet_pton(domain, argv[2], buf);
+    if (s &lt;= 0) {
+        if (s == 0)
+            fprintf(stderr, &quot;Not in presentation format&quot;);
+        else
+            perror(&quot;inet_pton&quot;);
+        exit(EXIT_FAILURE);
+    }
+
+    if (inet_ntop(domain, buf, str, INET6_ADDRSTRLEN) == NULL) {
+        perror(&quot;inet_ntop&quot;);
+        exit(EXIT_FAILURE);
+    }
+
+    printf(&quot;%s\n&quot;, str);
+
+    exit(EXIT_SUCCESS);
+}
+</PRE>
+
+<A NAME="lbAJ">&nbsp;</A>
 <H2>SEE ALSO</H2>
+
+<B><A HREF="../man3/getaddrinfo.3.html">getaddrinfo</A></B>(3),
+
+<B><A HREF="../man3/inet.3.html">inet</A></B>(3),
 
 <B><A HREF="../man3/inet_ntop.3.html">inet_ntop</A></B>(3)
 
@@ -150,12 +283,14 @@ instead.
 <DT><A HREF="#lbAE">RETURN VALUE</A><DD>
 <DT><A HREF="#lbAF">CONFORMING TO</A><DD>
 <DT><A HREF="#lbAG">BUGS</A><DD>
-<DT><A HREF="#lbAH">SEE ALSO</A><DD>
+<DT><A HREF="#lbAH">NOTES</A><DD>
+<DT><A HREF="#lbAI">EXAMPLE</A><DD>
+<DT><A HREF="#lbAJ">SEE ALSO</A><DD>
 </DL>
 <HR>
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 02:53:09 GMT, April 20, 2020
+Time: 02:53:38 GMT, April 20, 2020
 </BODY>
 </HTML>

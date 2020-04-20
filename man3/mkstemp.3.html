@@ -5,13 +5,13 @@ Copyright 1993 David Metcalfe (david@prism.demon.co.uk)
 <HTML><HEAD><TITLE>Man page of MKSTEMP</TITLE>
 </HEAD><BODY>
 <H1>MKSTEMP</H1>
-Section: Linux Programmer's Manual (3)<BR>Updated: 2007-07-26<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2008-06-19<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
 <H2>NAME</H2>
 
-mkstemp - create a unique temporary file
+mkstemp, mkostemp - create a unique temporary file
 <A NAME="lbAC">&nbsp;</A>
 <H2>SYNOPSIS</H2>
 
@@ -19,6 +19,8 @@ mkstemp - create a unique temporary file
 <B>#include &lt;<A HREF="file:///usr/include/stdlib.h">stdlib.h</A>&gt;</B>
 
 <B>int mkstemp(char *</B><I>template</I><B>);</B>
+
+<B>int mkostemp (char *</B><I>template</I><B>, int </B><I>flags</I><B>);</B>
 </PRE>
 
 <P>
@@ -31,39 +33,65 @@ Feature Test Macro Requirements for glibc (see
 <B>mkstemp</B>():
 
 _BSD_SOURCE || _SVID_SOURCE || _XOPEN_SOURCE&nbsp;&gt;=&nbsp;500
+<BR>
+
+<B>mkostemp</B>():
+
+_GNU_SOURCE
 <A NAME="lbAD">&nbsp;</A>
 <H2>DESCRIPTION</H2>
 
 The
 <B>mkstemp</B>()
 
-function generates a unique temporary filename
-from <I>template</I>.
-The last six characters of <I>template</I> must
-be XXXXXX and these are replaced with a string that makes the
+function generates a unique temporary filename from
+<I>template</I>,
+
+creates and opens the file,
+and returns an open file descriptor for the file.
+<P>
+The last six characters of
+<I>template</I>
+
+must be &quot;XXXXXX&quot; and these are replaced with a string that makes the
 filename unique.
-The file is then created with mode read/write and
-permissions 0666 (glibc 2.0.6 and earlier), 0600 (glibc 2.0.7 and later).
 Since it will be modified,
 <I>template</I>
 
 must not be a string constant, but should be declared as a character array.
+<P>
+The file is created with
+permissions 0600, that is, read plus write for owner only.
+(In glibc versions 2.06 and earlier, the file is created with permissions 0666,
+that is, read and write for all users.)
+The returned file descriptor provides both read and write access to the file.
 The file is opened with the
 <B><A HREF="../man2/open.2.html">open</A></B>(2)
 
 <B>O_EXCL</B>
 
-flag, guaranteeing that when
-<B>mkstemp</B>()
+flag, guaranteeing that the caller is the process that creates the file.
+<P>
+<B>mkostemp</B>()
 
-returns successfully we are the only user.
+is like
+<B>mkstemp</B>(),
+
+with the difference that flags as for
+<B><A HREF="../man2/open.2.html">open</A></B>(2)
+
+may be specified in
+<I>flags</I>
+
+(e.g.,
+<B>O_APPEND</B>,
+
+<B>O_SYNC</B>).
+
 <A NAME="lbAE">&nbsp;</A>
 <H2>RETURN VALUE</H2>
 
-On success, the
-<B>mkstemp</B>()
-
-function returns the file descriptor
+On success, these functions return the file descriptor
 of the temporary file.
 On error, -1 is returned, and
 <I>errno</I>
@@ -84,30 +112,58 @@ Now the contents of <I>template</I> are undefined.
 The last six characters of <I>template</I> were not XXXXXX.
 Now <I>template</I> is unchanged.
 </DL>
+<P>
+
+These functions may also fail with any of the errors described for
+<B><A HREF="../man2/open.2.html">open</A></B>(2).
+
 <A NAME="lbAG">&nbsp;</A>
+<H2>VERSIONS</H2>
+
+<B>mkostemp</B>()
+
+is available since glibc 2.7.
+<A NAME="lbAH">&nbsp;</A>
 <H2>CONFORMING TO</H2>
 
-4.3BSD, POSIX.1-2001
-<A NAME="lbAH">&nbsp;</A>
+<B>mkstemp</B>():
+
+4.3BSD, POSIX.1-2001.
+<B>mkostemp</B>():
+
+is a glibc extension.
+<A NAME="lbAI">&nbsp;</A>
 <H2>NOTES</H2>
 
-The old behavior (creating a file with mode 0666) may be
+The old behavior of creating a file with mode 0666 may be
 a security risk, especially since other Unix flavors use 0600,
 and somebody might overlook this detail when porting programs.
 <P>
-More generally, the POSIX specification does not say anything
-about file modes, so the application should make sure its umask
+More generally, the POSIX specification of
+<B>mkstemp</B>()
+
+does not say anything
+about file modes, so the application should make sure its
+file mode creation mask (see
+<B><A HREF="../man2/umask.2.html">umask</A></B>(2))
+
 is set appropriately before calling
-<B>mkstemp</B>().
+<B>mkstemp</B>()
+
+(and
+<B>mkostemp</B>()).
 
 <P>
-The prototype is in
+The prototype for
+<B>mktemp</B>()
+
+is in
 <I>&lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;</I>
 
 for libc4, libc5, glibc1; glibc2 follows POSIX.1 and has the prototype in
 <I>&lt;<A HREF="file:///usr/include/stdlib.h">stdlib.h</A>&gt;</I>.
 
-<A NAME="lbAI">&nbsp;</A>
+<A NAME="lbAJ">&nbsp;</A>
 <H2>SEE ALSO</H2>
 
 <B><A HREF="../man3/mkdtemp.3.html">mkdtemp</A></B>(3),
@@ -130,14 +186,15 @@ for libc4, libc5, glibc1; glibc2 follows POSIX.1 and has the prototype in
 <DT><A HREF="#lbAD">DESCRIPTION</A><DD>
 <DT><A HREF="#lbAE">RETURN VALUE</A><DD>
 <DT><A HREF="#lbAF">ERRORS</A><DD>
-<DT><A HREF="#lbAG">CONFORMING TO</A><DD>
-<DT><A HREF="#lbAH">NOTES</A><DD>
-<DT><A HREF="#lbAI">SEE ALSO</A><DD>
+<DT><A HREF="#lbAG">VERSIONS</A><DD>
+<DT><A HREF="#lbAH">CONFORMING TO</A><DD>
+<DT><A HREF="#lbAI">NOTES</A><DD>
+<DT><A HREF="#lbAJ">SEE ALSO</A><DD>
 </DL>
 <HR>
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 02:53:10 GMT, April 20, 2020
+Time: 02:53:39 GMT, April 20, 2020
 </BODY>
 </HTML>

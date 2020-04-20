@@ -5,7 +5,7 @@ Copyright (c) 1992 Drew Eckhardt (drew@cs.colorado.edu), March 28, 1992
 <HTML><HEAD><TITLE>Man page of CHOWN</TITLE>
 </HEAD><BODY>
 <H1>CHOWN</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2007-07-26<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2008-06-16<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -43,13 +43,31 @@ _BSD_SOURCE || _XOPEN_SOURCE&nbsp;&gt;=&nbsp;500
 <A NAME="lbAD">&nbsp;</A>
 <H2>DESCRIPTION</H2>
 
+These system calls change the owner and group of a file.
+The differ only in how the file is specified:
+<DL COMPACT>
+<DT>*<DD>
+<B>chown</B>()
 
+changes the ownership of the file specified by
+<I>path</I>,
 
-These system calls change the owner and group of the file specified by
-<I>path</I>
+which is dereferenced if it is a symbolic link.
+<DT>*<DD>
+<B>fchown</B>()
 
-or by
+changes the ownership of the file referred to by the open file descriptor
 <I>fd</I>.
+
+<DT>*<DD>
+<B>lchown</B>()
+
+is like
+<B>chown</B>(),
+
+but does not dereference symbolic links.
+</DL>
+<P>
 
 Only a privileged process (Linux: one with the
 <B>CAP_CHOWN</B>
@@ -203,6 +221,72 @@ used by the superuser (that is, ordinary users cannot give away files).
 <A NAME="lbAH">&nbsp;</A>
 <H2>NOTES</H2>
 
+When a new file is created (by, for example,
+<B><A HREF="../man2/open.2.html">open</A></B>(2)
+
+or
+<B><A HREF="../man2/mkdir.2.html">mkdir</A></B>(2)),
+
+its owner is made the same as the file system user ID of the
+creating process.
+The group of the file depends on a range of factors,
+including the type of file system,
+the options used to mount the file system,
+and whether or not the set-group-ID permission bit is enabled
+on the parent directory.
+If the file system supports the
+<I>-o&nbsp;grpid</I>
+
+(or, synonymously
+<I>-o&nbsp;bsdgroups</I>)
+
+and
+<I>-o&nbsp;nogrpid</I>
+
+(or, synonymously
+<I>-o&nbsp;sysvgroups</I>)
+
+<B><A HREF="../man8/mount.8.html">mount</A></B>(8)
+
+options, then the rules are as follows:
+<DL COMPACT>
+<DT>*<DD>
+If the file system is mounted with
+<I>-o&nbsp;grpid</I>,
+
+then the group of a new file is made
+the same as that of the parent directory.
+<DT>*<DD>
+If the file system is mounted with
+<I>-o&nbsp;nogrpid</I>
+
+and the set-group-ID bit is disabled on the parent directory,
+then the group of a new file is made the same as the
+process's file system GID.
+<DT>*<DD>
+If the file system is mounted with
+<I>-o&nbsp;nogrpid</I>
+
+and the set-group-ID bit is enabled on the parent directory,
+then the group of a new file is made
+the same as that of the parent directory.
+</DL>
+<P>
+
+As at Linux 2.6.25,
+the
+<I>-o&nbsp;grpid</I>
+
+and
+<I>-o&nbsp;nogrpid</I>
+
+mount options are supported by ext2, ext3, ext4, and XFS.
+File systems that don't support theese mount options follow the
+<I>-o&nbsp;nogrpid</I>
+
+rules.
+<P>
+
 The
 <B>chown</B>()
 
@@ -299,7 +383,9 @@ main(int argc, char *argv[])
 
 <B><A HREF="../man2/flock.2.html">flock</A></B>(2),
 
-<B><A HREF="../man7/path_resolution.7.html">path_resolution</A></B>(7)
+<B><A HREF="../man7/path_resolution.7.html">path_resolution</A></B>(7),
+
+<B><A HREF="../man7/symlink.7.html">symlink</A></B>(7)
 
 <P>
 
@@ -320,6 +406,6 @@ main(int argc, char *argv[])
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 02:53:01 GMT, April 20, 2020
+Time: 02:53:30 GMT, April 20, 2020
 </BODY>
 </HTML>

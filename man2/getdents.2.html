@@ -5,7 +5,7 @@ Copyright (C) 1995 Andries Brouwer (aeb@cwi.nl)
 <HTML><HEAD><TITLE>Man page of GETDENTS</TITLE>
 </HEAD><BODY>
 <H1>GETDENTS</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2007-06-01<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2008-06-22<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -43,10 +43,10 @@ reads several
 <I>dirent</I>
 
 structures from the directory
-pointed at by
+referred to by the open file descriptor
 <I>fd</I>
 
-into the memory area pointed to by
+into the buffer pointed to by
 <I>dirp</I>.
 
 The parameter
@@ -63,11 +63,17 @@ structure is declared as follows:
 
 
 <PRE>
-struct dirent {
-    long d_ino;                 /* inode number */
-    off_t d_off;                /* offset to next <I>dirent</I> */
-    unsigned short d_reclen;    /* length of this <I>dirent</I> */
-    char d_name [NAME_MAX+1];   /* filename (null-terminated) */
+struct linux_dirent {
+    unsigned long  d_ino;     /* Inode number */
+    unsigned long  d_off;     /* Offset to next <I>dirent</I> */
+    unsigned short d_reclen;  /* Length of this <I>dirent</I> */
+    char           d_name []; /* Filename (null-terminated) */
+                        /* length is actually (d_reclen - 2 -
+                           offsetof(struct linux_dirent, d_name) */
+    /* char        pad;          Zero padding byte */
+    /* char        d_type;       File type (only since Linux 2.6.4;
+                                 offset is (d_reclen - 1)) */
+
 }
 </PRE>
 
@@ -91,10 +97,44 @@ is the size of this entire
 
 is a null-terminated filename.
 <P>
+<I>d_type</I>
 
-This call supersedes
-<B><A HREF="../man2/readdir.2.html">readdir</A></B>(2).
+is a byte at the end of the structure that indicates the file type.
+It returns one of the following values:
+<DL COMPACT>
+<DT><B>DT_BLK</B>
 
+<DD>
+This is a block device.
+<DT><B>DT_CHR</B>
+
+<DD>
+This is a character device.
+<DT><B>DT_DIR</B>
+
+<DD>
+This is a directory.
+<DT><B>DT_FIFO</B>
+
+<DD>
+This is a named pipe (FIFO).
+<DT><B>DT_LNK</B>
+
+<DD>
+This is a symbolic link.
+<DT><B>DT_REG</B>
+
+<DD>
+This is a regular file.
+<DT><B>DT_SOCK</B>
+
+<DD>
+This is a Unix domain socket.
+<DT><B>DT_UNKNOWN</B>
+
+<DD>
+The file type is unknown.
+</DL>
 <A NAME="lbAE">&nbsp;</A>
 <H2>RETURN VALUE</H2>
 
@@ -142,6 +182,10 @@ SVr4.
 Glibc does not provide a wrapper for this system call; call it using
 <B><A HREF="../man2/syscall.2.html">syscall</A></B>(2).
 
+<P>
+This call supersedes
+<B><A HREF="../man2/readdir.2.html">readdir</A></B>(2).
+
 <A NAME="lbAI">&nbsp;</A>
 <H2>SEE ALSO</H2>
 
@@ -167,6 +211,6 @@ Glibc does not provide a wrapper for this system call; call it using
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 02:53:01 GMT, April 20, 2020
+Time: 02:53:30 GMT, April 20, 2020
 </BODY>
 </HTML>

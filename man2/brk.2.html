@@ -5,7 +5,7 @@ Copyright (c) 1993 Michael Haardt
 <HTML><HEAD><TITLE>Man page of BRK</TITLE>
 </HEAD><BODY>
 <H1>BRK</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2007-07-26<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2008-06-18<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -18,7 +18,7 @@ brk, sbrk - change data segment size
 <B>#include &lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;</B>
 
 <P>
-<B>int brk(void *</B><I>end_data_segment</I><B>);</B>
+<B>int brk(void *</B><I>addr</I><B>);</B>
 
 <P>
 <B>void *sbrk(intptr_t </B><I>increment</I><B>);</B>
@@ -42,11 +42,26 @@ _BSD_SOURCE || _SVID_SOURCE || _XOPEN_SOURCE&nbsp;&gt;=&nbsp;500
 
 <B>brk</B>()
 
-sets the end of the data segment to the value specified by
-<I>end_data_segment</I>,
+and
+<B>sbrk</B>()
 
-when that value is reasonable, the system does have enough memory
-and the process does not exceed its max data size (see
+change the location of the
+<I>program break</I>,
+
+which defines the end of the process's data segment
+(i.e., the program break is the first location after the end of the
+uninitialized data segment).
+Increasing the program break has the effect of
+allocating memory to the process;
+decreasing the break deallocates memory.
+<P>
+<B>brk</B>()
+
+sets the end of the data segment to the value specified by
+<I>addr</I>,
+
+when that value is reasonable, the system has enough memory,
+and the process does not exceed its maximum data size (see
 <B><A HREF="../man2/setrlimit.2.html">setrlimit</A></B>(2)).
 
 <P>
@@ -56,14 +71,13 @@ increments the program's data space by
 <I>increment</I>
 
 bytes.
-<B>sbrk</B>()
-
-isn't a system call, it is just a C library wrapper.
 Calling
 <B>sbrk</B>()
 
-with an increment of 0 can be used to find the current
-location of the program break.
+with an
+<I>increment</I>
+
+of 0 can be used to find the current location of the program break.
 <A NAME="lbAE">&nbsp;</A>
 <H2>RETURN VALUE</H2>
 
@@ -82,8 +96,13 @@ is set to
 On success,
 <B>sbrk</B>()
 
-returns a pointer to the start of the new area.
-On error, -1 is returned, and
+returns the previous program break.
+(If the break was increased,
+then this value is a pointer to the start of the newly allocated memory).
+On error,
+<I>(void&nbsp;*)&nbsp;-1</I>
+
+is returned, and
 <I>errno</I>
 
 is set to
@@ -93,17 +112,27 @@ is set to
 <H2>CONFORMING TO</H2>
 
 4.3BSD; SUSv1, marked LEGACY in SUSv2, removed in POSIX.1-2001.
-<P>
-<B>brk</B>()
 
-and
-<B>sbrk</B>()
 
-are not defined in the C Standard and are deliberately excluded from the
-POSIX.1 standard (see paragraphs B.1.1.1.3 and B.8.3.3).
+
+
+
+
 <A NAME="lbAG">&nbsp;</A>
 <H2>NOTES</H2>
 
+Avoid using
+<B>brk</B>()
+
+and
+<B>sbrk</B>():
+
+the
+<B><A HREF="../man3/malloc.3.html">malloc</A></B>(3)
+
+memory allocation package is the
+portable and comfortable way of allocating memory.
+<P>
 Various systems use various types for the parameter of
 <B>sbrk</B>().
 
@@ -127,16 +156,15 @@ system call.
 (On most other implementations, the return value from
 <B>brk</B>()
 
-is the same.)
+is the same; this return value was also specified in SUSv2.)
 However,
 the actual Linux system call returns the new program break on success.
-On failure, the system call returns the current break
-(thus for example, the call
-<I>brk(0)</I>
+On failure, the system call returns the current break.
+The glibc wrapper function does some work
+(i.e., checks whether the new break is less than
+<I>addr )</I>
 
-can be used to obtain the current break).
-The glibc wrapper function does some work to provide the 0
-and -1 return values described above.
+to provide the 0 and -1 return values described above.
 <P>
 On Linux,
 <B>sbrk</B>()
@@ -175,6 +203,6 @@ return the old break value.
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 02:53:01 GMT, April 20, 2020
+Time: 02:53:30 GMT, April 20, 2020
 </BODY>
 </HTML>

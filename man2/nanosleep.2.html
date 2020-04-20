@@ -5,13 +5,13 @@ Copyright (C) Markus Kuhn, 1996
 <HTML><HEAD><TITLE>Man page of NANOSLEEP</TITLE>
 </HEAD><BODY>
 <H1>NANOSLEEP</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2007-07-26<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2008-06-24<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
 <H2>NAME</H2>
 
-nanosleep - pause execution for a specified time
+nanosleep - high-resolution sleep
 <A NAME="lbAC">&nbsp;</A>
 <H2>SYNOPSIS</H2>
 
@@ -35,16 +35,21 @@ _POSIX_C_SOURCE&nbsp;&gt;=&nbsp;199309L
 
 <B>nanosleep</B>()
 
-delays the execution of the program for at least the time specified in
-<I>*req</I>.
+suspends the execution of the calling thread
+until either at least the time specified in
+<I>*req</I>
 
-The function can return earlier if a signal has been delivered to the
-process.
-In this case, it returns -1, sets <I>errno</I> to
+has elapsed, or the delivery of a signal
+that triggers the invocation of a handler in the calling thread or
+that terminates the process.
+<P>
+If the call is interrupted by a signal handler,
+<B>nanosleep</B>()
+
+returns -1, sets <I>errno</I> to
 <B>EINTR</B>,
 
-and writes the
-remaining time into the structure pointed to by
+and writes the remaining time into the structure pointed to by
 <I>rem</I>
 
 unless
@@ -57,17 +62,13 @@ The value of
 can then be used to call
 <B>nanosleep</B>()
 
-again and complete the specified pause.
+again and complete the specified pause (but see NOTES).
 <P>
 The structure
 <I>timespec</I>
 
 is used to specify intervals of time with nanosecond precision.
-It is
-specified in
-<I>&lt;<A HREF="file:///usr/include/time.h">time.h</A>&gt;</I>
-
-and has the form
+It is defined as follows:
 <P>
 
 <PRE>
@@ -90,9 +91,12 @@ and
 
 <B>nanosleep</B>()
 
-has the advantage of not affecting any signals, it is standardized by
-POSIX, it provides higher timing resolution, and it allows to continue
-a sleep that has been interrupted by a signal more easily.
+has the the following advantages:
+it provides a higher resolution for specifying the sleep interval;
+POSIX.1 explicitly specifies that it
+does not interact with signals;
+and it makes the task of resuming a sleep that has been
+interrupted by a signal handler easier.
 <A NAME="lbAE">&nbsp;</A>
 <H2>RETURN VALUE</H2>
 
@@ -117,9 +121,9 @@ Problem with copying information from user space.
 
 <DD>
 The pause has been interrupted by a non-blocked signal that was
-delivered to the process.
+delivered to the thread.
 The remaining sleep time has been written
-into <I>*rem</I> so that the process can easily call
+into <I>*rem</I> so that the thread can easily call
 <B>nanosleep</B>()
 
 again and continue with the pause.
@@ -141,22 +145,6 @@ POSIX.1-2001.
 <A NAME="lbAH">&nbsp;</A>
 <H2>BUGS</H2>
 
-The current implementation of
-<B>nanosleep</B>()
-
-is based on the normal kernel timer mechanism, which has a resolution
-of 1/<I>HZ</I>&nbsp;s (see
-<B><A HREF="../man7/time.7.html">time</A></B>(7)).
-
-Therefore,
-<B>nanosleep</B>()
-
-pauses always for at least the specified time, however it can take up
-to 10 ms longer than specified until the process becomes runnable
-again.
-For the same reason, the value returned in case of a delivered
-signal in <I>*rem</I> is usually rounded to the next larger multiple of
-1/<I>HZ</I>&nbsp;s.
 <A NAME="lbAI">&nbsp;</A>
 <H3>Old behavior</H3>
 
@@ -165,7 +153,7 @@ In order to support applications requiring much more precise pauses
 <B>nanosleep</B>()
 
 would handle pauses of up to 2&nbsp;ms by busy waiting with microsecond
-precision when called from a process scheduled under a real-time policy
+precision when called from a thread scheduled under a real-time policy
 like
 <B>SCHED_FIFO</B>
 
@@ -186,15 +174,84 @@ is stopped by a signal (e.g.,
 then the call fails with the error
 <B>EINTR</B>
 
-after the process is resumed by a
+after the thread is resumed by a
 <B>SIGCONT</B>
 
 signal.
 If the system call is subsequently restarted,
-then the time that the process spent in the stopped state is
+then the time that the thread spent in the stopped state is
 <I>not</I> counted against the sleep interval.
 <A NAME="lbAJ">&nbsp;</A>
+<H2>NOTES</H2>
+
+If the interval specified in
+<I>req</I>
+
+is not an exact multiple of the granularity underlying clock (see
+<B><A HREF="../man7/time.7.html">time</A></B>(7)),
+
+then the interval will be rounded up to the next multiple.
+Furthermore, after the sleep completes, there may still be a delay before
+the CPU becomes free to once again execute the calling thread.
+<P>
+The fact that
+<B>nanosleep</B>()
+
+sleeps for a relative interval can be problematic if the call
+is repeatedly restarted after being interrupted by signals,
+since the time between the interruptions and restarts of the call
+will lead to drift in the time when the sleep finally completes.
+This problem can be avoided by using
+<B><A HREF="../man2/clock_nanosleep.2.html">clock_nanosleep</A></B>(2)
+
+with an absolute time value.
+<P>
+POSIX.1 specifies that
+<B>nanosleep</B>()
+
+should measure time against the
+<B>CLOCK_REALTIME</B>
+
+clock.
+However, Linux measures the time using the
+<B>CLOCK_MONOTONIC</B>
+
+clock.
+
+
+
+This probably does not matter, since the POSIX.1 specification for
+<B>clock_settime</B>()
+
+says that discontinuous changes in
+<B>CLOCK_REALTIME</B>
+
+should not affect
+<B>nanosleep</B>():
+
+<DL COMPACT><DT><DD>
+<P>
+
+Setting the value of the
+<B>CLOCK_REALTIME</B>
+
+clock via
+<B>clock_settime</B>()
+
+shall
+have no effect on threads that are blocked waiting for a relative time
+service based upon this clock, including the
+<B>nanosleep</B>()
+
+function; ...
+Consequently, these time services shall expire when the requested relative
+interval elapses, independently of the new or old value of the clock.
+</DL>
+
+<A NAME="lbAK">&nbsp;</A>
 <H2>SEE ALSO</H2>
+
+<B><A HREF="../man2/clock_nanosleep.2.html">clock_nanosleep</A></B>(2),
 
 <B><A HREF="../man2/sched_setscheduler.2.html">sched_setscheduler</A></B>(2),
 
@@ -221,12 +278,13 @@ then the time that the process spent in the stopped state is
 <DL>
 <DT><A HREF="#lbAI">Old behavior</A><DD>
 </DL>
-<DT><A HREF="#lbAJ">SEE ALSO</A><DD>
+<DT><A HREF="#lbAJ">NOTES</A><DD>
+<DT><A HREF="#lbAK">SEE ALSO</A><DD>
 </DL>
 <HR>
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 02:53:02 GMT, April 20, 2020
+Time: 02:53:31 GMT, April 20, 2020
 </BODY>
 </HTML>

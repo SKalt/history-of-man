@@ -4,7 +4,7 @@
 <HTML><HEAD><TITLE>Man page of GETNAMEINFO</TITLE>
 </HEAD><BODY>
 <H1>GETNAMEINFO</H1>
-Section: Linux Programmer's Manual (3)<BR>Updated: 2007-06-08<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2008-06-18<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -29,16 +29,23 @@ getnameinfo - address-to-name translation in protocol-independent manner
 The
 <B>getnameinfo</B>()
 
-function is defined for protocol-independent address-to-nodename translation.
+function is the inverse of
+<B><A HREF="../man3/getaddrinfo.3.html">getaddrinfo</A></B>(3):
+
+it converts a socket address to a corresponding host and service,
+in a protocol-independent manner.
 It combines the functionality of
 <B><A HREF="../man3/gethostbyaddr.3.html">gethostbyaddr</A></B>(3)
 
 and
-<B><A HREF="../man3/getservbyport.3.html">getservbyport</A></B>(3)
+<B><A HREF="../man3/getservbyport.3.html">getservbyport</A></B>(3),
 
-and is the inverse of
-<B><A HREF="../man3/getaddrinfo.3.html">getaddrinfo</A></B>(3).
+but unlike those functions,
+<B><A HREF="../man3/getaddrinfo.3.html">getaddrinfo</A></B>(3)
 
+is reentrant and allows programs to eliminate
+IPv4-versus-IPv6 dependencies.
+<P>
 The
 <I>sa</I>
 
@@ -59,13 +66,17 @@ The arguments
 and
 <I>serv</I>
 
-are pointers to buffers (of size
+are pointers to caller-allocated buffers (of size
 <I>hostlen</I>
 
 and
 <I>servlen</I>
 
-respectively) to hold the return values.
+respectively) into which
+<B>getnameinfo</B>()
+
+places null-terminated strings containing the host and
+service names respectively.
 <P>
 The caller can specify that no hostname (or no service name)
 is required by providing a NULL
@@ -80,7 +91,7 @@ argument or a zero
 (or
 <I>servlen</I>)
 
-parameter.
+argument.
 However, at least one of hostname or service name
 must be requested.
 <P>
@@ -92,10 +103,22 @@ argument modifies the behavior of
 
 as follows:
 <DL COMPACT>
+<DT><B>NI_NAMEREQD</B>
+
+<DD>
+If set, then an error is returned if the hostname cannot be determined.
+<DT><B>NI_DGRAM</B>
+
+<DD>
+If set, then the service is datagram (UDP) based rather than
+stream (TCP) based.
+This is required for the few ports (512-514)
+that have different services for UDP and TCP.
 <DT><B>NI_NOFQDN</B>
 
 <DD>
-If set, return only the hostname part of the FQDN for local hosts.
+If set, return only the hostname part of the fully qualified domain name
+for local hosts.
 <DT><B>NI_NUMERICHOST</B>
 
 <DD>
@@ -105,23 +128,14 @@ If set, then the numeric form of the hostname is returned.
 
 
 (When not set, this will still happen in case the node's name
-cannot be looked up.)
-<DT><B>NI_NAMEREQD</B>
+cannot be determined.)
 
-<DD>
-If set, then an error is returned if the hostname cannot be looked up.
 <DT><B>NI_NUMERICSERV</B>
 
 <DD>
-If set, then the service address is returned in numeric form,
-for example by its port number.
-<DT><B>NI_DGRAM</B>
-
-<DD>
-If set, then the service is datagram (UDP) based rather than
-stream (TCP) based.
-This is required for the few ports (512-514)
-that have different services for UDP and TCP.
+If set, then the numeric form of the service address is returned.
+(When not set, this will still happen in case the service's name
+cannot be determined.)
 </DL>
 <A NAME="lbAE">&nbsp;</A>
 <H3>Extensions to getaddrinfo() for Internationalized Domain Names</H3>
@@ -184,7 +198,7 @@ Try again later.
 The
 <I>flags</I>
 
-parameter has an invalid value.
+argument has an invalid value.
 <DT><B>EAI_FAIL</B>
 
 <DD>
@@ -201,7 +215,7 @@ Out of memory.
 <DT><B>EAI_NONAME</B>
 
 <DD>
-The name does not resolve for the supplied parameters.
+The name does not resolve for the supplied arguments.
 <B>NI_NAMEREQD</B>
 
 is set and the host's name cannot be located,
@@ -242,10 +256,16 @@ suitable for error reporting.
 
 /etc/resolv.conf
 <A NAME="lbAH">&nbsp;</A>
+<H2>VERSIONS</H2>
+
+<B>getnameinfo</B>()
+
+is provided in glibc since version 2.1.
+<A NAME="lbAI">&nbsp;</A>
 <H2>CONFORMING TO</H2>
 
 RFC&nbsp;2553, POSIX.1-2001.
-<A NAME="lbAI">&nbsp;</A>
+<A NAME="lbAJ">&nbsp;</A>
 <H2>NOTES</H2>
 
 In order to assist the programmer in choosing reasonable sizes
@@ -272,7 +292,7 @@ in recent versions of BIND's
 header file.
 The latter is a guess based on the services listed
 in the current Assigned Numbers RFC.
-<A NAME="lbAJ">&nbsp;</A>
+<A NAME="lbAK">&nbsp;</A>
 <H2>EXAMPLE</H2>
 
 The following code tries to get the numeric hostname and service name,
@@ -283,9 +303,10 @@ a particular address family.
 
 <PRE>
 struct sockaddr *sa;    /* input */
+socklent_t len;         /* input */
 char hbuf[NI_MAXHOST], sbuf[NI_MAXSERV];
 
-if (getnameinfo(sa, sa-&gt;sa_len, hbuf, sizeof(hbuf), sbuf,
+if (getnameinfo(sa, len, hbuf, sizeof(hbuf), sbuf,
             sizeof(sbuf), NI_NUMERICHOST | NI_NUMERICSERV) == 0)
     printf(&quot;host=%s, serv=%s\n&quot;, hbuf, sbuf);
 </PRE>
@@ -298,9 +319,10 @@ reverse address mapping.
 
 <PRE>
 struct sockaddr *sa;    /* input */
+socklent_t len;         /* input */
 char hbuf[NI_MAXHOST];
 
-if (getnameinfo(sa, sa-&gt;sa_len, hbuf, sizeof(hbuf),
+if (getnameinfo(sa, len, hbuf, sizeof(hbuf),
             NULL, 0, NI_NAMEREQD))
     printf(&quot;could not resolve hostname&quot;);
 else
@@ -316,8 +338,16 @@ An example program using
 can be found in
 <B><A HREF="../man3/getaddrinfo.3.html">getaddrinfo</A></B>(3).
 
-<A NAME="lbAK">&nbsp;</A>
+<A NAME="lbAL">&nbsp;</A>
 <H2>SEE ALSO</H2>
+
+<B><A HREF="../man2/accept.2.html">accept</A></B>(2),
+
+<B><A HREF="../man2/getpeername.2.html">getpeername</A></B>(2),
+
+<B><A HREF="../man2/getsockname.2.html">getsockname</A></B>(2),
+
+<B><A HREF="../man2/recvfrom.2.html">recvfrom</A></B>(2),
 
 <B><A HREF="../man2/socket.2.html">socket</A></B>(2),
 
@@ -373,15 +403,16 @@ Proceedings of the freenix track:
 </DL>
 <DT><A HREF="#lbAF">RETURN VALUE</A><DD>
 <DT><A HREF="#lbAG">FILES</A><DD>
-<DT><A HREF="#lbAH">CONFORMING TO</A><DD>
-<DT><A HREF="#lbAI">NOTES</A><DD>
-<DT><A HREF="#lbAJ">EXAMPLE</A><DD>
-<DT><A HREF="#lbAK">SEE ALSO</A><DD>
+<DT><A HREF="#lbAH">VERSIONS</A><DD>
+<DT><A HREF="#lbAI">CONFORMING TO</A><DD>
+<DT><A HREF="#lbAJ">NOTES</A><DD>
+<DT><A HREF="#lbAK">EXAMPLE</A><DD>
+<DT><A HREF="#lbAL">SEE ALSO</A><DD>
 </DL>
 <HR>
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 02:53:08 GMT, April 20, 2020
+Time: 02:53:37 GMT, April 20, 2020
 </BODY>
 </HTML>

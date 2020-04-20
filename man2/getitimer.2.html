@@ -5,7 +5,7 @@ Copyright 7/93 by Darren Senn &lt;sinster@scintilla.santa-clara.ca.us&gt;
 <HTML><HEAD><TITLE>Man page of GETITIMER</TITLE>
 </HEAD><BODY>
 <H1>GETITIMER</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2006-04-27<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2008-04-24<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -117,7 +117,7 @@ sets the indicated timer to the value in
 If
 <I>ovalue</I>
 
-is non-zero, the old value of the timer is stored there.
+is non-NULL, the old value of the timer is stored there.
 <P>
 
 Timers decrement from
@@ -146,7 +146,9 @@ are significant in determining the duration of a timer.
 
 Timers will never expire before the requested time,
 but may expire some (short) time afterwards, which depends
-on the system timer resolution and on the system load.
+on the system timer resolution and on the system load; see
+<B><A HREF="../man7/time.7.html">time</A></B>(7).
+
 (But see BUGS below.)
 Upon expiration, a signal will be generated and the timer reset.
 If the timer expires while the process is active (always true for
@@ -210,6 +212,20 @@ does not inherit its parent's interval timers.
 Interval timers are preserved across an
 <B><A HREF="../man2/execve.2.html">execve</A></B>(2).
 
+<P>
+POSIX.1 leaves the
+interaction between
+<B>setitimer()</B>
+
+and
+<B><A HREF="../man2/alarm.2.html">alarm</A></B>(2),
+
+<B><A HREF="../man3/sleep.3.html">sleep</A></B>(3),
+
+and
+<B><A HREF="../man3/usleep.3.html">usleep</A></B>(3)
+
+unspecified.
 <A NAME="lbAI">&nbsp;</A>
 <H2>BUGS</H2>
 
@@ -223,7 +239,7 @@ timer may expire before the signal from a previous expiration
 has been delivered.
 The second signal in such an event will be lost.
 <P>
-On Linux, timer values are represented in jiffies.
+On Linux kernels before 2.6.16, timer values are represented in jiffies.
 If a request is made set a timer with a value whose jiffies
 representation exceeds
 <B>MAX_SEC_IN_JIFFIES</B>
@@ -236,6 +252,9 @@ On Linux/i386 (where, since Linux 2.6.13,
 the default jiffy is 0.004 seconds),
 this means that the ceiling value for a timer is
 approximately 99.42 days.
+Since Linux 2.6.16,
+the kernel uses a different internal representation for times,
+and this ceiling is removed.
 <P>
 On certain systems (including i386),
 Linux kernels before version 2.6.12 have a bug which will produce
@@ -298,6 +317,6 @@ error.
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 02:53:01 GMT, April 20, 2020
+Time: 02:53:30 GMT, April 20, 2020
 </BODY>
 </HTML>

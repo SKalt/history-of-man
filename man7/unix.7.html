@@ -4,7 +4,7 @@
 <HTML><HEAD><TITLE>Man page of UNIX</TITLE>
 </HEAD><BODY>
 <H1>UNIX</H1>
-Section: Linux Programmer's Manual (7)<BR>Updated: 2004-05-27<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (7)<BR>Updated: 2008-06-17<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -39,10 +39,8 @@ The
 
 socket family is used to communicate between processes on the same machine
 efficiently.
-Unix sockets can be either anonymous (created by
-<B><A HREF="../man2/socketpair.2.html">socketpair</A></B>(2))
-
-or associated with a file of type socket.
+Traditionally, Unix sockets can be either unnamed,
+or bound to a file system pathname (marked as being of type socket).
 Linux also supports an abstract namespace which is independent of the
 file system.
 <P>
@@ -66,53 +64,113 @@ to other processes using ancillary data.
 <A NAME="lbAE">&nbsp;</A>
 <H3>Address Format</H3>
 
-A Unix address is defined as a filename in the file system or
-as a unique string in the abstract namespace.
-Sockets created by
-<B><A HREF="../man2/socketpair.2.html">socketpair</A></B>(2)
-
-are anonymous.
-For non-anonymous sockets the target address can be set
-using
-<B><A HREF="../man2/connect.2.html">connect</A></B>(2).
-
-The local address can be set using
-<B><A HREF="../man2/bind.2.html">bind</A></B>(2).
-
-When a socket is connected and it doesn't already have a local address a
-unique address in the abstract namespace will be generated automatically.
-<P>
+A Unix domain socket address is represented in the following structure:
 
 <PRE>
+
 #define UNIX_PATH_MAX    108
 
 struct sockaddr_un {
-    sa_family_t    sun_family;               /* AF_UNIX */
-    char           sun_path[UNIX_PATH_MAX];  /* pathname */
+    sa_family_t sun_family;               /* AF_UNIX */
+    char        sun_path[UNIX_PATH_MAX];  /* pathname */
 };
 </PRE>
 
 
 <P>
+
 <I>sun_family</I>
 
 always contains
 <B>AF_UNIX</B>.
 
+<P>
+Three types of address are distinguished in this structure:
+<DL COMPACT>
+<DT>*<DD>
+<I>pathname</I>:
+
+a Unix domain socket can be bound to a null-terminated file
+system pathname using
+<B><A HREF="../man2/bind.2.html">bind</A></B>(2).
+
+When the address of the socket is returned by
+<B><A HREF="../man2/getsockname.2.html">getsockname</A></B>(2),
+
+<B><A HREF="../man2/getpeername.2.html">getpeername</A></B>(2),
+
+and
+<B><A HREF="../man2/accept.2.html">accept</A></B>(2),
+
+its length is
+<I>sizeof(sa_family_t) + strlen(sun_path) + 1</I>,
+
+and
 <I>sun_path</I>
 
-contains the zero-terminated pathname of the socket in the file system.
-If
+contains the null-terminated pathname.
+<DT>*<DD>
+<I>unnamed</I>:
+
+A stream socket that has not been bound to a pathname using
+<B><A HREF="../man2/bind.2.html">bind</A></B>(2)
+
+has no name.
+Likewise, the two sockets created by
+<B><A HREF="../man2/socketpair.2.html">socketpair</A></B>(2)
+
+are unnamed.
+When the address of an unnamed socket is returned by
+<B><A HREF="../man2/getsockname.2.html">getsockname</A></B>(2),
+
+<B><A HREF="../man2/getpeername.2.html">getpeername</A></B>(2),
+
+and
+<B><A HREF="../man2/accept.2.html">accept</A></B>(2),
+
+its length is
+<I>sizeof(sa_family_t)</I>,
+
+and
 <I>sun_path</I>
 
-starts with a null byte ('\0'),
-then it refers to the abstract namespace maintained by
-the Unix protocol module.
+should not be inspected.
+
+
+<DT>*<DD>
+<I>abstract</I>:
+
+an abstract socket address is distinguished by the fact that
+<I>sun_path[0]</I>
+
+is a null byte (`\0').
+All of the remaining bytes in
+<I>sun_path</I>
+
+define the &quot;name&quot; of the socket.
+(Null bytes in the name have no special significance.)
+The name has no connection with file system pathnames.
 The socket's address in this namespace is given by the rest of the
 bytes in
 <I>sun_path</I>.
 
-Note that names in the abstract namespace are not zero-terminated.
+When the address of an abstract socket is returned by
+<B><A HREF="../man2/getsockname.2.html">getsockname</A></B>(2),
+
+<B><A HREF="../man2/getpeername.2.html">getpeername</A></B>(2),
+
+and
+<B><A HREF="../man2/accept.2.html">accept</A></B>(2),
+
+its length is
+<I>sizeof(struct sockaddr_un)</I>,
+
+and
+<I>sun_path</I>
+
+contains the abstract name.
+The abstract socket namespace is a non-portable Linux extension.
+</DL>
 <A NAME="lbAF">&nbsp;</A>
 <H3>Socket Options</H3>
 
@@ -461,6 +519,6 @@ See
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 02:53:15 GMT, April 20, 2020
+Time: 02:53:44 GMT, April 20, 2020
 </BODY>
 </HTML>
