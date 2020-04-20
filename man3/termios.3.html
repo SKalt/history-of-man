@@ -66,7 +66,7 @@ provided to control asynchronous communications ports.
 <P>
 
 Many of the functions described here have a <I>termios_p</I> argument
-that is a pointer to a <B>termios</B> structure.  This structure contains
+that is a pointer to a <I>termios</I> structure.  This structure contains
 at least the following members:
 
 <P>
@@ -76,11 +76,20 @@ tcflag_t <I>c_iflag</I>;      /* input modes */
 tcflag_t <I>c_oflag</I>;      /* output modes */
 tcflag_t <I>c_cflag</I>;      /* control modes */
 tcflag_t <I>c_lflag</I>;      /* local modes */
-cc_t <I>c_cc</I>[<B>NCCS</B>];       /* control chars */
+cc_t     <I>c_cc</I>[<B>NCCS</B>];   /* control chars */
 </PRE>
 
 </DL>
 
+<P>
+
+The values that may be assigned to these fields are described below.
+In the case of the first four bit-mask fields, 
+the definitions of some of the associated flags that may be set are 
+only exposed if a specific feature test macro (see
+<I>&lt;<A HREF="file:///usr/include/features.h">features.h</A>&gt;</I>)
+
+is defined, as noted in brackets (&quot;[]&quot;).
 <P>
 
 <I>c_iflag</I> flag constants:
@@ -200,11 +209,13 @@ If unset, fill character is ASCII NUL ('\0').
 
 <DD>
 Newline delay mask.  Values are <B>NL0</B> and <B>NL1</B>.
+[requires _BSD_SOURCE or _SVID_SOURCE or _XOPEN_SOURCE]
 <DT><B>CRDLY</B>
 
 <DD>
 Carriage return delay mask.
 Values are <B>CR0</B>, <B>CR1</B>, <B>CR2</B>, or <B>CR3</B>.
+[requires _BSD_SOURCE or _SVID_SOURCE or _XOPEN_SOURCE]
 <DT><B>TABDLY</B>
 
 <DD>
@@ -212,11 +223,13 @@ Horizontal tab delay mask.
 Values are <B>TAB0</B>, <B>TAB1</B>, <B>TAB2</B>, <B>TAB3</B> (or <B>XTABS</B>).
 A value of TAB3, that is, XTABS, expands tabs to spaces
 (with tab stops every eight columns).
+[requires _BSD_SOURCE or _SVID_SOURCE or _XOPEN_SOURCE]
 <DT><B>BSDLY</B>
 
 <DD>
 Backspace delay mask.  Values are <B>BS0</B> or <B>BS1</B>.
 (Has never been implemented.)
+[requires _BSD_SOURCE or _SVID_SOURCE or _XOPEN_SOURCE]
 <DT><B>VTDLY</B>
 
 <DD>
@@ -225,6 +238,7 @@ Vertical tab delay mask.  Values are <B>VT0</B> or <B>VT1</B>.
 
 <DD>
 Form feed delay mask.  Values are <B>FF0</B> or <B>FF1</B>.
+[requires _BSD_SOURCE or _SVID_SOURCE or _XOPEN_SOURCE]
 </DL>
 <P>
 
@@ -234,10 +248,12 @@ Form feed delay mask.  Values are <B>FF0</B> or <B>FF1</B>.
 
 <DD>
 (not in POSIX) Baud speed mask (4+1 bits).
+[requires _BSD_SOURCE or _SVID_SOURCE]
 <DT><B>CBAUDEX</B>
 
 <DD>
 (not in POSIX) Extra baud speed mask (1 bit), included in CBAUD.
+[requires _BSD_SOURCE or _SVID_SOURCE]
 </DL>
 <P>
 
@@ -291,16 +307,18 @@ Ignore modem control lines.
 
 <DD>
 (not in POSIX) Block output from a noncurrent shell layer.
-(For use by <B>shl</B>.)
+For use by <B>shl</B> (sjhell layers).  (Not implemented on Linux.)
 <DT><B>CIBAUD</B>
 
 <DD>
 (not in POSIX) Mask for input speeds. The values for the CIBAUD bits are
 the same as the values for the CBAUD bits, shifted left IBSHIFT bits. 
+[requires _BSD_SOURCE or _SVID_SOURCE]
 <DT><B>CRTSCTS</B>
 
 <DD>
 (not in POSIX) Enable RTS/CTS (hardware) flow control.
+[requires _BSD_SOURCE or _SVID_SOURCE]
 </DL>
 <P>
 
@@ -325,6 +343,8 @@ If <B>ICANON</B> is also set, terminal is uppercase only.
 Input is converted to lowercase, except for characters preceded by \.
 On output, uppercase characters are preceded by \ and lowercase
 characters are converted to uppercase.
+
+
 <DT><B>ECHO</B>
 
 <DD>
@@ -349,16 +369,19 @@ If <B>ICANON</B> is also set, echo the NL character even if ECHO is not set.
 TAB, NL, START, and STOP are echoed as ^X, where X is the character with
 ASCII code 0x40 greater than the control signal.  For example, character
 0x08 (BS) is echoed as ^H.
+[requires _BSD_SOURCE or _SVID_SOURCE]
 <DT><B>ECHOPRT</B>
 
 <DD>
 (not in POSIX) If <B>ICANON</B> and <B>IECHO</B> are also set, characters
 are printed as they are being erased.
+[requires _BSD_SOURCE or _SVID_SOURCE]
 <DT><B>ECHOKE</B>
 
 <DD>
 (not in POSIX) If <B>ICANON</B> is also set, KILL is echoed by erasing
 each character on the line, as specified by <B>ECHOE</B> and <B>ECHOPRT</B>.
+[requires _BSD_SOURCE or _SVID_SOURCE]
 <DT><B>DEFECHO</B>
 
 <DD>
@@ -369,6 +392,7 @@ each character on the line, as specified by <B>ECHOE</B> and <B>ECHOPRT</B>.
 (not in POSIX; not supported under Linux)
 Output is being flushed.  This flag is toggled by typing
 the DISCARD character.
+[requires _BSD_SOURCE or _SVID_SOURCE]
 <DT><B>NOFLSH</B>
 
 <DD>
@@ -386,6 +410,7 @@ which tries to write to its controlling terminal.
 (not in POSIX; not supported under Linux)
 All characters in the input queue are reprinted when
 the next character is read.  (<B>bash</B> handles typeahead this way.)
+[requires _BSD_SOURCE or _SVID_SOURCE]
 <DT><B>IEXTEN</B>
 
 <DD>
@@ -536,7 +561,7 @@ immediately, only giving the currently already available characters.)
 <B>tcgetattr</B>()
 
 gets the parameters associated with the object referred by <I>fd</I> and
-stores them in the <B>termios</B> structure referenced by
+stores them in the <I>termios</I> structure referenced by
 <I>termios_p</I>.  This function may be invoked from a background process;
 however, the terminal attributes may be subsequently changed by a
 foreground process.
@@ -546,7 +571,7 @@ foreground process.
 
 sets the parameters associated with the terminal (unless support is
 required from the underlying hardware that is not available) from the
-<B>termios</B> structure referred to by <I>termios_p</I>.  
+<I>termios</I> structure referred to by <I>termios_p</I>.  
 <I>optional_actions</I> specifies when the changes take effect:
 <DL COMPACT>
 <DT><B>TCSANOW</B><DD>
@@ -635,7 +660,7 @@ output is suspended.
 <P>
 
 The baud rate functions are provided for getting and setting the values
-of the input and output baud rates in the <B>termios</B> structure.  The
+of the input and output baud rates in the <I>termios</I> structure.  The
 new values do not take effect
 until <B>tcsetattr</B>() is successfully called.
 <P>
@@ -644,25 +669,26 @@ The actual bit rate corresponding to <B>B38400</B> may be altered with
 <B><A HREF="../man8/setserial.8.html">setserial</A></B>(8).<TT>&nbsp;&nbsp;&nbsp;</TT><BR>
 <P>
 
-The input and output baud rates are stored in the <B>termios</B>
+The input and output baud rates are stored in the <I>termios</I>
 structure.
 <P>
 
 <B>cfmakeraw</B>() sets the terminal attributes as follows:
 <PRE>
-            termios_p-&gt;c_iflag &amp;= ~(IGNBRK|BRKINT|PARMRK|ISTRIP
-                            |INLCR|IGNCR|ICRNL|IXON);
-            termios_p-&gt;c_oflag &amp;= ~OPOST;
-            termios_p-&gt;c_lflag &amp;= ~(ECHO|ECHONL|ICANON|ISIG|IEXTEN);
-            termios_p-&gt;c_cflag &amp;= ~(CSIZE|PARENB);
-            termios_p-&gt;c_cflag |= CS8;
+
+    termios_p-&gt;c_iflag &amp;= ~(IGNBRK | BRKINT | PARMRK | ISTRIP
+                    | INLCR | IGNCR | ICRNL | IXON);
+    termios_p-&gt;c_oflag &amp;= ~OPOST;
+    termios_p-&gt;c_lflag &amp;= ~(ECHO | ECHONL | ICANON | ISIG | IEXTEN);
+    termios_p-&gt;c_cflag &amp;= ~(CSIZE | PARENB);
+    termios_p-&gt;c_cflag |= CS8;
 </PRE>
 
 <P>
 
 <B>cfgetospeed</B>()
 
-returns the output baud rate stored in the <B>termios</B> structure
+returns the output baud rate stored in the <I>termios</I> structure
 pointed to by
 <I>termios_p</I>.
 
@@ -670,9 +696,10 @@ pointed to by
 
 <B>cfsetospeed</B>()
 
-sets the output baud rate stored in the <B>termios</B> structure pointed
+sets the output baud rate stored in the <I>termios</I> structure pointed
 to by <I>termios_p</I> to <I>speed</I>, which must be one of these constants:
 <PRE>
+
 <B>        B0
         B50
         B75
@@ -692,7 +719,8 @@ to by <I>termios_p</I> to <I>speed</I>, which must be one of these constants:
         B57600
         B115200
         B230400
-</B></PRE>
+</B>
+</PRE>
 
 The zero baud rate, <B>B0</B>,
 is used to terminate the connection.  If B0
@@ -704,13 +732,16 @@ Thus, <B>B57600</B> &amp; <B>CBAUDEX</B> is non-zero.
 
 <B>cfgetispeed</B>()
 
-returns the input baud rate stored in the <B>termios</B> structure.
+returns the input baud rate stored in the <I>termios</I> structure.
 <P>
 
 <B>cfsetispeed</B>()
 
-sets the input baud rate stored in the <B>termios</B> structure to
-<I>speed</I>.
+sets the input baud rate stored in the <I>termios</I> structure to
+<I>speed</I>,
+
+which must be specified as one of the <B>Bnnn</B> constants listed above for
+<B>cfsetospeed</B>().
 
 If the input baud rate is set to zero, the input baud rate will be
 equal to the output baud rate.
@@ -718,7 +749,11 @@ equal to the output baud rate.
 
 <B>cfsetspeed</B>()
 
-is a 4.4 BSD extension. It will set both input and output speed.
+is a 4.4BSD extension. 
+It takes the same arguments as 
+<B>cfsetispeed</B>(),
+
+and sets both input and output speed.
 <A NAME="lbAE">&nbsp;</A>
 <H2>RETURN VALUE</H2>
 
@@ -727,13 +762,13 @@ is a 4.4 BSD extension. It will set both input and output speed.
 <B>cfgetispeed</B>()
 
 returns the input baud rate stored in the
-<B>termios</B>
+<I>termios</I>
 structure.
 <P>
 
 <B>cfgetospeed</B>()
 
-returns the output baud rate stored in the <B>termios</B> structure.
+returns the output baud rate stored in the <I>termios</I> structure.
 <P>
 
 All other functions return:
@@ -815,6 +850,6 @@ behaves like
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 02:25:59 GMT, April 20, 2020
+Time: 02:26:27 GMT, April 20, 2020
 </BODY>
 </HTML>
