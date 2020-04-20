@@ -5,7 +5,7 @@ Copyright (C) Tom Bjorkholm, Markus Kuhn &amp; David A. Wheeler 1996-1999
 <HTML><HEAD><TITLE>Man page of SETSCHEDULER</TITLE>
 </HEAD><BODY>
 <H1>SETSCHEDULER</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2005-07-28<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2006-03-23<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -16,25 +16,20 @@ set and get scheduling algorithm/parameters
 <A NAME="lbAC">&nbsp;</A>
 <H2>SYNOPSIS</H2>
 
+<PRE>
 <B>#include &lt;<A HREF="file:///usr/include/sched.h">sched.h</A>&gt;</B>
 
-<P>
 <B>int sched_setscheduler(pid_t </B><I>pid</I><B>, int </B><I>policy</I><B>,</B>
+<BR>
+<B>                       const struct sched_param *</B><I>param</I><B>);</B>
 
-<B>const struct sched_param *</B><I>p</I><B>);</B>
-
-<P>
 <B>int sched_getscheduler(pid_t </B><I>pid</I><B>);</B>
-
-<P>
-<PRE>
 
 <B>struct sched_param {
     ...
     int </B><I>sched_priority</I><B>;
     ...
 };
-
 </B></PRE>
 
 <A NAME="lbAD">&nbsp;</A>
@@ -45,14 +40,18 @@ set and get scheduling algorithm/parameters
 sets both the scheduling policy and the associated parameters for the
 process identified by <I>pid</I>. If <I>pid</I> equals zero, the
 scheduler of the calling process will be set. The interpretation of
-the parameter <I>p</I> depends on the selected policy. Currently, the
+the parameter <I>param</I> depends on the selected policy. Currently, the
 following three scheduling policies are supported under Linux:
 <I>SCHED_FIFO</I>,
 
 <I>SCHED_RR</I>,
 
-and 
-<I>SCHED_OTHER</I>;
+<I>SCHED_OTHER</I>,
+
+
+
+and
+<I>SCHED_BATCH</I>;
 
 their respective semantics are described below.
 <P>
@@ -61,8 +60,6 @@ their respective semantics are described below.
 queries the scheduling policy currently applied to the process
 identified by <I>pid</I>. If <I>pid</I> equals zero, the policy of the
 calling process will be retrieved.
-<P>
-<P>
 <A NAME="lbAE">&nbsp;</A>
 <H3>Scheduling Policies</H3>
 
@@ -81,11 +78,16 @@ each process, where it will be inserted into the list of processes
 with equal static priority and how it will move inside this list.
 <P>
 <I>SCHED_OTHER</I> is the default universal time-sharing scheduler
-policy used by most processes, <I>SCHED_FIFO</I> and <I>SCHED_RR</I> are
+policy used by most processes.
+<I>SCHED_BATCH</I> is intended for &quot;batch&quot; style execution of processes.
+<I>SCHED_FIFO</I> and <I>SCHED_RR</I> are
 intended for special time-critical applications that need precise
 control over the way in which runnable processes are selected for
-execution. Processes scheduled with <I>SCHED_OTHER</I> must be assigned
-the static priority 0, processes scheduled under <I>SCHED_FIFO</I> or
+execution. 
+<P>
+Processes scheduled with <I>SCHED_OTHER</I> or <I>SCHED_BATCH</I>
+must be assigned the static priority 0.
+Processes scheduled under <I>SCHED_FIFO</I> or
 <I>SCHED_RR</I> can have a static priority in the range 1 to 99. 
 The system calls <B>sched_get_priority_min</B>() and
 <B>sched_get_priority_max</B>() can be used to find out the valid
@@ -97,14 +99,14 @@ priority gets ready to run, the current process will be preempted and
 returned into its wait list. The scheduling policy only determines the
 ordering within the list of runnable processes with equal static
 priority.
-<P>
 <A NAME="lbAF">&nbsp;</A>
 <H3>SCHED_FIFO: First In-First Out scheduling</H3>
 
 <I>SCHED_FIFO</I> can only be used with static priorities higher than
 0, which means that when a <I>SCHED_FIFO</I> processes becomes runnable,
-it will always preempt immediately any currently running normal
-<I>SCHED_OTHER</I> process. <I>SCHED_FIFO</I> is a simple scheduling
+it will always immediately preempt any currently running
+<I>SCHED_OTHER</I> or <I>SCHED_BATCH</I> process. 
+<I>SCHED_FIFO</I> is a simple scheduling
 algorithm without time slicing. For processes scheduled under the
 <I>SCHED_FIFO</I> policy, the following rules are applied: A
 <I>SCHED_FIFO</I> process that has been preempted by another process of
@@ -127,7 +129,6 @@ scheduled under the <I>SCHED_FIFO</I> policy in the wait list of
 runnable processes with equal static priority. A <I>SCHED_FIFO</I>
 process runs until either it is blocked by an I/O request, it is
 preempted by a higher priority process, or it calls <B>sched_yield</B>().
-<P>
 <A NAME="lbAG">&nbsp;</A>
 <H3>SCHED_RR: Round Robin scheduling</H3>
 
@@ -140,12 +141,10 @@ end of the list for its priority. A <I>SCHED_RR</I> process that has
 been preempted by a higher priority process and subsequently resumes
 execution as a running process will complete the unexpired portion of
 its round robin time quantum. The length of the time quantum can be
-retrieved by <B>sched_rr_get_interval</B>().
+retrieved using <B><A HREF="../man2/sched_rr_get_interval.2.html">sched_rr_get_interval</A></B>(2).
 
 
 
-
-<P>
 <A NAME="lbAH">&nbsp;</A>
 <H3>SCHED_OTHER: Default Linux time-sharing scheduling</H3>
 
@@ -155,12 +154,29 @@ intended for all processes that do not require special static priority
 real-time mechanisms. The process to run is chosen from the static
 priority 0 list based on a dynamic priority that is determined only
 inside this list. The dynamic priority is based on the nice level (set
-by the <B>nice</B>() or <B>setpriority</B>() system call) and increased for
+by <B><A HREF="../man2/nice.2.html">nice</A></B>(2) or <B><A HREF="../man2/setpriority.2.html">setpriority</A></B>(2)) and increased for
 each time quantum the process is ready to run, but denied to run by
 the scheduler. This ensures fair progress among all <I>SCHED_OTHER</I>
 processes.
-<P>
 <A NAME="lbAI">&nbsp;</A>
+<H3>SCHED_BATCH: Scheduling batch processes</H3>
+
+(Since Linux 2.6.16.)
+<I>SCHED_BATCH</I> can only be used at static priority 0.
+This policy is similar to <I>SCHED_OTHER</I>, except that
+this policy will cause the scheduler to always assume
+that the process is CPU-intensive.
+Consequently, the scheduler will apply a small scheduling
+penalty so that this process is mildy disfavoured in scheduling
+decisions.
+
+
+
+This policy is useful for workloads that are non-interactive,
+but do not want to lower their nice value, 
+and for workloads that want a deterministic scheduling policy without 
+interactivity causing extra preemptions (between the workload's tasks).
+<A NAME="lbAJ">&nbsp;</A>
 <H3>Privileges and resource limits</H3>
 
 
@@ -228,8 +244,7 @@ Privileged
 
 processes ignore this limit; as with older older kernels,
 they can make arbitrary changes to scheduling policy and priority.
-<P>
-<A NAME="lbAJ">&nbsp;</A>
+<A NAME="lbAK">&nbsp;</A>
 <H3>Response time</H3>
 
 A blocked high priority process waiting for the I/O has a certain
@@ -238,8 +253,7 @@ can greatly reduce this response time by using a &quot;slow interrupt&quot;
 interrupt handler.
 
 
-<P>
-<A NAME="lbAK">&nbsp;</A>
+<A NAME="lbAL">&nbsp;</A>
 <H3>Miscellaneous</H3>
 
 Child processes inherit the scheduling algorithm and parameters across a
@@ -271,8 +285,7 @@ are available define
 <I>_POSIX_PRIORITY_SCHEDULING</I>
 
 in &lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;.
-<P>
-<A NAME="lbAL">&nbsp;</A>
+<A NAME="lbAM">&nbsp;</A>
 <H2>RETURN VALUE</H2>
 
 On success,
@@ -283,11 +296,11 @@ On success,
 <B>sched_getscheduler</B>()
 
 returns the policy for the process (a non-negative integer).  
-On error, -1 is returned,
+On error, -1 is returned, and
 <I>errno</I>
 
 is set appropriately.
-<A NAME="lbAM">&nbsp;</A>
+<A NAME="lbAN">&nbsp;</A>
 <H2>ERRORS</H2>
 
 <DL COMPACT>
@@ -295,7 +308,7 @@ is set appropriately.
 
 <DD>
 The scheduling <I>policy</I> is not one of the recognized policies,
-or the parameter <I>p</I> does not make sense for the <I>policy</I>.
+or the parameter <I>param</I> does not make sense for the <I>policy</I>.
 <DT><B>EPERM</B>
 
 <DD>
@@ -305,12 +318,13 @@ The calling process does not have appropriate privileges.
 <DD>
 The process whose ID is <I>pid</I> could not be found.
 </DL>
-<A NAME="lbAN">&nbsp;</A>
+<A NAME="lbAO">&nbsp;</A>
 <H2>CONFORMING TO</H2>
 
-POSIX.1b (formerly POSIX.4)
-<A NAME="lbAO">&nbsp;</A>
-<H2>NOTE</H2>
+POSIX.1b (formerly POSIX.4).
+The <I>SCHED_BATCH</I> policy is Linux specific.
+<A NAME="lbAP">&nbsp;</A>
+<H2>NOTES</H2>
 
 Standard Linux is a general-purpose operating system
 and can handle background processes,
@@ -340,7 +354,7 @@ consider using hard real-time extensions to Linux such as
 RTLinux (<A HREF="http://www.rtlinux.org)">http://www.rtlinux.org)</A> or RTAI (<A HREF="http://www.rtai.org)">http://www.rtai.org)</A>
 or use a different operating system
 designed specifically for hard real-time applications.
-<A NAME="lbAP">&nbsp;</A>
+<A NAME="lbAQ">&nbsp;</A>
 <H2>SEE ALSO</H2>
 
 <B><A HREF="../man2/getpriority.2.html">getpriority</A></B>(2),
@@ -405,20 +419,21 @@ POSIX.1i(1995).
 <DT><A HREF="#lbAF">SCHED_FIFO: First In-First Out scheduling</A><DD>
 <DT><A HREF="#lbAG">SCHED_RR: Round Robin scheduling</A><DD>
 <DT><A HREF="#lbAH">SCHED_OTHER: Default Linux time-sharing scheduling</A><DD>
-<DT><A HREF="#lbAI">Privileges and resource limits</A><DD>
-<DT><A HREF="#lbAJ">Response time</A><DD>
-<DT><A HREF="#lbAK">Miscellaneous</A><DD>
+<DT><A HREF="#lbAI">SCHED_BATCH: Scheduling batch processes</A><DD>
+<DT><A HREF="#lbAJ">Privileges and resource limits</A><DD>
+<DT><A HREF="#lbAK">Response time</A><DD>
+<DT><A HREF="#lbAL">Miscellaneous</A><DD>
 </DL>
-<DT><A HREF="#lbAL">RETURN VALUE</A><DD>
-<DT><A HREF="#lbAM">ERRORS</A><DD>
-<DT><A HREF="#lbAN">CONFORMING TO</A><DD>
-<DT><A HREF="#lbAO">NOTE</A><DD>
-<DT><A HREF="#lbAP">SEE ALSO</A><DD>
+<DT><A HREF="#lbAM">RETURN VALUE</A><DD>
+<DT><A HREF="#lbAN">ERRORS</A><DD>
+<DT><A HREF="#lbAO">CONFORMING TO</A><DD>
+<DT><A HREF="#lbAP">NOTES</A><DD>
+<DT><A HREF="#lbAQ">SEE ALSO</A><DD>
 </DL>
 <HR>
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 02:24:13 GMT, April 20, 2020
+Time: 02:24:46 GMT, April 20, 2020
 </BODY>
 </HTML>

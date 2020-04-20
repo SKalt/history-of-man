@@ -243,6 +243,36 @@ are not available if the main thread has already terminated
 
 
 
+<DT><I>/proc/[number]/smaps</I> (since Linux 2.6.14)
+
+<DD>
+This file shows memory consumption for each of the process's mappings.
+For each of mappings there is a series of lines as follows:
+
+<PRE>
+
+08048000-080bc000 r-xp 00000000 03:02 13130      /bin/bash
+Size:               464 kB
+Rss:                424 kB
+Shared_Clean:       424 kB
+Shared_Dirty:         0 kB
+Private_Clean:        0 kB
+Private_Dirty:        0 kB
+
+</PRE>
+
+
+The first of these lines shows the same information as is displayed
+for the mapping in
+<I>/proc/[number]/maps</I>.
+
+The remaining lines show the size of the mapping,
+the amount of the mapping that is currently resident in RAM,
+the number clean and dirty shared pages in the mapping,
+and the number clean and dirty private pages in the mapping.
+<P>
+This file is only present if the CONFIG_MMU kernel configuration 
+option is enabled.
 <DT><I>/proc/[number]/stat</I>
 
 <DD>
@@ -1779,6 +1809,28 @@ This directory supports Sun remote procedure call for network file system
 This directory contains files for memory management tuning, buffer and 
 cache
 management.
+<DT><I>/proc/sys/vm/drop_caches</I> (since Linux 2.6.16)
+
+<DD>
+Writing to this file causes the kernel to drop clean caches, dentries and
+inodes from memory, causing that memory to become free.
+<P>
+To free pagecache, use 
+<I>echo 1 &gt; /proc/sys/vm/drop_caches</I>;
+
+to free dentries and inodes, use
+<I>echo 2 &gt; /proc/sys/vm/drop_caches</I>;
+
+to free pagecache, dentries and inodes, use
+<I>echo 3 &gt; /proc/sys/vm/drop_caches</I>.
+
+<P>
+Because this is a non-destructive operation and dirty objects 
+are not freeable, the
+user should run 
+<B><A HREF="../man8/sync.8.html">sync</A></B>(8)
+
+first.
 <DT><I>/proc/sys/vm/legacy_va_layout</I> (since Linux 2.6.9)
 
 <DD>
@@ -1954,6 +2006,6 @@ kernel source documentation files written by Rik van Riel.
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 02:24:24 GMT, April 20, 2020
+Time: 02:24:57 GMT, April 20, 2020
 </BODY>
 </HTML>
