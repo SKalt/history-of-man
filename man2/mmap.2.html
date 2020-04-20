@@ -26,7 +26,7 @@ the source, must acknowledge the copyright and authors of this work.
 <HTML><HEAD><TITLE>Man page of MMAP</TITLE>
 </HEAD><BODY>
 <H1>MMAP</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2015-03-02<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2015-05-07<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -142,13 +142,10 @@ of the following values in
 Share this mapping.
 Updates to the mapping are visible to other processes that map this file,
 and are carried through to the underlying file.
-The file may not actually be updated until
-<B><A HREF="../man2/msync.2.html">msync</A></B>(2)
+(To precisely control when updates are carried through
+to the underlying file requires the use of
+<B><A HREF="../man2/msync.2.html">msync</A></B>(2).)
 
-or
-<B>munmap</B>()
-
-is called.
 <DT><B>MAP_PRIVATE</B>
 
 <DD>
@@ -289,6 +286,39 @@ See the Linux kernel source file
 <I>Documentation/vm/hugetlbpage.txt</I>
 
 for further information.
+<DT><B>MAP_HUGE_2MB</B>, <B>MAP_HUGE_1GB</B> (since Linux 3.8)
+
+<DD>
+
+Used in conjunction with
+<B>MAP_HUGETLB</B>
+
+to select alternative hugetlb page sizes (respectively, 2 MB and 1 GB)
+on systems that support multiple hugetlb page sizes.
+<P>
+More generally, the desired huge page size can be configured by encoding
+the base-2 logarithm of the desired page size in the six bits at the offset
+<B>MAP_HUGE_SHIFT</B>.
+
+(A value of zero in this bit field provides the default huge page size;
+the default huge page size can be discovered vie the
+<I>Hugepagesize</I>
+
+field exposed by
+<I>/proc/meminfo</I>.)
+
+Thus, the above two constants are defined as:
+<P>
+<PRE>
+#define MAP_HUGE_2MB    (21 &lt;&lt; MAP_HUGE_SHIFT)
+#define MAP_HUGE_1GB    (30 &lt;&lt; MAP_HUGE_SHIFT)
+</PRE>
+
+<P>
+The range of huge page sizes that are supported by the system
+can be discovered by listing the subdirectories in
+<I>/sys/kernel/mm/hugepages</I>.
+
 <DT><B>MAP_LOCKED</B> (since Linux 2.5.37)
 
 <DD>
@@ -492,14 +522,16 @@ On error, the value
 is returned, and
 <I>errno</I>
 
-is set appropriately.
+is set to indicate the cause of the error.
+<P>
 On success,
 <B>munmap</B>()
 
-returns 0, on failure -1, and
+returns 0.
+On failure, it returns -1, and
 <I>errno</I>
 
-is set (probably to
+is set to indicate the cause of the error (probably to
 <B>EINVAL</B>).
 
 <A NAME="lbAH">&nbsp;</A>
@@ -1031,6 +1063,6 @@ B.O. Gallmeister, POSIX.4, O'Reilly, pp. 128-129 and 389-391.
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:38:54 GMT, April 20, 2020
+Time: 03:39:26 GMT, April 20, 2020
 </BODY>
 </HTML>

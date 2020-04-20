@@ -25,7 +25,7 @@ License along with this manual; if not, see
 <HTML><HEAD><TITLE>Man page of BOOTPARAM</TITLE>
 </HEAD><BODY>
 <H1>BOOTPARAM</H1>
-Section: Linux Programmer's Manual (7)<BR>Updated: 2014-06-13<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (7)<BR>Updated: 2015-05-07<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -42,41 +42,16 @@ supply the kernel with information about hardware parameters that
 the kernel would not be able to determine on its own, or to avoid/override
 the values that the kernel would otherwise detect.
 <P>
-When the kernel is booted directly by the BIOS (say from a floppy to
-which you copied a kernel using 'cp zImage /dev/fd0'),
+When the kernel is booted directly by the BIOS,
 you have no opportunity to specify any parameters.
 So, in order to take advantage of this possibility you have to
 use a boot loader that is able to pass parameters, such as GRUB.
-<P>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 <A NAME="lbAD">&nbsp;</A>
 <H3>The argument list</H3>
 
 The kernel command line is parsed into a list of strings
 (boot arguments) separated by spaces.
-Most of the boot arguments take have the form:
+Most of the boot arguments have the form:
 <P>
 
 <PRE>
@@ -102,8 +77,8 @@ checks to see if the argument is any of the special arguments 'root=',
 'nfsroot=', 'nfsaddrs=', 'ro', 'rw', 'debug' or 'init'.
 The meaning of these special arguments is described below.
 <P>
-Then it walks a list of setup functions (contained in the bootsetups
-array) to see if the specified argument string (such as 'foo') has
+Then it walks a list of setup functions
+to see if the specified argument string (such as 'foo') has
 been associated with a setup function ('foo_setup()') for a particular
 device or part of the kernel.
 If you passed the kernel the line
@@ -120,8 +95,8 @@ A (useless?) example would be to use 'TERM=vt100' as a boot
 argument.
 <P>
 Any remaining arguments that were not picked up by the kernel and were
-not interpreted as environment variables are then passed onto process
-one, which is usually the
+not interpreted as environment variables are then passed onto PID 1,
+which is usually the
 <B><A HREF="../man1/init.1.html">init</A></B>(1)
 
 program.
@@ -161,46 +136,16 @@ and panic if all of this fails.
 <DT><B>'nfsaddrs=...'</B>
 
 <DD>
-This sets the nfs boot address to the given string.
+This sets the NFS boot address to the given string.
 This boot address is used in case of a net boot.
 <DT><B>'nfsroot=...'</B>
 
 <DD>
-This sets the nfs root name to the given string.
+This sets the NFS root name to the given string.
 If this string
 does not begin with '/' or ',' or a digit, then it is prefixed by
 '/tftpboot/'.
 This root name is used in case of a net boot.
-<DT><B>'no387'</B>
-
-<DD>
-(Only when
-<B>CONFIG_BUGi386</B>
-
-is defined.)
-Some i387 coprocessor chips have bugs that show up when used in 32 bit
-protected mode.
-For example, some of the early ULSI-387 chips would
-cause solid lockups while performing floating-point calculations.
-Using the 'no387' boot argument causes Linux to ignore the maths
-coprocessor even if you have one.
-Of course you must then have your
-kernel compiled with math emulation support!
-<DT><B>'no-hlt'</B>
-
-<DD>
-(Only when
-<B>CONFIG_BUGi386</B>
-
-is defined.)
-Some of the early i486DX-100 chips have a problem with the 'hlt'
-instruction, in that they can't reliably return to operating mode
-after this instruction is used.
-Using the 'no-hlt' instruction tells
-Linux to just run an infinite loop when there is nothing else to do,
-and to not halt the CPU.
-This allows people with these broken chips
-to use Linux.
 <DT><B>'root=...'</B>
 
 <DD>
@@ -218,19 +163,10 @@ A symbolic specification has the form
 <I>/dev/XXYN</I>,
 
 where XX designates
-the device type ('hd' for ST-506 compatible hard disk, with Y in
-'a'-'d'; 'sd' for SCSI compatible disk, with Y in 'a'-'e';
-'ad' for Atari ACSI disk, with Y in 'a'-'e',
-'ez' for a Syquest EZ135 parallel port removable drive, with Y='a',
-'xd' for XT compatible disk, with Y either 'a' or 'b'; 'fd' for
-floppy disk, with Y the floppy drive number---fd0 would be
-the DOS 'A:' drive, and fd1 would be 'B:'), Y the driver letter or
-number, and N the number (in decimal) of the partition on this device
-(absent in the case of floppies).
-Recent kernels allow many other
-types, mostly for CD-ROMs: nfs, ram, scd, mcd, cdu535, aztcd, cm206cd,
-gscd, sbpcd, sonycd, bpcd.
-(The type nfs specifies a net boot; ram refers to a ram disk.)
+the device type (e.g., 'hd' for ST-506 compatible hard disk, with Y in
+'a'-'d'; 'sd' for SCSI compatible disk, with Y in 'a'-'e'),
+Y the driver letter or
+number, and N the number (in decimal) of the partition on this device.
 <P>
 Note that this has nothing to do with the designation of these
 devices on your filesystem.
@@ -284,7 +220,8 @@ This is the default.
 
 <DD>
 This tells the kernel the location of the suspend-to-disk data that you want the machine to resume from after hibernation.
-Usually, it is the same as your swap partition or file. Example:
+Usually, it is the same as your swap partition or file.
+Example:
 <P>
 
 <PRE>
@@ -328,45 +265,6 @@ reserve=0x300,32  blah=0x300
 <DT><DD>
 keeps all device drivers except the driver for 'blah' from probing
 0x300-0x31f.
-<DT><B>'mem=...'</B>
-
-<DD>
-The BIOS call defined in the PC specification that returns
-the amount of installed memory was designed only to be able
-to report up to 64MB.
-Linux uses this BIOS call at boot to
-determine how much memory is installed.
-If you have more than 64MB of
-RAM installed, you can use this boot argument to tell Linux how much memory
-you have.
-The value is in decimal or hexadecimal (prefix 0x),
-and the suffixes 'k' (times 1024) or 'M' (times 1048576) can be used.
-Here is a quote from Linus on usage of the 'mem=' parameter.
-<P>
-
-The kernel will accept any 'mem=xx' parameter you give it, and if it
-turns out that you lied to it, it will crash horribly sooner or later.
-The parameter indicates the highest addressable RAM address, so
-'mem=0x1000000' means you have 16MB of memory, for example.
-For a 96MB machine this would be 'mem=0x6000000'.
-<P>
-<B>NOTE</B>:
-
-some machines might use the top of memory for BIOS
-caching or whatever, so you might not actually have up to the full
-96MB addressable.
-The reverse is also true: some chipsets will map
-the physical memory that is covered by the BIOS area into the area
-just past the top of memory, so the top-of-mem might actually be 96MB
-+ 384kB for example.
-If you tell linux that it has more memory than
-it actually does have, bad things will happen: maybe not at once, but
-surely eventually.
-
-<P>
-You can also use the boot argument 'mem=nopentium' to turn off 4 MB
-page tables on kernels configured for IA32 systems with a pentium or newer
-CPU.
 <DT><B>'panic=N'</B>
 
 <DD>
@@ -383,11 +281,7 @@ echo N &gt; /proc/sys/kernel/panic
 <DT><B>'reboot=[warm|cold][,[bios|hard]]'</B>
 
 <DD>
-(Only when
-<B>CONFIG_BUGi386</B>
-
-is defined.)
-Since 2.0.22 a reboot is by default a cold reboot.
+Since Linux 2.0.22, a reboot is by default a cold reboot.
 One asks for the old default with 'reboot=warm'.
 (A cold reboot may be required to reset certain hardware,
 but might destroy not yet written data in a disk cache.
@@ -412,23 +306,40 @@ of CPUs activated in SMP mode to N.
 <DT><B>'debug'</B>
 
 <DD>
-Kernel messages are handed off to the kernel log daemon klogd so that they
-may be logged to disk.
+Kernel messages are handed off to a daemon (e.g.,
+<B><A HREF="../man8/klogd.8.html">klogd</A></B>(8)
+
+or similar) so that they may be logged to disk.
 Messages with a priority above
 <I>console_loglevel</I>
 
 are also printed on the console.
-(For these levels, see
-<I>&lt;<A HREF="file:///usr/include/linux/kernel.h">linux/kernel.h</A>&gt;</I>.)
+(For a discussion of log levels, see
+<B><A HREF="../man2/syslog.2.html">syslog</A></B>(2).)
 
-By default, this variable is set to log anything more important than
-debug messages.
+By default,
+<I>console_loglevel</I>
+
+is set to log messages at levels higher than
+<B>KERN_DEBUG</B>.
+
 This boot argument will cause the kernel to also
-print the messages of DEBUG priority.
-The console loglevel can also be set at run time via an option
-to klogd.
-See
-<B><A HREF="../man8/klogd.8.html">klogd</A></B>(8).
+print messages logged at level
+<B>KERN_DEBUG</B>.
+
+The console loglevel can also be set on a booted system via the
+<I>/proc/sys/kernel/printk</I>
+
+file (described in
+<B><A HREF="../man2/syslog.2.html">syslog</A></B>(2)),
+
+the
+<B><A HREF="../man2/syslog.2.html">syslog</A></B>(2)
+
+<B>SYSLOG_ACTION_CONSOLE_LEVEL</B>
+
+operation, or
+<B><A HREF="../man8/dmesg.8.html">dmesg</A></B>(8).
 
 <DT><B>'profile=N'</B>
 
@@ -469,30 +380,17 @@ Writing to
 <I>/proc/profile</I>
 
 will clear the counters.
-<DT><B>'swap=N1,N2,N3,N4,N5,N6,N7,N8'</B>
-
-<DD>
-Set the eight parameters max_page_age, page_advance, page_decline,
-page_initial_age, age_cluster_fract, age_cluster_min, pageout_weight,
-bufferout_weight that control the kernel swap algorithm.
-For kernel tuners only.
-<DT><B>'buff=N1,N2,N3,N4,N5,N6'</B>
-
-<DD>
-Set the six parameters max_buff_age, buff_advance, buff_decline,
-buff_initial_age, bufferout_weight, buffermem_grace that control
-kernel buffer memory management.
-For kernel tuners only.
-</DL>
+<DT></DL>
 <A NAME="lbAG">&nbsp;</A>
 <H3>Boot arguments for ramdisk use</H3>
 
+<DD>
 (Only if the kernel was compiled with
 <B>CONFIG_BLK_DEV_RAM</B>.)
 
 In general it is a bad idea to use a ramdisk under Linux---the
 system will use available memory more efficiently itself.
-But while booting (or while constructing boot floppies)
+But while booting,
 it is often useful to load the floppy contents into a
 ramdisk.
 One might also have a system in which first
@@ -504,7 +402,7 @@ Earlier, the memory was allocated statically, and there was
 a 'ramdisk=N' parameter to tell its size.
 (This could also be set in the kernel image at compile time.)
 These days ram disks use the buffer cache, and grow dynamically.
-For a lot of information in conjunction with the new ramdisk
+For a lot of information on the current ramdisk
 setup, see the kernel source file
 <I>Documentation/blockdev/ramdisk.txt</I>
 
@@ -683,401 +581,6 @@ Full details can be found in the file
 <I>drivers/scsi/README.st</I>
 
 for older kernels) in the Linux kernel source.
-<DT><B>Adaptec aha151x, aha152x, aic6260, aic6360, SB16-SCSI configuration</B>
-
-<DD>
-The aha numbers refer to cards and the aic numbers refer to the actual
-SCSI chip on these type of cards, including the Soundblaster-16 SCSI.
-<P>
-The probe code for these SCSI hosts looks for an installed BIOS, and
-if none is present, the probe will not find your card.
-Then you will
-have to use a boot argument of the form:
-<P>
-
-<PRE>
-<B>aha152x=</B><I>iobase[,irq[,scsi-id[,reconnect[,parity]]]]</I>
-</PRE>
-
-
-<DT><DD>
-If the driver was compiled with debugging enabled, a sixth
-value can be specified to set the debug level.
-<P>
-All the parameters are as described at the top of this section, and the
-<I>reconnect</I>
-
-value will allow device disconnect/reconnect if a nonzero value
-is used.
-An example usage is as follows:
-<P>
-
-<PRE>
-aha152x=0x340,11,7,1
-</PRE>
-
-
-<DT><DD>
-Note that the parameters must be specified in order, meaning that if
-you want to specify a parity setting, then you will have to specify an
-iobase, irq, scsi-id and reconnect value as well.
-<DT><B>Adaptec aha154x configuration</B>
-
-<DD>
-The aha1542 series cards have an i82077 floppy controller onboard,
-while the aha1540 series cards do not.
-These are busmastering cards,
-and have parameters to set the &quot;fairness&quot; that is used to share
-the bus with other devices.
-The boot argument looks like the following.
-<P>
-
-<PRE>
-<B>aha1542=</B><I>iobase[,buson,busoff[,dmaspeed]]</I>
-</PRE>
-
-
-<DT><DD>
-Valid iobase values are usually one of: 0x130, 0x134, 0x230, 0x234,
-0x330, 0x334.
-Clone cards may permit other values.
-<P>
-The
-<I>buson</I>, <I>busoff</I>
-
-values refer to the number of microseconds that the
-card dominates the ISA bus.
-The defaults are 11us on, and 4us off, so
-that other cards (such as an ISA LANCE Ethernet card) have a chance to
-get access to the ISA bus.
-<P>
-The
-<I>dmaspeed</I>
-
-value refers to the rate (in MB/s) at which the DMA
-(Direct Memory Access) transfers proceed.
-The default is 5MB/s.
-Newer revision cards allow you to select this value as part of the
-soft-configuration, older cards use jumpers.
-You can use values up to
-10MB/s assuming that your motherboard is capable of handling it.
-Experiment with caution if using values over 5MB/s.
-<DT><B>Adaptec aha274x, aha284x, aic7xxx configuration</B>
-
-<DD>
-These boards can accept an argument of the form:
-<P>
-
-<PRE>
-<B>aic7xxx=</B><I>extended,no_reset</I>
-</PRE>
-
-
-<DT><DD>
-The
-<I>extended</I>
-
-value, if nonzero, indicates that extended translation for large
-disks is enabled.
-The
-<I>no_reset</I>
-
-value, if nonzero, tells the driver not to reset the SCSI bus when
-setting up the host adapter at boot.
-<DT><B>AdvanSys SCSI Hosts configuration ('advansys=')</B>
-
-<DD>
-The AdvanSys driver can accept up to four I/O addresses that will be
-probed for an AdvanSys SCSI card.
-Note that these values (if used) do
-not effect EISA or PCI probing in any way.
-They are used only for
-probing ISA and VLB cards.
-In addition, if the driver has been
-compiled with debugging enabled, the level of debugging output can be
-set by adding an 0xdeb[0-f] parameter.
-The 0-f allows setting the
-level of the debugging messages to any of 16 levels of verbosity.
-<DT><B>AM53C974</B>
-
-<DD>
-Syntax:
-<P>
-
-<PRE>
-<B>AM53C974=</B><I>host-scsi-id,target-scsi-id,max-rate,max-offset</I>
-</PRE>
-
-
-<DT><B>BusLogic SCSI Hosts configuration ('BusLogic=')</B>
-
-<DD>
-<P>
-Syntax:
-
-<PRE>
-<B>BusLogic=</B><I>N1,N2,N3,N4,N5,S1,S2,...</I>
-</PRE>
-
-
-<DT><DD>
-For an extensive discussion of the BusLogic command line parameters,
-see the kernel source file
-<I>drivers/scsi/BusLogic.c</I>.
-
-
-The text
-below is a very much abbreviated extract.
-<P>
-The parameters N1-N5 are integers.
-The parameters S1,... are strings.
-N1 is the I/O Address at which the Host Adapter is located.
-N2 is the Tagged Queue Depth to use for Target Devices that support
-Tagged Queuing.
-N3 is the Bus Settle Time in seconds.
-This is the amount of time
-to wait between a Host Adapter Hard Reset which
-initiates a SCSI Bus Reset and issuing any SCSI Commands.
-N4 is the Local Options (for one Host Adapter).
-N5 is the Global Options (for all Host Adapters).
-<P>
-The string options are used to provide control over Tagged Queuing
-(TQ:Default, TQ:Enable, TQ:Disable, TQ:&lt;Per-Target-Spec&gt;), over
-Error Recovery (ER:Default, ER:HardReset, ER:BusDeviceReset,
-ER:None, ER:&lt;Per-Target-Spec&gt;), and over Host Adapter Probing
-(NoProbe, NoProbeISA, NoSortPCI).
-<DT><B>EATA/DMA configuration</B>
-
-<DD>
-The default list of I/O ports to be probed can be changed by
-<P>
-
-<PRE>
-<B>eata=</B><I>iobase,iobase,...</I><B>.</B>
-</PRE>
-
-
-<DT><B>Future Domain TMC-16x0 configuration</B>
-
-<DD>
-Syntax:
-<P>
-
-<PRE>
-<B>fdomain=</B><I>iobase,irq[,adapter_id]</I>
-</PRE>
-
-
-<DT><B>Great Valley Products (GVP) SCSI controller configuration</B>
-
-<DD>
-Syntax:
-<P>
-
-<PRE>
-<B>gvp11=</B><I>dma_transfer_bitmask</I>
-</PRE>
-
-
-<DT><B>Future Domain TMC-8xx, TMC-950 configuration</B>
-
-<DD>
-Syntax:
-<P>
-
-<PRE>
-<B>tmc8xx=</B><I>mem_base,irq</I>
-</PRE>
-
-
-<DT><DD>
-The
-<I>mem_base</I>
-
-value is the value of the memory-mapped I/O region that
-the card uses.
-This will usually be one of the following values:
-0xc8000, 0xca000, 0xcc000, 0xce000, 0xdc000, 0xde000.
-<DT><B>IN2000 configuration</B>
-
-<DD>
-Syntax:
-<P>
-
-<PRE>
-<B>in2000=</B><I>S</I>
-</PRE>
-
-
-<DT><DD>
-where S is a comma-separated string of items keyword[:value].
-Recognized keywords (possibly with value) are:
-ioport:addr, noreset, nosync:x, period:ns, disconnect:x,
-debug:x, proc:x.
-For the function of these parameters, see the kernel source file
-<I>drivers/scsi/in2000.c</I>.
-
-<DT><B>NCR5380 and NCR53C400 configuration</B>
-
-<DD>
-The boot argument is of the form
-<P>
-
-<PRE>
-<B>ncr5380=</B><I>iobase,irq,dma</I>
-</PRE>
-
-
-<DT><DD>
-or
-<P>
-
-<PRE>
-<B>ncr53c400=</B><I>iobase,irq</I>
-</PRE>
-
-
-<DT><DD>
-If the card doesn't use interrupts, then an IRQ value of 255 (0xff) will
-disable interrupts.
-An IRQ value of 254 means to autoprobe.
-More details can be found in the file
-<I>Documentation/scsi/g_NCR5380.txt</I>
-
-(or
-<I>drivers/scsi/README.g_NCR5380</I>
-
-for older kernels) in the Linux kernel source.
-<DT><B>NCR53C8xx configuration</B>
-
-<DD>
-Syntax:
-<P>
-
-<PRE>
-<B>ncr53c8xx=</B><I>S</I>
-</PRE>
-
-
-<DT><DD>
-where S is a comma-separated string of items keyword:value.
-Recognized keywords are: mpar (master_parity), spar (scsi_parity),
-disc (disconnection), specf (special_features), ultra (ultra_scsi),
-fsn (force_sync_nego), tags (default_tags), sync (default_sync),
-verb (verbose), debug (debug), burst (burst_max).
-For the function of the assigned values, see the kernel source file
-<I>drivers/scsi/ncr53c8xx.c</I>.
-
-<DT><B>NCR53c406a configuration</B>
-
-<DD>
-Syntax:
-<P>
-
-<PRE>
-<B>ncr53c406a=</B><I>iobase[,irq[,fastpio]]</I>
-</PRE>
-
-
-<DT><DD>
-Specify irq = 0 for noninterrupt driven mode.
-Set fastpio = 1 for fast pio mode, 0 for slow mode.
-<DT><B>Pro Audio Spectrum configuration</B>
-
-<DD>
-The PAS16 uses a NC5380 SCSI chip, and newer models support
-jumperless configuration.
-The boot argument is of the form:
-<P>
-
-<PRE>
-<B>pas16=</B><I>iobase,irq</I>
-</PRE>
-
-
-<DT><DD>
-The only difference is that you can specify an IRQ value of 255, which
-will tell the driver to work without using interrupts, albeit at a
-performance loss.
-The iobase is usually 0x388.
-<DT><B>Seagate ST-0x configuration</B>
-
-<DD>
-If your card is not detected at boot time,
-you will then have to use a boot argument of the form:
-<P>
-
-<PRE>
-<B>st0x=</B><I>mem_base,irq</I>
-</PRE>
-
-
-<DT><DD>
-The
-<I>mem_base</I>
-
-value is the value of the memory-mapped I/O region that
-the card uses.
-This will usually be one of the following values:
-0xc8000, 0xca000, 0xcc000, 0xce000, 0xdc000, 0xde000.
-<DT><B>Trantor T128 configuration</B>
-
-<DD>
-These cards are also based on the NCR5380 chip, and accept the
-following options:
-<P>
-
-<PRE>
-<B>t128=</B><I>mem_base,irq</I>
-</PRE>
-
-
-<DT><DD>
-The valid values for
-<I>mem_base</I>
-
-are as follows: 0xcc000, 0xc8000, 0xdc000, 0xd8000.
-<DT><B>UltraStor 14F/34F configuration</B>
-
-<DD>
-The default list of I/O ports to be probed can be changed by
-<P>
-
-<PRE>
-<B>eata=</B><I>iobase,iobase,...</I><B>.</B>
-</PRE>
-
-
-<DT><B>WD7000 configuration</B>
-
-<DD>
-Syntax:
-<P>
-
-<PRE>
-<B>wd7000=</B><I>irq,dma,iobase</I>
-</PRE>
-
-
-<DT><B>Commodore Amiga A2091/590 SCSI controller configuration</B>
-
-<DD>
-Syntax:
-<P>
-
-<PRE>
-<B>wd33c93=</B><I>S</I>
-</PRE>
-
-
-<DT><DD>
-where S is a comma-separated string of options.
-Recognized options are
-nosync:bitmask, nodma:x, period:ns, disconnect:x, debug:x,
-clock:x, next.
-For details, see the kernel source file
-<I>drivers/scsi/wd33c93.c</I>.
-
 </DL>
 <A NAME="lbAI">&nbsp;</A>
 <H3>Hard disks</H3>
@@ -1099,12 +602,16 @@ drive in the (a, ..., h) sequence.
 For the following discussions,
 the 'hd=' option will be cited for brevity.
 See the file
-<I>Documentation/ide.txt</I>
+<I>Documentation/ide/ide.txt</I>
 
 (or
+<I>Documentation/ide.txt</I>
+
+
+in older kernels, or
 <I>drivers/block/README.ide</I>
 
-for older kernels) in the Linux kernel source for more details.
+in ancient kernels) in the Linux kernel source for more details.
 <DT><B>The 'hd=cyls,heads,sects[,wpcom[,irq]]' options</B>
 
 <DD>
@@ -1126,12 +633,6 @@ drives on the primary interface, it will corrupt your data.
 Using this
 option tells the driver to make sure that both interfaces are never
 used at the same time.
-<DT><B>The 'hd=dtc2278' option</B>
-
-<DD>
-This option tells the driver that you have a DTC-2278D IDE interface.
-The driver then tries to do DTC-specific operations to enable the
-second interface and to enable faster transfer modes.
 <DT><B>The 'hd=noprobe' option</B>
 
 <DD>
@@ -1183,298 +684,8 @@ hd=cyls,heads,sects
 <DT><DD>
 If there are two disks installed, the above is repeated with the
 geometry parameters of the second disk.
-<DT><B>XT Disk Driver Options ('xd=')</B>
-
-<DD>
-If you are unfortunate enough to be using one of these old 8-bit cards
-that move data at a whopping 125kB/s, then here is the scoop.
-If the card is not recognized,
-you will have to use a boot argument of the form:
-<P>
-
-<PRE>
-xd=type,irq,iobase,dma_chan
-</PRE>
-
-
-<DT><DD>
-The type value specifies the particular manufacturer of the card,
-overriding autodetection.
-For the types to use, consult the
-<I>drivers/block/xd.c</I>
-
-source file of the kernel you are using.
-The type is an index in the list
-<I>xd_sigs</I>
-
-and in the course of time
-
-types have been added to or deleted from the middle of the list,
-changing all type numbers.
-Today (Linux 2.5.0) the types are
-0=generic; 1=DTC 5150cx; 2,3=DTC 5150x; 4,5=Western Digital;
-6,7,8=Seagate; 9=Omti; 10=XEBEC, and where here several types are
-given with the same designation, they are equivalent.
-<P>
-The xd_setup() function does no checking on the values, and assumes
-that you entered all four values.
-Don't disappoint it.
-Here is an
-example usage for a WD1002 controller with the BIOS disabled/removed,
-using the 'default' XT controller parameters:
-<P>
-
-<PRE>
-xd=2,5,0x320,3
-</PRE>
-
-
-<DT><B>Syquest's EZ* removable disks</B>
-
-<DD>
-Syntax:
-<P>
-
-<PRE>
-<B>ez=</B><I>iobase[,irq[,rep[,nybble]]]</I>
-</PRE>
-
-
 </DL>
 <A NAME="lbAJ">&nbsp;</A>
-<H3>IBM MCA bus devices</H3>
-
-See also the kernel source file
-<I>Documentation/mca.txt</I>.
-
-<DL COMPACT>
-<DT><B>PS/2 ESDI hard disks</B>
-
-<DD>
-It is possible to specify the desired geometry at boot time:
-<P>
-
-<PRE>
-<B>ed=</B><I>cyls,heads,sectors.</I>
-</PRE>
-
-
-<DT><DD>
-For a ThinkPad-720, add the option
-<P>
-
-<PRE>
-<B>tp720=1</B>.
-</PRE>
-
-
-<DT><B>IBM Microchannel SCSI Subsystem configuration</B>
-
-<DD>
-Syntax:
-<P>
-
-<PRE>
-<B>ibmmcascsi=</B><I>N</I>
-</PRE>
-
-
-<DT><DD>
-where N is the
-<I>pun</I>
-
-(SCSI ID) of the subsystem.
-<DT><B>The Aztech Interface</B>
-
-<DD>
-The syntax for this type of card is:
-<P>
-
-<PRE>
-aztcd=iobase[,magic_number]
-</PRE>
-
-
-<DT><DD>
-If you set the magic_number to 0x79, then the driver will try and run
-anyway in the event of an unknown firmware version.
-All other values
-are ignored.
-<DT><B>Parallel port CD-ROM drives</B>
-
-<DD>
-Syntax:
-<P>
-
-<PRE>
-pcd.driveN=prt,pro,uni,mod,slv,dly
-pcd.nice=nice
-</PRE>
-
-
-<DT><DD>
-where 'port' is the base address, 'pro' is the protocol number, 'uni'
-is the unit selector (for chained devices), 'mod' is the mode (or -1
-to choose the best automatically), 'slv' is 1 if it should be a slave,
-and 'dly' is a small integer for slowing down port accesses.
-The 'nice' parameter controls the driver's use of idle CPU time, at the
-expense of some speed.
-<DT><B>The CDU-31A and CDU-33A Sony Interface</B>
-
-<DD>
-This CD-ROM interface is found on some of the Pro Audio Spectrum sound
-cards, and other Sony supplied interface cards.
-The syntax is as follows:
-<P>
-
-<PRE>
-cdu31a=iobase,[irq[,is_pas_card]]
-</PRE>
-
-
-<DT><DD>
-Specifying an IRQ value of zero tells the driver that hardware
-interrupts aren't supported (as on some PAS cards).
-If your card
-supports interrupts, you should use them as it cuts down on the CPU
-usage of the driver.
-<P>
-The
-<I>is_pas_card</I>
-
-should be entered as 'PAS' if using a Pro Audio Spectrum card,
-and otherwise it should not be specified at all.
-<DT><B>The CDU-535 Sony Interface</B>
-
-<DD>
-The syntax for this CD-ROM interface is:
-<P>
-
-<PRE>
-sonycd535=iobase[,irq]
-</PRE>
-
-
-<DT><DD>
-A zero can be used for the I/O base as a 'placeholder' if one wishes
-to specify an IRQ value.
-<DT><B>The GoldStar Interface</B>
-
-<DD>
-The syntax for this CD-ROM interface is:
-<P>
-
-<PRE>
-gscd=iobase
-</PRE>
-
-
-<DT><B>The ISP16 CD-ROM Interface</B>
-
-<DD>
-Syntax:
-<P>
-
-<PRE>
-isp16=[iobase[,irq[,dma[,type]]]]
-</PRE>
-
-
-<DT><DD>
-(Three integers and a string.)
-If the type is given as 'noisp16',
-the interface will not be configured.
-Other recognized types
-are: 'Sanyo&quot;, 'Sony', 'Panasonic' and 'Mitsumi'.
-<DT><B>The Mitsumi Standard Interface</B>
-
-<DD>
-The syntax for this CD-ROM interface is:
-<P>
-
-<PRE>
-mcd=iobase,[irq[,wait_value]]
-</PRE>
-
-
-<DT><DD>
-The
-<I>wait_value</I>
-
-is used as an internal timeout value for people who are
-having problems with their drive, and may or may not be implemented
-depending on a compile-time #define.
-The Mitsumi FX400 is an IDE/ATAPI CD-ROM player and does not use
-the mcd driver.
-<DT><B>The Mitsumi XA/MultiSession Interface</B>
-
-<DD>
-This is for the same hardware as above, but the driver has extended features.
-Syntax:
-<P>
-
-<PRE>
-mcdx=iobase[,irq]
-</PRE>
-
-
-<DT><B>The Optics Storage Interface</B>
-
-<DD>
-The syntax for this type of card is:
-<P>
-
-<PRE>
-optcd=iobase
-</PRE>
-
-
-<DT><B>The Phillips CM206 Interface</B>
-
-<DD>
-The syntax for this type of card is:
-<P>
-
-<PRE>
-cm206=[iobase][,irq]
-</PRE>
-
-
-<DT><DD>
-The driver assumes numbers between 3 and 11 are IRQ values, and
-numbers between 0x300 and 0x370 are I/O ports, so you can specify one,
-or both numbers, in any order.
-It also accepts 'cm206=auto' to enable
-autoprobing.
-<DT><B>The Sanyo Interface</B>
-
-<DD>
-The syntax for this type of card is:
-<P>
-
-<PRE>
-sjcd=iobase[,irq[,dma_channel]]
-</PRE>
-
-
-<DT><B>The SoundBlaster Pro Interface</B>
-
-<DD>
-The syntax for this type of card is:
-<P>
-
-<PRE>
-sbpcd=iobase,type
-</PRE>
-
-
-<DT><DD>
-where type is one of the following (case sensitive) strings:
-'SoundBlaster', 'LaserMate', or 'SPEA'.
-The I/O base is that of the
-CD-ROM interface, and not that of the sound portion of the card.
-</DL>
-<A NAME="lbAK">&nbsp;</A>
 <H3>Ethernet devices</H3>
 
 Different drivers make use of different parameters, but they all at
@@ -1514,106 +725,24 @@ cards and on the card/driver-specific implementation
 of the param_n values where used.
 Interested readers should refer to
 the section in that document on their particular card.
-<A NAME="lbAL">&nbsp;</A>
+<A NAME="lbAK">&nbsp;</A>
 <H3>The floppy disk driver</H3>
 
 There are many floppy driver options, and they are all listed in
-<I>Documentation/floppy.txt</I>
+<I>Documentation/blockdev/floppy.txt</I>
 
 (or
+<I>Documentation/floppy.txt</I>
+
+in oplder kernels, or
 <I>drivers/block/README.fd</I>
 
-for older kernels) in the Linux kernel source.
-This information is taken directly
-from that file.
-<DL COMPACT>
-<DT><B>floppy=mask,allowed_drive_mask</B>
-
-<DD>
-Sets the bit mask of allowed drives to mask.
-By default, only units 0
-and 1 of each floppy controller are allowed.
-This is done because
-certain nonstandard hardware (ASUS PCI motherboards) mess up the
-keyboard when accessing units 2 or 3.
-This option is somewhat
-obsoleted by the cmos option.
-<DT><B>floppy=all_drives</B>
-
-<DD>
-Sets the bit mask of allowed drives to all drives.
-Use this if you have
-more than two drives connected to a floppy controller.
-<DT><B>floppy=asus_pci</B>
-
-<DD>
-Sets the bit mask to allow only units 0 and 1.
-(The default)
-<DT><B>floppy=daring</B>
-
-<DD>
-Tells the floppy driver that you have a well behaved floppy
-controller.
-This allows more efficient and smoother operation, but
-may fail on certain controllers.
-This may speed up certain operations.
-<DT><B>floppy=0,daring</B>
-
-<DD>
-Tells the floppy driver that your floppy controller should be used
-with caution.
-<DT><B>floppy=one_fdc</B>
-
-<DD>
-Tells the floppy driver that you have only floppy controller (default)
-<DT><B>floppy=two_fdc</B> or <B>floppy=address,two_fdc</B>
-
-<DD>
-Tells the floppy driver that you have two floppy controllers.
-The second floppy controller is assumed to be at address.
-If address is
-not given, 0x370 is assumed.
-<DT><B>floppy=thinkpad</B>
-
-<DD>
-Tells the floppy driver that you have a Thinkpad.
-Thinkpads use an
-inverted convention for the disk change line.
-<DT><B>floppy=0,thinkpad</B>
-
-<DD>
-Tells the floppy driver that you don't have a Thinkpad.
-<DT><B>floppy=drive,type,cmos</B>
-
-<DD>
-Sets the cmos type of drive to type.
-Additionally, this drive is
-allowed in the bit mask.
-This is useful if you have more than two
-floppy drives (only two can be described in the physical cmos), or if
-your BIOS uses nonstandard CMOS types.
-Setting the CMOS to 0 for the
-first two drives (default) makes the floppy driver read the physical
-cmos for those drives.
-<DT><B>floppy=unexpected_interrupts</B>
-
-<DD>
-Print a warning message when an unexpected interrupt is received
-(default behavior)
-<DT><B>floppy=no_unexpected_interrupts</B> or <B>floppy=L40SX</B>
-
-<DD>
-Don't print a message when an unexpected interrupt is received.
-This is needed on IBM L40SX laptops in certain video modes.
-(There seems to
-be an interaction between video and floppy.
-The unexpected interrupts
-only affect performance, and can safely be ignored.)
-</DL>
-<A NAME="lbAM">&nbsp;</A>
+for ancient kernels) in the Linux kernel source.
+See that file for the details.
+<A NAME="lbAL">&nbsp;</A>
 <H3>The sound driver</H3>
 
-The sound driver can also accept boot arguments to override the compiled in
+The sound driver can also accept boot arguments to override the compiled-in
 values.
 This is not recommended, as it is rather complex.
 It is described in the Linux kernel source file
@@ -1645,160 +774,12 @@ I - interrupt line in hex (i.e 10=a, 11=b, ...)
 <P>
 d - DMA channel.
 <P>
-As you can see it gets pretty messy, and you are better off to compile
+As you can see, it gets pretty messy, and you are better off to compile
 in your own personal values as recommended.
 Using a boot argument of
 'sound=0' will disable the sound driver entirely.
 </DL>
-<A NAME="lbAN">&nbsp;</A>
-<H3>ISDN drivers</H3>
-
-<DL COMPACT>
-<DT><B>The ICN ISDN driver</B>
-
-<DD>
-Syntax:
-<P>
-
-<PRE>
-icn=iobase,membase,icn_id1,icn_id2
-</PRE>
-
-
-<DT><DD>
-where icn_id1,icn_id2 are two strings used to identify the
-card in kernel messages.
-<DT><B>The PCBIT ISDN driver</B>
-
-<DD>
-Syntax:
-<P>
-
-<PRE>
-pcbit=membase1,irq1[,membase2,irq2]
-</PRE>
-
-
-<DT><DD>
-where membaseN is the shared memory base of the N'th card, and irqN is
-the interrupt setting of the N'th card.
-The default is IRQ 5 and
-membase 0xD0000.
-<DT><B>The Teles ISDN driver</B>
-
-<DD>
-Syntax:
-<P>
-
-<PRE>
-teles=iobase,irq,membase,protocol,teles_id
-</PRE>
-
-
-<DT><DD>
-where iobase is the I/O port address of the card, membase is the
-shared memory base address of the card, irq is the interrupt channel
-the card uses, and teles_id is the unique ASCII string identifier.
-</DL>
-<A NAME="lbAO">&nbsp;</A>
-<H3>Serial port drivers</H3>
-
-<DL COMPACT>
-<DT><B>The RISCom/8 Multiport Serial Driver ('riscom8=')</B>
-
-<DD>
-Syntax:
-<P>
-
-<PRE>
-riscom=iobase1[,iobase2[,iobase3[,iobase4]]]
-</PRE>
-
-
-<DT><DD>
-More details can be found in the kernel source file
-<I>Documentation/riscom8.txt</I>.
-
-<DT><B>The DigiBoard Driver ('digi=')</B>
-
-<DD>
-If this option is used, it should have precisely six parameters.
-Syntax:
-<P>
-
-<PRE>
-digi=status,type,altpin,numports,iobase,membase
-</PRE>
-
-
-<DT><DD>
-The parameters maybe given as integers, or as strings.
-If strings are used, then iobase and membase should be given
-in hexadecimal.
-The integer arguments (fewer may be given) are in order:
-status (<A HREF="../man1/Enable.1.html">Enable</A>(1) or Disable(0) this card),
-type (PC/Xi(0), PC/<A HREF="../man1/Xe.1.html">Xe</A>(1), PC/<A HREF="../man2/Xeve.2.html">Xeve</A>(2), PC/<A HREF="../man3/Xem.3.html">Xem</A>(3)),
-altpin (<A HREF="../man1/Enable.1.html">Enable</A>(1) or Disable(0) alternate pin arrangement),
-numports (number of ports on this card),
-iobase (I/O Port where card is configured (in HEX)),
-membase (base of memory window (in HEX)).
-Thus, the following two boot prompt arguments are equivalent:
-<P>
-
-<PRE>
-digi=E,PC/Xi,D,16,200,D0000
-digi=1,0,0,16,0x200,851968
-</PRE>
-
-
-<DT><DD>
-More details can be found in the kernel source file
-<I>Documentation/digiboard.txt</I>.
-
-<DT><B>The Baycom Serial/Parallel Radio Modem</B>
-
-<DD>
-Syntax:
-<P>
-
-<PRE>
-baycom=iobase,irq,modem
-</PRE>
-
-
-<DT><DD>
-There are precisely 3 parameters; for several cards, give
-several 'baycom=' commands.
-The modem parameter is a string
-that can take one of the values ser12, ser12*, par96, par96*.
-Here the * denotes that software DCD is to be used, and
-ser12/par96 chooses between the supported modem types.
-For more details, see the file
-<I>Documentation/networking/baycom.txt</I>
-
-(or
-<I>drivers/net/README.baycom</I>
-
-for older kernels) in the Linux kernel source.
-<DT><B>Soundcard radio modem driver</B>
-
-<DD>
-Syntax:
-<P>
-
-<PRE>
-soundmodem=iobase,irq,dma[,dma2[,serio[,pario]]],0,mode
-</PRE>
-
-
-<DT><DD>
-All parameters except the last are integers;
-the dummy 0 is required because of a bug in the setup code.
-The mode parameter is a string with syntax hw:modem,
-where hw is one of sbc, wss, or wssfdx, and modem is one of
-afsk1200 or fsk9600.
-</DL>
-<A NAME="lbAP">&nbsp;</A>
+<A NAME="lbAM">&nbsp;</A>
 <H3>The line printer driver</H3>
 
 <DL COMPACT>
@@ -1831,65 +812,10 @@ lp=none,parport0 would use the first parallel port for lp1, and
 disable lp0.
 To disable the printer driver entirely, one can use
 lp=0.
-<DT><B>WDT500/501 driver</B>
-
-<DD>
-Syntax:
-<P>
-
-<PRE>
-wdt=io,irq
-</PRE>
 
 
 </DL>
-<A NAME="lbAQ">&nbsp;</A>
-<H3>Mouse drivers</H3>
-
-<DL COMPACT>
-<DT><B>'bmouse=irq'</B>
-
-<DD>
-The busmouse driver accepts only one parameter, that being the
-hardware IRQ value to be used.
-<DT><B>'msmouse=irq'</B>
-
-<DD>
-And precisely the same is true for the msmouse driver.
-<DT><B>ATARI mouse setup</B>
-
-<DD>
-Syntax:
-<P>
-
-<PRE>
-atamouse=threshold[,y-threshold]
-</PRE>
-
-
-<DT><DD>
-If only one argument is given, it is used for both
-x-threshold and y-threshold.
-Otherwise, the first argument
-is the x-threshold, and the second the y-threshold.
-These values must lie between 1 and 20 (inclusive); the default is 2.
-</DL>
-<A NAME="lbAR">&nbsp;</A>
-<H3>Video hardware</H3>
-
-<DL COMPACT>
-<DT><B>'no-scroll'</B>
-
-<DD>
-This option tells the console driver not to use hardware scroll
-(where a scroll is effected by moving the screen origin in video
-memory, instead of moving the data).
-It is required by certain
-Braille machines.
-
-
-</DL>
-<A NAME="lbAS">&nbsp;</A>
+<A NAME="lbAN">&nbsp;</A>
 <H2>SEE ALSO</H2>
 
 <B><A HREF="../man8/klogd.8.html">klogd</A></B>(8),
@@ -1897,10 +823,7 @@ Braille machines.
 <B><A HREF="../man8/mount.8.html">mount</A></B>(8)
 
 <P>
-Large parts of this man page have been derived from the
-Boot Parameter HOWTO (version 1.0.1) written by Paul Gortmaker.
-More information may be found in this (or a more recent) HOWTO.
-An up-to-date source of information is the kernel source file
+For up-to-date information, see the kernel source file
 <I>Documentation/kernel-parameters.txt</I>.
 
 <P>
@@ -1917,22 +840,17 @@ An up-to-date source of information is the kernel source file
 <DT><A HREF="#lbAG">Boot arguments for ramdisk use</A><DD>
 <DT><A HREF="#lbAH">Boot arguments for SCSI devices</A><DD>
 <DT><A HREF="#lbAI">Hard disks</A><DD>
-<DT><A HREF="#lbAJ">IBM MCA bus devices</A><DD>
-<DT><A HREF="#lbAK">Ethernet devices</A><DD>
-<DT><A HREF="#lbAL">The floppy disk driver</A><DD>
-<DT><A HREF="#lbAM">The sound driver</A><DD>
-<DT><A HREF="#lbAN">ISDN drivers</A><DD>
-<DT><A HREF="#lbAO">Serial port drivers</A><DD>
-<DT><A HREF="#lbAP">The line printer driver</A><DD>
-<DT><A HREF="#lbAQ">Mouse drivers</A><DD>
-<DT><A HREF="#lbAR">Video hardware</A><DD>
+<DT><A HREF="#lbAJ">Ethernet devices</A><DD>
+<DT><A HREF="#lbAK">The floppy disk driver</A><DD>
+<DT><A HREF="#lbAL">The sound driver</A><DD>
+<DT><A HREF="#lbAM">The line printer driver</A><DD>
 </DL>
-<DT><A HREF="#lbAS">SEE ALSO</A><DD>
+<DT><A HREF="#lbAN">SEE ALSO</A><DD>
 </DL>
 <HR>
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:39:07 GMT, April 20, 2020
+Time: 03:39:39 GMT, April 20, 2020
 </BODY>
 </HTML>

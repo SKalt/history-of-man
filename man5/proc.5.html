@@ -25,7 +25,7 @@ License along with this manual; if not, see
 <HTML><HEAD><TITLE>Man page of PROC</TITLE>
 </HEAD><BODY>
 <H1>PROC</H1>
-Section: Linux Programmer's Manual (5)<BR>Updated: 2015-03-29<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (5)<BR>Updated: 2015-05-07<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -45,7 +45,107 @@ It is commonly mounted at
 
 Most of it is read-only, but some files allow kernel variables to be
 changed.
-<P>
+<A NAME="lbAD">&nbsp;</A>
+<H3>Mount options</H3>
+
+The
+<I>proc</I>
+
+filesystem supports the following mount options:
+<DL COMPACT>
+<DT><B>hidepid</B>=<I>n</I> (since Linux 3.3)
+
+<DD>
+
+This option controls who can access the information in
+<I>/proc/[pid]</I>
+
+directories.
+The argument,
+<I>n</I>,
+
+is one of the following values:
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT>0<DD>
+Everybody may access all
+<I>/proc/[pid]</I>
+
+directories.
+This is the traditional behavior,
+and the default if this mount option is not specified.
+<DT>1<DD>
+Users may not access files and subdirectories inside any
+<I>/proc/[pid]</I>
+
+directories but their own (the
+<I>/proc/[pid]</I>
+
+directories themselves remain visible).
+Sensitive files such as
+<I>/proc/[pid]cmdline</I>
+
+and
+<I>/proc/[pid]status</I>
+
+are now protected against other users.
+This makes it impossible to learn whether any user is running a
+specific program
+(so long as the program doesn't otherwise reveal itself by its behavior).
+
+
+
+
+
+<DT>2<DD>
+As for mode 1, but in addition the
+<I>/proc/[pid]</I>
+
+directories belonging to other users become invisible.
+This means that
+<I>/proc/[pid]</I>
+
+entries can no longer be used to discover the PIDs on the system.
+This doesn't hide the fact that a process with a specific PID value exists
+(it can be learned by other means, for example, by &quot;kill -0 $PID&quot;),
+but it hides a process's UID and GID,
+which could otherwise be learned by employing
+<B><A HREF="../man2/stat.2.html">stat</A></B>(2)
+
+on a
+<I>/proc/[pid]</I>
+
+directory.
+This greatly complicates an attacker's task of gathering
+information about running processes (e.g., discovering whether
+some daemon is running with elevated privileges,
+whether another user is running some sensitive program,
+whether other users are running any program at all, and so on).
+</DL>
+</DL>
+
+<DT><B>gid</B>=<I>gid</I> (since Linux 3.3)
+
+<DD>
+
+Specifies the ID of a group whose members are authorized to
+learn process information otherwise prohibited by
+<B>hidepid</B>
+
+(ie/e/, users in this group behave as though
+<I>/proc</I>
+
+was mounted with
+<I>hidepid=0</I>.
+
+This group should be used instead of approaches such as putting
+nonroot users into the
+<B><A HREF="../man5/sudoers.5.html">sudoers</A></B>(5)
+
+file.
+</DL>
+<A NAME="lbAE">&nbsp;</A>
+<H3>Files and directories</H3>
 
 The following list describes many of the files and directories under the
 <I>/proc</I>
@@ -453,8 +553,10 @@ it will open the executable.
 You can even type
 <I>/proc/[pid]/exe</I>
 
-to run another copy of the same executable as is being run by
+to run another copy of the same executable that is being run by
 process [pid].
+If the pathname has been unlinked, the symbolic link will contain the
+string '(deleted)' appended to the original pathname.
 
 In a multithreaded process, the contents of this symbolic link
 are not available if the main thread has already terminated
@@ -2011,6 +2113,7 @@ VmData:     5224 kB
 VmStk:        88 kB
 VmExe:       572 kB
 VmLib:      1708 kB
+VmPMD:         4 kB
 VmPTE:        20 kB
 VmSwap:        0 kB
 Threads:        1
@@ -2127,6 +2230,11 @@ Shared library code size.
 <I>VmPTE</I>:
 
 Page table entries size (since Linux 2.6.10).
+<DT>*<DD>
+<I>VmPMD</I>:
+
+
+Size of second-level page tables (since Linux 4.0).
 <DT>*<DD>
 <I>VmSwap</I>:
 
@@ -2249,7 +2357,7 @@ although most system calls use fewer registers.
 If the process is blocked, but not in a system call,
 then the file displays -1 in place of the system call number,
 followed by just the values of the stack pointer and program counter.
-If process is not blocked, then file contains just the string &quot;running&quot;.
+If process is not blocked, then the file contains just the string &quot;running&quot;.
 <P>
 This file is present only if the kernel was configured with
 <B>CONFIG_HAVE_ARCH_TRACEHOOK</B>.
@@ -3305,7 +3413,8 @@ use apart from debugging.
 The &quot;sl&quot; value is the kernel hash slot for the
 socket, the &quot;local_address&quot; is the local address and port number pair.
 The &quot;rem_address&quot; is the remote address and port number pair
-(if connected). &quot;St&quot; is the internal status of the socket.
+(if connected).
+&quot;St&quot; is the internal status of the socket.
 The &quot;tx_queue&quot; and &quot;rx_queue&quot; are the outgoing and incoming data queue
 in terms of kernel memory usage.
 The &quot;tr&quot;, &quot;tm-&gt;when&quot;, and &quot;rexmits&quot; fields
@@ -3389,7 +3498,8 @@ that commences with the character '@'.
 
 <DD>
 This file contains information about netfilter userspace queueing, if used.
-Each line represents a queue.  Queues that have not been subscribed to
+Each line represents a queue.
+Queues that have not been subscribed to
 by userspace are not shown.
 <PRE>
 
@@ -3402,7 +3512,8 @@ The fields in each line are:
 <DL COMPACT><DT><DD>
 <DL COMPACT>
 <DT>(1)<DD>
-The ID of the queue.  This matches what is specified in the
+The ID of the queue.
+This matches what is specified in the
 <B>--queue-num</B>
 
 or
@@ -3411,7 +3522,8 @@ or
 options to the
 <B><A HREF="../man8/iptables.8.html">iptables</A></B>(8)
 
-NFQUEUE target.  See
+NFQUEUE target.
+See
 <B><A HREF="../man8/iptables-extensions.8.html">iptables-extensions</A></B>(8)
 
 for more information.
@@ -3421,21 +3533,26 @@ The netlink port ID subscribed to the queue.
 The number of packets currently queued and waiting to be processed by
 the application.
 <DT>(4)<DD>
-The copy mode of the queue. It is either 1 (metadata only) or 2
+The copy mode of the queue.
+It is either 1 (metadata only) or 2
 (also copy payload data to userspace).
 <DT>(5)<DD>
-Copy range, i.e. how many bytes of packet payload should be copied to
+Copy range; that is, how many bytes of packet payload should be copied to
 userspace at most.
 <DT>(6)<DD>
-queue dropped.  Number of packets that had to be dropped by the kernel because
+queue dropped.
+Number of packets that had to be dropped by the kernel because
 too many packets are already waiting for userspace to send back the mandatory
 accept/drop verdicts.
 <DT>(7)<DD>
-queue user dropped.  Number of packets that were dropped within the netlink
-subsystem.  Such drops usually happen when the corresponding socket buffer is
-full, i.e.  userspace is not able to read messages fast enough.
+queue user dropped.
+Number of packets that were dropped within the netlink
+subsystem.
+Such drops usually happen when the corresponding socket buffer is
+full; that is, userspace is not able to read messages fast enough.
 <DT>(8)<DD>
-sequence number. Every queued packet is associated with a (32-bit)
+sequence number.
+Every queued packet is associated with a (32-bit)
 monotonically-increasing sequence number.
 This shows the ID of the most recent packet queued.
 </DL>
@@ -4053,10 +4170,10 @@ All of the following conditions are true:
 <DT>&bull;<DD>
 the target is a regular file;
 <DT>&bull;<DD>
-the target file does not have its set-user-ID permission bit enabled;
+the target file does not have its set-user-ID mode bit enabled;
 <DT>&bull;<DD>
 the target file does not have both its set-group-ID and
-group-executable permission bits enabled; and
+group-executable mode bits enabled; and
 <DT>&bull;<DD>
 the caller has permission to read and write the target file
 (either via the file's permissions mask or because it has
@@ -5418,7 +5535,7 @@ This file display information about memory zones.
 This is useful for analyzing virtual memory behavior.
 
 </DL>
-<A NAME="lbAD">&nbsp;</A>
+<A NAME="lbAF">&nbsp;</A>
 <H2>NOTES</H2>
 
 Many strings (i.e., the environment and command line) are in
@@ -5433,7 +5550,7 @@ of thing that needs to be updated very often.
 
 
 
-<A NAME="lbAE">&nbsp;</A>
+<A NAME="lbAG">&nbsp;</A>
 <H2>SEE ALSO</H2>
 
 <B><A HREF="../man1/cat.1.html">cat</A></B>(1),
@@ -5508,13 +5625,17 @@ and
 <DL>
 <DT><A HREF="#lbAB">NAME</A><DD>
 <DT><A HREF="#lbAC">DESCRIPTION</A><DD>
-<DT><A HREF="#lbAD">NOTES</A><DD>
-<DT><A HREF="#lbAE">SEE ALSO</A><DD>
+<DL>
+<DT><A HREF="#lbAD">Mount options</A><DD>
+<DT><A HREF="#lbAE">Files and directories</A><DD>
+</DL>
+<DT><A HREF="#lbAF">NOTES</A><DD>
+<DT><A HREF="#lbAG">SEE ALSO</A><DD>
 </DL>
 <HR>
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:39:07 GMT, April 20, 2020
+Time: 03:39:38 GMT, April 20, 2020
 </BODY>
 </HTML>

@@ -10,7 +10,7 @@ of the modification is added to the header.
 <HTML><HEAD><TITLE>Man page of SENDFILE</TITLE>
 </HEAD><BODY>
 <H1>SENDFILE</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2015-02-21<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2015-05-07<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -136,6 +136,12 @@ If the transfer was successful, the number of bytes written to
 <I>out_fd</I>
 
 is returned.
+Note that a successful call to
+<B>sendfile</B>()
+
+may write fewer bytes than requested;
+the caller should be prepared to retry the call if there were unsent bytes.
+<P>
 On error, -1 is returned, and
 <I>errno</I>
 
@@ -169,6 +175,18 @@ Descriptor is not valid or locked, or an
 operation is not available for
 <I>in_fd</I>.
 
+<DT><B>EINVAL</B>
+
+<DD>
+<I>out_fd</I>
+
+was has the
+<B>O_APPEND</B>
+
+flag set.
+This is not currently supported by
+<B>sendfile</B>().
+
 <DT><B>EIO</B>
 
 <DD>
@@ -187,7 +205,7 @@ Insufficient memory to read from
 
 <B>sendfile</B>()
 
-is a new feature in Linux 2.2.
+first appeared in Linux 2.2.
 The include file
 <I>&lt;<A HREF="file:///usr/include/sys/sendfile.h">sys/sendfile.h</A>&gt;</I>
 
@@ -195,7 +213,7 @@ is present since glibc 2.1.
 <A NAME="lbAH">&nbsp;</A>
 <H2>CONFORMING TO</H2>
 
-Not specified in POSIX.1-2001, or other standards.
+Not specified in POSIX.1-2001, nor in other standards.
 <P>
 Other UNIX systems implement
 <B>sendfile</B>()
@@ -221,10 +239,9 @@ to minimize the number of packets and to tune performance.
 In Linux 2.4 and earlier,
 <I>out_fd</I>
 
-could also refer to a regular file, and
-<B>sendfile</B>()
-
-changed the current offset of that file.
+could also refer to a regular file;
+this possibility went away in the Linux 2.6.x kernel series,
+but was restored in Linux 2.6.33.
 <P>
 The original Linux
 <B>sendfile</B>()
@@ -284,7 +301,6 @@ call supports transferring data between arbitrary files
 <B><A HREF="../man2/splice.2.html">splice</A></B>(2)
 
 <P>
-<P>
 
 <HR>
 <A NAME="index">&nbsp;</A><H2>Index</H2>
@@ -303,6 +319,6 @@ call supports transferring data between arbitrary files
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:38:55 GMT, April 20, 2020
+Time: 03:39:27 GMT, April 20, 2020
 </BODY>
 </HTML>

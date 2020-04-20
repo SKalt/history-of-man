@@ -8,7 +8,7 @@ Distributed under GPL
 <HTML><HEAD><TITLE>Man page of TTY_IOCTL</TITLE>
 </HEAD><BODY>
 <H1>TTY_IOCTL</H1>
-Section: Linux Programmer's Manual (4)<BR>Updated: 2013-11-12<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (4)<BR>Updated: 2015-05-07<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -464,6 +464,17 @@ except for a process with the
 <B>CAP_SYS_ADMIN</B>
 
 capability.)
+<DT><B>TIOCGEXCL<TT>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT>int *</B><I>argp</I>
+
+<DD>
+If the terminal is currently in exclusive mode,<BR>
+place a nonzero value in the location pointed to by
+<I>argp</I>;
+
+otherwise, place zero in
+<I>*argp</I>
+
+(since Linux 3.8).
 <DT><B>TIOCNXCL<TT>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT>void</B>
 
 <DD>
@@ -534,7 +545,37 @@ and
 
 to implement a remote-echoed,
 locally <B>^S</B>/<B>^Q</B> flow-controlled remote login.
+<DT><B>TIOGCPKT<TT>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT>const int *</B><I>argp</I>
+
+<DD>
+Return the current packet mode setting in the integer pointed to by<BR>
+<I>argp</I>
+
+(since Linux 3.8).
+<DT><B>TIOCSPTLCK<TT>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT>int *</B><I>argp</I>
+
+<DD>
+Set (if<BR>
+<I>*argp</I>
+
+is nonzero) or remove (if
+<I>*argp</I>
+
+is zero) the pseudoterminal slave device.
+(See also
+<B><A HREF="../man3/unlockpt.3.html">unlockpt</A></B>(3).)
+
+<DT><B>TIOCGPTLCK<TT>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT>int *</B><I>argp</I>
+
+<DD>
+Place the current lock state of the pseudoterminal slave device<BR>
+in the location pointed to by
+<I>argp</I>
+
+(since Linux 3.8).
+</DL>
 <P>
+
 The BSD ioctls
 <B>TIOCSTOP</B>,
 
@@ -545,7 +586,6 @@ The BSD ioctls
 <B>TIOCREMOTE</B>
 
 have not been implemented under Linux.
-</DL>
 <A NAME="lbAR">&nbsp;</A>
 <H3>Modem control</H3>
 
@@ -553,23 +593,23 @@ have not been implemented under Linux.
 <DT><B>TIOCMGET<TT>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT>int *</B><I>argp</I>
 
 <DD>
-get the status of modem bits.<BR>
+Get the status of modem bits.<BR>
 <DT><B>TIOCMSET<TT>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT>const int *</B><I>argp</I>
 
 <DD>
-set the status of modem bits.<BR>
+Set the status of modem bits.<BR>
 <DT><B>TIOCMBIC<TT>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT>const int *</B><I>argp</I>
 
 <DD>
-clear the indicated modem bits.<BR>
+Clear the indicated modem bits.<BR>
 <DT><B>TIOCMBIS<TT>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT>const int *</B><I>argp</I>
 
 <DD>
-set the indicated modem bits.<BR>
+Set the indicated modem bits.<BR>
 </DL>
 <P>
 
-Bits used by these four ioctls:
+The following bits are used by the above ioctls:
 <P>
 <PRE>
 TIOCM_LE        DSR (data set ready/line enable)
@@ -585,6 +625,42 @@ TIOCM_RI         see TIOCM_RNG
 TIOCM_DSR       DSR (data set ready)
 </PRE>
 
+<DL COMPACT>
+<DT><B>TIOCMIWAIT<TT>&nbsp;&nbsp;&nbsp;&nbsp;</TT>int </B><I>arg</I>
+
+<DD>
+Wait for any of the 4 modem bits (DCD, RI, DSR, CTS) to change.<BR>
+The bits of interest are specified as a bit mask in
+<I>arg</I>,
+
+by ORing together any of the bit values,
+<B>TIOCM_RNG</B>,
+
+<B>TIOCM_DSR</B>,
+
+<B>TIOCM_CD</B>,
+
+and
+<B>TIOCM_CTS</B>.
+
+The caller should use
+<B>TIOCGICOUNT</B>
+
+to see which bit has changed.
+<DT><B>TIOCGICOUNT<TT>&nbsp;&nbsp;&nbsp;&nbsp;</TT>struct serial_icounter_struct *</B><I>argp</I>
+
+<DD>
+Get counts of input serial line interrupts (DCD, RI, DSR, CTS).<BR>
+The counts are written to the
+<I>serial_icounter_struct</I>
+
+structure pointed to by
+<I>argp</I>.
+
+<P>
+Note: both 1-&gt;0 and 0-&gt;1 transitions are counted, except for
+RI, where only 0-&gt;1 transitions are counted.
+</DL>
 <A NAME="lbAS">&nbsp;</A>
 <H3>Marking a line as local</H3>
 
@@ -716,9 +792,9 @@ main(void)
     fd = open(&quot;/dev/ttyS0&quot;, O_RDONLY);
     ioctl(fd, TIOCMGET, &amp;serial);
     if (serial &amp; TIOCM_DTR)
-        puts(&quot;TIOCM_DTR is not set&quot;);
-    else
         puts(&quot;TIOCM_DTR is set&quot;);
+    else
+        puts(&quot;TIOCM_DTR is not set&quot;);
     close(fd);
 }
 </PRE>
@@ -784,6 +860,6 @@ main(void)
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:39:06 GMT, April 20, 2020
+Time: 03:39:38 GMT, April 20, 2020
 </BODY>
 </HTML>

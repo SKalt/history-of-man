@@ -31,8 +31,8 @@ Section: Linux Programmer's Manual (3)<BR>Updated: 2015-04-19<BR><A HREF="#index
 <A NAME="lbAB">&nbsp;</A>
 <H2>NAME</H2>
 
-printf, fprintf, sprintf, snprintf, vprintf, vfprintf, vsprintf,
-vsnprintf - formatted output conversion
+printf, fprintf, dprintf, sprintf, snprintf, vprintf, vfprintf, vdprintf,
+vsprintf, vsnprintf - formatted output conversion
 <A NAME="lbAC">&nbsp;</A>
 <H2>SYNOPSIS</H2>
 
@@ -44,6 +44,10 @@ vsnprintf - formatted output conversion
 <BR>
 
 <B>int fprintf(FILE *</B><I>stream</I><B>, const char *</B><I>format</I><B>, ...);</B>
+
+<BR>
+
+<B>int dprintf(int </B><I>fd</I><B>, const char *</B><I>format</I><B>, ...);</B>
 
 <BR>
 
@@ -62,6 +66,10 @@ vsnprintf - formatted output conversion
 <BR>
 
 <B>int vfprintf(FILE *</B><I>stream</I><B>, const char *</B><I>format</I><B>, va_list </B><I>ap</I><B>);</B>
+
+<BR>
+
+<B>int vdprintf(int </B><I>fd</I><B>, const char *</B><I>format</I><B>, va_list </B><I>ap</I><B>);</B>
 
 <BR>
 
@@ -92,6 +100,22 @@ or
 <I>cc -std=c99</I>
 
 </DL>
+
+<P>
+<B>dprintf</B>(),
+
+<B>vdprintf</B>():
+
+
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT>Since glibc 2.10:<DD>
+_XOPEN_SOURCE&nbsp;&gt;=&nbsp;700 || _POSIX_C_SOURCE&nbsp;&gt;=&nbsp;200809L
+<DT>Before glibc 2.10:<DD>
+_GNU_SOURCE
+</DL>
+</DL>
+
 
 
 <A NAME="lbAD">&nbsp;</A>
@@ -135,7 +159,20 @@ write to the character string
 <I>str</I>.
 
 <P>
+The function
+<B>dprintf</B>()
 
+is the same as
+<B><A HREF="../man3/fprintf.3.html">fprintf</A></B>(3)
+
+except that it outputs to a file descriptor,
+<I>fd</I>,
+
+instead of to a
+<I>stdio</I>
+
+stream.
+<P>
 The functions
 <B>snprintf</B>()
 
@@ -149,11 +186,12 @@ bytes (including the terminating null byte ('\0')) to
 <I>str</I>.
 
 <P>
-
 The functions
 <B>vprintf</B>(),
 
 <B>vfprintf</B>(),
+
+<B>vdprintf</B>(),
 
 <B>vsprintf</B>(),
 
@@ -163,6 +201,8 @@ are equivalent to the functions
 <B>printf</B>(),
 
 <B>fprintf</B>(),
+
+<B>dprintf</B>(),
 
 <B>sprintf</B>(),
 
@@ -187,8 +227,7 @@ See
 <B><A HREF="../man3/stdarg.3.html">stdarg</A></B>(3).
 
 <P>
-
-These eight functions write the output under the control of a
+All of these functions write the output under the control of a
 <I>format</I>
 
 string that specifies how subsequent arguments (or arguments accessed via
@@ -212,33 +251,6 @@ would cause copying to take place between objects that overlap
 refer to the same buffer).
 See NOTES.
 <A NAME="lbAE">&nbsp;</A>
-<H3>Return value</H3>
-
-Upon successful return, these functions return the number of characters
-printed (excluding the null byte used to end output to strings).
-<P>
-The functions
-<B>snprintf</B>()
-
-and
-<B>vsnprintf</B>()
-
-do not write more than
-<I>size</I>
-
-bytes (including the terminating null byte ('\0')).
-If the output was truncated due to this limit, then the return value
-is the number of characters (excluding the terminating null byte)
-which would have been written to the final string if enough space
-had been available.
-Thus, a return value of
-<I>size</I>
-
-or more means that the output was truncated.
-(See also below under NOTES.)
-<P>
-If an output error is encountered, a negative value is returned.
-<A NAME="lbAF">&nbsp;</A>
 <H3>Format of the format string</H3>
 
 The format string is a character string, beginning and ending
@@ -273,12 +285,18 @@ and an optional
 The arguments must correspond properly (after type promotion) with the
 conversion specifier.
 By default, the arguments are used in the order
-given, where each '*' and each conversion specifier asks for the next
+given, where each '*' (see
+<I>Field width</I>
+
+and
+<I>Precision</I>
+
+below) and each conversion specifier asks for the next
 argument (and it is an error if insufficiently many arguments are given).
 One can also specify explicitly which argument is taken,
 at each place where an argument is required, by writing &quot;%m$&quot; instead
 of '%' and &quot;*m$&quot; instead of '*',
-where the decimal integer m denotes
+where the decimal integer <I>m</I> denotes
 the position in the argument list of the desired argument, indexed starting
 from 1.
 Thus,
@@ -307,7 +325,7 @@ which comes from the Single UNIX Specification.
 If the style using
 '$' is used, it must be used throughout for all conversions taking an
 argument and all width and precision arguments, but it may be mixed
-with &quot;%%&quot; formats which do not consume an argument.
+with &quot;%%&quot; formats, which do not consume an argument.
 There may be no
 gaps in the numbers of arguments specified using '$'; for example, if
 arguments 1 and 3 are specified, argument 2 must also be specified
@@ -333,8 +351,8 @@ Thus,
 
 results in &quot;1234567.89&quot; in the POSIX locale, in &quot;1234567,89&quot; in the
 nl_NL locale, and in &quot;1.234.567,89&quot; in the da_DK locale.
-<A NAME="lbAG">&nbsp;</A>
-<H3>The flag characters</H3>
+<A NAME="lbAF">&nbsp;</A>
+<H3>Flag characters</H3>
 
 The character % is followed by zero or more of the following flags:
 <DL COMPACT>
@@ -533,8 +551,8 @@ For example, since glibc 2.2.3 this will give Arabic-Indic digits
 in the Persian (&quot;fa_IR&quot;) locale.
 
 </DL>
-<A NAME="lbAH">&nbsp;</A>
-<H3>The field width</H3>
+<A NAME="lbAG">&nbsp;</A>
+<H3>Field width</H3>
 
 An optional decimal digit string (with nonzero first digit) specifying
 a minimum field width.
@@ -552,14 +570,14 @@ positive field width.
 In no case does a nonexistent or small field width cause truncation of a
 field; if the result of a conversion is wider than the field width, the
 field is expanded to contain the conversion result.
-<A NAME="lbAI">&nbsp;</A>
-<H3>The precision</H3>
+<A NAME="lbAH">&nbsp;</A>
+<H3>Precision</H3>
 
 An optional precision, in the form of a period ('.')  followed by an
 optional decimal digit string.
 Instead of a decimal digit string one may write &quot;*&quot; or &quot;*m$&quot;
-(for some decimal integer m) to specify that the precision
-is given in the next argument, or in the m-th argument, respectively,
+(for some decimal integer <I>m</I>) to specify that the precision
+is given in the next argument, or in the <I>m</I>-th argument, respectively,
 which must be of type
 <I>int</I>.
 
@@ -608,8 +626,8 @@ and
 <B>S</B>
 
 conversions.
-<A NAME="lbAJ">&nbsp;</A>
-<H3>The length modifier</H3>
+<A NAME="lbAI">&nbsp;</A>
+<H3>Length modifier</H3>
 
 Here, &quot;integer conversion&quot; stands for
 <B>d</B>,
@@ -840,8 +858,8 @@ and
 
 <B>LG</B>).
 
-<A NAME="lbAK">&nbsp;</A>
-<H3>The conversion specifier</H3>
+<A NAME="lbAJ">&nbsp;</A>
+<H3>Conversion specifiers</H3>
 
 A character that specifies the type of conversion to be applied.
 The conversion specifiers and their meanings are:
@@ -1150,6 +1168,33 @@ No argument is converted.
 The complete conversion
 specification is '%%'.
 </DL>
+<A NAME="lbAK">&nbsp;</A>
+<H2>RETURN VALUE</H2>
+
+Upon successful return, these functions return the number of characters
+printed (excluding the null byte used to end output to strings).
+<P>
+The functions
+<B>snprintf</B>()
+
+and
+<B>vsnprintf</B>()
+
+do not write more than
+<I>size</I>
+
+bytes (including the terminating null byte ('\0')).
+If the output was truncated due to this limit, then the return value
+is the number of characters (excluding the terminating null byte)
+which would have been written to the final string if enough space
+had been available.
+Thus, a return value of
+<I>size</I>
+
+or more means that the output was truncated.
+(See also below under NOTES.)
+<P>
+If an output error is encountered, a negative value is returned.
 <A NAME="lbAL">&nbsp;</A>
 <H2>ATTRIBUTES</H2>
 
@@ -1203,6 +1248,7 @@ and
 <B>vsprintf</B>()
 
 functions conform to C89 and C99.
+<P>
 The
 <B>snprintf</B>()
 
@@ -1210,6 +1256,15 @@ and
 <B>vsnprintf</B>()
 
 functions conform to C99.
+<P>
+The
+<B>dprintf</B>()
+
+and
+<B>vdprintf</B>()
+
+functions were originally GNU extensions that were later standardized
+in POSIX.1-2008.
 <P>
 
 Concerning the return value of
@@ -1517,6 +1572,8 @@ error instead of being handled gracefully.
 
 <B><A HREF="../man3/dprintf.3.html">dprintf</A></B>(3),
 
+<B><A HREF="../man3/puts.3.html">puts</A></B>(3),
+
 <B><A HREF="../man3/scanf.3.html">scanf</A></B>(3),
 
 <B><A HREF="../man3/setlocale.3.html">setlocale</A></B>(3),
@@ -1536,14 +1593,14 @@ error instead of being handled gracefully.
 <DT><A HREF="#lbAC">SYNOPSIS</A><DD>
 <DT><A HREF="#lbAD">DESCRIPTION</A><DD>
 <DL>
-<DT><A HREF="#lbAE">Return value</A><DD>
-<DT><A HREF="#lbAF">Format of the format string</A><DD>
-<DT><A HREF="#lbAG">The flag characters</A><DD>
-<DT><A HREF="#lbAH">The field width</A><DD>
-<DT><A HREF="#lbAI">The precision</A><DD>
-<DT><A HREF="#lbAJ">The length modifier</A><DD>
-<DT><A HREF="#lbAK">The conversion specifier</A><DD>
+<DT><A HREF="#lbAE">Format of the format string</A><DD>
+<DT><A HREF="#lbAF">Flag characters</A><DD>
+<DT><A HREF="#lbAG">Field width</A><DD>
+<DT><A HREF="#lbAH">Precision</A><DD>
+<DT><A HREF="#lbAI">Length modifier</A><DD>
+<DT><A HREF="#lbAJ">Conversion specifiers</A><DD>
 </DL>
+<DT><A HREF="#lbAK">RETURN VALUE</A><DD>
 <DT><A HREF="#lbAL">ATTRIBUTES</A><DD>
 <DT><A HREF="#lbAM">CONFORMING TO</A><DD>
 <DT><A HREF="#lbAN">NOTES</A><DD>
@@ -1555,6 +1612,6 @@ error instead of being handled gracefully.
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:39:02 GMT, April 20, 2020
+Time: 03:39:34 GMT, April 20, 2020
 </BODY>
 </HTML>

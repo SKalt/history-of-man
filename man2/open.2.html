@@ -25,7 +25,7 @@ the source, must acknowledge the copyright and authors of this work.
 <HTML><HEAD><TITLE>Man page of OPEN</TITLE>
 </HEAD><BODY>
 <H1>OPEN</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2015-03-29<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2015-05-07<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -305,7 +305,7 @@ described in
 
 <I>mode</I>
 
-specifies the permissions to use in case a new file is created.
+specifies the mode to use in case a new file is created.
 This argument must be supplied when
 <B>O_CREAT</B>
 
@@ -325,11 +325,11 @@ is specified, then
 <I>mode</I>
 
 is ignored.
-The effective permissions are modified by
-the process's
+The effective mode is modified by the process's
 <I>umask</I>
 
-in the usual way: The permissions of the created file are
+in the usual way: in the absence of a default ACL, the mode of the
+created file is
 <I>(mode&nbsp;&amp;&nbsp;~umask)</I>.
 
 Note that this mode applies only to future accesses of the
@@ -347,7 +347,7 @@ The following symbolic constants are provided for
 <DT><B>S_IRWXU</B>
 
 <DD>
-00700 user (file owner) has read, write and execute permission
+00700 user (file owner) has read, write, and execute permission
 <DT><B>S_IRUSR</B>
 
 <DD>
@@ -363,7 +363,7 @@ The following symbolic constants are provided for
 <DT><B>S_IRWXG</B>
 
 <DD>
-00070 group has read, write and execute permission
+00070 group has read, write, and execute permission
 <DT><B>S_IRGRP</B>
 
 <DD>
@@ -379,7 +379,7 @@ The following symbolic constants are provided for
 <DT><B>S_IRWXO</B>
 
 <DD>
-00007 others have read, write and execute permission
+00007 others have read, write, and execute permission
 <DT><B>S_IROTH</B>
 
 <DD>
@@ -392,6 +392,35 @@ The following symbolic constants are provided for
 
 <DD>
 00001 others have execute permission
+</DL>
+</DL>
+
+<DT><DD>
+According to POSIX, the effect when other bits are set in
+<I>mode</I>
+
+is unspecified.
+On Linux, the following bits are also honored in
+<I>mode</I>:
+
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT><B>S_ISUID</B>
+
+<DD>
+0004000 set-user-ID bit
+<DT><B>S_ISGID</B>
+
+<DD>
+0002000 set-group-ID bit (see
+<B><A HREF="../man2/stat.2.html">stat</A></B>(2))
+
+<DT><B>S_ISVTX</B>
+
+<DD>
+0001000 sticky bit (see
+<B><A HREF="../man2/stat.2.html">stat</A></B>(2))
+
 </DL>
 </DL>
 
@@ -1491,7 +1520,13 @@ parent directory.
 Otherwise, if the file is modified because of the
 <B>O_TRUNC</B>
 
-flag, its st_ctime and st_mtime fields are set to the current time.
+flag, its
+<I>st_ctime</I>
+
+and
+<I>st_mtime</I>
+
+fields are set to the current time.
 
 
 <A NAME="lbAL">&nbsp;</A>
@@ -2032,6 +2067,26 @@ when trying to determine whether the kernel supports
 <B>O_TMPFILE</B>
 
 functionality.
+<P>
+When both
+<B>O_CREAT</B>
+
+and
+<B>O_DIRECTORY</B>
+
+are specified in
+<I>flags</I>
+
+and the file specified by
+<I>pathname</I>
+
+does not exist,
+<B>open</B>()
+
+will create a regular file (i.e.,
+<B>O_DIRECTORY</B>
+
+is ignored).
 <A NAME="lbAT">&nbsp;</A>
 <H2>SEE ALSO</H2>
 
@@ -2070,6 +2125,8 @@ functionality.
 <B><A HREF="../man2/write.2.html">write</A></B>(2),
 
 <B><A HREF="../man3/fopen.3.html">fopen</A></B>(3),
+
+<B><A HREF="../man5/acl.5.html">acl</A></B>(5)
 
 <B><A HREF="../man7/fifo.7.html">fifo</A></B>(7),
 
@@ -2110,6 +2167,6 @@ functionality.
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:38:54 GMT, April 20, 2020
+Time: 03:39:26 GMT, April 20, 2020
 </BODY>
 </HTML>

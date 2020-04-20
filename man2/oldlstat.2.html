@@ -181,6 +181,42 @@ that may be present between some fields on various architectures.
 Consult the glibc and kernel source code
 if you need to know the details.
 <P>
+
+
+<I>Note:</I>
+
+For performance and simplicity reasons, different fields in the
+<I>stat</I>
+
+structure may contain state information from different moments
+during the execution of the system call.
+For example, if
+<I>st_mode</I>
+
+or
+<I>st_uid</I>
+
+is changed by another process by calling
+<B><A HREF="../man2/chmod.2.html">chmod</A></B>(2)
+
+or
+<B><A HREF="../man2/chown.2.html">chown</A></B>(2),
+
+<B>stat</B>()
+
+might return the old
+<I>st_mode</I>
+
+together with the new
+<I>st_uid</I>,
+
+or the old
+<I>st_uid</I>
+
+together with the new
+<I>st_mode</I>.
+
+<P>
 The
 <I>st_dev</I>
 
@@ -310,13 +346,30 @@ is changed by writing or by setting inode information
 (i.e., owner, group, link count, mode, etc.).
 <P>
 
-The following mask values are defined for the file type component of the
+POSIX refers to the
+<I>st_mode</I>
+
+bits corresponding to the mask
+<B>S_IFMT</B>
+
+(see below) as the
+<I>file type</I>,
+
+the 12 bits corresponding to the mask 07777 as the
+<I>file mode bits</I>
+
+and the least significant 9 bits (0777) as the
+<I>file permission bits</I>.
+
+<P>
+
+The following mask values are defined for the file type of the
 <I>st_mode</I>
 
 field:
 
 <TABLE>
-<TR VALIGN=top><TD><B>S_IFMT</B></TD><TD>0170000</TD><TD>bit mask for the file type bit fields<BR></TD></TR>
+<TR VALIGN=top><TD><B>S_IFMT</B></TD><TD>0170000</TD><TD>bit mask for the file type bit field<BR></TD></TR>
 <TR VALIGN=top><TD><B></B></TD><TD></TD><TD><BR></TD></TR>
 <TR VALIGN=top><TD><B>S_IFSOCK</B></TD><TD>0140000</TD><TD>socket<BR></TD></TR>
 <TR VALIGN=top><TD><B>S_IFLNK</B></TD><TD>0120000</TD><TD>symbolic link<BR></TD></TR>
@@ -441,28 +494,28 @@ with a value of 200112L or greater.
 <P>
 
 The following mask values are defined for
-the file permissions component of the
+the file mode component of the
 <I>st_mode</I>
 
 field:
 
 <TABLE>
-<TR VALIGN=top><TD><B>S_ISUID</B></TD><TD>0004000</TD><TD>set-user-ID bit<BR></TD></TR>
-<TR VALIGN=top><TD><B>S_ISGID</B></TD><TD>0002000</TD><TD>set-group-ID bit (see below)<BR></TD></TR>
-<TR VALIGN=top><TD><B>S_ISVTX</B></TD><TD>0001000</TD><TD>sticky bit (see below)<BR></TD></TR>
+<TR VALIGN=top><TD><B>S_ISUID</B></TD><TD>  04000</TD><TD>set-user-ID bit<BR></TD></TR>
+<TR VALIGN=top><TD><B>S_ISGID</B></TD><TD>  02000</TD><TD>set-group-ID bit (see below)<BR></TD></TR>
+<TR VALIGN=top><TD><B>S_ISVTX</B></TD><TD>  01000</TD><TD>sticky bit (see below)<BR></TD></TR>
 <TR VALIGN=top><TD><B></B></TD><TD></TD><TD><BR></TD></TR>
-<TR VALIGN=top><TD><B>S_IRWXU</B></TD><TD>  00700</TD><TD>mask for file owner permissions<BR></TD></TR>
+<TR VALIGN=top><TD><B>S_IRWXU</B></TD><TD>  00700</TD><TD>owner has read, write, and execute permission<BR></TD></TR>
 <TR VALIGN=top><TD><B>S_IRUSR</B></TD><TD>  00400</TD><TD>owner has read permission<BR></TD></TR>
 <TR VALIGN=top><TD><B>S_IWUSR</B></TD><TD>  00200</TD><TD>owner has write permission<BR></TD></TR>
 <TR VALIGN=top><TD><B>S_IXUSR</B></TD><TD>  00100</TD><TD>owner has execute permission<BR></TD></TR>
 <TR VALIGN=top><TD><B></B></TD><TD></TD><TD><BR></TD></TR>
-<TR VALIGN=top><TD><B>S_IRWXG</B></TD><TD>  00070</TD><TD>mask for group permissions<BR></TD></TR>
+<TR VALIGN=top><TD><B>S_IRWXG</B></TD><TD>  00070</TD><TD>group has read, write, and execute permission<BR></TD></TR>
 <TR VALIGN=top><TD><B>S_IRGRP</B></TD><TD>  00040</TD><TD>group has read permission<BR></TD></TR>
 <TR VALIGN=top><TD><B>S_IWGRP</B></TD><TD>  00020</TD><TD>group has write permission<BR></TD></TR>
 <TR VALIGN=top><TD><B>S_IXGRP</B></TD><TD>  00010</TD><TD>group has execute permission<BR></TD></TR>
 <TR VALIGN=top><TD><B></B></TD><TD></TD><TD><BR></TD></TR>
 <TR VALIGN=top><TD><B>S_IRWXO</B></TD><TD>  00007</TD><TD>
-mask for permissions for others (not in group)
+others (not in group) have read, write, and execute permission
 <BR></TD></TR>
 <TR VALIGN=top><TD><B>S_IROTH</B></TD><TD>  00004</TD><TD>others have read permission<BR></TD></TR>
 <TR VALIGN=top><TD><B>S_IWOTH</B></TD><TD>  00002</TD><TD>others have write permission<BR></TD></TR>
@@ -785,7 +838,7 @@ According to POSIX.1-2001,
 on a symbolic link need return valid information only in the
 <I>st_size</I>
 
-field and the file-type component of the
+field and the file type of the
 <I>st_mode</I>
 
 field of the
@@ -795,7 +848,7 @@ structure.
 POSIX.1-2008 tightens the specification, requiring
 <B>lstat</B>()
 
-to return valid information in all fields except the permission bits in
+to return valid information in all fields except the mode bits in
 <I>st_mode</I>.
 
 <P>
@@ -1276,6 +1329,6 @@ main(int argc, char *argv[])
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:38:54 GMT, April 20, 2020
+Time: 03:39:26 GMT, April 20, 2020
 </BODY>
 </HTML>

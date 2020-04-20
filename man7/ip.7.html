@@ -10,7 +10,7 @@ of the modification is added to the header.
 <HTML><HEAD><TITLE>Man page of IP</TITLE>
 </HEAD><BODY>
 <H1>IP</H1>
-Section: Linux Programmer's Manual (7)<BR>Updated: 2014-05-10<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (7)<BR>Updated: 2015-05-07<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -61,12 +61,12 @@ For more information on sockets, see
 
 <P>
 
-An IP socket is created by calling the
-<B><A HREF="../man2/socket.2.html">socket</A></B>(2)
+An IP socket is created using
+<B><A HREF="../man2/socket.2.html">socket</A></B>(2):
 
-function as
-<B>socket(AF_INET, </B><I>socket_type</I><B>, </B><I>protocol</I><B>)</B><I></I>.
-
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;socket(AF_INET,&nbsp;socket_type,&nbsp;protocol);
+<P>
 Valid socket types are
 <B>SOCK_STREAM</B>
 
@@ -291,6 +291,16 @@ The socket option level for IP is
 
 
 A boolean integer flag is zero when it is false, otherwise true.
+<P>
+When an invalid socket option is specified,
+<B><A HREF="../man2/getsockopt.2.html">getsockopt</A></B>(2)
+
+and
+<B><A HREF="../man2/setsockopt.2.html">setsockopt</A></B>(2)
+
+fail with the error
+<B>ENOPROTOOPT</B>.
+
 <DL COMPACT>
 <DT><B>IP_ADD_MEMBERSHIP</B> (since Linux 1.2)
 
@@ -355,7 +365,14 @@ only by not including the
 <I>imr_ifindex</I>
 
 field.
-Only valid as a
+(The kernel determines which structure is being passed based
+on the size passed in
+<I>optlen</I>.)
+
+<P>
+<B>IP_ADD_MEMBERSHIP</B>
+
+is valid only for
 <B><A HREF="../man2/setsockopt.2.html">setsockopt</A></B>(2).
 
 
@@ -479,18 +496,17 @@ interface described below.
 <DD>
 If enabled,
 the user supplies an IP header in front of the user data.
-Only valid for
+Valid only for
 <B>SOCK_RAW</B>
 
-sockets.
-See
+sockets; see
 <B><A HREF="../man7/raw.7.html">raw</A></B>(7)
 
 for more information.
 When this flag is enabled, the values set by
 <B>IP_OPTIONS</B>,
 
-<B>IP_TTL</B>
+<B>IP_TTL</B>,
 
 and
 <B>IP_TOS</B>
@@ -548,11 +564,14 @@ refer to RFC 3376.
 <DD>
 
 Retrieve the current known path MTU of the current socket.
-Valid only when the socket has been connected.
 Returns an integer.
-Only valid as a
-<B><A HREF="../man2/getsockopt.2.html">getsockopt</A></B>(2).
+<P>
+<B>IP_MTU</B>
 
+is valid only for
+<B><A HREF="../man2/getsockopt.2.html">getsockopt</A></B>(2)
+
+and can be employed only when the socket has been connected.
 <DT><B>IP_MTU_DISCOVER</B> (since Linux 2.2)
 
 <DD>
@@ -678,23 +697,36 @@ option) on this particular socket.
 
 <DD>
 Set the local device for a multicast socket.
-Argument is an
+The argument for
+<B><A HREF="../man2/setsockopt.2.html">setsockopt</A></B>(2)
+
+is an
 <I>ip_mreqn</I>
 
 or
-<I>ip_mreq</I>
-
 
 
 (since Linux 3.5)
+<I>ip_mreq</I>
+
 structure similar to
-<B>IP_ADD_MEMBERSHIP</B>.
+<B>IP_ADD_MEMBERSHIP</B>,
 
-<DT><DD>
-When an invalid socket option is passed,
-<B>ENOPROTOOPT</B>
+or an
+<I>in_addr</I>
 
-is returned.
+structure.
+(The kernel determines which structure is being passed based
+on the size passed in
+<I>optlen</I>.)
+
+For
+<B><A HREF="../man2/getsockopt.2.html">getsockopt</A></B>(2),
+
+the argument is an
+<I>in_addr</I>
+
+structure.
 <DT><B>IP_MULTICAST_LOOP</B> (since Linux 1.2)
 
 <DD>
@@ -714,11 +746,12 @@ Argument is an integer.
 <DD>
 If enabled (argument is nonzero),
 the reassembly of outgoing packets is disabled in the netfilter layer.
+The argument is an integer.
+<P>
 This option is valid only for
 <B>SOCK_RAW</B>
 
 sockets.
-The argument is an integer.
 <DT><B>IP_OPTIONS</B> (since Linux 2.0)
 
 <DD>
@@ -1066,7 +1099,7 @@ options not filled in for this hop.
 
 Pass all to-be forwarded packets with the
 IP Router Alert option set to this socket.
-Only valid for raw sockets.
+Valid only for raw sockets.
 This is useful, for instance, for user-space RSVP daemons.
 The tapped packets are not forwarded by the kernel; it is
 the user's responsibility to send them out again.
@@ -1105,13 +1138,6 @@ Some high-priority levels may require superuser privileges (the
 <B>CAP_NET_ADMIN</B>
 
 capability).
-The priority can also be set in a protocol-independent way by the
-(<B>SOL_SOCKET</B>, <B>SO_PRIORITY</B>)
-
-socket option (see
-<B><A HREF="../man7/socket.7.html">socket</A></B>(7)).
-
-
 
 
 
@@ -1685,6 +1711,6 @@ RFC&nbsp;1812 for the IPv4 router requirements.
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:39:07 GMT, April 20, 2020
+Time: 03:39:39 GMT, April 20, 2020
 </BODY>
 </HTML>

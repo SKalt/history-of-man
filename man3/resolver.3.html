@@ -26,12 +26,13 @@ the source, must acknowledge the copyright and authors of this work.
 <HTML><HEAD><TITLE>Man page of RESOLVER</TITLE>
 </HEAD><BODY>
 <H1>RESOLVER</H1>
-Section: Linux Programmer's Manual (3)<BR>Updated: 2015-03-29<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2015-05-07<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
 <H2>NAME</H2>
 
+res_ninit, res_nquery, res_nsearch, res_nquerydomain, res_nmkquery, res_nsend,
 res_init, res_query, res_search, res_querydomain, res_mkquery, res_send,
 dn_comp, dn_expand - resolver routines
 <A NAME="lbAC">&nbsp;</A>
@@ -41,55 +42,116 @@ dn_comp, dn_expand - resolver routines
 <B>#include &lt;<A HREF="file:///usr/include/netinet/in.h">netinet/in.h</A>&gt;</B>
 <B>#include &lt;<A HREF="file:///usr/include/arpa/nameser.h">arpa/nameser.h</A>&gt;</B>
 <B>#include &lt;<A HREF="file:///usr/include/resolv.h">resolv.h</A>&gt;</B>
+
+<B>struct __res_state;</B>
+<B>typedef struct __res_state *res_state;</B>
+
+<B>int res_ninit(void);</B>
+
+<B>int res_nquery(res_state </B><I>statep</I><B>);</B>
+<B>           const char *</B><I>dname</I><B>, int </B><I>class</I><B>, int </B><I>type</I><B>,</B>
+<B>           unsigned char *</B><I>answer</I><B>, int </B><I>anslen</I><B>);</B>
+
+<B>int res_nsearch(res_state </B><I>statep</I><B>,</B>
+<B>           const char *</B><I>dname</I><B>, int </B><I>class</I><B>, int </B><I>type</I><B>,</B>
+<B>           unsigned char *</B><I>answer</I><B>, int </B><I>anslen</I><B>);</B>
+
+<B>int res_nquerydomain(res_state </B><I>statep</I><B>,</B>
+<B>           const char *</B><I>name</I><B>, const char *</B><I>domain</I><B>,</B>
+<B>           int </B><I>class</I><B>, int </B><I>type</I><B>, unsigned char *</B><I>answer</I><B>,</B>
+<B>           int </B><I>anslen</I><B>);</B>
+
+<B>int res_nmkquery(res_state </B><I>statep</I><B>,</B>
+<B>           int </B><I>op</I><B>, const char *</B><I>dname</I><B>, int </B><I>class</I><B>,</B>
+<B>           int </B><I>type</I><B>, const unsigned char *</B><I>data</I><B>, int </B><I>datalen</I><B>,</B>
+<B>           const unsigned char *</B><I>newrr</I><B>,</B>
+<B>           unsigned char *</B><I>buf</I><B>, int </B><I>buflen</I><B>);</B>
+
+<B>int res_nsend(res_state </B><I>statep</I><B>,</B>
+<B>           const unsigned char *</B><I>msg</I><B>, int </B><I>msglen</I><B>,</B>
+<B>           unsigned char *</B><I>answer</I><B>, int </B><I>anslen</I><B>);</B>
+
+<B>int dn_comp(const char *</B><I>exp_dn</I><B>, unsigned char *</B><I>comp_dn</I><B>,</B>
+<B>           int </B><I>length</I><B>, unsigned char **</B><I>dnptrs</I><B>,</B>
+<B>           unsigned char **</B><I>lastdnptr</I><B>);</B>
+
+<B>int dn_expand(const unsigned char *</B><I>msg</I><B>,</B>
+<B>           const unsigned char *</B><I>eomorig</I><B>,</B>
+<B>           const unsigned char *</B><I>comp_dn</I><B>, char *</B><I>exp_dn</I><B>,</B>
+<B>           int </B><I>length</I><B>);</B>
+</PRE>
+
+<P>
+<A NAME="lbAD">&nbsp;</A>
+<H3>Deprecated</H3>
+
+<P>
+<PRE>
 <B>extern struct __res_state _res;</B>
 
 <B>int res_init(void);</B>
 
 <B>int res_query(const char *</B><I>dname</I><B>, int </B><I>class</I><B>, int </B><I>type</I><B>,</B>
-<DL COMPACT><DT><DD><B>unsigned char *</B><I>answer</I><B>, int </B><I>anslen</I><B>);</B>
-</DL>
+<B>           unsigned char *</B><I>answer</I><B>, int </B><I>anslen</I><B>);</B>
 
 <B>int res_search(const char *</B><I>dname</I><B>, int </B><I>class</I><B>, int </B><I>type</I><B>,</B>
-<DL COMPACT><DT><DD><B>unsigned char *</B><I>answer</I><B>, int </B><I>anslen</I><B>);</B>
-</DL>
+<B>           unsigned char *</B><I>answer</I><B>, int </B><I>anslen</I><B>);</B>
 
 <B>int res_querydomain(const char *</B><I>name</I><B>, const char *</B><I>domain</I><B>,</B>
-<DL COMPACT><DT><DD><B>int </B><I>class</I><B>, int </B><I>type</I><B>, unsigned char *</B><I>answer</I><B>,</B>
-<B>int </B><I>anslen</I><B>);</B>
-</DL>
+<B>           int </B><I>class</I><B>, int </B><I>type</I><B>, unsigned char *</B><I>answer</I><B>,</B>
+<B>           int </B><I>anslen</I><B>);</B>
 
 <B>int res_mkquery(int </B><I>op</I><B>, const char *</B><I>dname</I><B>, int </B><I>class</I><B>,</B>
-<DL COMPACT><DT><DD><B>int </B><I>type</I><B>, const unsigned char *</B><I>data</I><B>, int </B><I>datalen</I><B>,</B>
-<B>const unsigned char *</B><I>newrr</I><B>, unsigned char *</B><I>buf</I><B>, int </B><I>buflen</I><B>);</B>
-</DL>
+<B>           int </B><I>type</I><B>, const unsigned char *</B><I>data</I><B>, int </B><I>datalen</I><B>,</B>
+<B>           const unsigned char *</B><I>newrr</I><B>,</B>
+<B>           unsigned char *</B><I>buf</I><B>, int </B><I>buflen</I><B>);</B>
 
 <B>int res_send(const unsigned char *</B><I>msg</I><B>, int </B><I>msglen</I><B>,</B>
-<DL COMPACT><DT><DD><B>unsigned char *</B><I>answer</I><B>, int </B><I>anslen</I><B>);</B>
-</DL>
-
-<B>int dn_comp(const char *</B><I>exp_dn</I><B>, unsigned char *</B><I>comp_dn</I><B>,</B>
-<DL COMPACT><DT><DD><B>int </B><I>length</I><B>, unsigned char **</B><I>dnptrs</I><B>, unsigned char **</B><I>lastdnptr</I><B>);</B>
-</DL>
-
-<B>int dn_expand(const unsigned char *</B><I>msg</I><B>, const unsigned char *</B><I>eomorig</I><B>,</B>
-<DL COMPACT><DT><DD><B>const unsigned char *</B><I>comp_dn</I><B>, char *</B><I>exp_dn</I><B>,</B>
-<B>int </B><I>length</I><B>);</B>
-</DL>
+<B>           unsigned char *</B><I>answer</I><B>, int </B><I>anslen</I><B>);</B>
 </PRE>
 
 <P>
 Link with <I>-lresolv</I>.
-<A NAME="lbAD">&nbsp;</A>
+<A NAME="lbAE">&nbsp;</A>
 <H2>DESCRIPTION</H2>
 
-These functions make queries to and interpret the responses from Internet
-domain name servers.
-<P>
+<B>Note:</B>
 
-The
+This page is incomplete (various resolver functions provided by glibc
+are not described) and likely out of date.
+<P>
+The functions described below make queries to and interpret
+the responses from Internet domain name servers.
+<P>
+The API consists of a set of more modern, reentrant functions
+and an older set of nonreentrant functions that have been superseded.
+The traditional resolver interfaces such as
 <B>res_init</B>()
 
-function reads the configuration files (see
+and
+<B>res_query</B>()
+
+use some static (global) state stored in the
+<I>_res</I>
+
+structure, rendering these functions non-thread-safe.
+BIND 8.2 introduced a set of new interfaces
+<B>res_ninit</B>(),
+
+<B>res_nquery</B>(),
+
+and so on, which take a
+<I>res_state</I>
+
+as their first argument, so you can use a per-thread resolver state.
+<P>
+The
+<B>res_ninit</B>()
+
+and
+<B>res_init</B>()
+
+functions read the configuration files (see
 <B><A HREF="../man5/resolv.conf.5.html">resolv.conf</A></B>(5))
 
 to get the default domain name and name
@@ -99,30 +161,39 @@ If no domain is given, that associated with the local host is used.
 It can be overridden with the environment variable
 <B>LOCALDOMAIN</B>.
 
+<B>res_ninit</B>()
+
+or
 <B>res_init</B>()
 
 is normally executed by the first call to one of the
 other functions.
 <P>
-
 The
+<B>res_nquery</B>()
+
+and
 <B>res_query</B>()
 
-function queries the name server for the
+functions query the name server for the
 fully qualified domain name <I>name</I> of specified <I>type</I> and
 <I>class</I>.
 The reply is left in the buffer <I>answer</I> of length
 <I>anslen</I> supplied by the caller.
 <P>
-
 The
+<B>res_nsearch</B>()
+
+and
 <B>res_search</B>()
 
-function makes a query and waits for the response
-like
+functions make a query and waits for the response like
+<B>res_nquery</B>()
+
+and
 <B>res_query</B>(),
 
-but in addition implements the default and search
+but in addition they implement the default and search
 rules controlled by
 <B>RES_DEFNAMES</B>
 
@@ -132,25 +203,28 @@ and
 (see description of
 <I>_res</I> options below).
 <P>
-
 The
+<B>res_nquerydomain</B>()
+
+and
 <B>res_querydomain</B>()
 
-function makes a query using
-<B>res_query</B>()
+functions make a query using
+<B>res_nquery</B>()/<B>res_query</B>()
 
 on the concatenation of <I>name</I> and <I>domain</I>.
 <P>
-
 The following functions are lower-level routines used by
-<B>res_query</B>().
+<B>res_query</B>()/<B>res_query</B>().
 
 <P>
-
 The
+<B>res_nmkquery</B>()
+
+and
 <B>res_mkquery</B>()
 
-function constructs a query message in <I>buf</I>
+functions construct a query message in <I>buf</I>
 of length <I>buflen</I> for the domain name <I>dname</I>.
 The query type
 <I>op</I> is usually
@@ -160,18 +234,19 @@ but can be any of the types defined in
 <I>&lt;<A HREF="file:///usr/include/arpa/nameser.h">arpa/nameser.h</A>&gt;</I>.
 <I>newrr</I> is currently unused.
 <P>
-
 The
+<B>res_nsend</B>()
+
+and
 <B>res_send</B>()
 
-function sends a preformatted query given in
+function send a preformatted query given in
 <I>msg</I> of length <I>msglen</I> and returns the answer in <I>answer</I>
 which is of length <I>anslen</I>.
-It will call
-<B>res_init</B>(),
+They will call
+<B>res_ninit</B>()/<B>res_init</B>()
 
-if it
-has not already been called.
+if it has not already been called.
 <P>
 
 The
@@ -200,11 +275,22 @@ in a query or reply message, and <I>msg</I> points to the beginning of
 the message.
 <P>
 
-The resolver routines use global configuration and state information
-contained in the structure <I>_res</I>, which is defined in
-<I>&lt;<A HREF="file:///usr/include/resolv.h">resolv.h</A>&gt;</I>.
-The only field that is normally manipulated by the
-user is <I>_res.options</I>.
+The resolver routines use configuration and state information
+contained in a
+<I>__res_state</I>
+
+structure (either passed as the
+<I>statep</I>
+
+argument, or in the global variable
+<I>_res</I>,
+
+in the case of the older nonreentrant functions).
+The only field of this structure that is normally manipulated by the
+user is the
+<I>options</I>
+
+field.
 This field can contain the bitwise &quot;OR&quot;
 of the following options:
 <DL COMPACT>
@@ -212,6 +298,9 @@ of the following options:
 
 <DD>
 True if
+<B>res_ninit</B>()
+
+or
 <B>res_init</B>()
 
 has been called.
@@ -286,13 +375,21 @@ This option is used by
 <DT><B>RES_INSECURE1</B>
 
 <DD>
-Accept a response from a wrong server and show it on standard output
-(for debug purpose only).
+Accept a response from a wrong server.
+This can be used to detect potential security hazards,
+but you need to compile glibc with debugging enabled and use
+<B>RES_DEBUG</B>
+
+option (for debug purpose only).
 <DT><B>RES_INSECURE2</B>
 
 <DD>
-Accept a response which contains a wrong query and show it on standard
-output (for debug purpose only).
+Accept a response which contains a wrong query.
+This can be used to detect potential security hazards,
+but you need to compile glibc with debugging enabled and use
+<B>RES_DEBUG</B>
+
+option (for debug purpose only).
 <DT><B>RES_NOALIASES</B>
 
 <DD>
@@ -397,24 +494,37 @@ and
 
 <P>
 </DL>
-<A NAME="lbAE">&nbsp;</A>
+<A NAME="lbAF">&nbsp;</A>
 <H2>RETURN VALUE</H2>
 
 The
+<B>res_ninit</B>()
+
+and
 <B>res_init</B>()
 
-function returns 0 on success, or -1 if an error
+functions return 0 on success, or -1 if an error
 occurs.
 <P>
 
 The
+<B>res_nquery</B>(),
+
 <B>res_query</B>(),
+
+<B>res_nsearch</B>(),
 
 <B>res_search</B>(),
 
+<B>res_nquerydomain</B>(),
+
 <B>res_querydomain</B>(),
 
-<B>res_mkquery</B>()
+<B>res_nmkquery</B>(),
+
+<B>res_mkquery</B>(),
+
+<B>res_nsend</B>(),
 
 and
 <B>res_send</B>()
@@ -431,7 +541,7 @@ and
 
 functions return the length
 of the compressed name, or -1 if an error occurs.
-<A NAME="lbAF">&nbsp;</A>
+<A NAME="lbAG">&nbsp;</A>
 <H2>FILES</H2>
 
 <PRE>
@@ -439,11 +549,11 @@ of the compressed name, or -1 if an error occurs.
 /etc/host.conf            resolver configuration file
 </PRE>
 
-<A NAME="lbAG">&nbsp;</A>
+<A NAME="lbAH">&nbsp;</A>
 <H2>CONFORMING TO</H2>
 
 4.3BSD.
-<A NAME="lbAH">&nbsp;</A>
+<A NAME="lbAI">&nbsp;</A>
 <H2>SEE ALSO</H2>
 
 <B><A HREF="../man3/gethostbyname.3.html">gethostbyname</A></B>(3),
@@ -457,22 +567,29 @@ of the compressed name, or -1 if an error occurs.
 <B><A HREF="../man8/named.8.html">named</A></B>(8)
 
 <P>
+The GNU C library source file
+<I>resolv/README</I>.
+
+<P>
 
 <HR>
 <A NAME="index">&nbsp;</A><H2>Index</H2>
 <DL>
 <DT><A HREF="#lbAB">NAME</A><DD>
 <DT><A HREF="#lbAC">SYNOPSIS</A><DD>
-<DT><A HREF="#lbAD">DESCRIPTION</A><DD>
-<DT><A HREF="#lbAE">RETURN VALUE</A><DD>
-<DT><A HREF="#lbAF">FILES</A><DD>
-<DT><A HREF="#lbAG">CONFORMING TO</A><DD>
-<DT><A HREF="#lbAH">SEE ALSO</A><DD>
+<DL>
+<DT><A HREF="#lbAD">Deprecated</A><DD>
+</DL>
+<DT><A HREF="#lbAE">DESCRIPTION</A><DD>
+<DT><A HREF="#lbAF">RETURN VALUE</A><DD>
+<DT><A HREF="#lbAG">FILES</A><DD>
+<DT><A HREF="#lbAH">CONFORMING TO</A><DD>
+<DT><A HREF="#lbAI">SEE ALSO</A><DD>
 </DL>
 <HR>
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:39:03 GMT, April 20, 2020
+Time: 03:39:35 GMT, April 20, 2020
 </BODY>
 </HTML>
