@@ -5,7 +5,7 @@ Copyright (c) 1980, 1991 Regents of the University of California.
 <HTML><HEAD><TITLE>Man page of LSEEK</TITLE>
 </HEAD><BODY>
 <H1>LSEEK</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2010-09-11<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2011-09-20<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -75,6 +75,91 @@ If data is later written at this point, subsequent reads of the data
 in the gap (a &quot;hole&quot;) return null bytes ('\0') until
 data is actually written into the gap.
 <A NAME="lbAE">&nbsp;</A>
+<H3>Seeking file data and holes</H3>
+
+Since version 3.1, Linux supports the following additional values for
+<I>whence</I>:
+
+<DL COMPACT>
+<DT><B>SEEK_DATA</B>
+
+<DD>
+Adjust the file offset to the next location
+in the file greater than or equal to
+<I>offset</I>
+
+containing data.
+If
+<I>offset</I>
+
+points to data,
+then the file offset is set to
+<I>offset</I>.
+
+<DT><B>SEEK_HOLE</B>
+
+<DD>
+Adjust the file offset to the next hole in the file
+greater than or equal to
+<I>offset</I>.
+
+If
+<I>offset</I>
+
+points into the middle of a hole,
+then the file offset is set to
+<I>offset</I>.
+
+If there is no hole past
+<I>offset</I>,
+
+then the file offset is adjusted to the end of the file
+(i.e., there is an implicit hole at the end of any file).
+</DL>
+<P>
+
+In both of the above cases,
+<B>lseek</B>()
+
+fails if
+<I>offset</I>
+
+points past the end of the file.
+<P>
+These operations allow applications to map holes in a sparsely
+allocated file.
+This can be useful for applications such as file backup tools,
+which can save space when creating backups and preserve holes,
+if they have a mechanism for discovering holes.
+<P>
+For the purposes of these operations, a hole is a sequence of zeros that
+(normally) has not been allocated in the underlying file storage.
+However, a file system is not obliged to report holes,
+so these operations are not a guaranteed mechanism for
+mapping the storage space actually allocated to a file.
+(Furthermore, a sequence of zeros that actually has been written
+to the underlying storage may not be reported as a hole.)
+In the simplest implementation,
+a file system can support the operations by making
+<B>SEEK_HOLE</B>
+
+always return the offset of the end of the file,
+and making
+<B>SEEK_DATA</B>
+
+always return
+return
+<I>offset</I>
+
+(i.e., even if the location referred to by
+<I>offset</I>
+
+is a hole,
+it can be considered to consist of data that is a sequence of zeros).
+
+
+
+<A NAME="lbAF">&nbsp;</A>
 <H2>RETURN VALUE</H2>
 
 Upon successful completion,
@@ -86,7 +171,7 @@ On error, the value <I>(off_t)&nbsp;-1</I> is returned and
 <I>errno</I>
 
 is set to indicate the error.
-<A NAME="lbAF">&nbsp;</A>
+<A NAME="lbAG">&nbsp;</A>
 <H2>ERRORS</H2>
 
 <DL COMPACT>
@@ -101,14 +186,8 @@ is not an open file descriptor.
 <DD>
 <I>whence</I>
 
-is not one of
-<B>SEEK_SET</B>,
-
-<B>SEEK_CUR</B>,
-
-<B>SEEK_END</B>;
-
-or the resulting file offset would be negative,
+is not valid.
+Or: the resulting file offset would be negative,
 or beyond the end of a seekable device.
 
 
@@ -125,19 +204,35 @@ The resulting file offset cannot be represented in an
 <I>fd</I>
 
 is associated with a pipe, socket, or FIFO.
+<DT><B>ENXIO</B>
+
+<DD>
+<I>whence</I>
+
+is
+<B>SEEK_DATA</B>
+
+or
+<B>SEEK_HOLE</B>,
+
+and the current file offset is beyond the end of the file.
 </DL>
-<A NAME="lbAG">&nbsp;</A>
+<A NAME="lbAH">&nbsp;</A>
 <H2>CONFORMING TO</H2>
 
 SVr4, 4.3BSD, POSIX.1-2001.
-<A NAME="lbAH">&nbsp;</A>
+<P>
+<B>SEEK_DATA</B>
+
+and
+<B>SEEK_HOLE</B>
+
+are nonstandard extensions also present in Solaris;
+they are proposed for inclusion in the next POSIX revision (Issue 8).
+
+<A NAME="lbAI">&nbsp;</A>
 <H2>NOTES</H2>
 
-This document's use of
-<I>whence</I>
-
-is incorrect English, but maintained for historical reasons.
-<P>
 Some devices are incapable of seeking and POSIX does not specify which
 devices must support
 <B>lseek</B>().
@@ -176,7 +271,7 @@ or
 
 share the current file position pointer, so seeking on such files may be
 subject to race conditions.
-<A NAME="lbAI">&nbsp;</A>
+<A NAME="lbAJ">&nbsp;</A>
 <H2>SEE ALSO</H2>
 
 <B><A HREF="../man2/dup.2.html">dup</A></B>(2),
@@ -199,16 +294,19 @@ subject to race conditions.
 <DT><A HREF="#lbAB">NAME</A><DD>
 <DT><A HREF="#lbAC">SYNOPSIS</A><DD>
 <DT><A HREF="#lbAD">DESCRIPTION</A><DD>
-<DT><A HREF="#lbAE">RETURN VALUE</A><DD>
-<DT><A HREF="#lbAF">ERRORS</A><DD>
-<DT><A HREF="#lbAG">CONFORMING TO</A><DD>
-<DT><A HREF="#lbAH">NOTES</A><DD>
-<DT><A HREF="#lbAI">SEE ALSO</A><DD>
+<DL>
+<DT><A HREF="#lbAE">Seeking file data and holes</A><DD>
+</DL>
+<DT><A HREF="#lbAF">RETURN VALUE</A><DD>
+<DT><A HREF="#lbAG">ERRORS</A><DD>
+<DT><A HREF="#lbAH">CONFORMING TO</A><DD>
+<DT><A HREF="#lbAI">NOTES</A><DD>
+<DT><A HREF="#lbAJ">SEE ALSO</A><DD>
 </DL>
 <HR>
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:10:44 GMT, April 20, 2020
+Time: 03:11:19 GMT, April 20, 2020
 </BODY>
 </HTML>

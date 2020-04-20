@@ -4,7 +4,7 @@
 <HTML><HEAD><TITLE>Man page of IP</TITLE>
 </HEAD><BODY>
 <H1>IP</H1>
-Section: Linux Programmer's Manual (7)<BR>Updated: 2010-10-24<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (7)<BR>Updated: 2011-09-22<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -420,28 +420,41 @@ Only valid as a
 
 Set or receive the Path MTU Discovery setting for a socket.
 When enabled, Linux will perform Path MTU Discovery
-as defined in RFC&nbsp;1191
-on this socket.
-The don't-fragment flag is set on all outgoing datagrams.
-The system-wide default is controlled by the
-<I>/proc/sys/net/ipv4/ip_no_pmtu_disc</I>
-
-file for
+as defined in RFC&nbsp;1191 on
 <B>SOCK_STREAM</B>
 
-sockets, and disabled on all others.
+sockets.
 For
 non-<B>SOCK_STREAM</B>
 
-sockets, it is the user's responsibility to packetize the data
-in MTU sized chunks and to do the retransmits if necessary.
-The kernel will reject packets that are bigger than the known
-path MTU if this flag is set (with
-<B>EMSGSIZE</B>
+sockets,
+<B>IP_PMTUDISC_DO</B>
 
-).
+forces the don't-fragment flag to be set on all outgoing packets.
+It is the user's responsibility to packetize the data
+in MTU-sized chunks and to do the retransmits if necessary.
+The kernel will reject (with
+<B>EMSGSIZE</B>)
+
+datagrams that are bigger than the known path MTU.
+<B>IP_PMTUDISC_WANT</B>
+
+will fragment a datagram if needed according to the path MTU,
+or will set the don't-fragment flag otherwise.
+<P>
+The system-wide default can be toggled between
+<B>IP_PMTUDISC_WANT</B>
+
+and
+<B>IP_PMTUDISC_DONT</B>
+
+by writing (respectively, zero and nonzero values) to the
+<I>/proc/sys/net/ipv4/ip_no_pmtu_disc</I>
+
+file.
+<P>
 <TABLE>
-<TR VALIGN=top><TD ALIGN=center>Path MTU discovery flags</TD><TD>Meaning<BR></TD></TR>
+<TR VALIGN=top><TD ALIGN=center>Path MTU discovery value</TD><TD>Meaning<BR></TD></TR>
 <TR VALIGN=top><TD>IP_PMTUDISC_WANT</TD><TD>Use per-route settings.<BR></TD></TR>
 <TR VALIGN=top><TD>IP_PMTUDISC_DONT</TD><TD>Never do Path MTU Discovery.<BR></TD></TR>
 <TR VALIGN=top><TD>IP_PMTUDISC_DO</TD><TD>Always do Path MTU Discovery.<BR></TD></TR>
@@ -457,11 +470,11 @@ When it is connected to a specific peer with
 the currently known path MTU can be retrieved conveniently using the
 <B>IP_MTU</B>
 
-socket option (e.g., after a
+socket option (e.g., after an
 <B>EMSGSIZE</B>
 
 error occurred).
-It may change over time.
+The path MTU may change over time.
 For connectionless sockets with many destinations,
 the new MTU for a given destination can also be accessed using the
 error queue (see
@@ -1456,6 +1469,6 @@ RFC&nbsp;1812 for the IPv4 router requirements.
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:10:57 GMT, April 20, 2020
+Time: 03:11:32 GMT, April 20, 2020
 </BODY>
 </HTML>

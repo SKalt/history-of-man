@@ -5,7 +5,7 @@ Copyright (C) 2001 David Gómez &lt;davidge@jazzfree.com&gt;
 <HTML><HEAD><TITLE>Man page of MADVISE</TITLE>
 </HEAD><BODY>
 <H1>MADVISE</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2010-06-20<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2011-09-18<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -223,7 +223,7 @@ and
 <B>MADV_UNMERGEABLE</B>
 
 operations are only available if the kernel was configured with
-<B>CONFIG_KSM.</B>
+<B>CONFIG_KSM</B>.
 
 <DT><B>MADV_UNMERGEABLE</B> (since Linux 2.6.32)
 
@@ -238,6 +238,54 @@ KSM unmerges whatever pages it had merged in the address range specified by
 and
 <I>length</I>.
 
+<DT><B>MADV_HUGEPAGE</B> (since Linux 2.6.38)
+
+<DD>
+
+
+Enables Transparent Huge Pages (THP) for pages in the range specified by
+<I>addr</I>
+
+and
+<I>length</I>.
+
+Currently, Transparent Huge Pages only work with private anonymous pages (see
+<B><A HREF="../man2/mmap.2.html">mmap</A></B>(2)).
+
+The kernel will regularly scan the areas marked as huge page candidates
+to replace them with huge pages.
+The kernel will also allocate huge pages directly when the region is
+naturally aligned to the huge page size (see
+<B><A HREF="../man2/posix_memalign.2.html">posix_memalign</A></B>(2)).
+
+This feature is primarily aimed at applications that use large mappings of
+data and access large regions of that memory at a time (e.g. virtualization
+systems such as QEMU).
+It can very easily waste memory (e.g. a 2MB mapping that only ever accesses
+1 byte will result in 2MB of wired memory instead of one 4KB page).
+See the kernel source file
+<I>Documentation/vm/transhuge.txt</I>
+
+for more details.
+The
+<B>MADV_HUGEPAGE</B>
+
+and
+<B>MADV_NOHUGEPAGE</B>
+
+operations are only available if the kernel was configured with
+<B>CONFIG_TRANSPARENT_HUGEPAGE</B>.
+
+<DT><B>MADV_NOHUGEPAGE</B> (since Linux 2.6.38)
+
+<DD>
+Ensures that memory in the address range specified by
+<I>addr</I>
+
+and
+<I>length</I>
+
+will not be collapsed into huge pages.
 </DL>
 <A NAME="lbAE">&nbsp;</A>
 <H2>RETURN VALUE</H2>
@@ -426,6 +474,6 @@ from the system call, as it should).
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:10:44 GMT, April 20, 2020
+Time: 03:11:19 GMT, April 20, 2020
 </BODY>
 </HTML>
