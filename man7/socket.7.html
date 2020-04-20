@@ -4,7 +4,7 @@
 <HTML><HEAD><TITLE>Man page of SOCKET</TITLE>
 </HEAD><BODY>
 <H1>SOCKET</H1>
-Section: Linux Programmer's Manual (7)<BR>Updated: 2012-07-07<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (7)<BR>Updated: 2012-12-15<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -245,6 +245,66 @@ See the
 
 discussion below.
 <A NAME="lbAF">&nbsp;</A>
+<H3>Socket address structures</H3>
+
+Each socket domain has its own format for socket addresses,
+with a domain-specific address structure.
+Each of these structures begins with an
+integer &quot;family&quot; field (typed as
+<I>sa_family_t</I>)
+
+that indicates the type of the address structure.
+This allows
+the various system calls (e.g.,
+<B><A HREF="../man2/connect.2.html">connect</A></B>(2),
+
+<B><A HREF="../man2/bind.2.html">bind</A></B>(2),
+
+<B><A HREF="../man2/accept.2.html">accept</A></B>(2),
+
+<B><A HREF="../man2/getsockname.2.html">getsockname</A></B>(2),
+
+<B><A HREF="../man2/getpeername.2.html">getpeername</A></B>(2)),
+
+which are generic to all socket domains,
+to determine the domain of a particular socket address.
+<P>
+To allow any type of socket address to be passed to
+interfaces in the sockets API,
+the type
+<I>struct sockaddr</I>
+
+is defined.
+The purpose of this type is purely to allow casting of
+domain-specific socket address types to a &quot;generic&quot; type,
+so as to avoid compiler warnings about type mismatches in
+calls to the sockets API.
+<P>
+In addition, the sockets API provides the data type
+<I>struct sockaddr_storage.</I>
+
+This type
+is suitable to accommodate all supported domain-specific socket
+address structures; it is large enough and is aligned properly.
+(In particular, it is large enough to hold
+IPv6 socket addresses.)
+The structure includes the following field, which can be used to identify
+the type of socket address actually stored in the structure:
+<P>
+
+<PRE>
+    sa_family_t ss_family;
+</PRE>
+
+
+<P>
+The
+<I>sockaddr_storage</I>
+
+structure is useful in programs that must handle socket addresses
+in a generic way
+(e.g., programs that must deal with both IPv4 and IPv6 socket addresses).
+<A NAME="lbAG">&nbsp;</A>
 <H3>Socket Options</H3>
 
 These socket options can be set by using
@@ -583,8 +643,14 @@ set to
 <B>EAGAIN</B>
 
 or
-<B>EWOULDBLOCK</B>
+<B>EWOULDBLOCK</B>,
 
+
+or
+<B>EINPROGRESS</B>
+
+(for
+<B><A HREF="../man2/connect.2.html">connect</A></B>(2))
 
 just as if the socket was specified to be nonblocking.
 If the timeout is set to zero (the default)
@@ -689,7 +755,7 @@ Gets the socket type as an integer (e.g.,
 
 This socket option is read-only.
 </DL>
-<A NAME="lbAG">&nbsp;</A>
+<A NAME="lbAH">&nbsp;</A>
 <H3>Signals</H3>
 
 When writing onto a connection-oriented socket that has been shut down
@@ -753,7 +819,7 @@ may have already disappeared when the process reacts to the signal.
 If this happens, the process should wait again because Linux
 will resend the signal later.
 
-<A NAME="lbAH">&nbsp;</A>
+<A NAME="lbAI">&nbsp;</A>
 <H3>/proc interfaces</H3>
 
 The core socket networking parameters can be accessed
@@ -801,7 +867,7 @@ Maximum length of ancillary data and user control data like the iovecs
 per socket.
 
 </DL>
-<A NAME="lbAI">&nbsp;</A>
+<A NAME="lbAJ">&nbsp;</A>
 <H3>Ioctls</H3>
 
 These operations can be accessed using
@@ -933,7 +999,7 @@ The same as the
 <B><A HREF="../man2/ioctl.2.html">ioctl</A></B>(2).
 
 </DL>
-<A NAME="lbAJ">&nbsp;</A>
+<A NAME="lbAK">&nbsp;</A>
 <H2>VERSIONS</H2>
 
 <B>SO_BINDTODEVICE</B>
@@ -954,7 +1020,7 @@ and
 are supported since Linux 2.3.41.
 Earlier, timeouts were fixed to
 a protocol-specific setting, and could not be read or written.
-<A NAME="lbAK">&nbsp;</A>
+<A NAME="lbAL">&nbsp;</A>
 <H2>NOTES</H2>
 
 Linux assumes that half of the send/receive buffer is used for internal
@@ -978,7 +1044,7 @@ where only the later program needs to set the
 option.
 Typically this difference is invisible, since, for example, a server
 program is designed to always set this option.
-<A NAME="lbAL">&nbsp;</A>
+<A NAME="lbAM">&nbsp;</A>
 <H2>BUGS</H2>
 
 The
@@ -996,10 +1062,12 @@ The suggested interface to use them is via the libpcap
 library.
 
 
-<A NAME="lbAM">&nbsp;</A>
+<A NAME="lbAN">&nbsp;</A>
 <H2>SEE ALSO</H2>
 
 <B><A HREF="../man2/getsockopt.2.html">getsockopt</A></B>(2),
+
+<B><A HREF="../man2/connect.2.html">connect</A></B>(2),
 
 <B><A HREF="../man2/setsockopt.2.html">setsockopt</A></B>(2),
 
@@ -1029,20 +1097,21 @@ library.
 <DT><A HREF="#lbAD">DESCRIPTION</A><DD>
 <DL>
 <DT><A HREF="#lbAE">Socket Layer Functions</A><DD>
-<DT><A HREF="#lbAF">Socket Options</A><DD>
-<DT><A HREF="#lbAG">Signals</A><DD>
-<DT><A HREF="#lbAH">/proc interfaces</A><DD>
-<DT><A HREF="#lbAI">Ioctls</A><DD>
+<DT><A HREF="#lbAF">Socket address structures</A><DD>
+<DT><A HREF="#lbAG">Socket Options</A><DD>
+<DT><A HREF="#lbAH">Signals</A><DD>
+<DT><A HREF="#lbAI">/proc interfaces</A><DD>
+<DT><A HREF="#lbAJ">Ioctls</A><DD>
 </DL>
-<DT><A HREF="#lbAJ">VERSIONS</A><DD>
-<DT><A HREF="#lbAK">NOTES</A><DD>
-<DT><A HREF="#lbAL">BUGS</A><DD>
-<DT><A HREF="#lbAM">SEE ALSO</A><DD>
+<DT><A HREF="#lbAK">VERSIONS</A><DD>
+<DT><A HREF="#lbAL">NOTES</A><DD>
+<DT><A HREF="#lbAM">BUGS</A><DD>
+<DT><A HREF="#lbAN">SEE ALSO</A><DD>
 </DL>
 <HR>
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:16:53 GMT, April 20, 2020
+Time: 03:17:23 GMT, April 20, 2020
 </BODY>
 </HTML>

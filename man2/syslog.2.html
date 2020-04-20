@@ -5,7 +5,7 @@ Copyright (C) 1995 Andries Brouwer (aeb@cwi.nl)
 <HTML><HEAD><TITLE>Man page of SYSLOG</TITLE>
 </HEAD><BODY>
 <H1>SYSLOG</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2012-05-05<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2012-11-29<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -45,46 +45,6 @@ The system call of this name is about controlling the kernel
 buffer, and the glibc wrapper function is called
 <B>klogctl</B>().
 
-<P>
-The <I>type</I> argument determines the action taken by this function,
-as follows:
-<P>
-<PRE>
-      0 -- Close the log.  Currently a NOP.
-      1 -- Open the log. Currently a NOP.
-      2 -- Read from the log.
-      3 -- Read all messages remaining in the ring buffer.
-      4 -- Read and clear all messages remaining in the ring buffer
-      5 -- Clear ring buffer.
-      6 -- Disable printk to console
-      7 -- Enable printk to console
-      8 -- Set level of messages printed to console
-      9 -- Return number of unread characters in the log buffer
-     10 -- Return size of the log buffer
-</PRE>
-
-<P>
-Type 9 was added in Linux 2.4.10; type 10 in Linux 2.6.6.
-<P>
-In Linux kernels before 2.6.37,
-only command types 3 and 10 are allowed to unprivileged processes.
-Since Linux 2.6.37,
-command types 3 and 10 are only allowed to unprivileged processes if
-<I>/proc/sys/kernel/dmesg_restrict</I>
-
-has the value 0.
-Before Linux 2.6.37, &quot;privileged&quot; means that the caller has the
-<B>CAP_SYS_ADMIN</B>
-
-capability.
-Since Linux 2.6.37,
-&quot;privileged&quot; means that the caller has either the
-<B>CAP_SYS_ADMIN</B>
-
-capability (now deprecated for this purpose) or the (new)
-<B>CAP_SYSLOG</B>
-
-capability.
 <A NAME="lbAE">&nbsp;</A>
 <H3>The kernel log buffer</H3>
 
@@ -101,85 +61,185 @@ In early kernels,
 had the value 4096;
 from kernel 1.3.54, it was 8192;
 from kernel 2.1.113 it was 16384;
-since 2.4.23/2.6 the value is a kernel configuration option.
+since 2.4.23/2.6 the value is a kernel configuration option
+(<B>CONFIG_LOG_BUF_SHIFT</B>).
 
 
-In recent kernels the size can be queried with command type 10.
-<P>
+
+In recent kernels the size can be queried with command type 10 (see below).
+<A NAME="lbAF">&nbsp;</A>
+<H3>Commands</H3>
+
+The <I>type</I> argument determines the action taken by this function.
+The list below specifies the values for
+<I>type</I>.
+
+The symbolic names are defined in the kernel source,
+but are not exported to user space;
+you will either need to use the numbers, or define the names yourself.
+<DL COMPACT>
+<DT><B>SYSLOG_ACTION_CLOSE</B> (0)
+
+<DD>
+Close the log.
+Currently a NOP.
+<DT><B>SYSLOG_ACTION_OPEN</B> (1)
+
+<DD>
+Open the log.
+Currently a NOP.
+<DT><B>SYSLOG_ACTION_READ</B> (2)
+
+<DD>
+Read from the log.
 The call
-<I>syslog(2,buf,len)</I>
+waits until the kernel log buffer is nonempty, and then reads
+at most <I>len</I> bytes into the buffer pointed to by
+<I>bufp</I>.
 
-waits until this kernel log buffer is nonempty, and then reads
-at most <I>len</I> bytes into the buffer <I>buf</I>.
-It returns
-the number of bytes read.
-Bytes read from the log disappear from
-the log buffer: the information can only be read once.
-This is the function executed by the kernel when a user program
-reads
+The call returns the number of bytes read.
+Bytes read from the log disappear from the log buffer:
+the information can only be read once.
+This is the function executed by the kernel when a user program reads
 <I>/proc/kmsg</I>.
 
-<P>
-The call
-<I>syslog(3,buf,len)</I>
+<DT><B>SYSLOG_ACTION_READ_ALL</B> (3)
 
-will read the last <I>len</I> bytes from the log buffer (nondestructively),
+<DD>
+Read all messages remaining in the ring buffer,
+placing then in the buffer pointed to by
+<I>bufp</I>.
+
+The call reads the last <I>len</I>
+bytes from the log buffer (nondestructively),
 but will not read more than was written into the buffer since the
-last &quot;clear ring buffer&quot; command (which does not clear the buffer at all).
-It returns the number of bytes read.
-<P>
-The call
-<I>syslog(4,buf,len)</I>
+last &quot;clear ring buffer&quot; command (see command 5 below)).
+The call returns the number of bytes read.
+<DT><B>SYSLOG_ACTION_READ_CLEAR</B> (4)
 
-does precisely the same, but also executes the &quot;clear ring buffer&quot; command.
-<P>
-The call
-<I>syslog(5,dummy,dummy)</I>
+<DD>
+Read and clear all messages remaining in the ring buffer.
+The call does precisely the same as for a
+<I>type</I>
 
-executes just the &quot;clear ring buffer&quot; command.
-(In each call where
-<I>buf</I>
+of 3, but also executes the &quot;clear ring buffer&quot; command.
+<DT><B>SYSLOG_ACTION_CLEAR</B> (5)
 
-or
+<DD>
+The call executes just the &quot;clear ring buffer&quot; command.
+The
+<I>bufp</I>
+
+and
 <I>len</I>
 
-is shown as &quot;dummy&quot;, the value of the argument is ignored by the call.)
-<P>
-The call
-<I>syslog(6,dummy,dummy)</I>
+arguments are ignored.
+<DT><DD>
+This command does not really clear the ring buffer.
+Rather, it sets a kernel bookkeeping variable that
+determines the results returned by commands 3
+(<B>SYSLOG_ACTION_READ_ALL</B>)
 
-sets the console log level to minimum, so that no messages are printed
-to the console.
-<P>
-The call
-<I>syslog(7,dummy,dummy)</I>
+and 4
+(<B>SYSLOG_ACTION_READ_CLEAR</B>).
 
-sets the console log level to default, so that messages are printed
-to the console.
-<P>
-The call
-<I>syslog(8,dummy,level)</I>
+This command has no effect on commands 2
+(<B>SYSLOG_ACTION_READ</B>)
 
-sets the console log level to
-<I>level</I>,
+and 9
+(<B>SYSLOG_ACTION_SIZE_UNREAD</B>).
+
+<DT><B>SYSLOG_ACTION_CONSOLE_OFF</B> (6)
+
+<DD>
+Disable printk to console.
+The call sets the console log level to the minimum,
+so that no messages are printed to the console.
+The
+<I>bufp</I>
+
+and
+<I>len</I>
+
+arguments are ignored.
+<DT><B>SYSLOG_ACTION_CONSOLE_ON</B> (7)
+
+<DD>
+The call sets the console log level to the default,
+so that messages are printed to the console.
+The
+<I>bufp</I>
+
+and
+<I>len</I>
+
+arguments are ignored.
+<DT><B>SYSLOG_ACTION_CONSOLE_LEVEL</B> (8)
+
+<DD>
+The call sets the console log level to the value given in
+<I>len</I>,
 
 which must be an integer between 1 and 8 (inclusive).
 See the
 <B>loglevel</B>
 
 section for details.
-<P>
-The call
-<I>syslog(9,dummy,dummy)</I>
+The
+<I>bufp</I>
 
+argument is ignored.
+<DT><B>SYSLOG_ACTION_SIZE_UNREAD</B> (9) (since Linux 2.4.10)
+
+<DD>
+The call
 returns the number of bytes currently available to be read
-on the kernel log buffer.
-<P>
-The call
-<I>syslog(10,dummy,dummy)</I>
+from the kernel log buffer via command 2
+(<B>SYSLOG_ACTION_READ</B>).
 
-returns the total size of the kernel log buffer.
-<A NAME="lbAF">&nbsp;</A>
+The
+<I>bufp</I>
+
+and
+<I>len</I>
+
+arguments are ignored.
+<DT><B>SYSLOG_ACTION_SIZE_BUFFER</B> (10) (since Linux 2.6.6)
+
+<DD>
+This command returns the total size of the kernel log buffer.
+The
+<I>bufp</I>
+
+and
+<I>len</I>
+
+arguments are ignored.
+
+</DL>
+<P>
+
+All commands except 3 and 10 require privilege.
+In Linux kernels before 2.6.37,
+command types 3 and 10 are allowed to unprivileged processes;
+since Linux 2.6.37,
+these commands are allowed to unprivileged processes only if
+<I>/proc/sys/kernel/dmesg_restrict</I>
+
+has the value 0.
+Before Linux 2.6.37, &quot;privileged&quot; means that the caller has the
+<B>CAP_SYS_ADMIN</B>
+
+capability.
+Since Linux 2.6.37,
+&quot;privileged&quot; means that the caller has either the
+<B>CAP_SYS_ADMIN</B>
+
+capability (now deprecated for this purpose) or the (new)
+<B>CAP_SYSLOG</B>
+
+capability.
+<A NAME="lbAG">&nbsp;</A>
 <H3>The loglevel</H3>
 
 The kernel routine
@@ -195,13 +255,20 @@ This variable initially has the value
 (7), but is set to 10 if the
 kernel command line contains the word &quot;debug&quot;, and to 15 in case
 of a kernel fault (the 10 and 15 are just silly, and equivalent to 8).
-This variable is set (to a value in the range 1-8) by the call
-<I>syslog(8,dummy,value)</I>.
+This variable is set (to a value in the range 1-8) by a
+<B>syslog</B>()
 
-The calls
-<I>syslog(type,dummy,dummy)</I>
+call with a
+<I>type</I>
 
-with <I>type</I> equal to 6 or 7, set it to 1 (kernel panics only)
+of 8.
+Calls to
+<B>syslog</B>()
+
+with
+<I>type</I>
+
+equal to 6 or 7 set the variable to 1 (kernel panics only)
 or 7 (all except debugging messages), respectively.
 <P>
 Every text line in a message has its own loglevel.
@@ -227,7 +294,7 @@ as follows:
 #define KERN_DEBUG    &quot;&lt;7&gt;&quot;  /* debug-level messages             */
 </PRE>
 
-<A NAME="lbAG">&nbsp;</A>
+<A NAME="lbAH">&nbsp;</A>
 <H2>RETURN VALUE</H2>
 
 For <I>type</I> equal to 2, 3, or 4, a successful call to
@@ -248,7 +315,7 @@ For other values of <I>type</I>, 0 is returned on success.
 <P>
 In case of error, -1 is returned,
 and <I>errno</I> is set to indicate the error.
-<A NAME="lbAH">&nbsp;</A>
+<A NAME="lbAI">&nbsp;</A>
 <H2>ERRORS</H2>
 
 <DL COMPACT>
@@ -304,12 +371,12 @@ capability).
 System call was interrupted by a signal; nothing was read.
 (This can be seen only during a trace.)
 </DL>
-<A NAME="lbAI">&nbsp;</A>
+<A NAME="lbAJ">&nbsp;</A>
 <H2>CONFORMING TO</H2>
 
 This system call is Linux-specific and should not be used in programs
 intended to be portable.
-<A NAME="lbAJ">&nbsp;</A>
+<A NAME="lbAK">&nbsp;</A>
 <H2>NOTES</H2>
 
 From the very start people noted that it is unfortunate that
@@ -319,7 +386,7 @@ different animals.
 
 
 
-<A NAME="lbAK">&nbsp;</A>
+<A NAME="lbAL">&nbsp;</A>
 <H2>SEE ALSO</H2>
 
 <B><A HREF="../man3/syslog.3.html">syslog</A></B>(3),
@@ -336,18 +403,19 @@ different animals.
 <DT><A HREF="#lbAD">DESCRIPTION</A><DD>
 <DL>
 <DT><A HREF="#lbAE">The kernel log buffer</A><DD>
-<DT><A HREF="#lbAF">The loglevel</A><DD>
+<DT><A HREF="#lbAF">Commands</A><DD>
+<DT><A HREF="#lbAG">The loglevel</A><DD>
 </DL>
-<DT><A HREF="#lbAG">RETURN VALUE</A><DD>
-<DT><A HREF="#lbAH">ERRORS</A><DD>
-<DT><A HREF="#lbAI">CONFORMING TO</A><DD>
-<DT><A HREF="#lbAJ">NOTES</A><DD>
-<DT><A HREF="#lbAK">SEE ALSO</A><DD>
+<DT><A HREF="#lbAH">RETURN VALUE</A><DD>
+<DT><A HREF="#lbAI">ERRORS</A><DD>
+<DT><A HREF="#lbAJ">CONFORMING TO</A><DD>
+<DT><A HREF="#lbAK">NOTES</A><DD>
+<DT><A HREF="#lbAL">SEE ALSO</A><DD>
 </DL>
 <HR>
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:16:41 GMT, April 20, 2020
+Time: 03:17:11 GMT, April 20, 2020
 </BODY>
 </HTML>

@@ -5,7 +5,7 @@ Copyright (c) 1992 Drew Eckhardt, March 28, 1992
 <HTML><HEAD><TITLE>Man page of GETRLIMIT</TITLE>
 </HEAD><BODY>
 <H1>GETRLIMIT</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2011-09-10<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2012-11-25<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -629,6 +629,13 @@ in
 The shell's resource limits are inherited by the processes that
 it creates to execute commands.
 <P>
+Since Linux 2.6.24, the resource limits of any process can be inspected via
+<I>/proc/[pid]/limits</I>;
+
+see
+<B><A HREF="../man5/proc.5.html">proc</A></B>(5).
+
+<P>
 Ancient systems provided a
 <B>vlimit</B>()
 
@@ -749,6 +756,37 @@ was calculated as
 This was fixed in kernel 2.6.13.
 
 <P>
+Since Linux 2.6.12,
+
+
+
+
+
+if a process reaches its soft
+<B>RLIMIT_CPU</B>
+
+limit and has a handler installed for
+<B>SIGXCPU</B>,
+
+then, in addition to invoking the signal handler,
+the kernel increases the soft limit by one second.
+This behavior repeats if the process continues to consume CPU time,
+until the hard limit is reached,
+at which point the process is killed.
+Other implementations
+
+do not change the
+<B>RLIMIT_CPU</B>
+
+soft limit in this manner,
+and the Linux behavior is probably not standards conformant;
+portable applications should avoid relying on this Linux-specific behavior.
+
+The Linux-specific
+<B>RLIMIT_RTTIME</B>
+
+limit exhibits the same behavior when the soft limit is encountered.
+<P>
 Kernels before 2.4.22 did not diagnose the error
 <B>EINVAL</B>
 
@@ -820,6 +858,6 @@ was greater than
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:16:39 GMT, April 20, 2020
+Time: 03:17:09 GMT, April 20, 2020
 </BODY>
 </HTML>
