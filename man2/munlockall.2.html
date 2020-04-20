@@ -4,13 +4,13 @@
 <HTML><HEAD><TITLE>Man page of MLOCK</TITLE>
 </HEAD><BODY>
 <H1>MLOCK</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2015-07-23<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2015-12-28<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
 <H2>NAME</H2>
 
-mlock, munlock, mlockall, munlockall - lock and unlock memory
+mlock, mlock2, munlock, mlockall, munlockall - lock and unlock memory
 <A NAME="lbAC">&nbsp;</A>
 <H2>SYNOPSIS</H2>
 
@@ -18,6 +18,7 @@ mlock, munlock, mlockall, munlockall - lock and unlock memory
 <B>#include &lt;<A HREF="file:///usr/include/sys/mman.h">sys/mman.h</A>&gt;</B>
 
 <B>int mlock(const void *</B><I>addr</I><B>, size_t </B><I>len</I><B>);</B>
+<B>int mlock2(const void *</B><I>addr</I><B>, size_t </B><I>len</I><B>, int </B><I>flags</I><B>);</B>
 <B>int munlock(const void *</B><I>addr</I><B>, size_t </B><I>len</I><B>);</B>
 
 <B>int mlockall(int </B><I>flags</I><B>);</B>
@@ -27,26 +28,30 @@ mlock, munlock, mlockall, munlockall - lock and unlock memory
 <A NAME="lbAD">&nbsp;</A>
 <H2>DESCRIPTION</H2>
 
-<B>mlock</B>()
+<B>mlock</B>(),
+
+<B>mlock2</B>(),
 
 and
 <B>mlockall</B>()
 
-respectively lock part or all of the calling process's virtual address
+lock part or all of the calling process's virtual address
 space into RAM, preventing that memory from being paged to the
 swap area.
+<P>
 <B>munlock</B>()
 
 and
 <B>munlockall</B>()
 
 perform the converse operation,
-respectively unlocking part or all of the calling process's virtual
+unlocking part or all of the calling process's virtual
 address space, so that pages in the specified virtual address range may
 once more to be swapped out if required by the kernel memory manager.
+<P>
 Memory locking and unlocking are performed in units of whole pages.
 <A NAME="lbAE">&nbsp;</A>
-<H3>mlock() and munlock()</H3>
+<H3>mlock(), mlock2(), and munlock()</H3>
 
 <B>mlock</B>()
 
@@ -60,6 +65,55 @@ bytes.
 All pages that contain a part of the specified address range are
 guaranteed to be resident in RAM when the call returns successfully;
 the pages are guaranteed to stay in RAM until later unlocked.
+<P>
+<B>mlock2</B>()
+
+
+
+
+also locks pages in the specified range starting at
+<I>addr</I>
+
+and continuing for
+<I>len</I>
+
+bytes.
+However, the state of the pages contained in that range after the call
+returns successfully will depend on the value in the
+<I>flags</I>
+
+argument.
+<P>
+The
+<I>flags</I>
+
+argument can be either 0 or the following constant:
+<DL COMPACT>
+<DT><B>MLOCK_ONFAULT</B>
+
+<DD>
+Lock pages that are currently resident and mark the entire range to have
+pages locked when they are populated by the page fault.
+</DL>
+<P>
+
+<P>
+If
+<I>flags</I>
+
+is 0,
+<B>mlock2</B>()
+
+behaves exactly the same as
+<B>mlock</B>().
+
+<P>
+Note: currently, there is not a glibc wrapper for
+<B>mlock2</B>(),
+
+so it will need to be invoked using
+<B><A HREF="../man2/syscall.2.html">syscall</A></B>(2).
+
 <P>
 <B>munlock</B>()
 
@@ -102,9 +156,47 @@ the process.
 <DD>
 Lock all pages which will become mapped into the address space of the
 process in the future.
-These could be for instance new pages required
+These could be, for instance, new pages required
 by a growing heap and stack as well as new memory-mapped files or
 shared memory regions.
+<DT><B>MCL_ONFAULT</B> (since Linux 4.4)
+
+<DD>
+Used together with
+<B>MCL_CURRENT</B>,
+
+<B>MCL_FUTURE</B>,
+
+or both.
+Mark all current (with
+<B>MCL_CURRENT</B>)
+
+or future (with
+<B>MCL_FUTURE</B>)
+
+mappings to lock pages when they are faulted in.
+When used with
+<B>MCL_CURRENT</B>,
+
+all present pages are locked, but
+<B>mlockall</B>()
+
+will not fault in non-present pages.
+When used with
+<B>MCL_FUTURE</B>,
+
+all future mappings will be marked to lock pages when they are faulted
+in, but they will not be populated by the lock when the mapping is
+created.
+<B>MCL_ONFAULT</B>
+
+must be used with either
+<B>MCL_CURRENT</B>
+
+or
+<B>MCL_FUTURE</B>
+
+or both.
 </DL>
 <P>
 
@@ -179,7 +271,9 @@ to perform the requested operation.
 <P>
 
 For
-<B>mlock</B>()
+<B>mlock</B>(),
+
+<B>mlock2</B>(),
 
 and
 <B>munlock</B>():
@@ -193,10 +287,10 @@ Some or all of the specified address range could not be locked.
 
 <DD>
 The result of the addition
-<I>start</I>+<I>len</I>
+<I>addr</I>+<I>len</I>
 
 was less than
-<I>start</I>
+<I>addr</I>
 
 (e.g., the addition may have resulted in an overflow).
 <DT><B>EINVAL</B>
@@ -225,13 +319,32 @@ two locked mappings at each end and an unlocked mapping in the middle.)
 <P>
 
 For
-<B>mlockall</B>():
+<B>mlock2</B>():
 
 <DL COMPACT>
 <DT><B>EINVAL</B>
 
 <DD>
 Unknown <I>flags</I> were specified.
+</DL>
+<P>
+
+For
+<B>mlockall</B>():
+
+<DL COMPACT>
+<DT><B>EINVAL</B>
+
+<DD>
+Unknown <I>flags</I> were specified or
+<B>MCL_ONFAULT</B>
+
+was specified without either
+<B>MCL_FUTURE</B>
+
+or
+<B>MCL_CURRENT</B>.
+
 </DL>
 <P>
 
@@ -247,10 +360,19 @@ For
 
 </DL>
 <A NAME="lbAI">&nbsp;</A>
+<H2>VERSIONS</H2>
+
+<B><A HREF="../man2/mlock2.2.html">mlock2</A></B>(2)
+
+is available since Linux 4.4.
+<A NAME="lbAJ">&nbsp;</A>
 <H2>CONFORMING TO</H2>
 
 POSIX.1-2001, POSIX.1-2008, SVr4.
-<A NAME="lbAJ">&nbsp;</A>
+<P>
+mlock2 ()
+is Linux specific.
+<A NAME="lbAK">&nbsp;</A>
 <H2>AVAILABILITY</H2>
 
 On POSIX systems on which
@@ -286,7 +408,7 @@ is defined in <I>&lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;</I>
 
 
 
-<A NAME="lbAK">&nbsp;</A>
+<A NAME="lbAL">&nbsp;</A>
 <H2>NOTES</H2>
 
 Memory locking has two main applications: real-time algorithms and
@@ -334,10 +456,13 @@ The
 
 <B>MCL_FUTURE</B>
 
-setting is not inherited by a child created via
+and
+<B>MCL_FUTURE | MCL_ONFAULT</B>
+
+settings are not inherited by a child created via
 <B><A HREF="../man2/fork.2.html">fork</A></B>(2)
 
-and is cleared during an
+and are cleared during an
 <B><A HREF="../man2/execve.2.html">execve</A></B>(2).
 
 <P>
@@ -348,7 +473,9 @@ if the address range is unmapped via
 <P>
 Memory locks do not stack, that is, pages which have been locked several times
 by calls to
-<B>mlock</B>()
+<B>mlock</B>(),
+
+<B>mlock2</B>(),
 
 or
 <B>mlockall</B>()
@@ -362,11 +489,40 @@ for the corresponding range or by
 Pages which are mapped to several locations or by several processes stay
 locked into RAM as long as they are locked at least at one location or by
 at least one process.
-<A NAME="lbAL">&nbsp;</A>
+<P>
+If a call to
+<B>mlockall</B>()
+
+which uses the
+<B>MCL_FUTURE</B>
+
+flag is followed by another call that does not specify this flag, the
+changes made by the
+<B>MCL_FUTURE</B>
+
+call will be lost.
+<P>
+The
+<B>mlock2</B>()
+
+<B>MLOCK_ONFAULT</B>
+
+flag and the
+<B>mlockall</B>()
+
+<B>MCL_ONFAULT</B>
+
+flag allow efficient memory locking for applications that deal with
+large mappings where only a (small) portion of pages in the mapping are touched.
+In such cases, locking all of the pages in a mapping would incur
+a significant penalty for memory locking.
+<A NAME="lbAM">&nbsp;</A>
 <H3>Linux notes</H3>
 
 Under Linux,
-<B>mlock</B>()
+<B>mlock</B>(),
+
+<B>mlock2</B>(),
 
 and
 <B>munlock</B>()
@@ -375,7 +531,13 @@ automatically round
 <I>addr</I>
 
 down to the nearest page boundary.
-However, POSIX.1 allows an implementation to require that
+However, the POSIX.1 specification of
+<B>mlock</B>()
+
+and
+<B>munlock</B>()
+
+allows an implementation to require that
 <I>addr</I>
 
 is page aligned, so portable applications should ensure this.
@@ -392,6 +554,8 @@ file shows how many kilobytes of memory the process with ID
 has locked using
 <B>mlock</B>(),
 
+<B>mlock2</B>(),
+
 <B>mlockall</B>(),
 
 and
@@ -399,7 +563,7 @@ and
 
 <B>MAP_LOCKED</B>.
 
-<A NAME="lbAM">&nbsp;</A>
+<A NAME="lbAN">&nbsp;</A>
 <H3>Limits and permissions</H3>
 
 In Linux 2.6.8 and earlier,
@@ -417,7 +581,7 @@ that a privileged process can lock and the
 
 soft resource limit instead defines a limit on how much memory an
 unprivileged process may lock.
-<A NAME="lbAN">&nbsp;</A>
+<A NAME="lbAO">&nbsp;</A>
 <H2>BUGS</H2>
 
 In the 2.4 series Linux kernels up to and including 2.4.17,
@@ -452,7 +616,7 @@ resource limit is encountered.
 
 
 
-<A NAME="lbAO">&nbsp;</A>
+<A NAME="lbAP">&nbsp;</A>
 <H2>SEE ALSO</H2>
 
 <B><A HREF="../man2/mmap.2.html">mmap</A></B>(2),
@@ -477,25 +641,26 @@ resource limit is encountered.
 <DT><A HREF="#lbAC">SYNOPSIS</A><DD>
 <DT><A HREF="#lbAD">DESCRIPTION</A><DD>
 <DL>
-<DT><A HREF="#lbAE">mlock() and munlock()</A><DD>
+<DT><A HREF="#lbAE">mlock(), mlock2(), and munlock()</A><DD>
 <DT><A HREF="#lbAF">mlockall() and munlockall()</A><DD>
 </DL>
 <DT><A HREF="#lbAG">RETURN VALUE</A><DD>
 <DT><A HREF="#lbAH">ERRORS</A><DD>
-<DT><A HREF="#lbAI">CONFORMING TO</A><DD>
-<DT><A HREF="#lbAJ">AVAILABILITY</A><DD>
-<DT><A HREF="#lbAK">NOTES</A><DD>
+<DT><A HREF="#lbAI">VERSIONS</A><DD>
+<DT><A HREF="#lbAJ">CONFORMING TO</A><DD>
+<DT><A HREF="#lbAK">AVAILABILITY</A><DD>
+<DT><A HREF="#lbAL">NOTES</A><DD>
 <DL>
-<DT><A HREF="#lbAL">Linux notes</A><DD>
-<DT><A HREF="#lbAM">Limits and permissions</A><DD>
+<DT><A HREF="#lbAM">Linux notes</A><DD>
+<DT><A HREF="#lbAN">Limits and permissions</A><DD>
 </DL>
-<DT><A HREF="#lbAN">BUGS</A><DD>
-<DT><A HREF="#lbAO">SEE ALSO</A><DD>
+<DT><A HREF="#lbAO">BUGS</A><DD>
+<DT><A HREF="#lbAP">SEE ALSO</A><DD>
 </DL>
 <HR>
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:41:13 GMT, April 20, 2020
+Time: 03:41:45 GMT, April 20, 2020
 </BODY>
 </HTML>

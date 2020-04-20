@@ -7,7 +7,7 @@ This is in the public domain
 <HTML><HEAD><TITLE>Man page of LD.SO</TITLE>
 </HEAD><BODY>
 <H1>LD.SO</H1>
-Section: Linux Programmer's Manual (8)<BR>Updated: 2015-08-08<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (8)<BR>Updated: 2015-12-28<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -118,7 +118,7 @@ In the default path
 and then
 <I>/usr/lib</I>.
 
-(On some 64-bit archiectures, the default paths for 64-bit shared objects are
+(On some 64-bit architectures, the default paths for 64-bit shared objects are
 <I>/lib64</I>,
 
 and then
@@ -282,10 +282,9 @@ A nonzero value may have been set by a Linux Security Module.
 
 Among the more important environment variables are the following:
 <DL COMPACT>
-<DT><B>LD_ASSUME_KERNEL</B>
+<DT><B>LD_ASSUME_KERNEL</B> (glibc since 2.2.3)
 
 <DD>
-(glibc since 2.2.3)
 Each shared object can inform the dynamic linker of the minimum kernel ABI
 version that it requires.
 (This requirement is encoded in an ELF note section that is viewable via
@@ -370,7 +369,7 @@ only if the set-user-ID mode bit is enabled on the shared object file.
 
 <DD>
 (ELF only)
-If set to a nonempty string, causes the program to list its dynamic
+If set (to any value), causes the program to list its dynamic
 dependencies, as if run by
 <B><A HREF="../man1/ldd.1.html">ldd</A></B>(1),
 
@@ -435,7 +434,8 @@ in the chapter
 
 <DD>
 (glibc since 2.1.95)
-Do not update the GOT (global offset table) and PLT (procedure linkage table)
+If this environment variable is set to a nonempty string,
+do not update the GOT (global offset table) and PLT (procedure linkage table)
 after resolving a symbol.
 <DT><B>LD_DEBUG</B>
 
@@ -473,7 +473,8 @@ is ignored in secure-execution mode.
 
 <DD>
 (glibc since 2.1.91)
-Allow weak symbols to be overridden (reverting to old glibc behavior).
+If this environment variable is defined (with any value),
+allow weak symbols to be overridden (reverting to old glibc behavior).
 
 
 
@@ -563,7 +564,10 @@ is always used.
 
 <DD>
 (glibc since 2.1)
-Show auxiliary array passed up from the kernel.
+If this environment variable is defined (with any value),
+show the auxiliary array passed up from the kernel (see also
+<B><A HREF="../man3/getauxval.3.html">getauxval</A></B>(3)).
+
 Since glibc 2.3.5,
 <B>LD_SHOW_AUXV</B>
 
@@ -572,7 +576,8 @@ is ignored in secure-execution mode.
 
 <DD>
 (glibc since 2.4)
-Trace prelinking of the object whose name is assigned to
+If this environment variable is defined (with any value),
+trace prelinking of the object whose name is assigned to
 this environment variable.
 (Use
 <B><A HREF="../man1/ldd.1.html">ldd</A></B>(1)
@@ -618,6 +623,31 @@ environment variable has been set.
 <DD>
 (ELF only)(glibc since 2.1.3)
 If set to a nonempty string, warn about unresolved symbols.
+<DT><B>LD_PREFER_MAP_32BIT_EXEC</B>
+
+<DD>
+(x86-64 only)(glibc since 2.23)
+According to the Intel Silvermont software optimization guide, for 64-bit
+applications, branch prediction performance can be negatively impacted
+when the target of a branch is more than 4GB away from the branch.
+If this environment variable is set (to any value),
+<B>ld.so</B>
+
+will first try to map executable pages using the
+<B><A HREF="../man2/mmap.2.html">mmap</A></B>(2)
+
+<B>MAP_32BIT</B>
+
+flag, and fall back to mapping without that flag if that attempt fails.
+NB: MAP_32BIT will map to the low 2GB (not 4GB) of the address space.
+Because
+<B>MAP_32BIT</B>
+
+reduces the address range available for address space layout
+randomization (ASLR),
+<B>LD_PREFER_MAP_32BIT_EXEC</B>
+
+is always disabled in secure-execution mode.
 <DT><B>LDD_ARGV0</B>
 
 <DD>
@@ -768,6 +798,6 @@ mtrr, pat, pbe, pge, pn, pse36, sep, ss, sse, sse2, tm
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:41:26 GMT, April 20, 2020
+Time: 03:41:58 GMT, April 20, 2020
 </BODY>
 </HTML>
