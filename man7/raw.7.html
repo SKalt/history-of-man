@@ -170,16 +170,27 @@ socket options valid for datagram sockets are supported.
 <A NAME="lbAG">&nbsp;</A>
 <H2>NOTES</H2>
 
-Raw sockets fragment a packet when its total length exceeds the 
-interface MTU
-(but see BUGS).
-A more network friendly and faster alternative is to implement path MTU 
-discovery as described in the
-<B>IP_MTU_DISCOVER </B>
+By default raw sockets do path MTU (Maximum Transmission Unit) discovery. 
+This means the kernel
+will keep track of the MTU to a specific target IP address and return
+<I>EMSGSIZE</I>
 
-section of
-<B><A HREF="../man7/ip.7.html">ip</A></B>(7).
+when a raw packet write exceeds it. 
+When this happens the application should decrease the packet size. 
+Path MTU discovery can be also turned off using the
+<B>IP_MTU_DISCOVER</B>
 
+socket option or the 
+<B>ip_no_pmtu_disc</B>
+
+sysctl, see 
+<B><A HREF="../man7/ip.7.html">ip</A>(7)</B>
+
+for details. 
+When turned off raw sockets will fragment outgoing packets
+that exceed the interface MTU. 
+However disabling it is not recommended
+for performance and reliability reasons.
 <P>
 A raw socket can be bound to a specific local address using the 
 <B><A HREF="../man2/bind.2.html">bind</A></B>(2)
@@ -388,6 +399,6 @@ include file for the IP protocol.
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 02:32:35 GMT, April 20, 2020
+Time: 02:33:05 GMT, April 20, 2020
 </BODY>
 </HTML>
