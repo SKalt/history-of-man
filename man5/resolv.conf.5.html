@@ -48,10 +48,9 @@ The configuration file is considered a trusted source of DNS information
 source).
 <P>
 
-If this file does not exist,
-only the name server on the local machine will be queried;
-the domain name is determined from the hostname
-and the domain search path is constructed from the domain name.
+If this file does not exist, only the name server on the local machine
+will be queried, and the search list contains the local domain name
+determined from the hostname.
 <P>
 
 The different configuration options are:
@@ -73,20 +72,16 @@ the default is to use the name server on the local machine.
 try the next, until out of name servers,
 then repeat trying all the name servers
 until a maximum number of retries are made.)
-<DT><B>domain</B> Local domain name.<DD>
-Most queries for names within this domain can use short names
-relative to the local domain.
-If set to '.', the root domain is considered.
-If no <B>domain</B> entry is present, the domain is determined
-from the local hostname returned by
+<DT><B>search</B> Search list for host-name lookup.<DD>
+By default, the search list contains one entry, the local domain name.
+It is determined from the local hostname returned by
 <B><A HREF="../man2/gethostname.2.html">gethostname</A></B>(2);
 
-the domain part is taken to be everything after the first '.'.
-Finally, if the hostname does not contain a domain part, the root
-domain is assumed.
-<DT><B>search</B> Search list for host-name lookup.<DD>
-The search list is normally determined from the local domain name;
-by default, it contains only the local domain name.
+the local domain name is taken to be everything after the first
+'.'.
+Finally, if the hostname does not contain a '.', the
+root domain is assumed as the local domain name.
+<DT><DD>
 This may be changed by listing the desired domain search path
 following the <I>search</I> keyword with spaces or tabs separating
 the names.
@@ -116,11 +111,24 @@ traffic if the servers for the listed domains are not local,
 and that queries will time out if no server is available
 for one of the domains.
 <DT><DD>
+If there are multiple
+<B>search</B>
+
+directives, only the search list from the last instance is used.
+<DT><DD>
 In glibc 2.25 and earlier, the search list is limited to six domains
 with a total of 256 characters.
 Since glibc 2.26,
 
 the search list is unlimited.
+<DT><DD>
+The
+<B>domain</B>
+
+directive is an obsolete name for the
+<B>search</B>
+
+directive that handles one search list entry only.
 <DT><B>sortlist</B><DD>
 This option allows addresses returned by
 <B><A HREF="../man3/gethostbyname.3.html">gethostbyname</A></B>(3)
@@ -387,11 +395,6 @@ This option disables automatic reloading of a changed configuration file.
 </DL>
 <P>
 
-The <I>domain</I> and <I>search</I> keywords are mutually exclusive.
-If more than one instance of these keywords is present,
-the last instance wins.
-<P>
-
 The <I>search</I> keyword of a system's <I>resolv.conf</I> file can be
 overridden on a per-process basis by setting the environment variable
 <B>LOCALDOMAIN</B>
@@ -456,6 +459,6 @@ Name Server Operations Guide for BIND
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:51:43 GMT, April 20, 2020
+Time: 03:52:15 GMT, April 20, 2020
 </BODY>
 </HTML>

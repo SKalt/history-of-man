@@ -26,7 +26,7 @@ the source, must acknowledge the copyright and authors of this work.
 <HTML><HEAD><TITLE>Man page of PIVOT_ROOT</TITLE>
 </HEAD><BODY>
 <H1>PIVOT_ROOT</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2019-08-02<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2019-11-19<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -446,6 +446,7 @@ hello world
 #include &lt;<A HREF="file:///usr/include/sys/mount.h">sys/mount.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/sys/stat.h">sys/stat.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/limits.h">limits.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/sys/mman.h">sys/mman.h</A>&gt;
 <P>
 #define errExit(msg)    do { perror(msg); exit(EXIT_FAILURE); \
 <BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}&nbsp;while&nbsp;(0)
@@ -513,9 +514,10 @@ main(int argc, char *argv[])
 {
 <BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Create&nbsp;a&nbsp;child&nbsp;process&nbsp;in&nbsp;a&nbsp;new&nbsp;mount&nbsp;namespace&nbsp;*/
 <P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;char&nbsp;*stack&nbsp;=&nbsp;malloc(STACK_SIZE);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(stack&nbsp;==&nbsp;NULL)
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;errExit(&quot;malloc&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;char&nbsp;*stack&nbsp;=&nbsp;mmap(NULL,&nbsp;STACK_SIZE,&nbsp;PROT_READ&nbsp;|&nbsp;PROT_WRITE,
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;MAP_PRIVATE&nbsp;|&nbsp;MAP_ANONYMOUS&nbsp;|&nbsp;MAP_STACK,&nbsp;-1,&nbsp;0);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(stack&nbsp;==&nbsp;MAP_FAILED)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;errExit(&quot;mmap&quot;);
 <P>
 <BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(clone(child,&nbsp;stack&nbsp;+&nbsp;STACK_SIZE,
 <BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;CLONE_NEWNS&nbsp;|&nbsp;SIGCHLD,&nbsp;&amp;argv[1])&nbsp;==&nbsp;-1)
@@ -575,6 +577,6 @@ main(int argc, char *argv[])
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:51:30 GMT, April 20, 2020
+Time: 03:52:03 GMT, April 20, 2020
 </BODY>
 </HTML>

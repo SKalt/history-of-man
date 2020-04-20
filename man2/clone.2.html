@@ -8,13 +8,13 @@ May be distributed under the GNU General Public License.
 <HTML><HEAD><TITLE>Man page of CLONE</TITLE>
 </HEAD><BODY>
 <H1>CLONE</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2019-08-02<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2019-11-19<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
 <H2>NAME</H2>
 
-clone, __clone2 - create a child process
+clone, __clone2, clone3 - create a child process
 <A NAME="lbAC">&nbsp;</A>
 <H2>SYNOPSIS</H2>
 
@@ -24,58 +24,83 @@ clone, __clone2 - create a child process
 <B>#define _GNU_SOURCE</B>
 <B>#include &lt;<A HREF="file:///usr/include/sched.h">sched.h</A>&gt;</B>
 
-<B>int clone(int (*</B><I>fn</I><B>)(void *), void *</B><I>child_stack</I><B>,</B>
-<B>          int </B><I>flags</I><B>, void *</B><I>arg</I><B>, ... </B>
-<B>          /* pid_t *</B><I>ptid</I><B>, void *</B><I>newtls</I><B>, pid_t *</B><I>ctid</I><B> */ );</B>
+<B>int clone(int (*</B><I>fn</I><B>)(void *), void *</B><I>stack</I><B>, int </B><I>flags</I><B>, void *</B><I>arg</I><B>, ... </B>
+<B>          /* pid_t *</B><I>parent_tid</I><B>, void *</B><I>tls</I><B>, pid_t *</B><I>child_tid</I><B> */ );</B>
 
-/* For the prototype of the raw system call, see NOTES */
+/* For the prototype of the raw clone() system call, see NOTES */
+
+<B>long clone3(struct clone_args *</B><I>cl_args</I><B>, size_t </B><I>size</I><B>);</B>
 </PRE>
 
+<P>
+
+<I>Note</I>:
+
+There is not yet a glibc wrapper for
+<B>clone3</B>();
+
+see NOTES.
 <A NAME="lbAD">&nbsp;</A>
 <H2>DESCRIPTION</H2>
 
-<B>clone</B>()
-
-creates a new process, in a manner similar to
+These system calls
+create a new (&quot;child&quot;) process, in a manner similar to
 <B><A HREF="../man2/fork.2.html">fork</A></B>(2).
 
 <P>
 
-This page describes both the glibc
+By contrast with
+<B><A HREF="../man2/fork.2.html">fork</A></B>(2),
+
+these system calls provide more precise control over what pieces of execution
+context are shared between the calling process and the child process.
+For example, using these system calls, the caller can control whether
+or not the two processes share the virtual address space,
+the table of file descriptors, and the table of signal handlers.
+These system calls also allow the new child process to be placed
+in separate
+<B><A HREF="../man7/namespaces.7.html">namespaces</A></B>(7).
+
+<P>
+
+Note that in this manual
+page, &quot;calling process&quot; normally corresponds to &quot;parent process&quot;.
+But see the description of
+<B>CLONE_PARENT</B>
+
+below.
+<P>
+
+This page describes the following interfaces:
+<DL COMPACT>
+<DT>*<DD>
+The glibc
 <B>clone</B>()
 
 wrapper function and the underlying system call on which it is based.
 The main text describes the wrapper function;
 the differences for the raw system call
 are described toward the end of this page.
+<DT>*<DD>
+The newer
+<B>clone3</B>()
+
+system call.
+</DL>
 <P>
 
-Unlike
-<B><A HREF="../man2/fork.2.html">fork</A></B>(2),
+In the remainder of this page, the terminology &quot;the clone call&quot; is used
+when noting details that apply to all of these interfaces,
 
+<A NAME="lbAE">&nbsp;</A>
+<H3>The clone() wrapper function</H3>
+
+<P>
+
+When the child process is created with the
 <B>clone</B>()
 
-allows the child process to share parts of its execution context with
-the calling process, such as the virtual address space, the table of file
-descriptors, and the table of signal handlers.
-(Note that on this manual
-page, &quot;calling process&quot; normally corresponds to &quot;parent process&quot;.
-But see the description of
-<B>CLONE_PARENT</B>
-
-below.)
-<P>
-
-One use of
-<B>clone</B>()
-
-is to implement threads: multiple flows of control in a program that
-run concurrently in a shared address space.
-<P>
-
-When the child process is created with
-<B>clone</B>(),
-
+wrapper function,
 it commences execution by calling the function pointed to by the argument
 <I>fn</I>.
 
@@ -110,7 +135,7 @@ or after receiving a fatal signal.
 <P>
 
 The
-<I>child_stack</I>
+<I>stack</I>
 
 argument specifies the location of the stack used by the child process.
 Since the child and calling process may share memory,
@@ -123,19 +148,181 @@ space to
 
 Stacks grow downward on all processors that run Linux
 (except the HP PA processors), so
-<I>child_stack</I>
+<I>stack</I>
 
 usually points to the topmost address of the memory space set up for
 the child stack.
+Note that
+<B>clone</B>()
+
+does not provide a means whereby the caller can inform the kernel of the
+size of the stack area.
 <P>
 
-The low byte of
+The remaining arguments to
+<B>clone</B>()
+
+are discussed below.
+
+<A NAME="lbAF">&nbsp;</A>
+<H3>clone3()</H3>
+
+<P>
+
+The
+<B>clone3</B>()
+
+system call provides a superset of the functionality of the older
+<B>clone</B>()
+
+interface.
+It also provides a number of API improvements, including:
+space for additional flags bits;
+cleaner separation in the use of various arguments;
+and the ability to specify the size of the child's stack area.
+<P>
+
+As with
+<B><A HREF="../man2/fork.2.html">fork</A></B>(2),
+
+<B>clone3</B>()
+
+returns in both the parent and the child.
+It returns 0 in the child process and returns the PID of the child
+in the parent.
+<P>
+
+The
+<I>cl_args</I>
+
+argument of
+<B>clone3</B>()
+
+is a structure of the following form:
+<P>
+
+
+
+struct clone_args {
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;u64&nbsp;flags;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Flags&nbsp;bit&nbsp;mask&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;u64&nbsp;pidfd;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Where&nbsp;to&nbsp;store&nbsp;PID&nbsp;file&nbsp;descriptor
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<I>pid_t&nbsp;*</I>)&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;u64&nbsp;child_tid;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Where&nbsp;to&nbsp;store&nbsp;child&nbsp;TID,
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;in&nbsp;child's&nbsp;memory&nbsp;(<I>pid_t&nbsp;*</I>)&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;u64&nbsp;parent_tid;&nbsp;&nbsp;&nbsp;/*&nbsp;Where&nbsp;to&nbsp;store&nbsp;child&nbsp;TID,
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;in&nbsp;parent's&nbsp;memory&nbsp;(<I>int&nbsp;*</I>)&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;u64&nbsp;exit_signal;&nbsp;&nbsp;/*&nbsp;Signal&nbsp;to&nbsp;deliver&nbsp;to&nbsp;parent&nbsp;on
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;child&nbsp;termination&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;u64&nbsp;stack;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Pointer&nbsp;to&nbsp;lowest&nbsp;byte&nbsp;of&nbsp;stack&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;u64&nbsp;stack_size;&nbsp;&nbsp;&nbsp;/*&nbsp;Size&nbsp;of&nbsp;stack&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;u64&nbsp;tls;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Location&nbsp;of&nbsp;new&nbsp;TLS&nbsp;*/
+};
+
+
+<P>
+
+The
+<I>size</I>
+
+argument that is supplied to
+<B>clone3</B>()
+
+should be initialized to the size of this structure.
+(The existence of the
+<I>size</I>
+
+argument permits future extensions to the
+<I>clone_args</I>
+
+structure.)
+<P>
+
+The stack for the child process is specified via
+<I>cl_args.stack</I>,
+
+which points to the lowest byte of the stack area,
+and
+<I>cl_args.stack_size</I>,
+
+which specifies the size of the stack in bytes.
+In the case where the
+<B>CLONE_VM</B>
+
+flag (see below) is specified, a stack must be explicitly allocated
+and specified.
+Otherwise, these two fields can be specified as NULL and 0,
+which causes the child to use the same stack area as the parent
+(in the child's own virtual address space).
+<P>
+
+The remaining fields in the
+<I>cl_args</I>
+
+argument are discussed below.
+
+<A NAME="lbAG">&nbsp;</A>
+<H3>Equivalence between clone() and clone3() arguments</H3>
+
+<P>
+
+Unlike the older
+<B>clone</B>()
+
+interface, where arguments are passed individually, in the newer
+<B>clone3</B>()
+
+interface the arguments are packaged into the
+<I>clone_args</I>
+
+structure shown above.
+This structure allows for a superset of the information passed via the
+<B>clone</B>()
+
+arguments.
+<P>
+
+The following table shows the equivalence between the arguments of
+<B>clone</B>()
+
+and the fields in the
+<I>clone_args</I>
+
+argument supplied to
+<B>clone3</B>():
+
+<DL COMPACT><DT><DD>
+<TABLE>
+<TR VALIGN=top><TD><B>clone()</B></TD><TD><B><A HREF="../man3/clone.3.html">clone</A>(3)</B></TD><TD><B>Notes</B><BR></TD></TR>
+<TR VALIGN=top><TD></TD><TD><I>cl_args</I> field</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><I>flags &amp; ~0xff</I></TD><TD><I>flags</I></TD><TD>For most flags; details below<BR></TD></TR>
+<TR VALIGN=top><TD><I>parent_tid</I></TD><TD><I>pidfd</I></TD><TD>See CLONE_PIDFD<BR></TD></TR>
+<TR VALIGN=top><TD><I>child_tid</I></TD><TD><I>child_tid</I></TD><TD>See CLONE_CHILD_SETTID<BR></TD></TR>
+<TR VALIGN=top><TD><I>parent_tid</I></TD><TD><I>parent_tid</I></TD><TD>See CLONE_PARENT_SETTID<BR></TD></TR>
+<TR VALIGN=top><TD><I>flags &amp; 0xff</I></TD><TD><I>exit_signal</I></TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><I>stack</I></TD><TD><I>stack</I></TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><I>---</I></TD><TD><I>stack_size</I></TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><I>tls</I></TD><TD><I>tls</I></TD><TD>See CLONE_SETTLS<BR></TD></TR>
+</TABLE>
+
+</DL>
+
+
+<A NAME="lbAH">&nbsp;</A>
+<H3>The child termination signal</H3>
+
+<P>
+
+When the child process terminates, a signal may be sent to the parent.
+The termination signal is specified in the low byte of
 <I>flags</I>
 
-contains the number of the
-<I>termination signal</I>
+(<B>clone</B>())
 
-sent to the parent when the child dies.
+or in
+<I>cl_args.exit_signal</I>
+
+(<B>clone3</B>()).
+
 If this signal is specified as anything other than
 <B>SIGCHLD</B>,
 
@@ -148,21 +335,66 @@ or
 options when waiting for the child with
 <B><A HREF="../man2/wait.2.html">wait</A></B>(2).
 
-If no signal is specified, then the parent process is not signaled
+If no signal (i.e., zero) is specified, then the parent process is not signaled
 when the child terminates.
+
+<A NAME="lbAI">&nbsp;</A>
+<H3>The flags mask</H3>
+
 <P>
 
+Both
+<B>clone</B>()
+
+and
+<B>clone3</B>()
+
+allow a flags bit mask that modifies their behavior
+and allows the caller to specify what is shared between the calling process
+and the child process.
+This bit mask---the
 <I>flags</I>
 
-may also be bitwise-ORed with zero or more of the following constants,
-in order to specify what is shared between the calling process
-and the child process:
+argument of
+<B>clone</B>()
+
+or the
+<I>cl_args.flags</I>
+
+field passed to
+<B>clone3</B>()---is
+
+referred to as the
+<I>flags</I>
+
+mask in the remainder of this page.
+<P>
+
+The
+<I>flags</I>
+
+mask is specified as a bitwise-OR of zero or more of
+the constants listed below.
+Except as noted below, these flags are available
+(and have the same effect) in both
+<B>clone</B>()
+
+and
+<B>clone3</B>().
+
 <DL COMPACT>
 <DT><B>CLONE_CHILD_CLEARTID</B> (since Linux 2.5.49)
 
 <DD>
-Clear (zero) the child thread ID at the location
-<I>ctid</I>
+Clear (zero) the child thread ID at the location pointed to by
+<I>child_tid</I>
+
+(<B>clone</B>())
+
+or
+<I>cl_args.child_tid</I>
+
+(<B>clone3</B>())
 
 in child memory when the child exits, and do a wakeup on the futex
 at that address.
@@ -174,21 +406,50 @@ This is used by threading libraries.
 <DT><B>CLONE_CHILD_SETTID</B> (since Linux 2.5.49)
 
 <DD>
-Store the child thread ID at the location
-<I>ctid</I>
+Store the child thread ID at the location pointed to by
+<I>child_tid</I>
+
+(<B>clone</B>())
+
+or
+<I>cl_args.child_tid</I>
+
+(<B>clone3</B>())
 
 in the child's memory.
-The store operation completes before
-<B>clone</B>()
-
+The store operation completes before the clone call
 returns control to user space in the child process.
-(Note that the store operation may not have completed before
-<B>clone</B>()
-
+(Note that the store operation may not have completed before the clone call
 returns in the parent process, which will be relevant if the
 <B>CLONE_VM</B>
 
 flag is also employed.)
+<DT><B>CLONE_DETACHED</B> (historical)
+
+<DD>
+For a while (during the Linux 2.5 development series)
+
+there was a
+<B>CLONE_DETACHED</B>
+
+flag,
+which caused the parent not to receive a signal when the child terminated.
+Ultimately, the effect of this flag was subsumed under the
+<B>CLONE_THREAD</B>
+
+flag and by the time Linux 2.6.0 was released, this flag had no effect.
+Starting in Linux 2.6.2, the need to give this flag together with
+<B>CLONE_THREAD</B>
+
+disappeared.
+<DT><DD>
+This flag is still defined, but it is usually ignored when calling
+<B>clone</B>().
+
+However, see the description of
+<B>CLONE_PIDFD</B>
+
+for some exceptions.
 <DT><B>CLONE_FILES</B> (since Linux 2.0)
 
 <DD>
@@ -215,9 +476,7 @@ If
 <B>CLONE_FILES</B>
 
 is not set, the child process inherits a copy of all file descriptors
-opened in the calling process at the time of
-<B>clone</B>().
-
+opened in the calling process at the time of the clone call.
 Subsequent operations that open or close file descriptors,
 or change file descriptor flags,
 performed by either the calling
@@ -254,10 +513,7 @@ If
 <B>CLONE_FS</B>
 
 is not set, the child process works on a copy of the filesystem
-information of the calling process at the time of the
-<B>clone</B>()
-
-call.
+information of the calling process at the time of the clone call.
 Calls to
 <B><A HREF="../man2/chroot.2.html">chroot</A></B>(2),
 
@@ -311,7 +567,6 @@ If this flag is not set, then (as with
 <B><A HREF="../man2/fork.2.html">fork</A></B>(2))
 
 the process is created in the same cgroup namespaces as the calling process.
-This flag is intended for the implementation of containers.
 <DT><DD>
 For further information on cgroup namespaces, see
 <B><A HREF="../man7/cgroup_namespaces.7.html">cgroup_namespaces</A></B>(7).
@@ -336,29 +591,10 @@ If this flag is not set, then (as with
 
 the process is created in the same IPC namespace as
 the calling process.
-This flag is intended for the implementation of containers.
 <DT><DD>
-An IPC namespace provides an isolated view of System&nbsp;V IPC objects (see
-<B><A HREF="../man7/sysvipc.7.html">sysvipc</A></B>(7))
+For further information on IPC namespaces, see
+<B><A HREF="../man7/ipc_namespaces.7.html">ipc_namespaces</A></B>(7).
 
-and (since Linux 2.6.30)
-
-
-POSIX message queues
-(see
-<B><A HREF="../man7/mq_overview.7.html">mq_overview</A></B>(7)).
-
-The common characteristic of these IPC mechanisms is that IPC
-objects are identified by mechanisms other than filesystem
-pathnames.
-<DT><DD>
-Objects created in an IPC namespace are visible to all other processes
-that are members of that namespace,
-but are not visible to processes in other IPC namespaces.
-<DT><DD>
-When an IPC namespace is destroyed
-(i.e., when the last process that is a member of the namespace terminates),
-all IPC objects in the namespace are automatically destroyed.
 <DT><DD>
 Only a privileged process
 (<B>CAP_SYS_ADMIN</B>)
@@ -368,10 +604,6 @@ can employ
 
 This flag can't be specified in conjunction with
 <B>CLONE_SYSVSEM</B>.
-
-<DT><DD>
-For further information on IPC namespaces, see
-<B><A HREF="../man7/namespaces.7.html">namespaces</A></B>(7).
 
 <DT><B>CLONE_NEWNET</B> (since Linux 2.6.24)
 
@@ -388,33 +620,9 @@ If this flag is not set, then (as with
 
 the process is created in the same network namespace as
 the calling process.
-This flag is intended for the implementation of containers.
 <DT><DD>
-A network namespace provides an isolated view of the networking stack
-(network device interfaces, IPv4 and IPv6 protocol stacks,
-IP routing tables, firewall rules, the
-<I>/proc/net</I>
-
-and
-<I>/sys/class/net</I>
-
-directory trees, sockets, etc.).
-A physical network device can live in exactly one
-network namespace.
-A virtual network
-(<B><A HREF="../man4/veth.4.html">veth</A></B>(4))
-
-device pair provides a pipe-like abstraction
-that can be used to create tunnels between network namespaces,
-and can be used to create a bridge to a physical network device
-in another namespace.
-<DT><DD>
-When a network namespace is freed
-(i.e., when the last process in the namespace terminates),
-its physical network devices are moved back to the
-initial network namespace (not to the parent of the process).
 For further information on network namespaces, see
-<B><A HREF="../man7/namespaces.7.html">namespaces</A></B>(7).
+<B><A HREF="../man7/network_namespaces.7.html">network_namespaces</A></B>(7).
 
 <DT><DD>
 Only a privileged process
@@ -437,6 +645,13 @@ If
 is not set, the child lives in the same mount
 namespace as the parent.
 <DT><DD>
+For further information on mount namespaces, see
+<B><A HREF="../man7/namespaces.7.html">namespaces</A></B>(7)
+
+and
+<B><A HREF="../man7/mount_namespaces.7.html">mount_namespaces</A></B>(7).
+
+<DT><DD>
 Only a privileged process
 (<B>CAP_SYS_ADMIN</B>)
 
@@ -450,17 +665,7 @@ and
 <B>CLONE_FS</B>
 
 
-in the same
-<B>clone</B>()
-
-call.
-<DT><DD>
-For further information on mount namespaces, see
-<B><A HREF="../man7/namespaces.7.html">namespaces</A></B>(7)
-
-and
-<B><A HREF="../man7/mount_namespaces.7.html">mount_namespaces</A></B>(7).
-
+in the same clone call.
 <DT><B>CLONE_NEWPID</B> (since Linux 2.6.24)
 
 <DD>
@@ -480,7 +685,6 @@ If this flag is not set, then (as with
 
 the process is created in the same PID namespace as
 the calling process.
-This flag is intended for the implementation of containers.
 <DT><DD>
 For further information on PID namespaces, see
 <B><A HREF="../man7/namespaces.7.html">namespaces</A></B>(7)
@@ -524,6 +728,13 @@ If this flag is not set, then (as with
 
 the process is created in the same user namespace as the calling process.
 <DT><DD>
+For further information on user namespaces, see
+<B><A HREF="../man7/namespaces.7.html">namespaces</A></B>(7)
+
+and
+<B><A HREF="../man7/user_namespaces.7.html">user_namespaces</A></B>(7).
+
+<DT><DD>
 Before Linux 3.8, use of
 <B>CLONE_NEWUSER</B>
 
@@ -556,13 +767,6 @@ For security reasons,
 cannot be specified in conjunction with
 <B>CLONE_FS</B>.
 
-<DT><DD>
-For further information on user namespaces, see
-<B><A HREF="../man7/namespaces.7.html">namespaces</A></B>(7)
-
-and
-<B><A HREF="../man7/user_namespaces.7.html">user_namespaces</A></B>(7).
-
 <DT><B>CLONE_NEWUTS</B> (since Linux 2.6.19)
 
 <DD>
@@ -577,31 +781,16 @@ If this flag is not set, then (as with
 
 the process is created in the same UTS namespace as
 the calling process.
-This flag is intended for the implementation of containers.
 <DT><DD>
-A UTS namespace is the set of identifiers returned by
-<B><A HREF="../man2/uname.2.html">uname</A></B>(2);
+For further information on UTS namespaces, see
+<B><A HREF="../man7/uts_namespaces.7.html">uts_namespaces</A></B>(7).
 
-among these, the domain name and the hostname can be modified by
-<B><A HREF="../man2/setdomainname.2.html">setdomainname</A></B>(2)
-
-and
-<B><A HREF="../man2/sethostname.2.html">sethostname</A></B>(2),
-
-respectively.
-Changes made to the identifiers in a UTS namespace
-are visible to all other processes in the same namespace,
-but are not visible to processes in other UTS namespaces.
 <DT><DD>
 Only a privileged process
 (<B>CAP_SYS_ADMIN</B>)
 
 can employ
 <B>CLONE_NEWUTS</B>.
-
-<DT><DD>
-For further information on UTS namespaces, see
-<B><A HREF="../man7/namespaces.7.html">namespaces</A></B>(7).
 
 <DT><B>CLONE_PARENT</B> (since Linux 2.3.12)
 
@@ -634,17 +823,22 @@ calling process itself, will be signaled.
 <DT><B>CLONE_PARENT_SETTID</B> (since Linux 2.5.49)
 
 <DD>
-Store the child thread ID at the location
-<I>ptid</I>
+Store the child thread ID at the location pointed to by
+<I>parent_tid</I>
+
+(<B>clone</B>())
+
+or
+<I>cl_args.child_tid</I>
+
+(<B>clone3</B>())
 
 in the parent's memory.
 (In Linux 2.5.32-2.5.48 there was a flag
 <B>CLONE_SETTID</B>
 
 that did this.)
-The store operation completes before
-<B>clone</B>()
-
+The store operation completes before the clone call
 returns control to user space.
 <DT><B>CLONE_PID</B> (Linux 2.0 to 2.5.15)
 
@@ -659,56 +853,83 @@ of not much use.
 From Linux 2.3.21 onward, this flag could be
 specified only by the system boot process (PID 0).
 The flag disappeared completely from the kernel sources in Linux 2.5.16.
-Since then, the kernel silently ignores this bit if it is specified in
-<I>flags</I>.
+Subsequently, the kernel silently ignored this bit if it was specified in the
+<I>flags</I>
 
+mask.
+Much later, the same bit was recycled for use as the
+<B>CLONE_PIDFD</B>
+
+flag.
 <DT><B>CLONE_PIDFD</B> (since Linux 5.2)
 
 <DD>
 
-If
-<B>CLONE_PIDFD</B>
-
-is set,
-<B>clone</B>()
-
-stores a PID file descriptor referring to the child process at
-the location
-<I>ptid</I>
-
-in the parent's memory.
+If this flag is specified,
+a PID file descriptor referring to the child process is allocated
+and placed at a specified location in the parent's memory.
 The close-on-exec flag is set on this new file descriptor.
 PID file descriptors can be used for the purposes described in
 <B><A HREF="../man2/pidfd_open.2.html">pidfd_open</A></B>(2).
 
-<DT><DD>
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT>*<DD>
+When using
+<B>clone3</B>(),
+
+the PID file descriptor is placed at the location pointed to by
+<I>cl_args.pidfd</I>.
+
+<DT>*<DD>
+When using
+<B>clone</B>(),
+
+the PID file descriptor is placed at the location pointed to by
+<I>parent_tid</I>.
+
 Since the
-<I>ptid</I>
+<I>parent_tid</I>
 
 argument is used to return the PID file descriptor,
 <B>CLONE_PIDFD</B>
 
 cannot be used with
-<B>CLONE_PARENT_SETTID.</B>
+<B>CLONE_PARENT_SETTID</B>
+
+when calling
+<B>clone</B>().
+
+</DL>
+</DL>
 
 <DT><DD>
 It is currently not possible to use this flag together with
 <B>CLONE_THREAD.</B>
 
 This means that the process identified by the PID file descriptor
-will always be a thread-group leader.
+will always be a thread group leader.
 <DT><DD>
-For a while there was a
+If the obsolete
 <B>CLONE_DETACHED</B>
 
-flag.
-This flag is usually ignored when passed along with other flags.
-However, when passed alongside
-<B>CLONE_PIDFD</B>,
+flag is specified alongside
+<B>CLONE_PIDFD</B>
+
+when calling
+<B>clone</B>(),
 
 an error is returned.
-This ensures that this flag can be reused
-for further PID file descriptor features in the future.
+An error also results if
+<B>CLONE_DETACHED</B>
+
+is specified when calling
+<B>clone3</B>().
+
+This error behavior ensures that the bit corresponding to
+<B>CLONE_DETACHED</B>
+
+can be reused for further PID file descriptor features in the future.
 <DT><B>CLONE_PTRACE</B> (since Linux 2.2)
 
 <DD>
@@ -723,15 +944,15 @@ then trace the child also (see
 
 <DD>
 The TLS (Thread Local Storage) descriptor is set to
-<I>newtls</I>.
+<I>tls</I>.
 
 <DT><DD>
 The interpretation of
-<I>newtls</I>
+<I>tls</I>
 
 and the resulting effect is architecture dependent.
 On x86,
-<I>newtls</I>
+<I>tls</I>
 
 is interpreted as a
 <I>struct user_desc&nbsp;*</I>
@@ -748,6 +969,9 @@ argument to
 
 On architectures with a dedicated TLS register, it is the new value
 of that register.
+<DT><DD>
+Use of this flag requires detailed knowledge and generally it
+should not be used except in libraries implementing threading.
 <DT><B>CLONE_SIGHAND</B> (since Linux 2.0)
 
 <DD>
@@ -773,10 +997,7 @@ If
 <B>CLONE_SIGHAND</B>
 
 is not set, the child process inherits a copy of the signal handlers
-of the calling process at the time
-<B>clone</B>()
-
-is called.
+of the calling process at the time of the clone call.
 Calls to
 <B><A HREF="../man2/sigaction.2.html">sigaction</A></B>(2)
 
@@ -785,9 +1006,10 @@ process.
 <DT><DD>
 Since Linux 2.6.0,
 
+the
 <I>flags</I>
 
-must also include
+mask must also include
 <B>CLONE_VM</B>
 
 if
@@ -874,18 +1096,13 @@ return the TGID of the caller.
 The threads within a group can be distinguished by their (system-wide)
 unique thread IDs (TID).
 A new thread's TID is available as the function result
-returned to the caller of
-<B>clone</B>(),
-
+returned to the caller,
 and a thread can obtain
 its own TID using
 <B><A HREF="../man2/gettid.2.html">gettid</A></B>(2).
 
 <DT><DD>
-When a call is made to
-<B>clone</B>()
-
-without specifying
+When a clone call is made without specifying
 <B>CLONE_THREAD</B>,
 
 then the resulting thread is placed in a new thread group
@@ -898,9 +1115,7 @@ of the new thread group.
 A new thread created with
 <B>CLONE_THREAD</B>
 
-has the same parent process as the caller of
-<B>clone</B>()
-
+has the same parent process as the process that made the clone call
 (i.e., like
 <B>CLONE_PARENT</B>),
 
@@ -911,10 +1126,7 @@ return the same value for all of the threads in a thread group.
 When a
 <B>CLONE_THREAD</B>
 
-thread terminates, the thread that created it using
-<B>clone</B>()
-
-is not sent a
+thread terminates, the thread that created it is not sent a
 <B>SIGCHLD</B>
 
 (or other termination) signal;
@@ -946,10 +1158,10 @@ then any thread in the group can
 
 for that child.
 <DT><DD>
-Since Linux 2.5.35,
+Since Linux 2.5.35, the
 <I>flags</I>
 
-must also include
+mask must also include
 <B>CLONE_SIGHAND</B>
 
 if
@@ -1073,23 +1285,36 @@ If
 <B>CLONE_VM</B>
 
 is not set, the child process runs in a separate copy of the memory
-space of the calling process at the time of
-<B>clone</B>().
-
+space of the calling process at the time of the clone call.
 Memory writes or file mappings/unmappings performed by one of the
 processes do not affect the other, as with
 <B><A HREF="../man2/fork.2.html">fork</A></B>(2).
 
 </DL>
-<A NAME="lbAE">&nbsp;</A>
+<A NAME="lbAJ">&nbsp;</A>
 <H2>NOTES</H2>
+
+<P>
+
+One use of these systems calls
+is to implement threads: multiple flows of control in a program that
+run concurrently in a shared address space.
+<P>
+
+Glibc does not provide a wrapper for
+<B>clone3</B>();
+
+call it using
+<B><A HREF="../man2/syscall.2.html">syscall</A></B>(2).
+
+<P>
 
 Note that the glibc
 <B>clone</B>()
 
 wrapper function makes some changes
 in the memory pointed to by
-<I>child_stack</I>
+<I>stack</I>
 
 (changes required to set the stack up correctly for the child)
 <I>before</I>
@@ -1105,7 +1330,7 @@ is used to recursively create children,
 do not use the buffer employed for the parent's stack
 as the stack of the child.
 
-<A NAME="lbAF">&nbsp;</A>
+<A NAME="lbAK">&nbsp;</A>
 <H3>C library/kernel differences</H3>
 
 The raw
@@ -1128,14 +1353,20 @@ arguments of the
 wrapper function are omitted.
 <P>
 
-Another difference for the raw
+In contrast to the glibc wrapper, the raw
 <B>clone</B>()
 
-system call is that the
-<I>child_stack</I>
+system call accepts NULL as a
+<I>stack</I>
 
-argument may be NULL,
-in which case the child uses a duplicate of the parent's stack.
+argument (and
+<B>clone3</B>()
+
+likewise allows
+<I>cl_args.stack</I>
+
+to be NULL).
+In this case, the child uses a duplicate of the parent's stack.
 (Copy-on-write semantics ensure that the child gets separate copies
 of stack pages when either process modifies the stack.)
 In this case, for correct operation, the
@@ -1158,16 +1389,16 @@ as detailed in the following paragraphs.
 <P>
 
 The raw system call interface on x86-64 and some other architectures
-(including sh, tile, ia-64, and alpha) is:
+(including sh, tile, and alpha) is:
 <P>
 
 
 
-<B>long clone(unsigned long </B><I>flags</I><B>, void *</B><I>child_stack</I><B>,</B>
+<B>long clone(unsigned long </B><I>flags</I><B>, void *</B><I>stack</I><B>,</B>
 
-<B>           int *</B><I>ptid</I><B>, int *</B><I>ctid</I><B>,</B>
+<B>           int *</B><I>parent_tid</I><B>, int *</B><I>child_tid</I><B>,</B>
 
-<B>           unsigned long </B><I>newtls</I><B>);</B>
+<B>           unsigned long </B><I>tls</I><B>);</B>
 
 
 
@@ -1182,11 +1413,11 @@ the order of the last two arguments is reversed:
 
 
 
-<B>long clone(unsigned long </B><I>flags</I><B>, void *</B><I>child_stack</I><B>,</B>
+<B>long clone(unsigned long </B><I>flags</I><B>, void *</B><I>stack</I><B>,</B>
 
-<B>          int *</B><I>ptid</I><B>, unsigned long </B><I>newtls</I><B>,</B>
+<B>          int *</B><I>parent_tid</I><B>, unsigned long </B><I>tls</I><B>,</B>
 
-<B>          int *</B><I>ctid</I><B>);</B>
+<B>          int *</B><I>child_tid</I><B>);</B>
 
 
 
@@ -1199,11 +1430,11 @@ the order of the first two arguments is reversed:
 
 
 
-<B>long clone(void *</B><I>child_stack</I><B>, unsigned long </B><I>flags</I><B>,</B>
+<B>long clone(void *</B><I>stack</I><B>, unsigned long </B><I>flags</I><B>,</B>
 
-<B>           int *</B><I>ptid</I><B>, int *</B><I>ctid</I><B>,</B>
+<B>           int *</B><I>parent_tid</I><B>, int *</B><I>child_tid</I><B>,</B>
 
-<B>           unsigned long </B><I>newtls</I><B>);</B>
+<B>           unsigned long </B><I>tls</I><B>);</B>
 
 
 
@@ -1216,18 +1447,18 @@ an additional argument is supplied:
 
 
 
-<B>long clone(unsigned long </B><I>flags</I><B>, void *</B><I>child_stack</I><B>,</B>
+<B>long clone(unsigned long </B><I>flags</I><B>, void *</B><I>stack</I><B>,</B>
 
 <B>           int </B><I>stack_size</I><B>,</B><I></I>         /* Size of stack */
 
-<B>           int *</B><I>ptid</I><B>, int *</B><I>ctid</I><B>,</B>
+<B>           int *</B><I>parent_tid</I><B>, int *</B><I>child_tid</I><B>,</B>
 
-<B>           unsigned long </B><I>newtls</I><B>);</B>
-
-
+<B>           unsigned long </B><I>tls</I><B>);</B>
 
 
-<A NAME="lbAG">&nbsp;</A>
+
+
+<A NAME="lbAL">&nbsp;</A>
 <H3>blackfin, m68k, and sparc</H3>
 
 
@@ -1236,7 +1467,7 @@ an additional argument is supplied:
 The argument-passing conventions on
 blackfin, m68k, and sparc are different from the descriptions above.
 For details, see the kernel (and glibc) source.
-<A NAME="lbAH">&nbsp;</A>
+<A NAME="lbAM">&nbsp;</A>
 <H3>ia64</H3>
 
 On ia64, a different interface is used:
@@ -1246,11 +1477,13 @@ On ia64, a different interface is used:
 
 <B>int __clone2(int (*</B><I>fn</I><B>)(void *), </B>
 
-<B>             void *</B><I>child_stack_base</I><B>, size_t </B><I>stack_size</I><B>,</B>
+<B>             void *</B><I>stack_base</I><B>, size_t </B><I>stack_size</I><B>,</B>
 
 <B>             int </B><I>flags</I><B>, void *</B><I>arg</I><B>, ... </B>
 
-<B>          /* pid_t *</B><I>ptid</I><B>, struct user_desc *</B><I>tls</I><B>, pid_t *</B><I>ctid</I><B> */ );</B>
+<B>          /* pid_t *</B><I>parent_tid</I><B>, struct user_desc *</B><I>tls</I><B>,</B>
+
+<B>             pid_t *</B><I>child_tid</I><B> */ );</B>
 
 
 
@@ -1266,11 +1499,11 @@ prototype on microblaze):
 
 
 
-<B>long clone2(unsigned long </B><I>flags</I><B>, void *</B><I>child_stack_base</I><B>,</B>
+<B>long clone2(unsigned long </B><I>flags</I><B>, void *</B><I>stack_base</I><B>,</B>
 
 <B>            int </B><I>stack_size</I><B>,</B><I></I>         /* Size of stack */
 
-<B>            int *</B><I>ptid</I><B>, int *</B><I>ctid</I><B>,</B>
+<B>            int *</B><I>parent_tid</I><B>, int *</B><I>child_tid</I><B>,</B>
 
 <B>            unsigned long </B><I>tls</I><B>);</B>
 
@@ -1284,30 +1517,30 @@ operates in the same way as
 <B>clone</B>(),
 
 except that
-<I>child_stack_base</I>
+<I>stack_base</I>
 
 points to the lowest address of the child's stack area,
 and
 <I>stack_size</I>
 
 specifies the size of the stack pointed to by
-<I>child_stack_base</I>.
+<I>stack_base</I>.
 
-<A NAME="lbAI">&nbsp;</A>
+<A NAME="lbAN">&nbsp;</A>
 <H3>Linux 2.4 and earlier</H3>
 
 In Linux 2.4 and earlier,
 <B>clone</B>()
 
 does not take arguments
-<I>ptid</I>,
+<I>parent_tid</I>,
 
 <I>tls</I>,
 
 and
-<I>ctid</I>.
+<I>child_tid</I>.
 
-<A NAME="lbAJ">&nbsp;</A>
+<A NAME="lbAO">&nbsp;</A>
 <H2>RETURN VALUE</H2>
 
 
@@ -1319,7 +1552,7 @@ in the caller's context, no child process will be created, and
 <I>errno</I>
 
 will be set appropriately.
-<A NAME="lbAK">&nbsp;</A>
+<A NAME="lbAP">&nbsp;</A>
 <H2>ERRORS</H2>
 
 <DL COMPACT>
@@ -1334,7 +1567,10 @@ Too many processes are already running; see
 <DD>
 <B>CLONE_SIGHAND</B>
 
-was specified, but
+was specified in the
+<I>flags</I>
+
+mask, but
 <B>CLONE_VM</B>
 
 was not.
@@ -1345,7 +1581,10 @@ was not.
 <DD>
 <B>CLONE_THREAD</B>
 
-was specified, but
+was specified in the
+<I>flags</I>
+
+mask, but
 <B>CLONE_SIGHAND</B>
 
 was not.
@@ -1363,7 +1602,10 @@ was not.
 <DD>
 <B>CLONE_THREAD</B>
 
-was specified, but the current process previously called
+was specified in the
+<I>flags</I>
+
+mask, but the current process previously called
 <B><A HREF="../man2/unshare.2.html">unshare</A></B>(2)
 
 with the
@@ -1383,9 +1625,10 @@ Both
 and
 <B>CLONE_NEWNS</B>
 
-were specified in
-<I>flags</I>.
+were specified in the
+<I>flags</I>
 
+mask.
 <DT><B>EINVAL</B> (since Linux 3.9)
 
 <DD>
@@ -1395,9 +1638,10 @@ Both
 and
 <B>CLONE_FS</B>
 
-were specified in
-<I>flags</I>.
+were specified in the
+<I>flags</I>
 
+mask.
 <DT><B>EINVAL</B>
 
 <DD>
@@ -1407,9 +1651,10 @@ Both
 and
 <B>CLONE_SYSVSEM</B>
 
-were specified in
-<I>flags</I>.
+were specified in the
+<I>flags</I>
 
+mask.
 <DT><B>EINVAL</B>
 
 <DD>
@@ -1425,9 +1670,10 @@ and one (or both) of
 or
 <B>CLONE_PARENT</B>
 
-were specified in
-<I>flags</I>.
+were specified in the
+<I>flags</I>
 
+mask.
 <DT><B>EINVAL</B>
 
 <DD>
@@ -1438,7 +1684,7 @@ wrapper function when
 <I>fn</I>
 
 or
-<I>child_stack</I>
+<I>stack</I>
 
 is specified as NULL.
 <DT><B>EINVAL</B>
@@ -1446,9 +1692,10 @@ is specified as NULL.
 <DD>
 <B>CLONE_NEWIPC</B>
 
-was specified in
-<I>flags</I>,
+was specified in the
+<I>flags</I>
 
+mask,
 but the kernel was not configured with the
 <B>CONFIG_SYSVIPC</B>
 
@@ -1461,9 +1708,10 @@ options.
 <DD>
 <B>CLONE_NEWNET</B>
 
-was specified in
-<I>flags</I>,
+was specified in the
+<I>flags</I>
 
+mask,
 but the kernel was not configured with the
 <B>CONFIG_NET_NS</B>
 
@@ -1473,9 +1721,10 @@ option.
 <DD>
 <B>CLONE_NEWPID</B>
 
-was specified in
-<I>flags</I>,
+was specified in the
+<I>flags</I>
 
+mask,
 but the kernel was not configured with the
 <B>CONFIG_PID_NS</B>
 
@@ -1485,9 +1734,10 @@ option.
 <DD>
 <B>CLONE_NEWUSER</B>
 
-was specified in
-<I>flags</I>,
+was specified in the
+<I>flags</I>
 
+mask,
 but the kernel was not configured with the
 <B>CONFIG_USER_NS</B>
 
@@ -1497,9 +1747,10 @@ option.
 <DD>
 <B>CLONE_NEWUTS</B>
 
-was specified in
-<I>flags</I>,
+was specified in the
+<I>flags</I>
 
+mask,
 but the kernel was not configured with the
 <B>CONFIG_UTS_NS</B>
 
@@ -1507,37 +1758,58 @@ option.
 <DT><B>EINVAL</B>
 
 <DD>
-<I>child_stack</I>
+<I>stack</I>
 
 is not aligned to a suitable boundary for this architecture.
 For example, on aarch64,
-<I>child_stack</I>
+<I>stack</I>
 
 must be a multiple of 16.
+<DT><B>EINVAL</B> (<B>clone3</B>() only
+
+<DD>
+<B>CLONE_DETACHED</B>
+
+was specified in the
+<I>flags</I>
+
+mask.
+<DT><B>EINVAL</B> (<B>clone</B>() only
+
+<DD>
+<B>CLONE_PIDFD</B>
+
+was specified together with
+<B>CLONE_DETACHED</B>
+
+in the
+<I>flags</I>
+
+mask.
 <DT><B>EINVAL</B>
 
 <DD>
 <B>CLONE_PIDFD</B>
 
 was specified together with
-<B>CLONE_DETACHED.</B>
+<B>CLONE_THREAD</B>
 
-<DT><B>EINVAL</B>
+in the
+<I>flags</I>
 
-<DD>
-<B>CLONE_PIDFD</B>
-
-was specified together with
-<B>CLONE_PARENT_SETTID.</B>
-
-<DT><B>EINVAL</B>
+mask.
+<DT><B>EINVAL </B>(<B>clone</B>() only)
 
 <DD>
 <B>CLONE_PIDFD</B>
 
 was specified together with
-<B>CLONE_THREAD.</B>
+<B>CLONE_PARENT_SETTID</B>
 
+in the
+<I>flags</I>
+
+mask.
 <DT><B>ENOMEM</B>
 
 <DD>
@@ -1550,7 +1822,10 @@ copied.
 
 <B>CLONE_NEWPID</B>
 
-was specified in flags,
+was specified in the
+<I>flags</I>
+
+mask,
 but the limit on the nesting depth of PID namespaces
 would have been exceeded; see
 <B><A HREF="../man7/pid_namespaces.7.html">pid_namespaces</A></B>(7).
@@ -1560,10 +1835,10 @@ would have been exceeded; see
 <DD>
 <B>CLONE_NEWUSER</B>
 
-was specified in
-<I>flags</I>,
+was specified in the
+<I>flags</I>
 
-and the call would cause the limit on the number of
+mask, and the call would cause the limit on the number of
 nested user namespaces to be exceeded.
 See
 <B><A HREF="../man7/user_namespaces.7.html">user_namespaces</A></B>(7).
@@ -1575,10 +1850,10 @@ From Linux 3.11 to Linux 4.8, the error diagnosed in this case was
 <DT><B>ENOSPC</B> (since Linux 4.9)
 
 <DD>
-One of the values in
+One of the values in the
 <I>flags</I>
 
-specified the creation of a new user namespace,
+mask specified the creation of a new user namespace,
 but doing so would have caused the limit defined by the corresponding file in
 <I>/proc/sys/user</I>
 
@@ -1615,9 +1890,10 @@ was specified by a process other than process 0.
 <DD>
 <B>CLONE_NEWUSER</B>
 
-was specified in
-<I>flags</I>,
+was specified in the
+<I>flags</I>
 
+mask,
 but either the effective user ID or the effective group ID of the caller
 does not have a mapping in the parent namespace (see
 <B><A HREF="../man7/user_namespaces.7.html">user_namespaces</A></B>(7)).
@@ -1628,10 +1904,10 @@ does not have a mapping in the parent namespace (see
 
 <B>CLONE_NEWUSER</B>
 
-was specified in
+was specified in the
 <I>flags</I>
 
-and the caller is in a chroot environment
+mask and the caller is in a chroot environment
 
 (i.e., the caller's root directory does not match the root directory
 of the mount namespace in which it resides).
@@ -1646,30 +1922,36 @@ System call was interrupted by a signal and will be restarted.
 <DD>
 <B>CLONE_NEWUSER</B>
 
-was specified in
-<I>flags</I>,
+was specified in the
+<I>flags</I>
 
+mask,
 and the limit on the number of nested user namespaces would be exceeded.
 See the discussion of the
 <B>ENOSPC</B>
 
 error above.
-
-
-
-
-
-
-
 </DL>
-<A NAME="lbAL">&nbsp;</A>
+<A NAME="lbAQ">&nbsp;</A>
+<H2>VERSIONS</H2>
+
+The
+<B>clone3</B>()
+
+system call first appeared in Linux 5.3.
+
+
+
+
+
+
+<A NAME="lbAR">&nbsp;</A>
 <H2>CONFORMING TO</H2>
 
-<B>clone</B>()
-
-is Linux-specific and should not be used in programs
+These system calls
+are Linux-specific and should not be used in programs
 intended to be portable.
-<A NAME="lbAM">&nbsp;</A>
+<A NAME="lbAS">&nbsp;</A>
 <H2>NOTES</H2>
 
 The
@@ -1685,9 +1967,7 @@ System V semaphore undo operations, or a virtual address space.
 Handlers registered using
 <B><A HREF="../man3/pthread_atfork.3.html">pthread_atfork</A></B>(3)
 
-are not executed during a call to
-<B>clone</B>().
-
+are not executed during a clone call.
 <P>
 
 In the Linux 2.4.x series,
@@ -1704,25 +1984,13 @@ flag implied the
 flag (as in Linux 2.6.0 and later).
 <P>
 
-For a while there was
-<B>CLONE_DETACHED</B>
-
-(introduced in 2.5.32):
-parent wants no child-exit signal.
-In Linux 2.6.2, the need to give this flag together with
-<B>CLONE_THREAD</B>
-
-disappeared.
-This flag is still defined, but has no effect.
-<P>
-
 On i386,
 <B>clone</B>()
 
 should not be called through vsyscall, but directly through
 <I>int $0x80</I>.
 
-<A NAME="lbAN">&nbsp;</A>
+<A NAME="lbAT">&nbsp;</A>
 <H2>BUGS</H2>
 
 GNU C library versions 2.3.4 up to and including 2.24
@@ -1785,7 +2053,7 @@ Because of the stale-cache problem, as well as other problems noted in
 <B><A HREF="../man2/getpid.2.html">getpid</A></B>(2),
 
 the PID caching feature was removed in glibc 2.25.
-<A NAME="lbAO">&nbsp;</A>
+<A NAME="lbAU">&nbsp;</A>
 <H2>EXAMPLE</H2>
 
 The following program demonstrates the use of
@@ -1799,7 +2067,38 @@ differs in the UTS namespaces of the parent and child.
 For an example of the use of this program, see
 <B><A HREF="../man2/setns.2.html">setns</A></B>(2).
 
-<A NAME="lbAP">&nbsp;</A>
+<P>
+
+Within the sample program, we allocate the memory that is to
+be used for the child's stack using
+<B><A HREF="../man2/mmap.2.html">mmap</A></B>(2)
+
+rather than
+<B><A HREF="../man3/malloc.3.html">malloc</A></B>(3)
+
+for the following reasons:
+<DL COMPACT>
+<DT>*<DD>
+<B><A HREF="../man2/mmap.2.html">mmap</A></B>(2)
+
+allocates a block of memory that starts on a page
+boundary and is a multiple of the page size.
+This is useful if we want to establish a guard page (a page with protection
+<B>PROT_NONE</B>)
+
+at the end of the stack using
+<B><A HREF="../man2/mprotect.2.html">mprotect</A></B>(2).
+
+<DT>*<DD>
+We can specify the
+<B>MAP_STACK</B>
+
+flag to request a mapping that is suitable for a stack.
+For the moment, this flag is a no-op on Linux,
+but it exists and has effect on some other systems,
+so we should include it for portability.
+</DL>
+<A NAME="lbAV">&nbsp;</A>
 <H3>Program source</H3>
 
 
@@ -1811,6 +2110,7 @@ For an example of the use of this program, see
 #include &lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/stdlib.h">stdlib.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/sys/mman.h">sys/mman.h</A>&gt;
 <P>
 #define errExit(msg)    do { perror(msg); exit(EXIT_FAILURE); \
 <BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}&nbsp;while&nbsp;(0)
@@ -1855,11 +2155,13 @@ main(int argc, char *argv[])
 <BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_SUCCESS);
 <BR>&nbsp;&nbsp;&nbsp;&nbsp;}
 <P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Allocate&nbsp;stack&nbsp;for&nbsp;child&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Allocate&nbsp;memory&nbsp;to&nbsp;be&nbsp;used&nbsp;for&nbsp;the&nbsp;stack&nbsp;of&nbsp;the&nbsp;child&nbsp;*/
 <P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;stack&nbsp;=&nbsp;malloc(STACK_SIZE);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(stack&nbsp;==&nbsp;NULL)
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;errExit(&quot;malloc&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;stack&nbsp;=&nbsp;mmap(NULL,&nbsp;STACK_SIZE,&nbsp;PROT_READ&nbsp;|&nbsp;PROT_WRITE,
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;MAP_PRIVATE&nbsp;|&nbsp;MAP_ANONYMOUS&nbsp;|&nbsp;MAP_STACK,&nbsp;-1,&nbsp;0);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(stack&nbsp;==&nbsp;MAP_FAILED)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;errExit(&quot;mmap&quot;);
+<P>
 <BR>&nbsp;&nbsp;&nbsp;&nbsp;stackTop&nbsp;=&nbsp;stack&nbsp;+&nbsp;STACK_SIZE;&nbsp;&nbsp;/*&nbsp;Assume&nbsp;stack&nbsp;grows&nbsp;downward&nbsp;*/
 <P>
 <BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Create&nbsp;child&nbsp;that&nbsp;has&nbsp;its&nbsp;own&nbsp;UTS&nbsp;namespace;
@@ -1888,7 +2190,7 @@ main(int argc, char *argv[])
 <BR>&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_SUCCESS);
 }
 
-<A NAME="lbAQ">&nbsp;</A>
+<A NAME="lbAW">&nbsp;</A>
 <H2>SEE ALSO</H2>
 
 <B><A HREF="../man2/fork.2.html">fork</A></B>(2),
@@ -1900,6 +2202,8 @@ main(int argc, char *argv[])
 <B><A HREF="../man2/gettid.2.html">gettid</A></B>(2),
 
 <B><A HREF="../man2/kcmp.2.html">kcmp</A></B>(2),
+
+<B><A HREF="../man2/mmap.2.html">mmap</A></B>(2),
 
 <B><A HREF="../man2/pidfd_open.2.html">pidfd_open</A></B>(2),
 
@@ -1929,28 +2233,36 @@ main(int argc, char *argv[])
 <DT><A HREF="#lbAB">NAME</A><DD>
 <DT><A HREF="#lbAC">SYNOPSIS</A><DD>
 <DT><A HREF="#lbAD">DESCRIPTION</A><DD>
-<DT><A HREF="#lbAE">NOTES</A><DD>
 <DL>
-<DT><A HREF="#lbAF">C library/kernel differences</A><DD>
-<DT><A HREF="#lbAG">blackfin, m68k, and sparc</A><DD>
-<DT><A HREF="#lbAH">ia64</A><DD>
-<DT><A HREF="#lbAI">Linux 2.4 and earlier</A><DD>
+<DT><A HREF="#lbAE">The clone() wrapper function</A><DD>
+<DT><A HREF="#lbAF">clone3()</A><DD>
+<DT><A HREF="#lbAG">Equivalence between clone() and clone3() arguments</A><DD>
+<DT><A HREF="#lbAH">The child termination signal</A><DD>
+<DT><A HREF="#lbAI">The flags mask</A><DD>
 </DL>
-<DT><A HREF="#lbAJ">RETURN VALUE</A><DD>
-<DT><A HREF="#lbAK">ERRORS</A><DD>
-<DT><A HREF="#lbAL">CONFORMING TO</A><DD>
-<DT><A HREF="#lbAM">NOTES</A><DD>
-<DT><A HREF="#lbAN">BUGS</A><DD>
-<DT><A HREF="#lbAO">EXAMPLE</A><DD>
+<DT><A HREF="#lbAJ">NOTES</A><DD>
 <DL>
-<DT><A HREF="#lbAP">Program source</A><DD>
+<DT><A HREF="#lbAK">C library/kernel differences</A><DD>
+<DT><A HREF="#lbAL">blackfin, m68k, and sparc</A><DD>
+<DT><A HREF="#lbAM">ia64</A><DD>
+<DT><A HREF="#lbAN">Linux 2.4 and earlier</A><DD>
 </DL>
-<DT><A HREF="#lbAQ">SEE ALSO</A><DD>
+<DT><A HREF="#lbAO">RETURN VALUE</A><DD>
+<DT><A HREF="#lbAP">ERRORS</A><DD>
+<DT><A HREF="#lbAQ">VERSIONS</A><DD>
+<DT><A HREF="#lbAR">CONFORMING TO</A><DD>
+<DT><A HREF="#lbAS">NOTES</A><DD>
+<DT><A HREF="#lbAT">BUGS</A><DD>
+<DT><A HREF="#lbAU">EXAMPLE</A><DD>
+<DL>
+<DT><A HREF="#lbAV">Program source</A><DD>
+</DL>
+<DT><A HREF="#lbAW">SEE ALSO</A><DD>
 </DL>
 <HR>
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:51:29 GMT, April 20, 2020
+Time: 03:52:02 GMT, April 20, 2020
 </BODY>
 </HTML>

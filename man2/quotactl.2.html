@@ -26,7 +26,7 @@ the source, must acknowledge the copyright and authors of this work.
 <HTML><HEAD><TITLE>Man page of QUOTACTL</TITLE>
 </HEAD><BODY>
 <H1>QUOTACTL</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2017-09-15<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2019-11-19<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -112,13 +112,13 @@ that is copied in or out of the system.
 The interpretation of
 <I>addr</I>
 
-is given with each command below.
+is given with each operation below.
 <P>
 
 The
 <I>subcmd</I>
 
-value is one of the following:
+value is one of the following operations:
 <DL COMPACT>
 <DT><B>Q_QUOTAON</B>
 
@@ -157,7 +157,30 @@ the filesystem.
 The quota file must exist; it is normally created with the
 <B><A HREF="../man8/quotacheck.8.html">quotacheck</A></B>(8)
 
-program.
+program
+<DT><DD>
+Quota information can be also stored in hidden system inodes
+for ext4, XFS, and other filesystems if the filesystem is configured so.
+In this case, there are no visible quota files and there is no need to
+use
+<B><A HREF="../man8/quotacheck.8.html">quotacheck</A></B>(8).
+
+Quota information is always kept consistent by the filesystem and the
+<B>Q_QUOTAON</B>
+
+operation serves only to enable enforcement of quota limits.
+The presence of hidden
+system inodes with quota information is indicated by the
+<B>DQF_SYS_FILE</B>
+
+flag in the
+<I>dqi_flags</I>
+
+field returned by the
+<B>Q_GETINFO</B>
+
+operation.
+<DT><DD>
 This operation requires privilege
 (<B>CAP_SYS_ADMIN</B>).
 
@@ -484,7 +507,7 @@ carry the information instead.
 <P>
 
 For XFS filesystems making use of the XFS Quota Manager (XQM),
-the above commands are bypassed and the following commands are used:
+the above operations are bypassed and the following operations are used:
 <DL COMPACT>
 <DT><B>Q_XQUOTAON</B>
 
@@ -540,7 +563,7 @@ that specifies whether quota accounting and/or limit enforcement need
 to be turned off (using the same flags as for
 <B>Q_XQUOTAON</B>
 
-subcommand).
+operation).
 This operation requires privilege
 (<B>CAP_SYS_ADMIN</B>).
 
@@ -649,7 +672,7 @@ field, no separate structure type is needed (in contrast with
 and
 <B>Q_GETNEXTQUOTA</B>
 
-commands)
+operations)
 <DT><B>Q_XSETQLIM</B>
 
 <DD>
@@ -727,7 +750,7 @@ Returns XFS filesystem-specific quota information in the
 pointed to by
 <I>addr</I>.
 
-This version of the command uses a structure with proper versioning support,
+This version of the operation uses a structure with proper versioning support,
 along with appropriate layout (all fields are naturally aligned) and
 padding to avoiding special compat handling;
 it also provides the ability to get statistics regarding
@@ -786,9 +809,10 @@ The
 <I>id</I>
 
 argument is ignored.
-<DT><B>Q_XQUOTARM</B>
+<DT><B>Q_XQUOTARM()  (since Linux 3.16)</B>
 
 <DD>
+
 Free the disk space taken by disk quotas. The
 <I>addr</I>
 
@@ -817,8 +841,8 @@ argument is ignored.
 
 <DD>
 
-This command was an XFS quota equivalent to
-<I>Q_SYNC</I>,
+This operation was an XFS quota equivalent to
+<B>Q_SYNC</B>,
 
 but it is no-op since Linux 3.4,
 
@@ -1043,6 +1067,6 @@ prefix.
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:51:31 GMT, April 20, 2020
+Time: 03:52:04 GMT, April 20, 2020
 </BODY>
 </HTML>
