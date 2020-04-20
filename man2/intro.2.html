@@ -16,7 +16,7 @@ intro, _syscall - Introduction to system calls
 <H2>DESCRIPTION</H2>
 
 This chapter describes the Linux system calls.
-For a list of the 164 syscalls present in Linux 2.0, see <A HREF="../man2/syscalls.2.html">syscalls</A>(2).
+For a list of the Linux system calls, see <A HREF="../man2/syscalls.2.html">syscalls</A>(2).
 <A NAME="lbAD">&nbsp;</A>
 <H3>Calling Directly</H3>
 
@@ -24,14 +24,10 @@ In most cases, it is unnecessary to invoke a system call directly, but there
 are times when the Standard C library does not implement a nice function call
 for you.
 In this case, the programmer must manually invoke the system call using
-either one of the _syscall macros, or
-<B>syscall</B>().
-
-The latter technique is described in
 <B><A HREF="../man2/syscall.2.html">syscall</A></B>(2).
 
-This page describes the _syscall macros, and includes some notes
-on when to use one or other mechanism.
+Historically, this was also possible using one of the _syscall macros
+described below.
 <A NAME="lbAE">&nbsp;</A>
 <H3>Synopsis</H3>
 
@@ -92,7 +88,19 @@ See
 <A NAME="lbAI">&nbsp;</A>
 <H2>NOTES</H2>
 
-The _syscall() macros DO NOT produce a prototype.
+Starting around kernel 2.6.18, the _syscall macros were removed
+from header files supplied to user space.
+Use
+<B><A HREF="../man2/syscall.2.html">syscall</A></B>(2)
+
+instead.
+(Some architectures, notably ia64, never provided the _syscall macros;
+on those architectures,
+<B><A HREF="../man2/syscall.2.html">syscall</A></B>(2)
+
+was always required.)
+<P>
+The _syscall() macros <I> do not</I> produce a prototype.
 You may have to
 create one, especially for C++ users.
 <P>
@@ -117,28 +125,19 @@ require more than five arguments.
 These are handled by pushing the
 arguments on the stack and passing a pointer to the block of arguments.
 <P>
-When defining a system call, the argument types MUST be passed by-value
-or by-pointer (for aggregates like structs).
-<P>
-The preferred way to invoke system calls that glibc does not know
-about yet is via
-<B><A HREF="../man2/syscall.2.html">syscall</A></B>(2).
+When defining a system call, the argument types <I>must</I> be
+passed by-value or by-pointer (for aggregates like structs).
 
-However, this mechanism can only be used if using a libc
-(such as glibc) that supports
-<B><A HREF="../man2/syscall.2.html">syscall</A></B>(2),
 
-and if the
-<I>&lt;<A HREF="file:///usr/include/sys/syscall.h">sys/syscall.h</A>&gt;</I>
 
-header file contains the required SYS_foo definition.
-Otherwise, the use of a _syscall macro is required.
-<P>
-Some architectures, notably ia64, do not provide the _syscall macros.
-On these architectures,
-<B><A HREF="../man2/syscall.2.html">syscall</A></B>(2)
 
-must be used.
+
+
+
+
+
+
+
 <A NAME="lbAJ">&nbsp;</A>
 <H2>EXAMPLE</H2>
 
@@ -225,6 +224,6 @@ Number of processes = 40
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 02:42:11 GMT, April 20, 2020
+Time: 02:42:41 GMT, April 20, 2020
 </BODY>
 </HTML>

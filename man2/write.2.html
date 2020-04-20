@@ -4,7 +4,7 @@
 <HTML><HEAD><TITLE>Man page of WRITE</TITLE>
 </HEAD><BODY>
 <H1>WRITE</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2001-12-13<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2007-06-18<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -27,12 +27,49 @@ write - write to a file descriptor
 writes up to
 <I>count</I>
 
-bytes to the file referenced by the file descriptor
-<I>fd</I>
+bytes from the buffer pointed 
+<I>buf</I>
 
-from the buffer starting at
-<I>buf</I>.
+to the file referred to by the file descriptor
+<I>fd.</I>
 
+<P>
+The number of bytes written may be less than
+<I>count</I>
+
+if, for example,
+there is insufficient space on the underlying physical medium, or the
+<B>RLIMIT_FSIZE</B>
+
+resource limit is encountered (see
+<B><A HREF="../man2/setrlimit.2.html">setrlimit</A></B>(2)),
+
+or the call was interrupted by a signal
+handler after having written less than
+<I>count</I>
+
+bytes.
+(See also
+<B><A HREF="../man7/pipe.7.html">pipe</A></B>(7).)
+
+<P>
+For a seekable file (i.e., one to which
+<B><A HREF="../man2/lseek.2.html">lseek</A></B>(2)
+
+may be applied, for example, a regular file)
+writing takes place at the current file offset,
+and the file offset is incremented by
+the number of bytes actually written.
+If the file was
+<B><A HREF="../man2/open.2.html">open</A></B>(2)ed
+
+with
+<B>O_APPEND</B>,
+
+the file offset is first set to the end of the file before writing.
+The adjustment of the file offset and the write operation
+are performed as an atomic step.
+<P>
 POSIX requires that a
 <B><A HREF="../man2/read.2.html">read</A></B>(2)
 
@@ -40,12 +77,11 @@ which can be proved to occur after a
 <B>write</B>()
 
 has returned returns the new data.
-Note that not all file
-systems are POSIX conforming.
+Note that not all file systems are POSIX conforming.
 <A NAME="lbAE">&nbsp;</A>
 <H2>RETURN VALUE</H2>
 
-On success, the number of bytes written are returned (zero indicates
+On success, the number of bytes written is returned (zero indicates
 nothing was written).
 On error, -1 is returned, and <I>errno</I> is set
 appropriately.
@@ -54,7 +90,7 @@ If <I>count</I> is zero and
 <I>fd</I>
 
 refers to a regular file, then
-<B>write ()</B>
+<B>write</B>()
 
 may return a failure status if one of the errors below is detected.
 If no errors are detected,
@@ -72,8 +108,11 @@ the results are not specified.
 <DT><B>EAGAIN</B>
 
 <DD>
-Non-blocking I/O has been selected using
-<B>O_NONBLOCK</B>
+The file descriptor
+<I>fd</I>
+
+has been marked non-blocking
+(<B>O_NONBLOCK</B>)
 
 and the write would block.
 <DT><B>EBADF</B>
@@ -92,8 +131,8 @@ is outside your accessible address space.
 
 <DD>
 An attempt was made to write a file that exceeds the implementation-defined
-maximum file size or the process' file size limit, or to write at a position
-past the maximum allowed offset.
+maximum file size or the process's file size limit,
+or to write at a position past the maximum allowed offset.
 <DT><B>EINTR</B>
 
 <DD>
@@ -165,6 +204,16 @@ The only way to be sure is to call
 <B><A HREF="../man2/fsync.2.html">fsync</A></B>(2)
 
 after you are done writing all your data.
+<P>
+If a
+<B>write</B>()
+
+is interrupted by a signal handler before any bytes are written,
+then the call fails with the error
+<B>EINTR</B>;
+
+if it is interrupted after at least one byte has been written,
+the call succeeds, and returns the number of bytes written.
 <A NAME="lbAI">&nbsp;</A>
 <H2>SEE ALSO</H2>
 
@@ -208,6 +257,6 @@ after you are done writing all your data.
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 02:42:14 GMT, April 20, 2020
+Time: 02:42:44 GMT, April 20, 2020
 </BODY>
 </HTML>

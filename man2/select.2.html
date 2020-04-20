@@ -303,7 +303,7 @@ This causes problems both when Linux code which reads
 <I>timeout</I>
 
 is ported to other operating systems, and when code is ported to Linux
-that reuses a struct timeval for multiple
+that reuses a <I>struct timeval</I> for multiple
 <B>select</B>()s
 
 in a loop without reinitializing it.
@@ -562,9 +562,26 @@ in which a file descriptor is spuriously reported as ready.
 
 Thus it may be safer to use O_NONBLOCK on sockets that should not block.
 
+<P>
+On Linux,
+<B>select</B>()
 
+also modifies
+<I>timeout</I>
 
+if the call is interrupted by a signal handler (i.e., the
+<B>EINTR</B>
 
+error return).
+This is not permitted by POSIX.1-2001.
+The Linux
+<B><A HREF="../man2/pselect.2.html">pselect</A></B>(2)
+
+system call has the same behavior,
+but the glibc wrapper hides this behavior by internally copying the
+<I>timeout</I>
+
+to a local variable and passing that variable to the system call.
 <A NAME="lbAM">&nbsp;</A>
 <H2>EXAMPLE</H2>
 
@@ -660,6 +677,6 @@ For vaguely related stuff, see
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 02:42:13 GMT, April 20, 2020
+Time: 02:42:42 GMT, April 20, 2020
 </BODY>
 </HTML>
