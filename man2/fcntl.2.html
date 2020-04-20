@@ -4,7 +4,7 @@
 <HTML><HEAD><TITLE>Man page of FCNTL</TITLE>
 </HEAD><BODY>
 <H1>FCNTL</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2008-08-21<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2008-09-05<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -18,9 +18,7 @@ fcntl - manipulate file descriptor
 <B>#include &lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;</B>
 <B>#include &lt;<A HREF="file:///usr/include/fcntl.h">fcntl.h</A>&gt;</B>
 
-<B>int fcntl(int </B><I>fd</I><B>, int </B><I>cmd</I><B>);</B>
-<B>int fcntl(int </B><I>fd</I><B>, int </B><I>cmd</I><B>, long </B><I>arg</I><B>);</B>
-<B>int fcntl(int </B><I>fd</I><B>, int </B><I>cmd</I><B>, struct flock *</B><I>lock</I><B>);</B>
+<B>int fcntl(int </B><I>fd</I><B>, int </B><I>cmd</I><B>, ... /* </B><I>arg</I><B> */ );</B>
 </PRE>
 
 <A NAME="lbAD">&nbsp;</A>
@@ -34,11 +32,31 @@ performs one of the operations described below on the open file descriptor
 The operation is determined by
 <I>cmd</I>.
 
+<P>
+<B>fcntl</B>()
+
+can take an optional third argument.
+Whether or not this argument is required is determined by
+<I>cmd</I>.
+
+The required argument type is indicated in paretheses after each
+<I>cmd</I>
+
+name (in most cases, the required type is
+<I>long</I>,
+
+and we identify the argument using the name
+<I>arg</I>),
+
+or
+<I>void</I>
+
+is specified if the argument is not required.
 <A NAME="lbAE">&nbsp;</A>
 <H3>Duplicating a file descriptor</H3>
 
 <DL COMPACT>
-<DT><B>F_DUPFD</B>
+<DT><B>F_DUPFD</B> (<I>long</I>)
 
 <DD>
 Find the lowest numbered available file descriptor
@@ -49,7 +67,7 @@ and make it be a copy of
 <I>fd</I>.
 
 This is different from
-<B><A HREF="../man2/dup2.2.html">dup2</A></B>(2)
+<B><A HREF="../man2/dup2.2.html">dup2</A></B>(2),
 
 which uses exactly the descriptor specified.
 <DT><DD>
@@ -59,7 +77,7 @@ See
 <B><A HREF="../man2/dup.2.html">dup</A></B>(2)
 
 for further details.
-<DT><B>F_DUPFD_CLOEXEC</B> (since Linux 2.6.24)
+<DT><B>F_DUPFD_CLOEXEC</B> (<I>long</I>; since Linux 2.6.24)
 
 <DD>
 As for
@@ -101,11 +119,14 @@ bit is 0, the file descriptor will remain open across an
 
 otherwise it will be closed.
 <DL COMPACT>
-<DT><B>F_GETFD</B>
+<DT><B>F_GETFD</B> (<I>void</I>)
 
 <DD>
-Read the file descriptor flags.
-<DT><B>F_SETFD</B>
+Read the file descriptor flags;
+<I>arg</I>
+
+is ignored.
+<DT><B>F_SETFD</B> (<I>long</I>)
 
 <DD>
 Set the file descriptor flags to the value specified by
@@ -139,11 +160,14 @@ The file status flags and their semantics are described in
 <B><A HREF="../man2/open.2.html">open</A></B>(2).
 
 <DL COMPACT>
-<DT><B>F_GETFL</B>
+<DT><B>F_GETFL</B> (<I>void</I>)
 
 <DD>
-Read the file status flags.
-<DT><B>F_SETFL</B>
+Read the file status flags;
+<I>arg</I>
+
+is ignored.
+<DT><B>F_SETFL</B> (<I>long</I>)
 
 <DD>
 Set the file status flags to the value specified by
@@ -184,8 +208,8 @@ flags.
 
 are used to acquire, release, and test for the existence of record
 locks (also known as file-segment or file-region locks).
-The third argument
-<I>lock</I>
+The third argument,
+<I>lock</I>,
 
 is a pointer to a structure that has at least the following fields
 (in unspecified order).
@@ -213,6 +237,9 @@ The
 <I>l_whence</I>, <I>l_start</I>, and <I>l_len</I>
 
 fields of this structure specify the range of bytes we wish to lock.
+Bytes past the end of the file may be locked,
+but not bytes before the start of the file.
+<P>
 <I>l_start</I>
 
 is the starting offset for the lock, and is interpreted
@@ -240,12 +267,19 @@ In the final two cases,
 
 can be a negative number provided the
 offset does not lie before the start of the file.
+<P>
 <I>l_len</I>
 
-is a non-negative integer (but see the NOTES below) specifying
-the number of bytes to be locked.
-Bytes past the end of the file may be locked,
-but not bytes before the start of the file.
+specifies the number of bytes to be locked.
+If
+<I>l_len</I>
+
+is positive, then the range to be locked covers bytes
+<I>l_start</I>
+
+up to and including
+<I>l_start</I>+<I>l_len</I>-<I>1</I>.
+
 Specifying 0 for
 <I>l_len</I>
 
@@ -255,7 +289,24 @@ location specified by
 
 through to the end of file, no matter how large the file grows.
 <P>
+POSIX.1-2001 allows (but does not require)
+an implementation to support a negative
+<I>l_len</I>
 
+value; if
+<I>l_len</I>
+
+is negative, the interval described by
+<I>lock</I>
+
+covers bytes
+<I>l_start</I>+<I>l_len</I>
+
+up to and including
+<I>l_start</I>-1.
+
+This is supported by Linux since kernel versions 2.4.21 and 2.5.49.
+<P>
 The
 <I>l_type</I>
 
@@ -278,7 +329,7 @@ then the existing lock is converted to the new lock type.
 an existing lock if the byte range specified by the new lock does not
 precisely coincide with the range of the existing lock.)
 <DL COMPACT>
-<DT><B>F_SETLK</B>
+<DT><B>F_SETLK</B> (<I>struct flock *</I>)
 
 <DD>
 Acquire a lock (when
@@ -312,7 +363,7 @@ to
 or
 <B>EAGAIN</B>.
 
-<DT><B>F_SETLKW</B>
+<DT><B>F_SETLKW</B> (<I>struct flock *</I>)
 
 <DD>
 As for
@@ -331,7 +382,7 @@ set to
 see
 <B><A HREF="../man7/signal.7.html">signal</A></B>(7)).
 
-<DT><B>F_GETLK</B>
+<DT><B>F_GETLK</B> (<I>struct flock *</I>)
 
 <DD>
 On input to this call,
@@ -489,10 +540,11 @@ See BUGS below.
 
 are used to manage I/O availability signals:
 <DL COMPACT>
-<DT><B>F_GETOWN</B>
+<DT><B>F_GETOWN</B> (<I>void</I>)
 
 <DD>
-Get the process ID or process group currently receiving
+Return (as the function result)
+the process ID or process group currently receiving
 <B>SIGIO</B>
 
 and
@@ -503,7 +555,10 @@ signals for events on file descriptor
 
 Process IDs are returned as positive values;
 process group IDs are returned as negative values (but see BUGS below).
-<DT><B>F_SETOWN</B>
+<I>arg</I>
+
+is ignored.
+<DT><B>F_SETOWN</B> (<I>long</I>)
 
 <DD>
 Set the process ID or process group ID that will receive
@@ -513,7 +568,10 @@ and
 <B>SIGURG</B>
 
 signals for events on file descriptor
-<I>fd</I>.
+<I>fd</I>
+
+to the ID given in
+<I>arg</I>.
 
 A process ID is specified as a positive value;
 a process group ID is specified as a negative value.
@@ -651,10 +709,11 @@ delivering
 and this signal is delivered to the entire
 process rather than to a specific thread.
 
-<DT><B>F_GETSIG</B>
+<DT><B>F_GETSIG</B> (<I>void</I>)
 
 <DD>
-Get the signal sent when input or output becomes possible.
+Return (as the function result)
+the signal sent when input or output becomes possible.
 A value of zero means
 <B>SIGIO</B>
 
@@ -667,10 +726,16 @@ signal sent instead, and in this case additional info is available to
 the signal handler if installed with
 <B>SA_SIGINFO</B>.
 
-<DT><B>F_SETSIG</B>
+<I>arg</I>
+
+is ignored.
+<DT><B>F_SETSIG</B> (<I>long</I>)
 
 <DD>
-Sets the signal sent when input or output becomes possible.
+Set the signal sent when input or output becomes possible
+to the value given in
+<I>arg</I>.
+
 A value of zero means to send the default
 <B>SIGIO</B>
 
@@ -797,7 +862,7 @@ or
 
 the file referred to by that file descriptor.
 <DL COMPACT>
-<DT><B>F_SETLEASE</B>
+<DT><B>F_SETLEASE</B> (<I>long</I>)
 
 <DD>
 Set or remove a file lease according to which of the following
@@ -860,7 +925,7 @@ A process with the
 
 capability may take out leases on arbitrary files.
 <DL COMPACT>
-<DT><B>F_GETLEASE</B>
+<DT><B>F_GETLEASE</B> (<I>void</I>)
 
 <DD>
 Indicates what type of lease is associated with the file descriptor
@@ -870,10 +935,9 @@ by returning either
 <B>F_RDLCK</B>, <B>F_WRLCK</B>, or <B>F_UNLCK</B>,
 
 indicating, respectively, a read lease , a write lease, or no lease.
-(The third argument to
-<B>fcntl</B>()
+<I>arg</I>
 
-is omitted.)
+is ignored.
 </DL>
 <P>
 
@@ -989,7 +1053,7 @@ that has been accessed by another process.
 <H3>File and directory change notification (dnotify)</H3>
 
 <DL COMPACT>
-<DT><B>F_NOTIFY</B>
+<DT><B>F_NOTIFY</B> (<I>long</I>)
 
 <DD>
 (Linux 2.4 onwards)
@@ -1098,11 +1162,11 @@ so that multiple notifications can be queued.
 <P>
 <B>NOTE:</B>
 
-New applications should consider using the
+New applications should use the
 <I>inotify</I>
 
 interface (available since kernel 2.6.13),
-which provides a superior interface for obtaining notifications of
+which provides a much superior interface for obtaining notifications of
 file system events.
 See
 <B><A HREF="../man7/inotify.7.html">inotify</A></B>(7).
@@ -1308,19 +1372,6 @@ and
 <B>fcntl</B>().
 
 <P>
-POSIX.1-2001 allows
-<I>l_len</I>
-
-to be negative.
-(And if it is, the interval described by the lock
-covers bytes
-<I>l_start</I>+<I>l_len</I>
-
-up to and including
-<I>l_start</I>-1.)
-
-This is supported by Linux since Linux 2.4.21 and 2.5.49.
-<P>
 Several systems have more fields in
 <I>struct flock</I>
 
@@ -1452,6 +1503,6 @@ in the kernel source.
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 02:57:20 GMT, April 20, 2020
+Time: 02:57:52 GMT, April 20, 2020
 </BODY>
 </HTML>

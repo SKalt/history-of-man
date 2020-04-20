@@ -5,7 +5,7 @@ Copyright (c) 1992 Drew Eckhardt (drew@cs.colorado.edu), March 28, 1992
 <HTML><HEAD><TITLE>Man page of STAT</TITLE>
 </HEAD><BODY>
 <H1>STAT</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2007-07-26<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2008-09-10<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -113,7 +113,7 @@ struct stat {
     dev_t     st_rdev;    /* device ID (if special file) */
     off_t     st_size;    /* total size, in bytes */
     blksize_t st_blksize; /* blocksize for file system I/O */
-    blkcnt_t  st_blocks;  /* number of blocks allocated */
+    blkcnt_t  st_blocks;  /* number of 512B blocks allocated */
     time_t    st_atime;   /* time of last access */
     time_t    st_mtime;   /* time of last modification */
     time_t    st_ctime;   /* time of last status change */
@@ -160,12 +160,23 @@ an inefficient read-modify-rewrite.)
 
 Not all of the Linux file systems implement all of the time fields.
 Some file system types allow mounting in such a way that file
-accesses do not cause an update of the
+and/or directory accesses do not cause an update of the
 <I>st_atime</I>
 
 field.
-(See &quot;noatime&quot; in
-<B><A HREF="../man8/mount.8.html">mount</A></B>(8).)
+(See
+<I>noatime</I>,
+
+<I>nodiratime</I>,
+
+and
+<I>relatime</I>
+
+in
+<B><A HREF="../man8/mount.8.html">mount</A></B>(8),
+
+and related information in
+<B><A HREF="../man2/mount.2.html">mount</A></B>(2).)
 
 <P>
 The field
@@ -506,9 +517,6 @@ A sticky command appeared in Version 32V AT&amp;T UNIX.
 <A NAME="lbAI">&nbsp;</A>
 <H2>NOTES</H2>
 
-<A NAME="lbAJ">&nbsp;</A>
-<H3>Linux Notes</H3>
-
 Since kernel 2.5.48, the
 <I>stat</I>
 
@@ -535,6 +543,14 @@ these nanosecond fields are returned with the value 0.
 
 
 <P>
+On Linux,
+<B>lstat</B>()
+
+will generally not trigger automounter action, whereas
+<B>stat()</B>
+
+will.
+<P>
 For most files under the
 <I>/proc</I>
 
@@ -545,7 +561,7 @@ does not return the file size in the
 <I>st_size</I>
 
 field; instead the field is returned with the value 0.
-<A NAME="lbAK">&nbsp;</A>
+<A NAME="lbAJ">&nbsp;</A>
 <H3>Underlying kernel interface</H3>
 
 Over time, increases in the size of the
@@ -610,7 +626,7 @@ and
 
 
 
-<A NAME="lbAL">&nbsp;</A>
+<A NAME="lbAK">&nbsp;</A>
 <H2>EXAMPLE</H2>
 
 The following program calls
@@ -680,7 +696,7 @@ main(int argc, char *argv[])
 }
 </PRE>
 
-<A NAME="lbAM">&nbsp;</A>
+<A NAME="lbAL">&nbsp;</A>
 <H2>SEE ALSO</H2>
 
 <B><A HREF="../man2/access.2.html">access</A></B>(2),
@@ -715,16 +731,15 @@ main(int argc, char *argv[])
 </DL>
 <DT><A HREF="#lbAI">NOTES</A><DD>
 <DL>
-<DT><A HREF="#lbAJ">Linux Notes</A><DD>
-<DT><A HREF="#lbAK">Underlying kernel interface</A><DD>
+<DT><A HREF="#lbAJ">Underlying kernel interface</A><DD>
 </DL>
-<DT><A HREF="#lbAL">EXAMPLE</A><DD>
-<DT><A HREF="#lbAM">SEE ALSO</A><DD>
+<DT><A HREF="#lbAK">EXAMPLE</A><DD>
+<DT><A HREF="#lbAL">SEE ALSO</A><DD>
 </DL>
 <HR>
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 02:57:23 GMT, April 20, 2020
+Time: 02:57:54 GMT, April 20, 2020
 </BODY>
 </HTML>
