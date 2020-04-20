@@ -5,7 +5,7 @@ Copyright (c) 1993 Michael Haardt &lt;michael@moria.de&gt;
 <HTML><HEAD><TITLE>Man page of PTRACE</TITLE>
 </HEAD><BODY>
 <H1>PTRACE</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2012-10-25<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2013-01-27<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -351,72 +351,21 @@ is ignored.)
 
 is interpreted as a bit mask of options,
 which are specified by the following flags:
+<P>
 <DL COMPACT><DT><DD>
+<P>
 <DL COMPACT>
-<DT><B>PTRACE_O_TRACESYSGOOD</B> (since Linux 2.4.6)
+<DT><B>PTRACE_O_EXITKILL</B> (since Linux 3.8)
 
 <DD>
-When delivering system call traps, set bit 7 in the signal number
-(i.e., deliver
-<I>SIGTRAP|0x80</I>).
 
-This makes it easy for the tracer to distinguish
-normal traps from those caused by a system call.
-(<B>PTRACE_O_TRACESYSGOOD</B>
+If a tracer sets this flag, a
+<B>SIGKILL</B>
 
-may not work on all architectures.)
-<DT><B>PTRACE_O_TRACEFORK</B> (since Linux 2.5.46)
-
-<DD>
-Stop the tracee at the next
-<B><A HREF="../man2/fork.2.html">fork</A></B>(2)
-
-and automatically start tracing the newly forked process,
-which will start with a
-<B>SIGSTOP</B>.
-
-A
-<B><A HREF="../man2/waitpid.2.html">waitpid</A></B>(2)
-
-by the tracer will return a
-<I>status</I>
-
-value such that
+signal will be sent to every tracee if the tracer exits.
+This option is useful for ptrace jailers that
+want to ensure that tracees can never escape the trcer's control.
 <P>
-<PRE>
-  status&gt;&gt;8 == (SIGTRAP | (PTRACE_EVENT_FORK&lt;&lt;8))
-</PRE>
-
-<P>
-The PID of the new process can be retrieved with
-<B>PTRACE_GETEVENTMSG</B>.
-
-<DT><B>PTRACE_O_TRACEVFORK</B> (since Linux 2.5.46)
-
-<DD>
-Stop the tracee at the next
-<B><A HREF="../man2/vfork.2.html">vfork</A></B>(2)
-
-and automatically start tracing the newly vforked process,
-which will start with a
-<B>SIGSTOP</B>.
-
-A
-<B><A HREF="../man2/waitpid.2.html">waitpid</A></B>(2)
-
-by the tracer will return a
-<I>status</I>
-
-value such that
-<P>
-<PRE>
-  status&gt;&gt;8 == (SIGTRAP | (PTRACE_EVENT_VFORK&lt;&lt;8))
-</PRE>
-
-<P>
-The PID of the new process can be retrieved with
-<B>PTRACE_GETEVENTMSG</B>.
-
 <DT><B>PTRACE_O_TRACECLONE</B> (since Linux 2.5.46)
 
 <DD>
@@ -473,6 +422,7 @@ will be delivered if
 <B>PTRACE_O_TRACEFORK</B>
 
 is set.
+<P>
 <DT><B>PTRACE_O_TRACEEXEC</B> (since Linux 2.5.46)
 
 <DD>
@@ -497,28 +447,7 @@ the thread ID is reset to thread group leader's ID before this stop.
 Since Linux 3.0, the former thread ID can be retrieved with
 <B>PTRACE_GETEVENTMSG</B>.
 
-<DT><B>PTRACE_O_TRACEVFORKDONE</B> (since Linux 2.5.60)
-
-<DD>
-Stop the tracee at the completion of the next
-<B><A HREF="../man2/vfork.2.html">vfork</A></B>(2).
-
-A
-<B><A HREF="../man2/waitpid.2.html">waitpid</A></B>(2)
-
-by the tracer will return a
-<I>status</I>
-
-value such that
 <P>
-<PRE>
-  status&gt;&gt;8 == (SIGTRAP | (PTRACE_EVENT_VFORK_DONE&lt;&lt;8))
-</PRE>
-
-<P>
-The PID of the new process can (since Linux 2.6.18) be retrieved with
-<B>PTRACE_GETEVENTMSG</B>.
-
 <DT><B>PTRACE_O_TRACEEXIT</B> (since Linux 2.5.60)
 
 <DD>
@@ -547,9 +476,99 @@ whereas the normal exit notification is done after the process
 is finished exiting.
 Even though context is available,
 the tracer cannot prevent the exit from happening at this point.
+<P>
+<DT><B>PTRACE_O_TRACEFORK</B> (since Linux 2.5.46)
+
+<DD>
+Stop the tracee at the next
+<B><A HREF="../man2/fork.2.html">fork</A></B>(2)
+
+and automatically start tracing the newly forked process,
+which will start with a
+<B>SIGSTOP</B>.
+
+A
+<B><A HREF="../man2/waitpid.2.html">waitpid</A></B>(2)
+
+by the tracer will return a
+<I>status</I>
+
+value such that
+<P>
+<PRE>
+  status&gt;&gt;8 == (SIGTRAP | (PTRACE_EVENT_FORK&lt;&lt;8))
+</PRE>
+
+<P>
+The PID of the new process can be retrieved with
+<B>PTRACE_GETEVENTMSG</B>.
+
+<P>
+<DT><B>PTRACE_O_TRACESYSGOOD</B> (since Linux 2.4.6)
+
+<DD>
+When delivering system call traps, set bit 7 in the signal number
+(i.e., deliver
+<I>SIGTRAP|0x80</I>).
+
+This makes it easy for the tracer to distinguish
+normal traps from those caused by a system call.
+(<B>PTRACE_O_TRACESYSGOOD</B>
+
+may not work on all architectures.)
+<DT><B>PTRACE_O_TRACEVFORK</B> (since Linux 2.5.46)
+
+<DD>
+Stop the tracee at the next
+<B><A HREF="../man2/vfork.2.html">vfork</A></B>(2)
+
+and automatically start tracing the newly vforked process,
+which will start with a
+<B>SIGSTOP</B>.
+
+A
+<B><A HREF="../man2/waitpid.2.html">waitpid</A></B>(2)
+
+by the tracer will return a
+<I>status</I>
+
+value such that
+<P>
+<PRE>
+  status&gt;&gt;8 == (SIGTRAP | (PTRACE_EVENT_VFORK&lt;&lt;8))
+</PRE>
+
+<P>
+The PID of the new process can be retrieved with
+<B>PTRACE_GETEVENTMSG</B>.
+
+<DT><B>PTRACE_O_TRACEVFORKDONE</B> (since Linux 2.5.60)
+
+<DD>
+Stop the tracee at the completion of the next
+<B><A HREF="../man2/vfork.2.html">vfork</A></B>(2).
+
+A
+<B><A HREF="../man2/waitpid.2.html">waitpid</A></B>(2)
+
+by the tracer will return a
+<I>status</I>
+
+value such that
+<P>
+<PRE>
+  status&gt;&gt;8 == (SIGTRAP | (PTRACE_EVENT_VFORK_DONE&lt;&lt;8))
+</PRE>
+
+<P>
+The PID of the new process can (since Linux 2.6.18) be retrieved with
+<B>PTRACE_GETEVENTMSG</B>.
+
+<P>
 </DL>
 </DL>
 
+<P>
 <DT><B>PTRACE_GETEVENTMSG</B> (since Linux 2.5.46)
 
 <DD>
@@ -2473,6 +2492,6 @@ attach.)
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:17:10 GMT, April 20, 2020
+Time: 03:17:45 GMT, April 20, 2020
 </BODY>
 </HTML>

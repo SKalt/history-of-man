@@ -5,7 +5,7 @@ Copyright (c) 1992 Drew Eckhardt &lt;drew@cs.colorado.edu&gt;, March 28, 1992
 <HTML><HEAD><TITLE>Man page of CLONE</TITLE>
 </HEAD><BODY>
 <H1>CLONE</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2012-11-30<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2013-01-01<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -67,7 +67,6 @@ When the child process is created with
 <B>clone</B>(),
 
 it executes the function
-application
 <I>fn</I>(<I>arg</I>).
 
 (This differs from
@@ -171,7 +170,7 @@ Store child thread ID at location
 <I>ctid</I>
 
 in child memory.
-<DT><B>CLONE_FILES</B>
+<DT><B>CLONE_FILES</B> (since Linux 2.0)
 
 <DD>
 If
@@ -205,7 +204,7 @@ Subsequent operations that open or close file descriptors,
 or change file descriptor flags,
 performed by either the calling
 process or the child process do not affect the other process.
-<DT><B>CLONE_FS</B>
+<DT><B>CLONE_FS</B> (since Linux 2.0)
 
 <DD>
 If
@@ -292,35 +291,26 @@ the process is created in the same IPC namespace as
 the calling process.
 This flag is intended for the implementation of containers.
 <P>
-An IPC namespace consists of the set of identifiers for
-System V IPC objects.
-(These objects are created using
-<B><A HREF="../man2/msgctl.2.html">msgctl</A></B>(2),
+An IPC namespace provides an isolated view of System V IPC objects (see
+<B><A HREF="../man7/svipc.7.html">svipc</A></B>(7))
 
-<B><A HREF="../man2/semctl.2.html">semctl</A></B>(2),
+and (since Linux 2.6.30)
 
-and
-<B><A HREF="../man2/shmctl.2.html">shmctl</A></B>(2)).
 
+POSIX message queues
+(see
+<B><A HREF="../man7/mq_overview.7.html">mq_overview</A></B>(7)).
+
+The common characteristic of these IPC mechanisms is that IPC
+objects are identified by mechanisms other than filesystem
+pathnames.
+<P>
 Objects created in an IPC namespace are visible to all other processes
 that are members of that namespace,
 but are not visible to processes in other IPC namespaces.
 <P>
-Since Linux 2.6.30,
-
-
-<B>CLONE_NEWIPC</B>
-
-also supports POSIX message queues, meaning that
-<B>CLONE_NEWIPC</B>
-
-causes a new instance of a POSIX message queue file system (see
-<B><A HREF="../man7/mq_overview.7.html">mq_overview</A></B>(7))
-
-to be created and mounted.
-<P>
 When an IPC namespace is destroyed
-(i.e, when the last process that is a member of the namespace terminates),
+(i.e., when the last process that is a member of the namespace terminates),
 all IPC objects in the namespace are automatically destroyed.
 <P>
 Use of this flag requires: a kernel configured with the
@@ -365,6 +355,7 @@ directory trees, sockets, etc.).
 A physical network device can live in exactly one
 network namespace.
 A virtual network device (&quot;veth&quot;) pair provides a pipe-like abstraction
+
 that can be used to create tunnels between network namespaces,
 and can be used to create a bridge to a physical network device
 in another namespace.
@@ -623,7 +614,7 @@ of not much use.
 Since 2.3.21 this flag can be
 specified only by the system boot process (PID 0).
 It disappeared in Linux 2.5.16.
-<DT><B>CLONE_PTRACE</B>
+<DT><B>CLONE_PTRACE</B> (since Linux 2.2)
 
 <DD>
 If
@@ -643,7 +634,7 @@ argument is the new TLS (Thread Local Storage) descriptor.
 (See
 <B><A HREF="../man2/set_thread_area.2.html">set_thread_area</A></B>(2).)
 
-<DT><B>CLONE_SIGHAND</B>
+<DT><B>CLONE_SIGHAND</B> (since Linux 2.0)
 
 <DD>
 If
@@ -884,7 +875,7 @@ is specified, then a tracing process cannot force
 <B>CLONE_PTRACE</B>
 
 on this child process.
-<DT><B>CLONE_VFORK</B>
+<DT><B>CLONE_VFORK</B> (since Linux 2.2)
 
 <DD>
 If
@@ -908,7 +899,7 @@ If
 is not set then both the calling process and the child are schedulable
 after the call, and an application should not rely on execution occurring
 in any particular order.
-<DT><B>CLONE_VM</B>
+<DT><B>CLONE_VM</B> (since Linux 2.0)
 
 <DD>
 If
@@ -1310,6 +1301,111 @@ To get the truth, it may be necessary to use code such as the following:
 
 
 <A NAME="lbAM">&nbsp;</A>
+<H2>EXAMPLE</H2>
+
+<A NAME="lbAN">&nbsp;</A>
+<H3>Create a child that executes in a separate UTS namespace</H3>
+
+The following program demonstrates the use of
+<B><A HREF="../man2/clone.2.html">clone</A></B>(2)
+
+to create a child process that executes in a separate UTS namespace.
+The child changes the hostname in its UTS namespace.
+Both parent and child then display the system hostname,
+making it possible to see that the hostname
+differs in the UTS namespaces of the parent and child.
+For an example of the use of this program, see
+<B><A HREF="../man2/setns.2.html">setns</A></B>(2).
+
+<P>
+<PRE>
+#define _GNU_SOURCE
+#include &lt;<A HREF="file:///usr/include/sys/wait.h">sys/wait.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/sys/utsname.h">sys/utsname.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/sched.h">sched.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/string.h">string.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/stdlib.h">stdlib.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;
+
+#define errExit(msg)    do { perror(msg); exit(EXIT_FAILURE); \
+                        } while (0)
+
+static int              /* Start function for cloned child */
+childFunc(void *arg)
+{
+    struct utsname uts;
+
+    /* Change hostname in UTS namespace of child */
+
+    if (sethostname(arg, strlen(arg)) == -1)
+        errExit(&quot;sethostname&quot;);
+
+    /* Retrieve and display hostname */
+
+    if (uname(&amp;uts) == -1)
+        errExit(&quot;uname&quot;);
+    printf(&quot;uts.nodename in child:  %s\n&quot;, uts.nodename);
+
+    /* Keep the namespace open for a while, by sleeping.
+       This allows some experimentation--for example, another
+       process might join the namespace. */
+
+    sleep(200);
+
+    return 0;           /* Child terminates now */
+}
+
+#define STACK_SIZE (1024 * 1024)    /* Stack size for cloned child */
+
+int
+main(int argc, char *argv[])
+{
+    char *stack;                    /* Start of stack buffer */
+    char *stackTop;                 /* End of stack buffer */
+    pid_t pid;
+    struct utsname uts;
+
+    if (argc &lt; 2) {
+        fprintf(stderr, &quot;Usage: %s &lt;child-hostname&gt;\n&quot;, argv[0]);
+        exit(EXIT_SUCCESS);
+    }
+
+    /* Allocate stack for child */
+
+    stack = malloc(STACK_SIZE);
+    if (stack == NULL)
+        errExit(&quot;malloc&quot;);
+    stackTop = stack + STACK_SIZE;  /* Assume stack grows downward */
+
+    /* Create child that has its own UTS namespace;
+       child commences execution in childFunc() */
+
+    pid = clone(childFunc, stackTop, CLONE_NEWUTS | SIGCHLD, argv[1]);
+    if (pid == -1)
+        errExit(&quot;clone&quot;);
+    printf(&quot;clone() returned %ld\n&quot;, (long) pid);
+
+    /* Parent falls through to here */
+
+    <A HREF="../man1/sleep.1.html">sleep</A>(1);           /* Give child time to change its hostname */
+
+    /* Display hostname in parent's UTS namespace. This will be
+       different from hostname in child's UTS namespace. */
+
+    if (uname(&amp;uts) == -1)
+        errExit(&quot;uname&quot;);
+    printf(&quot;uts.nodename in parent: %s\n&quot;, uts.nodename);
+
+    if (waitpid(pid, NULL, 0) == -1)    /* Wait for child */
+        errExit(&quot;waitpid&quot;);
+    printf(&quot;child has terminated\n&quot;);
+
+    exit(EXIT_SUCCESS);
+}
+</PRE>
+
+<A NAME="lbAO">&nbsp;</A>
 <H2>SEE ALSO</H2>
 
 <B><A HREF="../man2/fork.2.html">fork</A></B>(2),
@@ -1320,9 +1416,13 @@ To get the truth, it may be necessary to use code such as the following:
 
 <B><A HREF="../man2/gettid.2.html">gettid</A></B>(2),
 
+<B><A HREF="../man2/kcmp.2.html">kcmp</A></B>(2),
+
 <B><A HREF="../man2/set_thread_area.2.html">set_thread_area</A></B>(2),
 
 <B><A HREF="../man2/set_tid_address.2.html">set_tid_address</A></B>(2),
+
+<B><A HREF="../man2/setns.2.html">setns</A></B>(2),
 
 <B><A HREF="../man2/tkill.2.html">tkill</A></B>(2),
 
@@ -1352,12 +1452,16 @@ To get the truth, it may be necessary to use code such as the following:
 <DT><A HREF="#lbAJ">CONFORMING TO</A><DD>
 <DT><A HREF="#lbAK">NOTES</A><DD>
 <DT><A HREF="#lbAL">BUGS</A><DD>
-<DT><A HREF="#lbAM">SEE ALSO</A><DD>
+<DT><A HREF="#lbAM">EXAMPLE</A><DD>
+<DL>
+<DT><A HREF="#lbAN">Create a child that executes in a separate UTS namespace</A><DD>
+</DL>
+<DT><A HREF="#lbAO">SEE ALSO</A><DD>
 </DL>
 <HR>
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:17:08 GMT, April 20, 2020
+Time: 03:17:44 GMT, April 20, 2020
 </BODY>
 </HTML>

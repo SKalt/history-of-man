@@ -5,7 +5,7 @@ Copyright (C) 1994, 1995 by Daniel Quinlan (quinlan@yggdrasil.com)
 <HTML><HEAD><TITLE>Man page of PROC</TITLE>
 </HEAD><BODY>
 <H1>PROC</H1>
-Section: Linux Programmer's Manual (5)<BR>Updated: 2012-11-24<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (5)<BR>Updated: 2012-12-27<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -333,8 +333,7 @@ Up to and including Linux 2.6.35,
 this file is protected to only allow reading by the real UID of the process.
 Since Linux 2.6.36,
 
-this file is readable file is readable
-by all users on the system.
+this file is readable by all users on the system.
 <DT><I>/proc/[pid]/maps</I>
 
 <DD>
@@ -612,6 +611,7 @@ which disables OOM-killing altogether for this process.
 A positive score increases the likelihood of this
 process being killed by the OOM-killer;
 a negative score decreases the likelihood.
+<DT><DD>
 The default value for this file is 0;
 a new process inherits its parent's
 <I>oom_adj</I>
@@ -621,6 +621,10 @@ A process must be privileged
 (<B>CAP_SYS_RESOURCE</B>)
 
 to update this file.
+<DT><DD>
+Since Linux 2.6.36, use of this file is deprecated in favor of
+<I>/proc/[pid]/oom_score_adj</I>.
+
 <DT><I>/proc/[pid]/oom_score</I> (since Linux 2.6.11)
 
 <DD>
@@ -658,10 +662,90 @@ whether the process is making direct hardware access (-).
 The
 <I>oom_score</I>
 
-also reflects the bit-shift adjustment specified by the
+also reflects the adjustment specified by the
+<I>oom_score_adj</I>
+
+or
 <I>oom_adj</I>
 
 setting for the process.
+<DT><I>/proc/[pid]/oom_score_adj</I> (since Linux 2.6.36)
+
+<DD>
+
+This file can be used to adjust the badness heuristic used to select which
+process gets killed in out-of-memory conditions.
+<P>
+The badness heuristic assigns a value to each candidate task ranging from 0
+(never kill) to 1000 (always kill) to determine which process is targeted.
+The units are roughly a proportion along that range of
+allowed memory the process may allocate from,
+based on an estimation of its current memory and swap use.
+For example, if a task is using all allowed memory,
+its badness score will be 1000.
+If it is using half of its allowed memory, its score will be 500.
+<P>
+There is an additional factor included in the badness score: root
+processes are given 3% extra memory over other tasks.
+<P>
+The amount of &quot;allowed&quot; memory depends on the context
+in which the OOM killer was called.
+If it is due to the memory assigned to the allocating task's cpuset
+being exhausted,
+the allowed memory represents the set of mems assigned to that
+cpuset (see
+<B><A HREF="../man7/cpuset.7.html">cpuset</A></B>(7)).
+
+If it is due to a mempolicy's node(s) being exhausted,
+the allowed memory represents the set of mempolicy nodes.
+If it is due to a memory limit (or swap limit) being reached,
+the allowed memory is that configured limit.
+Finally, if it is due to the entire system being out of memory, the
+allowed memory represents all allocatable resources.
+<P>
+The value of
+<I>/oom_score_adj</I>
+
+is added to the badness score before it
+is used to determine which task to kill.
+Acceptable values range from -1000
+(OOM_SCORE_ADJ_MIN) to +1000 (OOM_SCORE_ADJ_MAX).
+This allows user space to control the preference for OOM killing,
+ranging from always preferring a certain
+task or completely disabling it from OOM killink.
+The lowest possible value, -1000, is
+equivalent to disabling OOM killing entirely for that task,
+since it will always report a badness score of 0.
+<P>
+Consequently, it is very simple for user space to define
+the amount of memory to consider for each task.
+Setting a
+<I>oom_score_adj</I>
+
+value of +500, for example,
+is roughly equivalent to allowing the remainder of tasks sharing the
+same system, cpuset, mempolicy, or memory controller resources
+to use at least 50% more memory.
+A value of -500, on the other hand, would be roughly
+equivalent to discounting 50% of the task's
+allowed memory from being considered as scoring against the task.
+<P>
+For backwards compatibility with previous kernels,
+<I>/proc/[pid]/oom_adj</I>
+
+can still be used to tune the badness score.
+Its value is
+scaled linearly with
+<I>oom_score_adj</I>.
+
+<P>
+Writing to
+<I>/proc/[pid]/oom_score_adj</I>
+
+or
+<I>/proc/[pid]/oom_adj</I>
+
+will change the other with its scaled value.
 
 
 
@@ -748,53 +832,53 @@ format specifiers, are:
 <DL COMPACT><DT><DD>
 <DL COMPACT>
 <DT><I>pid</I> %d<DD>
-The process ID.
+(1) The process ID.
 <DT><I>comm</I> %s<DD>
-The filename of the executable, in parentheses.
+(2) The filename of the executable, in parentheses.
 This is visible whether or not the executable is swapped out.
 <DT><I>state</I> %c<DD>
-One character from the string &quot;RSDZTW&quot; where R is running, S is
+(3) One character from the string &quot;RSDZTW&quot; where R is running, S is
 sleeping in an interruptible wait, D is waiting in uninterruptible
 disk sleep, Z is zombie, T is traced or stopped (on a signal),
 and W is paging.
 <DT><I>ppid</I> %d<DD>
-The PID of the parent.
+(4) The PID of the parent.
 <DT><I>pgrp</I> %d<DD>
-The process group ID of the process.
+(5) The process group ID of the process.
 <DT><I>session</I> %d<DD>
-The session ID of the process.
+(6) The session ID of the process.
 <DT><I>tty_nr</I> %d<DD>
-The controlling terminal of the process.
+(7) The controlling terminal of the process.
 (The minor device number is contained in the combination of bits
 31 to 20 and 7 to 0;
 the major device number is in bits 15 to 8.)
 <DT><I>tpgid</I> %d<DD>
 
-The ID of the foreground process group of the controlling
+(8) The ID of the foreground process group of the controlling
 terminal of the process.
 <DT><I>flags</I> %u (%lu before Linux 2.6.22)<DD>
-The kernel flags word of the process.
+(9) The kernel flags word of the process.
 For bit meanings,
 see the PF_* defines in the Linux kernel source file
 <I>include/linux/sched.h</I>.
 
 Details depend on the kernel version.
 <DT><I>minflt</I> %lu<DD>
-The number of minor faults the process has made which have not
+(10) The number of minor faults the process has made which have not
 required loading a memory page from disk.
 <DT>
 <DD>
 <I>cminflt</I> %lu
-The number of minor faults that the process's
+(11) The number of minor faults that the process's
 waited-for children have made.
 <DT><I>majflt</I> %lu<DD>
-The number of major faults the process has made which have
+(12) The number of major faults the process has made which have
 required loading a memory page from disk.
 <DT><I>cmajflt</I> %lu<DD>
-The number of major faults that the process's
+(13) The number of major faults that the process's
 waited-for children have made.
 <DT><I>utime</I> %lu<DD>
-Amount of time that this process has been scheduled in user mode,
+(14) Amount of time that this process has been scheduled in user mode,
 measured in clock ticks (divide by
 <I>sysconf(_SC_CLK_TCK)</I>).
 
@@ -803,12 +887,12 @@ This includes guest time, <I>guest_time</I>
 so that applications that are not aware of the guest time field
 do not lose that time from their calculations.
 <DT><I>stime</I> %lu<DD>
-Amount of time that this process has been scheduled in kernel mode,
+(15) Amount of time that this process has been scheduled in kernel mode,
 measured in clock ticks (divide by
 <I>sysconf(_SC_CLK_TCK)</I>).
 
 <DT><I>cutime</I> %ld<DD>
-Amount of time that this process's
+(16) Amount of time that this process's
 waited-for children have been scheduled in user mode,
 measured in clock ticks (divide by
 <I>sysconf(_SC_CLK_TCK)</I>).
@@ -819,13 +903,13 @@ measured in clock ticks (divide by
 This includes guest time, <I>cguest_time</I>
 (time spent running a virtual CPU, see below).
 <DT><I>cstime</I> %ld<DD>
-Amount of time that this process's
+(17) Amount of time that this process's
 waited-for children have been scheduled in kernel mode,
 measured in clock ticks (divide by
 <I>sysconf(_SC_CLK_TCK)</I>).
 
 <DT><I>priority</I> %ld<DD>
-(Explanation for Linux 2.6)
+(18) (Explanation for Linux 2.6)
 For processes running a real-time scheduling policy
 (<I>policy</I>
 
@@ -848,13 +932,11 @@ Before Linux 2.6, this was a scaled value based on
 the scheduler weighting given to this process.
 
 <DT><I>nice</I> %ld<DD>
-The nice value (see
+(19) The nice value (see
 <B><A HREF="../man2/setpriority.2.html">setpriority</A></B>(2)),
 
 a value in the range 19 (low priority) to -20 (high priority).
 
-<DT>
-<DD>
 
 
 
@@ -863,35 +945,36 @@ a value in the range 19 (low priority) to -20 (high priority).
 
 
 
-<I>num_threads</I> %ld
-Number of threads in this process (since Linux 2.6).
+
+<DT><I>num_threads</I> %ld<DD>
+(20) Number of threads in this process (since Linux 2.6).
 Before kernel 2.6, this field was hard coded to 0 as a placeholder
 for an earlier removed field.
 <DT>
 <DD>
 <I>itrealvalue</I> %ld
-The time in jiffies before the next
+(21) The time in jiffies before the next
 <B>SIGALRM</B>
 
 is sent to the process due to an interval timer.
 Since kernel 2.6.17, this field is no longer maintained,
 and is hard coded as 0.
 <DT><I>starttime</I> %llu (was %lu before Linux 2.6)<DD>
-The time the process started after system boot.
+(22) The time the process started after system boot.
 In kernels before Linux 2.6, this value was expressed in jiffies.
 Since Linux 2.6, the value is expressed in clock ticks (divide by
 <I>sysconf(_SC_CLK_TCK)</I>).
 
 <DT><I>vsize</I> %lu<DD>
-Virtual memory size in bytes.
+(23) Virtual memory size in bytes.
 <DT><I>rss</I> %ld<DD>
-Resident Set Size: number of pages the process has in real memory.
+(24) Resident Set Size: number of pages the process has in real memory.
 This is just the pages which
 count toward text, data, or stack space.
 This does not include pages
 which have not been demand-loaded in, or which are swapped out.
 <DT><I>rsslim</I> %lu<DD>
-Current soft limit in bytes on the rss of the process;
+(25) Current soft limit in bytes on the rss of the process;
 see the description of
 <B>RLIMIT_RSS</B>
 
@@ -899,44 +982,44 @@ in
 <B><A HREF="../man2/getrlimit.2.html">getrlimit</A></B>(2).
 
 <DT><I>startcode</I> %lu<DD>
-The address above which program text can run.
+(26) The address above which program text can run.
 <DT><I>endcode</I> %lu<DD>
-The address below which program text can run.
+(27) The address below which program text can run.
 <DT><I>startstack</I> %lu<DD>
-The address of the start (i.e., bottom) of the stack.
+(28) The address of the start (i.e., bottom) of the stack.
 <DT><I>kstkesp</I> %lu<DD>
-The current value of ESP (stack pointer), as found in the
+(29) The current value of ESP (stack pointer), as found in the
 kernel stack page for the process.
 <DT><I>kstkeip</I> %lu<DD>
-The current EIP (instruction pointer).
+(30) The current EIP (instruction pointer).
 <DT>
 <DD>
 <I>signal</I> %lu
-The bitmap of pending signals, displayed as a decimal number.
+(31) The bitmap of pending signals, displayed as a decimal number.
 Obsolete, because it does not provide information on real-time signals; use
 <I>/proc/[pid]/status</I>
 
 instead.
 <DT><I>blocked</I> %lu<DD>
-The bitmap of blocked signals, displayed as a decimal number.
+(32) The bitmap of blocked signals, displayed as a decimal number.
 Obsolete, because it does not provide information on real-time signals; use
 <I>/proc/[pid]/status</I>
 
 instead.
 <DT><I>sigignore</I> %lu<DD>
-The bitmap of ignored signals, displayed as a decimal number.
+(33) The bitmap of ignored signals, displayed as a decimal number.
 Obsolete, because it does not provide information on real-time signals; use
 <I>/proc/[pid]/status</I>
 
 instead.
 <DT><I>sigcatch</I> %lu<DD>
-The bitmap of caught signals, displayed as a decimal number.
+(34) The bitmap of caught signals, displayed as a decimal number.
 Obsolete, because it does not provide information on real-time signals; use
 <I>/proc/[pid]/status</I>
 
 instead.
 <DT><I>wchan</I> %lu<DD>
-This is the &quot;channel&quot; in which the process is waiting.
+(35) This is the &quot;channel&quot; in which the process is waiting.
 It is the
 address of a system call, and can be looked up in a namelist if you
 need a textual name.
@@ -946,17 +1029,15 @@ need a textual name.
 then
 try <I>ps -l</I> to see the WCHAN field in action.)
 <DT><I>nswap</I> %lu<DD>
-
-Number of pages swapped (not maintained).
+(36) .Number of pages swapped (not maintained).
 <DT><I>cnswap</I> %lu<DD>
-
-Cumulative <I>nswap</I> for child processes (not maintained).
+(37) .Cumulative <I>nswap</I> for child processes (not maintained).
 <DT><I>exit_signal</I> %d (since Linux 2.1.22)<DD>
-Signal to be sent to parent when we die.
+(38) Signal to be sent to parent when we die.
 <DT><I>processor</I> %d (since Linux 2.2.8)<DD>
-CPU number last executed on.
+(39) CPU number last executed on.
 <DT><I>rt_priority</I> %u (since Linux 2.5.19; was %lu before Linux 2.6.22)<DD>
-Real-time scheduling priority, a number in the range 1 to 99 for
+(40) Real-time scheduling priority, a number in the range 1 to 99 for
 processes scheduled under a real-time policy,
 or 0, for non-real-time processes (see
 <B><A HREF="../man2/sched_setscheduler.2.html">sched_setscheduler</A></B>(2)).
@@ -964,21 +1045,21 @@ or 0, for non-real-time processes (see
 <DT>
 <DD>
 <I>policy</I> %u (since Linux 2.5.19; was %lu before Linux 2.6.22)
-Scheduling policy (see
+(41) Scheduling policy (see
 <B><A HREF="../man2/sched_setscheduler.2.html">sched_setscheduler</A></B>(2)).
 
 Decode using the SCHED_* constants in
 <I>linux/sched.h</I>.
 
 <DT><I>delayacct_blkio_ticks</I> %llu (since Linux 2.6.18)<DD>
-Aggregated block I/O delays, measured in clock ticks (centiseconds).
+(42) Aggregated block I/O delays, measured in clock ticks (centiseconds).
 <DT><I>guest_time</I> %lu (since Linux 2.6.24)<DD>
-Guest time of the process (time spent running a virtual CPU
+(43) Guest time of the process (time spent running a virtual CPU
 for a guest operating system), measured in clock ticks (divide by
 <I>sysconf(_SC_CLK_TCK)</I>).
 
 <DT><I>cguest_time</I> %ld (since Linux 2.6.24)<DD>
-Guest time of the process's children, measured in clock ticks (divide by
+(44) Guest time of the process's children, measured in clock ticks (divide by
 <I>sysconf(_SC_CLK_TCK)</I>).
 
 </DL>
@@ -992,15 +1073,15 @@ The columns are:
 
 <PRE>
 
-size       total program size
+size       (1) total program size
            (same as VmSize in <I>/proc/[pid]/status</I>)
-resident   resident set size
+resident   (2) resident set size
            (same as VmRSS in <I>/proc/[pid]/status</I>)
-share      shared pages (from shared mappings)
-text       text (code)
-lib        library (unused in Linux 2.6)
-data       data + stack
-dt         dirty pages (unused in Linux 2.6)
+share      (3) shared pages (i.e., backed by a file)
+text       (4) text (code)
+lib        (5) library (unused in Linux 2.6)
+data       (6) data + stack
+dt         (7) dirty pages (unused in Linux 2.6)
 </PRE>
 
 
@@ -2243,36 +2324,64 @@ USER_HZ (1/100ths of a second on most architectures, use
 
 to obtain the right value),
 
-that the system spent in user mode,
-user mode with low priority (nice), system mode, and the
-idle task, respectively.
+that the system spent in various states:
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT><I>user</I>
+
+<DD>
+(1) Time spent in user mode.
+<DT><I>nice</I>
+
+<DD>
+(2) Time spent in user mode with low priority (nice)
+<DT><I>system</I>
+
+<DD>
+(3) Time spent in system mode
+<DT><I>idle</I>
+
+<DD>
+(4) Time spent in the idle task.
 
 
-The last value should be USER_HZ times the
-second entry in the uptime pseudo-file.
-<P>
-In Linux 2.6 this line includes three additional columns:
-<I>iowait</I>
 
-- time waiting for I/O to complete (since 2.5.41);
-<I>irq</I>
+This value should be USER_HZ times the
+second entry in the
+<I>/proc/uptime</I>
 
-- time servicing interrupts (since 2.6.0-test4);
-<I>softirq</I>
+pseudo-file.
+<DT><I>iowait</I> (since Linux 2.5.41)
 
-- time servicing softirqs (since 2.6.0-test4).
-<P>
-Since Linux 2.6.11, there is an eighth column,
-<I>steal</I>
+<DD>
+(5) Time waiting for I/O to complete.
+<DT><I>irq</I> (since Linux 2.6.0-test4)
 
-- stolen time, which is the time spent in other operating systems when
+<DD>
+(6) Time servicing interrupts.
+<DT><I>softirq  (since Linux 2.6.0-test4)</I>
+
+<DD>
+(7) Time servicing softirqs.
+<DT><I>steal</I> (since Linux 2.6.11)
+
+<DD>
+(8) Stolen time, which is the time spent in other operating systems when
 running in a virtualized environment
-<P>
-Since Linux 2.6.24, there is a ninth column,
-<I>guest</I>,
+<DT><I>guest</I> (since Linux 2.6.24)
 
-which is the time spent running a virtual CPU for guest
+<DD>
+(9) The time spent running a virtual CPU for guest
 operating systems under the control of the Linux kernel.
+
+<DT><I>guest_nice</I> (since Linux 2.6.33)
+
+<DD>
+
+(10) Time spent running a niced guest (virtual CPU for guest
+operating systems under the control of the Linux kernel).
+</DL>
+</DL>
 
 <DT><I>page 5741 1808</I><DD>
 The number of pages the system paged in and the number that were paged
@@ -2722,8 +2831,9 @@ based on time-of-check, time-of-use races when accessing symbolic links.
 The value in this file determines whether core dump files are
 produced for set-user-ID or otherwise protected/tainted binaries.
 Three different integer values can be specified:
-<P>
-<I>0&nbsp;(default)</I>
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT><I>0&nbsp;(default)</I><DD>
 This provides the traditional (pre-Linux 2.6.13) behavior.
 A core dump will not be produced for a process which has
 changed credentials (by calling
@@ -2733,15 +2843,13 @@ changed credentials (by calling
 
 or similar, or by executing a set-user-ID or set-group-ID program)
 or whose binary does not have read permission enabled.
-<P>
-<I>1&nbsp;(&quot;debug&quot;)</I>
+<DT><I>1&nbsp;(&quot;debug&quot;)</I><DD>
 All processes dump core when possible.
 The core dump is owned by the file system user ID of the dumping process
 and no security is applied.
 This is intended for system debugging situations only.
 Ptrace is unchecked.
-<P>
-<I>2&nbsp;(&quot;suidsafe&quot;)</I>
+<DT><I>2&nbsp;(&quot;suidsafe&quot;)</I><DD>
 Any binary which normally would not be dumped (see &quot;0&quot; above)
 is dumped readable by root only.
 This allows the user to remove the core dump file but not to read it.
@@ -2749,6 +2857,23 @@ For security reasons core dumps in this mode will not overwrite one
 another or other files.
 This mode is appropriate when administrators are
 attempting to debug problems in a normal environment.
+<DT><DD>
+Additionally, since Linux 3.6,
+
+<I>/proc/sys/kernel/core_pattern</I>
+
+must either be an absolute pathname
+or a pipe command, as detailed in
+<B><A HREF="../man5/core.5.html">core</A></B>(5).
+
+Warnings will be written to the kernel log if
+<I>core_pattern</I>
+
+does not follow these rules, and no core dump will be produced.
+
+</DL>
+</DL>
+
 <DT><I>/proc/sys/fs/super-max</I>
 
 <DD>
@@ -2849,14 +2974,22 @@ Note: when a program (like dosemu) has the keyboard in &quot;raw&quot;
 mode, the ctrl-alt-del is intercepted by the program before it
 ever reaches the kernel tty layer, and it's up to the program
 to decide what to do with it.
-<DT><I>/proc/sys/kernel/hotplug</I>
+<DT><I>/proc/sys/kernel/dmesg_restrict</I> (since Linux 2.6.37)
 
 <DD>
-This file
-contains the path for the hotplug policy agent.
-The default value in this file is
-<I>/sbin/hotplug</I>.
+The value in this file determines who can see kernel syslog contents.
+A value of 0 in this file imposes no restrictions.
+If the value is 1, only privileged users can read the kernel syslog.
+(See
+<B><A HREF="../man2/syslog.2.html">syslog</A></B>(2)
 
+for more details.)
+Since Linux 3.4,
+
+only users with the
+<B>CAP_SYS_ADMIN</B>
+
+capability may change the value in this file.
 <DT><I>/proc/sys/kernel/domainname</I> and <I>/proc/sys/kernel/hostname</I>
 
 <DD>
@@ -2898,6 +3031,14 @@ see the
 <B><A HREF="../man1/hostname.1.html">hostname</A></B>(1)
 
 man page.
+<DT><I>/proc/sys/kernel/hotplug</I>
+
+<DD>
+This file
+contains the path for the hotplug policy agent.
+The default value in this file is
+<I>/sbin/hotplug</I>.
+
 <DT><I>/proc/sys/kernel/htab-reclaim</I>
 
 <DD>
@@ -2933,6 +3074,12 @@ The initial default value for this file was 1,
 but the default was changed
 
 to 0 in Linux 2.6.39.
+Since Linux 3.4,
+
+only users with the
+<B>CAP_SYS_ADMIN</B>
+
+capability can change the value in this file.
 <DT><I>/proc/sys/kernel/l2cr</I>
 
 <DD>
@@ -3714,6 +3861,6 @@ and
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:17:22 GMT, April 20, 2020
+Time: 03:17:57 GMT, April 20, 2020
 </BODY>
 </HTML>

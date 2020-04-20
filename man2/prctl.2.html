@@ -5,7 +5,7 @@ Copyright (C) 1998 Andries Brouwer (aeb@cwi.nl)
 <HTML><HEAD><TITLE>Man page of PRCTL</TITLE>
 </HEAD><BODY>
 <H1>PRCTL</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2012-10-25<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2013-01-10<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -299,6 +299,43 @@ Return the current value of the parent process death signal,
 in the location pointed to by
 <I>(int&nbsp;*) arg2</I>.
 
+<DT><B>PR_SET_PTRACER</B> (since Linux 3.4)
+
+<DD>
+
+
+This is only meaningful when the Yama LSM is enabled and in mode 1
+(&quot;restricted ptrace&quot;, visible via
+<I>/proc/sys/kernel/yama/ptrace_scope</I>).
+
+When a &quot;ptracer process ID&quot; is passed in <I>arg2</I>,
+the caller is declaring that the ptracer process can
+<B><A HREF="../man2/ptrace.2.html">ptrace</A></B>(2)
+
+the calling process as if it were a direct process ancestor.
+Each
+<B>PR_SET_PTRACER</B>
+
+operation replaces the previous &quot;ptracer process ID&quot;.
+Employing
+<B>PR_SET_PTRACER</B>
+
+with
+<I>arg2</I>
+
+set to 0 clears the caller's &quot;ptracer process ID&quot;.
+If
+<I>arg2</I>
+
+is
+<B>PR_SET_PTRACER_ANY,</B>
+
+the ptrace restrictions introduced by Yama are effectively disabled for the
+calling process.
+<P>
+For further information, see the kernel source file
+<I>Documentation/security/Yama.txt</I>.
+
 <DT><B>PR_SET_SECCOMP</B> (since Linux 2.6.23)
 
 <DD>
@@ -423,6 +460,22 @@ the &quot;securebits&quot; flags of the calling thread.
 See
 <B><A HREF="../man7/capabilities.7.html">capabilities</A></B>(7).
 
+<DT><B>PR_GET_TID_ADDRESS</B> (since Linux 3.5)
+
+<DD>
+
+Retrieve the
+<I>clear_child_tid</I>
+
+address set by
+<B><A HREF="../man2/set_tid_address.2.html">set_tid_address</A></B>(2)
+
+and the
+<B><A HREF="../man2/clone.2.html">clone</A></B>(2)
+
+<B>CLONE_CHILD_CLEARTID</B>
+
+flag.
 <DT><B>PR_SET_TIMERSLACK</B> (since Linux 2.6.28)
 
 <DD>
@@ -987,9 +1040,24 @@ resource limit to be exceeded.
 </DL>
 </DL>
 
-<DT><B>EPERM</B>
+<DT><B>EINVAL</B>
 
 <DD>
+<I>option</I>
+
+is
+<B>PR_SET_PTRACER</B>
+
+and
+<I>arg2</I>
+
+is not 0,
+<B>PR_SET_PTRACER_ANY</B>,
+
+or the PID of an existing process.
+<DT>TP<DD>
+<B>EPERM</B>
+
 <I>option</I>
 
 is
@@ -1138,6 +1206,6 @@ get or set the maximum stack size, and so on.
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:17:10 GMT, April 20, 2020
+Time: 03:17:45 GMT, April 20, 2020
 </BODY>
 </HTML>
