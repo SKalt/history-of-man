@@ -26,7 +26,7 @@ the source, must acknowledge the copyright and authors of this work.
 <HTML><HEAD><TITLE>Man page of POSIX_FADVISE</TITLE>
 </HEAD><BODY>
 <H1>POSIX_FADVISE</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2010-10-09<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2013-04-01<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -196,22 +196,31 @@ or
 
 first.
 <A NAME="lbAJ">&nbsp;</A>
-<H3>arm_fadvise()</H3>
+<H3>Architecture-specific variants</H3>
 
-The ARM architecture
-needs 64-bit arguments to be aligned in a suitable pair of registers.
-On this architecture, the call signature of
+Some architectures require
+64-bit arguments to be aligned in a suitable pair of registers (see
+<B><A HREF="../man2/syscall.2.html">syscall</A></B>(2)
+
+for further detail).
+On such architectures, the call signature of
 <B>posix_fadvise</B>()
 
-is flawed, since it forces a register to be wasted as padding between the
+shown in the SYNOPSIS would force
+a register to be wasted as padding between the
 <I>fd</I>
 
 and
 <I>len</I>
 
 arguments.
-Therefore, since Linux 2.6.14, ARM defines a different
-system call that orders the arguments suitably:
+Therefore, these architectures define a version of the
+system call that orders the arguments suitably,
+but otherwise is otherwise exactly the same as
+<B>posix_fadvise</B>().
+
+<P>
+For example, since Linux 2.6.14, ARM has the following system call:
 <P>
 
 
@@ -223,11 +232,12 @@ system call that orders the arguments suitably:
 
 <P>
 
-The behavior of this system call is otherwise exactly the same as
-<B>posix_fadvise</B>().
+These architecture-specific details are generally
+hidden from applications by the glibc
+<B>posix_fadvise</B>()
 
-No library support is provided for this system call in glibc.
-
+wrapper function,
+which invokes the appropriate architecture-specific system call.
 <A NAME="lbAK">&nbsp;</A>
 <H2>BUGS</H2>
 
@@ -262,7 +272,7 @@ rather than as meaning &quot;all bytes through to the end of the file&quot;.
 <DT><A HREF="#lbAH">CONFORMING TO</A><DD>
 <DT><A HREF="#lbAI">NOTES</A><DD>
 <DL>
-<DT><A HREF="#lbAJ">arm_fadvise()</A><DD>
+<DT><A HREF="#lbAJ">Architecture-specific variants</A><DD>
 </DL>
 <DT><A HREF="#lbAK">BUGS</A><DD>
 <DT><A HREF="#lbAL">SEE ALSO</A><DD>
@@ -271,6 +281,6 @@ rather than as meaning &quot;all bytes through to the end of the file&quot;.
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:19:57 GMT, April 20, 2020
+Time: 03:20:33 GMT, April 20, 2020
 </BODY>
 </HTML>

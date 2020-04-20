@@ -8,7 +8,7 @@ May be distributed under the GNU General Public License.
 <HTML><HEAD><TITLE>Man page of CLONE</TITLE>
 </HEAD><BODY>
 <H1>CLONE</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2013-01-01<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2013-04-16<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -19,13 +19,45 @@ clone, __clone2 - create a child process
 <H2>SYNOPSIS</H2>
 
 <PRE>
-<B>#define _GNU_SOURCE</B>             /* See <A HREF="../man7/feature_test_macros.7.html">feature_test_macros</A>(7) */
+/* Prototype for the glibc wrapper function */
+
 <B>#include &lt;<A HREF="file:///usr/include/sched.h">sched.h</A>&gt;</B>
 
 <B>int clone(int (*</B><I>fn</I><B>)(void *), void *</B><I>child_stack</I><B>,</B>
 <B>          int </B><I>flags</I><B>, void *</B><I>arg</I><B>, ... </B>
 <B>          /* pid_t *</B><I>ptid</I><B>, struct user_desc *</B><I>tls</I><B>, pid_t *</B><I>ctid</I><B> */ );</B>
+
+/* Prototype for the raw system call */
+
+<B>long clone(unsigned long </B><I>flags</I><B>, void *</B><I>child_stack</I><B>,</B>
+<B>          void *</B><I>ptid</I><B>, void *</B><I>ctid</I><B>,</B>
+<B>          struct pt_regs *</B><I>regs</I><B>);</B>
 </PRE>
+
+<P>
+
+Feature Test Macro Requirements for glibc wrapper function (see
+<B><A HREF="../man7/feature_test_macros.7.html">feature_test_macros</A></B>(7)):
+
+
+<P>
+<B>clone</B>():
+
+
+<DL COMPACT><DT><DD>
+
+<DL COMPACT>
+<DT>Since glibc 2.14:<DD>
+_GNU_SOURCE
+<DT>
+<DD>
+Before glibc 2.14:
+_BSD_SOURCE || _SVID_SOURCE
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;_GNU_SOURCE&nbsp;also&nbsp;suffices&nbsp;*/
+
+</DL>
+</DL>
+
 
 <A NAME="lbAD">&nbsp;</A>
 <H2>DESCRIPTION</H2>
@@ -35,22 +67,21 @@ clone, __clone2 - create a child process
 creates a new process, in a manner similar to
 <B><A HREF="../man2/fork.2.html">fork</A></B>(2).
 
-It is actually a library function layered on top of the underlying
+<P>
+This page describes both the glibc
 <B>clone</B>()
 
-system call, hereinafter referred to as
-<B>sys_clone</B>.
-
-A description of
-<B>sys_clone</B>
-
-is given toward the end of this page.
+wrapper function and the underlying system call on which it is based.
+The main text describes the wrapper function;
+the differences for the raw system call
+are described toward the end of this page.
 <P>
 Unlike
 <B><A HREF="../man2/fork.2.html">fork</A></B>(2),
 
-these calls
-allow the child process to share parts of its execution context with
+<B>clone</B>()
+
+allows the child process to share parts of its execution context with
 the calling process, such as the memory space, the table of file
 descriptors, and the table of signal handlers.
 (Note that on this manual
@@ -332,7 +363,7 @@ This flag can't be specified in conjunction with
 
 <DD>
 
-(The implementation of this flag was only completed
+(The implementation of this flag was completed only
 by about kernel version 2.6.29.)
 <P>
 If
@@ -933,10 +964,10 @@ processes do not affect the other, as with
 
 </DL>
 <A NAME="lbAE">&nbsp;</A>
-<H3>sys_clone</H3>
+<H3>The raw system call interface</H3>
 
-The
-<B>sys_clone</B>
+The raw
+<B>clone</B>()
 
 system call corresponds more closely to
 <B><A HREF="../man2/fork.2.html">fork</A></B>(2)
@@ -954,7 +985,7 @@ arguments of the
 
 wrapper function are omitted.
 Furthermore, the argument order changes.
-The raw system call interface is roughly:
+The raw system call interface on x86 and many other architectures is roughly:
 
 <PRE>
 
@@ -965,10 +996,7 @@ The raw system call interface is roughly:
 </PRE>
 
 
-Another difference for
-<B>sys_clone</B>
-
-is that the
+Another difference for the raw system call is that the
 <I>child_stack</I>
 
 argument may be zero, in which case copy-on-write semantics ensure that the
@@ -978,7 +1006,66 @@ In this case, for correct operation, the
 <B>CLONE_VM</B>
 
 option should not be specified.
+<P>
+For some architectures, the order of the arguments for the system call
+differs from that shown above.
+On the score, microblaze, ARM, ARM 64, PA-RISC, arc, Power PC, xtensa,
+and MIPS architectures,
+the order of the fourth and fifth arguments is reversed.
+On the cris and s390 architectures,
+the order of the first and second arguments is reversed.
 <A NAME="lbAF">&nbsp;</A>
+<H3>blackfin, m68k, and sparc</H3>
+
+The argument-passing conventions on
+blackfin, m68k, and sparc are different from descriptions above.
+For details, see the kernel (and glibc) source.
+<A NAME="lbAG">&nbsp;</A>
+<H3>ia64</H3>
+
+On ia64, a different interface is used:
+<PRE>
+
+<B>int __clone2(int (*</B><I>fn</I><B>)(void *), </B>
+<B>             void *</B><I>child_stack_base</I><B>, size_t </B><I>stack_size</I><B>,</B>
+<B>             int </B><I>flags</I><B>, void *</B><I>arg</I><B>, ... </B>
+<B>          /* pid_t *</B><I>ptid</I><B>, struct user_desc *</B><I>tls</I><B>, pid_t *</B><I>ctid</I><B> */ );</B>
+</PRE>
+
+<P>
+
+The prototype shown above is for the glibc wrapper function;
+the raw system call interface has no
+<I>fn</I>
+
+or
+<I>arg</I>
+
+argument, and changes the order of the arguments so that
+<I>flags</I>
+
+is the first argument, and
+<I>tls</I>
+
+is the last argument.
+<P>
+
+<B>__clone2</B>()
+
+operates in the same way as
+<B>clone</B>(),
+
+except that
+<I>child_stack_base</I>
+
+points to the lowest address of the child's stack area,
+and
+<I>stack_size</I>
+
+specifies the size of the stack pointed to by
+<I>child_stack_base</I>.
+
+<A NAME="lbAH">&nbsp;</A>
 <H3>Linux 2.4 and earlier</H3>
 
 In Linux 2.4 and earlier,
@@ -992,7 +1079,7 @@ does not take arguments
 and
 <I>ctid</I>.
 
-<A NAME="lbAG">&nbsp;</A>
+<A NAME="lbAI">&nbsp;</A>
 <H2>RETURN VALUE</H2>
 
 
@@ -1004,7 +1091,7 @@ in the caller's context, no child process will be created, and
 <I>errno</I>
 
 will be set appropriately.
-<A NAME="lbAH">&nbsp;</A>
+<A NAME="lbAJ">&nbsp;</A>
 <H2>ERRORS</H2>
 
 <DL COMPACT>
@@ -1164,7 +1251,7 @@ was specified by an unprivileged process (process without <B>CAP_SYS_ADMIN</B>).
 
 was specified by a process other than process 0.
 </DL>
-<A NAME="lbAI">&nbsp;</A>
+<A NAME="lbAK">&nbsp;</A>
 <H2>VERSIONS</H2>
 
 There is no entry for
@@ -1175,18 +1262,14 @@ glibc2 provides
 <B>clone</B>()
 
 as described in this manual page.
-<A NAME="lbAJ">&nbsp;</A>
+<A NAME="lbAL">&nbsp;</A>
 <H2>CONFORMING TO</H2>
 
-The
 <B>clone</B>()
 
-and
-<B>sys_clone</B>
-
-calls are Linux-specific and should not be used in programs
+is Linux-specific and should not be used in programs
 intended to be portable.
-<A NAME="lbAK">&nbsp;</A>
+<A NAME="lbAM">&nbsp;</A>
 <H2>NOTES</H2>
 
 In the kernel 2.4.x series,
@@ -1220,35 +1303,7 @@ On i386,
 should not be called through vsyscall, but directly through
 <I>int $0x80</I>.
 
-<P>
-On ia64, a different system call is used:
-<PRE>
-
-<B>int __clone2(int (*</B><I>fn</I><B>)(void *), </B>
-<B>             void *</B><I>child_stack_base</I><B>, size_t </B><I>stack_size</I><B>,</B>
-<B>             int </B><I>flags</I><B>, void *</B><I>arg</I><B>, ... </B>
-<B>          /* pid_t *</B><I>ptid</I><B>, struct user_desc *</B><I>tls</I><B>, pid_t *</B><I>ctid</I><B> */ );</B>
-</PRE>
-
-<P>
-
-The
-<B>__clone2</B>()
-
-system call operates in the same way as
-<B>clone</B>(),
-
-except that
-<I>child_stack_base</I>
-
-points to the lowest address of the child's stack area,
-and
-<I>stack_size</I>
-
-specifies the size of the stack pointed to by
-<I>child_stack_base</I>.
-
-<A NAME="lbAL">&nbsp;</A>
+<A NAME="lbAN">&nbsp;</A>
 <H2>BUGS</H2>
 
 Versions of the GNU C library that include the NPTL threading library
@@ -1303,10 +1358,10 @@ To get the truth, it may be necessary to use code such as the following:
 
 
 
-<A NAME="lbAM">&nbsp;</A>
+<A NAME="lbAO">&nbsp;</A>
 <H2>EXAMPLE</H2>
 
-<A NAME="lbAN">&nbsp;</A>
+<A NAME="lbAP">&nbsp;</A>
 <H3>Create a child that executes in a separate UTS namespace</H3>
 
 The following program demonstrates the use of
@@ -1408,7 +1463,7 @@ main(int argc, char *argv[])
 }
 </PRE>
 
-<A NAME="lbAO">&nbsp;</A>
+<A NAME="lbAQ">&nbsp;</A>
 <H2>SEE ALSO</H2>
 
 <B><A HREF="../man2/fork.2.html">fork</A></B>(2),
@@ -1446,25 +1501,27 @@ main(int argc, char *argv[])
 <DT><A HREF="#lbAC">SYNOPSIS</A><DD>
 <DT><A HREF="#lbAD">DESCRIPTION</A><DD>
 <DL>
-<DT><A HREF="#lbAE">sys_clone</A><DD>
-<DT><A HREF="#lbAF">Linux 2.4 and earlier</A><DD>
+<DT><A HREF="#lbAE">The raw system call interface</A><DD>
+<DT><A HREF="#lbAF">blackfin, m68k, and sparc</A><DD>
+<DT><A HREF="#lbAG">ia64</A><DD>
+<DT><A HREF="#lbAH">Linux 2.4 and earlier</A><DD>
 </DL>
-<DT><A HREF="#lbAG">RETURN VALUE</A><DD>
-<DT><A HREF="#lbAH">ERRORS</A><DD>
-<DT><A HREF="#lbAI">VERSIONS</A><DD>
-<DT><A HREF="#lbAJ">CONFORMING TO</A><DD>
-<DT><A HREF="#lbAK">NOTES</A><DD>
-<DT><A HREF="#lbAL">BUGS</A><DD>
-<DT><A HREF="#lbAM">EXAMPLE</A><DD>
+<DT><A HREF="#lbAI">RETURN VALUE</A><DD>
+<DT><A HREF="#lbAJ">ERRORS</A><DD>
+<DT><A HREF="#lbAK">VERSIONS</A><DD>
+<DT><A HREF="#lbAL">CONFORMING TO</A><DD>
+<DT><A HREF="#lbAM">NOTES</A><DD>
+<DT><A HREF="#lbAN">BUGS</A><DD>
+<DT><A HREF="#lbAO">EXAMPLE</A><DD>
 <DL>
-<DT><A HREF="#lbAN">Create a child that executes in a separate UTS namespace</A><DD>
+<DT><A HREF="#lbAP">Create a child that executes in a separate UTS namespace</A><DD>
 </DL>
-<DT><A HREF="#lbAO">SEE ALSO</A><DD>
+<DT><A HREF="#lbAQ">SEE ALSO</A><DD>
 </DL>
 <HR>
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:19:55 GMT, April 20, 2020
+Time: 03:20:32 GMT, April 20, 2020
 </BODY>
 </HTML>

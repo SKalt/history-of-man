@@ -26,13 +26,13 @@ the source, must acknowledge the copyright and authors of this work.
 <HTML><HEAD><TITLE>Man page of SEMOP</TITLE>
 </HEAD><BODY>
 <H1>SEMOP</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2012-08-27<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2013-04-17<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
 <H2>NAME</H2>
 
-semop, semtimedop - semaphore operations
+semop, semtimedop - System V semaphore operations
 <A NAME="lbAC">&nbsp;</A>
 <H2>SYNOPSIS</H2>
 
@@ -60,7 +60,8 @@ _GNU_SOURCE
 <A NAME="lbAD">&nbsp;</A>
 <H2>DESCRIPTION</H2>
 
-Each semaphore in a semaphore set has the following associated values:
+Each semaphore in a System V semaphore set
+has the following associated values:
 <P>
 
 <PRE>
@@ -151,10 +152,13 @@ the semaphore value
 Furthermore, if
 <B>SEM_UNDO</B>
 
-is specified for this operation, the system updates the undo count
+is specified for this operation, the system subtracts the value
+<I>sem_op</I>
+
+from the semaphore adjustment
 (<I>semadj</I>)
 
-for this semaphore.
+value for this semaphore.
 This operation can always proceed---it never forces a thread to wait.
 The calling process must have alter permission on the semaphore set.
 <P>
@@ -265,10 +269,13 @@ is subtracted from
 and, if
 <B>SEM_UNDO</B>
 
-is specified for this operation, the system updates the undo count
+is specified for this operation, the system adds the absolute value of
+<I>sem_op</I>
+
+to the semaphore adjustment
 (<I>semadj</I>)
 
-for this semaphore.
+value for this semaphore.
 If the absolute value of
 <I>sem_op</I>
 
@@ -304,24 +311,9 @@ one of the following occurs:
 <I>semval</I>
 
 becomes greater than or equal to the absolute value of
-<I>sem_op</I>,
+<I>sem_op</I>:
 
-at which time the value of
-<I>semncnt</I>
-
-is decremented, the absolute value of
-<I>sem_op</I>
-
-is subtracted from
-<I>semval</I>
-
-and, if
-<B>SEM_UNDO</B>
-
-is specified for this operation, the system updates the undo count
-(<I>semadj</I>)
-
-for this semaphore.
+the operation now proceeds, as described above.
 <DT>&bull;<DD>
 The semaphore set is removed from the system:
 <B>semop</B>()
@@ -589,14 +581,26 @@ regardless of the setting of the
 
 flag when establishing a signal handler.
 <P>
+A semaphore adjustment
+(<I>semadj</I>)
 
-<I>semadj</I>
-
-is a per-process integer which is simply the (negative) count
-of all semaphore operations performed specifying the
+value is a per-process, per-semaphore integer that is the negated sum
+of all operations performed on a semaphore specifying the
 <B>SEM_UNDO</B>
 
 flag.
+Each process has a list of
+<I>semadj</I>
+
+values---one value for each semaphore on which it has operated using
+<B>SEM_UNDO</B>.
+
+When a process terminates, each of its per-semaphore
+<I>semadj</I>
+
+values is added to the corresponding semaphore,
+thus undoing the effect of that process's operations on the semaphore
+(but see BUGS below).
 When a semaphore's value is directly set using the
 <B>SETVAL</B>
 
@@ -757,6 +761,6 @@ and then increment the semaphore value by one.
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:19:58 GMT, April 20, 2020
+Time: 03:20:34 GMT, April 20, 2020
 </BODY>
 </HTML>

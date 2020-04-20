@@ -25,7 +25,7 @@ License along with this manual; if not, see
 <HTML><HEAD><TITLE>Man page of PROC</TITLE>
 </HEAD><BODY>
 <H1>PROC</H1>
-Section: Linux Programmer's Manual (5)<BR>Updated: 2013-02-11<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (5)<BR>Updated: 2013-04-17<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -100,7 +100,7 @@ control group in the hierarchy to which the process belongs
 </DL>
 
 <DT><DD>
-This file is only present if the
+This file is present only if the
 <B>CONFIG_CGROUPS</B>
 
 kernel configuration option is enabled.
@@ -176,7 +176,7 @@ Thus, to print out the environment of process 1, you would do:
 
 <PRE>
 
-$<B> (cat /proc/1/environ; echo) | tr '\000' '\n'</B>
+$<B> strings /proc/1/environ</B>
 </PRE>
 
 
@@ -350,34 +350,106 @@ for each of the process's resource limits (see
 <B><A HREF="../man2/getrlimit.2.html">getrlimit</A></B>(2)).
 
 Up to and including Linux 2.6.35,
-this file is protected to only allow reading by the real UID of the process.
+this file is protected to allow reading only by the real UID of the process.
 Since Linux 2.6.36,
 
 this file is readable by all users on the system.
+<DT><I>/proc/[pid]/map_files/</I> (since kernel 3.3)
+
+<DD>
+
+This subdirectory contains entries corresponding to memory-mapped
+files (see
+<B><A HREF="../man2/mmap.2.html">mmap</A></B>(2)).
+
+Entries are named by memory region start and end
+address pair (expressed as hexadecimal numbers),
+and are symbolic links to the mapped files themselves.
+Here is an example, with the output wrapped and reformatted to fit on an 80-column display:
+
+<PRE>
+
+$<B> ls -l /proc/self/map_files/</B>
+lr--------. 1 root root 64 Apr 16 21:31
+            3252e00000-3252e20000 -&gt; /usr/lib64/ld-2.15.so
+...
+</PRE>
+
+
+<P>
+Although these entries are present for memory regions that were
+mapped with  the
+<B>MAP_FILE</B>
+
+flag, the way anonymous shared memory (regions created with the
+<B>MAP_ANON | MAP_SHARED</B>
+
+flags)
+is implemented in Linux
+means that such regions also appear on this directory.
+Here is an example where the target file is the deleted
+<I>/dev/zero</I>
+
+one:
+
+<PRE>
+
+lrw-------. 1 root root 64 Apr 16 21:33
+            7fc075d2f000-7fc075e6f000 -&gt; /dev/zero (deleted)
+</PRE>
+
+
+<P>
+This directory appears only if the
+<B>CONFIG_CHECKPOINT_RESTORE</B>
+
+kernel configuration option is enabled.
 <DT><I>/proc/[pid]/maps</I>
 
 <DD>
 A file containing the currently mapped memory regions and their access
 permissions.
+See
+<B><A HREF="../man2/mmap.2.html">mmap</A></B>(2)
+
+for some further information about memory mappings.
 <P>
-The format is:
+The format of the file is:
 <P>
+
 <PRE>
-address           perms offset  dev   inode   pathname
-08048000-08056000 r-xp 00000000 03:0c 64593   /usr/sbin/gpm
-08056000-08058000 rw-p 0000d000 03:0c 64593   /usr/sbin/gpm
-08058000-0805b000 rwxp 00000000 00:00 0
-40000000-40013000 r-xp 00000000 03:0c 4165    /lib/ld-2.2.4.so
-40013000-40015000 rw-p 00012000 03:0c 4165    /lib/ld-2.2.4.so
-4001f000-40135000 r-xp 00000000 03:0c 45494   /lib/libc-2.2.4.so
-40135000-4013e000 rw-p 00115000 03:0c 45494   /lib/libc-2.2.4.so
-4013e000-40142000 rw-p 00000000 00:00 0
-bffff000-c0000000 rwxp 00000000 00:00 0
+<I>address           perms offset  dev   inode       pathname</I>
+00400000-00452000 r-xp 00000000 08:02 173521      /usr/bin/dbus-daemon
+00651000-00652000 r--p 00051000 08:02 173521      /usr/bin/dbus-daemon
+00652000-00655000 rw-p 00052000 08:02 173521      /usr/bin/dbus-daemon
+00e03000-00e24000 rw-p 00000000 00:00 0           [heap]
+00e24000-011f7000 rw-p 00000000 00:00 0           [heap]
+...
+35b1800000-35b1820000 r-xp 00000000 08:02 135522  /usr/lib64/ld-2.15.so
+35b1a1f000-35b1a20000 r--p 0001f000 08:02 135522  /usr/lib64/ld-2.15.so
+35b1a20000-35b1a21000 rw-p 00020000 08:02 135522  /usr/lib64/ld-2.15.so
+35b1a21000-35b1a22000 rw-p 00000000 00:00 0
+35b1c00000-35b1dac000 r-xp 00000000 08:02 135870  /usr/lib64/libc-2.15.so
+35b1dac000-35b1fac000 ---p 001ac000 08:02 135870  /usr/lib64/libc-2.15.so
+35b1fac000-35b1fb0000 r--p 001ac000 08:02 135870  /usr/lib64/libc-2.15.so
+35b1fb0000-35b1fb2000 rw-p 001b0000 08:02 135870  /usr/lib64/libc-2.15.so
+...
+f2c6ff8c000-7f2c7078c000 rw-p 00000000 00:00 0    [stack:986]
+...
+7fffb2c0d000-7fffb2c2e000 rw-p 00000000 00:00 0   [stack]
+7fffb2d48000-7fffb2d49000 r-xp 00000000 00:00 0   [vdso]
 </PRE>
 
+
 <P>
-where &quot;address&quot; is the address space in the process that it occupies,
-&quot;perms&quot; is a set of permissions:
+The
+<I>address</I>
+
+field is the address space in the process that the mapping occupies.
+The
+<I>perms</I>
+
+field is a set of permissions:
 <P>
 <PRE>
 r = read
@@ -389,10 +461,81 @@ p = private (copy on write)
 
 
 <P>
-&quot;offset&quot; is the offset into the file/whatever, &quot;dev&quot; is the device
-(major:minor), and &quot;inode&quot; is the inode on that device.
+The
+<I>offset</I>
+
+field is the offset into the file/whatever;
+<I>dev</I>
+
+is the device
+(major:minor);
+<I>inode</I>
+
+is the inode on that device.
 0 indicates that no inode is associated with the memory region,
-as the case would be with BSS (uninitialized data).
+as would be the case with BSS (uninitialized data).
+<P>
+The
+<I>pathname</I>
+
+field will usually be the file that is backing the mapping.
+For ELF files,
+you can easily coordinate with the
+<I>offset</I>
+
+field by looking at the
+Offset field in the ELF program headers
+(<I>readelf&nbsp;-l</I>).
+
+<P>
+There are additional helpful pseudo-paths:
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT><I>[stack]</I>
+
+<DD>
+The initial process's (also known as the main thread's) stack.
+<DT><I>[stack:&lt;tid&gt;]</I> (since Linux 3.4)
+
+<DD>
+
+A thread's stack (where the
+<I>&lt;tid&gt;</I>
+
+is a thread ID).
+It corresponds to the
+<I>/proc/[pid]/task/[tid]/</I>
+
+path.
+<DT><I>[vdso]</I>
+
+<DD>
+The virtual dynamically linked shared object.
+<DT><I>[heap]</I>
+
+<DD>
+The process's heap.
+
+
+</DL>
+</DL>
+
+<DT><DD>
+If the
+<I>pathname</I>
+
+field is blank,
+this is an anonymous mapping as obtained via the
+<B><A HREF="../man2/mmap.2.html">mmap</A></B>(2)
+
+function.
+There is no easy way to coordinate this back to a process's source,
+short of running it through
+<B><A HREF="../man1/gdb.1.html">gdb</A></B>(1),
+
+<B><A HREF="../man1/strace.1.html">strace</A></B>(1),
+
+or similar.
 <P>
 Under Linux 2.0 there is no field giving pathname.
 <DT><I>/proc/[pid]/mem</I>
@@ -532,7 +675,7 @@ information via this field.
 </DL>
 
 <DT><DD>
-This file is only readable by the owner of the process.
+This file is readable only by the owner of the process.
 <DT><I>/proc/[pid]/ns/</I> (since Linux 3.0)
 
 <DD>
@@ -829,7 +972,7 @@ the amount of the mapping that is currently resident in RAM,
 the number of clean and dirty shared pages in the mapping,
 and the number of clean and dirty private pages in the mapping.
 <P>
-This file is only present if the
+This file is present only if the
 <B>CONFIG_MMU</B>
 
 kernel configuration
@@ -1464,7 +1607,7 @@ cat /lib/modules/$(uname -r)/build/.config
 <DT><DD>
 <I>/proc/config.gz</I>
 
-is only provided if the kernel is configured with
+is provided only if the kernel is configured with
 <B>CONFIG_IKCONFIG_PROC</B>.
 
 <DT><I>/proc/cpuinfo</I>
@@ -1667,7 +1810,7 @@ and leases
 
 <DD>
 
-This file is only present if
+This file is present only if
 <B>CONFIG_DEBUG_MALLOC</B>
 
 was defined during compilation.
@@ -1687,7 +1830,7 @@ The list below describes the parameter names and
 the format specifier required to read the field value.
 Except as noted below,
 all of the fields have been present since at least Linux 2.6.0.
-Some fileds are only displayed if the kernel was configured
+Some fileds are displayed only if the kernel was configured
 with various options; those dependencies are noted in the list.
 <DL COMPACT><DT><DD>
 <DL COMPACT>
@@ -1878,8 +2021,9 @@ Memory used by FUSE for temporary writeback buffers.
 <DD>
 Based on the overcommit ratio ('vm.overcommit_ratio'),
 this is the total amount of  memory currently available to
-be allocated on the system. This limit is only adhered to
-if strict overcommit accounting is enabled (mode 2 in
+be allocated on the system.
+This limit is adhered to
+only if strict overcommit accounting is enabled (mode 2 in
 <I>/proc/sys/vm/overcommit_ratio</I>).
 
 The
@@ -1911,8 +2055,8 @@ has been allocated by processes, even if it has not been
 A process which allocates 1GB of memory (using
 <B><A HREF="../man3/malloc.3.html">malloc</A></B>(3)
 
-or similar), but only touches 300MB of that memory will only show up
-as using 300MB of memory even if it has the address space
+or similar), but touches only 300MB of that memory will show up
+as using only 300MB of memory even if it has the address space
 allocated for the entire 1GB.
 This 1GB is memory which has been &quot;committed&quot; to by the VM
 and can be used at any time by the allocating application.
@@ -2326,7 +2470,7 @@ directory named by the process ID of the same process.
 
 <DD>
 Information about kernel caches.
-Since Linux 2.6.16 this file is only present if the
+Since Linux 2.6.16 this file is present only if the
 <B>CONFIG_SLAB</B>
 
 kernel configuration option is enabled.
@@ -2758,7 +2902,7 @@ for details.
 These files
 allow you to change the value of the fixed UID and GID.
 The default is 65534.
-Some file systems only support 16-bit UIDs and GIDs, although in Linux
+Some file systems support only 16-bit UIDs and GIDs, although in Linux
 UIDs and GIDs are 32 bits.
 When one of these file systems is mounted
 with writes enabled, any UID or GID that would exceed 65535 is translated
@@ -2934,7 +3078,7 @@ This file
 controls the maximum number of superblocks, and
 thus the maximum number of mounted file systems the kernel
 can have.
-You only need to increase
+You need increase only
 <I>super-max</I>
 
 if you need to mount more file systems than the current value in
@@ -2982,6 +3126,12 @@ Default values are 4, 2 and 30.
 That is, suspend accounting if 2% or less space is free; resume it
 if 4% or more space is free; consider information about amount of free space
 valid for 30 seconds.
+<DT><I>/proc/sys/kernel/cap_last_cap</I> (since Linux 3.2)
+
+<DD>
+See
+<B><A HREF="../man7/capabilities.7.html">capabilities</A></B>(7).
+
 <DT><I>/proc/sys/kernel/cap-bound</I> (from Linux 2.2 to 2.6.24)
 
 <DD>
@@ -3148,7 +3298,7 @@ This file contains the path for the kernel module loader.
 The default value is
 <I>/sbin/modprobe</I>.
 
-The file is only present if the kernel is built with the
+The file is present only if the kernel is built with the
 <B>CONFIG_MODULES</B>
 
 (<B>CONFIG_KMOD</B>
@@ -3158,7 +3308,7 @@ option enabled.
 It is described by the Linux kernel source file
 <I>Documentation/kmod.txt</I>
 
-(only present in kernel 2.4 and earlier).
+(present only in kernel 2.4 and earlier).
 <DT><I>/proc/sys/kernel/modules_disabled</I> (since Linux 2.6.31)
 
 <DD>
@@ -3169,7 +3319,7 @@ in an otherwise modular kernel.
 This toggle defaults to off (0), but can be set true (1).
 Once true, modules can be neither loaded nor unloaded,
 and the toggle cannot be set back to false.
-The file is only present if the kernel is built with the
+The file is present only if the kernel is built with the
 <B>CONFIG_MODULES</B>
 
 option enabled.
@@ -3179,12 +3329,11 @@ option enabled.
 This file defines
 a system-wide limit specifying the maximum number of bytes in
 a single message written on a System V message queue.
-<DT><I>/proc/sys/kernel/msgmni</I>
+<DT><I>/proc/sys/kernel/msgmni</I> (since Linux 2.4)
 
 <DD>
 This file defines the system-wide limit on the number of
 message queue identifiers.
-(This file is only present in Linux 2.4 onward.)
 <DT><I>/proc/sys/kernel/msgmnb</I>
 
 <DD>
@@ -3359,6 +3508,12 @@ in the system.
 <DD>
 (Only in kernels up to and including 2.6.7.)
 This file shows the number POSIX real-time signals currently queued.
+<DT><I>/proc/sys/kernel/sched_rr_timeslice_ms</I> (since Linux 3.9)
+
+<DD>
+See
+<B><A HREF="../man2/sched_rr_get_interval.2.html">sched_rr_get_interval</A></B>(2).
+
 <DT><I>/proc/sys/kernel/sem</I> (since Linux 2.4)
 
 <DD>
@@ -3394,6 +3549,48 @@ the value of
 <B>SG_BIG_BUFF</B>.
 
 However, there shouldn't be any reason to change this value.
+<DT><I>/proc/sys/kernel/shm_rmid_forced</I> (since Linux 3.1)
+
+<DD>
+
+
+If this file is set to 1, all System V shared memory segments will
+be marked for destruction as soon as the number of attached processes
+falls to zero;
+in other words, it is no longer possible to create shared memory segments
+that exist independently of any attached process.
+<DT><DD>
+The effect is as though a
+<B><A HREF="../man2/shmctl.2.html">shmctl</A></B>(2)
+
+<B>IPC_RMID</B>
+
+is performed on all existing  segments as well as all segments
+created in the future (until this file is reset to 0).
+Note that existing segments that are attached to no process will be
+immediately destroyed when this file is set to 1.
+Setting this option will also destroy segments that were created,
+but never attached,
+upon termination of the process that created the segment with
+<B><A HREF="../man2/shmget.2.html">shmget</A></B>(2).
+
+<DT><DD>
+Setting this file to 1 provides a way of ensuring that
+all System V shared memory segments are counted against the
+resource usage and resource limits (see the description of
+<B>RLIMIT_AS</B>
+
+in
+<B><A HREF="../man2/getrlimit.2.html">getrlimit</A></B>(2))
+
+of at least one process.
+<DT><DD>
+Because setting this file to 1 produces behavior that is nonstandard
+and could also break existing applications,
+the default value in this file is 0.
+Only set this file to 1 if you have a good understanding
+of the semantics of the applications using
+System V shared memory on your system.
 <DT><I>/proc/sys/kernel/shmall</I>
 
 <DD>
@@ -3412,10 +3609,9 @@ kernel.
 This value defaults to
 <B>SHMMAX</B>.
 
-<DT><I>/proc/sys/kernel/shmmni</I>
+<DT><I>/proc/sys/kernel/shmmni</I> (since Linux 2.4)
 
 <DD>
-(available in Linux 2.4 and onward)
 This file
 specifies the system-wide maximum number of System V shared memory
 segments that can be created.
@@ -3442,7 +3638,7 @@ Possible values in this file are:
 <BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;128&nbsp;-&nbsp;allow&nbsp;reboot/poweroff
 <BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;256&nbsp;-&nbsp;allow&nbsp;nicing&nbsp;of&nbsp;all&nbsp;real-time&nbsp;tasks
 <P>
-This file is only present if the
+This file is present only if the
 <B>CONFIG_MAGIC_SYSRQ</B>
 
 kernel configuration option is enabled.
@@ -3560,8 +3756,8 @@ as soon as the corruption is detected.
 Note this is not supported for a few types of pages, like kernel internally
 allocated data or the swap cache, but works for the majority of user pages.
 <DT>0:<DD>
-Only unmap the corrupted page from all processes and only kill a process
-who tries to access it.
+Only unmap the corrupted page from all processes and kill only a process
+that tries to access it.
 </DL>
 </DL>
 
@@ -3580,7 +3776,7 @@ Processes can handle this if they want to; see
 
 for more details.
 <P>
-This feature is only active on architectures/platforms with advanced machine
+This feature is active only on architectures/platforms with advanced machine
 check handling and depends on the hardware capabilities.
 <P>
 Applications can override the
@@ -3758,7 +3954,7 @@ Writing a character to this file triggers the same SysRq function as
 typing ALT-SysRq-&lt;character&gt; (see the description of
 <I>/proc/sys/kernel/sysrq</I>).
 
-This file is normally only writable by
+This file is normally writable only by
 <I>root</I>.
 
 For further details see the Linux kernel source file
@@ -3891,7 +4087,9 @@ of thing that needs to be updated very often.
 
 <B><A HREF="../man8/procinfo.8.html">procinfo</A></B>(8),
 
-<B><A HREF="../man8/route.8.html">route</A></B>(8)
+<B><A HREF="../man8/route.8.html">route</A></B>(8),
+
+<B><A HREF="../man8/sysctl.8.html">sysctl</A></B>(8)
 
 <P>
 The Linux kernel source files:
@@ -3914,6 +4112,6 @@ and
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:20:09 GMT, April 20, 2020
+Time: 03:20:45 GMT, April 20, 2020
 </BODY>
 </HTML>

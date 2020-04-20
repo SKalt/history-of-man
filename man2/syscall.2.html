@@ -34,7 +34,7 @@ SUCH DAMAGE.
 <HTML><HEAD><TITLE>Man page of SYSCALL</TITLE>
 </HEAD><BODY>
 <H1>SYSCALL</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2012-08-14<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2013-04-07<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -98,6 +98,136 @@ and an error code is stored in
 first appeared in
 4BSD.
 <A NAME="lbAG">&nbsp;</A>
+<H3>Architecture-specific requirements</H3>
+
+Each architecture ABI has its own requirements on how
+system call arguments are passed to the kernel.
+For system calls that have a glibc wrapper (e.g., most system calls),
+glibc handles the details of copying arguments to the right registers
+in a manner suitable for the architecture.
+However, when using
+<B>syscall</B>()
+
+to make a system call,
+the caller might need to handle architecture-dependent details;
+this requirement is most commonly encountered on certain 32-bit architectures.
+<P>
+For example, on the ARM architecture Embedded ABI (EABI), a
+64-bit value (e.g.,
+<I>long long</I>)
+
+must be aligned to an even register pair.
+Thus, using
+<B>syscall</B>()
+
+instead of the wrapper provided by glibc,
+the
+<B>readahead</B>()
+
+system call would be invoked as follows on the ARM architecture with the EABI:
+<P>
+
+<PRE>
+syscall(SYS_readahead, fd, 0,
+        (unsigned int) (offset &gt;&gt; 32),
+        (unsigned int) (offset &amp; 0xFFFFFFFF),
+        count);
+</PRE>
+
+
+<P>
+
+Since the offset argument is 64 bits, and the first argument
+(<I>fd</I>)
+
+is passed in
+<I>r0</I>,
+
+the caller must manually split and align the 64-bit value
+so that it is passed in the
+<I>r2</I>/<I>r3</I>
+
+register pair.
+That means inserting a dummy value into
+<I>r1</I>
+
+(the second argument of 0).
+<P>
+Similar issues can occur on MIPS with the O32 ABI,
+on PowerPC with the 32-bit ABI, and on Xtensa.
+
+
+<P>
+The affected system calls are
+<B><A HREF="../man2/fadvise64_64.2.html">fadvise64_64</A></B>(2),
+
+<B><A HREF="../man2/ftruncate64.2.html">ftruncate64</A></B>(2),
+
+<B><A HREF="../man2/posix_fadvise.2.html">posix_fadvise</A></B>(2),
+
+<B><A HREF="../man2/pread64.2.html">pread64</A></B>(2),
+
+<B><A HREF="../man2/pwrite64.2.html">pwrite64</A></B>(2),
+
+<B><A HREF="../man2/readahead.2.html">readahead</A></B>(2),
+
+<B><A HREF="../man2/sync_file_range.2.html">sync_file_range</A></B>(2),
+
+and
+<B><A HREF="../man2/truncate64.2.html">truncate64</A></B>(2).
+
+<A NAME="lbAH">&nbsp;</A>
+<H3>Architecture calling conventions</H3>
+
+Every architecture has its own way of invoking and passing arguments to the
+kernel.
+The details for various architectures are listed in the two tables below.
+<P>
+The first table lists the instruction used to transition to kernel mode,
+(which might not be the fastest or best way to transition to the kernel,
+so you might have to refer to the VDSO),
+the register used to indicate the system call number,
+and the register used to return the system call result.
+
+<TABLE>
+<TR VALIGN=top><TD>arch/ABI</TD><TD>instruction&nbsp;</TD><TD>syscall #</TD><TD>retval&nbsp;</TD><TD>Notes<BR></TD></TR>
+<TR VALIGN=top><TD COLSPAN=5><HR></TD></TR>
+<TR VALIGN=top><TD>arm/OABI</TD><TD>swi NR&nbsp;</TD><TD>-</TD><TD>a1&nbsp;</TD><TD>NR is syscall #<BR></TD></TR>
+<TR VALIGN=top><TD>arm/EABI</TD><TD>swi 0x0&nbsp;</TD><TD>r7</TD><TD>r1&nbsp;</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD>blackfin</TD><TD>excpt 0x0&nbsp;</TD><TD>P0</TD><TD>R0&nbsp;</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD>i386</TD><TD>int $0x80&nbsp;</TD><TD>eax</TD><TD>eax&nbsp;</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD>ia64</TD><TD>break 0x100000&nbsp;</TD><TD>r15</TD><TD>r10/r8&nbsp;</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD>parisc</TD><TD>ble 0x100(%sr2, %r0)&nbsp;</TD><TD>r20</TD><TD>r28&nbsp;</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD>sparc/32</TD><TD>t 0x10&nbsp;</TD><TD>g1</TD><TD>o0&nbsp;</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD>sparc/64</TD><TD>t 0x6d&nbsp;</TD><TD>g1</TD><TD>o0&nbsp;</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD>x86_64</TD><TD>syscall&nbsp;</TD><TD>rax</TD><TD>rax&nbsp;</TD><TD><BR></TD></TR>
+</TABLE>
+
+
+<P>
+
+The second table shows the registers used to pass the system call arguments.
+
+<TABLE>
+<TR VALIGN=top><TD>arch/ABI</TD><TD>arg1</TD><TD>arg2</TD><TD>arg3</TD><TD>arg4</TD><TD>arg5</TD><TD>arg6</TD><TD>arg7<BR></TD></TR>
+<TR VALIGN=top><TD COLSPAN=8><HR></TD></TR>
+<TR VALIGN=top><TD>arm/OABI</TD><TD>a1</TD><TD>a2</TD><TD>a3</TD><TD>a4</TD><TD>v1</TD><TD>v2</TD><TD>v3<BR></TD></TR>
+<TR VALIGN=top><TD>arm/EABI</TD><TD>r1</TD><TD>r2</TD><TD>r3</TD><TD>r4</TD><TD>r5</TD><TD>r6</TD><TD>r7<BR></TD></TR>
+<TR VALIGN=top><TD>blackfin</TD><TD>R0</TD><TD>R1</TD><TD>R2</TD><TD>R3</TD><TD>R4</TD><TD>R5</TD><TD>-<BR></TD></TR>
+<TR VALIGN=top><TD>i386</TD><TD>ebx</TD><TD>ecx</TD><TD>edx</TD><TD>esi</TD><TD>edi</TD><TD>ebp</TD><TD>-<BR></TD></TR>
+<TR VALIGN=top><TD>ia64</TD><TD>r11</TD><TD>r9</TD><TD>r10</TD><TD>r14</TD><TD>r15</TD><TD>r13</TD><TD>-<BR></TD></TR>
+<TR VALIGN=top><TD>parisc</TD><TD>r26</TD><TD>r25</TD><TD>r24</TD><TD>r23</TD><TD>r22</TD><TD>r21</TD><TD>-<BR></TD></TR>
+<TR VALIGN=top><TD>sparc/32</TD><TD>o0</TD><TD>o1</TD><TD>o2</TD><TD>o3</TD><TD>o4</TD><TD>o5</TD><TD>-<BR></TD></TR>
+<TR VALIGN=top><TD>sparc/64</TD><TD>o0</TD><TD>o1</TD><TD>o2</TD><TD>o3</TD><TD>o4</TD><TD>o5</TD><TD>-<BR></TD></TR>
+<TR VALIGN=top><TD>x86_64</TD><TD>rdi</TD><TD>rsi</TD><TD>rdx</TD><TD>r10</TD><TD>r8</TD><TD>r9</TD><TD>-<BR></TD></TR>
+</TABLE>
+
+
+<P>
+
+Note that these tables don't cover the entire calling convention---some
+architectures may indiscriminately clobber other registers not listed here.
+<A NAME="lbAI">&nbsp;</A>
 <H2>EXAMPLE</H2>
 
 <PRE>
@@ -116,7 +246,7 @@ main(int argc, char *argv[])
 }
 </PRE>
 
-<A NAME="lbAH">&nbsp;</A>
+<A NAME="lbAJ">&nbsp;</A>
 <H2>SEE ALSO</H2>
 
 <B><A HREF="../man2/_syscall.2.html">_syscall</A></B>(2),
@@ -135,13 +265,17 @@ main(int argc, char *argv[])
 <DT><A HREF="#lbAD">DESCRIPTION</A><DD>
 <DT><A HREF="#lbAE">RETURN VALUE</A><DD>
 <DT><A HREF="#lbAF">NOTES</A><DD>
-<DT><A HREF="#lbAG">EXAMPLE</A><DD>
-<DT><A HREF="#lbAH">SEE ALSO</A><DD>
+<DL>
+<DT><A HREF="#lbAG">Architecture-specific requirements</A><DD>
+<DT><A HREF="#lbAH">Architecture calling conventions</A><DD>
+</DL>
+<DT><A HREF="#lbAI">EXAMPLE</A><DD>
+<DT><A HREF="#lbAJ">SEE ALSO</A><DD>
 </DL>
 <HR>
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:19:58 GMT, April 20, 2020
+Time: 03:20:35 GMT, April 20, 2020
 </BODY>
 </HTML>
