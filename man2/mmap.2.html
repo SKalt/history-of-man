@@ -140,8 +140,9 @@ of the following values in
 
 <DD>
 Share this mapping.
-Updates to the mapping are visible to other processes that map this file,
-and are carried through to the underlying file.
+Updates to the mapping are visible to other processes mapping the same region,
+and (in the case of file-backed mappings)
+are carried through to the underlying file.
 (To precisely control when updates are carried through
 to the underlying file requires the use of
 <B><A HREF="../man2/msync.2.html">msync</A></B>(2).)
@@ -200,10 +201,7 @@ its contents are initialized to zero.
 The
 <I>fd</I>
 
-and
-<I>offset</I>
-
-arguments are ignored;
+argument is ignored;
 however, some implementations require
 <I>fd</I>
 
@@ -215,6 +213,12 @@ to be -1 if
 
 is specified,
 and portable applications should ensure this.
+The
+<I>offset</I>
+
+argument should be zero.
+
+
 The use of
 <B>MAP_ANONYMOUS</B>
 
@@ -335,7 +339,7 @@ So the semantic is not as strong as
 <B><A HREF="../man2/mlock.2.html">mlock</A></B>(2).
 
 One should use
-<B><A HREF="../man2/mmap.2.html">mmap</A></B>(2)
+<B>mmap</B>()
 
 plus
 <B><A HREF="../man2/mlock.2.html">mlock</A></B>(2)
@@ -623,6 +627,23 @@ This error can also occur for
 when unmapping a region in the middle of an existing mapping,
 since this results in two smaller mappings on either side of
 the region being unmapped.
+<DT><B>EOVERFLOW</B>
+
+<DD>
+On 32-bit architecture together with the large file extension
+(i.e., using 64-bit
+<I>off_t</I>):
+
+the number of pages used for
+<I>length</I>
+
+plus number of pages used for
+<I>offset</I>
+
+would overflow
+<I>unsigned long</I>
+
+(32 bits).
 <DT><B>EPERM</B>
 
 <DD>
@@ -650,23 +671,6 @@ was set but the object specified by
 <I>fd</I>
 
 is open for writing.
-<DT><B>EOVERFLOW</B>
-
-<DD>
-On 32-bit architecture together with the large file extension
-(i.e., using 64-bit
-<I>off_t</I>):
-
-the number of pages used for
-<I>length</I>
-
-plus number of pages used for
-<I>offset</I>
-
-would overflow
-<I>unsigned long</I>
-
-(32 bits).
 </DL>
 <P>
 
@@ -1137,6 +1141,6 @@ B.O. Gallmeister, POSIX.4, O'Reilly, pp. 128-129 and 389-391.
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:43:33 GMT, April 20, 2020
+Time: 03:44:11 GMT, April 20, 2020
 </BODY>
 </HTML>

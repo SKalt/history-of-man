@@ -25,7 +25,7 @@ License along with this manual; if not, see
 <HTML><HEAD><TITLE>Man page of MLOCK</TITLE>
 </HEAD><BODY>
 <H1>MLOCK</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2015-12-28<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2016-10-08<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -487,6 +487,24 @@ and are cleared during an
 <B><A HREF="../man2/execve.2.html">execve</A></B>(2).
 
 <P>
+Note that
+<B><A HREF="../man2/fork.2.html">fork</A></B>(2)
+
+will prepare the address space for a copy-on-write operation.
+The consequence is that any write access that follows will cause
+a page fault that in turn may cause high latencies for a real-time process.
+Therefore, it is crucial not to invoke
+<B><A HREF="../man2/fork.2.html">fork</A></B>(2)
+
+after an
+<B>mlockall</B>()
+
+or
+<B>mlock</B>()
+
+operation---not even from a thread which runs at a low priority within
+a process which also has a thread running at elevated priority.
+<P>
 The memory lock on an address range is automatically removed
 if the address range is unmapped via
 <B><A HREF="../man2/munmap.2.html">munmap</A></B>(2).
@@ -567,7 +585,7 @@ The
 <I>VmLck</I>
 
 field of the Linux-specific
-<I>/proc/PID/status</I>
+<I>/proc/[pid]/status</I>
 
 file shows how many kilobytes of memory the process with ID
 <I>PID</I>
@@ -681,6 +699,6 @@ resource limit is encountered.
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:43:33 GMT, April 20, 2020
+Time: 03:44:11 GMT, April 20, 2020
 </BODY>
 </HTML>

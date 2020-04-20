@@ -158,8 +158,43 @@ hierarchy.
 <DD>
 There is a numerical subdirectory for each running process; the
 subdirectory is named by the process ID.
-Each such subdirectory contains the following
-pseudo-files and directories.
+<P>
+Each
+<I>/proc/[pid]</I>
+
+subdirectory contains the
+pseudo-files and directories described below.
+These files are normally owned by the effective user and
+effective group ID of the process.
+However, as a security measure, the ownership is made
+<I>root:root</I>
+
+if the process's &quot;dumpable&quot; attribute is set to a value other than 1.
+This attribute may change for the following reasons:
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT>*<DD>
+The attribute was explicitly set via the
+<B><A HREF="../man2/prctl.2.html">prctl</A></B>(2)
+
+<B>PR_SET_DUMPABLE</B>
+
+operation.
+<DT>*<DD>
+The attribute was reset to the value in the file
+<I>/proc/sys/fs/suid_dumpable</I>
+
+(described below), for the reasons described in
+<B><A HREF="../man2/prctl.2.html">prctl</A></B>(2).
+
+</DL>
+</DL>
+
+<DT><DD>
+Resetting the &quot;dumpable&quot; attribute to 1 reverts the ownership of the
+<I>/proc/[pid]/*</I>
+
+files to the process's real UID and real GID.
 <DT><I>/proc/[pid]/attr</I>
 
 <DD>
@@ -381,7 +416,7 @@ process during the measured interval.
 If one is interested only in inspecting the selected mapping types,
 then the value 2 or 3 can be used instead of 1.
 <P>
-A further value can be written to affect a different bit:
+Further values can be written to affect different properties:
 <DL COMPACT><DT><DD>
 <DL COMPACT>
 <DT>4 (since Linux 3.11)<DD>
@@ -395,6 +430,10 @@ have been dirtied since the file
 <I>/proc/[pid]/clear_refs</I>
 
 was written to.
+<DT>5 (since Linux 4.0)<DD>
+
+Reset the peak resident set size (&quot;high water mark&quot;) to the process's
+current resident set size value.
 </DL>
 </DL>
 
@@ -1787,9 +1826,47 @@ and
 <I>fd/*</I>.
 
 <P>
+Note however that this file is not merely a symbolic link.
+It provides the same view of the filesystem (including namespaces and the
+set of per-process mounts) as the process itself.
+An example illustrates this point.
+In one terminal, we start a shell in new user and mount namespaces,
+and in that shell we create some new mount points:
+<P>
+<PRE>
+$ <B>PS1='sh1# ' unshare -Urnm</B>
+sh1# <B>mount -t tmpfs tmpfs /etc</B>  # Mount empty tmpfs at /etc
+sh1# <B>mount --bind /usr /dev</B>     # Mount /usr at /dev
+sh1# <B>echo $$</B>
+27123
+</PRE>
 
-In a multithreaded process, the contents of this symbolic link
-are not available if the main thread has already terminated
+<P>
+In a second terminal window, in the initial mount namespace,
+we look at the contents of the corresponding mounts in
+the initial and new namespaces:
+<P>
+<PRE>
+$ <B>PS1='sh2# ' sudo sh</B>
+sh2# <B>ls /etc | wc -l</B>                  # In initial NS
+309
+sh2# <B>ls /proc/27123/root/etc | wc -l</B>  # /etc in other NS
+0                                     # The empty tmpfs dir
+sh2# <B>ls /dev | wc -l</B>                  # In initial NS
+205
+sh2# <B>ls /proc/27123/root/dev | wc -l</B>  # /dev in other NS
+11                                    # Actually bind
+                                      # mounted to /usr
+sh2# <B>ls /usr | wc -l</B>                  # /usr in initial NS
+11
+</PRE>
+
+<P>
+
+In a multithreaded process, the contents of the
+<I>/proc/[pid]/root</I>
+
+symbolic link are not available if the main thread has already terminated
 (typically by calling
 <B><A HREF="../man3/pthread_exit.3.html">pthread_exit</A></B>(3)).
 
@@ -1807,6 +1884,39 @@ check; see
 
 
 
+
+<DT><I>/proc/[pid]/seccomp</I> (Linux 2.6.12 to 2.6.22)
+
+<DD>
+This file can be used to read and change the process's
+secure computing (seccomp) mode setting.
+It contains the value 0 if the process is not in seccomp mode,
+and 1 if the process is in strict seccomp mode (see
+<B><A HREF="../man2/seccomp.2.html">seccomp</A></B>(2)).
+
+Writing 1 to this file places the process irreversibly in strict seccomp mode.
+(Further attempts to write to the file fail with the
+<B>EPERM</B>
+
+error.)
+<P>
+In Linux 2.6.23,
+this file went away, to be replaced by the
+<B><A HREF="../man2/prctl.2.html">prctl</A></B>(2)
+
+<B>PR_GET_SECCOMP</B>
+
+and
+<B>PR_SET_SECCOMP</B>
+
+operations (and later by
+<B><A HREF="../man2/seccomp.2.html">seccomp</A></B>(2)
+
+and the
+<I>Seccomp</I>
+
+field in
+<I>/proc/[pid]/status</I>).
 
 
 
@@ -1878,6 +1988,8 @@ Private_Dirty:         0 kB
 Referenced:          460 kB
 Anonymous:             0 kB
 AnonHugePages:         0 kB
+ShmemHugePages:        0 kB
+ShmemPmdMapped:        0 kB
 Swap:                  0 kB
 KernelPageSize:        4 kB
 MMUPageSize:           4 kB
@@ -1892,7 +2004,7 @@ for the mapping in
 
 The remaining lines show the size of the mapping,
 the amount of the mapping that is currently resident in RAM (&quot;Rss&quot;),
-the process' proportional share of this mapping (&quot;Pss&quot;),
+the process's proportional share of this mapping (&quot;Pss&quot;),
 the number of clean and dirty shared pages in the mapping,
 and the number of clean and dirty private pages in the mapping.
 &quot;Referenced&quot; indicates the amount of memory currently marked as
@@ -2317,11 +2429,12 @@ size       (1) total program size
            (same as VmSize in <I>/proc/[pid]/status</I>)
 resident   (2) resident set size
            (same as VmRSS in <I>/proc/[pid]/status</I>)
-share      (3) shared pages (i.e., backed by a file)
+shared     (3) number of resident shared pages (i.e., backed by a file)
+           (same as RssFile+RssShmem in <I>/proc/[pid]/status</I>)
 text       (4) text (code)
-lib        (5) library (unused in Linux 2.6)
+lib        (5) library (unused since Linux 2.6; always 0)
 data       (6) data + stack
-dt         (7) dirty pages (unused in Linux 2.6)
+dt         (7) dirty pages (unused since Linux 2.6; always 0)
 </PRE>
 
 
@@ -2356,19 +2469,23 @@ NStgid: 17248
 NSpid:  17248
 NSpgid: 17248
 NSsid:  17200
-VmPeak:     9136 kB
-VmSize:     7896 kB
+VmPeak:   131168 kB
+VmSize:   131168 kB
 VmLck:         0 kB
 VmPin:         0 kB
-VmHWM:      7572 kB
-VmRSS:      6316 kB
-VmData:     5224 kB
-VmStk:        88 kB
-VmExe:       572 kB
-VmLib:      1708 kB
-VmPMD:         4 kB
-VmPTE:        20 kB
+VmHWM:     13484 kB
+VmRSS:     13484 kB
+RssAnon:           10264 kB
+RssFile:            3220 kB
+RssShmem:              0 kB
+VmData:    10332 kB
+VmStk:       136 kB
+VmExe:       992 kB
+VmLib:      2104 kB
+VmPTE:        76 kB
+VmPMD:        12 kB
 VmSwap:        0 kB
+HugetlbPages:          0 kB             # 4.4
 Threads:        1
 SigQ:   0/3067
 SigPnd: 0000000000000000
@@ -2402,7 +2519,9 @@ Command run by this process.
 <DT>*<DD>
 <I>Umask</I>:
 
-Process umask, expressed in octal with a leading zero.
+Process umask, expressed in octal with a leading zero; see
+<B><A HREF="../man2/umask.2.html">umask</A></B>(2).
+
 (Since Linux 4.7.)
 <DT>*<DD>
 <I>State</I>:
@@ -2452,7 +2571,7 @@ Number of file descriptor slots currently allocated.
 
 Supplementary group list.
 <DT>*<DD>
-<I>NStgid</I>
+<I>NStgid :</I>
 
 Thread group ID (i.e., PID) in each of the PID namespaces of which
 <I>[pid]</I>
@@ -2464,7 +2583,7 @@ followed by the value in successively nested inner namespaces.
 
 (Since Linux 4.1.)
 <DT>*<DD>
-<I>NSpid</I>
+<I>NSpid:</I>
 
 Thread ID in each of the PID namespaces of which
 <I>[pid]</I>
@@ -2475,7 +2594,7 @@ The fields are ordered as for
 
 (Since Linux 4.1.)
 <DT>*<DD>
-<I>NSpgid</I>
+<I>NSpgid</I>:
 
 Process group ID in each of the PID namespaces of which
 <I>[pid]</I>
@@ -2486,7 +2605,7 @@ The fields are ordered as for
 
 (Since Linux 4.1.)
 <DT>*<DD>
-<I>NSsid</I>
+<I>NSsid</I>:
 
 descendant namespace session ID hierarchy
 Session ID in each of the PID namespaces of which
@@ -2527,6 +2646,33 @@ Peak resident set size (&quot;high water mark&quot;).
 <I>VmRSS</I>:
 
 Resident set size.
+Note that the value here is the sum of
+<I>RssAnon</I>,
+
+<I>RssFile</I>,
+
+and
+<I>RssShmem</I>.
+
+<DT>*<DD>
+<I>RssAnon</I>:
+
+Size of resident anonymous memory.
+
+(since Linux 4.5).
+<DT>*<DD>
+<I>RssFile</I>:
+
+Size of resident file mappings.
+
+(since Linux 4.5).
+<DT>*<DD>
+<I>RssShmem</I>:
+
+Size of resident shared memory (includes System V shared memory,
+mappings from tmpfs, and shared anonymous mappings).
+
+(since Linux 4.5).
 <DT>*<DD>
 <I>VmData</I>, <I>VmStk</I>, <I>VmExe</I>:
 
@@ -2550,6 +2696,12 @@ Size of second-level page tables (since Linux 4.0).
 
 Swapped-out virtual memory size by anonymous private pages;
 shmem swap usage is not included (since Linux 2.6.34).
+<DT>*<DD>
+<I>HugetlbPages</I>:
+
+Size of hugetlb memory portions.
+
+(since Linux 4.4).
 <DT>*<DD>
 <I>Threads</I>:
 
@@ -2725,8 +2877,12 @@ the corresponding files under
 may have different values (e.g., various fields in each of the
 <I>task/[tid]/status</I>
 
-files may be different for each thread).
-<P>
+files may be different for each thread),
+
+or they might not exist in
+<I>/proc/[pid]</I>
+
+at all.
 
 In a multithreaded process, the contents of the
 <I>/proc/[pid]/task</I>
@@ -2735,6 +2891,35 @@ directory are not available if the main thread has already terminated
 (typically by calling
 <B><A HREF="../man3/pthread_exit.3.html">pthread_exit</A></B>(3)).
 
+<P>
+<DT><I>/proc/[pid]/task/[tid]/children</I> (since Linux 3.5)
+
+<DD>
+
+A space-separated list of child tasks of this task.
+Each child task is represented by its TID.
+<P>
+
+This option is intended for use by the checkpoint-restore (CRIU) system,
+and reliably provides a list of children only if all of the child processes
+are stopped or frozen.
+It does not work properly if children of the target task exit while
+the file is being read!
+Exiting children may cause non-exiting children to be omitted from the list.
+This makes this interface even more unreliable than classic PID-based
+approaches if the inspected task and its children aren't frozen,
+and most code should probably not use this interface.
+<P>
+Until Linux 4.2, the presence of this file was governed by the
+<B>CONFIG_CHECKPOINT_RESTORE</B>
+
+kernel configuration option.
+Since Linux 4.2,
+
+it is governed by the
+<B>CONFIG_PROC_CHILDREN</B>
+
+option.
 <DT><I>/proc/[pid]/timers</I> (since Linux 3.10)
 
 <DD>
@@ -3573,6 +3758,17 @@ Largest contiguous block of vmalloc area which is free.
 <DD>
 (<B>CONFIG_TRANSPARENT_HUGEPAGE</B> is required.)
 Non-file backed huge pages mapped into user-space page tables.
+<DT><I>ShmemHugePages</I> %lu (since Linux 4.8)
+
+<DD>
+(<B>CONFIG_TRANSPARENT_HUGEPAGE</B> is required.)
+Memory used by shared memory (shmem) and tmpfs allocated
+with huge pages
+<DT><I>ShmemPmdMapped</I> %lu (since Linux 4.8)
+
+<DD>
+(<B>CONFIG_TRANSPARENT_HUGEPAGE</B> is required.)
+Shared memory mapped into user space with huge pages.
 <DT><I>CmaTotal</I> %lu (since Linux 3.1)
 
 <DD>
@@ -3941,10 +4137,10 @@ that commences with the character '@'.
 <DT><I>/proc/net/netfilter/nfnetlink_queue</I>
 
 <DD>
-This file contains information about netfilter userspace queueing, if used.
+This file contains information about netfilter user-space queueing, if used.
 Each line represents a queue.
 Queues that have not been subscribed to
-by userspace are not shown.
+by user space are not shown.
 <PRE>
 
    1   4207     0  2 65535     0     0        0  1
@@ -3979,21 +4175,21 @@ the application.
 <DT>(4)<DD>
 The copy mode of the queue.
 It is either 1 (metadata only) or 2
-(also copy payload data to userspace).
+(also copy payload data to user space).
 <DT>(5)<DD>
 Copy range; that is, how many bytes of packet payload should be copied to
-userspace at most.
+user space at most.
 <DT>(6)<DD>
 queue dropped.
 Number of packets that had to be dropped by the kernel because
-too many packets are already waiting for userspace to send back the mandatory
+too many packets are already waiting for user space to send back the mandatory
 accept/drop verdicts.
 <DT>(7)<DD>
 queue user dropped.
 Number of packets that were dropped within the netlink
 subsystem.
 Such drops usually happen when the corresponding socket buffer is
-full; that is, userspace is not able to read messages fast enough.
+full; that is, user space is not able to read messages fast enough.
 <DT>(8)<DD>
 sequence number.
 Every queued packet is associated with a (32-bit)
@@ -4610,10 +4806,11 @@ only if one of the following conditions is true:
 <DL COMPACT><DT><DD>
 <DL COMPACT>
 <DT>*<DD>
-The caller has the
+The calling process has the
 <B>CAP_FOWNER</B>
 
-capability.
+capability in its user namespace
+and the file UID has a mapping in the namespace.
 <DT>*<DD>
 The filesystem UID of the process creating the link matches
 the owner (UID) of the target file
@@ -4705,10 +4902,16 @@ in the circumstances described in
 In effect,
 the value in this file determines whether core dump files are
 produced for set-user-ID or otherwise protected/tainted binaries.
+The &quot;dumpable&quot; setting also affects the ownership of files in a process's
+<I>/proc/[pid]</I>
+
+directory, as described above.
+<P>
 Three different integer values can be specified:
 <DL COMPACT><DT><DD>
 <DL COMPACT>
 <DT><I>0&nbsp;(default)</I><DD>
+
 This provides the traditional (pre-Linux 2.6.13) behavior.
 A core dump will not be produced for a process which has
 changed credentials (by calling
@@ -4719,12 +4922,18 @@ changed credentials (by calling
 or similar, or by executing a set-user-ID or set-group-ID program)
 or whose binary does not have read permission enabled.
 <DT><I>1&nbsp;(&quot;debug&quot;)</I><DD>
+
 All processes dump core when possible.
+(Reasons why a process might nevertheless not dump core are described in
+<B><A HREF="../man5/core.5.html">core</A></B>(5).)
+
 The core dump is owned by the filesystem user ID of the dumping process
 and no security is applied.
-This is intended for system debugging situations only.
-Ptrace is unchecked.
+This is intended for system debugging situations only:
+this mode is insecure because it allows unprivileged users to
+examine the memory contents of privileged processes.
 <DT><I>2&nbsp;(&quot;suidsafe&quot;)</I><DD>
+
 Any binary which normally would not be dumped (see &quot;0&quot; above)
 is dumped readable by root only.
 This allows the user to remove the core dump file but not to read it.
@@ -4748,6 +4957,11 @@ does not follow these rules, and no core dump will be produced.
 
 </DL>
 </DL>
+
+<DT><DD>
+For details of the effect of a process's &quot;dumpable&quot; setting
+on ptrace access mode checking, see
+<B><A HREF="../man2/ptrace.2.html">ptrace</A></B>(2).
 
 <DT><I>/proc/sys/fs/super-max</I>
 
@@ -5159,6 +5373,9 @@ on the system.
 
 <DD>
 This file defines the maximum number of pseudoterminals.
+
+
+
 <DT><I>/proc/sys/kernel/pty/nr</I>
 
 <DD>
@@ -6973,6 +7190,8 @@ of thing that needs to be updated very often.
 
 <B><A HREF="../man1/free.1.html">free</A></B>(1),
 
+<B><A HREF="../man1/init.1.html">init</A></B>(1),
+
 <B><A HREF="../man1/ps.1.html">ps</A></B>(1),
 
 <B><A HREF="../man1/tr.1.html">tr</A></B>(1),
@@ -7000,8 +7219,6 @@ of thing that needs to be updated very often.
 <B><A HREF="../man8/hdparm.8.html">hdparm</A></B>(8),
 
 <B><A HREF="../man8/ifconfig.8.html">ifconfig</A></B>(8),
-
-<B><A HREF="../man1/init.1.html">init</A></B>(1),
 
 <B><A HREF="../man8/lsmod.8.html">lsmod</A></B>(8),
 
@@ -7048,6 +7265,6 @@ and
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:43:46 GMT, April 20, 2020
+Time: 03:44:24 GMT, April 20, 2020
 </BODY>
 </HTML>

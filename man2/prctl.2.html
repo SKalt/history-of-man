@@ -89,7 +89,7 @@ is removed from the ambient set.
 
 <DD>
 The
-<B><A HREF="../man2/prctl.2.html">prctl</A></B>(2)
+<B>prctl</B>()
 
 call returns 1 if the capability in
 <I>arg3</I>
@@ -143,7 +143,7 @@ is not valid, then the call fails with the error
 If the calling thread has the
 <B>CAP_SETPCAP</B>
 
-capability, then drop the capability specified by
+capability within its user namespace, then drop the capability specified by
 <I>arg2</I>
 
 from the calling thread's capability bounding set.
@@ -244,56 +244,24 @@ However, it is reset to the current value contained in the file
 <I>/proc/sys/fs/:suid_dumpable</I>
 
 (which by default has the value 0),
-if any of the following attributes of the process
-are changed by the operations listed below:
+in the following circumstances:
 
 <DL COMPACT><DT><DD>
 <DL COMPACT>
 <DT>*<DD>
-The effective user or group ID is changed.
+The process's effective user or group ID is changed.
 <DT>*<DD>
-The filesystem user or group ID is changed (see
+The process's filesystem user or group ID is changed (see
 <B><A HREF="../man7/credentials.7.html">credentials</A></B>(7)).
 
 <DT>*<DD>
-The process's set of permitted capabilities (see
-<B><A HREF="../man7/capabilities.7.html">capabilities</A></B>(7))
-
-is changed such that its new set of capabilities is
-not a subset of its previous set of capabilities.
-</DL>
-</DL>
-
-<DT><DD>
-The operations that may trigger changes to the dumpable flag include:
-
-<DL COMPACT><DT><DD>
-<DL COMPACT>
-<DT>*<DD>
-execution
+The process executes
 (<B><A HREF="../man2/execve.2.html">execve</A></B>(2))
 
-of a set-user-ID or set-group-ID program,
+a set-user-ID or set-group-ID program,
 or a program that has capabilities (see
-<B><A HREF="../man7/capabilities.7.html">capabilities</A></B>(7));
+<B><A HREF="../man7/capabilities.7.html">capabilities</A></B>(7)).
 
-<DT>*<DD>
-<B><A HREF="../man2/capset.2.html">capset</A></B>(2);
-
-and
-<DT>*<DD>
-system calls that change process credentials
-(<B><A HREF="../man2/setuid.2.html">setuid</A></B>(2)
-
-<B><A HREF="../man2/setgid.2.html">setgid</A></B>(2),
-
-<B><A HREF="../man2/setresuid.2.html">setresuid</A></B>(2),
-
-<B><A HREF="../man2/setresgid.2.html">setresgid</A></B>(2),
-
-<B><A HREF="../man2/setgroups.2.html">setgroups</A></B>(2),
-
-and so on).
 
 </DL>
 </DL>
@@ -302,7 +270,19 @@ and so on).
 Processes that are not dumpable can not be attached via
 <B><A HREF="../man2/ptrace.2.html">ptrace</A></B>(2)
 
-<B>PTRACE_ATTACH</B>.
+<B>PTRACE_ATTACH</B>;
+
+see
+<B><A HREF="../man2/ptrace.2.html">ptrace</A></B>(2)
+
+for further details.
+<P>
+If a process is not dumpable,
+the ownership of files in the process's
+<I>/proc/[pid]</I>
+
+directory is affected as described in
+<B><A HREF="../man5/proc.5.html">proc</A></B>(5).
 
 <DT><B>PR_GET_DUMPABLE</B> (since Linux 2.3.20)
 
@@ -1342,6 +1322,30 @@ is set appropriately.
 <I>option</I>
 
 is
+<B>PR_SET_SECCOMP</B>
+
+and
+<I>arg2</I>
+
+is
+<B>SECCOMP_MODE_FILTER</B>,
+
+but the process does not have the
+<B>CAP_SYS_ADMIN</B>
+
+capability or has not set the
+<I>no_new_privs</I>
+
+attribute (see the discussion of
+<B>PR_SET_NO_NEW_PRIVS</B>
+
+above).
+<DT><B>EACCES</B>
+
+<DD>
+<I>option</I>
+
+is
 <B>PR_SET_MM</B>,
 
 and
@@ -1850,6 +1854,6 @@ get or set the maximum stack size, and so on.
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:43:34 GMT, April 20, 2020
+Time: 03:44:12 GMT, April 20, 2020
 </BODY>
 </HTML>

@@ -25,7 +25,7 @@ the source, must acknowledge the copyright and authors of this work.
 <HTML><HEAD><TITLE>Man page of FCNTL</TITLE>
 </HEAD><BODY>
 <H1>FCNTL</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2016-03-15<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2016-10-08<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -94,12 +94,11 @@ indicating that the kernel does not recognize this value.
 <DT><B>F_DUPFD</B> (<I>int</I>)
 
 <DD>
-Find the lowest numbered available file descriptor
-greater than or equal to
-<I>arg</I>
+Duplicate the file descriptor
+<I>fd</I>
 
-and make it be a copy of
-<I>fd</I>.
+using the lowest-numbered available file descriptor greater than or equal to
+<I>arg</I>.
 
 This is different from
 <B><A HREF="../man2/dup2.2.html">dup2</A></B>(2),
@@ -149,15 +148,25 @@ the close-on-exec flag.
 If the
 <B>FD_CLOEXEC</B>
 
-bit is 0, the file descriptor will remain open across an
-<B><A HREF="../man2/execve.2.html">execve</A></B>(2),
+bit is set,
+the file descriptor will automatically be closed during a successful
+<B><A HREF="../man2/execve.2.html">execve</A></B>(2).
 
-otherwise it will be closed.
+(If the
+<B><A HREF="../man2/execve.2.html">execve</A></B>(2)
+
+fails, the file descriptor is left open.)
+If the
+<B>FD_CLOEXEC</B>
+
+bit is not set, the file descriptor will remain open across an
+<B><A HREF="../man2/execve.2.html">execve</A></B>(2).
+
 <DL COMPACT>
 <DT><B>F_GETFD</B> (<I>void</I>)
 
 <DD>
-Read the file descriptor flags;
+Return (as the function result) the file descriptor flags;
 <I>arg</I>
 
 is ignored.
@@ -220,7 +229,8 @@ The file status flags and their semantics are described in
 <DT><B>F_GETFL</B> (<I>void</I>)
 
 <DD>
-Get the file access mode and the file status flags;
+Return (as the function result)
+the file access mode and the file status flags;
 <I>arg</I>
 
 is ignored.
@@ -646,7 +656,7 @@ or via a duplicate of the file descriptor created by
 
 <B><A HREF="../man2/dup.2.html">dup</A></B>(2),
 
-<B><A HREF="../man2/fcntl.2.html">fcntl</A></B>(2)
+<B>fcntl</B>()
 
 <B>F_DUPFD</B>,
 
@@ -939,6 +949,16 @@ where the sending process is the one that employs
 (but see BUGS below).
 If this permission check fails, then the signal is
 silently discarded.
+<I>Note</I>:
+
+The
+<B>F_SETOWN</B>
+
+operation records the caller's credentials at the time of the
+<B>fcntl</B>()
+
+call,
+and it is these saved credentials that are used for the permission checks.
 <P>
 If the file descriptor
 <I>fd</I>
@@ -1753,12 +1773,14 @@ a privileged process
 (<B>CAP_SYS_RESOURCE</B>)
 
 can override the limit.
+<P>
 When allocating the buffer for the pipe,
 the kernel may use a capacity larger than
 <I>arg</I>,
 
 if that is convenient for the implementation.
 The actual capacity that is set is returned as the function result.
+<P>
 Attempting to set the pipe capacity smaller than the amount
 of buffer space currently used to store data produces the error
 <B>EBUSY</B>.
@@ -1793,7 +1815,7 @@ Currently, only the
 
 filesystem supports sealing.
 On other filesystems, all
-<B><A HREF="../man2/fcntl.2.html">fcntl</A></B>(2)
+<B>fcntl</B>()
 
 operations that operate on seals will return
 <B>EINVAL</B>.
@@ -1852,7 +1874,7 @@ The following seals are available:
 
 <DD>
 If this seal is set, any further call to
-<B><A HREF="../man2/fcntl.2.html">fcntl</A></B>(2)
+<B>fcntl</B>()
 
 with
 <B>F_ADD_SEALS</B>
@@ -2704,6 +2726,6 @@ is called
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:43:32 GMT, April 20, 2020
+Time: 03:44:10 GMT, April 20, 2020
 </BODY>
 </HTML>

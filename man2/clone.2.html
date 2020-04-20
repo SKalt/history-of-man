@@ -26,13 +26,9 @@ clone, __clone2 - create a child process
 
 <B>int clone(int (*</B><I>fn</I><B>)(void *), void *</B><I>child_stack</I><B>,</B>
 <B>          int </B><I>flags</I><B>, void *</B><I>arg</I><B>, ... </B>
-<B>          /* pid_t *</B><I>ptid</I><B>, struct user_desc *</B><I>tls</I><B>, pid_t *</B><I>ctid</I><B> */ );</B>
+<B>          /* pid_t *</B><I>ptid</I><B>, void *</B><I>newtls</I><B>, pid_t *</B><I>ctid</I><B> */ );</B>
 
-/* Prototype for the raw system call */
-
-<B>long clone(unsigned long </B><I>flags</I><B>, void *</B><I>child_stack</I><B>,</B>
-<B>          void *</B><I>ptid</I><B>, void *</B><I>ctid</I><B>,</B>
-<B>          struct pt_regs *</B><I>regs</I><B>);</B>
+/* For the prototype of the raw system call, see NOTES */
 </PRE>
 
 <A NAME="lbAD">&nbsp;</A>
@@ -209,15 +205,16 @@ is not set, the child process inherits a copy of all file descriptors
 opened in the calling process at the time of
 <B>clone</B>().
 
-(The duplicated file descriptors in the child refer to the
-same open file descriptions (see
-<B><A HREF="../man2/open.2.html">open</A></B>(2))
-
-as the corresponding file descriptors in the calling process.)
 Subsequent operations that open or close file descriptors,
 or change file descriptor flags,
 performed by either the calling
 process or the child process do not affect the other process.
+Note, however,
+that the duplicated file descriptors in the child refer to the same open file
+descriptions as the corresponding file descriptors in the calling process,
+and thus share file offsets and files status flags (see
+<B><A HREF="../man2/open.2.html">open</A></B>(2)).
+
 <DT><B>CLONE_FS</B> (since Linux 2.0)
 
 <DD>
@@ -659,13 +656,32 @@ then trace the child also (see
 <DT><B>CLONE_SETTLS</B> (since Linux 2.5.32)
 
 <DD>
-The
+The TLS (Thread Local Storage) descriptor is set to
+<I>newtls.</I>
+
+<P>
+The interpretation of
 <I>newtls</I>
 
-argument is the new TLS (Thread Local Storage) descriptor.
-(See
-<B><A HREF="../man2/set_thread_area.2.html">set_thread_area</A></B>(2).)
+and the resulting effect is architecture dependent.
+On x86,
+<I>newtls</I>
 
+is interpreted as a
+<I>struct user_desc *</I>
+
+(See
+<B><A HREF="../man2/set_thread_area.2.html">set_thread_area</A></B>(2)).
+
+On x86_64 it is the new value to be set for the %fs base register
+(See the
+<I>ARCH_SET_FS</I>
+
+argument to
+<B><A HREF="../man2/arch_prctl.2.html">arch_prctl</A></B>(2)).
+
+On architectures with a dedicated TLS register, it is the new value
+of that register.
 <DT><B>CLONE_SIGHAND</B> (since Linux 2.0)
 
 <DD>
@@ -1008,17 +1024,62 @@ arguments of the
 
 wrapper function are omitted.
 Furthermore, the argument order changes.
-The raw system call interface on x86 and many other architectures is roughly:
+In addition, there are variations across architectures.
+<P>
+The raw system call interface on x86-64 and some other architectures
+(including sh, tile, and alpha) is roughly:
+<P>
 
 <PRE>
-
 <B>long clone(unsigned long </B><I>flags</I><B>, void *</B><I>child_stack</I><B>,</B>
-<B>           void *</B><I>ptid</I><B>, void *</B><I>ctid</I><B>,</B>
-<B>           struct pt_regs *</B><I>regs</I><B>);</B>
-
+<B>           int *</B><I>ptid</I><B>, int *</B><I>ctid</I><B>,</B>
+<B>           unsigned long </B><I>newtls</I><B>);</B>
 </PRE>
 
 
+<P>
+On x86-32, and several other common architectures
+(including score, ARM, ARM 64, PA-RISC, arc, Power PC, xtensa,
+and MIPS),
+
+the order of the last two arguments is reversed:
+<P>
+
+<PRE>
+<B>long clone(unsigned long </B><I>flags</I><B>, void *</B><I>child_stack</I><B>,</B>
+<B>          int *</B><I>ptid</I><B>, unsigned long </B><I>newtls</I><B>,</B>
+<B>          int *</B><I>ctid</I><B>);</B>
+</PRE>
+
+
+<P>
+On the cris and s390 architectures,
+
+the order of the first two arguments is reversed:
+<P>
+
+<PRE>
+<B>long clone(void *</B><I>child_stack</I><B>, unsigned long </B><I>flags</I><B>,</B>
+<B>           int *</B><I>ptid</I><B>, int *</B><I>ctid</I><B>,</B>
+<B>           unsigned long </B><I>newtls</I><B>);</B>
+</PRE>
+
+
+<P>
+On the microblaze architecture,
+
+an additional argument is supplied:
+<P>
+
+<PRE>
+<B>long clone(unsigned long </B><I>flags</I><B>, void *</B><I>child_stack</I><B>,</B>
+<B>           int </B><I>stack_size</I><B>,</B><I></I>         /* Size of stack */
+<B>           int *</B><I>ptid</I><B>, int *</B><I>ctid</I><B>,</B>
+<B>           unsigned long </B><I>newtls</I><B>);</B>
+</PRE>
+
+
+<P>
 Another difference for the raw system call is that the
 <I>child_stack</I>
 
@@ -1029,16 +1090,12 @@ In this case, for correct operation, the
 <B>CLONE_VM</B>
 
 option should not be specified.
-<P>
-For some architectures, the order of the arguments for the system call
-differs from that shown above.
-On the score, microblaze, ARM, ARM 64, PA-RISC, arc, Power PC, xtensa,
-and MIPS architectures,
-the order of the fourth and fifth arguments is reversed.
-On the cris and s390 architectures,
-the order of the first and second arguments is reversed.
+
 <A NAME="lbAF">&nbsp;</A>
 <H3>blackfin, m68k, and sparc</H3>
+
+
+
 
 The argument-passing conventions on
 blackfin, m68k, and sparc are different from the descriptions above.
@@ -1210,12 +1267,16 @@ were specified in
 <DT><B>EINVAL</B>
 
 <DD>
-Returned by
+Returned by the glibc
 <B>clone</B>()
 
-when a zero value is specified for
-<I>child_stack</I>.
+wrapper function when
+<I>fn</I>
 
+or
+<I>child_stack</I>
+
+is specified as NULL.
 <DT><B>EINVAL</B>
 
 <DD>
@@ -1329,6 +1390,12 @@ and the caller is in a chroot environment
 
 (i.e., the caller's root directory does not match the root directory
 of the mount namespace in which it resides).
+<DT><B>ERESTARTNOINTR</B> (since Linux 2.6.17)
+
+<DD>
+
+System call was interrupted by a signal and will be restarted.
+(This can be seen only during a trace.)
 <DT><B>EUSERS</B> (since Linux 3.11)
 
 <DD>
@@ -1342,12 +1409,6 @@ nested user namespaces to be exceeded.
 See
 <B><A HREF="../man7/user_namespaces.7.html">user_namespaces</A></B>(7).
 
-<DT><B>ERESTARTNOINTR</B> (since Linux 2.6.17)
-
-<DD>
-
-System call was interrupted by a signal and will be restarted.
-(This can be seen only during a trace.)
 </DL>
 <A NAME="lbAK">&nbsp;</A>
 <H2>VERSIONS</H2>
@@ -1370,6 +1431,13 @@ intended to be portable.
 <A NAME="lbAM">&nbsp;</A>
 <H2>NOTES</H2>
 
+The
+<B><A HREF="../man2/kcmp.2.html">kcmp</A></B>(2)
+
+system call can be used to test whether two processes share various
+resources such as a file descriptor table,
+System V semaphore undo operations, or a virtual address space.
+<P>
 In the kernel 2.4.x series,
 <B>CLONE_THREAD</B>
 
@@ -1388,8 +1456,7 @@ For a while there was
 
 (introduced in 2.5.32):
 parent wants no child-exit signal.
-In 2.6.2 the need to give this
-together with
+In Linux 2.6.2, the need to give this flag together with
 <B>CLONE_THREAD</B>
 
 disappeared.
@@ -1621,6 +1688,6 @@ main(int argc, char *argv[])
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:43:32 GMT, April 20, 2020
+Time: 03:44:10 GMT, April 20, 2020
 </BODY>
 </HTML>

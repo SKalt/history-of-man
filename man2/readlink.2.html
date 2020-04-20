@@ -34,7 +34,7 @@ SUCH DAMAGE.
 <HTML><HEAD><TITLE>Man page of READLINK</TITLE>
 </HEAD><BODY>
 <H1>READLINK</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2016-03-15<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2016-10-08<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -107,7 +107,7 @@ which has size
 does not append a null byte to
 <I>buf</I>.
 
-It will truncate the contents (to a length of
+It will (silently) truncate the contents (to a length of
 <I>bufsiz</I>
 
 characters), in case the buffer is too small to hold all of the contents.
@@ -192,6 +192,10 @@ for an explanation of the need for
 On success, these calls return the number of bytes placed in
 <I>buf</I>.
 
+(If the returned value equals
+<I>busiz</I>,
+
+then truncation may have occurred.)
 On error, -1 is returned and
 <I>errno</I>
 
@@ -369,13 +373,20 @@ The following program allocates the buffer needed by
 <B>readlink</B>()
 
 dynamically from the information provided by
-<B>lstat</B>(),
+<B><A HREF="../man2/lstat.2.html">lstat</A></B>(2),
 
-making sure there's no race condition between the calls.
+falling back to a buffer of size
+<B>PATH_MAX</B>
+
+in cases where
+<B><A HREF="../man2/lstat.2.html">lstat</A></B>(2)
+
+reports a size of zero.
 <PRE>
 
 #include &lt;<A HREF="file:///usr/include/sys/types.h">sys/types.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/sys/stat.h">sys/stat.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/limits.h">limits.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/stdlib.h">stdlib.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;
@@ -385,7 +396,7 @@ main(int argc, char *argv[])
 {
     struct stat sb;
     char *linkname;
-    ssize_t r;
+    ssize_t r, bufsiz;
 
     if (argc != 2) {
         fprintf(stderr, &quot;Usage: %s &lt;pathname&gt;\n&quot;, argv[0]);
@@ -397,22 +408,26 @@ main(int argc, char *argv[])
         exit(EXIT_FAILURE);
     }
 
-    linkname = malloc(sb.st_size + 1);
+    bufsiz = sb.st_size + 1;
+
+    /* Some magic symlinks under (for example) /proc and /sys
+       report 'st_size' as zero. In that case, take PATH_MAX as
+       a &quot;good enough&quot; estimate */
+
+    if (sb.st_size == 0)
+        bufsiz = PATH_MAX;
+
+    printf(&quot;%zd\n&quot;, bufsiz);
+
+    linkname = malloc(bufsiz);
     if (linkname == NULL) {
-        fprintf(stderr, &quot;insufficient memory\n&quot;);
+        perror(&quot;malloc&quot;);
         exit(EXIT_FAILURE);
     }
 
-    r = readlink(argv[1], linkname, sb.st_size + 1);
-
+    r = readlink(argv[1], linkname, bufsiz);
     if (r == -1) {
         perror(&quot;readlink&quot;);
-        exit(EXIT_FAILURE);
-    }
-
-    if (r &gt; sb.st_size) {
-        fprintf(stderr, &quot;symlink increased in size &quot;
-                        &quot;between lstat() and readlink()\n&quot;);
         exit(EXIT_FAILURE);
     }
 
@@ -420,8 +435,10 @@ main(int argc, char *argv[])
 
     printf(&quot;'%s' points to '%s'\n&quot;, argv[1], linkname);
 
-    free(linkname);
+    if (r == bufsiz)
+        printf(&quot;(Returned buffer may have been truncated)\n&quot;);
 
+    free(linkname);
     exit(EXIT_SUCCESS);
 }
 </PRE>
@@ -469,6 +486,6 @@ main(int argc, char *argv[])
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:43:34 GMT, April 20, 2020
+Time: 03:44:12 GMT, April 20, 2020
 </BODY>
 </HTML>

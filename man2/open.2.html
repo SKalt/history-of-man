@@ -282,18 +282,24 @@ flag to deal with this problem.)
 
 <DD>
 If the file does not exist, it will be created.
-The owner (user ID) of the file is set to the effective user ID
+<P>
+The owner (user ID) of the new file is set to the effective user ID
 of the process.
-The group ownership (group ID) is set either to
-the effective group ID of the process or to the group ID of the
-parent directory (depending on filesystem type and mount options,
-and the mode of the parent directory; see the mount options
+<P>
+The group ownership (group ID) of the new file is set either to
+the effective group ID of the process (System V semantics)
+or to the group ID of the parent directory (BSD semantics).
+On Linux, the behavior depends on whether the
+set-group-ID mode bit is set on the parent directory:
+if that bit is set, then BSD semantics apply;
+otherwise, System V semantics apply.
+For some filesystems, the behavior also depends on the
 <I>bsdgroups</I>
 
 and
 <I>sysvgroups</I>
 
-described in
+mount options described in
 <B><A HREF="../man8/mount.8.html">mount</A></B>(8)).
 
 
@@ -603,6 +609,24 @@ in the inode)
 when the file is
 <B><A HREF="../man2/read.2.html">read</A></B>(2).
 
+<P>
+This flag can be employed only if one of the following conditions is true:
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT>*<DD>
+The effective UID of the process
+
+matches the owner UID of the file.
+<DT>*<DD>
+The calling process has the
+<B>CAP_FOWNER</B>
+
+capability in its user namespace and
+the owner UID of the file has a mapping in the namespace.
+</DL>
+</DL>
+
+<DT><DD>
 This flag is intended for use by indexing or backup programs,
 where its use can significantly reduce the amount of disk activity.
 This flag may not be effective on all filesystems.
@@ -956,12 +980,15 @@ requires support by the underlying filesystem;
 only a subset of Linux filesystems provide that support.
 In the initial implementation, support was provided in
 the ext2, ext3, ext4, UDF, Minix, and shmem filesystems.
+
 XFS support was added
 
 
-in Linux 3.15, and Btrfs support was added
+in Linux 3.15, and support for Btrfs
 
-in Linux 3.16.
+and F2FS
+
+was added in Linux 3.16.
 <DT><B>O_TRUNC</B>
 
 <DD>
@@ -1301,7 +1328,10 @@ was not a directory.
 
 is set, the named file is a FIFO, and
 no process has the FIFO open for reading.
-Or, the file is a device special file and no corresponding device exists.
+<DT><B>ENXIO</B>
+
+<DD>
+The file is a device special file and no corresponding device exists.
 <DT><B>EOPNOTSUPP</B>
 
 <DD>
@@ -1345,9 +1375,7 @@ The
 
 flag was specified, but the effective user ID of the caller
 
-did not match the owner of the file and the caller was not privileged
-(<B>CAP_FOWNER</B>).
-
+did not match the owner of the file and the caller was not privileged.
 <DT><B>EPERM</B>
 
 <DD>
@@ -1586,11 +1614,20 @@ inherits duplicates of its parent's file descriptors,
 and those duplicates refer to the same open file descriptions.
 <P>
 Each
-<B><A HREF="../man2/open.2.html">open</A></B>(2)
+<B>open</B>()
 
 of a file creates a new open file description;
 thus, there may be multiple open file descriptions
 corresponding to a file inode.
+<P>
+On Linux, one can use the
+<B><A HREF="../man2/kcmp.2.html">kcmp</A></B>(2)
+
+<B>KCMP_FILE</B>
+
+operation to test whether two file descriptors
+(in the same process or in two different processes)
+refer to the same open file description.
 
 
 <A NAME="lbAM">&nbsp;</A>
@@ -2196,6 +2233,6 @@ is ignored).
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:43:34 GMT, April 20, 2020
+Time: 03:44:12 GMT, April 20, 2020
 </BODY>
 </HTML>

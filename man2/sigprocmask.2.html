@@ -26,7 +26,7 @@ the source, must acknowledge the copyright and authors of this work.
 <HTML><HEAD><TITLE>Man page of SIGPROCMASK</TITLE>
 </HEAD><BODY>
 <H1>SIGPROCMASK</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2016-03-15<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2016-10-08<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -39,10 +39,20 @@ sigprocmask, rt_sigprocmask - examine and change blocked signals
 <B>#include &lt;<A HREF="file:///usr/include/signal.h">signal.h</A>&gt;</B>
 
 <P>
-<B>int sigprocmask(int </B><I>how</I><B>, const sigset_t *</B><I>set</I><B>,</B>
+<PRE>
+/* Prototype for the glibc wrapper function */
+<B>int sigprocmask(int </B><I>how</I><B>, const sigset_t *</B><I>set</I><B>, sigset_t *</B><I>oldset</I><B>);</B>
 
-<B>sigset_t *</B><I>oldset</I><B>);</B>
+/* Prototype for the underlying system call */
+<B>int rt_sigprocmask(int </B><I>how</I><B>, const kernel_sigset_t *</B><I>set</I><B>,</B>
+<B>                   kernel_sigset_t *</B><I>oldset,</I><B> size_t </B><I>sigsetsize</I><B>);</B>
 
+/* Prototype for the legacy system call (deprecated) */
+<B>int sigprocmask(int </B><I>how</I><B>, const old_kernel_sigset_t *</B><I>set</I><B>,</B>
+<B>                old_kernel_sigset_t *</B><I>oldset</I><B>);</B><I></I>
+</PRE>
+
+<P>
 <P>
 
 Feature Test Macro Requirements for glibc (see
@@ -156,10 +166,12 @@ argument points outside the process's allocated address space.
 <DT><B>EINVAL</B>
 
 <DD>
-The value specified in
+Either the value specified in
 <I>how</I>
 
-was invalid.
+was invalid or the kernel does not support the size passed in
+<I>sigsetsize.</I>
+
 </DL>
 <A NAME="lbAG">&nbsp;</A>
 <H2>CONFORMING TO</H2>
@@ -213,6 +225,20 @@ for details on manipulating signal sets.
 <A NAME="lbAI">&nbsp;</A>
 <H3>C library/kernel differences</H3>
 
+<P>
+The kernel's definition of
+<I>sigset_t</I>
+
+differs in size from that used
+by the C library.
+In this manual page, the former is referred to as
+<I>kernel_sigset_t</I>
+
+(it is nevertheless named
+<I>sigset_t</I>
+
+in the kernel sources).
+<P>
 The glibc wrapper function for
 <B>sigprocmask</B>()
 
@@ -230,6 +256,10 @@ However, with the addition of real-time signals in Linux 2.2,
 the fixed-size, 32-bit
 <I>sigset_t</I>
 
+(referred to as
+<I>old_kernel_sigset_t</I>
+
+in this manual page)
 type supported by that system call was no longer fit for purpose.
 Consequently, a new system call,
 <B>rt_sigprocmask</B>(),
@@ -237,7 +267,11 @@ Consequently, a new system call,
 was added to support an enlarged
 <I>sigset_t</I>
 
-type.
+type
+(referred to as
+<I>kernel_sigset_t</I>
+
+in this manual page).
 The new system call takes a fourth argument,
 <I>size_t sigsetsize</I>,
 
@@ -247,13 +281,12 @@ which specifies the size in bytes of the signal sets in
 and
 <I>oldset</I>.
 
-This argument is currently required to have the value
-<I>sizeof(sigset_t)</I>
+This argument is currently required to have the value 8
+(
+<I>sizeof(kernel_sigset_t)</I>
 
-(or the error
-<B>EINVAL</B>
-
-results).
+).
+<P>
 The glibc
 <B>sigprocmask</B>()
 
@@ -306,6 +339,6 @@ when the kernel provides it.
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:43:35 GMT, April 20, 2020
+Time: 03:44:13 GMT, April 20, 2020
 </BODY>
 </HTML>

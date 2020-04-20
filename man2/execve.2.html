@@ -26,7 +26,7 @@ the source, must acknowledge the copyright and authors of this work.
 <HTML><HEAD><TITLE>Man page of EXECVE</TITLE>
 </HEAD><BODY>
 <H1>EXECVE</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2016-03-15<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2016-10-08<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -64,11 +64,15 @@ starting with a line of the form:
 For details of the latter case, see &quot;Interpreter scripts&quot; below.
 <P>
 <I>argv</I> is an array of argument strings passed to the new program.
-By convention, the first of these strings should contain the filename
-associated with the file being executed.
+By convention, the first of these strings (i.e.,
+<I>argv[0]</I>)
+
+should contain the filename associated with the file being executed.
 <I>envp</I> is an array of strings, conventionally of the form
 <B>key=value</B>, which are passed as environment to the new program.
-Both <I>argv</I> and <I>envp</I> must be terminated by a null pointer.
+The <I>argv</I> and <I>envp</I> arrays must each include a null pointer
+at the end of the array.
+<P>
 The argument vector and environment can be accessed by the
 called program's main function, when it is defined as:
 <P>
@@ -79,13 +83,20 @@ int main(int argc, char *argv[], char *envp[])
 
 
 <P>
+Note, however, that the use of a third argument to the main function
+is not specified in POSIX.1;
+according to POSIX.1,
+the environment should be accessed via the external variable
+<B><A HREF="../man7/environ.7.html">environ</A></B>(7).
+
+<P>
 <B>execve</B>()
 
-does not return on success, and the text, data, bss, and
-stack of the calling process are overwritten by that of the program
-loaded.
+does not return on success, and the text, initialized data,
+uninitialized data (bss), and stack of the calling process are overwritten
+according to the contents of the newly loaded program.
 <P>
-If the current program is being ptraced, a <B>SIGTRAP</B> is sent to it
+If the current program is being ptraced, a <B>SIGTRAP</B> signal is sent to it
 after a successful
 <B>execve</B>().
 
@@ -112,6 +123,11 @@ The effective user ID of the process is copied to the saved set-user-ID;
 similarly, the effective group ID is copied to the saved set-group-ID.
 This copying takes place after any effective ID changes that occur
 because of the set-user-ID and set-group-ID mode bits.
+<P>
+The process's read UID and real GID, as well its supplementary group IDs,
+are unchanged by a call to
+<B><A HREF="../man2/execve.2.html">execve</A></B>(2).
+
 <P>
 If the executable is an a.out dynamically linked
 binary executable containing
@@ -1047,6 +1063,6 @@ argv[4]: world
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:43:32 GMT, April 20, 2020
+Time: 03:44:10 GMT, April 20, 2020
 </BODY>
 </HTML>

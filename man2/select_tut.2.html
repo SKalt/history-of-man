@@ -25,7 +25,7 @@ the source, must acknowledge the copyright and authors of this work.
 <HTML><HEAD><TITLE>Man page of SELECT_TUT</TITLE>
 </HEAD><BODY>
 <H1>SELECT_TUT</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2016-03-15<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2016-10-08<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -704,7 +704,6 @@ connect_socket(int connect_port, char *address)
     cfd = socket(AF_INET, SOCK_STREAM, 0);
     if (cfd == -1) {
         perror(&quot;socket&quot;);
-        close(cfd);
         return -1;
     }
 
@@ -751,8 +750,8 @@ main(int argc, char *argv[])
     int h;
     int fd1 = -1, fd2 = -1;
     char buf1[BUF_SIZE], buf2[BUF_SIZE];
-    int buf1_avail, buf1_written;
-    int buf2_avail, buf2_written;
+    int buf1_avail = 0, buf1_written = 0;
+    int buf2_avail = 0, buf2_written = 0;
 
     if (argc != 4) {
         fprintf(stderr, &quot;Usage\n\tfwd &lt;listen-port&gt; &quot;
@@ -778,22 +777,19 @@ main(int argc, char *argv[])
         FD_ZERO(&amp;exceptfds);
         FD_SET(h, &amp;readfds);
         nfds = max(nfds, h);
-        if (fd1 &gt; 0 &amp;&amp; buf1_avail &lt; BUF_SIZE) {
+
+        if (fd1 &gt; 0 &amp;&amp; buf1_avail &lt; BUF_SIZE)
             FD_SET(fd1, &amp;readfds);
-            nfds = max(nfds, fd1);
-        }
-        if (fd2 &gt; 0 &amp;&amp; buf2_avail &lt; BUF_SIZE) {
+            /* Note: nfds is updated below, when fd1 is added to
+               exceptfds. */
+        if (fd2 &gt; 0 &amp;&amp; buf2_avail &lt; BUF_SIZE)
             FD_SET(fd2, &amp;readfds);
-            nfds = max(nfds, fd2);
-        }
-        if (fd1 &gt; 0 &amp;&amp; buf2_avail - buf2_written &gt; 0) {
+
+        if (fd1 &gt; 0 &amp;&amp; buf2_avail - buf2_written &gt; 0)
             FD_SET(fd1, &amp;writefds);
-            nfds = max(nfds, fd1);
-        }
-        if (fd2 &gt; 0 &amp;&amp; buf1_avail - buf1_written &gt; 0) {
+        if (fd2 &gt; 0 &amp;&amp; buf1_avail - buf1_written &gt; 0)
             FD_SET(fd2, &amp;writefds);
-            nfds = max(nfds, fd2);
-        }
+
         if (fd1 &gt; 0) {
             FD_SET(fd1, &amp;exceptfds);
             nfds = max(nfds, fd1);
@@ -835,6 +831,9 @@ main(int argc, char *argv[])
                 else
                     printf(&quot;connect from %s\n&quot;,
                             inet_ntoa(client_addr.sin_addr));
+
+                /* Skip any events on the old, closed file descriptors. */
+                continue;
             }
         }
 
@@ -874,7 +873,7 @@ main(int argc, char *argv[])
             else
                 buf2_avail += nbytes;
         }
-        if (fd1 &gt; 0 &amp;&amp; FD_ISSET(fd1, &amp;writefds)) {
+        if (fd1 &gt; 0 &amp;&amp; FD_ISSET(fd1, &amp;writefds) &amp;&amp; buf2_avail &gt; 0) {
             nbytes = write(fd1, buf2 + buf2_written,
                        buf2_avail - buf2_written);
             if (nbytes &lt; 1)
@@ -882,7 +881,7 @@ main(int argc, char *argv[])
             else
                 buf2_written += nbytes;
         }
-        if (fd2 &gt; 0 &amp;&amp; FD_ISSET(fd2, &amp;writefds)) {
+        if (fd2 &gt; 0 &amp;&amp; FD_ISSET(fd2, &amp;writefds) &amp;&amp; buf1_avail &gt; 0) {
             nbytes = write(fd2, buf1 + buf1_written,
                        buf1_avail - buf1_written);
             if (nbytes &lt; 1)
@@ -993,6 +992,6 @@ connections cause the current connection to be dropped.
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:43:34 GMT, April 20, 2020
+Time: 03:44:12 GMT, April 20, 2020
 </BODY>
 </HTML>

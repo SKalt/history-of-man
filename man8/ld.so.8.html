@@ -7,7 +7,7 @@ This is in the public domain
 <HTML><HEAD><TITLE>Man page of LD.SO</TITLE>
 </HEAD><BODY>
 <H1>LD.SO</H1>
-Section: Linux Programmer's Manual (8)<BR>Updated: 2016-05-09<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (8)<BR>Updated: 2016-10-08<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -59,8 +59,9 @@ The program
 handles a.out binaries, a format used long ago;
 <B>ld-linux.so*</B>
 
-handles ELF (<I>/lib/ld-linux.so.1</I> for libc5, <I>/lib/ld-linux.so.2</I>
-for glibc2), which everybody has been using for years now.
+(<I>/lib/ld-linux.so.1</I> for libc5, <I>/lib/ld-linux.so.2</I> for glibc2)
+handles ELF,
+which everybody has been using for years now.
 Otherwise, both have the same behavior, and use the same
 support files and programs
 <B><A HREF="../man1/ldd.1.html">ldd</A></B>(1),
@@ -85,7 +86,7 @@ If a shared object dependency does not contain a slash,
 then it is searched for in the following order:
 <DL COMPACT>
 <DT>o<DD>
-(ELF only) Using the directories specified in the
+Using the directories specified in the
 DT_RPATH dynamic section attribute
 of the binary if present and DT_RUNPATH attribute does not exist.
 Use of DT_RPATH is deprecated.
@@ -96,7 +97,7 @@ Using the environment variable
 (unless the executable is being run in secure-execution mode; see below).
 in which case it is ignored.
 <DT>o<DD>
-(ELF only) Using the directories specified in the
+Using the directories specified in the
 DT_RUNPATH dynamic section attribute
 of the binary if present.
 <DT>o<DD>
@@ -294,7 +295,7 @@ A nonzero value may have been set by a Linux Security Module.
 
 Among the more important environment variables are the following:
 <DL COMPACT>
-<DT><B>LD_ASSUME_KERNEL</B> (glibc since 2.2.3)
+<DT><B>LD_ASSUME_KERNEL</B> (since glibc 2.2.3)
 
 <DD>
 Each shared object can inform the dynamic linker of the minimum kernel ABI
@@ -345,10 +346,9 @@ LinuxThreads and NPTL
 see
 <B><A HREF="../man7/pthreads.7.html">pthreads</A></B>(7).
 
-<DT><B>LD_BIND_NOW</B>
+<DT><B>LD_BIND_NOW</B> (since glibc 2.1.1)
 
 <DD>
-(libc5; glibc since 2.1.1)
 If set to a nonempty string,
 causes the dynamic linker to resolve all symbols
 at program startup instead of deferring function call resolution to the point
@@ -409,8 +409,8 @@ This can be used to selectively override functions in other shared objects.
 The objects are searched for using the rules given under DESCRIPTION.
 In secure-execution mode,
 preload pathnames containing slashes are ignored,
-and shared objects in the standard search directories are loaded
-only if the set-user-ID mode bit is enabled on the shared object file.
+and only shared objects in the standard search directories that
+have the set-user-ID mode bit enabled are loaded.
 <P>
 Within the pathnames specified in
 <B>LD_PRELOAD</B>,
@@ -436,7 +436,6 @@ as described above in
 <DT><B>LD_TRACE_LOADED_OBJECTS</B>
 
 <DD>
-(ELF only)
 If set (to any value), causes the program to list its dynamic
 dependencies, as if run by
 <B><A HREF="../man1/ldd.1.html">ldd</A></B>(1),
@@ -448,32 +447,9 @@ instead of running normally.
 Then there are lots of more or less obscure variables,
 many obsolete or only for internal use.
 <DL COMPACT>
-<DT><B>LD_AOUT_LIBRARY_PATH</B>
+<DT><B>LD_AUDIT</B> (since glibc 2.4)
 
 <DD>
-(libc5)
-Version of
-<B>LD_LIBRARY_PATH</B>
-
-for a.out binaries only.
-Old versions of ld-linux.so.1 also supported
-<B>LD_ELF_LIBRARY_PATH</B>.
-
-<DT><B>LD_AOUT_PRELOAD</B>
-
-<DD>
-(libc5)
-Version of
-<B>LD_PRELOAD</B>
-
-for a.out binaries only.
-Old versions of ld-linux.so.1 also supported
-<B>LD_ELF_PRELOAD</B>.
-
-<DT><B>LD_AUDIT</B>
-
-<DD>
-(glibc since 2.4)
 A colon-separated list of user-specified, ELF shared objects
 to be loaded before all others in a separate linker namespace
 (i.e., one that does not intrude upon the normal symbol bindings that
@@ -498,26 +474,75 @@ as described in its
 in the chapter
 <I>Runtime Linker Auditing Interface</I>.
 
-<DT><B>LD_BIND_NOT</B>
+<DT><B>LD_BIND_NOT</B> (since glibc 2.1.95)
 
 <DD>
-(glibc since 2.1.95)
 If this environment variable is set to a nonempty string,
 do not update the GOT (global offset table) and PLT (procedure linkage table)
 after resolving a symbol.
-<DT><B>LD_DEBUG</B>
+<DT><B>LD_DEBUG</B> (since glibc 2.1)
 
 <DD>
-(glibc since 2.1)
 Output verbose debugging information about the dynamic linker.
 If set to
-<B>all</B>
+<B>all</B>,
 
-prints all debugging information it has, if set to
+print all debugging information,
+Setting this variable to
 <B>help</B>
 
-prints a help message about which categories can be specified in this
+does not run the specified program,
+and displays a help message about which categories can be specified in this
 environment variable.
+The categories are:
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT><I>bindings</I>
+
+<DD>
+Display information about which definition each symbol is bound to.
+<DT><I>files</I>
+
+<DD>
+Display progress for input file.
+<DT><I>libs</I>
+
+<DD>
+Display library search paths.
+<DT><I>reloc</I>
+
+<DD>
+Display relocation processing.
+<DT><I>scopes</I>
+
+<DD>
+Display scope information.
+<DT><I>statistics</I>
+
+<DD>
+Display relocation statistics.
+<DT><I>symbols</I>
+
+<DD>
+Display search paths for each symbol look-up.
+<DT><I>unused</I>
+
+<DD>
+Determine unused DSOs.
+<DT><I>versions</I>
+
+<DD>
+Display version dependencies.
+</DL>
+</DL>
+
+<DT><DD>
+The value in
+<B>LD_DEBUG</B>
+
+can specify multiple categories, separated by colons, commas,
+or (if the value is quoted) spaces.
+<P>
 Since glibc 2.3.4,
 <B>LD_DEBUG</B>
 
@@ -525,10 +550,9 @@ is ignored in secure-execution mode, unless the file
 <I>/etc/suid-debug</I>
 
 exists (the content of the file is irrelevant).
-<DT><B>LD_DEBUG_OUTPUT</B>
+<DT><B>LD_DEBUG_OUTPUT</B> (since glibc 2.1)
 
 <DD>
-(glibc since 2.1)
 File in which
 <B>LD_DEBUG</B>
 
@@ -537,10 +561,9 @@ The default is standard error.
 <B>LD_DEBUG_OUTPUT</B>
 
 is ignored in secure-execution mode.
-<DT><B>LD_DYNAMIC_WEAK</B>
+<DT><B>LD_DYNAMIC_WEAK</B> (since glibc 2.1.91)
 
 <DD>
-(glibc since 2.1.91)
 If this environment variable is defined (with any value),
 allow weak symbols to be overridden (reverting to old glibc behavior).
 
@@ -554,27 +577,13 @@ Since glibc 2.3.4,
 <B>LD_DYNAMIC_WEAK</B>
 
 is ignored in secure-execution mode.
-<DT><B>LD_HWCAP_MASK</B>
+<DT><B>LD_HWCAP_MASK</B> (since glibc 2.1)
 
 <DD>
-(glibc since 2.1)
 Mask for hardware capabilities.
-<DT><B>LD_KEEPDIR</B>
+<DT><B>LD_ORIGIN_PATH</B> (since glibc 2.1)
 
 <DD>
-(a.out only)(libc5)
-Don't ignore the directory in the names of a.out libraries to be loaded.
-Use of this option is strongly discouraged.
-<DT><B>LD_NOWARN</B>
-
-<DD>
-(a.out only)(libc5)
-Suppress warnings about a.out libraries with incompatible minor
-version numbers.
-<DT><B>LD_ORIGIN_PATH</B>
-
-<DD>
-(glibc since 2.1)
 Path where the binary is found.
 Since glibc 2.4,
 <B>LD_ORIGIN_PATH</B>
@@ -582,10 +591,9 @@ Since glibc 2.4,
 is ignored in secure-execution mode.
 
 
-<DT><B>LD_POINTER_GUARD</B>
+<DT><B>LD_POINTER_GUARD</B> (glibc from 2.4 to 2.22)
 
 <DD>
-(glibc from 2.4 to 2.22)
 Set to 0 to disable pointer guarding.
 Any other value enables pointer guarding, which is also the default.
 Pointer guarding is a security mechanism whereby some pointers to code
@@ -602,18 +610,16 @@ Since glibc 2.23,
 
 can no longer be used to disable pointer guarding,
 which is now always enabled.
-<DT><B>LD_PROFILE</B>
+<DT><B>LD_PROFILE</B> (since glibc 2.1)
 
 <DD>
-(glibc since 2.1)
 The name of a (single) shared object to be profiled,
 specified either as a pathname or a soname.
 Profiling output is appended to the file whose name is:
 &quot;<I>$LD_PROFILE_OUTPUT</I>/<I>$LD_PROFILE</I>.profile&quot;.
-<DT><B>LD_PROFILE_OUTPUT</B>
+<DT><B>LD_PROFILE_OUTPUT</B> (since glibc 2.1)
 
 <DD>
-(glibc since 2.1)
 Directory where
 <B>LD_PROFILE</B>
 
@@ -628,10 +634,9 @@ is ignored in secure-execution mode; instead
 <I>/var/profile</I>
 
 is always used.
-<DT><B>LD_SHOW_AUXV</B>
+<DT><B>LD_SHOW_AUXV</B> (since glibc 2.1)
 
 <DD>
-(glibc since 2.1)
 If this environment variable is defined (with any value),
 show the auxiliary array passed up from the kernel (see also
 <B><A HREF="../man3/getauxval.3.html">getauxval</A></B>(3)).
@@ -640,10 +645,9 @@ Since glibc 2.3.5,
 <B>LD_SHOW_AUXV</B>
 
 is ignored in secure-execution mode.
-<DT><B>LD_TRACE_PRELINKING</B>
+<DT><B>LD_TRACE_PRELINKING</B> (since glibc 2.4)
 
 <DD>
-(glibc since 2.4)
 If this environment variable is defined (with any value),
 trace prelinking of the object whose name is assigned to
 this environment variable.
@@ -654,7 +658,7 @@ to get a list of the objects that might be traced.)
 If the object name is not recognized,
 
 then all prelinking activity is traced.
-<DT><B>LD_USE_LOAD_BIAS</B>
+<DT><B>LD_USE_LOAD_BIAS</B> (since glibc 2.3.3)
 
 <DD>
 
@@ -676,25 +680,22 @@ If
 is defined with the value 0,
 neither executables nor PIEs will honor the base addresses.
 This variable is ignored in secure-execution mode.
-<DT><B>LD_VERBOSE</B>
+<DT><B>LD_VERBOSE</B> (since glibc 2.1)
 
 <DD>
-(glibc since 2.1)
 If set to a nonempty string,
 output symbol versioning information about the
 program if the
 <B>LD_TRACE_LOADED_OBJECTS</B>
 
 environment variable has been set.
-<DT><B>LD_WARN</B>
+<DT><B>LD_WARN</B> (since glibc 2.1.3)
 
 <DD>
-(ELF only)(glibc since 2.1.3)
 If set to a nonempty string, warn about unresolved symbols.
-<DT><B>LD_PREFER_MAP_32BIT_EXEC</B>
+<DT><B>LD_PREFER_MAP_32BIT_EXEC</B> (x86-64 only; since glibc 2.23)
 
 <DD>
-(x86-64 only)(glibc since 2.23)
 According to the Intel Silvermont software optimization guide, for 64-bit
 applications, branch prediction performance can be negatively impacted
 when the target of a branch is more than 4GB away from the branch.
@@ -716,16 +717,6 @@ randomization (ASLR),
 <B>LD_PREFER_MAP_32BIT_EXEC</B>
 
 is always disabled in secure-execution mode.
-<DT><B>LDD_ARGV0</B>
-
-<DD>
-(libc5)
-<I>argv</I>[0]
-
-to be used by
-<B><A HREF="../man1/ldd.1.html">ldd</A></B>(1)
-
-when none is present.
 </DL>
 <A NAME="lbAJ">&nbsp;</A>
 <H2>FILES</H2>
@@ -759,12 +750,6 @@ shared objects
 <A NAME="lbAK">&nbsp;</A>
 <H2>NOTES</H2>
 
-The
-<B>ld.so</B>
-
-functionality is available for executables compiled using libc version
-4.4.3 or greater.
-ELF functionality is available since Linux 1.1.52 and libc5.
 <A NAME="lbAL">&nbsp;</A>
 <H3>Hardware capabilities</H3>
 
@@ -866,6 +851,6 @@ mtrr, pat, pbe, pge, pn, pse36, sep, ss, sse, sse2, tm
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:43:47 GMT, April 20, 2020
+Time: 03:44:25 GMT, April 20, 2020
 </BODY>
 </HTML>
