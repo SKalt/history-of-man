@@ -5,13 +5,14 @@ Copyright 2001 Andries Brouwer &lt;aeb@cwi.nl&gt;.
 <HTML><HEAD><TITLE>Man page of RINT</TITLE>
 </HEAD><BODY>
 <H1>RINT</H1>
-Section: Linux Programmer's Manual (3)<BR>Updated: 2007-07-26<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2008-08-05<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
 <H2>NAME</H2>
 
-nearbyint, nearbyintf, nearbyintl, rint, rintf, rintl - round to nearest integer
+nearbyint, nearbyintf, nearbyintl, rint, rintf, rintl - round
+to nearest integer
 <A NAME="lbAC">&nbsp;</A>
 <H2>SYNOPSIS</H2>
 
@@ -52,13 +53,18 @@ _XOPEN_SOURCE&nbsp;&gt;=&nbsp;600 || _ISOC99_SOURCE; or
 
 <BR>
 
-<B>rint</B>(),
+<B>rint</B>():
+
+_BSD_SOURCE || _SVID_SOURCE || _XOPEN_SOURCE&nbsp;&gt;=&nbsp;500 || _ISOC99_SOURCE; or
+<I>cc&nbsp;-std=c99</I>
+
+<BR>
 
 <B>rintf</B>(),
 
 <B>rintl</B>():
 
-_BSD_SOURCE || _SVID_SOURCE || _XOPEN_SOURCE&nbsp;&gt;=&nbsp;500 || _ISOC99_SOURCE; or
+_BSD_SOURCE || _SVID_SOURCE || _XOPEN_SOURCE&nbsp;&gt;=&nbsp;600 || _ISOC99_SOURCE; or
 <I>cc&nbsp;-std=c99</I>
 
 
@@ -68,8 +74,11 @@ _BSD_SOURCE || _SVID_SOURCE || _XOPEN_SOURCE&nbsp;&gt;=&nbsp;500 || _ISOC99_SOUR
 The
 <B>nearbyint</B>()
 
-functions round their argument to an integer value in floating point
-format, using the current rounding direction and without raising the
+functions round their argument to an integer value in floating-point
+format, using the current rounding direction (see
+<B><A HREF="../man3/fesetround.3.html">fesetround</A></B>(3))
+
+and without raising the
 <I>inexact</I>
 
 exception.
@@ -81,33 +90,29 @@ The
 functions do the same, but will raise the
 <I>inexact</I>
 
-exception when the result differs in value from the argument.
+exception
+(<B>FE_INEXACT</B>,
+
+checkable via
+<B><A HREF="../man3/fetestexcept.3.html">fetestexcept</A></B>(3))
+
+when the result differs in value from the argument.
 <A NAME="lbAE">&nbsp;</A>
 <H2>RETURN VALUE</H2>
 
-The rounded integer value.
-If <I>x</I> is integral or infinite,
+These functions return the rounded integer value.
+<P>
+If <I>x</I> is integral, +0, -0, NaN, or infinite,
 <I>x</I> itself is returned.
 <A NAME="lbAF">&nbsp;</A>
 <H2>ERRORS</H2>
 
-No errors other than
-<B>EDOM</B>
-
-and
-<B>ERANGE</B>
-
-can occur.
-If <I>x</I> is NaN, then NaN is returned and
-<I>errno</I>
-
-may be set to
-<B>EDOM</B>.
-
+No errors occur.
+POSIX.1-2001 documents a range error for overflows, but see NOTES.
 <A NAME="lbAG">&nbsp;</A>
 <H2>CONFORMING TO</H2>
 
-C99.
+C99, POSIX.1-2001.
 <A NAME="lbAH">&nbsp;</A>
 <H2>NOTES</H2>
 
@@ -117,14 +122,23 @@ SUSv2 and POSIX.1-2001 contain text about overflow (which might set
 to
 <B>ERANGE</B>,
 
-or raise an exception).
+or raise an
+<B>FE_OVERFLOW</B>
+
+exception).
 In practice, the result cannot overflow on any current machine,
 so this error-handling stuff is just nonsense.
 (More precisely, overflow can happen only when the maximum value
 of the exponent is smaller than the number of mantissa bits.
-For the IEEE-754 standard 32-bit and 64-bit floating point numbers
-the maximum value of the exponent is 128 (respectively, 1024), and the number
-of mantissa bits is 24 (respectively, 53).)
+For the IEEE-754 standard 32-bit and 64-bit floating-point numbers
+the maximum value of the exponent is 128 (respectively, 1024),
+and the number of mantissa bits is 24 (respectively, 53).)
+<P>
+If you want to store the rounded value in an integer type,
+you probably want to use one of the functions described in
+<B><A HREF="../man3/lrint.3.html">lrint</A></B>(3)
+
+instead.
 <A NAME="lbAI">&nbsp;</A>
 <H2>SEE ALSO</H2>
 
@@ -156,6 +170,6 @@ of mantissa bits is 24 (respectively, 53).)
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 02:55:46 GMT, April 20, 2020
+Time: 02:56:21 GMT, April 20, 2020
 </BODY>
 </HTML>

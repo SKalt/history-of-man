@@ -1,59 +1,157 @@
 <!--
+Copyright 2008, Linux Foundation, written by Michael Kerrisk
 -->
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
-<HTML><HEAD><TITLE>Man page of ERF</TITLE>
+<HTML><HEAD><TITLE>Man page of ERFC</TITLE>
 </HEAD><BODY>
-<H1>ERF</H1>
-Section: Linux Programmer's Manual (3)<BR>Updated: 2002-07-27<BR><A HREF="#index">Index</A>
+<H1>ERFC</H1>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2008-08-05<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
 <H2>NAME</H2>
 
-erf, erff, erfl, erfc, erfcf, erfcl - error function and complementary error function
+erfc, erfcf, erfcl - complementary error function
 <A NAME="lbAC">&nbsp;</A>
 <H2>SYNOPSIS</H2>
 
 <PRE>
 <B>#include &lt;<A HREF="file:///usr/include/math.h">math.h</A>&gt;</B>
 
-<B>double erf(double </B><I>x</I><B>);</B>
-
-<B>float erff(float </B><I>x</I><B>);</B>
-
-<B>long double erfl(long double </B><I>x</I><B>);</B>
-
 <B>double erfc(double </B><I>x</I><B>);</B>
-
 <B>float erfcf(float </B><I>x</I><B>);</B>
-
 <B>long double erfcl(long double </B><I>x</I><B>);</B>
 
 </PRE>
 
-Link with -lm.
+Link with <I>-lm</I>.
+<P>
+
+Feature Test Macro Requirements for glibc (see
+<B><A HREF="../man7/feature_test_macros.7.html">feature_test_macros</A></B>(7)):
+
+
+<P>
+
+<B>erfc</B>():
+
+_BSD_SOURCE || _SVID_SOURCE || _XOPEN_SOURCE || _ISOC99_SOURCE; or
+<I>cc&nbsp;-std=c99</I>
+
+<BR>
+
+<B>erfcf</B>(),
+
+<B>erfcl</B>():
+
+_BSD_SOURCE || _SVID_SOURCE || _XOPEN_SOURCE&nbsp;&gt;=&nbsp;600|| _ISOC99_SOURCE; or
+<I>cc&nbsp;-std=c99</I>
+
+
 <A NAME="lbAD">&nbsp;</A>
 <H2>DESCRIPTION</H2>
 
-The <B>erf()</B> function returns the error function of <I>x</I>; defined
-as
+The
+<B>erfc</B>()
+
+function returns the complementary error function of
+<I>x</I>,
+
+that is, 1.0 - erf(x).
+<A NAME="lbAE">&nbsp;</A>
+<H2>RETURN VALUE</H2>
+
+On success, these functions return the complementary error function of
+<I>x</I>,
+
+a value in the range [0,2].
+<P>
+If
+<I>x</I>
+
+is a NaN, a NaN is returned.
+<P>
+If
+<I>x</I>
+
+is +0 or -0, 1 is returned.
+<P>
+If
+<I>x</I>
+
+is positive infinity,
++0 is returned.
+<P>
+If
+<I>x</I>
+
+is negative infinity,
++2 is returned.
+<P>
+If the function result underflows and produces an unrepresentable value,
+the return value is 0.0.
+<P>
+If the function result underflows but produces a representable
+(i.e., subnormal) value,
+
+that value is returned, and
+a range error occurs.
+<A NAME="lbAF">&nbsp;</A>
+<H2>ERRORS</H2>
+
+See
+<B><A HREF="../man7/math_error.7.html">math_error</A></B>(7)
+
+for information on how to determine whether an error has occurred
+when calling these functions.
+<P>
+
+The following errors can occur:
 <DL COMPACT>
-<DT>erf(x) = 2/sqrt(pi)* integral from 0 to x of exp(-t*t) dt<DD>
+<DT>Range error: result underflow (result is subnormal)<DD>
+
+
+
+An underflow floating-point exception
+(<B>FE_UNDERFLOW</B>)
+
+is raised.
 </DL>
 <P>
 
-The <B>erfc()</B> function returns the complementary error function of
-<I>x</I>, that is 1.0 - erf(x).
-<A NAME="lbAE">&nbsp;</A>
+These functions do not set
+<I>errno</I>.
+
+
+
+<A NAME="lbAG">&nbsp;</A>
 <H2>CONFORMING TO</H2>
 
-SVID 3, BSD 4.3, C99.
-The float and long double variants are requirements of C99.
-<A NAME="lbAF">&nbsp;</A>
+C99, POSIX.1-2001.
+The variant returning
+<I>double</I>
+
+also conforms to
+SVr4, 4.3BSD.
+<A NAME="lbAH">&nbsp;</A>
+<H2>NOTES</H2>
+
+The
+<B>erfc</B>()
+
+functions are provided to avoid the loss accuracy that
+would occur for the calculation 1-erf(x) for large values of
+<I>x</I>
+
+(for which the value of erf(x) approaches 1).
+<A NAME="lbAI">&nbsp;</A>
 <H2>SEE ALSO</H2>
 
-<B><A HREF="../man3/exp.3.html">exp</A></B>(3)
+<B><A HREF="../man3/cerf.3.html">cerf</A></B>(3),
 
+<B><A HREF="../man3/erf.3.html">erf</A></B>(3),
+
+<B><A HREF="../man3/exp.3.html">exp</A></B>(3)
 
 <P>
 
@@ -63,13 +161,16 @@ The float and long double variants are requirements of C99.
 <DT><A HREF="#lbAB">NAME</A><DD>
 <DT><A HREF="#lbAC">SYNOPSIS</A><DD>
 <DT><A HREF="#lbAD">DESCRIPTION</A><DD>
-<DT><A HREF="#lbAE">CONFORMING TO</A><DD>
-<DT><A HREF="#lbAF">SEE ALSO</A><DD>
+<DT><A HREF="#lbAE">RETURN VALUE</A><DD>
+<DT><A HREF="#lbAF">ERRORS</A><DD>
+<DT><A HREF="#lbAG">CONFORMING TO</A><DD>
+<DT><A HREF="#lbAH">NOTES</A><DD>
+<DT><A HREF="#lbAI">SEE ALSO</A><DD>
 </DL>
 <HR>
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 02:10:26 GMT, April 20, 2020
+Time: 02:56:17 GMT, April 20, 2020
 </BODY>
 </HTML>

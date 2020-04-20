@@ -5,7 +5,7 @@ Copyright 1993 David Metcalfe (david@prism.demon.co.uk)
 <HTML><HEAD><TITLE>Man page of REMAINDER</TITLE>
 </HEAD><BODY>
 <H1>REMAINDER</H1>
-Section: Linux Programmer's Manual (3)<BR>Updated: 2008-06-16<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2008-08-05<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -39,13 +39,18 @@ Feature Test Macro Requirements for glibc (see
 
 <P>
 
-<B>remainder</B>(),
+<B>remainder</B>():
+
+_SVID_SOURCE || _BSD_SOURCE || _XOPEN_SOURCE&nbsp;&gt;=&nbsp;500 || _ISOC99_SOURCE; or
+<I>cc&nbsp;-std=c99</I>
+
+<BR>
 
 <B>remainderf</B>(),
 
 <B>remainderl</B>():
 
-_SVID_SOURCE || _BSD_SOURCE || _XOPEN_SOURCE&nbsp;&gt;=&nbsp;500 || _ISOC99_SOURCE; or
+_SVID_SOURCE || _BSD_SOURCE || _XOPEN_SOURCE&nbsp;&gt;=&nbsp;600 || _ISOC99_SOURCE; or
 <I>cc&nbsp;-std=c99</I>
 
 <BR>
@@ -71,8 +76,7 @@ by
 <I>y</I>.
 
 The return value is
-<I>x&nbsp;-&nbsp;n&nbsp;*&nbsp;y</I>,
-
+<I>x</I>-<I>n</I>*<I>y</I>,
 where
 <I>n</I>
 
@@ -80,11 +84,14 @@ is the value
 <I>x&nbsp;/&nbsp;y</I>,
 
 rounded to the nearest integer.
-If this quotient is 1/2 (mod 1), it is rounded to the nearest even number
-(independent of the current rounding mode).
-If the return value is 0, it has the sign of
-<I>x</I>.
+If the absolute value of
+<I>x</I>-<I>n</I>*<I>y</I>
+is 0.5,
+<I>n</I>
 
+is chosen to be even.
+<P>
+These functions are unaffected by the current rounding mode.
 <P>
 
 The
@@ -94,32 +101,87 @@ function does precisely the same thing.
 <A NAME="lbAE">&nbsp;</A>
 <H2>RETURN VALUE</H2>
 
-The
-<B>remainder</B>()
+On success, these
+functions return the floating-point remainder,
+<I>x</I>-<I>n</I>*<I>y</I>.
+If the return value is 0, it has the sign of
+<I>x</I>.
 
-function returns the remainder, unless
+<P>
+If
+<I>x</I>
+
+or
 <I>y</I>
 
-is zero, when the function fails and
-<I>errno</I>
+is a NaN, a NaN is returned.
+<P>
+If
+<I>x</I>
 
-is set.
+is an infinity,
+and
+<I>y</I>
+
+is not a NaN,
+a domain error occurs, and
+a NaN is returned.
+<P>
+If
+<I>y</I>
+
+is zero,
+
+and
+<I>x</I>
+
+is not a NaN,
+
+a domain error occurs, and
+a NaN is returned.
 <A NAME="lbAF">&nbsp;</A>
 <H2>ERRORS</H2>
 
+See
+<B><A HREF="../man7/math_error.7.html">math_error</A></B>(7)
+
+for information on how to determine whether an error has occurred
+when calling these functions.
+<P>
+
+The following errors can occur:
 <DL COMPACT>
-<DT><B>EDOM</B>
+<DT>Domain error: <I>x</I> is an infinity and <I>y</I> is not a NaN<DD>
+
+
+
+An invalid floating-point exception
+(<B>FE_INVALID</B>)
+
+is raised.
+<DT><DD>
+These functions do not set
+<I>errno</I>
+
+for this case.
+
+
+
+<DT>Domain error: <I>y</I> is zero<I>errno</I>
 
 <DD>
-The denominator
-<I>y</I>
+is set to
+<B>EDOM</B>.
 
-is zero.
+An invalid floating-point exception
+(<B>FE_INVALID</B>)
+
+is raised.
 </DL>
 <A NAME="lbAG">&nbsp;</A>
 <H2>CONFORMING TO</H2>
 
-IEC 60559.
+
 The functions
 <B>remainder</B>(),
 
@@ -128,7 +190,7 @@ The functions
 and
 <B>remainderl</B>()
 
-are from C99.
+are specified in C99 and POSIX.1-2001.
 <P>
 The function
 <B>drem</B>()
@@ -152,10 +214,21 @@ Avoid the use of these functions in favor of
 
 etc.
 <A NAME="lbAH">&nbsp;</A>
+<H2>BUGS</H2>
+
+The call
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;remainder(nan(&quot;&quot;),&nbsp;0);
+<P>
+returns a NaN, as expected, but wrongly causes a domain error;
+it should yield a silent NaN.
+
+
+<A NAME="lbAI">&nbsp;</A>
 <H2>EXAMPLE</H2>
 
 The call &quot;remainder(29.0, 3.0)&quot; returns -1.
-<A NAME="lbAI">&nbsp;</A>
+<A NAME="lbAJ">&nbsp;</A>
 <H2>SEE ALSO</H2>
 
 <B><A HREF="../man3/fmod.3.html">fmod</A></B>(3),
@@ -173,13 +246,14 @@ The call &quot;remainder(29.0, 3.0)&quot; returns -1.
 <DT><A HREF="#lbAE">RETURN VALUE</A><DD>
 <DT><A HREF="#lbAF">ERRORS</A><DD>
 <DT><A HREF="#lbAG">CONFORMING TO</A><DD>
-<DT><A HREF="#lbAH">EXAMPLE</A><DD>
-<DT><A HREF="#lbAI">SEE ALSO</A><DD>
+<DT><A HREF="#lbAH">BUGS</A><DD>
+<DT><A HREF="#lbAI">EXAMPLE</A><DD>
+<DT><A HREF="#lbAJ">SEE ALSO</A><DD>
 </DL>
 <HR>
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 02:55:46 GMT, April 20, 2020
+Time: 02:56:21 GMT, April 20, 2020
 </BODY>
 </HTML>

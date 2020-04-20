@@ -5,13 +5,13 @@ Copyright 2004 Andries Brouwer &lt;aeb@cwi.nl&gt;.
 <HTML><HEAD><TITLE>Man page of ILOGB</TITLE>
 </HEAD><BODY>
 <H1>ILOGB</H1>
-Section: Linux Programmer's Manual (3)<BR>Updated: 2004-10-31<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2008-08-05<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
 <H2>NAME</H2>
 
-ilogb, ilogbf, ilogbl - get integer exponent of a floating point value
+ilogb, ilogbf, ilogbl - get integer exponent of a floating-point value
 <A NAME="lbAC">&nbsp;</A>
 <H2>SYNOPSIS</H2>
 
@@ -30,6 +30,29 @@ ilogb, ilogbf, ilogbl - get integer exponent of a floating point value
 
 <P>
 Link with <I>-lm</I>.
+<P>
+
+Feature Test Macro Requirements for glibc (see
+<B><A HREF="../man7/feature_test_macros.7.html">feature_test_macros</A></B>(7)):
+
+
+<P>
+
+<B>ilogb</B>():
+
+_BSD_SOURCE || _SVID_SOURCE || _XOPEN_SOURCE&nbsp;&gt;=&nbsp;500 || _ISOC99_SOURCE; or
+<I>cc&nbsp;-std=c99</I>
+
+<BR>
+
+<B>ilogbf</B>(),
+
+<B>ilogbl</B>():
+
+_BSD_SOURCE || _SVID_SOURCE || _XOPEN_SOURCE&nbsp;&gt;=&nbsp;600 || _ISOC99_SOURCE; or
+<I>cc&nbsp;-std=c99</I>
+
+
 <A NAME="lbAD">&nbsp;</A>
 <H2>DESCRIPTION</H2>
 
@@ -40,86 +63,97 @@ are equivalent to the corresponding
 <B><A HREF="../man3/logb.3.html">logb</A></B>(3)
 
 functions, cast to
-<I>(int)</I>.
-
-An error will occur for zero and infinity and NaN,
-and possibly for overflow.
-
-
+<I>int</I>.
 
 <A NAME="lbAE">&nbsp;</A>
+<H2>RETURN VALUE</H2>
+
+On success, these functions return the exponent of
+<I>x</I>,
+
+as a signed integer.
+<P>
+If
+<I>x</I>
+
+is zero, then a domain error occurs, and the functions return
+
+
+<B>FP_ILOGB0</B>.
+
+
+<P>
+If
+<I>x</I>
+
+is a NaN, then a domain error occurs, and the functions return
+<B>FP_ILOGBNAN</B>.
+
+
+
+<P>
+If
+<I>x</I>
+
+is negative infinity or positive infinity, then
+a domain error occurs, and the functions return
+<B>INT_MAX</B>.
+
+
+
+
+
+
+
+
+<A NAME="lbAF">&nbsp;</A>
 <H2>ERRORS</H2>
 
-In order to check for errors, set
-<I>errno</I>
+See
+<B><A HREF="../man7/math_error.7.html">math_error</A></B>(7)
 
-to zero and call
-<I>feclearexcept(FE_ALL_EXCEPT)</I>
-
-before calling these functions.
-On return, if
-<I>errno</I>
-
-is non-zero or
-<I>fetestexcept(FE_INVALID | FE_DIVBYZERO | FE_OVERFLOW | FE_UNDERFLOW)</I>
-
-is non-zero, an error has occurred.
+for information on how to determine whether an error has occurred
+when calling these functions.
 <P>
 
-If an error occurs and
-<I>(math_errhandling &amp; MATH_ERRNO)</I>
+The following errors can occur:
+<DL COMPACT>
+<DT>Domain error: <I>x</I> is 0 or a NaN<DD>
 
-is non-zero, then
+
+
+An invalid floating-point exception
+(<B>FE_INVALID</B>)
+
+is raised.
+<DT><DD>
+These functions do not set
 <I>errno</I>
 
-is set to
-<B>EDOM</B>.
+for this case.
 
-If an error occurs and
-<I>(math_errhandling &amp; MATH_ERREXCEPT)</I>
+<DT>Domain error: <I>x</I> is an infinity<DD>
 
-is non-zero, then the invalid floating-point exception is raised.
-<P>
 
-A domain error occurs when
-<I>x</I>
 
-is zero or infinite (or too large, or too small) or NaN.
-If
-<I>x</I>
 
-is zero, the constant
-<B>FP_ILOGB0</B>
 
-is returned.
 
-If
-<I>x</I>
+<DT><DD>
+These functions do not set
+<I>errno</I>
 
-is NaN, the constant
-<B>FP_ILOGBNAN</B>
+or raise an exception for this case.
 
-is returned.
 
-If
-<I>x</I>
 
-is infinite (or too large),
-<B>INT_MAX</B>
 
-is returned.
-If
-<I>x</I>
-
-is too small,
-<B>INT_MIN</B>
-
-is returned.
-<A NAME="lbAF">&nbsp;</A>
+</DL>
+<A NAME="lbAG">&nbsp;</A>
 <H2>CONFORMING TO</H2>
 
-C99.
-<A NAME="lbAG">&nbsp;</A>
+C99, POSIX.1-2001.
+<A NAME="lbAH">&nbsp;</A>
 <H2>SEE ALSO</H2>
 
 <B><A HREF="../man3/log.3.html">log</A></B>(3),
@@ -134,14 +168,15 @@ C99.
 <DT><A HREF="#lbAB">NAME</A><DD>
 <DT><A HREF="#lbAC">SYNOPSIS</A><DD>
 <DT><A HREF="#lbAD">DESCRIPTION</A><DD>
-<DT><A HREF="#lbAE">ERRORS</A><DD>
-<DT><A HREF="#lbAF">CONFORMING TO</A><DD>
-<DT><A HREF="#lbAG">SEE ALSO</A><DD>
+<DT><A HREF="#lbAE">RETURN VALUE</A><DD>
+<DT><A HREF="#lbAF">ERRORS</A><DD>
+<DT><A HREF="#lbAG">CONFORMING TO</A><DD>
+<DT><A HREF="#lbAH">SEE ALSO</A><DD>
 </DL>
 <HR>
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 02:55:44 GMT, April 20, 2020
+Time: 02:56:19 GMT, April 20, 2020
 </BODY>
 </HTML>

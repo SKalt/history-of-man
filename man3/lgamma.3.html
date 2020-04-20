@@ -5,7 +5,7 @@ Copyright 2002 Walter Harms (walter.harms@informatik.uni-oldenburg.de)
 <HTML><HEAD><TITLE>Man page of LGAMMA</TITLE>
 </HEAD><BODY>
 <H1>LGAMMA</H1>
-Section: Linux Programmer's Manual (3)<BR>Updated: 2007-07-26<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2008-08-05<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -44,13 +44,18 @@ Feature Test Macro Requirements for glibc (see
 
 <P>
 
-<B>lgamma</B>(),
+<B>lgamma</B>():
+
+_BSD_SOURCE || _SVID_SOURCE || _XOPEN_SOURCE || _ISOC99_SOURCE; or
+<I>cc&nbsp;-std=c99</I>
+
+<BR>
 
 <B>lgammaf</B>(),
 
 <B>lgammal</B>():
 
-_BSD_SOURCE || _SVID_SOURCE || _XOPEN_SOURCE || _ISOC99_SOURCE; or
+_BSD_SOURCE || _SVID_SOURCE || _XOPEN_SOURCE&nbsp;&gt;=&nbsp;600 || _ISOC99_SOURCE; or
 <I>cc&nbsp;-std=c99</I>
 
 <BR>
@@ -96,61 +101,95 @@ is not thread-safe, the functions
 <B>lgamma_r</B>()
 
 etc. have
-been introduced; they return this sign via the argument
+been introduced; they return the sign via the argument
 <I>signp</I>.
 
+<A NAME="lbAE">&nbsp;</A>
+<H2>RETURN VALUE</H2>
+
+On success, these functions return the natural logarithm of Gamma(x).
 <P>
+If
+<I>x</I>
 
-For non-positive integer values of <I>x</I>,
-<B>lgamma</B>()
+is a NaN, a NaN is returned.
+<P>
+If
+<I>x</I>
 
-returns
+is 1 or 2, +0 is returned.
+<P>
+If
+<I>x</I>
+
+is positive infinity or negative infinity,
+positive infinity is returned.
+<P>
+If
+<I>x</I>
+
+is a non-positive integer,
+a pole error occurs,
+and the functions return
++<B>HUGE_VAL</B>,
+
++<B>HUGE_VALF</B>,
+
+or
++<B>HUGE_VALL</B>,
+
+respectively.
+<P>
+If the result overflows,
+a range error occurs,
+
+and the functions return
 <B>HUGE_VAL</B>,
 
-sets <I>errno</I> to
-<B>ERANGE</B>
+<B>HUGE_VALF</B>,
 
-and raises the zero divide exception.
-(Similarly,
-<B>lgammaf</B>()
+or
+<B>HUGE_VALL</B>,
 
-returns
-<B>HUGE_VALF</B>
-
-and
-<B>lgammal</B>()
-
-returns
-<B>HUGE_VALL</B>.)
-
-<A NAME="lbAE">&nbsp;</A>
+respectively, with the correct mathematical sign.
+<A NAME="lbAF">&nbsp;</A>
 <H2>ERRORS</H2>
 
-In order to check for errors, set
-<I>errno</I>
+See
+<B><A HREF="../man7/math_error.7.html">math_error</A></B>(7)
 
-to zero and call
-<I>feclearexcept(FE_ALL_EXCEPT)</I>
-
-before calling these functions.
-On return, if
-<I>errno</I>
-
-is non-zero or
-<I>fetestexcept(FE_INVALID | FE_DIVBYZERO | FE_OVERFLOW | FE_UNDERFLOW)</I>
-
-is non-zero, an error has occurred.
+for information on how to determine whether an error has occurred
+when calling these functions.
 <P>
 
-A range error occurs if
-<I>x</I>
+The following errors can occur:
+<DL COMPACT>
+<DT>Pole error: <I>x</I> is a non-positive integer<DD>
+<I>errno</I>
 
-is too large.
-A pole error occurs if
-<I>x</I>
+is set to
 
-is a negative integer or zero.
-<A NAME="lbAF">&nbsp;</A>
+<B>ERANGE</B>
+
+(but see BUGS).
+A divide-by-zero floating-point exception
+(<B>FE_DIVBYZERO</B>)
+
+is raised.
+<DT>Range error: result overflow<DD>
+<I>errno</I>
+
+is set to
+<B>ERANGE</B>.
+
+An overflow floating-point exception
+(<B>FE_OVERFLOW</B>)
+
+is raised.
+
+
+</DL>
+<A NAME="lbAG">&nbsp;</A>
 <H2>CONFORMING TO</H2>
 
 The
@@ -164,7 +203,22 @@ The
 <B>lgamma_r</B>()
 
 functions are non-standard, but present on several other systems.
-<A NAME="lbAG">&nbsp;</A>
+<A NAME="lbAH">&nbsp;</A>
+<H2>BUGS</H2>
+
+For a pole error,
+
+
+
+<I>errno</I>
+
+is set to
+<B>EDOM</B>;
+
+POSIX.1 says it should be set to
+<B>ERANGE</B>.
+
+<A NAME="lbAI">&nbsp;</A>
 <H2>SEE ALSO</H2>
 
 <B><A HREF="../man3/tgamma.3.html">tgamma</A></B>(3)
@@ -177,14 +231,16 @@ functions are non-standard, but present on several other systems.
 <DT><A HREF="#lbAB">NAME</A><DD>
 <DT><A HREF="#lbAC">SYNOPSIS</A><DD>
 <DT><A HREF="#lbAD">DESCRIPTION</A><DD>
-<DT><A HREF="#lbAE">ERRORS</A><DD>
-<DT><A HREF="#lbAF">CONFORMING TO</A><DD>
-<DT><A HREF="#lbAG">SEE ALSO</A><DD>
+<DT><A HREF="#lbAE">RETURN VALUE</A><DD>
+<DT><A HREF="#lbAF">ERRORS</A><DD>
+<DT><A HREF="#lbAG">CONFORMING TO</A><DD>
+<DT><A HREF="#lbAH">BUGS</A><DD>
+<DT><A HREF="#lbAI">SEE ALSO</A><DD>
 </DL>
 <HR>
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 02:55:45 GMT, April 20, 2020
+Time: 02:56:20 GMT, April 20, 2020
 </BODY>
 </HTML>

@@ -5,14 +5,14 @@ Copyright 2002 Walter Harms (walter.harms@informatik.uni-oldenburg.de)
 <HTML><HEAD><TITLE>Man page of NEXTAFTER</TITLE>
 </HEAD><BODY>
 <H1>NEXTAFTER</H1>
-Section: Linux Programmer's Manual (3)<BR>Updated: 2007-07-26<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2008-08-05<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
 <H2>NAME</H2>
 
 nextafter, nextafterf, nextafterl, nexttoward, nexttowardf, nexttowardl -
-floating point number manipulation
+floating-point number manipulation
 <A NAME="lbAC">&nbsp;</A>
 <H2>SYNOPSIS</H2>
 
@@ -50,8 +50,29 @@ Feature Test Macro Requirements for glibc (see
 
 <P>
 
-All functions shown above:
+<B>nextafter</B>():
+
 _BSD_SOURCE || _SVID_SOURCE || _XOPEN_SOURCE&nbsp;&gt;=&nbsp;500 || _ISOC99_SOURCE; or
+<I>cc&nbsp;-std=c99</I>
+
+<BR>
+
+<B>nextafterf</B>(),
+
+<B>nextafterl</B>():
+
+_BSD_SOURCE || _SVID_SOURCE || _XOPEN_SOURCE&nbsp;&gt;=&nbsp;600 || _ISOC99_SOURCE; or
+<I>cc&nbsp;-std=c99</I>
+
+<BR>
+
+<B>nexttoward</B>(),
+
+<B>nexttowardf</B>(),
+
+<B>nexttowardl</B>():
+
+_XOPEN_SOURCE&nbsp;&gt;=&nbsp;600 || _ISOC99_SOURCE;
 <I>cc&nbsp;-std=c99</I>
 
 
@@ -61,23 +82,24 @@ _BSD_SOURCE || _SVID_SOURCE || _XOPEN_SOURCE&nbsp;&gt;=&nbsp;500 || _ISOC99_SOUR
 The
 <B>nextafter</B>()
 
-functions return the next representable neighbor of
-<I>x</I> in the direction towards <I>y</I>.
-The size of the step
-between <I>x</I> and the result depends on the type of the result.
-If <I>x</I> = <I>y</I> the function simply returns <I>y</I>.
-If either value is
-<I>NaN</I>,
+functions return the next representable floating-point value following
+<I>x</I>
 
-then
-<I>NaN</I>
+in the direction of
+<I>y</I>.
 
-is returned.
-Otherwise a value corresponding to the value of the
-least significant bit in the mantissa is added or subtracted,
-depending on the direction.
+If
+<I>y</I>
+
+is less than
+<I>x</I>,
+
+these functions will return the next representable number less than
+<I>y</I>.
+
 <P>
-
+If <I>x</I> equals <I>y</I>, the functions return <I>y</I>.
+<P>
 The
 <B>nexttoward</B>()
 
@@ -88,17 +110,112 @@ functions, except that they have a
 <I>long double</I>
 
 second argument.
+<A NAME="lbAE">&nbsp;</A>
+<H2>RETURN VALUE</H2>
+
+On success,
+these functions return the next representable floating-point value after
+<I>x</I>
+
+in the direction of
+<I>y</I>.
+
+<P>
+If
+<I>x</I>
+
+equals
+<I>y</I>,
+
+then
+<I>y</I>
+
+(cast to the same type as
+<I>x</I>)
+
+is returned.
+<P>
+If
+<I>x</I>
+
+or
+<I>y</I>
+
+is a NaN,
+a NaN is returned.
+<P>
+If
+<I>x</I>
+
+is finite,
+
+and the result would overflow,
+a range error occurs,
+and the functions return
+<B>HUGE_VAL</B>,
+
+<B>HUGE_VALF</B>,
+
+or
+<B>HUGE_VALL</B>,
+
+respectively, with the correct mathematical sign.
+<P>
+If
+<I>x</I>
+
+is not equal to
+<I>y</I>,
+
+and the correct function result would be subnormal, zero, or underflow,
+a range error occurs,
+and either the correct value (if it can be represented),
+or 0.0, is returned.
+<A NAME="lbAF">&nbsp;</A>
+<H2>ERRORS</H2>
+
+See
+<B><A HREF="../man7/math_error.7.html">math_error</A></B>(7)
+
+for information on how to determine whether an error has occurred
+when calling these functions.
 <P>
 
-These functions will signal overflow or underflow if the result
-goes outside of the range of normalized numbers.
-<A NAME="lbAE">&nbsp;</A>
+The following errors can occur:
+<DL COMPACT>
+<DT>Range error: result overflow<DD>
+
+
+
+
+An overflow floating-point exception
+(<B>FE_OVERFLOW</B>)
+
+is raised.
+<DT>Range error: result is subnormal or underflows<DD>
+
+
+
+
+An underflow floating-point exception
+(<B>FE_UNDERFLOW</B>)
+
+is raised.
+</DL>
+<P>
+
+These functions do not set
+<I>errno</I>.
+
+
+
+<A NAME="lbAG">&nbsp;</A>
 <H2>CONFORMING TO</H2>
 
-C99.
+C99, POSIX.1-2001.
 This function is defined in IEC 559 (and the appendix with
 recommended functions in IEEE 754/IEEE 854).
-<A NAME="lbAF">&nbsp;</A>
+<A NAME="lbAH">&nbsp;</A>
 <H2>SEE ALSO</H2>
 
 <B><A HREF="../man3/nearbyint.3.html">nearbyint</A></B>(3)
@@ -111,13 +228,15 @@ recommended functions in IEEE 754/IEEE 854).
 <DT><A HREF="#lbAB">NAME</A><DD>
 <DT><A HREF="#lbAC">SYNOPSIS</A><DD>
 <DT><A HREF="#lbAD">DESCRIPTION</A><DD>
-<DT><A HREF="#lbAE">CONFORMING TO</A><DD>
-<DT><A HREF="#lbAF">SEE ALSO</A><DD>
+<DT><A HREF="#lbAE">RETURN VALUE</A><DD>
+<DT><A HREF="#lbAF">ERRORS</A><DD>
+<DT><A HREF="#lbAG">CONFORMING TO</A><DD>
+<DT><A HREF="#lbAH">SEE ALSO</A><DD>
 </DL>
 <HR>
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 02:55:46 GMT, April 20, 2020
+Time: 02:56:20 GMT, April 20, 2020
 </BODY>
 </HTML>

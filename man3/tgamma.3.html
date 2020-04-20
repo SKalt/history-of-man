@@ -5,7 +5,7 @@ Copyright 2002 Walter Harms (walter.harms@informatik.uni-oldenburg.de)
 <HTML><HEAD><TITLE>Man page of TGAMMA</TITLE>
 </HEAD><BODY>
 <H1>TGAMMA</H1>
-Section: Linux Programmer's Manual (3)<BR>Updated: 2007-07-26<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2008-08-05<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -53,66 +53,172 @@ _XOPEN_SOURCE&nbsp;&gt;=&nbsp;600 || _ISOC99_SOURCE; or
 
 The Gamma function is defined by
 <P>
-<BR>&nbsp;Gamma(x)&nbsp;=&nbsp;integral&nbsp;from&nbsp;0&nbsp;to&nbsp;infinity&nbsp;of&nbsp;t^(x-1)&nbsp;e^-t&nbsp;dt
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;Gamma(x)&nbsp;=&nbsp;integral&nbsp;from&nbsp;0&nbsp;to&nbsp;infinity&nbsp;of&nbsp;t^(x-1)&nbsp;e^-t&nbsp;dt
 <P>
 It is defined for every real number except for non-positive integers.
 For non-negative integral <I>m</I> one has
 <P>
-<BR>&nbsp;Gamma(m+1)&nbsp;=&nbsp;m!
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;Gamma(m+1)&nbsp;=&nbsp;m!
 <P>
 and, more generally, for all <I>x</I>:
 <P>
-<BR>&nbsp;Gamma(x+1)&nbsp;=&nbsp;x&nbsp;*&nbsp;Gamma(x)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;Gamma(x+1)&nbsp;=&nbsp;x&nbsp;*&nbsp;Gamma(x)
 <P>
 Furthermore, the following is valid for all values of <I>x</I>
 outside the poles:
 <P>
-<BR>&nbsp;Gamma(x)&nbsp;*&nbsp;Gamma(1&nbsp;-&nbsp;x)&nbsp;=&nbsp;PI&nbsp;/&nbsp;sin(PI&nbsp;*&nbsp;x)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;Gamma(x)&nbsp;*&nbsp;Gamma(1&nbsp;-&nbsp;x)&nbsp;=&nbsp;PI&nbsp;/&nbsp;sin(PI&nbsp;*&nbsp;x)
 <P>
 
-This function returns the value of the Gamma function for the
-argument <I>x</I>.
-It had to be called &quot;true gamma function&quot;
+<A NAME="lbAE">&nbsp;</A>
+<H2>RETURN VALUE</H2>
+
+On success, these functions return Gamma(x).
+<P>
+If
+<I>x</I>
+
+is a NaN, a NaN is returned.
+<P>
+If
+<I>x</I>
+
+is positive infinity, positive infinity is returned.
+<P>
+If
+<I>x</I>
+
+is a negative integer, or is negative infinity,
+a domain error occurs,
+and a NaN is returned.
+<P>
+If the result overflows,
+a range error occurs,
+and the functions return
+<B>HUGE_VAL</B>,
+
+<B>HUGE_VALF</B>,
+
+or
+<B>HUGE_VALL</B>,
+
+respectively, with the correct mathematical sign.
+<P>
+If the result underflows,
+a range error occurs,
+and the functions return 0, with the correct mathematical sign.
+<P>
+If
+<I>x</I>
+
+is -0 or +0,
+a pole error occurs,
+and the functions return
+<B>HUGE_VAL</B>,
+
+<B>HUGE_VALF</B>,
+
+or
+<B>HUGE_VALL</B>,
+
+respectively, with the same sign as the 0.
+<A NAME="lbAF">&nbsp;</A>
+<H2>ERRORS</H2>
+
+See
+<B><A HREF="../man7/math_error.7.html">math_error</A></B>(7)
+
+for information on how to determine whether an error has occurred
+when calling these functions.
+<P>
+
+The following errors can occur:
+<DL COMPACT>
+<DT>Domain error: <I>x</I> a negative integer, or negative infinity<DD>
+
+
+<I>errno</I>
+
+is set to
+<B>EDOM</B>.
+
+An invalid floating-point exception
+(<B>FE_INVALID</B>)
+
+is raised (but see BUGS).
+<DT>Pole error: <I>x</I> is +0 or -0<DD>
+<I>errno</I>
+
+is set to
+<B>ERANGE</B>.
+
+A divide-by-zero floating-point exception
+(<B>FE_DIVBYZERO</B>)
+
+is raised.
+<DT>Range error: result overflow<DD>
+<I>errno</I>
+
+is set to
+<B>ERANGE</B>.
+
+An overflow floating-point exception
+(<B>FE_OVERFLOW</B>)
+
+is raised.
+</DL>
+<P>
+
+glibc also gives the following error which is not specified
+C99 or POSIX.1-2001.
+<DL COMPACT>
+<DT>Range error: result underflow<DD>
+
+
+
+
+An underflow floating-point exception
+(<B>FE_UNDERFLOW</B>)
+
+is raised.
+<DT><DD>
+<I>errno</I>
+
+is not set for this case.
+
+
+
+
+
+</DL>
+<A NAME="lbAG">&nbsp;</A>
+<H2>CONFORMING TO</H2>
+
+C99, POSIX.1-2001.
+<A NAME="lbAH">&nbsp;</A>
+<H2>NOTES</H2>
+
+This function had to be called &quot;true gamma function&quot;
 since there is already a function
 <B><A HREF="../man3/gamma.3.html">gamma</A></B>(3)
 
-that returns something else.
-<A NAME="lbAE">&nbsp;</A>
-<H2>ERRORS</H2>
+that returns something else (see
+<B><A HREF="../man3/gamma.3.html">gamma</A></B>(3)
 
-In order to check for errors, set
+for details).
+<A NAME="lbAI">&nbsp;</A>
+<H2>BUGS</H2>
+
+If
+<I>x</I>
+
+is negative infinity,
 <I>errno</I>
 
-to zero and call
-<I>feclearexcept(FE_ALL_EXCEPT)</I>
+is not set (it should be set to
 
-before calling these functions.
-On return, if
-<I>errno</I>
 
-is non-zero or
-<I>fetestexcept(FE_INVALID | FE_DIVBYZERO | FE_OVERFLOW | FE_UNDERFLOW)</I>
-
-is non-zero, an error has occurred.
-<P>
-
-A range error occurs if
-<I>x</I>
-
-is too large.
-A pole error occurs if
-<I>x</I>
-
-is zero.
-A domain error (or a pole error) occurs if
-<I>x</I>
-
-is a negative integer.
-<A NAME="lbAF">&nbsp;</A>
-<H2>CONFORMING TO</H2>
-
-C99.
-<A NAME="lbAG">&nbsp;</A>
+<A NAME="lbAJ">&nbsp;</A>
 <H2>SEE ALSO</H2>
 
 <B><A HREF="../man3/gamma.3.html">gamma</A></B>(3),
@@ -127,14 +233,17 @@ C99.
 <DT><A HREF="#lbAB">NAME</A><DD>
 <DT><A HREF="#lbAC">SYNOPSIS</A><DD>
 <DT><A HREF="#lbAD">DESCRIPTION</A><DD>
-<DT><A HREF="#lbAE">ERRORS</A><DD>
-<DT><A HREF="#lbAF">CONFORMING TO</A><DD>
-<DT><A HREF="#lbAG">SEE ALSO</A><DD>
+<DT><A HREF="#lbAE">RETURN VALUE</A><DD>
+<DT><A HREF="#lbAF">ERRORS</A><DD>
+<DT><A HREF="#lbAG">CONFORMING TO</A><DD>
+<DT><A HREF="#lbAH">NOTES</A><DD>
+<DT><A HREF="#lbAI">BUGS</A><DD>
+<DT><A HREF="#lbAJ">SEE ALSO</A><DD>
 </DL>
 <HR>
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 02:55:48 GMT, April 20, 2020
+Time: 02:56:23 GMT, April 20, 2020
 </BODY>
 </HTML>

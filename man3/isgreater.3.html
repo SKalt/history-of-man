@@ -5,78 +5,119 @@ Copyright 2002 Walter Harms (walter.harms@informatik.uni-oldenburg.de)
 <HTML><HEAD><TITLE>Man page of ISGREATER</TITLE>
 </HEAD><BODY>
 <H1>ISGREATER</H1>
-Section: Linux Programmer's Manual (3)<BR>Updated: 2002-07-27<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2008-08-05<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
 <H2>NAME</H2>
 
-isgreater, isgreaterequal, isless, islessequal, islessgreater, isunordered - macros
-to test a relation
+isgreater, isgreaterequal, isless, islessequal, islessgreater,
+isunordered - floating-point relational tests without exception for NaN
 <A NAME="lbAC">&nbsp;</A>
 <H2>SYNOPSIS</H2>
 
 <PRE>
 <B>#include &lt;<A HREF="file:///usr/include/math.h">math.h</A>&gt;</B>
 
-<B>int isgreater(x,y);</B>
+<B>int isgreater(</B><I>x</I><B>, </B><I>y</I><B>);</B>
 
-<B>int isgreaterequal(x,y);</B>
+<B>int isgreaterequal(</B><I>x</I><B>, </B><I>y</I><B>);</B>
 
-<B>int isless(x,y);</B>
+<B>int isless(</B><I>x</I><B>, </B><I>y</I><B>);</B>
 
-<B>int islessequal(x,y);</B>
+<B>int islessequal(</B><I>x</I><B>, </B><I>y</I><B>);</B>
 
-<B>int islessgreater(x,y);</B>
+<B>int islessgreater(</B><I>x</I><B>, </B><I>y</I><B>);</B>
 
-<B>int isunordered(x,y);</B>
+<B>int isunordered(</B><I>x</I><B>, </B><I>y</I><B>);</B>
 </PRE>
 
 <P>
-Compile with <I>-std=c99</I>; link with <I>-lm</I>.
+Link with <I>-lm</I>.
+<P>
+
+Feature Test Macro Requirements for glibc (see
+<B><A HREF="../man7/feature_test_macros.7.html">feature_test_macros</A></B>(7)):
+
+
+<P>
+
+All functions described here:
+_XOPEN_SOURCE&nbsp;&gt;=&nbsp;600 || _ISOC99_SOURCE; or
+<I>cc&nbsp;-std=c99</I>
+
+
 <A NAME="lbAD">&nbsp;</A>
 <H2>DESCRIPTION</H2>
 
-The normal relation operations (like less) will fail if one of the
-operands is NaN.
+The normal relation operations (like <B>&lt;</B>, &quot;less than&quot;)
+will fail if one of the operands is NaN.
 This will cause an exception.
-To avoid this, C99 defines
-these macros.
+To avoid this, C99 defines these macros.
 The macros are guaranteed to evaluate their operands only once.
-The operand can be of any real floating-point type.
+The operands can be of any real floating-point type.
 <DL COMPACT>
-<DT>isgreater()<DD>
+<DT><B>isgreater</B>()
+
+<DD>
 determines <I>(x)&nbsp;&gt;&nbsp;(y)</I> without an exception
 if <I>x</I> or <I>y</I> is NaN.
-<DT>isgreaterequal()<DD>
+<DT><B>isgreaterequal</B>()
+
+<DD>
 determines <I>(x)&nbsp;&gt;=&nbsp;(y)</I> without an exception
 if <I>x</I> or <I>y</I> is NaN.
-<DT>isless()<DD>
+<DT><B>isless</B>()
+
+<DD>
 determines <I>(x)&nbsp;&lt;&nbsp;(y)</I> without an exception
 if <I>x</I> or <I>y</I> is NaN.
-<DT>islessequal()<DD>
+<DT><B>islessequal</B>()
+
+<DD>
 determines <I>(x)&nbsp;&lt;=&nbsp;(y)</I> without an exception
 if <I>x</I> or <I>y</I> is NaN.
-<DT>islessgreater()<DD>
+<DT><B>islessgreater</B>()
+
+<DD>
 determines <I>(x)&nbsp;&lt; (y) || (x) &gt;&nbsp;(y)</I>
 without an exception if <I>x</I> or <I>y</I> is NaN.
 This macro is not equivalent to <I>x&nbsp;!=&nbsp;y</I> because that expression is
 true if <I>x</I> or <I>y</I> is NaN.
-<DT>isunordered()<DD>
-is true if <I>x</I> or <I>y</I> is NaN and false otherwise.
+<DT><B>isunordered</B>()
+
+<DD>
+determines whether its arguments are unordered, that is, whether
+at least one of the arguments is a NaN.
 </DL>
 <A NAME="lbAE">&nbsp;</A>
+<H2>RETURN VALUE</H2>
+
+The macros other than
+<B>isunordered</B>()
+
+return the result of the relational comparison;
+these macros return 0 if either argument is a NaN.
+<P>
+<B>isunordered</B>()
+
+returns 1 if <I>x</I> or <I>y</I> is NaN and 0 otherwise.
+<A NAME="lbAF">&nbsp;</A>
+<H2>ERRORS</H2>
+
+No errors occur.
+<A NAME="lbAG">&nbsp;</A>
 <H2>CONFORMING TO</H2>
 
-C99.
-<A NAME="lbAF">&nbsp;</A>
+C99, POSIX.1-2001.
+<A NAME="lbAH">&nbsp;</A>
 <H2>NOTES</H2>
 
-Not all hardware supports these functions, and where it doesn't, they
-will be emulated by macros.
-This will give you a performance penalty.
+Not all hardware supports these functions,
+and where hardware support isn't provided, they will be emulated by macros.
+This will result in a performance penalty.
 Don't use these functions if NaN is of no concern for you.
-<A NAME="lbAG">&nbsp;</A>
+<A NAME="lbAI">&nbsp;</A>
 <H2>SEE ALSO</H2>
 
 <B><A HREF="../man3/fpclassify.3.html">fpclassify</A></B>(3),
@@ -91,14 +132,16 @@ Don't use these functions if NaN is of no concern for you.
 <DT><A HREF="#lbAB">NAME</A><DD>
 <DT><A HREF="#lbAC">SYNOPSIS</A><DD>
 <DT><A HREF="#lbAD">DESCRIPTION</A><DD>
-<DT><A HREF="#lbAE">CONFORMING TO</A><DD>
-<DT><A HREF="#lbAF">NOTES</A><DD>
-<DT><A HREF="#lbAG">SEE ALSO</A><DD>
+<DT><A HREF="#lbAE">RETURN VALUE</A><DD>
+<DT><A HREF="#lbAF">ERRORS</A><DD>
+<DT><A HREF="#lbAG">CONFORMING TO</A><DD>
+<DT><A HREF="#lbAH">NOTES</A><DD>
+<DT><A HREF="#lbAI">SEE ALSO</A><DD>
 </DL>
 <HR>
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 02:55:45 GMT, April 20, 2020
+Time: 02:56:19 GMT, April 20, 2020
 </BODY>
 </HTML>

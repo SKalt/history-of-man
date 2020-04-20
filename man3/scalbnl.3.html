@@ -1,43 +1,21 @@
 <!--
 -->
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
-<HTML><HEAD><TITLE>Man page of SCALB</TITLE>
+<HTML><HEAD><TITLE>Man page of SCALBLN</TITLE>
 </HEAD><BODY>
-<H1>SCALB</H1>
-Section: Linux Programmer's Manual (3)<BR>Updated: 2004-10-31<BR><A HREF="#index">Index</A>
+<H1>SCALBLN</H1>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2008-08-05<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
 <H2>NAME</H2>
 
-scalb, scalbf, scalbl, scalbn, scalbnf, scalbnl, scalbln, scalblnf, scalblnl -
+scalbn, scalbnf, scalbnl, scalbln, scalblnf, scalblnl -
 multiply floating-point number by integral power of radix
 <A NAME="lbAC">&nbsp;</A>
 <H2>SYNOPSIS</H2>
 
 <B>#include &lt;<A HREF="file:///usr/include/math.h">math.h</A>&gt;</B>
-
-<P>
-<B>double scalb(double </B><I>x</I><B>, double </B><I>exp</I><B>);</B>
-
-<BR>
-
-<B>float scalbf(float </B><I>x</I><B>, double </B><I>exp</I><B>);</B>
-
-<BR>
-
-<B>long double scalbl(long double </B><I>x</I><B>, double </B><I>exp</I><B>);</B>
-
-<P>
-<B>double scalbn(double </B><I>x</I><B>, int </B><I>exp</I><B>);</B>
-
-<BR>
-
-<B>float scalbnf(float </B><I>x</I><B>, int </B><I>exp</I><B>);</B>
-
-<BR>
-
-<B>long double scalbnl(long double </B><I>x</I><B>, int </B><I>exp</I><B>);</B>
 
 <P>
 <B>double scalbln(double </B><I>x</I><B>, long int </B><I>exp</I><B>);</B>
@@ -51,50 +29,184 @@ multiply floating-point number by integral power of radix
 <B>long double scalblnl(long double </B><I>x</I><B>, long int </B><I>exp</I><B>);</B>
 
 <P>
-Link with -lm.
+<B>double scalbn(double </B><I>x</I><B>, int </B><I>exp</I><B>);</B>
+
+<BR>
+
+<B>float scalbnf(float </B><I>x</I><B>, int </B><I>exp</I><B>);</B>
+
+<BR>
+
+<B>long double scalbnl(long double </B><I>x</I><B>, int </B><I>exp</I><B>);</B>
+
+<P>
+Link with <I>-lm</I>.
+<P>
+
+Feature Test Macro Requirements for glibc (see
+<B><A HREF="../man7/feature_test_macros.7.html">feature_test_macros</A></B>(7)):
+
+
+<P>
+
+<B>scalbln</B>(),
+
+<B>scalblnf</B>(),
+
+<B>scalblnl</B>():
+
+_XOPEN_SOURCE&nbsp;&gt;=&nbsp;600 || _ISOC99_SOURCE; or
+<I>cc&nbsp;-std=c99</I>
+
+<BR>
+
+<B>scalbn</B>(),
+
+<B>scalbnf</B>(),
+
+<B>scalbnl</B>():
+
+_BSD_SOURCE || _SVID_SOURCE || _XOPEN_SOURCE&nbsp;&gt;=&nbsp;600 || _ISOC99_SOURCE; or
+<I>cc&nbsp;-std=c99</I>
+
+
 <A NAME="lbAD">&nbsp;</A>
 <H2>DESCRIPTION</H2>
 
 These functions multiply their first argument
 <I>x</I>
 
-by FLT_RADIX (probably 2) to the power
-<I>exp</I>.
+by
+<B>FLT_RADIX</B>
+
+(probably 2)
+to the power of
+<I>exp</I>,
+
+that is:
+<PRE>
+
+    x * FLT_RADIX ** exp
+</PRE>
 
 <P>
-If FLT_RADIX equals 2, then
-<B>scalbn()</B>
+The definition of
+<B>FLT_RADIX</B>
 
-is equivalent to
-<B>ldexp()</B>.
-
-<P>
-The value of FLT_RADIX is found in
-<I>&lt;<A HREF="file:///usr/include/float.h">float.h</A>&gt;.</I>
+can be obtained by including
+<I>&lt;<A HREF="file:///usr/include/float.h">float.h</A>&gt;</I>.
 
 
 <A NAME="lbAE">&nbsp;</A>
+<H2>RETURN VALUE</H2>
+
+On success, these functions return <I>x</I> * <B>FLT_RADIX</B> ** <I>exp</I>.
+<P>
+If
+<I>x</I>
+
+is a NaN, a NaN is returned.
+<P>
+If
+<I>x</I>
+
+is positive infinity (negative infinity),
+positive infinity (negative infinity) is returned.
+<P>
+If
+<I>x</I>
+
+is +0 (-0), +0 (-0) is returned.
+<P>
+If the result overflows,
+a range error occurs,
+and the functions return
+<B>HUGE_VAL</B>,
+
+<B>HUGE_VALF</B>,
+
+or
+<B>HUGE_VALL</B>,
+
+respectively, with a sign the same as
+<I>x</I>.
+
+<P>
+If the result underflows,
+a range error occurs,
+and the functions return zero, with a sign the same as
+<I>x</I>.
+
+<A NAME="lbAF">&nbsp;</A>
+<H2>ERRORS</H2>
+
+See
+<B><A HREF="../man7/math_error.7.html">math_error</A></B>(7)
+
+for information on how to determine whether an error has occurred
+when calling these functions.
+<P>
+
+The following errors can occur:
+<DL COMPACT>
+<DT>Range error, overflow<DD>
+
+
+
+An overflow floating-point exception
+(<B>FE_OVERFLOW</B>)
+
+is raised.
+<DT>Range error, underflow<DD>
+
+
+
+An underflow floating-point exception
+(<B>FE_UNDERFLOW</B>)
+
+is raised.
+</DL>
+<P>
+
+These functions do not set
+<I>errno</I>.
+
+
+
+<A NAME="lbAG">&nbsp;</A>
 <H2>CONFORMING TO</H2>
 
-The
-<B>scalb()</B>
+C99, POSIX.1-2001.
+<A NAME="lbAH">&nbsp;</A>
+<H2>NOTES</H2>
 
-function is from BSD 4.3.
-The
-<B>scalbn()</B>
+These functions differ from the obsolete functions described in
+<B><A HREF="../man3/scalb.3.html">scalb</A></B>(3)
 
-and
-<B>scalbln()</B>
+in the type of their second argument.
+The functions described on this page have a second argument
+of an integral type, while those in
+<B><A HREF="../man3/scalb.3.html">scalb</A></B>(3)
 
-functions are from C99.
-All three are in POSIX 1003.1-2003. The
-<B>scalb()</B>
+have a second argument of type
+<I>double</I>.
 
-function is marked obsolescent.
-<A NAME="lbAF">&nbsp;</A>
+<P>
+If
+<B>FLT_RADIX</B>
+
+equals 2 (which is usual), then
+<B>scalbn</B>()
+
+is equivalent to
+<B><A HREF="../man3/ldexp.3.html">ldexp</A></B>(3).
+
+<A NAME="lbAI">&nbsp;</A>
 <H2>SEE ALSO</H2>
 
-<B><A HREF="../man3/ldexp.3.html">ldexp</A></B>(3)
+<B><A HREF="../man3/ldexp.3.html">ldexp</A></B>(3),
+
+<B><A HREF="../man3/scalb.3.html">scalb</A></B>(3)
 
 
 <P>
@@ -105,13 +217,16 @@ function is marked obsolescent.
 <DT><A HREF="#lbAB">NAME</A><DD>
 <DT><A HREF="#lbAC">SYNOPSIS</A><DD>
 <DT><A HREF="#lbAD">DESCRIPTION</A><DD>
-<DT><A HREF="#lbAE">CONFORMING TO</A><DD>
-<DT><A HREF="#lbAF">SEE ALSO</A><DD>
+<DT><A HREF="#lbAE">RETURN VALUE</A><DD>
+<DT><A HREF="#lbAF">ERRORS</A><DD>
+<DT><A HREF="#lbAG">CONFORMING TO</A><DD>
+<DT><A HREF="#lbAH">NOTES</A><DD>
+<DT><A HREF="#lbAI">SEE ALSO</A><DD>
 </DL>
 <HR>
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 02:11:00 GMT, April 20, 2020
+Time: 02:56:21 GMT, April 20, 2020
 </BODY>
 </HTML>

@@ -5,13 +5,13 @@ Copyright 2004 Andries Brouwer &lt;aeb@cwi.nl&gt;.
 <HTML><HEAD><TITLE>Man page of LOGB</TITLE>
 </HEAD><BODY>
 <H1>LOGB</H1>
-Section: Linux Programmer's Manual (3)<BR>Updated: 2007-07-26<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2008-08-05<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
 <H2>NAME</H2>
 
-logb, logbf, logbl - get exponent of a floating point value
+logb, logbf, logbl - get exponent of a floating-point value
 <A NAME="lbAC">&nbsp;</A>
 <H2>SYNOPSIS</H2>
 
@@ -38,27 +38,40 @@ Feature Test Macro Requirements for glibc (see
 
 <P>
 
-<B>logb</B>(),
+<B>logb</B>():
+
+_BSD_SOURCE || _SVID_SOURCE || _XOPEN_SOURCE&nbsp;&gt;=&nbsp;500 || _ISOC99_SOURCE; or
+<I>cc&nbsp;-std=c99</I>
+
+<BR>
 
 <B>logbf</B>(),
 
 <B>logbl</B>():
 
-_BSD_SOURCE || _SVID_SOURCE || _XOPEN_SOURCE&nbsp;&gt;=&nbsp;500 || _ISOC99_SOURCE; or
+_BSD_SOURCE || _SVID_SOURCE || _XOPEN_SOURCE&nbsp;&gt;=&nbsp;600 || _ISOC99_SOURCE; or
 <I>cc&nbsp;-std=c99</I>
 
 
 <A NAME="lbAD">&nbsp;</A>
 <H2>DESCRIPTION</H2>
 
-These functions extract the exponent of
+These functions extract the exponent from the
+internal floating-point representation of
 <I>x</I>
 
 and return it as a floating-point value.
+The integer constant
+<B>FLT_RADIX</B>,
+
+defined in
+<I>&lt;<A HREF="file:///usr/include/float.h">float.h</A>&gt;</I>,
+
+indicates the radix used for the system's floating-point representation.
 If
 <B>FLT_RADIX</B>
 
-is two,
+is 2,
 <B>logb(</B><I>x</I><B>)</B>
 
 is equal to
@@ -70,78 +83,84 @@ except that it is probably faster.
 If
 <I>x</I>
 
-is de-normalized,
+is subnormal,
 <B>logb</B>()
 
 returns the exponent
 <I>x</I>
 
 would have if it were normalized.
-<P>
-
-If
-<I>x</I>
-
-is zero, -<B>HUGE_VAL</B> (resp. -<B>HUGE_VALF</B>, -<B>HUGE_VALL</B>)
-is returned, and a pole error occurs.
-If
-<I>x</I>
-
-is infinite, plus infinity is returned.
-If
-<I>x</I>
-
-is NaN, NaN is returned.
-
-
 <A NAME="lbAE">&nbsp;</A>
+<H2>RETURN VALUE</H2>
+
+On success, these functions return the exponent of
+<I>x</I>.
+
+<P>
+If
+<I>x</I>
+
+is a NaN,
+a NaN is returned.
+<P>
+If
+<I>x</I>
+
+is zero, then a pole error occurs, and the functions return
+-<B>HUGE_VAL</B>,
+
+-<B>HUGE_VALF</B>,
+
+or
+-<B>HUGE_VALL</B>,
+
+respectively.
+<P>
+If
+<I>x</I>
+
+is negative infinity or positive infinity, then
+positive infinity is returned.
+<A NAME="lbAF">&nbsp;</A>
 <H2>ERRORS</H2>
 
-In order to check for errors, set
-<I>errno</I>
+See
+<B><A HREF="../man7/math_error.7.html">math_error</A></B>(7)
 
-to zero and call
-<I>feclearexcept(FE_ALL_EXCEPT)</I>
-
-before calling these functions.
-On return, if
-<I>errno</I>
-
-is non-zero or
-<I>fetestexcept(FE_INVALID | FE_DIVBYZERO | FE_OVERFLOW | FE_UNDERFLOW)</I>
-
-is non-zero, an error has occurred.
+for information on how to determine whether an error has occurred
+when calling these functions.
 <P>
 
-If an error occurs and
-<I>(math_errhandling &amp; MATH_ERRNO)</I>
+The following errors can occur:
+<DL COMPACT>
+<DT>Pole error: <I>x</I> is 0<DD>
 
-is non-zero, then
-<I>errno</I>
 
-is set to
-<B>ERANGE</B>.
 
-If an error occurs and
-<I>(math_errhandling &amp; MATH_ERREXCEPT)</I>
+A divide-by-zero floating-point exception
+(<B>FE_DIVBYZERO</B>)
 
-is non-zero, then the divide-by-zero floating-point exception is raised.
+is raised.
+</DL>
 <P>
 
-A pole error occurs when
-<I>x</I>
-
-is zero.
+These functions do not set
+<I>errno</I>.
 
 
 
 
 
-<A NAME="lbAF">&nbsp;</A>
+
+
+
+
+
+<A NAME="lbAG">&nbsp;</A>
 <H2>CONFORMING TO</H2>
 
-C99.
-<A NAME="lbAG">&nbsp;</A>
+C99, POSIX.1-2001.
+<A NAME="lbAH">&nbsp;</A>
 <H2>SEE ALSO</H2>
 
 <B><A HREF="../man3/ilogb.3.html">ilogb</A></B>(3),
@@ -156,14 +175,15 @@ C99.
 <DT><A HREF="#lbAB">NAME</A><DD>
 <DT><A HREF="#lbAC">SYNOPSIS</A><DD>
 <DT><A HREF="#lbAD">DESCRIPTION</A><DD>
-<DT><A HREF="#lbAE">ERRORS</A><DD>
-<DT><A HREF="#lbAF">CONFORMING TO</A><DD>
-<DT><A HREF="#lbAG">SEE ALSO</A><DD>
+<DT><A HREF="#lbAE">RETURN VALUE</A><DD>
+<DT><A HREF="#lbAF">ERRORS</A><DD>
+<DT><A HREF="#lbAG">CONFORMING TO</A><DD>
+<DT><A HREF="#lbAH">SEE ALSO</A><DD>
 </DL>
 <HR>
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 02:55:45 GMT, April 20, 2020
+Time: 02:56:20 GMT, April 20, 2020
 </BODY>
 </HTML>
