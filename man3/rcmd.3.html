@@ -5,13 +5,14 @@ Copyright (c) 1983, 1991, 1993
 <HTML><HEAD><TITLE>Man page of RCMD</TITLE>
 </HEAD><BODY>
 <H1>RCMD</H1>
-Section: Linux Programmer's Manual (3)<BR>Updated: 2012-03-29<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2012-04-23<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
 <H2>NAME</H2>
 
-rcmd, rresvport, iruserok, ruserok - routines for returning a
+rcmd, rresvport, iruserok, ruserok, rcmd_af,
+rresvport_af, iruserok_af, ruserok_af - routines for returning a
 stream to a remote command
 <A NAME="lbAC">&nbsp;</A>
 <H2>SYNOPSIS</H2>
@@ -29,6 +30,18 @@ stream to a remote command
 
 <B>int ruserok(const char *</B><I>rhost</I><B>, int </B><I>superuser</I><B>, </B>
 <B>            const char *</B><I>ruser</I><B>, const char *</B><I>luser</I><B>);</B>
+
+<B>int rcmd_af(char **</B><I>ahost</I><B>, int </B><I>inport</I><B>, const char *</B><I>locuser</I><B>, </B>
+<B>            const char *</B><I>remuser</I><B>, const char *</B><I>cmd</I><B>, int *</B><I>fd2p</I><B>,</B>
+<B>            sa_family_t </B><I>af</I><B>);</B>
+
+<B>int rresvport_af(int *</B><I>port</I><B>, sa_family_t </B><I>af</I><B>);</B>
+
+<B>int iruserok_af(uint32_t </B><I>raddr</I><B>, int </B><I>superuser</I><B>, </B>
+<B>                const char *</B><I>ruser</I><B>, const char *</B><I>luser</I><B>, sa_family_t </B><I>af</I><B>);</B>
+
+<B>int ruserok_af(const char *</B><I>rhost</I><B>, int </B><I>superuser</I><B>, </B>
+<B>               const char *</B><I>ruser</I><B>, const char *</B><I>luser</I><B>, sa_family_t </B><I>af</I><B>);</B>
 </PRE>
 
 <P>
@@ -40,9 +53,19 @@ Feature Test Macro Requirements for glibc (see
 <P>
 <B>rcmd</B>(),
 
+<B>rcmd_af</B>(),
+
 <B>rresvport</B>(),
 
-<B>ruserok</B>():
+<B>rresvport_af</B>(),
+
+<B>iruserok</B>(),
+
+<B>iruserok_af</B>(),
+
+<B>ruserok</B>(),
+
+<B>ruserok_af</B>():
 
 _BSD_SOURCE
 <A NAME="lbAD">&nbsp;</A>
@@ -70,11 +93,13 @@ functions are used by servers
 to authenticate clients requesting service with
 <B>rcmd</B>().
 
-All four functions are present in the same file and are used
-by the
+All four functions are used by the
 <B><A HREF="../man8/rshd.8.html">rshd</A></B>(8)
 
 server (among others).
+<A NAME="lbAE">&nbsp;</A>
+<H3>rcmd()</H3>
+
 <P>
 
 The
@@ -139,19 +164,38 @@ although you may be able to get its attention by using out-of-band data.
 The protocol is described in detail in
 <B><A HREF="../man8/rshd.8.html">rshd</A></B>(8).
 
+<A NAME="lbAF">&nbsp;</A>
+<H3>rresvport()</H3>
+
 <P>
 
 The
 <B>rresvport</B>()
 
 function is used to obtain a socket with a privileged
-address bound to it.
+port bound to it.
 This socket is suitable for use by
 <B>rcmd</B>()
 
 and several other functions.
-Privileged Internet ports are those in the range 0 to 1023.
-Only the superuser is allowed to bind an address of this sort to a socket.
+Privileged ports are those in the range 0 to 1023.
+Only a privileged process
+(<B>CAP_NET_BIND_SERVICE</B>)
+
+is allowed to bind to a privileged port.
+In the glibc implementation,
+this function restricts its search to the ports from 512 to 1023.
+The
+<I>port</I>
+
+argument is value-result:
+the value it supplies to the call is used as the starting point
+for a circular search of the port range;
+on (successful) return, it contains the port number that was bound to.
+
+<A NAME="lbAG">&nbsp;</A>
+<H3>iruserok() and ruserok()</H3>
+
 <P>
 
 The
@@ -206,7 +250,31 @@ should be used in preference to
 <B>ruserok</B>(),
 
 as it does not require trusting the DNS server for the remote host's domain.
-<A NAME="lbAE">&nbsp;</A>
+<A NAME="lbAH">&nbsp;</A>
+<H3>*_af() variants</H3>
+
+All of the functions described above work with IPv4
+(<B>AF_INET</B>)
+
+sockets.
+The &quot;_af&quot; variants take an extra argument that allows the
+socket address family to be specified.
+For these functions, the
+<I>af</I>
+
+argument can be specified as
+<B>AF_INET</B>
+
+or
+<B>AF_INET6</B>.
+
+In addition,
+<B>rcmd_af</B>()
+
+supports the use of
+<B>AF_UNSPEC</B>.
+
+<A NAME="lbAI">&nbsp;</A>
 <H2>RETURN VALUE</H2>
 
 The
@@ -230,7 +298,29 @@ The error code
 <B>EAGAIN</B>
 
 is overloaded to mean &quot;All network ports in use.&quot;
-<A NAME="lbAF">&nbsp;</A>
+<P>
+For information on the return from
+<B>ruserok</B>()
+
+and
+<B>iruserok</B>(),
+
+see above.
+<A NAME="lbAJ">&nbsp;</A>
+<H2>VERSIONS</H2>
+
+The functions
+<B>iruserok_af</B>(),
+
+<B>rcmd_af</B>(),
+
+<B>rresvport_af</B>(),
+
+and
+<B>ruserok_af</B>()
+
+functions are provide in glibc since version 2.2.
+<A NAME="lbAK">&nbsp;</A>
 <H2>CONFORMING TO</H2>
 
 Not in POSIX.1-2001.
@@ -238,15 +328,20 @@ Present on the BSDs, Solaris, and many other systems.
 These
 functions appeared in
 4.2BSD.
-<A NAME="lbAG">&nbsp;</A>
+The &quot;_af&quot; variants are more recent additions,
+and are not present on as wide a range of systems.
+<A NAME="lbAL">&nbsp;</A>
 <H2>BUGS</H2>
 
 <B>iruserok</B>()
 
-is declared in glibc headers only since version 2.12.
+and
+<B>iruserok_af</B>()
+
+are declared in glibc headers only since version 2.12.
 
 
-<A NAME="lbAH">&nbsp;</A>
+<A NAME="lbAM">&nbsp;</A>
 <H2>SEE ALSO</H2>
 
 <B><A HREF="../man1/rlogin.1.html">rlogin</A></B>(1),
@@ -271,15 +366,22 @@ is declared in glibc headers only since version 2.12.
 <DT><A HREF="#lbAB">NAME</A><DD>
 <DT><A HREF="#lbAC">SYNOPSIS</A><DD>
 <DT><A HREF="#lbAD">DESCRIPTION</A><DD>
-<DT><A HREF="#lbAE">RETURN VALUE</A><DD>
-<DT><A HREF="#lbAF">CONFORMING TO</A><DD>
-<DT><A HREF="#lbAG">BUGS</A><DD>
-<DT><A HREF="#lbAH">SEE ALSO</A><DD>
+<DL>
+<DT><A HREF="#lbAE">rcmd()</A><DD>
+<DT><A HREF="#lbAF">rresvport()</A><DD>
+<DT><A HREF="#lbAG">iruserok() and ruserok()</A><DD>
+<DT><A HREF="#lbAH">*_af() variants</A><DD>
+</DL>
+<DT><A HREF="#lbAI">RETURN VALUE</A><DD>
+<DT><A HREF="#lbAJ">VERSIONS</A><DD>
+<DT><A HREF="#lbAK">CONFORMING TO</A><DD>
+<DT><A HREF="#lbAL">BUGS</A><DD>
+<DT><A HREF="#lbAM">SEE ALSO</A><DD>
 </DL>
 <HR>
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:14:04 GMT, April 20, 2020
+Time: 03:14:35 GMT, April 20, 2020
 </BODY>
 </HTML>
