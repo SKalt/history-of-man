@@ -25,7 +25,7 @@ the source, must acknowledge the copyright and authors of this work.
 <HTML><HEAD><TITLE>Man page of OPEN</TITLE>
 </HEAD><BODY>
 <H1>OPEN</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2013-02-18<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2013-07-21<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -390,10 +390,7 @@ avoid denial-of-service problems if
 <B><A HREF="../man3/opendir.3.html">opendir</A></B>(3)
 
 is called on a
-FIFO or tape device, but should not be used outside of the
-implementation of
-<B><A HREF="../man3/opendir.3.html">opendir</A></B>(3).
-
+FIFO or tape device.
 <DT><B>O_EXCL</B>
 
 <DD>
@@ -533,6 +530,10 @@ If <I>pathname</I> is a symbolic link, then the open fails.
 This is a FreeBSD extension, which was added to Linux in version 2.1.126.
 Symbolic links in earlier components of the pathname will still be
 followed.
+See also
+<B>O_NOPATH</B>
+
+below.
 
 
 
@@ -554,6 +555,133 @@ For a discussion of the effect of
 in conjunction with mandatory file locks and with file leases, see
 <B><A HREF="../man2/fcntl.2.html">fcntl</A></B>(2).
 
+<DT><B>O_PATH</B> (since Linux 2.6.39)
+
+<DD>
+
+
+
+
+
+
+
+
+Obtain a file descriptor that can be used for two purposes:
+to indicate a location in the file-system tree and
+to perform operations that act purely at the file descriptor level.
+The file itself is not opened, and other file operations (e.g.,
+<B><A HREF="../man2/read.2.html">read</A></B>(2),
+
+<B><A HREF="../man2/write.2.html">write</A></B>(2),
+
+<B><A HREF="../man2/fchmod.2.html">fchmod</A></B>(2),
+
+<B><A HREF="../man2/fchown.2.html">fchown</A></B>(2),
+
+<B><A HREF="../man2/fgetxattr.2.html">fgetxattr</A></B>(2))
+
+fail with the error
+<B>EBADF</B>.
+
+<P>
+The following operations
+<I>can</I>
+
+be performed on the resulting file descriptor:
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT>*<DD>
+<B><A HREF="../man2/close.2.html">close</A></B>(2);
+
+<B><A HREF="../man2/fchdir.2.html">fchdir</A></B>(2)
+
+(since Linux 3.5);
+
+<B><A HREF="../man2/fstat.2.html">fstat</A></B>(2)
+
+(since Linux 3.6).
+
+<DT>*<DD>
+Duplicating the file descriptor
+(<B><A HREF="../man2/dup.2.html">dup</A></B>(2),
+
+<B><A HREF="../man2/fcntl.2.html">fcntl</A></B>(2)
+
+<B>F_DUPFD</B>,
+
+etc.).
+<DT>*<DD>
+Getting and setting file descriptor flags
+(<B><A HREF="../man2/fcntl.2.html">fcntl</A></B>(2)
+
+<B>F_GETFD</B>
+
+and
+<B>F_SETFD</B>).
+
+<DT>*<DD>
+Retrieving open file status flags using the
+<B><A HREF="../man2/fcntl.2.html">fcntl</A></B>(2)
+
+<B>F_GETFL</B>
+
+operation: the returned flags will include the bit
+<B>O_PATH</B>.
+
+<P>
+<DT>*<DD>
+Passing the file descriptor as the
+<I>dirfd</I>
+
+argument of
+<B><A HREF="../man2/openat.2.html">openat</A></B>(2)
+
+and the other &quot;*at()&quot; system calls.
+<DT>*<DD>
+Passing the file descriptor to another process via a UNIX domain socket
+(see
+<B>SCM_RIGHTS</B>
+
+in
+<B><A HREF="../man7/unix.7.html">unix</A></B>(7)).
+
+</DL>
+</DL>
+
+<DT><DD>
+When
+<B>O_PATH</B>
+
+is specified in
+<I>flags</I>,
+
+flag bits other than
+<B>O_DIRECTORY</B>
+
+and
+<B>O_NOFOLLOW</B>
+
+are ignored.
+<P>
+If the
+<B>O_NOFOLLOW</B>
+
+flag is also specified,
+then the call returns a file descriptor referring to the symbolic link.
+This file descriptor can be used as the
+<I>dirfd</I>
+
+argument in calls to
+<B><A HREF="../man2/fchownat.2.html">fchownat</A></B>(2),
+
+<B><A HREF="../man2/fstatat.2.html">fstatat</A></B>(2),
+
+<B><A HREF="../man2/linkat.2.html">linkat</A></B>(2),
+
+and
+<B><A HREF="../man2/readlinkat.2.html">readlinkat</A></B>(2)
+
+with an empty pathname to have the calls operate on the symbolic link.
 <DT><B>O_SYNC</B>
 
 <DD>
@@ -830,8 +958,10 @@ The
 
 <B>O_NOATIME</B>,
 
+<B>O_NOFOLLOW</B>,
+
 and
-<B>O_NOFOLLOW</B>
+<B>O_PATH</B>
 
 flags are Linux-specific, and one may need to define
 <B>_GNU_SOURCE</B>
@@ -1255,6 +1385,6 @@ to enable this flag.
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:21:04 GMT, April 20, 2020
+Time: 03:21:40 GMT, April 20, 2020
 </BODY>
 </HTML>

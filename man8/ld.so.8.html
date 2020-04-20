@@ -7,7 +7,7 @@ This is in the public domain
 <HTML><HEAD><TITLE>Man page of LD.SO</TITLE>
 </HEAD><BODY>
 <H1>LD.SO</H1>
-Section: Linux Programmer's Manual (8)<BR>Updated: 2013-02-10<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (8)<BR>Updated: 2013-07-15<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -123,26 +123,26 @@ If the binary was linked with the
 linker option, this step is skipped.
 </DL>
 <A NAME="lbAE">&nbsp;</A>
-<H3>$ORIGIN and rpath</H3>
+<H3>Rpath token expansion</H3>
 
 <P>
 
 <B>ld.so</B>
 
-understands the string
-<I>$ORIGIN</I>
+understands certain strings in an rpath specification (DT_RPATH or DT_RUNPATH); those strings are substituted as follows
+<DL COMPACT>
+<DT><I>$ORIGIN</I> (or equivalently <I>${ORIGIN}</I>)
 
-(or equivalently
-<I>${ORIGIN}</I>)
-
-in an rpath specification (DT_RPATH or DT_RUNPATH) to mean
+<DD>
+This expands to
 the directory containing the application executable.
 Thus, an application located in
 <I>somedir/app</I>
 
 could be compiled with
-<I>gcc -Wl,-rpath,'$ORIGIN/../lib'</I>
-
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;gcc&nbsp;-Wl,-rpath,'$ORIGIN/../lib'
+<P>
 so that it finds an associated shared library in
 <I>somedir/lib</I>
 
@@ -154,6 +154,35 @@ This facilitates the creation of &quot;turn-key&quot; applications that
 do not need to be installed into special directories,
 but can instead be unpacked into any directory
 and still find their own shared libraries.
+<DT><I>$LIB</I> (or equivalently <I>${LIB}</I>)
+
+<DD>
+This expands to
+<I>lib</I>
+
+or
+<I>lib64</I>
+
+depending on the architecture
+(e.g., on x86-64, it expands to
+<I>lib64</I>
+
+and
+on x86-32, it expands to
+<I>lib</I>).
+
+<DT><I>$PLATFORM</I> (or equivalently <I>${PLATFORM}</I>)
+
+<DD>
+This expands to a string corresponding to the processor type
+of the host system (e.g., &quot;x86_64&quot;).
+On some architectures, the Linux kernel doesn't provide a platform
+string to the dynamic linker.
+The value of this string is taken from the
+<B>AT_PLATFORM</B>
+
+value in the auxiliary vector (see
+<B><A HREF="../man3/getauxval.3.html">getauxval</A></B>(3)).
 
 
 
@@ -163,10 +192,7 @@ and still find their own shared libraries.
 
 
 
-
-
-
-
+</DL>
 <A NAME="lbAF">&nbsp;</A>
 <H2>OPTIONS</H2>
 
@@ -249,6 +275,64 @@ mtrr, pat, pbe, pge, pn, pse36, sep, ss, sse, sse2, tm
 
 There are four important environment variables.
 <DL COMPACT>
+<DT><B>LD_ASSUME_KERNEL</B>
+
+<DD>
+(glibc since 2.2.3)
+Each shared library can inform the dynamic linker of the minimum kernel ABI
+version that it requires.
+(This requirement is encoded in an ELF note section that is viewable via
+<I>readelf&nbsp;-n</I>
+
+as a section labeled
+<B>NT_GNU_ABI_TAG</B>.)
+
+At run time,
+the dynamic linker determines the ABI version of the running kernel and
+will reject loading shared libraries that specify minimum ABI versions
+that exceed that ABI version.
+<P>
+<B>LD_ASSUME_KERNEL</B>
+
+can be used to
+cause the dynamic linker to assume that it is running on a system with
+a different kernel ABI version.
+For example, the following command line causes the
+dynamic linker to assume it is running on Linux 2.2.5 when loading
+the shared libraries required by
+<I>myprog</I>:
+
+<P>
+
+<PRE>
+$ <B>LD_ASSUME_KERNEL=2.2.5 ./myprog</B>
+</PRE>
+
+
+<P>
+On systems that provide multiple versions of a shared library
+(in different directories in the search path) that have
+different minimum kernel ABI version requirements,
+<B>LD_ASSUME_KERNEL</B>
+
+can be used to select the version of the library that is used
+(dependent on the directory search order).
+Historically, the most common use of the
+<B>LD_ASSUME_KERNEL</B>
+
+feature was to manually select the older
+LinuxThreads POSIX threads implementation on systems that provided both
+LinuxThreads and NPTL
+(which latter was typically the default on such systems);
+see
+<B><A HREF="../man7/pthreads.7.html">pthreads</A></B>(7).
+
+<DT><B>LD_BIND_NOT</B>
+
+<DD>
+(glibc since 2.2)
+Don't update the Global Offset Table (GOT) and Procedure Linkage Table (PLT)
+when resolving a symbol.
 <DT><B>LD_BIND_NOW</B>
 
 <DD>
@@ -372,10 +456,11 @@ is ignored for set-user-ID/set-group-ID binaries.
 
 <DD>
 (glibc since 2.1)
-File where
+File in which
 <B>LD_DEBUG</B>
 
-output should be fed into, default is standard output.
+output should be written.
+The default is standard output.
 <B>LD_DEBUG_OUTPUT</B>
 
 is ignored for set-user-ID/set-group-ID binaries.
@@ -497,10 +582,10 @@ This variable is ignored by set-user-ID and set-group-ID programs.
 (glibc since 2.1)
 If set to a nonempty string,
 output symbol versioning information about the
-program if
+program if the
 <B>LD_TRACE_LOADED_OBJECTS</B>
 
-variable has been set.
+environment variable has been set.
 <DT><B>LD_WARN</B>
 
 <DD>
@@ -583,7 +668,7 @@ ELF functionality is available since Linux 1.1.52 and libc5.
 <DT><A HREF="#lbAC">SYNOPSIS</A><DD>
 <DT><A HREF="#lbAD">DESCRIPTION</A><DD>
 <DL>
-<DT><A HREF="#lbAE">$ORIGIN and rpath</A><DD>
+<DT><A HREF="#lbAE">Rpath token expansion</A><DD>
 </DL>
 <DT><A HREF="#lbAF">OPTIONS</A><DD>
 <DT><A HREF="#lbAG">HARDWARE CAPABILITIES</A><DD>
@@ -596,6 +681,6 @@ ELF functionality is available since Linux 1.1.52 and libc5.
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:21:17 GMT, April 20, 2020
+Time: 03:21:53 GMT, April 20, 2020
 </BODY>
 </HTML>

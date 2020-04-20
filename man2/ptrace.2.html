@@ -25,7 +25,7 @@ License along with this manual; if not, see
 <HTML><HEAD><TITLE>Man page of PTRACE</TITLE>
 </HEAD><BODY>
 <H1>PTRACE</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2013-02-16<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2013-07-11<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -321,23 +321,6 @@ On return, the kernel modifies
 <B>iov.len</B>
 
 to indicate the actual number of bytes returned.
-<DT><B>PTRACE_GETSIGINFO</B> (since Linux 2.3.99-pre6)
-
-<DD>
-Retrieve information about the signal that caused the stop.
-Copy a
-<I>siginfo_t</I>
-
-structure (see
-<B><A HREF="../man2/sigaction.2.html">sigaction</A></B>(2))
-
-from the tracee to the address
-<I>data</I>
-
-in the tracer.
-(<I>addr</I>
-
-is ignored.)
 <DT><B>PTRACE_SETREGS</B>, <B>PTRACE_SETFPREGS</B>
 
 <DD>
@@ -386,6 +369,23 @@ and
 is analogous to
 <B>PTRACE_GETREGSET</B>.
 
+<DT><B>PTRACE_GETSIGINFO</B> (since Linux 2.3.99-pre6)
+
+<DD>
+Retrieve information about the signal that caused the stop.
+Copy a
+<I>siginfo_t</I>
+
+structure (see
+<B><A HREF="../man2/sigaction.2.html">sigaction</A></B>(2))
+
+from the tracee to the address
+<I>data</I>
+
+in the tracer.
+(<I>addr</I>
+
+is ignored.)
 <DT><B>PTRACE_SETSIGINFO</B> (since Linux 2.3.99-pre6)
 
 <DD>
@@ -440,8 +440,15 @@ Stop the tracee at the next
 
 and automatically start tracing the newly cloned process,
 which will start with a
-<B>SIGSTOP</B>.
+<B>SIGSTOP</B>,
 
+or
+<B>PTRACE_EVENT_STOP</B>
+
+if
+<B>PTRACE_SEIZE</B>
+
+was used.
 A
 <B><A HREF="../man2/waitpid.2.html">waitpid</A></B>(2)
 
@@ -548,8 +555,15 @@ Stop the tracee at the next
 
 and automatically start tracing the newly forked process,
 which will start with a
-<B>SIGSTOP</B>.
+<B>SIGSTOP</B>,
 
+or
+<B>PTRACE_EVENT_STOP</B>
+
+if
+<B>PTRACE_SEIZE</B>
+
+was used.
 A
 <B><A HREF="../man2/waitpid.2.html">waitpid</A></B>(2)
 
@@ -586,8 +600,15 @@ Stop the tracee at the next
 
 and automatically start tracing the newly vforked process,
 which will start with a
-<B>SIGSTOP</B>.
+<B>SIGSTOP</B>,
 
+or
+<B>PTRACE_EVENT_STOP</B>
+
+if
+<B>PTRACE_SEIZE</B>
+
+was used.
 A
 <B><A HREF="../man2/waitpid.2.html">waitpid</A></B>(2)
 
@@ -789,16 +810,34 @@ directly has no such limitation.
 
 <DD>
 Stop a tracee.
-If the tracee is running, it will stop with
-<B>PTRACE_EVENT_STOP</B>.
+If the tracee is running or sleeping in kernel space and
+<B>PTRACE_SYSCALL</B>
 
-If the tracee is already stopped by a signal, or receives a signal
-in parallel with
-<B>PTRACE_INTERRUPT</B>,
+is in effect,
+the system call is interrupted and syscall-exit-stop is reported.
+(The interrupted system call is restarted when the tracee is restarted.)
+If the tracee was already stopped by a signal and
+<B>PTRACE_LISTEN</B>
 
-it may report a group-stop
-or a signal-delivery-stop instead of
-<B>PTRACE_EVENT_STOP</B>.
+was sent to it,
+the tracee stops with
+<B>PTRACE_EVENT_STOP</B>
+
+and
+<I>WSTOPSIG(status)</I>
+
+returns the stop signal.
+If any other ptrace-stop is generated at the same time (for example,
+if a signal is sent to the tracee), this ptrace-stop happens.
+If none of the above applies (for example, if the tracee is running in userspace),
+it stops with
+<B>PTRACE_EVENT_STOP</B>
+
+with
+<I>WSTOPSIG(status)</I>
+
+==
+<B>SIGTRAP</B>.
 
 <B>PTRACE_INTERRUPT</B>
 
@@ -1011,6 +1050,32 @@ the thread group leader's PID.
 <H3>Stopped states</H3>
 
 A tracee can be in two states: running or stopped.
+For the purposes of ptrace, a tracee which is blocked in a system call
+(such as
+<B><A HREF="../man2/read.2.html">read</A></B>(2),
+
+<B><A HREF="../man2/pause.2.html">pause</A></B>(2),
+
+etc.)
+is nevertheless considered to be running, even if the tracee is blocked
+for a long time.
+The state of the tracee after
+<B>PTRACE_LISTEN</B>
+
+is somewhat of a gray area: it is not in any ptrace-stop (ptrace commands
+won't work on it, and it will deliver
+<B><A HREF="../man2/waitpid.2.html">waitpid</A></B>(2)
+
+notifications),
+but it also may be considered &quot;stopped&quot; because
+it is not executing instructions (is not scheduled), and if it was
+in group-stop before
+<B>PTRACE_LISTEN</B>,
+
+it will not respond to signals until
+<B>SIGCONT</B>
+
+is received.
 <P>
 
 There are many kinds of states when the tracee is stopped, and in ptrace
@@ -1399,6 +1464,21 @@ then it is definitely a group-stop.
 killed the tracee.)
 <P>
 
+If tracee was attached using
+<I>PTRACE_SEIZE</I>,
+
+group-stop is indicated by
+<B>PTRACE_EVENT_STOP</B>:
+
+<I>status&gt;&gt;16 == PTRACE_EVENT_STOP</I>.
+
+This allows detection of group-stops
+without requiring an extra
+<B>PTRACE_GETSIGINFO</B>
+
+call.
+<P>
+
 As of Linux 2.6.38,
 after the tracer sees the tracee ptrace-stop and until it
 restarts or kills it, the tracee will not run,
@@ -1577,7 +1657,17 @@ to finish exiting.
 Stop induced by
 <B>PTRACE_INTERRUPT</B>
 
-command.
+command, or group-stop, or initial ptrace-stop when a new child is attached
+(only if attached using
+<B>PTRACE_SEIZE</B>).
+
+or
+<B>PTRACE_EVENT_STOP</B>
+
+if
+<B>PTRACE_SEIZE</B>
+
+was used.
 </DL>
 <P>
 
@@ -2328,8 +2418,18 @@ the report is sent only once.
 On success,
 <B>PTRACE_PEEK*</B>
 
-requests return the requested data,
-while other requests return zero.
+requests return the requested data, while other requests return zero.
+(On Linux, this is done in the libc wrapper around ptrace system call.
+On the system call level,
+<B>PTRACE_PEEK*</B>
+
+requests have a different API: they store the result
+at the address specified by
+<I>data</I>
+
+parameter, and return value is the error flag.)
+<P>
+
 On error, all requests return -1, and
 <I>errno</I>
 
@@ -2670,6 +2770,6 @@ attach.)
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:21:04 GMT, April 20, 2020
+Time: 03:21:40 GMT, April 20, 2020
 </BODY>
 </HTML>
