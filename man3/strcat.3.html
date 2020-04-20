@@ -5,7 +5,7 @@ Copyright 1993 David Metcalfe (david@prism.demon.co.uk)
 <HTML><HEAD><TITLE>Man page of STRCAT</TITLE>
 </HEAD><BODY>
 <H1>STRCAT</H1>
-Section: Linux Programmer's Manual (3)<BR>Updated: 1993-04-11<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2007-06-15<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -30,8 +30,8 @@ The
 <B>strcat</B>()
 
 function appends the <I>src</I> string to the
-<I>dest</I> string overwriting the `\0' character at the end of
-<I>dest</I>, and then adds a terminating `\0' character.
+<I>dest</I> string, overwriting the null byte ('\0') at the end of
+<I>dest</I>, and then adds a terminating null byte.
 The strings may not overlap, and the <I>dest</I> string must have
 enough space for the result.
 <P>
@@ -39,10 +39,52 @@ enough space for the result.
 The
 <B>strncat</B>()
 
-function is similar, except that it will use
-at most <I>n</I> characters from <I>src</I>.
-Since the result is always terminated with `\0', at most <I>n</I>+1
-characters are written.
+function is similar, except that
+<DL COMPACT>
+<DT>*<DD>
+it will use at most <I>n</I> characters from <I>src</I>; and
+<DT>*<DD>
+<I>src</I> does not need to be null terminated if it contains
+<I>n</I> or more characters.
+</DL>
+<P>
+
+As with
+<B>strcat</B>(),
+
+the resulting string in <I>dest</I> is always null terminated.
+<P>
+
+If <I>src</I> contains <I>n</I> or more characters,
+<B>strcat</B>()
+
+writes <I>n+1</I> characters to <I>dest</I> (<I>n</I>
+from <I>src</I> plus the terminating null byte).
+Therefore, the size of <I>dest</I> must be at least
+<I>strlen(dest)+n+1</I>.
+<P>
+A simple implementation of
+<B>strncat</B>()
+
+might be:
+
+<PRE>
+
+char*
+strncat(char *dest, const char *src, size_t n)
+{
+    size_t dest_len = strlen(dest);
+    int i;
+
+    for(i = 0 ; i &lt; n &amp;&amp; src[i] != '\0' ; i++)
+        dest[dest_len + i] = src[i];
+    dest[dest_len + i] = '\0';
+
+    return dest;
+}
+</PRE>
+
+
 <A NAME="lbAE">&nbsp;</A>
 <H2>RETURN VALUE</H2>
 
@@ -52,8 +94,7 @@ The
 and
 <B>strncat</B>()
 
-functions return a pointer
-to the resulting string <I>dest</I>.
+functions return a pointer to the resulting string <I>dest</I>.
 <A NAME="lbAF">&nbsp;</A>
 <H2>CONFORMING TO</H2>
 
@@ -91,6 +132,6 @@ SVr4, 4.3BSD, C89, C99.
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 02:40:40 GMT, April 20, 2020
+Time: 02:41:14 GMT, April 20, 2020
 </BODY>
 </HTML>

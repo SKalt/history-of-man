@@ -5,7 +5,7 @@ Copyright (C) 1993 David Metcalfe (david@prism.demon.co.uk)
 <HTML><HEAD><TITLE>Man page of STRCPY</TITLE>
 </HEAD><BODY>
 <H1>STRCPY</H1>
-Section: Linux Programmer's Manual (3)<BR>Updated: 1993-04-11<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2007-06-15<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -29,9 +29,9 @@ strcpy, strncpy - copy a string
 The
 <B>strcpy</B>()
 
-function copies the string pointed to by <I>src</I>
-(including the terminating `\0' character) to the array pointed to by
-<I>dest</I>.
+function copies the string pointed to by <I>src</I>,
+including the terminating null byte ('\0'),
+to the buffer pointed to by <I>dest</I>.
 The strings may not overlap, and the destination string
 <I>dest</I> must be large enough to receive the copy.
 <P>
@@ -39,23 +39,50 @@ The strings may not overlap, and the destination string
 The
 <B>strncpy</B>()
 
-function is similar, except that not more than
+function is similar, except that at most
 <I>n</I> bytes of <I>src</I> are copied.
-Thus, if there is no null byte
-among the first <I>n</I> bytes of <I>src</I>, the result will not be
-null-terminated.
+<B>Warning</B>:
+
+If there is no null byte
+among the first <I>n</I> bytes of <I>src</I>,
+the string placed in <I>dest</I> will not be null terminated.
 <P>
 
-In the case where the length of
+If the length of
 <I>src</I>
 
-is less than that of
+is less than
 <I>n</I>,
 
-the remainder of
+<B>strncat</B>()
+
+pads the remainder of
 <I>dest</I>
 
-will be padded with null bytes.
+with null bytes.
+<P>
+
+A simple implementation of
+<B>strncpy</B>()
+
+might be:
+
+<PRE>
+
+char*
+strncpy(char *dest, const char *src, size_t n){
+    size_t i;
+
+    for(i = 0 ; i &lt; n &amp;&amp; src[i] != '\0' ; i++)
+        dest[i] = src[i];
+    for( ; i &lt; n ; i++)
+        dest[i] = '\0';
+
+    return dest;
+}
+</PRE>
+
+
 <A NAME="lbAE">&nbsp;</A>
 <H2>RETURN VALUE</H2>
 
@@ -72,16 +99,46 @@ the destination string <I>dest</I>.
 
 SVr4, 4.3BSD, C89, C99.
 <A NAME="lbAG">&nbsp;</A>
+<H2>NOTES</H2>
+
+Some programmers consider
+<B>strncpy</B>()
+
+to be inefficient and error prone.
+If the programmer knows (i.e., includes code to test!)
+that the size of <I>dest</I> is greater than
+the length of <I>src</I>, then
+<B>strcpy</B>()
+
+can be used.
+<P>
+If there is no terminating null byte in the first <I>n</I>
+characters of <I>src</I>,
+<B>strncpy</B>()
+
+produces an unterminated string in <I>dest</I>.
+Programmers often prevent this mistake by forcing termination
+as follows:
+
+<PRE>
+
+strncpy(buf, str, n);
+if (n &gt; 0) 
+    buf[n - 1]= '&nbsp;';
+</PRE>
+
+
+<A NAME="lbAH">&nbsp;</A>
 <H2>BUGS</H2>
 
 If the destination string of a
 <B>strcpy</B>()
 
 is not large enough
-(that is, if the programmer was stupid/lazy, and failed to check
+(that is, if the programmer was stupid or lazy, and failed to check
 the size before copying) then anything might happen.
 Overflowing fixed length strings is a favourite cracker technique.
-<A NAME="lbAH">&nbsp;</A>
+<A NAME="lbAI">&nbsp;</A>
 <H2>SEE ALSO</H2>
 
 <B><A HREF="../man3/bcopy.3.html">bcopy</A></B>(3),
@@ -106,13 +163,14 @@ Overflowing fixed length strings is a favourite cracker technique.
 <DT><A HREF="#lbAD">DESCRIPTION</A><DD>
 <DT><A HREF="#lbAE">RETURN VALUE</A><DD>
 <DT><A HREF="#lbAF">CONFORMING TO</A><DD>
-<DT><A HREF="#lbAG">BUGS</A><DD>
-<DT><A HREF="#lbAH">SEE ALSO</A><DD>
+<DT><A HREF="#lbAG">NOTES</A><DD>
+<DT><A HREF="#lbAH">BUGS</A><DD>
+<DT><A HREF="#lbAI">SEE ALSO</A><DD>
 </DL>
 <HR>
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 02:40:40 GMT, April 20, 2020
+Time: 02:41:14 GMT, April 20, 2020
 </BODY>
 </HTML>
