@@ -4,7 +4,7 @@
 <HTML><HEAD><TITLE>Man page of OPEN</TITLE>
 </HEAD><BODY>
 <H1>OPEN</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2012-02-27<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2012-05-01<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -989,8 +989,54 @@ operation in
 Under Linux 2.4, transfer sizes, and the alignment of the user buffer
 and the file offset must all be multiples of the logical block size
 of the file system.
-Under Linux 2.6, alignment to 512-byte boundaries
-suffices.
+Under Linux 2.6, alignment to 512-byte boundaries suffices.
+<P>
+
+<B>O_DIRECT</B>
+
+I/Os should never be run concurrently with the
+<B><A HREF="../man2/fork.2.html">fork</A></B>(2)
+
+system call,
+if the memory buffer is a private mapping
+(i.e., any mapping created with the
+<B><A HREF="../man2/mmap.2.html">mmap</A>(2)</B>
+
+<B>MAP_PRIVATE</B>
+
+flag;
+this includes memory allocated on the heap and statically allocated buffers).
+Any such I/Os, whether submitted via an asynchronous I/O interface or from
+another thread in the process,
+should be completed before
+<B><A HREF="../man2/fork.2.html">fork</A></B>(2)
+
+is called.
+Failure to do so can result in data corruption and undefined behavior in
+parent and child processes.
+This restriction does not apply when the memory buffer for the
+<B>O_DIRECT</B>
+
+I/Os was created using
+<B><A HREF="../man2/shmat.2.html">shmat</A></B>(2)
+
+or
+<B><A HREF="../man2/mmap.2.html">mmap</A></B>(2)
+
+with the
+<B>MAP_SHARED</B>
+
+flag.
+Nor does this restriction apply when the memory buffer has been advised as
+<B>MADV_DONTFORK</B>
+
+with
+<B><A HREF="../man2/madvise.2.html">madvise</A>(2),</B>
+
+ensuring that it will not be available
+to the child after
+<B><A HREF="../man2/fork.2.html">fork</A></B>(2).
+
 <P>
 
 The
@@ -1159,6 +1205,6 @@ to enable this flag.
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:14:26 GMT, April 20, 2020
+Time: 03:15:01 GMT, April 20, 2020
 </BODY>
 </HTML>

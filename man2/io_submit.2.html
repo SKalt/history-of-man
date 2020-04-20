@@ -5,7 +5,7 @@ Copyright (C) 2003 Free Software Foundation, Inc.
 <HTML><HEAD><TITLE>Man page of IO_SUBMIT</TITLE>
 </HEAD><BODY>
 <H1>IO_SUBMIT</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2008-06-18<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2012-05-08<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -16,11 +16,9 @@ io_submit - submit asynchronous I/O blocks for processing
 <H2>SYNOPSIS</H2>
 
 <PRE>
-<B>#include &lt;<A HREF="file:///usr/include/libaio.h">libaio.h</A>&gt;</B>
+<B>#include &lt;<A HREF="file:///usr/include/linux/aio_abi.h">linux/aio_abi.h</A>&gt;</B>          /* Defines needed types */
 
 <B>int io_submit(aio_context_t </B><I>ctx_id</I><B>, long </B><I>nr</I><B>, struct iocb **</B><I>iocbpp</I><B>);</B>
-
-Link with <I>-laio</I>.
 </PRE>
 
 <A NAME="lbAD">&nbsp;</A>
@@ -28,11 +26,16 @@ Link with <I>-laio</I>.
 
 <P>
 
+The
 <B>io_submit</B>()
 
+system call
 queues <I>nr</I> I/O request blocks for processing in
 the AIO context <I>ctx_id</I>.
-<I>iocbpp</I> should be an array of <I>nr</I> AIO control blocks,
+The
+<I>iocbpp</I>
+
+argument should be an array of <I>nr</I> AIO control blocks,
 which will be submitted to context <I>ctx_id</I>.
 <A NAME="lbAE">&nbsp;</A>
 <H2>RETURN VALUE</H2>
@@ -62,9 +65,12 @@ One of the data structures points to invalid data.
 <DT><B>EINVAL</B>
 
 <DD>
-The <I>aio_context</I> specified by <I>ctx_id</I> is invalid.
+The AIO context specified by <I>ctx_id</I> is invalid.
 <I>nr</I> is less than 0.
-The <I>iocb</I> at *iocbpp[0] is not properly initialized,
+The <I>iocb</I> at
+<I>*iocbpp[0]</I>
+
+is not properly initialized,
 or the operation specified is invalid for the file descriptor
 in the <I>iocb</I>.
 <DT><B>ENOSYS</B>
@@ -79,7 +85,7 @@ is not implemented on this architecture.
 
 <P>
 
-The asynchronous I/O system calls first appeared in Linux 2.5, August 2002.
+The asynchronous I/O system calls first appeared in Linux 2.5.
 <A NAME="lbAH">&nbsp;</A>
 <H2>CONFORMING TO</H2>
 
@@ -93,14 +99,33 @@ programs that are intended to be portable.
 <H2>NOTES</H2>
 
 Glibc does not provide a wrapper function for this system call.
-<P>
-The wrapper provided in
-<I>libaio</I>
+You could invoke it using
+<B><A HREF="../man2/syscall.2.html">syscall</A></B>(2).
 
-for
+But instead, you probably want to use the
 <B>io_submit</B>()
 
-does not follow the usual C library conventions for indicating error:
+wrapper function provided by
+
+<I>libaio</I>.
+
+<P>
+Note that the
+<I>libaio</I>
+
+wrapper function uses a different type
+(<I>io_context_t</I>)
+
+
+
+for the
+<I>ctx_id</I>
+
+argument.
+Note also that the
+<I>libaio</I>
+
+wrapper does not follow the usual C library conventions for indicating errors:
 on error it returns a negated error number
 (the negative of one of the values listed in ERRORS).
 If the system call is invoked via
@@ -126,9 +151,6 @@ set to a (positive) value that indicates the error.
 
 
 
-
-
-
 <P>
 
 <HR>
@@ -148,6 +170,6 @@ set to a (positive) value that indicates the error.
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:14:25 GMT, April 20, 2020
+Time: 03:15:01 GMT, April 20, 2020
 </BODY>
 </HTML>

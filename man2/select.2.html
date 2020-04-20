@@ -4,7 +4,7 @@
 <HTML><HEAD><TITLE>Man page of SELECT</TITLE>
 </HEAD><BODY>
 <H1>SELECT</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2010-08-31<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2012-05-02<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -166,12 +166,16 @@ returns.
 is the highest-numbered file descriptor in any of the three sets, plus 1.
 <P>
 
+The
 <I>timeout</I>
 
-is an upper bound on the amount of time elapsed before
+argument specifies the minimum interval that
 <B>select</B>()
 
-returns.
+should block waiting for a file descriptor to become ready.
+(This interval will be rounded up to the system clock granularity,
+and kernel scheduling delays mean that the blocking interval
+may overrun by a small amount.)
 If both fields of the
 <I>timeval</I>
 
@@ -514,8 +518,18 @@ Since glibc 2.2.2 the requirements are as shown in the SYNOPSIS.
 <A NAME="lbAK">&nbsp;</A>
 <H3>Linux Notes</H3>
 
-The Linux
+The
 <B>pselect</B>()
+
+interface described in this page is implemented by glibc.
+The underlying Linux system call is named
+<B>pselect6</B>().
+
+This system call has somewhat different behavior from the gibc
+wrapper function.
+<P>
+The Linux
+<B>pselect6</B>()
 
 system call modifies its
 <I>timeout</I>
@@ -532,6 +546,30 @@ function does not modify its
 
 argument;
 this is the behavior required by POSIX.1-2001.
+<P>
+The final argument of the
+<B>pselect6()</B>
+
+system call is not a
+<I>sigset_t&nbsp;*</I>
+
+pointer, but is instead a structure of the form:
+
+<PRE>
+
+struct {
+    const sigset_t *ss;     /* Pointer to signal set */
+    size_t          ss_len; /* Size (in bytes) of object pointed
+                               to by 'ss' */
+};
+
+</PRE>
+
+
+This allows the system call to obtain both
+a pointer to the signal set and its size,
+while allowing for the fact that most architectures
+support a maximum of 6 arguments to a system call.
 <A NAME="lbAL">&nbsp;</A>
 <H2>BUGS</H2>
 
@@ -565,12 +603,16 @@ On systems that lack
 <B>pselect</B>(),
 
 reliable (and more portable) signal trapping can be achieved
-using the self-pipe trick
-(where a signal handler writes a byte to a pipe whose other end
+using the self-pipe trick.
+In this technique,
+a signal handler writes a byte to a pipe whose other end
 is monitored by
 <B>select</B>()
 
-in the main program.)
+in the main program.
+(To avoid possibly blocking when writing to a pipe that may be full
+or reading from a pipe that may be empty,
+nonblocking I/O is used when reading from and writing to the pipe.)
 <P>
 Under Linux,
 <B>select</B>()
@@ -705,6 +747,6 @@ For vaguely related stuff, see
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:14:27 GMT, April 20, 2020
+Time: 03:15:02 GMT, April 20, 2020
 </BODY>
 </HTML>

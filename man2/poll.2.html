@@ -5,7 +5,7 @@ Copyright (C) 1997 Andries Brouwer (aeb@cwi.nl)
 <HTML><HEAD><TITLE>Man page of POLL</TITLE>
 </HEAD><BODY>
 <H1>POLL</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2012-04-15<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2012-05-05<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -133,14 +133,24 @@ blocks until one of the events occurs.
 The
 <I>timeout</I>
 
-argument specifies an upper limit on the time for which
+argument specifies the minimum number of milliseconds that
 <B>poll</B>()
 
-will block, in milliseconds.
+will block.
+(This interval will be rounded up to the system clock granularity,
+and kernel scheduling delays mean that the blocking interval
+may overrun by a small amount.)
 Specifying a negative value in
 <I>timeout</I>
 
 means an infinite timeout.
+Specifying a
+<I>timeout</I>
+
+of zero causes
+<B>poll</B>()
+
+to return immediately, even if no file descriptors are ready.
 <P>
 The bits that may be set/returned in
 <I>events</I>
@@ -390,18 +400,14 @@ The
 <B>poll</B>()
 
 system call was introduced in Linux 2.1.23.
-The
+On older kernels that lack this system call,
+
+the glibc (and the old Linux libc)
 <B>poll</B>()
 
-library call was introduced in libc 5.4.28
-(and provides emulation using
-<B><A HREF="../man2/select.2.html">select</A></B>(2)
+wrapper function provides emulation using
+<B><A HREF="../man2/select.2.html">select</A></B>(2).
 
-if your kernel does not
-have a
-<B>poll</B>()
-
-system call).
 <P>
 The
 <B>ppoll</B>()
@@ -496,6 +502,6 @@ BUGS section of
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:14:26 GMT, April 20, 2020
+Time: 03:15:02 GMT, April 20, 2020
 </BODY>
 </HTML>

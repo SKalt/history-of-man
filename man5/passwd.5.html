@@ -5,7 +5,7 @@ Copyright (c) 1993 Michael Haardt (michael@moria.de),
 <HTML><HEAD><TITLE>Man page of PASSWD</TITLE>
 </HEAD><BODY>
 <H1>PASSWD</H1>
-Section: Linux Programmer's Manual (5)<BR>Updated: 2012-02-14<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (5)<BR>Updated: 2012-05-03<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -41,6 +41,25 @@ and the encrypted passwords are in
 which is readable by the superuser only.
 <P>
 
+If the encrypted password, whether in
+<I>/etc/passwd</I>
+
+or in
+<I>/etc/shadow</I>,
+
+is an empty string, login is allowed without even asking for a password.
+Note that this functionality may be intentionally disabled in applications,
+or configurable (for example using the &quot;nullok&quot; or &quot;nonull&quot; arguments to
+pam_unix.so).
+<P>
+
+If the encrypted password in
+<I>/etc/passwd</I>
+
+is &quot;<I>*NP*</I>&quot; (without the quotes),
+the shadow record should be obtained from an NIS+ server.
+<P>
+
 Regardless of whether shadow passwords are used, many system administrators
 use an asterisk (*) in the encrypted password field to make sure
 that this user can not authenticate him- or herself using a
@@ -55,24 +74,26 @@ then use
 to set it.
 <P>
 
-Each line of the file describes a single user, and has the following format:
+Each line of the file describes a single user,
+and contains seven colon-separated fields:
 <P>
 <DL COMPACT><DT><DD>
-account:password:UID:GID:GECOS:directory:shell
+name:password:UID:GID:GECOS:directory:shell
 </DL>
 
 <P>
 The field are as follows:
 <DL COMPACT>
-<DT><I>account</I>
+<DT><I>name</I>
 
 <DD>
-the name of the user on the system.
+This is the user's login name.
 It should not contain capital letters.
 <DT><I>password</I>
 
 <DD>
-the encrypted user password, an asterisk (*), or the letter 'x'.
+This is either the encrypted user password,
+an asterisk (*), or the letter 'x'.
 (See
 <B><A HREF="../man8/pwconv.8.html">pwconv</A></B>(8)
 
@@ -80,16 +101,28 @@ for an explanation of 'x'.)
 <DT><I>UID</I>
 
 <DD>
-the numeric user ID.
+The privileged
+<I>root</I>
+
+login account (superuser) has the user ID 0.
 <DT><I>GID</I>
 
 <DD>
-the numeric primary group ID for this user.
+This is the numeric primary group ID for this user.
+(Additional groups for the user are defined in the system group file; see
+<B><A HREF="../man5/group.5.html">group</A></B>(5)).
+
 <DT><I>GECOS</I>
 
 <DD>
-This field is optional and used only for informational purposes.
+This field (sometimes called the &quot;comment field&quot;)
+is optional and used only for informational purposes.
 Usually, it contains the full username.
+Some programs (for example,
+<B><A HREF="../man1/finger.1.html">finger</A></B>(1))
+
+display information from this field.
+<DT><DD>
 GECOS stands for &quot;General Electric Comprehensive Operating System&quot;,
 which was renamed to GCOS when
 GE's large systems division was sold to Honeywell.
@@ -101,20 +134,26 @@ Not elegant.&quot;
 <DT><I>directory</I>
 
 <DD>
-the user's
-<B>$HOME</B>
+This is the user's home directory:
+the initial directory where the user is placed after logging in.
+The value in this field is used to set the
+<B>HOME</B>
 
-directory.
+environment variable.
 <DT><I>shell</I>
 
 <DD>
-the program to run at login (if empty, use
+This is the program to run at login (if empty, use
 <I>/bin/sh</I>).
 
 If set to a nonexistent executable, the user will be unable to login
 through
 <B><A HREF="../man1/login.1.html">login</A></B>(1).
 
+The value in this field is used to set the
+<B>SHELL</B>
+
+environment variable.
 </DL>
 <A NAME="lbAD">&nbsp;</A>
 <H2>FILES</H2>
@@ -162,6 +201,8 @@ shell field yields the same result and additionally allows the use of
 
 <B><A HREF="../man3/getpwnam.3.html">getpwnam</A></B>(3),
 
+<B><A HREF="../man3/crypt.3.html">crypt</A></B>(3),
+
 <B><A HREF="../man5/group.5.html">group</A></B>(5),
 
 <B><A HREF="../man5/shadow.5.html">shadow</A></B>(5)
@@ -181,6 +222,6 @@ shell field yields the same result and additionally allows the use of
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:14:38 GMT, April 20, 2020
+Time: 03:15:14 GMT, April 20, 2020
 </BODY>
 </HTML>

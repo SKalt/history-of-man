@@ -5,7 +5,7 @@ Copyright (c) Bruno Haible &lt;haible@clisp.cons.org&gt;
 <HTML><HEAD><TITLE>Man page of ICONV</TITLE>
 </HEAD><BODY>
 <H1>ICONV</H1>
-Section: Linux Programmer's Manual (3)<BR>Updated: 2008-09-08<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2012-05-10<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -26,10 +26,38 @@ iconv - perform character set conversion
 <A NAME="lbAD">&nbsp;</A>
 <H2>DESCRIPTION</H2>
 
-The argument <I>cd</I> must be a conversion descriptor created using the
-function
-<B><A HREF="../man3/iconv_open.3.html">iconv_open</A></B>(3).
+The
+<B>iconv</B>()
 
+function converts a sequence of characters in one character encoding
+to a sequence of characters in another character encoding.
+The
+<I>cd</I>
+
+argument is a conversion descriptor,
+previously created by a call to
+<B><A HREF="../man3/iconv_open.3.html">iconv_open</A></B>(3);
+
+the conversion descriptor defines the character encodings that
+<B>iconv</B>()
+
+uses for the conversion.
+The
+<I>inbuf</I>
+
+argument is the address of a variable that points to
+the first character of the input sequence;
+<I>inbytesleft</I>
+
+indicates the number of bytes in that buffer.
+The
+<I>outbuf</I>
+
+argument is the address of a variable that points to
+the first byte available in the output buffer;
+<I>outbytesleft</I>
+
+indicates the number of bytes available in the output buffer.
 <P>
 
 The main case is when <I>inbuf</I> is not NULL and <I>*inbuf</I> is not NULL.
@@ -57,27 +85,25 @@ function can also convert a sequence of input bytes
 to an update to the conversion state without producing any output bytes;
 such input is called a <I>shift sequence</I>.
 The conversion can stop for four reasons:
-<P>
-
-1. An invalid multibyte sequence is encountered in the input.
+<DL COMPACT>
+<DT>1.<DD>
+An invalid multibyte sequence is encountered in the input.
 In this case
 it sets <I>errno</I> to <B>EILSEQ</B> and returns
 <I>(size_t)&nbsp;-1</I>.
 
 <I>*inbuf</I>
 is left pointing to the beginning of the invalid multibyte sequence.
-<P>
-
-2. The input byte sequence has been entirely converted,
+<DT>2.<DD>
+The input byte sequence has been entirely converted,
 that is, <I>*inbytesleft</I> has gone down to 0.
 In this case
 <B>iconv</B>()
 
 returns the number of
 nonreversible conversions performed during this call.
-<P>
-
-3. An incomplete multibyte sequence is encountered in the input, and the
+<DT>3.<DD>
+An incomplete multibyte sequence is encountered in the input, and the
 input byte sequence terminates after it.
 In this case it sets <I>errno</I> to
 <B>EINVAL</B> and returns
@@ -85,12 +111,12 @@ In this case it sets <I>errno</I> to
 
 <I>*inbuf</I> is left pointing to the
 beginning of the incomplete multibyte sequence.
-<P>
-
-4. The output buffer has no more room for the next converted character.
+<DT>4.<DD>
+The output buffer has no more room for the next converted character.
 In this case it sets <I>errno</I> to <B>E2BIG</B> and returns
 <I>(size_t)&nbsp;-1</I>.
 
+</DL>
 <P>
 
 A different case is when <I>inbuf</I> is NULL or <I>*inbuf</I> is NULL, but
@@ -154,6 +180,31 @@ This function is available in glibc since version 2.1.
 
 POSIX.1-2001.
 <A NAME="lbAI">&nbsp;</A>
+<H2>NOTES</H2>
+
+Although
+<I>inbuf</I>
+
+and
+<I>outbuf</I>
+
+are typed as
+<I>char&nbsp;**</I>,
+
+this does not mean that the objects they point can be interpreted
+as C strings or as arrays of characters:
+the interpretation of character byte sequences is
+handled internally by the conversion functions.
+In some encodings, a zero byte may be a valid part of a multibyte character.
+<P>
+The caller of
+<B>iconv</B>()
+
+must ensure that the pointers passed to the function are suitable
+for accessing characters in the appropriate character set.
+This includes ensuring correct alignment on platforms that have
+tight restrictions on alignment.
+<A NAME="lbAJ">&nbsp;</A>
 <H2>SEE ALSO</H2>
 
 <B><A HREF="../man3/iconv_close.3.html">iconv_close</A></B>(3),
@@ -172,12 +223,13 @@ POSIX.1-2001.
 <DT><A HREF="#lbAF">ERRORS</A><DD>
 <DT><A HREF="#lbAG">VERSIONS</A><DD>
 <DT><A HREF="#lbAH">CONFORMING TO</A><DD>
-<DT><A HREF="#lbAI">SEE ALSO</A><DD>
+<DT><A HREF="#lbAI">NOTES</A><DD>
+<DT><A HREF="#lbAJ">SEE ALSO</A><DD>
 </DL>
 <HR>
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:14:33 GMT, April 20, 2020
+Time: 03:15:08 GMT, April 20, 2020
 </BODY>
 </HTML>
