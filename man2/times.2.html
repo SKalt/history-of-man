@@ -5,7 +5,7 @@ Copyright (c) 1992 Drew Eckhardt (drew@cs.colorado.edu), March 28, 1992
 <HTML><HEAD><TITLE>Man page of TIMES</TITLE>
 </HEAD><BODY>
 <H1>TIMES</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2002-06-14<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2007-12-18<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -104,9 +104,6 @@ All times reported are in clock ticks.
 
 returns the number of clock ticks that have elapsed since
 an arbitrary point in the past.
-For Linux 2.4 and earlier this point is the moment the system was booted.
-Since Linux 2.6, this point is <I>(2^32/HZ) - 300</I>
-(i.e., about 429 million) seconds before system boot time.
 The return value may overflow the possible range of type
 <I>clock_t</I>.
 
@@ -123,10 +120,9 @@ SVr4, 4.3BSD, POSIX.1-2001.
 <H2>NOTES</H2>
 
 The number of clock ticks per second can be obtained using:
-<DL COMPACT><DT><DD>
+
 <P>
 sysconf(_SC_CLK_TCK);
-</DL>
 
 <P>
 
@@ -177,17 +173,35 @@ other Unix implementations require a non-NULL value for
 Note that
 <B><A HREF="../man3/clock.3.html">clock</A></B>(3)
 
-returns values of type
-<I>clock_t</I>
+also returns a value of type
+<I>clock_t</I>,
 
-that are not measured in clock ticks
-but in
-<B>CLOCKS_PER_SEC</B>.
+but this value is measured in units of
+<B>CLOCKS_PER_SEC</B>,
+
+not the clock ticks used by
+<B><A HREF="../man2/times.2.html">times</A></B>(2).
 
 <P>
+On Linux, the &quot;arbitrary point in the past&quot; from which the return value of
+<B>times</B>()
 
-On older systems the number of clock ticks per second is given
-by the variable HZ.
+is measured has varied across kernel versions.
+On Linux 2.4 and earlier this point is the moment the system was booted.
+Since Linux 2.6, this point is <I>(2^32/HZ) - 300</I>
+(i.e., about 429 million) seconds before system boot time.
+This variability across kernel versions (and across Unix implementations),
+combined with the fact that the returned value may overflow the range of
+<I>clock_t</I>,
+
+means that a portable application would be wise to avoid using this value.
+To measure changes in elapsed time, use
+<B><A HREF="../man2/gettimeofday.2.html">gettimeofday</A></B>(2)
+
+instead.
+
+
+
 <A NAME="lbAH">&nbsp;</A>
 <H3>Historical</H3>
 
@@ -197,7 +211,7 @@ SVr1-3 returns
 and the struct members are of type
 <I>time_t</I>
 
-although they store clock ticks, not seconds since the epoch.
+although they store clock ticks, not seconds since the Epoch.
 V7 used
 <I>long</I>
 
@@ -206,6 +220,25 @@ for the struct members, because it had no type
 
 yet.
 <A NAME="lbAI">&nbsp;</A>
+<H2>BUGS</H2>
+
+A limitation of the Linux system call conventions on some architectures
+(notably x86) means that on Linux 2.6 there is a small time window
+(41 seconds) soon after boot when
+<B><A HREF="../man2/times.2.html">times</A></B>(2)
+
+can return -1, falsely indicating that an error occurred.
+The same problem can occur when the return value wraps passed
+the maximum value that can be stored in
+<B>clockid_t</B>.
+
+
+
+
+
+
+
+<A NAME="lbAJ">&nbsp;</A>
 <H2>SEE ALSO</H2>
 
 <B><A HREF="../man1/time.1.html">time</A></B>(1),
@@ -234,12 +267,13 @@ yet.
 <DL>
 <DT><A HREF="#lbAH">Historical</A><DD>
 </DL>
-<DT><A HREF="#lbAI">SEE ALSO</A><DD>
+<DT><A HREF="#lbAI">BUGS</A><DD>
+<DT><A HREF="#lbAJ">SEE ALSO</A><DD>
 </DL>
 <HR>
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 02:49:00 GMT, April 20, 2020
+Time: 02:49:33 GMT, April 20, 2020
 </BODY>
 </HTML>

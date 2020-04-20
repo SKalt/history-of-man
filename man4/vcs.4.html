@@ -5,7 +5,7 @@ Copyright (c) 1995 James R. Van Zandt &lt;jrv@vanzandt.mv.com&gt;
 <HTML><HEAD><TITLE>Man page of VCS</TITLE>
 </HEAD><BODY>
 <H1>VCS</H1>
-Section: Linux Programmer's Manual (4)<BR>Updated: 1995-02-19<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (4)<BR>Updated: 2007-12-17<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -25,15 +25,31 @@ displayed virtual console terminal.
 terminals, they have major number 7 and minor number 1 to 63, usually
 mode 0644 and owner root.tty.
 <I>/dev/vcsa[0-63]</I> are the same, but
-including attributes, and prefixed with four bytes giving the screen
+using unsigned shorts (in host byte order) that include attributes,
+and prefixed with four bytes giving the screen
 dimensions and cursor position: <I>lines</I>, <I>columns</I>, <I>x</I>, <I>y</I>.
 (<I>x</I> = <I>y</I> = 0 at the top left corner of the screen.)
 <P>
+When a 512-character font is loaded,
+the 9th bit position can be fetched by applying the
+<B><A HREF="../man2/ioctl.2.html">ioctl</A></B>(2)
 
-These replace the screendump
-<I>ioctl</I>s
+<B>VT_GETHIFONTMASK</B> operation
+(available in Linux kernels 2.6.18 and above)
+on <I>/dev/tty[1-63]</I>;
+the value is returned in the
+<I>unsigned short</I>
 
-of
+pointed to by the third
+<B><A HREF="../man2/ioctl.2.html">ioctl</A></B>(2)
+
+argument.
+<P>
+
+These devices replace the screendump
+<B><A HREF="../man2/ioctl.2.html">ioctl</A></B>(2)
+
+operations of
 <B><A HREF="../man4/console.4.html">console</A></B>(4),
 
 so the system
@@ -90,15 +106,30 @@ there:
 #include &lt;<A HREF="file:///usr/include/stdlib.h">stdlib.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/fcntl.h">fcntl.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/sys/ioctl.h">sys/ioctl.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/linux/vt.h">linux/vt.h</A>&gt;
 
 int
 main(void)
 {
     int fd;
     char *device = &quot;/dev/vcsa2&quot;;
+    char *console = &quot;/dev/tty2&quot;;
     struct {unsigned char lines, cols, x, y;} scrn;
-    char ch, attrib;
+    unsigned short s;
+    unsigned short mask;
+    unsigned char ch, attrib;
 
+    fd = open(console, O_RDWR);
+    if (fd &lt; 0) {
+        perror(console);
+        exit(EXIT_FAILURE);
+    }
+    if (ioctl(fd, VT_GETHIFONTMASK, &amp;mask) &lt; 0) {
+        perror(&quot;VT_GETHIFONTMASK&quot;);
+        exit(EXIT_FAILURE);
+    }
+    (void) close(fd);
     fd = open(device, O_RDWR);
     if (fd &lt; 0) {
         perror(device);
@@ -106,8 +137,11 @@ main(void)
     }
     (void) read(fd, &amp;scrn, 4);
     (void) lseek(fd, 4 + 2*(scrn.y*scrn.cols + scrn.x), 0);
-    (void) read(fd, &amp;ch, 1);
-    (void) read(fd, &amp;attrib, 1);
+    (void) read(fd, &amp;s, 2);
+    ch = s &amp; 0xff;
+    if (attrib &amp; mask)
+        ch |= 0x100;
+    attrib = ((s &amp; ~mask) &gt;&gt; 8);
     printf(&quot;ch='%c' attrib=0x%02x\n&quot;, ch, attrib);
     attrib ^= 0x10;
     (void) lseek(fd, -1, 1);
@@ -143,6 +177,6 @@ main(void)
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 02:49:09 GMT, April 20, 2020
+Time: 02:49:43 GMT, April 20, 2020
 </BODY>
 </HTML>
