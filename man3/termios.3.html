@@ -25,7 +25,7 @@ License along with this manual; if not, see
 <HTML><HEAD><TITLE>Man page of TERMIOS</TITLE>
 </HEAD><BODY>
 <H1>TERMIOS</H1>
-Section: Linux Programmer's Manual (3)<BR>Updated: 2013-10-22<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2014-03-21<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -940,8 +940,7 @@ determine the circumstances in which a
 
 completes; there are four distinct cases:
 <DL COMPACT>
-<DT>*<DD>
-MIN == 0; TIME == 0:
+<DT>MIN == 0, TIME == 0 (polling read)<DD>
 If data is available,
 <B><A HREF="../man2/read.2.html">read</A></B>(2)
 
@@ -951,14 +950,12 @@ If no data is available,
 <B><A HREF="../man2/read.2.html">read</A></B>(2)
 
 returns 0.
-<DT>*<DD>
-MIN &gt; 0; TIME == 0:
+<DT>MIN &gt; 0, TIME == 0 (blocking read)<DD>
 <B><A HREF="../man2/read.2.html">read</A></B>(2)
 
-blocks until the lesser of MIN bytes or the number of bytes requested
-are available, and returns the lesser of these two values.
-<DT>*<DD>
-MIN == 0; TIME &gt; 0:
+blocks until MIN bytes are available,
+and returns up to the number of bytes requested.
+<DT>MIN == 0, TIME &gt; 0 (read with timeout)<DD>
 TIME specifies the limit for a timer in tenths of a second.
 The timer is started when
 <B><A HREF="../man2/read.2.html">read</A></B>(2)
@@ -972,19 +969,71 @@ If the timer expires without any input becoming available,
 <B><A HREF="../man2/read.2.html">read</A></B>(2)
 
 returns 0.
-<DT>*<DD>
-MIN &gt; 0; TIME &gt; 0:
+If data is already available at the time of the call to
+<B>read</B>(),
+
+the call behaves as though the data was received immediately after the call.
+<DT>MIN &gt; 0, TIME &gt; 0 (read with interbyte timeout)<DD>
 TIME specifies the limit for a timer in tenths of a second.
 Once an initial byte of input becomes available,
 the timer is restarted after each further byte is received.
 <B><A HREF="../man2/read.2.html">read</A></B>(2)
 
-returns either when the lesser of the number of bytes requested or
-MIN byte have been read,
-or when the interbyte timeout expires.
+returns when any of the following conditions is met:
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT>*<DD>
+MIN bytes have been received.
+<DT>*<DD>
+The interbyte timer expires.
+<DT>*<DD>
+The number of bytes requested by
+<B><A HREF="../man2/read.2.html">read</A></B>(2)
+
+has been received.
+(POSIX does not specify this termination condition,
+and on some other implementations
+
+<B>read</B>()
+
+does not return in this case.)
+</DL>
+</DL>
+
+<DT><DD>
 Because the timer is started only after the initial byte
 becomes available, at least one byte will be read.
+If data is already available at the time of the call to
+<B>read</B>(),
+
+the call behaves as though the data was received immediately after the call.
 </DL>
+<P>
+
+POSIX
+
+does not specify whether the setting of the
+<B>O_NONBLOCK</B>
+
+file status flag takes precedence over the MIN and TIME settings.
+If
+<B>O_NONBLOCK</B>
+
+is set, a
+<B>read</B>()
+
+in noncanonical mode may return immediately,
+regardless of the setting of MIN or TIME.
+Furthermore, if no data is available,
+POSIX permits a
+<B>read</B>()
+
+in noncanonical mode to return either 0, or -1 with
+<I>errno</I>
+
+set to
+<B>EAGAIN</B>.
+
 <A NAME="lbAH">&nbsp;</A>
 <H3>Raw mode</H3>
 
@@ -1353,6 +1402,6 @@ behaves like
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:27:28 GMT, April 20, 2020
+Time: 03:28:05 GMT, April 20, 2020
 </BODY>
 </HTML>
