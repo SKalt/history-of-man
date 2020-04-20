@@ -5,7 +5,7 @@ Copyright (C) 1999 Andries Brouwer (aeb@cwi.nl)
 <HTML><HEAD><TITLE>Man page of REALPATH</TITLE>
 </HEAD><BODY>
 <H1>REALPATH</H1>
-Section: Linux Programmer's Manual (3)<BR>Updated: 1999-08-24<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2004-12-14<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -23,7 +23,7 @@ realpath - return the canonicalized absolute pathname
 </PRE><A NAME="lbAD">&nbsp;</A>
 <H2>DESCRIPTION</H2>
 
-<B>realpath</B>
+<B>realpath</B>()
 
 expands all symbolic links and resolves references
 to
@@ -51,7 +51,10 @@ components.
 <A NAME="lbAE">&nbsp;</A>
 <H2>RETURN VALUE</H2>
 
-If there is no error, it returns a pointer to the
+If there is no error,
+<B>realpath</B>()
+
+returns a pointer to the
 <I>resolved_path</I>.
 
 <P>
@@ -81,6 +84,7 @@ or
 <I>resolved_path</I>
 
 is NULL. (In libc5 this would just cause a segfault.)
+But, see NOTES below.
 <DT><B>EIO</B>
 
 <DD>
@@ -109,10 +113,36 @@ The named file does not exist.
 A component of the path prefix is not a directory.
 </DL>
 <A NAME="lbAG">&nbsp;</A>
+<H2>NOTES</H2>
+
+The glibc implementation of
+<B>realpath</B>()
+
+provides a non-standard extension.
+If
+<I>resolved_path</I>
+
+is specified as NULL, then
+<B>realpath</B>()
+
+uses
+<B><A HREF="../man3/malloc.3.html">malloc</A></B>(3)
+
+to allocate a buffer to hold the resolved pathname,
+and returns a pointer to this buffer.
+The caller should deallocate this buffer using
+<B><A HREF="../man3/free.3.html">free</A></B>(3).
+
+
+
+
+<A NAME="lbAH">&nbsp;</A>
 <H2>BUGS</H2>
 
-Never use this function. It is broken by design since it is
-impossible to determine a suitable size for the output buffer.
+Avoid using this function. It is broken by design since it is
+impossible to determine a suitable size for the output buffer,
+<I>resolved_path</I>.
+
 According to POSIX a buffer of size PATH_MAX suffices, but
 PATH_MAX need not be a defined constant, and may have to be
 obtained using
@@ -135,15 +165,15 @@ may return -1 to signify that PATH_MAX is not bounded.
 The libc4 and libc5 implementation contains a buffer overflow
 (fixed in libc-5.4.13).
 Thus, suid programs like mount need a private version.
-<A NAME="lbAH">&nbsp;</A>
+<A NAME="lbAI">&nbsp;</A>
 <H2>HISTORY</H2>
 
 The
-<B>realpath</B>
+<B>realpath</B>()
 
 function first appeared in BSD 4.4, contributed by Jan-Simon Pendry.
 In Linux this function appears in libc 4.5.21.
-<A NAME="lbAI">&nbsp;</A>
+<A NAME="lbAJ">&nbsp;</A>
 <H2>CONFORMING TO</H2>
 
 In BSD 4.4 and Solaris the limit on the pathname length is MAXPATHLEN
@@ -176,11 +206,11 @@ path name. Solaris may return a relative path name when the
 
 argument is relative.
 The prototype of
-<B>realpath</B>
+<B>realpath</B>()
 
 is given in &lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt; in libc4 and libc5,
 but in &lt;<A HREF="file:///usr/include/stdlib.h">stdlib.h</A>&gt; everywhere else.
-<A NAME="lbAJ">&nbsp;</A>
+<A NAME="lbAK">&nbsp;</A>
 <H2>SEE ALSO</H2>
 
 <B><A HREF="../man2/readlink.2.html">readlink</A></B>(2),
@@ -201,15 +231,16 @@ but in &lt;<A HREF="file:///usr/include/stdlib.h">stdlib.h</A>&gt; everywhere el
 <DT><A HREF="#lbAD">DESCRIPTION</A><DD>
 <DT><A HREF="#lbAE">RETURN VALUE</A><DD>
 <DT><A HREF="#lbAF">ERRORS</A><DD>
-<DT><A HREF="#lbAG">BUGS</A><DD>
-<DT><A HREF="#lbAH">HISTORY</A><DD>
-<DT><A HREF="#lbAI">CONFORMING TO</A><DD>
-<DT><A HREF="#lbAJ">SEE ALSO</A><DD>
+<DT><A HREF="#lbAG">NOTES</A><DD>
+<DT><A HREF="#lbAH">BUGS</A><DD>
+<DT><A HREF="#lbAI">HISTORY</A><DD>
+<DT><A HREF="#lbAJ">CONFORMING TO</A><DD>
+<DT><A HREF="#lbAK">SEE ALSO</A><DD>
 </DL>
 <HR>
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 02:10:57 GMT, April 20, 2020
+Time: 02:11:56 GMT, April 20, 2020
 </BODY>
 </HTML>

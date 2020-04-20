@@ -12,7 +12,7 @@ Section: Linux Programmer's Manual (2)<BR>Updated: 2004-06-16<BR><A HREF="#index
 <A NAME="lbAB">&nbsp;</A>
 <H2>NAME</H2>
 
-getrlimit, getrusage, setrlimit - get/set resource limits and usage
+getrlimit, setrlimit - get/set resource limits
 <A NAME="lbAC">&nbsp;</A>
 <H2>SYNOPSIS</H2>
 
@@ -22,16 +22,8 @@ getrlimit, getrusage, setrlimit - get/set resource limits and usage
 
 <B>#include &lt;<A HREF="file:///usr/include/sys/resource.h">sys/resource.h</A>&gt;</B>
 
-<BR>
-
-<B>#include &lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;</B>
-
 <P>
 <B>int getrlimit(int </B><I>resource</I><B>, struct rlimit *</B><I>rlim</I><B>);</B>
-
-<BR>
-
-<B>int getrusage(int </B><I>who</I><B>, struct rusage *</B><I>usage</I><B>);</B>
 
 <BR>
 
@@ -40,10 +32,10 @@ getrlimit, getrusage, setrlimit - get/set resource limits and usage
 <A NAME="lbAD">&nbsp;</A>
 <H2>DESCRIPTION</H2>
 
-<B>getrlimit</B>
+<B>getrlimit</B>()
 
 and
-<B>setrlimit</B>
+<B>setrlimit</B>()
 
 get and set resource limits respectively.
 Each resource has an associated soft and hard limit, as defined by the 
@@ -60,9 +52,8 @@ argument to both
 
 <PRE>
 struct rlimit {
-    rlim_t rlim_cur;   /* Soft limit */
-    rlim_t rlim_max;   /* Hard limit (ceiling 
-                          for rlim_cur) */
+    rlim_t rlim_cur;  /* Soft limit */
+    rlim_t rlim_max;  /* Hard limit (ceiling for rlim_cur) */
 };
 
 </PRE>
@@ -111,8 +102,13 @@ which fail with the error
 <B>ENOMEM</B>
 
 upon exceeding this limit. Also automatic stack expansion will fail
-(and generate a SIGSEGV that kills the process when no alternate stack
-has been made available).
+(and generate a
+<B>SIGSEGV</B>
+
+that kills the process if no alternate stack
+has been made available via
+<B><A HREF="../man2/sigaltstack.2.html">sigaltstack</A></B>(2)).
+
 Since the value is a long, on machines with a 32-bit long
 either this limit is at most 2 GiB, or this resource is unlimited.
 <DT><B>RLIMIT_CORE</B>
@@ -141,7 +137,7 @@ once per second until the hard limit is reached, at which time
 it is sent
 <B>SIGKILL</B>.
 
-(This latter point describes Linux 2.2 and 2.4 behaviour.
+(This latter point describes Linux 2.2 through 2.6 behaviour.
 Implementations vary in how they treat processes which continue to
 consume CPU time after reaching the soft limit.
 Portable applications that need to catch this signal should
@@ -190,9 +186,50 @@ leases that this process may establish.
 <DT><B>RLIMIT_MEMLOCK</B>
 
 <DD>
-The maximum number of bytes of virtual memory that may be locked
-into RAM using
-<B>mlock</B>() and <B>mlockall</B>().
+The maximum number of bytes of memory that may be locked
+into RAM.
+In effect this limit is rounded down to the nearest multiple
+of the system page size.
+This limit affects 
+<B><A HREF="../man2/mlock.2.html">mlock</A></B>(2) and <B><A HREF="../man2/mlockall.2.html">mlockall</A></B>(2)
+
+and the
+<B><A HREF="../man2/mmap.2.html">mmap</A></B>(2)
+
+<B>MAP_LOCKED</B>
+
+operation.
+Since Linux 2.6.9 it also affects the
+<B><A HREF="../man2/shmctl.2.html">shmctl</A></B>(2)
+
+<B>SHM_LOCK</B>
+
+operation, where it sets a maximum on the total bytes in  
+shared memory segments (see
+<B><A HREF="../man2/shmget.2.html">shmget</A></B>(2))
+
+that may be locked by the real user ID of the calling process.
+The 
+<B><A HREF="../man2/shmctl.2.html">shmctl</A></B>(2)
+
+<B>SHM_LOCK</B>
+
+locks are accounted for separately from the per-process memory
+locks established by 
+<B><A HREF="../man2/mlock.2.html">mlock</A></B>(2), <B><A HREF="../man2/mlockall.2.html">mlockall</A></B>(2),
+
+and
+<B><A HREF="../man2/mmap.2.html">mmap</A></B>(2)
+
+<B>MAP_LOCKED</B>;
+
+a process can lock bytes up to this limit in each of these
+two categories.
+In Linux kernels before 2.6.9, this limit controlled the amount of
+memory that could be locked by a privileged process.
+Since Linux 2.6.9, no limits are placed on the amount of memory
+that a privileged process may lock, and this limit instead governs
+the amount of memory that an unprivileged process may lock.
 
 <DT><B>RLIMIT_NOFILE</B>
 
@@ -228,6 +265,26 @@ affects calls to
 specifying
 <B>MADVISE_WILLNEED</B>.
 
+
+
+<DT><B>RLIMIT_SIGPENDING</B>
+
+<DD>
+Specifies the limit on the number of signals
+that may be queued for the real user ID of the calling process.
+Both standard and real-time signals are counted for the purpose of
+checking this limit.
+However, the limit is only enforced for 
+<B><A HREF="../man2/sigqueue.2.html">sigqueue</A></B>(2);
+
+it is always possible to use
+<B><A HREF="../man2/kill.2.html">kill</A></B>(2)
+
+to queue one instance of any of the signals that are not already
+queued to the process.
+(Since Linux 2.6.8.)
+
+
 <DT><B>RLIMIT_STACK</B>
 
 <DD>
@@ -247,45 +304,6 @@ To handle this signal, a process must employ an alternate signal stack
 is the BSD name for 
 <B>RLIMIT_NOFILE</B>.
 
-<P>
-
-<B>getrusage</B>
-
-returns the current resource usages, for a <I>who</I>
-of either 
-<B>RUSAGE_SELF</B>
-
-or 
-<B>RUSAGE_CHILDREN</B>.
-
-The former asks for resources used by the current process,
-the latter for resources used by those of its children
-that have terminated and have been waited for.
-<P>
-
-
-<PRE>
-struct rusage {
-    struct timeval ru_utime; /* user time used */
-    struct timeval ru_stime; /* system time used */
-    long   ru_maxrss;        /* maximum resident set size */
-    long   ru_ixrss;         /* integral shared memory size */
-    long   ru_idrss;         /* integral unshared data size */
-    long   ru_isrss;         /* integral unshared stack size */
-    long   ru_minflt;        /* page reclaims */
-    long   ru_majflt;        /* page faults */
-    long   ru_nswap;         /* swaps */
-    long   ru_inblock;       /* block input operations */
-    long   ru_oublock;       /* block output operations */
-    long   ru_msgsnd;        /* messages sent */
-    long   ru_msgrcv;        /* messages received */
-    long   ru_nsignals;      /* signals received */
-    long   ru_nvcsw;         /* voluntary context switches */
-    long   ru_nivcsw;        /* involuntary context switches */
-};
-</PRE>
-
-
 <A NAME="lbAE">&nbsp;</A>
 <H2>RETURN VALUE</H2>
 
@@ -302,17 +320,13 @@ is set appropriately.
 <DD>
 <I>rlim</I>
 
-or
-<I>usage</I>
-
 points outside the accessible address space.
 <DT><B>EINVAL</B>
 
 <DD>
-<B>getrlimit</B> or <B>setrlimit</B>
+<I>resource</I>
 
-is called with a bad <I>resource</I>, or <B>getrusage</B> is called with a
-bad <I>who</I>.
+is not valid.
 <DT><B>EPERM</B>
 
 <DD>
@@ -326,54 +340,38 @@ the soft or hard RLIMIT_NOFILE limit above the current kernel
 maximum (NR_OPEN).
 </DL>
 <A NAME="lbAG">&nbsp;</A>
-<H2>CONFORMING TO</H2>
+<H2>BUGS</H2>
 
-SVr4, BSD 4.3
-<A NAME="lbAH">&nbsp;</A>
-<H2>NOTE</H2>
-
-Including
-<I>&lt;<A HREF="file:///usr/include/sys/time.h">sys/time.h</A>&gt;</I>
-
-is not required these days, but increases portability.
-(Indeed,
-<I>struct timeval</I>
-
-is defined in
-<I>&lt;<A HREF="file:///usr/include/sys/time.h">sys/time.h</A>&gt;</I>.)
-
-<P>
-
-On Linux, if the disposition of
-<B>SIGCHLD</B>
-
-is set to
-<B>SIG_IGN</B>
-
-then the resource usages of child processes
-are automatically included in the value returned by
-<B>RUSAGE_CHILDREN</B>,
-
-although POSIX 1003.1-2001 explicitly prohibits this.
-
-
-<P>
-
-The above struct was taken from BSD 4.3 Reno.
-Not all fields are meaningful under Linux.
-Right now (Linux 2.4, 2.6) only the fields
-<B>ru_utime</B>,
-
-<B>ru_stime</B>,
-
-<B>ru_minflt</B>,
-
-<B>ru_majflt</B>,
+In older Linux kernels, the
+<B>SIGXCPU</B>
 
 and
-<B>ru_nswap</B>
+<B>SIGKILL</B>
 
-are maintained.
+signals delivered when a process encountered the soft and hard
+<B>RLIMIT_CPU</B>
+
+limits were delivered one (CPU) second later than they should have been.
+This was fixed in kernel 2.6.8.
+<A NAME="lbAH">&nbsp;</A>
+<H2>CONFORMING TO</H2>
+
+SVr4, BSD 4.3.
+<B>RLIMIT_MEMLOCK</B>
+
+and 
+<B>RLIMIT_NPROC</B>
+
+derive from BSD and are not specified in POSIX.1-2001;
+they are present on the BSDs and Linux, but on few other implementations.
+<B>RLIMIT_RSS</B>
+
+derives from BSD and is not specified in POSIX.1-2001;
+it is nevertheless present on most implementations.
+<B>RLIMIT_SIGPENDING</B>
+
+is Linux specific.
+
 <A NAME="lbAI">&nbsp;</A>
 <H2>SEE ALSO</H2>
 
@@ -383,9 +381,9 @@ are maintained.
 
 <B><A HREF="../man2/fork.2.html">fork</A></B>(2),
 
-<B><A HREF="../man2/mlock.2.html">mlock</A></B>(2),
+<B><A HREF="../man2/getrusage.2.html">getrusage</A></B>(2),
 
-<B><A HREF="../man2/mlockall.2.html">mlockall</A></B>(2),
+<B><A HREF="../man2/mlock.2.html">mlock</A></B>(2),
 
 <B><A HREF="../man2/mmap.2.html">mmap</A></B>(2),
 
@@ -395,9 +393,9 @@ are maintained.
 
 <B><A HREF="../man2/sbrk.2.html">sbrk</A></B>(2),
 
-<B><A HREF="../man2/wait3.2.html">wait3</A></B>(2),
+<B><A HREF="../man2/shmctl.2.html">shmctl</A></B>(2),
 
-<B><A HREF="../man2/wait4.2.html">wait4</A></B>(2),
+<B><A HREF="../man2/sigqueue.2.html">sigqueue</A></B>(2),
 
 <B><A HREF="../man3/malloc.3.html">malloc</A></B>(3),
 
@@ -417,14 +415,14 @@ are maintained.
 <DT><A HREF="#lbAD">DESCRIPTION</A><DD>
 <DT><A HREF="#lbAE">RETURN VALUE</A><DD>
 <DT><A HREF="#lbAF">ERRORS</A><DD>
-<DT><A HREF="#lbAG">CONFORMING TO</A><DD>
-<DT><A HREF="#lbAH">NOTE</A><DD>
+<DT><A HREF="#lbAG">BUGS</A><DD>
+<DT><A HREF="#lbAH">CONFORMING TO</A><DD>
 <DT><A HREF="#lbAI">SEE ALSO</A><DD>
 </DL>
 <HR>
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 02:09:57 GMT, April 20, 2020
+Time: 02:11:52 GMT, April 20, 2020
 </BODY>
 </HTML>

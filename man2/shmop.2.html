@@ -5,7 +5,7 @@ Copyright 1993 Giorgio Ciucci (giorgio@crcc.it)
 <HTML><HEAD><TITLE>Man page of SHMOP</TITLE>
 </HEAD><BODY>
 <H1>SHMOP</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2004-05-27<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2004-11-10<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -33,11 +33,10 @@ shmop - shared memory operations
 <A NAME="lbAD">&nbsp;</A>
 <H2>DESCRIPTION</H2>
 
-The function
-<B>shmat</B>
+<B>shmat</B>()
 
 attaches the shared memory segment identified by
-<B>shmid</B>
+<I>shmid</I>
 
 to the address space of the calling process.
 The attaching address is specified by
@@ -65,7 +64,7 @@ isn't
 and
 <B>SHM_RND</B>
 
-is asserted in
+is specified in
 <I>shmflg</I>,
 
 the attach occurs at the address equal to
@@ -83,7 +82,7 @@ must be a page-aligned address at which the attach occurs.
 If
 <B>SHM_RDONLY</B>
 
-is asserted in
+is specified in
 <I>shmflg</I>,
 
 the segment is attached for reading and the process must have
@@ -96,11 +95,11 @@ There is no notion of a write-only shared memory segment.
 The (Linux-specific)
 <B>SHM_REMAP</B>
 
-flag may be asserted in
+flag may be specified in
 <I>shmflg</I>
 
 to indicate that the mapping of the segment should replace
-any existing mapping in the range starting at 
+any existing mapping in the range starting at
 <I>shmaddr</I>
 
 and continuing for the size of the segment.
@@ -117,7 +116,7 @@ must not be
 <P>
 
 The
-<B>brk</B>
+<B><A HREF="../man2/brk.2.html">brk</A></B>(2)
 
 value of the calling process is not altered by the attach.
 The segment will automatically be detached at process exit.
@@ -125,35 +124,33 @@ The same segment may be attached as a read and as a read-write
 one, and more than once, in the process's address space.
 <P>
 
-On a successful
-<B>shmat</B>
+A successful
+<B>shmat</B>()
 
-call the system updates the members of the
+call updates the members of the
 <B>shmid_ds</B>
 
-structure associated to the shared memory segment as follows:
+structure (see
+<B><A HREF="../man2/shmctl.2.html">shmctl</A></B>(2))
+
+associated with the shared memory segment as follows:
 <DL COMPACT>
 <DT><DD>
-<B>shm_atime</B>
+<I>shm_atime</I>
 
 is set to the current time.
 <DT><DD>
-<B>shm_lpid</B>
+<I>shm_lpid</I>
 
 is set to the process-ID of the calling process.
 <DT><DD>
-<B>shm_nattch</B>
+<I>shm_nattch</I>
 
 is incremented by one.
 </DL>
 <P>
 
-Note that the attach succeeds also if the shared memory segment is
-marked to be deleted.
-<P>
-
-The function
-<B>shmdt</B>
+<B>shmdt</B>()
 
 detaches the shared memory segment located at the address specified by
 <I>shmaddr</I>
@@ -163,62 +160,58 @@ The to-be-detached segment must be currently
 attached with
 <I>shmaddr</I>
 
-equal to the value returned by the its attaching
-<B>shmat</B>
+equal to the value returned by the attaching
+<B>shmat</B>()
 
 call.
 <P>
 
 On a successful
-<B>shmdt</B>
+<B>shmdt</B>()
 
 call the system updates the members of the
-<B>shmid_ds</B>
+<I>shmid_ds</I>
 
 structure associated with the shared memory segment as follows:
 <DL COMPACT>
 <DT><DD>
-<B>shm_dtime</B>
+<I>shm_dtime</I>
 
 is set to the current time.
 <DT><DD>
-<B>shm_lpid</B>
+<I>shm_lpid</I>
 
 is set to the process-ID of the calling process.
 <DT><DD>
-<B>shm_nattch</B>
+<I>shm_nattch</I>
 
 is decremented by one.
 If it becomes 0 and the segment is marked for deletion,
 the segment is deleted.
 </DL>
-<P>
-
-The occupied region in the user space of the calling process is
-unmapped.
 <A NAME="lbAE">&nbsp;</A>
 <H2>SYSTEM CALLS</H2>
 
 <DL COMPACT>
-<DT><B>fork()</B>
+<DT><B>fork</B>()
 
 <DD>
 After a
-<B>fork()</B>
+<B>fork</B>()
 
 the child inherits the attached shared memory segments.
-<DT><B>exec()</B>
+<DT><B>exec</B>()
 
 <DD>
 After an
-<B>exec()</B>
+<B>exec</B>()
 
 all attached shared memory segments are detached from the process.
-<DT><B>exit()</B>
+<DT><B>exit</B>()
 
 <DD>
 Upon
-<B>exit()</B>
+<B>exit</B>()
 
 all attached shared memory segments are detached from the process.
 </DL>
@@ -226,10 +219,10 @@ all attached shared memory segments are detached from the process.
 <H2>RETURN VALUE</H2>
 
 On success
-<B>shmat</B>
+<B>shmat</B>()
 
 returns the address of the attached shared memory segment, and
-<B>shmdt</B>
+<B>shmdt</B>()
 
 returns 0.
 On failure both functions return -1 with
@@ -240,7 +233,7 @@ indicating the error.
 <H2>ERRORS</H2>
 
 When
-<B>shmat</B>
+<B>shmat</B>()
 
 fails,
 <I>errno</I>
@@ -269,13 +262,13 @@ value, or failing attach at
 <B>brk</B>,
 
 
-or 
+or
 <B>SHM_REMAP</B>
 
 was specified and
 <I>shmaddr</I>
 
-was 
+was
 <B>NULL</B>.
 
 <DT><B>ENOMEM</B>
@@ -285,13 +278,12 @@ Could not allocate memory for the descriptor or for the page tables.
 </DL>
 <P>
 
-The function
-<B>shmdt</B>
+<B>shmdt</B>()
 
 can fail only if there is no shared memory segment attached at
-<I>shmaddr</I>,
+<I>shmaddr</I>;
 
-in such a case at return
+in this case,
 <I>errno</I>
 
 will be set to
@@ -301,7 +293,7 @@ will be set to
 <H2>NOTES</H2>
 
 Using
-<B>shmat</B>
+<B>shmat</B>()
 
 with
 <I>shmaddr</I>
@@ -317,14 +309,20 @@ made relative (typically to the starting address of the segment),
 rather than absolute.
 <P>
 
-The following system parameter affects a
-<B>shmat</B>
+On Linux, it is possible to attach a shared memory segment even if it
+already marked to be deleted.
+However, POSIX.1-2001 does not specify this behaviour and
+many other implementations do not support it.
+<P>
 
-system call:
+The following system parameter affects
+<B>shmat</B>():
+
 <DL COMPACT>
-<DT><B>SHMLBA</B>
-
+<DT>
 <DD>
+<B>SHMLBA</B>
+
 Segment low boundary address multiple.
 Must be page aligned.
 For the current implementation the
@@ -333,10 +331,12 @@ For the current implementation the
 value is
 <B>PAGE_SIZE</B>.
 
+
+
 </DL>
 <P>
 
-The implementation has no intrinsic limit to the per-process maximum
+The implementation places no intrinsic limit on the per-process maximum
 number of shared memory segments
 (<B>SHMSEG</B>).
 
@@ -396,6 +396,6 @@ prototypes; glibc2 has
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 02:10:07 GMT, April 20, 2020
+Time: 02:11:53 GMT, April 20, 2020
 </BODY>
 </HTML>

@@ -4,7 +4,7 @@
 <HTML><HEAD><TITLE>Man page of FCNTL</TITLE>
 </HEAD><BODY>
 <H1>FCNTL</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2004-05-27<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2004-12-08<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -122,8 +122,21 @@ Remaining bits (access mode, file creation flags) in
 <I>arg</I>
 
 are ignored.
-On Linux this command can only change the O_APPEND, O_NONBLOCK, O_ASYNC,
-and O_DIRECT flags.
+On Linux this command can only change the
+<B>O_APPEND</B>,
+
+<B>O_ASYNC</B>,
+
+<B>O_DIRECT</B>,
+
+<B>O_NOATIME</B>,
+
+and 
+<B>O_NONBLOCK</B>
+
+flags.
+
+
 </DL>
 <P>
 
@@ -213,7 +226,7 @@ field can be used to place a read
 (<B>F_RDLCK</B>)
 
 or a write
-(<B>F_WDLCK</B>)
+(<B>F_WRLCK</B>)
 
 lock on a file.
 Any number of processes may hold a read lock (shared lock)
@@ -399,7 +412,7 @@ Get the process ID or process group currently receiving SIGIO
 and SIGURG signals for events on file descriptor
 <I>fd</I>.
 
-Process groups are returned as negative values.
+Process groups are returned as negative values (but see BUGS below).
 <DT><B>F_SETOWN</B>
 
 <DD>
@@ -934,8 +947,29 @@ Clearly,
 
 alone is not going to be very useful if the process holding the lock
 may live on a different machine.
-<P>
 <A NAME="lbAO">&nbsp;</A>
+<H2>BUGS</H2>
+
+A limitation of the Linux system call conventions on some
+architectures (notably x86) means that if a (negative)
+process group ID to be returned by
+<B>F_GETOWN</B>
+
+falls in the range -1 to -4095, then the return value is wrongly
+interpreted by glibc as an error in the system call;
+
+that is, the return value of
+<B>fcntl</B>()
+
+will be -1, and
+<I>errno</I>
+
+will contain the (positive) process group ID.
+
+
+
+
+<A NAME="lbAP">&nbsp;</A>
 <H2>CONFORMING TO</H2>
 
 SVr4, SVID, POSIX, X/OPEN, BSD 4.3.  Only the operations F_DUPFD,
@@ -956,7 +990,7 @@ options and flags not documented here.
 <P>
 
 SVr4 documents additional EIO, ENOLINK and EOVERFLOW error conditions.
-<A NAME="lbAP">&nbsp;</A>
+<A NAME="lbAQ">&nbsp;</A>
 <H2>SEE ALSO</H2>
 
 <B><A HREF="../man2/dup2.2.html">dup2</A></B>(2),
@@ -995,13 +1029,14 @@ See also locks.txt, mandatory.txt, and dnotify.txt in
 <DT><A HREF="#lbAL">RETURN VALUE</A><DD>
 <DT><A HREF="#lbAM">ERRORS</A><DD>
 <DT><A HREF="#lbAN">NOTES</A><DD>
-<DT><A HREF="#lbAO">CONFORMING TO</A><DD>
-<DT><A HREF="#lbAP">SEE ALSO</A><DD>
+<DT><A HREF="#lbAO">BUGS</A><DD>
+<DT><A HREF="#lbAP">CONFORMING TO</A><DD>
+<DT><A HREF="#lbAQ">SEE ALSO</A><DD>
 </DL>
 <HR>
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 02:09:55 GMT, April 20, 2020
+Time: 02:11:52 GMT, April 20, 2020
 </BODY>
 </HTML>

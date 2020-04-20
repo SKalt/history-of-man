@@ -5,13 +5,14 @@ Copyright (c) 1994,1995 Mike Battersby &lt;mib@deakin.edu.au&gt;
 <HTML><HEAD><TITLE>Man page of SIGACTION</TITLE>
 </HEAD><BODY>
 <H1>SIGACTION</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2001-12-29<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2004-11-11<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
 <H2>NAME</H2>
 
-sigaction, sigprocmask, sigpending, sigsuspend - POSIX signal handling functions
+sigaction, sigprocmask, sigpending, sigsuspend -
+POSIX signal handling API
 <A NAME="lbAC">&nbsp;</A>
 <H2>SYNOPSIS</H2>
 
@@ -37,7 +38,7 @@ sigaction, sigprocmask, sigpending, sigsuspend - POSIX signal handling functions
 <H2>DESCRIPTION</H2>
 
 The
-<B>sigaction</B>
+<B>sigaction</B>()
 
 system call is used to change the action taken by a process on
 receipt of a specific signal.
@@ -71,7 +72,7 @@ is non-null, the previous action is saved in
 <P>
 
 The
-<B>sigaction</B>
+<I>sigaction</I>
 
 structure is defined as something like
 <P>
@@ -145,10 +146,7 @@ the signal handler.  In addition, the signal which triggered the handler
 will be blocked, unless the
 <B>SA_NODEFER</B>
 
-or
-<B>SA_NOMASK</B>
-
-flags are used.
+flag is used.
 <P>
 
 <I>sa_flags</I>
@@ -164,20 +162,44 @@ If
 <I>signum</I>
 
 is
-<B>SIGCHLD</B>, 
+<B>SIGCHLD</B>,
 
-do not receive notification when child processes stop (i.e., when child
-processes receive one of
+do not receive notification when child processes stop (i.e., when they
+receive one of
 <B>SIGSTOP</B>, <B>SIGTSTP</B>, <B>SIGTTIN</B>
 
 or
-<B>SIGTTOU</B>).
+<B>SIGTTOU</B>)
 
-<DT><B>SA_ONESHOT</B> or <B>SA_RESETHAND</B>
+or resume (i.e., they receive
+<B>SIGCONT</B>)
+
+(see
+<B><A HREF="../man2/wait.2.html">wait</A></B>(2)).
+
+<DT><B>SA_NOCLDWAIT</B>
+
+<DD>
+(Linux 2.6 and later)
+
+If
+<I>signum</I>
+
+is
+<B>SIGCHLD</B>,
+
+do not transform children into zombies when they terminate.
+See also
+<B><A HREF="../man2/waitpid.2.html">waitpid</A></B>(2).
+
+<DT><B>SA_RESETHAND</B>
 
 <DD>
 Restore the signal action to the default state once the signal handler
 has been called.
+<B>SA_ONESHOT</B>
+
+is an obsolete, non-standard synonym for this flag.
 <DT><B>SA_ONSTACK</B>
 
 <DD>
@@ -190,11 +212,14 @@ If an alternate stack is not available, the default stack will be used.
 <DD>
 Provide behaviour compatible with BSD signal semantics by making certain
 system calls restartable across signals.
-<DT><B>SA_NOMASK</B> or <B>SA_NODEFER</B>
+<DT><B>SA_NODEFER</B>
 
 <DD>
 Do not prevent the signal from being received from within its own signal
 handler.
+<B>SA_NOMASK</B>
+
+is an obsolete, non-standard synonym for this flag.
 <DT><B>SA_SIGINFO</B>
 
 <DD>
@@ -204,7 +229,10 @@ The signal handler takes 3 arguments, not one.  In this case,
 should be set instead of
 <I>sa_handler</I>.
 
-(The sa_sigaction field was added in Linux 2.1.86.)
+(The
+<I>sa_sigaction</I>
+
+field was added in Linux 2.1.86.)
 </DL>
 </DL>
 
@@ -247,13 +275,16 @@ siginfo_t {
 are defined for all signals.
 The rest of the struct may be a union, so that one should only
 read the fields that are meaningful for the given signal.
-<B><A HREF="../man2/kill.2.html">kill</A></B>(2),
+POSIX.1b signals and
+<B>SIGCHLD</B>
 
-POSIX.1b signals and SIGCHLD fill in
+fill in
 <I>si_pid</I> and <I>si_uid</I>.
 
 
-SIGCHLD also fills in
+<B>SIGCHLD</B>
+
+also fills in
 <I>si_status</I>, <I>si_utime</I> and <I>si_stime</I>.
 
 <I>si_int</I> and <I>si_ptr</I>
@@ -262,11 +293,22 @@ are specified by the sender of the POSIX.1b signal.
 
 
 
-SIGILL, SIGFPE, SIGSEGV and SIGBUS fill in
+<B>SIGILL</B>,
+
+<B>SIGFPE</B>,
+
+<B>SIGSEGV</B>,
+
+and
+<B>SIGBUS</B>
+
+fill in
 <I>si_addr</I>
 
 with the address of the fault.
-SIGPOLL fills in
+<B>SIGPOLL</B>
+
+fills in
 <I>si_band</I> and <I>si_fd</I>.
 
 <P>
@@ -277,13 +319,14 @@ values which are possible for any signal are listed in this table:
 <TABLE BORDER>
 <TR VALIGN=top><TD ALIGN=center COLSPAN=2><I>si_code</I><BR></TD></TR>
 <TR VALIGN=top><TD>Value</TD><TD>Signal origin<BR></TD></TR>
-<TR VALIGN=top><TD>SI_USER</TD><TD>kill, sigsend or raise<BR></TD></TR>
+<TR VALIGN=top><TD>SI_USER</TD><TD>kill(), sigsend(), or raise()<BR></TD></TR>
 <TR VALIGN=top><TD>SI_KERNEL</TD><TD>The kernel<BR></TD></TR>
-<TR VALIGN=top><TD>SI_QUEUE</TD><TD>sigqueue<BR></TD></TR>
-<TR VALIGN=top><TD>SI_TIMER</TD><TD>timer expired<BR></TD></TR>
-<TR VALIGN=top><TD>SI_MESGQ</TD><TD>mesq state changed<BR></TD></TR>
+<TR VALIGN=top><TD>SI_QUEUE</TD><TD>sigqueue()<BR></TD></TR>
+<TR VALIGN=top><TD>SI_TIMER</TD><TD>POSIX timer expired<BR></TD></TR>
+<TR VALIGN=top><TD>SI_MESGQ</TD><TD>POSIX message queue state changed (since Linux 2.6.6)<BR></TD></TR>
 <TR VALIGN=top><TD>SI_ASYNCIO</TD><TD>AIO completed<BR></TD></TR>
 <TR VALIGN=top><TD>SI_SIGIO</TD><TD>queued SIGIO<BR></TD></TR>
+<TR VALIGN=top><TD>SI_TKILL</TD><TD>tkill() or tgkill() (since Linux 2.4.19)<BR></TD></TR>
 </TABLE>
 
 <P>
@@ -342,7 +385,7 @@ values which are possible for any signal are listed in this table:
 <TR VALIGN=top><TD>CLD_DUMPED</TD><TD>child terminated abnormally<BR></TD></TR>
 <TR VALIGN=top><TD>CLD_TRAPPED</TD><TD>traced child has trapped<BR></TD></TR>
 <TR VALIGN=top><TD>CLD_STOPPED</TD><TD>child has stopped<BR></TD></TR>
-<TR VALIGN=top><TD>CLD_CONTINUED</TD><TD>stopped child has continued<BR></TD></TR>
+<TR VALIGN=top><TD>CLD_CONTINUED</TD><TD>stopped child has continued (since Linux 2.6.9)<BR></TD></TR>
 </TABLE>
 
 <P>
@@ -360,7 +403,7 @@ values which are possible for any signal are listed in this table:
 <P>
 
 The
-<B>sigprocmask</B>
+<B>sigprocmask</B>()
 
 call is used to change the list of currently blocked signals. The 
 behaviour of the call is dependent on the value of
@@ -404,7 +447,7 @@ is non-null, the previous value of the signal mask is stored in
 <P>
 
 The
-<B>sigpending</B>
+<B>sigpending</B>()
 
 call allows the examination of pending signals (ones which have been
 raised while blocked).  The signal mask of pending signals is stored
@@ -414,7 +457,7 @@ in
 <P>
 
 The
-<B>sigsuspend</B>
+<B>sigsuspend</B>()
 
 call temporarily replaces the signal mask for the process with that
 given by 
@@ -425,17 +468,15 @@ and then suspends the process until a signal is received.
 <A NAME="lbAE">&nbsp;</A>
 <H2>RETURN VALUE</H2>
 
-The functions
-<B>sigaction</B>,
+<B>sigaction</B>(),
 
-<B>sigprocmask</B>,
+<B>sigprocmask</B>(),
 
 and
-<B>sigpending</B>
+<B>sigpending</B>()
 
 return 0 on success and -1 on error.
-The function
-<B>sigsuspend</B>
+<B>sigsuspend</B>()
 
 always returns -1, normally with the error
 <B>EINTR</B>.
@@ -477,26 +518,78 @@ with the sigprocmask call.  Attempts to do so will be silently ignored.
 <P>
 
 According to POSIX, the behaviour of a process is undefined after it
-ignores a SIGFPE, SIGILL, or SIGSEGV signal that was not generated
-by the <I>kill()</I> or the <I>raise()</I> functions.
+ignores a
+<B>SIGFPE</B>,
+
+<B>SIGILL</B>,
+
+or
+<B>SIGSEGV</B>
+
+signal that was not generated by
+<B>kill</B>()
+
+or
+<B>raise</B>().
+
 Integer division by zero has undefined result.
-On some architectures it will generate a SIGFPE signal.
+On some architectures it will generate a
+<B>SIGFPE</B>
+
+signal.
 (Also dividing the most negative integer by -1 may generate SIGFPE.)
 Ignoring this signal might lead to an endless loop.
 <P>
 
-POSIX (B.3.3.1.3) disallows setting the action for SIGCHLD to SIG_IGN.
-The BSD and SYSV behaviours differ, causing BSD software
-that sets the action for SIGCHLD to SIG_IGN to fail on Linux.
+POSIX.1-1990 disallowed setting the action for
+<B>SIGCHLD</B>
+
+to
+<B>SIG_IGN</B>.
+
+POSIX.1-2001 allows this possibility, so that ignoring
+<B>SIGCHLD</B>
+
+can be used to prevent the creation of zombies (see
+<B><A HREF="../man2/wait.2.html">wait</A></B>(2)).
+
+Nevertheless, the historical BSD and System V behaviours for ignoring
+<B>SIGCHLD</B>
+
+differ, so that the only completely portable method of ensuring that
+terminated children do not become zombies is to catch the
+<B>SIGCHLD</B>
+
+signal and perform a
+<B><A HREF="../man2/wait.2.html">wait</A></B>(2)
+
+or similar.
 <P>
 
-The POSIX spec only defines
+POSIX.1-1990 only specified
 <B>SA_NOCLDSTOP</B>.
 
-Use of other
+POSIX.1-2001 added
+<B>SA_NOCLDWAIT</B>,
+
+<B>SA_RESETHAND</B>,
+
+<B>SA_NODEFER</B>,
+
+and
+<B>SA_SIGINFO</B>.
+
+Use of these latter values in
 <I>sa_flags</I>
 
-is non-portable.
+may be less portable in applications intended for older
+Unix implementations.
+<P>
+
+Support for
+<B>SA_SIGINFO</B>
+
+was added in Linux 2.2.
 <P>
 
 The
@@ -517,6 +610,7 @@ allowed the receipt of any signal, not just the one we are installing
 settings).
 <P>
 
+
 The
 <B>SA_RESETHAND</B> and <B>SA_NODEFER</B>
 
@@ -524,13 +618,7 @@ names for SVr4 compatibility are present only in library versions 3.0.9
 and greater.
 <P>
 
-The
-<B>SA_SIGINFO</B>
-
-flag is specified by POSIX.1b.  Support for it was added in Linux 2.2.
-<P>
-
-<B>sigaction</B>
+<B>sigaction</B>()
 
 can be called with a null second argument to query the current signal
 handler. It can also be used to check whether a given signal is valid for
@@ -553,7 +641,10 @@ Before the introduction of
 <B>SA_SIGINFO</B>
 
 it was also possible to get some additional information,
-namely by using a sa_handler with second argument of type
+namely by using a
+<I>sa_handler</I>
+
+with second argument of type
 <I>struct sigcontext.</I>
 
 See the relevant kernel sources for details.
@@ -566,15 +657,19 @@ This use is obsolete now.
 
 <B><A HREF="../man2/kill.2.html">kill</A></B>(2),
 
-<B><A HREF="../man2/killpg.2.html">killpg</A></B>(2),
-
 <B><A HREF="../man2/pause.2.html">pause</A></B>(2),
 
 <B><A HREF="../man2/sigaltstack.2.html">sigaltstack</A></B>(2),
 
 <B><A HREF="../man2/signal.2.html">signal</A></B>(2),
 
+<B><A HREF="../man2/sigqueue.2.html">sigqueue</A></B>(2),
+
 <B><A HREF="../man2/sigvec.2.html">sigvec</A></B>(2),
+
+<B><A HREF="../man2/wait.2.html">wait</A></B>(2),
+
+<B><A HREF="../man3/killpg.3.html">killpg</A></B>(3),
 
 <B><A HREF="../man3/raise.3.html">raise</A></B>(3),
 
@@ -603,6 +698,6 @@ This use is obsolete now.
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 02:10:07 GMT, April 20, 2020
+Time: 02:11:53 GMT, April 20, 2020
 </BODY>
 </HTML>

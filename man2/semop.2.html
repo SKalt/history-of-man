@@ -5,7 +5,7 @@ Copyright 1993 Giorgio Ciucci (giorgio@crcc.it)
 <HTML><HEAD><TITLE>Man page of SEMOP</TITLE>
 </HEAD><BODY>
 <H1>SEMOP</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2003-04-28<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2004-11-10<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -40,8 +40,7 @@ semop, semtimedop - semaphore operations
 <A NAME="lbAD">&nbsp;</A>
 <H2>DESCRIPTION</H2>
 
-A semaphore is represented by an anonymous structure
-including the following members:
+Each semaphore in a semaphore set has the following associated values:
 <P>
 
 <PRE>
@@ -52,10 +51,9 @@ pid_t           sempid;   /* process that did last op */
 
 </PRE>
 
-The function
-<B>semop</B>
+<B>semop</B>()
 
-performs operations on selected members of the semaphore set indicated by
+performs operations on selected semaphores in the set indicated by
 <I>semid</I>.
 
 Each of the
@@ -64,16 +62,17 @@ Each of the
 elements in the array pointed to by
 <I>sops</I>
 
-specifies an operation to be performed on a semaphore by a
-<B>struct sembuf</B>
+specifies an operation to be performed on a single semaphore.
+The elements of this structure are of type
+<B>struct sembuf</B>,
 
-including the following members:
+containing the following members:
 <P>
 
 <PRE>
-unsigned short sem_num; /* semaphore number */
-short sem_op;                   /* semaphore operation */
-short sem_flg;                  /* operation flags */
+unsigned short sem_num;  /* semaphore number */
+short          sem_op;   /* semaphore operation */
+short          sem_flg;  /* operation flags */
 
 </PRE>
 
@@ -86,10 +85,10 @@ are
 and
 <B>SEM_UNDO</B>.
 
-If an operation asserts
+If an operation specifies
 <B>SEM_UNDO</B>,
 
-it will be undone when the process exits.
+it will be automatically undone when the process terminates.
 <P>
 
 The set of operations contained in
@@ -113,9 +112,7 @@ Each operation is performed on the
 <I>sem_num</I>-th
 
 semaphore of the semaphore set, where the first semaphore of the set
-is semaphore
-<B>0</B>.
-
+is numbered 0.
 There are three types of operation, distinguished by the value of
 <I>sem_op</I>.
 
@@ -131,7 +128,7 @@ the semaphore value
 Furthermore, if
 <B>SEM_UNDO</B>
 
-is asserted for this operation, the system updates the process undo count
+is specified for this operation, the system updates the process undo count
 (<I>semadj</I>)
 
 for this semaphore.
@@ -142,7 +139,7 @@ The calling process must have alter permission on the semaphore set.
 If
 <I>sem_op</I>
 
-is zero, the process must have read access permission on the semaphore
+is zero, the process must have read permission on the semaphore
 set.
 This is a &quot;wait-for-zero&quot; operation: if
 <I>semval</I>
@@ -151,10 +148,12 @@ is zero, the operation can immediately proceed.
 Otherwise, if
 <B>IPC_NOWAIT</B>
 
-is asserted in
+is specified in
 <I>sem_flg</I>,
 
-the system call fails with
+<B>semop</B>()
+
+fails with
 <I>errno</I>
 
 set to
@@ -180,7 +179,10 @@ becomes 0, at which time the value of
 is decremented.
 <DT>&bull;<DD>
 The semaphore set
-is removed: the system call fails, with
+is removed:
+<B>semop</B>()
+
+fails, with
 <I>errno</I>
 
 set to
@@ -191,7 +193,10 @@ The calling process catches a signal:
 the value of
 <I>semzcnt</I>
 
-is decremented and the system call fails, with
+is decremented and
+<B>semop</B>()
+
+fails, with
 <I>errno</I>
 
 set to
@@ -202,9 +207,12 @@ The time limit specified by
 <I>timeout</I>
 
 in a
-<B>semtimedop</B>
+<B>semtimedop</B>()
 
-call expires: the system call fails, with
+call expires:
+<B>semop</B>()
+
+fails, with
 <I>errno</I>
 
 set to
@@ -234,7 +242,7 @@ is subtracted from
 and, if
 <B>SEM_UNDO</B>
 
-is asserted for this operation, the system updates the process undo count
+is specified for this operation, the system updates the process undo count
 (<I>semadj</I>)
 
 for this semaphore.
@@ -247,10 +255,12 @@ is greater than
 and
 <B>IPC_NOWAIT</B>
 
-is asserted in
+is specified in
 <I>sem_flg</I>,
 
-the system call fails, with
+<B>semop</B>()
+
+fails, with
 <I>errno</I>
 
 set to
@@ -285,12 +295,15 @@ is subtracted from
 and, if
 <B>SEM_UNDO</B>
 
-is asserted for this operation, the system updates the process undo count
+is specified for this operation, the system updates the process undo count
 (<I>semadj</I>)
 
 for this semaphore.
 <DT>&bull;<DD>
-The semaphore set is removed from the system: the system call fails with
+The semaphore set is removed from the system:
+<B>semop</B>()
+
+fails, with
 <I>errno</I>
 
 set to
@@ -301,7 +314,10 @@ The calling process catches a signal:
 the value of
 <I>semncnt</I>
 
-is decremented and the system call fails with
+is decremented and 
+<B>semop</B>()
+
+fails, with
 <I>errno</I>
 
 set to
@@ -312,7 +328,7 @@ The time limit specified by
 <I>timeout</I>
 
 in a
-<B>semtimedop</B>
+<B>semtimedop</B>()
 
 call expires: the system call fails, with
 <I>errno</I>
@@ -338,11 +354,10 @@ In addition, the
 is set to the current time.
 <P>
 
-The function
-<B>semtimedop</B>
+<B>semtimedop</B>()
 
-behaves identically to the function
-<B>semop</B>
+behaves identically to 
+<B>semop</B>()
 
 except that in those cases were the calling process would sleep,
 the duration of that sleep is limited by the amount of elapsed
@@ -353,7 +368,9 @@ structure whose address is passed in the
 <I>timeout</I>
 
 parameter.  If the specified time limit has been reached,
-the system call fails with
+<B>semtimedop</B>()
+
+fails with
 <I>errno</I>
 
 set to
@@ -370,20 +387,22 @@ parameter is
 <B>NULL</B>,
 
 then
-<B>semtimedop</B>
+<B>semtimedop</B>()
 
 behaves exactly like
-<B>semop</B>.
+<B>semop</B>().
 
 <A NAME="lbAE">&nbsp;</A>
 <H2>RETURN VALUE</H2>
 
-If successful the system call returns
-<B>0</B>,
+If successful
+<B>semop</B>()
 
-otherwise it returns
-<B>-1</B>
+and 
+<B>semtimedop</B>()
 
+return 0;
+otherwise they return -1
 with
 <I>errno</I>
 
@@ -422,7 +441,7 @@ capability.
 An operation could not proceed immediately and either
 <B>IPC_NOWAIT</B>
 
-was asserted in its
+was specified in
 <I>sem_flg</I>
 
 or the time limit specified in
@@ -471,7 +490,7 @@ has a non-positive value.
 The
 <I>sem_flg</I>
 
-of some operation asserted
+of some operation specified
 <B>SEM_UNDO</B>
 
 and the system does not have enough memory to allocate the undo
@@ -498,19 +517,19 @@ The
 structures of a process aren't inherited across a
 <B><A HREF="../man2/fork.2.html">fork</A></B>(2)
 
-system call, but they are inherited across a
+system call, but they are inherited across an
 <B><A HREF="../man2/execve.2.html">execve</A></B>(2)
 
 system call.
 <P>
 
-<B>semop</B>
+<B>semop</B>()
 
 is never automatically restarted after being interrupted by a signal handler,
 regardless of the setting of the
 <B>SA_RESTART</B>
 
-flags when establishing a signal handler.
+flag when establishing a signal handler.
 <P>
 
 <I>semadj</I>
@@ -542,8 +561,8 @@ for a semaphore can all be retrieved using appropriate
 calls.
 <P>
 
-The followings are limits on semaphore set resources affecting a
-<B>semop</B>
+The following limits on semaphore set resources affect the
+<B>semop</B>()
 
 call:
 <DL COMPACT>
@@ -551,9 +570,13 @@ call:
 
 <DD>
 Maximum number of operations allowed for one
-<B>semop</B>
+<B>semop</B>()
 
-call (32).
+call (32)
+(on Linux, this limit can be read and modified via the third field of
+<I>/proc/sys/kernel/sem</I>).
+
+
 <DT><B>SEMVMX</B>
 
 <DD>
@@ -635,6 +658,6 @@ ENOSPC.
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 02:10:04 GMT, April 20, 2020
+Time: 02:11:53 GMT, April 20, 2020
 </BODY>
 </HTML>

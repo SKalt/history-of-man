@@ -5,7 +5,7 @@ Copyright (c) 1993 Luigi P. Bai (lpb@softint.com) July 28, 1993
 <HTML><HEAD><TITLE>Man page of SHMCTL</TITLE>
 </HEAD><BODY>
 <H1>SHMCTL</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2004-06-17<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2004-11-10<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -28,25 +28,31 @@ shmctl - shared memory control
 <A NAME="lbAD">&nbsp;</A>
 <H2>DESCRIPTION</H2>
 
-<B>shmctl()</B>
-allows the user to receive information on a shared memory segment,
-set the owner, group, and permissions of a shared memory segment,
-or destroy a segment. The information about the segment identified by
-<I>shmid</I> is returned in a <I>shmid_ds</I>
-structure:
+<B>shmctl</B>()
+
+allows the caller to obtain information about a shared memory segment,
+set the owner, group, and permissions of a segment,
+or destroy a segment.
+<P>
+
+The
+<I>buf</I>
+
+argument is a pointer to a <I>shmid_ds</I> structure,
+defined in &lt;<A HREF="file:///usr/include/sys/shm.h">sys/shm.h</A>&gt; as follows:
 <P>
 
 
 <PRE>
 struct shmid_ds {
-    struct ipc_perm shm_perm;  /* operation perms */
-    int shm_segsz;             /* size of segment (bytes) */
-    time_t shm_atime;          /* last attach time */
-    time_t shm_dtime;          /* last detach time */
-    time_t shm_ctime;          /* last change time */
-    unsigned short shm_cpid;   /* pid of creator */
-    unsigned short shm_lpid;   /* pid of last operator */
-    short shm_nattch;          /* no. of current attaches */
+    struct ipc_perm shm_perm;    /* Ownership and permissions */
+    size_t          shm_segsz;   /* Size of segment (bytes) */
+    time_t          shm_atime;   /* Last attach time */
+    time_t          shm_dtime;   /* Last detach time */
+    time_t          shm_ctime;   /* Last change time */
+    pid_t           shm_cpid;    /* PID of creator */
+    pid_t           shm_lpid;    /* PID of last stmat()/shmdt() */
+    shmatt_t        shm_nattch;  /* No. of current attaches */
     ...
 };
 </PRE>
@@ -54,78 +60,130 @@ struct shmid_ds {
 
 <P>
 
-The highlighted fields in the member <I>shm_perm</I> can be set:
+The
+<I>ipc_perm</I>
+
+structure is defined in &lt;<A HREF="file:///usr/include/sys/ipc.h">sys/ipc.h</A>&gt; as follows
+(the highlighted fields are settable using
+<B>IPC_SET</B>):
+
 <P>
 
 
 <PRE>
 struct ipc_perm {
-    key_t  key;
-    <B>ushort uid</B>;   /* <B>owner</B> euid and egid */
-    <B>ushort gid</B>;
-    ushort cuid;  /* creator euid and egid */
-    ushort cgid;
-    <B>ushort mode</B>;  /* lower 9 bits of access modes */
-    ushort seq;   /* sequence number */
+    key_t key;            /* Key supplied to shmget() */
+    uid_t <B>uid</B>;            /* Effective UID of owner */
+    gid_t <B>gid</B>;            /* Effective GID of owner */
+    uid_t cuid;           /* Effective UID of creator */
+    gid_t cgid;           /* Effective GID of creator */
+    unsigned short <B>mode</B>;  /* <B>Permissions</B> + SHM_DEST and
+                             SHM_LOCKED flags */
+    unsigned short seq;   /* Sequence number */
 };
 </PRE>
 
 
 <P>
 
-The following <I>cmds</I> are available:
+Valid values for
+<I>cmd</I>
+
+are:
 <BR>
 
 <DL COMPACT>
 <DT><B>IPC_STAT</B>
 
 <DD>
-is used to copy the information about the shared memory segment into
-the buffer <I>buf</I>. The user must have <B>read</B> access to the
+Copy information from the kernel data structure associated with
+<I>shmid</I>
+
+into the
+<I>shmid_ds</I>
+
+structure pointed to by <I>buf</I>.
+The caller must have read permission on the
 shared memory segment.
 <DT><B>IPC_SET</B>
 
 <DD>
-is used to apply the changes the user has made to the <I>uid</I>, <I>gid</I>,
-or <I>mode</I> members of the <I>shm_perms</I> field.  Only the lowest 9 bits
-of <I>mode</I> are used.  The
+Write the values of some members of the
+<I>shmid_ds</I>
+
+structure pointed to by
+<I>arg.buf</I>
+
+to the kernel data structure associated with this shared memory segment,
+updating also its
 <I>shm_ctime</I>
 
-member is also updated.  The user must be the owner or creator, or be
-privileged.
+member.
+The following fields can be changed:
+<I>shm_perms.uid</I>, <I>shm_perms.gid</I>,
+and (the least significant 9 bits of) <I>shm_perms.mode</I>.
+The effective UID of the calling process must match the owner
+(<I>shm_perm.uid</I>)
+
+or creator
+(<I>shm_perm.cuid</I>)
+
+of the shared memory segment, or the caller must be privileged.
 <DT><B>IPC_RMID</B>
 
 <DD>
-is used to mark the segment as destroyed. It will actually be destroyed
-after the last detach.  (I.e., when the
+Mark the segment to be destroyed.
+The segment will only actually be destroyed
+after the last process detaches it (i.e., when the
 <I>shm_nattch</I>
 
 member of the associated structure
 <I>shmid_ds</I>
 
-is zero.)  The user must be the owner or creator, or be privileged.
+is zero).
+The caller must be the owner or creator, or be privileged.
+If a segment has been marked for destruction, then the (non-standard)
+<B>SHM_DEST</B>
+
+flag of the
+<I>shm_perm.mode</I>
+
+field in the associated data structure retrieved by
+<B>IPC_STAT</B>
+
+will be set.
 </DL>
 <P>
 
-The user <I>must</I> ensure that a segment is eventually destroyed; otherwise
-its pages that were faulted in will remain in memory or swap.
+The caller <I>must</I> ensure that a segment is eventually destroyed;
+otherwise its pages that were faulted in will remain in memory or swap.
 <A NAME="lbAE">&nbsp;</A>
 <H3>Linux additions</H3>
 
-A privileged user can prevent or allow swapping of a shared
-memory segment with the following <I>cmds</I>:
+A privileged caller can prevent or allow swapping of a shared
+memory segment with the following <I>cmd</I> values:
 <BR>
 
 <DL COMPACT>
 <DT><B>SHM_LOCK</B>
 
 <DD>
-prevents swapping of a shared memory segment. The user must fault in
+Prevent swapping of the shared memory segment. The caller must fault in
 any pages that are required to be present after locking is enabled.
+If a segment has been locked, then the (non-standard)
+<B>SHM_LOCKED</B>
+
+flag of the
+<I>shm_perm.mode</I>
+
+field in the associated data structure retrieved by
+<B>IPC_STAT</B>
+
+will be set.
 <DT><B>SHM_UNLOCK</B>
 
 <DD>
-allows the shared memory segment to be swapped out.
+Unlock the segment, allowing it to be swapped out.
 </DL>
 <P>
 
@@ -189,6 +247,21 @@ isn't accessible.
 <DD>
 <I>shmid</I> is not a valid identifier, or <I>cmd</I>
 is not a valid command.
+<DT><B>ENOMEM</B>
+
+<DD>
+(In kernels since 2.6.9),
+<B>SHM_LOCK</B>
+
+was specified and the size of the to-be-locked segment would mean 
+that the total bytes in locked shared memory segments would exceed
+the limit for the real user ID of the calling process.
+This limit is defined by the
+<B>RLIMIT_MEMLOCK</B>
+
+soft resource limit (see
+<B><A HREF="../man2/setrlimit.2.html">setrlimit</A></B>(2)).
+
 <DT><B>EOVERFLOW</B>
 
 <DD>
@@ -213,7 +286,7 @@ and the process was not privileged (Linux: did not have the
 
 capability).
 <P>
-Or,
+Or (in kernels before 2.6.9),
 <B>SHM_LOCK</B>
 
 or
@@ -224,6 +297,10 @@ was specified, but the process was not privileged
 <B>CAP_IPC_LOCK</B>
 
 capability).
+(Since Linux 2.6.9, this error can also occur if the
+<B>RLIMIT_MEMLOCK</B>
+
+is 0 and the caller is not privileged.)
 </DL>
 <A NAME="lbAH">&nbsp;</A>
 <H2>NOTE</H2>
@@ -242,6 +319,10 @@ ENOENT, ENOSPC, ENOMEM, EEXIST.  Neither SVr4 nor SVID documents
 an EIDRM error condition.
 <A NAME="lbAJ">&nbsp;</A>
 <H2>SEE ALSO</H2>
+
+<B><A HREF="../man2/mlock.2.html">mlock</A></B>(2),
+
+<B><A HREF="../man2/setrlimit.2.html">setrlimit</A></B>(2),
 
 <B><A HREF="../man2/shmget.2.html">shmget</A></B>(2),
 
@@ -270,6 +351,6 @@ an EIDRM error condition.
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 02:10:06 GMT, April 20, 2020
+Time: 02:11:53 GMT, April 20, 2020
 </BODY>
 </HTML>

@@ -5,7 +5,7 @@ Copyright 1993 Giorgio Ciucci (giorgio@crcc.it)
 <HTML><HEAD><TITLE>Man page of SEMCTL</TITLE>
 </HEAD><BODY>
 <H1>SEMCTL</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2004-06-17<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2004-11-10<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -26,8 +26,7 @@ semctl - semaphore control operations
 <A NAME="lbAD">&nbsp;</A>
 <H2>DESCRIPTION</H2>
 
-The function
-<B>semctl</B>
+<B>semctl</B>()
 
 performs the control operation specified by
 <I>cmd</I>
@@ -39,39 +38,69 @@ or on the
 <I>semnum</I>-th
 
 semaphore of that set.
-(Semaphores are numbered starting at 0.)
+(The semaphores in a set are numbered starting at 0.)
 <P>
 
-This function has three or four arguments. When there
-are four, the call is
-<B>semctl(</B><I>semid</I><B>,</B><I>semnum</I><B>,</B><I>cmd</I><B>,</B><I>arg</I><B>);</B>
+This function has three or four arguments, depending on
+<I>cmd</I>.
 
-where the fourth argument
-<I>arg</I>
+When there are four, the fourth has the type
+<I>union semun</I>.
 
-has a type
-<B>union semun</B>
-
-defined as follows:
+The <I>calling program</I> must define this union as follows:
 <P>
 <PRE>
-#if defined(__GNU_LIBRARY__) &amp;&amp; !defined(_SEM_SEMUN_UNDEFINED)
-/* union semun is defined by including &lt;<A HREF="file:///usr/include/sys/sem.h">sys/sem.h</A>&gt; */
-#else
-/* according to X/OPEN we have to define it ourselves */
 union semun {
-      int val;                  /* value for SETVAL */
-      struct semid_ds *buf;     /* buffer for IPC_STAT, IPC_SET */
-      unsigned short *array;    /* array for GETALL, SETALL */
-                                /* Linux specific part: */
-      struct seminfo *__buf;    /* buffer for IPC_INFO */
+    int              val;    /* Value for SETVAL */
+    struct semid_ds *buf;    /* Buffer for IPC_STAT, IPC_SET */
+    unsigned short  *array;  /* Array for GETALL, SETALL */
+    struct seminfo  *__buf;  /* Buffer for IPC_INFO 
+                                (Linux specific) */
 };
-#endif
 </PRE>
 
 <P>
 
-Legal values for
+The
+<I>semid_ds</I>
+
+data structure is defined in &lt;<A HREF="file:///usr/include/sys/sem.h">sys/sem.h</A>&gt; as follows:
+<PRE>
+
+struct semid_ds {
+    struct ipc_perm sem_perm;  /* Ownership and permissions
+    time_t          sem_otime; /* Last semop time */
+    time_t          sem_ctime; /* Last change time */
+    unsigned short  sem_nsems; /* No. of semaphores in set */
+};
+</PRE>
+
+<P>
+
+The
+<I>ipc_perm</I>
+
+structure is defined in &lt;<A HREF="file:///usr/include/sys/ipc.h">sys/ipc.h</A>&gt; as follows
+(the highlighted fields are settable using
+<B>IPC_SET</B>):
+
+<P>
+
+<PRE>
+struct ipc_perm {
+    key_t key;            /* Key supplied to semget() */
+    uid_t <B>uid</B>;            /* Effective UID of owner */
+    gid_t <B>gid</B>;            /* Effective GID of owner */
+    uid_t cuid;           /* Effective UID of creator */
+    gid_t cgid;           /* Effective GID of creator */
+    unsigned short <B>mode</B>;  /* Permissions */
+    unsigned short seq;   /* Sequence number */
+};
+</PRE>
+
+<P>
+
+Valid values for
 <I>cmd</I>
 
 are:
@@ -79,46 +108,49 @@ are:
 <DT><B>IPC_STAT</B>
 
 <DD>
-Copy info from the semaphore set data structure
-into the structure pointed to by
-<I>arg</I><B>.buf</B><I></I>.
+Copy information from the kernel data structure associated with
+<I>semid</I>
+
+into the
+<I>semid_ds</I>
+
+structure pointed to by
+<I>arg.buf</I>.
 
 The argument
 <I>semnum</I>
 
 is ignored.
-The calling process must have read access privileges on the semaphore set.
+The calling process must have read permission on the semaphore set.
 <DT><B>IPC_SET</B>
 
 <DD>
 Write the values of some members of the
-<B>semid_ds</B>
+<I>semid_ds</I>
 
 structure pointed to by
-<I>arg</I><B>.buf</B>
+<I>arg.buf</I>
 
-to the semaphore set data structure, updating also its
-<B>sem_ctime</B>
+to the kernel data structure associated with this semaphore set,
+updating also its
+<I>sem_ctime</I>
 
 member.
-Considered members from the user supplied
-<B>struct semid_ds</B>
+The following members of the structure are updated: 
+<I>sem_perm.uid</I>,
 
-pointed to by
-<I>arg</I><B>.buf</B>
+<I>sem_perm.gid</I>,
 
-are
-<PRE>
+and (the least significant 9 bits of)
+<I>sem_perm.mode</I>.
 
-<B>        sem_perm.uid
-        sem_perm.gid
-        sem_perm.mode   </B>/* only lowest 9-bits */
-</PRE>
+The effective UID of the calling process must match the owner
+(<I>sem_perm.uid</I>)
 
+or creator 
+(<I>sem_perm.cuid</I>)
 
-<P>
-The effective user-ID of the calling process must be that of the
-super-user, or match the creator or owner of the semaphore set.
+of the semaphore set, or the caller must be privileged.
 The argument
 <I>semnum</I>
 
@@ -126,15 +158,19 @@ is ignored.
 <DT><B>IPC_RMID</B>
 
 <DD>
-Immediately remove the semaphore set and its data structures
-awakening all waiting processes (with an error return and
-<B>errno</B>
+Immediately remove the semaphore set,
+awakening all processes blocked in
+<B>semop</B>()
+
+calls on the set (with an error return and
+<I>errno</I>
 
 set to
 <B>EIDRM</B>).
 
-The effective user-ID of the calling process must be that of the
-super-user, or match the creator or owner of the semaphore set.
+The effective user-ID of the calling process must
+match the creator or owner of the semaphore set,
+or the caller must be privileged.
 The argument
 <I>semnum</I>
 
@@ -145,21 +181,23 @@ is ignored.
 Return
 <B>semval</B>
 
+(i.e., the current value)
 for all semaphores of the set into
-<I>arg</I><B>.array</B><I></I>.
+<I>arg.array</I><B>.</B>
 
 The argument
 <I>semnum</I>
 
 is ignored.
-The calling process must have read access privileges on the semaphore set.
+The calling process must have read permission on the semaphore set.
 <DT><B>GETNCNT</B>
 
 <DD>
 The system call returns the value of
 <B>semncnt</B>
 
-for the
+(i.e., the number of processes waiting for the value of
+this semaphore to increase) for the
 <I>semnum</I>-th
 
 semaphore of the set
@@ -170,7 +208,7 @@ for the
 <I>semnum</I>-th
 
 semaphore of the set).
-The calling process must have read access privileges on the semaphore set.
+The calling process must have read permission on the semaphore set.
 <DT><B>GETPID</B>
 
 <DD>
@@ -181,14 +219,14 @@ for the
 <I>semnum</I>-th
 
 semaphore of the set
-(i.e. the pid of the process that executed the last
-<B>semop</B>
+(i.e. the PID of the process that executed the last
+<B>semop</B>()
 
 call for the
 <I>semnum</I>-th
 
 semaphore of the set).
-The calling process must have read access privileges on the semaphore set.
+The calling process must have read permission on the semaphore set.
 <DT><B>GETVAL</B>
 
 <DD>
@@ -199,14 +237,15 @@ for the
 <I>semnum</I>-th
 
 semaphore of the set.
-The calling process must have read access privileges on the semaphore set.
+The calling process must have read permission on the semaphore set.
 <DT><B>GETZCNT</B>
 
 <DD>
 The system call returns the value of
 <B>semzcnt</B>
 
-for the
+(i.e., the number of processes waiting for the value of
+this semaphore to become zero) for the
 <I>semnum</I>-th
 
 semaphore of the set
@@ -217,7 +256,7 @@ of the
 <I>semnum</I>-th
 
 semaphore of the set to become 0).
-The calling process must have read access privileges on the semaphore set.
+The calling process must have read permission on the semaphore set.
 <DT><B>SETALL</B>
 
 <DD>
@@ -225,25 +264,29 @@ Set
 <B>semval</B>
 
 for all semaphores of the set using
-<I>arg</I><B>.array</B><I>,</I>
+<I>arg.array</I><B>,</B>
 
 updating also the
-<B>sem_ctime</B>
+<I>sem_ctime</I>
 
 member of the
-<B>semid_ds</B>
+<I>semid_ds</I>
 
-structure associated to the set.
-Undo entries are cleared for altered semaphores in all processes.
-Processes sleeping on the wait queue are awakened if some
-<B>semval</B>
+structure associated with the set.
+Undo entries (see
+<B><A HREF="../man2/semop.2.html">semop</A></B>(2))
 
-becomes 0 or increases.
+are cleared for altered semaphores in all processes.
+If the changes to semaphore values would permit blocked
+<B>semop</B>()
+
+calls in other processes to proceed, then those processes are woken up.
 The argument
 <I>semnum</I>
 
 is ignored.
-The calling process must have alter access privileges on the semaphore set.
+The calling process must have alter (write) permission on
+the semaphore set.
 <DT><B>SETVAL</B>
 
 <DD>
@@ -251,36 +294,34 @@ Set the value of
 <B>semval</B>
 
 to
-<I>arg</I><B>.val</B>
+<I>arg.val</I>
 
 for the
 <I>semnum</I>-th
 
 semaphore of the set, updating also the
-<B>sem_ctime</B>
+<I>sem_ctime</I>
 
 member of the
-<B>semid_ds</B>
+<I>semid_ds</I>
 
-structure associated to the set.
+structure associated with the set.
 Undo entries are cleared for altered semaphores in all processes.
-Processes sleeping on the wait queue are awakened if
-<B>semval</B>
+If the changes to semaphore values would permit blocked
+<B>semop</B>()
 
-becomes 0 or increases.
-The calling process must have alter access privileges on the semaphore set.
+calls in other processes to proceed, then those processes are woken up.
+The calling process must have alter permission on the semaphore set.
 </DL>
 <A NAME="lbAE">&nbsp;</A>
 <H2>RETURN VALUE</H2>
 
 On failure
-<B>semctl</B>
+<B>semctl</B>()
 
-returns
-<B>-1</B>
-
+returns -1
 with
-<B>errno</B>
+<I>errno</I>
 
 indicating the error.
 Otherwise the system call returns a nonnegative value depending on
@@ -323,7 +364,7 @@ values return 0 on success.
 <H2>ERRORS</H2>
 
 On failure,
-<B>errno</B>
+<I>errno</I>
 
 will be set to one of the following:
 <DL COMPACT>
@@ -362,10 +403,10 @@ capability.
 
 <DD>
 The address pointed to by
-<I>arg</I><B>.buf</B>
+<I>arg.buf</I>
 
 or
-<I>arg</I><B>.array</B>
+<I>arg.array</I>
 
 isn't accessible.
 <DT><B>EIDRM</B>
@@ -387,13 +428,13 @@ or
 The argument
 <I>cmd</I>
 
-has value
+has the value
 <B>IPC_SET</B>
 
 or
 <B>IPC_RMID</B>
 
-but the but the effective user ID of the calling process is not the creator
+but the effective user ID of the calling process is not the creator
 (as found in
 <I>sem_perm.cuid</I>)
 
@@ -412,7 +453,7 @@ capability.
 The argument
 <I>cmd</I>
 
-has value
+has the value
 <B>SETALL</B>
 
 or
@@ -421,8 +462,8 @@ or
 and the value to which
 <B>semval</B>
 
-has to be set (for some semaphore of the set) is less than 0
-or greater than the implementation value
+is to be set (for some semaphore of the set) is less than 0
+or greater than the implementation limit
 <B>SEMVMX</B>.
 
 </DL>
@@ -441,20 +482,32 @@ control calls are used by the
 <B><A HREF="../man8/ipcs.8.html">ipcs</A></B>(8)
 
 program to provide information on allocated resources.
-In the future these can be modified as needed or moved to a proc file system
+In the future these may modified or moved to a /proc file system
 interface.
 <P>
 
 Various fields in a <I>struct semid_ds</I> were shorts under Linux 2.2
 and have become longs under Linux 2.4. To take advantage of this,
 a recompilation under glibc-2.1.91 or later should suffice.
-(The kernel distinguishes old and new calls by a IPC_64 flag in
+(The kernel distinguishes old and new calls by an IPC_64 flag in
 <I>cmd</I>.)
 
 <P>
 
+In some earlier versions of glibc, the
+<I>semun</I>
+
+union was defined in &lt;<A HREF="file:///usr/include/sys/sem.h">sys/sem.h</A>&gt;, but POSIX.1-2001 requires
+that the caller define this union.
+On versions of glibc where this union is <I>not</I> defined,
+the macro
+<B>_SEM_SEMUN_UNDEFINED</B>
+
+is defined in &lt;<A HREF="file:///usr/include/sys/sem.h">sys/sem.h</A>&gt;.
+<P>
+
 The following system limit on semaphore sets affects a
-<B>semctl</B>
+<B>semctl</B>()
 
 call:
 <DL COMPACT>
@@ -469,13 +522,13 @@ implementation dependent (32767).
 <P>
 
 For greater portability it is best to always call
-<B>semctl</B>
+<B>semctl</B>()
 
 with four arguments.
 <P>
 
-Under Linux, the function
-<B>semctl</B>
+Under Linux,
+<B>semctl</B>()
 
 is not a system call, but is implemented via the system call
 <B><A HREF="../man2/ipc.2.html">ipc</A></B>(2).
@@ -515,6 +568,6 @@ SVr4, SVID.  SVr4 documents more error conditions EINVAL and EOVERFLOW.
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 02:10:04 GMT, April 20, 2020
+Time: 02:11:53 GMT, April 20, 2020
 </BODY>
 </HTML>

@@ -28,7 +28,7 @@ shmget - allocates a shared memory segment
 <A NAME="lbAD">&nbsp;</A>
 <H2>DESCRIPTION</H2>
 
-<B>shmget()</B>
+<B>shmget</B>()
 
 returns the identifier of the shared memory segment
 associated with the value of the argument
@@ -58,13 +58,38 @@ no shared memory segment corresponding to
 exists, and
 <B>IPC_CREAT</B>
 
-is asserted in
+is specified in
+<I>shmflg</I>.
+
+<P>
+
+If
 <I>shmflg</I>
 
-(i.e.
-<I>shmflg</I><B>&amp;IPC_CREAT</B>
+specifies both
+<B>IPC_CREAT</B>
 
-isn't zero).
+and
+<B>IPC_EXCL</B>
+
+and a shared memory segment already exists for
+<I>key</I>,
+
+then
+<B>shmget</B>()
+
+fails with 
+<I>errno</I>
+
+set to
+<B>EEXIST</B>.
+
+(This is analogous to the effect of the combination 
+<B>O_CREAT | O_EXCL</B>
+
+for
+<B><A HREF="../man2/open.2.html">open</A></B>(2).)
+
 <P>
 
 The value
@@ -76,7 +101,7 @@ is composed of:
 
 <DD>
 to create a new segment. If this flag is not used, then 
-<B>shmget()</B>
+<B>shmget</B>()
 
 will find the segment associated with <I>key</I> and check to see if 
 the user has permission to access the segment.
@@ -84,140 +109,102 @@ the user has permission to access the segment.
 
 <DD>
 used with <B>IPC_CREAT</B> to ensure failure if the segment already exists. 
-<DT><B>mode_flags (lowest 9 bits)</B>
+<DT><I>mode_flags </I>
 
 <DD>
+(least significant 9 bits)
 specifying the permissions granted to the owner, group, and world.
+These bits have the same format, and the same
+meaning, as the
+<I>mode</I>
+
+argument of
+<B><A HREF="../man2/open.2.html">open</A></B>(2).
+
 Presently, the execute permissions are not used by the system.
 
 </DL>
 <P>
 
-If a new segment is created, the access permissions from
-<I>shmflg</I>
-
-are copied into the 
-<I>shm_perm</I>
-
-member of the 
+If a new shared memory segment is created,
+then its associated data structure
 <I>shmid_ds</I>
 
-structure that defines the segment.
-The <I>shmid_ds</I> structure has the following form:
-<P>
+(see
+<B><A HREF="../man2/shmctl.2.html">shmctl</A></B>(2))
 
-
-<PRE>
-struct shmid_ds {
-    struct ipc_perm shm_perm;    /* operation perms */
-    int             shm_segsz;   /* size of segment (bytes) */
-    time_t          shm_atime;   /* last attach time */
-    time_t          shm_dtime;   /* last detach time */
-    time_t          shm_ctime;   /* last change time */
-    unsigned short  shm_cpid;    /* pid of creator */
-    unsigned short  shm_lpid;    /* pid of last operator */
-    short           shm_nattch;  /* no. of current attaches */
-};
-</PRE>
-
-
-<P>
-
-
-<PRE>
-struct ipc_perm {
-    key_t  key;
-    ushort uid;   /* owner euid and egid */
-    ushort gid;
-    ushort cuid;  /* creator euid and egid */
-    ushort cgid;
-    ushort mode;  /* lower 9 bits of <I>shmflg</I> */
-    ushort seq;   /* sequence number */
-};
-</PRE>
-
-<P>
-
-When creating a new shared memory segment,
-the system call initializes the <I>shmid_ds</I> data structure
-<B>shmid_ds</B>
-
-as follows:
+is initialised as follows:
 <DL COMPACT>
 <DT><DD>
-<B>shm_perm.cuid</B>
+<I>shm_perm.cuid</I>
 
 and
-<B>shm_perm.uid</B>
+<I>shm_perm.uid</I>
 
 are set to the effective user-ID of the calling process.
 <DT><DD>
-<B>shm_perm.cgid</B>
+<I>shm_perm.cgid</I>
 
 and
-<B>shm_perm.gid</B>
+<I>shm_perm.gid</I>
 
 are set to the effective group-ID of the calling process.
 <DT><DD>
-The lowest order 9 bits of
-<B>shm_perm.mode</B>
+The least significant 9 bits of
+<I>shm_perm.mode</I>
 
-are set to the lowest order 9 bit of
+are set to the least significant 9 bit of
 <I>shmflg</I>.
 
 <DT><DD>
-<B>shm_segsz</B>
+<I>shm_segsz</I>
 
 is set to the value of
 <I>size</I>.
 
 <DT><DD>
-<B>shm_lpid</B>,
+<I>shm_lpid</I>,
 
-<B>shm_nattch</B>,
+<I>shm_nattch</I>,
 
-<B>shm_atime</B>
+<I>shm_atime</I>
 
 and
-<B>shm_dtime</B>
+<I>shm_dtime</I>
 
-are set to
-<B>0</B>.
-
+are set to 0.
 <DT><DD>
-<B>shm_ctime</B>
+<I>shm_ctime</I>
 
 is set to the current time.
 </DL>
 <P>
 
-If the shared memory segment already exists, the access permissions are
+If the shared memory segment already exists, the permissions are
 verified, and a check is made to see if it is marked for destruction.
-<P>
-
 <A NAME="lbAE">&nbsp;</A>
 <H2>SYSTEM CALLS</H2>
 
 <DL COMPACT>
-<DT><B>fork()</B>
+<DT><B>fork</B>()
 
 <DD>
 After a
-<B>fork()</B>
+<B>fork</B>()
 
 the child inherits the attached shared memory segments.
-<DT><B>exec()</B>
+<DT><B>exec</B>()
 
 <DD>
 After an
-<B>exec()</B>
+<B>exec</B>()
 
 all attached shared memory segments are detached (not destroyed).
-<DT><B>exit()</B>
+<DT><B>exit</B>()
 
 <DD>
 Upon
-<B>exit()</B>
+<B>exit</B>()
 
 all attached shared memory segments are detached (not destroyed).
 </DL>
@@ -234,7 +221,7 @@ is returned on success, -1 on error.
 <H2>ERRORS</H2>
 
 On failure,
-<B>errno</B>
+<I>errno</I>
 
 is set to one of the following:
 <DL COMPACT>
@@ -296,32 +283,37 @@ would cause the system to exceed the system-wide limit on shared memory
 <B>IPC_PRIVATE</B>
 
 isn't a flag field but a
-<B>key_t</B>
+<I>key_t</I>
 
 type.
 If this special value is used for
 <I>key</I>,
 
-the system call ignores everything but the lowest order 9 bits of
+the system call ignores everything but the least significant 9 bits of
 <I>shmflg</I>
 
 and creates a new shared memory segment (on success).
 <P>
 
-The followings are limits on shared memory segment resources affecting a
-<B>shmget</B>
+The following limits on shared memory segment resources affect the
+<B>shmget</B>()
 
 call:
 <DL COMPACT>
 <DT><B>SHMALL</B>
 
 <DD>
-System wide maximum of shared memory pages: policy dependent.
+System wide maximum of shared memory pages
+(on Linux, this limit can be read and modified via
+<I>/proc/sys/kernel/shmall</I>).
+
 <DT><B>SHMMAX</B>
 
 <DD>
-Maximum size in bytes for a shared memory segment: implementation
-dependent (currently 4M).
+Maximum size in bytes for a shared memory segment: policy dependent
+(on Linux, this limit can be read and modified via
+<I>/proc/sys/kernel/shmmax</I>).
+
 <DT><B>SHMMIN</B>
 
 <DD>
@@ -334,7 +326,11 @@ is the effective minimum size).
 
 <DD>
 System wide maximum number of shared memory segments: implementation
-dependent (currently 4096, was 128 before Linux 2.3.99).
+dependent (currently 4096, was 128 before Linux 2.3.99;
+on Linux, this limit can be read and modified via
+<I>/proc/sys/kernel/shmmni</I>).
+
+
 </DL>
 <P>
 
@@ -352,7 +348,7 @@ would more clearly show its function.
 
 SVr4, SVID.  SVr4 documents an additional error condition EEXIST.
 Until version 2.3.30 Linux would return EIDRM for a
-<B>shmget</B>
+<B>shmget</B>()
 
 on a shared memory segment scheduled for deletion.
 <A NAME="lbAK">&nbsp;</A>
@@ -390,6 +386,6 @@ on a shared memory segment scheduled for deletion.
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 02:10:06 GMT, April 20, 2020
+Time: 02:11:53 GMT, April 20, 2020
 </BODY>
 </HTML>

@@ -5,7 +5,7 @@ Copyright 1993 Giorgio Ciucci &lt;giorgio@crcc.it&gt;
 <HTML><HEAD><TITLE>Man page of MSGOP</TITLE>
 </HEAD><BODY>
 <H1>MSGOP</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2004-05-27<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2004-11-10<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -46,7 +46,22 @@ msgop - message operations
 <A NAME="lbAD">&nbsp;</A>
 <H2>DESCRIPTION</H2>
 
-To send or receive a message, the calling process allocates a structure
+The
+<B>msgsnd</B>()
+
+and
+<B>msgrcv</B>()
+
+system calls are used, respectively, to send messages to,
+and receive messages from, a message queue.
+The calling process must have write permission on the message queue
+in order to send a message, and read permission to receive a message.
+<P>
+
+The
+<I>msgp</I>
+
+argument is a pointer to caller-defined structure 
 of the following general form:
 <P>
 <B><TT>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT>struct msgbuf {</B>
@@ -80,19 +95,17 @@ field) are permitted.
 The
 <I>mtype</I>
 
-field must have a strictly positive integer value that can be
+field must have a strictly positive integer value.
+This value can be
 used by the receiving process for message selection
-(see the section about
-<B>msgrcv</B>).
+(see the description of
+<B>msgrcv</B>()
 
-<P>
-
-The calling process must have write permission to send
-and read permission to receive a message on the queue.
+below).
 <P>
 
 The
-<B>msgsnd</B>
+<B>msgsnd</B>()
 
 system call appends a copy of the message pointed to by
 <I>msgp</I>
@@ -103,8 +116,8 @@ by
 
 <P>
 
-If sufficient space is available on the queue,
-<B>msgsnd</B>
+If sufficient space is available in the queue,
+<B>msgsnd</B>()
 
 succeeds immediately.
 (The queue capacity is defined by the
@@ -115,25 +128,25 @@ During queue creation this field is initialised to
 <B>MSGMNB</B>
 
 bytes, but this limit can be modified using
-<B>msgctl</B>.)
+<B>msgctl</B>().)
 
-If insufficient space is available on the queue, then the default
+If insufficient space is available in the queue, then the default
 behaviour of 
-<B>msgsnd</B>
+<B>msgsnd</B>()
 
 is to block until space becomes available.
 If
 <B>IPC_NOWAIT</B>
 
-is asserted in
-<B>msgflg</B>
+is specified in
+<I>msgflg</I>,
 
 then the call instead fails with the error
 <B>EAGAIN</B>.
 
 <P>
 A blocked 
-<B>msgsnd</B>
+<B>msgsnd</B>()
 
 call may also fail if the queue is removed 
 (in which case the system call fails with
@@ -152,7 +165,7 @@ set to
 (<B>msgsnd</B> and <B>msgrcv</B>
 
 are never automatically restarted after being interrupted by a 
-signal handler, regardless of the  setting  of the
+signal handler, regardless of the setting  of the
 <B>SA_RESTART</B>
 
 flag when establishing a signal handler.)
@@ -177,7 +190,7 @@ is set to the current time.
 <P>
 
 The system call
-<B>msgrcv</B>
+<B>msgrcv</B>()
 
 reads a message from the message queue specified by
 <I>msqid</I>
@@ -204,15 +217,23 @@ argument.
 If the message text has length greater than
 <I>msgsz</I>,
 
-then if the
-<I>msgflg</I>
+then the behaviour depends on whether 
+<B>MSG_NOERROR</B>
 
-argument asserts
-<B>MSG_NOERROR</B>,
+is specified in 
+<I>msgflg</I>.
 
+If
+<B>MSG_NOERROR</B>
+
+is specified, then
 the message text will be truncated (and the truncated part will be
-lost), otherwise the message isn't removed from the queue and
-the system call fails returning with
+lost); if 
+<B>MSG_NOERROR</B>
+
+is not specified, then
+the message isn't removed from the queue and
+the system call fails returning -1 with
 <I>errno</I>
 
 set to
@@ -229,28 +250,24 @@ specifies the type of message requested as follows:
 If
 <I>msgtyp</I>
 
-is
-<B>0</B>,
-
+is 0,
 then the first message in the queue is read.
 <DT><DD>
 If
 <I>msgtyp</I>
 
-is greater than
-<B>0</B>,
-
-then the first message on the queue of type
+is greater than 0,
+then the first message in the queue of type
 <I>msgtyp</I>
 
 is read, unless
 <B>MSG_EXCEPT</B>
 
-was asserted in
+was specified in
 <I>msgflg</I>,
 
 in which case
-the first message on the queue of type not equal to
+the first message in the queue of type not equal to
 <I>msgtyp</I>
 
 will be read.
@@ -258,10 +275,8 @@ will be read.
 If
 <I>msgtyp</I>
 
-is less than
-<B>0</B>,
-
-then the first message on the queue with the lowest type less than or
+is less than 0,
+then the first message in the queue with the lowest type less than or
 equal to the absolute value of
 <I>msgtyp</I>
 
@@ -272,32 +287,33 @@ will be read.
 The
 <I>msgflg</I>
 
-argument asserts none, one or more (or-ing them) of the following
-flags:
+argument is a bit mask constructed by ORing together zero or more
+of the following flags:
 <DL COMPACT>
-<DT><DD>
-<B>IPC_NOWAIT</B>
+<DT><B>IPC_NOWAIT</B>
 
-For immediate return if no message of the requested type is on the queue.
-The system call fails with errno set to
+<DD>
+For immediate return if no message of the requested type is in the queue.
+The system call fails with
+<I>errno</I>
+
+set to
 <B>ENOMSG</B>.
 
-<DT><DD>
-<B>MSG_EXCEPT</B>
+<DT><B>MSG_EXCEPT</B>
 
+<DD>
 Used with
 <I>msgtyp</I>
 
-greater than
-<B>0</B>
-
-to read the first message on the queue with message type that differs
+greater than 0
+to read the first message in the queue with message type that differs
 from
 <I>msgtyp</I>.
 
-<DT><DD>
-<B>MSG_NOERROR</B>
+<DT><B>MSG_NOERROR</B>
 
+<DD>
 To truncate the message text if longer than
 <I>msgsz</I>
 
@@ -308,13 +324,13 @@ bytes.
 If no message of the requested type is available and
 <B>IPC_NOWAIT</B>
 
-isn't asserted in
+isn't specified in
 <I>msgflg</I>,
 
 the calling process is blocked until one of the following conditions occurs:
 <DL COMPACT>
 <DT><DD>
-A message of the desired type is placed on the queue.
+A message of the desired type is placed in the queue.
 <DT><DD>
 The message queue is removed from the system.
 In this case the system call fails with
@@ -353,21 +369,17 @@ is set to the current time.
 <A NAME="lbAE">&nbsp;</A>
 <H2>RETURN VALUE</H2>
 
-On a failure both functions return
-<B>-1</B>
-
+On failure both functions return -1
 with
 <I>errno</I>
 
 indicating the error,
 otherwise
-<B>msgsnd</B>
+<B>msgsnd</B>()
 
-returns
-<B>0</B>
-
+returns 0
 and
-<B>msgrvc</B>
+<B>msgrvc</B>()
 
 returns the number of bytes actually copied into the
 <I>mtext</I>
@@ -377,9 +389,9 @@ array.
 <H2>ERRORS</H2>
 
 When
-<B>msgsnd</B>
+<B>msgsnd</B>()
 
-fails, at return
+fails, 
 <I>errno</I>
 
 will be set to one among the following values:
@@ -401,7 +413,7 @@ The message can't be sent due to the
 limit for the queue and
 <B>IPC_NOWAIT</B>
 
-was asserted in
+was specified in
 <I>mgsflg</I>.
 
 <DT><B>EFAULT</B>
@@ -445,9 +457,9 @@ The system has not enough memory to make a copy of the supplied
 <P>
 
 When
-<B>msgrcv</B>
+<B>msgrcv</B>()
 
-fails, at return
+fails, 
 <I>errno</I>
 
 will be set to one among the following values:
@@ -461,7 +473,7 @@ The message text length is greater than
 and
 <B>MSG_NOERROR</B>
 
-isn't asserted in
+isn't specified in
 <I>msgflg</I>.
 
 <DT><B>EACCES</B>
@@ -488,25 +500,22 @@ the message queue was removed.
 
 <DD>
 While the process was sleeping to receive a message,
-the process received a signal that had to be caught.
+the process caught a signal.
 <DT><B>EINVAL</B>
 
 <DD>
-Illegal
 <I>msgqid</I>
 
-value, or
+was invalid, or
 <I>msgsz</I>
 
-less than
-<B>0</B>.
-
+was less than 0.
 <DT><B>ENOMSG</B>
 
 <DD>
 <B>IPC_NOWAIT</B>
 
-was asserted in
+was specified in
 <I>msgflg</I>
 
 and no message of the requested type existed on the message queue.
@@ -514,25 +523,30 @@ and no message of the requested type existed on the message queue.
 <A NAME="lbAG">&nbsp;</A>
 <H2>NOTES</H2>
 
-The followings are system limits affecting a
-<B>msgsnd</B>
+The following limits on message queue resources affect the
+<B>msgsnd</B>()
 
-system call:
+call:
 <DL COMPACT>
 <DT><B>MSGMAX</B>
 
 <DD>
-Maximum size for a message text: the implementation set this value to
-8192 bytes.
+Maximum size for a message text: 8192 bytes
+(on Linux, this limit can be read and modified via
+<I>/proc/sys/kernel/msgmax</I>).
+
 <DT><B>MSGMNB</B>
 
 <DD>
-Default maximum size in bytes of a message queue: 16384 bytes.
-The super-user can increase the size of a message queue beyond
+Default maximum size in bytes of a message queue: 16384 bytes
+(on Linux, this limit can be read and modified via
+<I>/proc/sys/kernel/msgmnb</I>).
+
+The superuser can increase the size of a message queue beyond
 <B>MSGMNB</B>
 
 by a
-<B>msgctl</B>
+<B>msgctl</B>()
 
 system call.
 </DL>
@@ -589,6 +603,6 @@ libc4, libc5, glibc 2.0, glibc 2.1. It is declared as <I>void *</I>
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 02:10:00 GMT, April 20, 2020
+Time: 02:11:53 GMT, April 20, 2020
 </BODY>
 </HTML>

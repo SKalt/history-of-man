@@ -4,7 +4,7 @@
 <HTML><HEAD><TITLE>Man page of OPEN</TITLE>
 </HEAD><BODY>
 <H1>OPEN</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2004-06-23<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2004-12-08<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -32,7 +32,7 @@ The
 
 system call is used to convert a pathname into a file descriptor
 (a small, non-negative integer for use in subsequent I/O as with
-<B>read</B>, <B>write</B>, etc.).
+<B><A HREF="../man2/read.2.html">read</A></B>(2), <B><A HREF="../man2/write.2.html">write</A></B>(2), etc.).
 
 When the call is successful, the file descriptor returned will be
 the lowest file descriptor not currently open for the process.
@@ -59,6 +59,36 @@ bitwise-<I>or</I>'d
 
 with zero or more of the following:
 <DL COMPACT>
+<DT><B>O_APPEND</B>
+
+<DD>
+The file is opened in append mode. Before each
+<B>write</B>(),
+
+the file pointer is positioned at the end of the file,
+as if with
+<B>lseek</B>().
+
+<B>O_APPEND</B>
+
+may lead to corrupted files on NFS file systems if more than one process
+appends data to a file at once.  This is because NFS does not support
+appending to a file, so the client kernel has to simulate it, which
+can't be done without a race condition.
+<DT><B>O_ASYNC</B>
+
+<DD>
+
+
+Generate a signal (SIGIO by default, but this can be changed via
+<B><A HREF="../man2/fcntl.2.html">fcntl</A></B>(2))
+
+when input or output becomes possible on this file descriptor.
+This feature is only available for terminals, pseudo-terminals, and
+sockets. See
+<B><A HREF="../man2/fcntl.2.html">fcntl</A></B>(2)
+
+for further details.
 <DT><B>O_CREAT</B>
 
 <DD>
@@ -76,104 +106,6 @@ and
 of the ext2 filesystem, as described in
 <B><A HREF="../man8/mount.8.html">mount</A></B>(8)).
 
-<DT><B>O_EXCL</B>
-
-<DD>
-When used with
-<B>O_CREAT</B>,
-
-if the file already exists it is an error and the
-<B>open</B>
-
-will fail. In this context, a symbolic link exists, regardless
-of where its points to.
-<B>O_EXCL</B>
-
-is broken on NFS file systems, programs which rely on it for performing
-locking tasks will contain a race condition.  The solution for performing
-atomic file locking using a lockfile is to create a unique file on the same
-fs (e.g., incorporating hostname and pid), use
-<B><A HREF="../man2/link.2.html">link</A></B>(2)
-
-to make a link to the lockfile. If <B>link()</B> returns 0, the lock is
-successful.  Otherwise, use
-<B><A HREF="../man2/stat.2.html">stat</A></B>(2)
-
-on the unique file to check if its link count has increased to 2,
-in which case the lock is also successful.
-<DT><B>O_NOCTTY</B>
-
-<DD>
-If
-<I>pathname</I>
-
-refers to a terminal device --- see
-<B><A HREF="../man4/tty.4.html">tty</A></B>(4)
-
---- it will not become the process's controlling terminal even if the
-process does not have one.
-<DT><B>O_TRUNC</B>
-
-<DD>
-If the file already exists and is a regular file and the open mode allows
-writing (i.e., is O_RDWR or O_WRONLY) it will be truncated to length 0.
-If the file is a FIFO or terminal device file, the O_TRUNC
-flag is ignored. Otherwise the effect of O_TRUNC is unspecified.
-<DT><B>O_APPEND</B>
-
-<DD>
-The file is opened in append mode. Before each
-<B>write</B>,
-
-the file pointer is positioned at the end of the file,
-as if with
-<B>lseek</B>.
-
-<B>O_APPEND</B>
-
-may lead to corrupted files on NFS file systems if more than one process
-appends data to a file at once.  This is because NFS does not support
-appending to a file, so the client kernel has to simulate it, which
-can't be done without a race condition.
-<DT><B>O_NONBLOCK</B> or <B>O_NDELAY</B>
-
-<DD>
-When possible, the file is opened in non-blocking mode. Neither the
-<B>open</B>
-
-nor any subsequent operations on the file descriptor which is
-returned will cause the calling process to wait.
-For the handling of FIFOs (named pipes), see also
-<B><A HREF="../man4/fifo.4.html">fifo</A></B>(4).
-
-This mode need not have any effect on files other than FIFOs.
-<DT><B>O_SYNC</B>
-
-<DD>
-The file is opened for synchronous I/O. Any
-<B>write</B>s
-
-on the resulting file descriptor will block the calling process until
-the data has been physically written to the underlying hardware.
-<I>See RESTRICTIONS below, though.</I>
-
-<DT><B>O_NOFOLLOW</B>
-
-<DD>
-If <I>pathname</I> is a symbolic link, then the open fails.  This is a
-FreeBSD extension, which was added to Linux in version 2.1.126.
-Symbolic links in earlier components of the pathname will still be
-followed.  The headers from glibc 2.0.100 and later include a
-definition of this flag; <I>kernels before 2.1.126 will ignore it if
-used</I>.
-<DT><B>O_DIRECTORY</B>
-
-<DD>
-If <I>pathname</I> is not a directory, cause the open to fail.  This
-flag is Linux-specific, and was added in kernel version 2.1.126, to
-avoid denial-of-service problems if <B><A HREF="../man3/opendir.3.html">opendir</A></B>(3) is called on a
-FIFO or tape device, but should not be used outside of the
-implementation of <B>opendir</B>.
 <DT><B>O_DIRECT</B>
 
 <DD>
@@ -199,18 +131,39 @@ suffices.
 A semantically similar interface for block devices is described in
 <B><A HREF="../man8/raw.8.html">raw</A></B>(8).
 
-<DT><B>O_ASYNC</B>
+<DT><B>O_DIRECTORY</B>
 
 <DD>
-Generate a signal (SIGIO by default, but this can be changed via
-<B><A HREF="../man2/fcntl.2.html">fcntl</A></B>(2))
+If <I>pathname</I> is not a directory, cause the open to fail.  This
+flag is Linux-specific, and was added in kernel version 2.1.126, to
+avoid denial-of-service problems if <B><A HREF="../man3/opendir.3.html">opendir</A></B>(3) is called on a
+FIFO or tape device, but should not be used outside of the
+implementation of <B>opendir</B>.
+<DT><B>O_EXCL</B>
 
-when input or output becomes possible on this file descriptor.
-This feature is only available for terminals, pseudo-terminals, and
-sockets. See
-<B><A HREF="../man2/fcntl.2.html">fcntl</A></B>(2)
+<DD>
+When used with
+<B>O_CREAT</B>,
 
-for further details.
+if the file already exists it is an error and the
+<B>open</B>()
+
+will fail. In this context, a symbolic link exists, regardless
+of where its points to.
+<B>O_EXCL</B>
+
+is broken on NFS file systems, programs which rely on it for performing
+locking tasks will contain a race condition.  The solution for performing
+atomic file locking using a lockfile is to create a unique file on
+the same file system (e.g., incorporating hostname and pid), use
+<B><A HREF="../man2/link.2.html">link</A></B>(2)
+
+to make a link to the lockfile. If <B>link()</B> returns 0, the lock is
+successful.  Otherwise, use
+<B><A HREF="../man2/stat.2.html">stat</A></B>(2)
+
+on the unique file to check if its link count has increased to 2,
+in which case the lock is also successful.
 <DT><B>O_LARGEFILE</B>
 
 <DD>
@@ -222,11 +175,73 @@ Allow files whose sizes cannot be represented in an
 <B>off64_t</B>)
 
 to be opened.
+<DT><B>O_NOATIME</B>
+
+<DD>
+(Since Linux 2.6.8)
+Do not update the file last access time when the file is
+<B><A HREF="../man2/read.2.html">read</A></B>(2).
+
+This flag is intended for use by indexing or backup programs,
+where its use can significantly reduce the amount of disk activity.
+This flag may not be effective on all filesystems.
+One example is NFS, where the server maintains the access time.
+
+
+<DT><B>O_NOCTTY</B>
+
+<DD>
+If
+<I>pathname</I>
+
+refers to a terminal device --- see
+<B><A HREF="../man4/tty.4.html">tty</A></B>(4)
+
+--- it will not become the process's controlling terminal even if the
+process does not have one.
+<DT><B>O_NOFOLLOW</B>
+
+<DD>
+If <I>pathname</I> is a symbolic link, then the open fails.  This is a
+FreeBSD extension, which was added to Linux in version 2.1.126.
+Symbolic links in earlier components of the pathname will still be
+followed.  The headers from glibc 2.0.100 and later include a
+definition of this flag; <I>kernels before 2.1.126 will ignore it if
+used</I>.
+<DT><B>O_NONBLOCK</B> or <B>O_NDELAY</B>
+
+<DD>
+When possible, the file is opened in non-blocking mode. Neither the
+<B>open</B>()
+
+nor any subsequent operations on the file descriptor which is
+returned will cause the calling process to wait.
+For the handling of FIFOs (named pipes), see also
+<B><A HREF="../man4/fifo.4.html">fifo</A></B>(4).
+
+This mode need not have any effect on files other than FIFOs.
+<DT><B>O_SYNC</B>
+
+<DD>
+The file is opened for synchronous I/O. Any
+<B>write</B>()s
+
+on the resulting file descriptor will block the calling process until
+the data has been physically written to the underlying hardware.
+<I>See RESTRICTIONS below, though.</I>
+
+<DT><B>O_TRUNC</B>
+
+<DD>
+If the file already exists and is a regular file and the open mode allows
+writing (i.e., is O_RDWR or O_WRONLY) it will be truncated to length 0.
+If the file is a FIFO or terminal device file, the O_TRUNC
+flag is ignored. Otherwise the effect of O_TRUNC is unspecified.
 </DL>
 <P>
 
 Some of these optional flags can be altered using
-<B>fcntl</B>
+<B>fcntl</B>()
 
 after the file has been opened.
 <P>
@@ -242,7 +257,7 @@ in the usual way: the permissions of the created file are
 
 Note that this mode only applies to future accesses of the
 newly created file; the
-<B>open</B>
+<B>open</B>()
 
 call that creates a read-only file may well return a read/write
 file descriptor.
@@ -313,10 +328,10 @@ is in the
 
 and is ignored otherwise.
 <P>
-<B>creat</B>
+<B>creat</B>()
 
 is equivalent to
-<B>open</B>
+<B>open</B>()
 
 with
 <I>flags</I>
@@ -327,17 +342,18 @@ equal to
 <A NAME="lbAE">&nbsp;</A>
 <H2>RETURN VALUE</H2>
 
-<B>open</B> and <B>creat</B>
+<B>open</B>() and <B>creat</B>()
 
-return the new file descriptor, or -1 if an error occurred (in which case,
+return the new file descriptor, or -1 if an error occurred
+(in which case,
 <I>errno</I>
 
 is set appropriately).
 Note that
-<B>open</B>
+<B>open</B>()
 
 can open device special files, but
-<B>creat</B>
+<B>creat</B>()
 
 cannot create them - use
 <B><A HREF="../man2/mknod.2.html">mknod</A></B>(2)
@@ -345,10 +361,12 @@ cannot create them - use
 instead.
 <P>
 
-On NFS file systems with UID mapping enabled, <B>open</B> may return a file
-descriptor but e.g. <B><A HREF="../man2/read.2.html">read</A></B>(2) requests are denied with <B>EACCES</B>.
-This is because the client performs <B>open</B> by checking the permissions,
-but UID mapping is performed by the server upon read and write requests.
+On NFS file systems with UID mapping enabled, <B>open</B> may 
+return a file descriptor but e.g. <B><A HREF="../man2/read.2.html">read</A></B>(2) requests are denied
+with <B>EACCES</B>.
+This is because the client performs <B>open</B> by checking the
+permissions, but UID mapping is performed by the server upon
+read and write requests.
 <P>
 If the file is newly created, its atime, ctime, mtime fields are set
 to the current time, and so are the ctime and mtime fields of the
@@ -472,6 +490,17 @@ Or, the file is a device special file and no corresponding device exists.
 <I>pathname</I>
 
 refers to a regular file, too large to be opened - see O_LARGEFILE above.
+<DT><B>EPERM</B>
+
+<DD>
+The
+<B>O_NOATIME</B>
+
+flag was specified, but the effective user ID of the caller
+
+did not match the owner of the file and the caller was not privileged
+(<B>CAP_FOWNER</B>).
+
 <DT><B>EROFS</B>
 
 <DD>
@@ -501,7 +530,9 @@ for use with
 
 SVr4, SVID, POSIX, X/OPEN, BSD 4.3.
 The
-<B>O_NOFOLLOW</B>
+<B>O_NOATIME</B>,
+
+<B>O_NOFOLLOW</B>,
 
 and
 <B>O_DIRECTORY</B>
@@ -603,6 +634,6 @@ corresponding to the flags <B>O_SYNC</B>, <B>O_DSYNC</B> and
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 02:10:01 GMT, April 20, 2020
+Time: 02:11:53 GMT, April 20, 2020
 </BODY>
 </HTML>

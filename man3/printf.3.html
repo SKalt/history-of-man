@@ -1063,14 +1063,17 @@ To allocate a sufficiently large string and print into it
 #include &lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/stdlib.h">stdlib.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/stdarg.h">stdarg.h</A>&gt;
+
 char *
 make_message(const char *fmt, ...) {
    /* Guess we need no more than 100 bytes. */
    int n, size = 100;
-   char *p;
+   char *p, *np;
    va_list ap;
+
    if ((p = malloc (size)) == NULL)
       return NULL;
+   
    while (1) {
       /* Try to print in the allocated space. */
       va_start(ap, fmt);
@@ -1084,8 +1087,12 @@ make_message(const char *fmt, ...) {
          size = n+1; /* precisely what is needed */
       else           /* glibc 2.0 */
          size *= 2;  /* twice the old size */
-      if ((p = realloc (p, size)) == NULL)
+      if ((np = realloc (p, size)) == NULL) {
+         free(p);
          return NULL;
+      } else {
+         p = np;
+      }
    }
 }
 </PRE>
@@ -1335,6 +1342,6 @@ call to write to memory and creating a security hole.
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 02:10:55 GMT, April 20, 2020
+Time: 02:11:56 GMT, April 20, 2020
 </BODY>
 </HTML>

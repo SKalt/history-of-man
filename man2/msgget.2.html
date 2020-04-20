@@ -29,7 +29,10 @@ msgget - get a message queue identifier
 <A NAME="lbAD">&nbsp;</A>
 <H2>DESCRIPTION</H2>
 
-The function returns the message queue identifier associated
+The
+<B>msgget</B>()
+
+system call returns the message queue identifier associated
 with the value of the
 <I>key</I>
 
@@ -52,110 +55,102 @@ no message queue with the given key
 exists, and
 <B>IPC_CREAT</B>
 
-is asserted in
+is specified in
+<I>msgflg</I>.
+
+<P>
+
+If
 <I>msgflg</I>
 
-(i.e.,
-<I>msgflg</I><B>&amp;</B><I>IPC_CREAT</I>
-
-is nonzero).
-The presence in
-<I>msgflg</I>
-
-of the fields
-<B>IPC_CREAT</B>
-
-and
-<B>IPC_EXCL</B>
-
-plays the same role, with respect to the existence
-of the message queue, as the presence
-of
-<B>O_CREAT</B>
-
-and
-<B>O_EXCL</B>
-
-in the mode argument of the
-<B><A HREF="../man2/open.2.html">open</A></B>(2)
-
-system call: i.e. the
-<B>msgget</B>
-
-function fails if
-<I>msgflg</I>
-
-asserts both
+specifies both
 <B>IPC_CREAT</B>
 
 and
 <B>IPC_EXCL</B>
 
 and a message queue already exists for
-<I>key</I>.
+<I>key</I>,
+
+then
+<B>msgget</B>()
+
+fails with 
+<I>errno</I>
+
+set to
+<B>EEXIST</B>.
+
+(This is analogous to the effect of the combination 
+<B>O_CREAT | O_EXCL</B>
+
+for
+<B><A HREF="../man2/open.2.html">open</A></B>(2).)
 
 <P>
 
-Upon creation, the lower 9 bits of the argument
+Upon creation, the least significant bits of the argument
 <I>msgflg</I>
 
-define the access permissions of the message queue.
+define the permissions of the message queue.
 These permission bits have the same format and semantics
-as the access permissions parameter in 
-<B><A HREF="../man2/open.2.html">open</A></B>(2)
+as the permissions specified for the 
+<I>mode</I>
 
-or
-<B><A HREF="../man2/creat.2.html">creat</A></B>(2)
+argument of
+<B><A HREF="../man2/open.2.html">open</A></B>(2).
 
-system calls.  (The execute permissions are not used.)
+(The execute permissions are not used.)
 <P>
 
 If a new message queue is created,
-the system call initializes the system message queue data structure
-<B>msqid_ds</B>
+then its associated data structure
 
-as follows:
+(see
+<B><A HREF="../man2/msgctl.2.html">msgctl</A></B>(2))
+
+is initialised as follows:
 <DL COMPACT>
 <DT><DD>
-<B>msg_perm.cuid</B>
+<I>msg_perm.cuid</I>
 
 and
-<B>msg_perm.uid</B>
+<I>msg_perm.uid</I>
 
 are set to the effective user-ID of the calling process.
 <DT><DD>
-<B>msg_perm.cgid</B>
+<I>msg_perm.cgid</I>
 
 and
-<B>msg_perm.gid</B>
+<I>msg_perm.gid</I>
 
 are set to the effective group-ID of the calling process.
 <DT><DD>
-The lowest order 9 bits of
-<B>msg_perm.mode</B>
+The least significant 9 bits of
+<I>msg_perm.mode</I>
 
-are set to the lowest order 9 bit of
+are set to the least significant 9 bits of
 <I>msgflg</I>.
 
 <DT><DD>
-<B>msg_qnum</B>,
+<I>msg_qnum</I>,
 
-<B>msg_lspid</B>,
+<I>msg_lspid</I>,
 
-<B>msg_lrpid</B>,
+<I>msg_lrpid</I>,
 
-<B>msg_stime</B>
+<I>msg_stime</I>
 
 and
-<B>msg_rtime</B>
+<I>msg_rtime</I>
 
 are set to 0.
 <DT><DD>
-<B>msg_ctime</B>
+<I>msg_ctime</I>
 
 is set to the current time.
 <DT><DD>
-<B>msg_qbytes</B>
+<I>msg_qbytes</I>
 
 is set to the system limit
 <B>MSGMNB</B>.
@@ -163,25 +158,23 @@ is set to the system limit
 </DL>
 <P>
 
-If the message queue already exists the access permissions are
+If the message queue already exists the permissions are
 verified, and a check is made to see if it is marked for
 destruction.
 <A NAME="lbAE">&nbsp;</A>
 <H2>RETURN VALUE</H2>
 
 If successful, the return value will be the message queue identifier (a
-nonnegative integer), otherwise
-<B>-1</B>
-
+nonnegative integer), otherwise -1
 with
-<B>errno</B>
+<I>errno</I>
 
 indicating the error.
 <A NAME="lbAF">&nbsp;</A>
 <H2>ERRORS</H2>
 
 On failure,
-<B>errno</B>
+<I>errno</I>
 
 is set to one of the following values:
 <DL COMPACT>
@@ -205,7 +198,7 @@ A message queue exists for
 and
 <I>msgflg</I>
 
-was asserting both
+specified both
 <B>IPC_CREAT</B>
 
 and
@@ -220,14 +213,14 @@ No message queue exists for
 and
 <I>msgflg</I>
 
-wasn't asserting
+did not specify
 <B>IPC_CREAT</B>.
 
 <DT><B>ENOMEM</B>
 
 <DD>
-A message queue has to be created but the system has not enough memory for
-the new data structure.
+A message queue has to be created but the system does not have enough
+memory for the new data structure.
 <DT><B>ENOSPC</B>
 
 <DD>
@@ -243,20 +236,20 @@ would be exceeded.
 <B>IPC_PRIVATE</B>
 
 isn't a flag field but a
-<B>key_t</B>
+<I>key_t</I>
 
 type.
 If this special value is used for
 <I>key</I>,
 
-the system call ignores everything but the lowest order 9 bits of
+the system call ignores everything but the least significant 9 bits of
 <I>msgflg</I>
 
 and creates a new message queue (on success).
 <P>
 
 The following is a system limit on message queue resources affecting a
-<B>msgget</B>
+<B>msgget</B>()
 
 call:
 <DL COMPACT>
@@ -264,7 +257,10 @@ call:
 
 <DD>
 System wide maximum number of message queues: policy
-dependent.
+dependent
+(on Linux, this limit can be read and modified via
+<I>/proc/sys/kernel/msgmni</I>).
+
 </DL>
 <A NAME="lbAH">&nbsp;</A>
 <H2>BUGS</H2>
@@ -276,7 +272,7 @@ would more clearly show its function.
 
 SVr4, SVID.
 Until version 2.3.20 Linux would return EIDRM for a
-<B>msgget</B>
+<B>msgget</B>()
 
 on a message queue scheduled for deletion.
 <A NAME="lbAJ">&nbsp;</A>
@@ -313,6 +309,6 @@ on a message queue scheduled for deletion.
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 02:10:00 GMT, April 20, 2020
+Time: 02:11:53 GMT, April 20, 2020
 </BODY>
 </HTML>

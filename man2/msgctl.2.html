@@ -5,7 +5,7 @@ Copyright 1993 Giorgio Ciucci (giorgio@crcc.it)
 <HTML><HEAD><TITLE>Man page of MSGCTL</TITLE>
 </HEAD><BODY>
 <H1>MSGCTL</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2004-06-17<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2004-11-10<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -31,13 +31,65 @@ msgctl - message control operations
 <A NAME="lbAD">&nbsp;</A>
 <H2>DESCRIPTION</H2>
 
-This function performs the control operation specified by
+<B>msgctl</B>()
+
+performs the control operation specified by
 <I>cmd</I>
 
 on the message queue with identifier
 <I>msqid</I>.
 
-Legal values for
+<P>
+
+The
+<I>msqid_ds</I>
+
+data structure is defined in &lt;<A HREF="file:///usr/include/sys/msg.h">sys/msg.h</A>&gt; as follows:
+<PRE>
+
+struct msqid_ds {
+    struct ipc_perm msg_perm;     /* Ownership and permissions
+    time_t          msg_stime;    /* Time of last msgsnd() */
+    time_t          msg_rtime;    /* Time of last msgrcv() */
+    time_t          msg_ctime;    /* Time of last change */
+    unsigned long   __msg_cbytes; /* Current number of bytes in 
+                                     queue (non-standard) */
+    msgqnum_t       msg_qnum;     /* Current number of messages 
+                                     in queue */
+    msglen_t        msg_qbytes;   /* Maximum number of bytes 
+                                     allowed in queue */
+    pid_t           msg_lspid;    /* PID of last msgsnd() */
+    pid_t           msg_lrpid;    /* PID of last msgrcv() */
+
+};
+</PRE>
+
+<P>
+
+The
+<I>ipc_perm</I>
+
+structure is defined in &lt;<A HREF="file:///usr/include/sys/ipc.h">sys/ipc.h</A>&gt; as follows
+(the highlighted fields are settable using
+<B>IPC_SET</B>):
+
+<P>
+
+<PRE>
+struct ipc_perm {
+    key_t key;            /* Key supplied to msgget() */
+    uid_t <B>uid</B>;            /* Effective UID of owner */
+    gid_t <B>gid</B>;            /* Effective GID of owner */
+    uid_t cuid;           /* Effective UID of creator */
+    gid_t cgid;           /* Effective GID of creator */
+    unsigned short <B>mode</B>;  /* Permissions */
+    unsigned short seq;   /* Sequence number */
+};
+</PRE>
+
+<P>
+
+Valid values for
 <I>cmd</I>
 
 are:
@@ -45,10 +97,13 @@ are:
 <DT><B>IPC_STAT</B>
 
 <DD>
-Copy info from the message queue data structure associated with
+Copy information from the kernel data structure associated with
 <I>msqid</I>
 
-into the structure pointed to by
+into the
+<I>msqid_ds</I>
+
+structure pointed to by
 <I>buf</I>.
 
 The caller must have read permission on the message queue.
@@ -56,39 +111,38 @@ The caller must have read permission on the message queue.
 
 <DD>
 Write the values of some members of the
-<B>msqid_ds</B>
+<I>msqid_ds</I>
 
 structure pointed to by
 <I>buf</I>
 
-to the message queue data structure, updating also its
-<B>msg_ctime</B>
+to the kernel data structure associated with this message queue,
+updating also its
+<I>msg_ctime</I>
 
 member.
-The following members of the structure can be updated:
-<PRE>
+The following members of the structure are updated: 
+<I>msg_qbytes</I>,
 
-<B>        msg_perm.uid
-        msg_perm.gid
-        msg_perm.mode   </B>/* only lowest 9-bits */
-        msg_qbytes
-</PRE>
+<I>msg_perm.uid</I>,
 
+<I>msg_perm.gid</I>,
 
-<P>
-The calling process must have appropriate (probably, root) privileges
-or its effective user-ID must be that of the creator
-(<I>msg_perm.cuid</I>)
+and (the least significant 9 bits of)
+<I>msg_perm.mode</I>.
 
-or owner
+The effective UID of the calling process must match the owner
 (<I>msg_perm.uid</I>)
 
-of the message queue.
+or creator 
+(<I>msg_perm.cuid</I>)
+
+of the message queue, or the caller must be privileged.
 Appropriate privilege (Linux: the
 <B>CAP_IPC_RESOURCE</B>
 
 capability) is required to raise the
-<B>msg_qbytes</B>
+<I>msg_qbytes</I>
 
 value beyond the system parameter
 <B>MSGMNB</B>.
@@ -96,36 +150,32 @@ value beyond the system parameter
 <DT><B>IPC_RMID</B>
 
 <DD>
-Immediately remove the message queue and its associated data structure,
+Immediately remove the message queue,
 awakening all waiting reader and writer processes (with an error
 return and
-<B>errno</B>
+<I>errno</I>
 
 set to
 <B>EIDRM</B>).
 
-The calling process must have appropriate (probably, root) privileges
+The calling process must have appropriate privileges
 or its effective user-ID must be either that of the creator or owner
 of the message queue.
 </DL>
 <A NAME="lbAE">&nbsp;</A>
 <H2>RETURN VALUE</H2>
 
-On success, the return value will be
-<B>0</B>,
-
-otherwise
-<B>-1</B>
-
+On success, the return value will be 0
+otherwise -1
 with
-<B>errno</B>
+<I>errno</I>
 
 indicating the error.
 <A NAME="lbAF">&nbsp;</A>
 <H2>ERRORS</H2>
 
 On failure,
-<B>errno</B>
+<I>errno</I>
 
 is set to one of the following:
 <DL COMPACT>
@@ -206,10 +256,10 @@ capability).
 <A NAME="lbAG">&nbsp;</A>
 <H2>NOTES</H2>
 
-Various fields in a <I>struct msqid_ds</I> were shorts under Linux 2.2
+Various fields in the <I>struct msqid_ds</I> were shorts under Linux 2.2
 and have become longs under Linux 2.4. To take advantage of this,
 a recompilation under glibc-2.1.91 or later should suffice.
-(The kernel distinguishes old and new calls by a IPC_64 flag in
+(The kernel distinguishes old and new calls by an IPC_64 flag in
 <I>cmd</I>.)
 
 <A NAME="lbAH">&nbsp;</A>
@@ -247,6 +297,6 @@ SVr4, SVID.  SVID does not document the EIDRM error condition.
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 02:10:00 GMT, April 20, 2020
+Time: 02:11:53 GMT, April 20, 2020
 </BODY>
 </HTML>
