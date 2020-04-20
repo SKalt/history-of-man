@@ -4,7 +4,7 @@
 <HTML><HEAD><TITLE>Man page of IP</TITLE>
 </HEAD><BODY>
 <H1>IP</H1>
-Section: Linux Programmer's Manual (7)<BR>Updated: 2010-09-11<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (7)<BR>Updated: 2010-10-13<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -278,11 +278,6 @@ The socket option level for IP is
 
 
 A boolean integer flag is zero when it is false, otherwise true.
-
-
-
-
-
 <DL COMPACT>
 <DT><B>IP_ADD_MEMBERSHIP</B> (since Linux 1.2)
 
@@ -335,12 +330,12 @@ group, or 0 to indicate any interface.
 The
 <I>ip_mreqn</I>
 
-is available only since Linux 2.2.
+structure is available only since Linux 2.2.
 For compatibility, the old
 <I>ip_mreq</I>
 
-structure (present since Linux 1.2) is still supported.
-It differs from
+structure (present since Linux 1.2) is still supported;
+it differs from
 <I>ip_mreqn</I>
 
 only by not including the
@@ -386,6 +381,23 @@ and
 <B>IP_TOS</B>
 
 are ignored.
+<DT><B>IP_FREEBIND</B> (since Linux 2.4)
+
+<DD>
+
+If enabled, this boolean option allows binding to an IP address
+that is nonlocal or does not (yet) exist.
+This permits listening on a socket,
+without requiring the underlying network interface or the
+specified dynamic IP address to be up at the time that
+the application is trying to bind to it.
+This option is the per-socket equivalent of the
+<I>ip_nonlocal_bind</I>
+
+<I>/proc</I>
+
+interface described below.
+
 
 
 
@@ -573,6 +585,22 @@ puts the current IP options used for sending into the supplied buffer.
 
 
 
+
+<DT><B>IP_RECVORIGDSTADDR</B> (since Linux 2.6.29)
+
+<DD>
+
+
+This boolean option enables the
+<B>IP_ORIGDSTADDR</B>
+
+ancillary message in
+<B><A HREF="../man2/recvmsg.2.html">recvmsg</A></B>(2),
+
+in which the kernel returns the original destination address
+of the datagram being received.
+The ancillary message contains a
+<I>struct sockaddr_in</I>.
 
 <DT><B>IP_PKTINFO</B> (since Linux 2.2)
 
@@ -917,7 +945,28 @@ socket option (see
 
 
 
+<DT><B>IP_TTL</B> (since Linux 2.6.24)
 
+<DD>
+
+
+
+
+
+Setting this boolean option enables transparent proxying on this socket.
+This socket option allows
+the calling application to bind to a nonlocal IP address and operate
+both as a client and a server with the foreign address as the local endpoint.
+NOTE: this requires that routing be set up in a way that
+packets going to the foreign address are routed through the TProxy box.
+Enabling this socket option requires superuser privileges
+(the
+<B>CAP_NET_ADMIN</B>
+
+capability).
+<DT><DD>
+TProxy redirection with the iptables TPROXY target also requires that
+this option be set on the redirected socket.
 <DT><B>IP_TTL</B> (since Linux 1.0)
 
 <DD>
@@ -1045,13 +1094,13 @@ to nonlocal IP addresses,
 which can be quite useful, but may break some applications.
 
 
-<DT><I>ip6frag_time</I> (integer; default 30)
+<DT><I>ip6frag_time</I> (integer; default: 30)
 
 <DD>
 Time in seconds to keep an IPv6 fragment in memory.
 
 
-<DT><I>ip6frag_secret_interval</I> (integer; default 600)
+<DT><I>ip6frag_secret_interval</I> (integer; default: 600)
 
 <DD>
 Regeneration interval (in seconds) of the hash secret (or lifetime
@@ -1228,24 +1277,28 @@ and
 <A NAME="lbAJ">&nbsp;</A>
 <H2>NOTES</H2>
 
+<B>IP_FREEBIND</B>,
+
 <B>IP_MTU</B>,
 
 <B>IP_MTU_DISCOVER</B>,
 
+<B>IP_RECVORIGDSTADDR</B>,
+
 <B>IP_PKTINFO</B>,
 
-<B>IP_RECVERR</B>
+<B>IP_RECVERR</B>,
+
+<B>IP_ROUTER_ALERT</B>,
 
 and
-<B>IP_ROUTER_ALERT</B>
+<B>IP_TRANSPARENT</B>
 
-are Linux-specific and should not be used in
-programs intended to be portable.
-
+are Linux-specific.
 
 
 
-
+<P>
 Be very careful with the
 <B>SO_BROADCAST</B>
 
@@ -1398,6 +1451,6 @@ RFC&nbsp;1812 for the IPv4 router requirements.
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:08:16 GMT, April 20, 2020
+Time: 03:08:51 GMT, April 20, 2020
 </BODY>
 </HTML>

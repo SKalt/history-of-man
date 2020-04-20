@@ -5,7 +5,7 @@ Copyright 2003 Abhijit Menon-Sen &lt;ams@wiw.org&gt;
 <HTML><HEAD><TITLE>Man page of POSIX_FADVISE</TITLE>
 </HEAD><BODY>
 <H1>POSIX_FADVISE</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2010-09-20<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2010-10-09<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -113,10 +113,14 @@ in this case.)
 <A NAME="lbAG">&nbsp;</A>
 <H2>VERSIONS</H2>
 
-<B>posix_fadvise</B>()
+Kernel support first appeared in Linux 2.5.60;
+the underlying system call is called
+<B>fadvise64</B>().
 
-appeared in kernel 2.5.60.
-Glibc support has been provided since version 2.2.
+
+Library support has been provided since glibc version 2.2,
+via the wrapper function
+<B>posix_fadvise</B>().
 
 <A NAME="lbAH">&nbsp;</A>
 <H2>CONFORMING TO</H2>
@@ -170,6 +174,39 @@ or
 
 first.
 <A NAME="lbAJ">&nbsp;</A>
+<H3>arm_fadvise()</H3>
+
+The ARM architecture
+needs 64-bit arguments to be aligned in a suitable pair of registers.
+On this architecture, the call signature of
+<B>posix_fadvise</B>()
+
+is flawed, since it forces a register to be wasted as padding between the
+<I>fd</I>
+
+and
+<I>len</I>
+
+arguments.
+Therefore, since Linux 2.6.14, ARM defines a different
+system call that orders the arguments suitably:
+<P>
+
+
+<PRE>
+<B>long arm_fadvise64_64(int </B><I>fd</I><B>, int </B><I>advice</I><B>,</B>
+<B>                     loff_t </B><I>offset</I><B>, loff_t </B><I>len</I><B>);</B>
+</PRE>
+
+
+<P>
+
+The behavior of this system call is otherwise exactly the same as
+<B>posix_fadvise().</B>
+
+No library support is provided for this system call in glibc.
+
+<A NAME="lbAK">&nbsp;</A>
 <H2>BUGS</H2>
 
 In kernels before 2.6.6, if
@@ -177,7 +214,7 @@ In kernels before 2.6.6, if
 
 was specified as 0, then this was interpreted literally as &quot;zero bytes&quot;,
 rather than as meaning &quot;all bytes through to the end of the file&quot;.
-<A NAME="lbAK">&nbsp;</A>
+<A NAME="lbAL">&nbsp;</A>
 <H2>SEE ALSO</H2>
 
 <B><A HREF="../man2/readahead.2.html">readahead</A></B>(2),
@@ -204,13 +241,16 @@ rather than as meaning &quot;all bytes through to the end of the file&quot;.
 <DT><A HREF="#lbAG">VERSIONS</A><DD>
 <DT><A HREF="#lbAH">CONFORMING TO</A><DD>
 <DT><A HREF="#lbAI">NOTES</A><DD>
-<DT><A HREF="#lbAJ">BUGS</A><DD>
-<DT><A HREF="#lbAK">SEE ALSO</A><DD>
+<DL>
+<DT><A HREF="#lbAJ">arm_fadvise()</A><DD>
+</DL>
+<DT><A HREF="#lbAK">BUGS</A><DD>
+<DT><A HREF="#lbAL">SEE ALSO</A><DD>
 </DL>
 <HR>
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:08:04 GMT, April 20, 2020
+Time: 03:08:39 GMT, April 20, 2020
 </BODY>
 </HTML>

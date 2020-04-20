@@ -4,7 +4,7 @@
 <HTML><HEAD><TITLE>Man page of UNIX</TITLE>
 </HEAD><BODY>
 <H1>UNIX</H1>
-Section: Linux Programmer's Manual (7)<BR>Updated: 2010-09-10<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (7)<BR>Updated: 2010-10-10<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -39,7 +39,7 @@ The
 
 socket family is used to communicate between processes on the same machine
 efficiently.
-Traditionally, Unix sockets can be either unnamed,
+Traditionally, UNIX domain sockets can be either unnamed,
 or bound to a file system pathname (marked as being of type socket).
 Linux also supports an abstract namespace which is independent of the
 file system.
@@ -51,7 +51,7 @@ for a stream-oriented socket and
 <B>SOCK_DGRAM</B>,
 
 for a datagram-oriented socket that preserves message boundaries
-(as on most Unix implementations, Unix domain datagram
+(as on most UNIX implementations, UNIX domain datagram
 sockets are always reliable and don't reorder datagrams);
 and (since Linux 2.6.4)
 <B>SOCK_SEQPACKET</B>,
@@ -59,12 +59,12 @@ and (since Linux 2.6.4)
 for a connection-oriented socket that preserves message boundaries
 and delivers messages in the order that they were sent.
 <P>
-Unix sockets support passing file descriptors or process credentials
+UNIX domain sockets support passing file descriptors or process credentials
 to other processes using ancillary data.
 <A NAME="lbAE">&nbsp;</A>
 <H3>Address Format</H3>
 
-A Unix domain socket address is represented in the following structure:
+A UNIX domain socket address is represented in the following structure:
 
 <PRE>
 
@@ -90,7 +90,7 @@ Three types of address are distinguished in this structure:
 <DT>*<DD>
 <I>pathname</I>:
 
-a Unix domain socket can be bound to a null-terminated file
+a UNIX domain socket can be bound to a null-terminated file
 system pathname using
 <B><A HREF="../man2/bind.2.html">bind</A></B>(2).
 
@@ -103,7 +103,7 @@ and
 <B><A HREF="../man2/accept.2.html">accept</A></B>(2),
 
 its length is
-<I>sizeof(sa_family_t) + strlen(sun_path) + 1</I>,
+<I>offsetof(struct sockaddr_un, sun_path) + strlen(sun_path) + 1</I>,
 
 and
 <I>sun_path</I>
@@ -144,16 +144,13 @@ an abstract socket address is distinguished by the fact that
 <I>sun_path[0]</I>
 
 is a null byte ('\0').
-All of the remaining bytes in
+The socket's address in this namespace is given by the additional
+bytes in
 <I>sun_path</I>
 
-define the &quot;name&quot; of the socket.
+that are covered by the specified length of the address structure.
 (Null bytes in the name have no special significance.)
 The name has no connection with file system pathnames.
-The socket's address in this namespace is given by the rest of the
-bytes in
-<I>sun_path</I>.
-
 When the address of an abstract socket is returned by
 <B><A HREF="../man2/getsockname.2.html">getsockname</A></B>(2),
 
@@ -162,13 +159,19 @@ When the address of an abstract socket is returned by
 and
 <B><A HREF="../man2/accept.2.html">accept</A></B>(2),
 
-its length is
-<I>sizeof(struct sockaddr_un)</I>,
+the returned
+<I>addrlen</I>
 
-and
-<I>sun_path</I>
+is greater than
+<I>sizeof(sa_family_t)</I>
 
-contains the abstract name.
+(i.e., greater than 2), and the name of the socket is contained in
+the first
+<I>(addrlen - sizeof(sa_family_t))</I>
+
+bytes of
+<I>sun_path</I>.
+
 The abstract socket namespace is a nonportable Linux extension.
 </DL>
 <A NAME="lbAF">&nbsp;</A>
@@ -195,19 +198,43 @@ as the socket family.
 <DT><B>SO_PASSCRED</B>
 
 <DD>
-Enables the receiving of the credentials of the sending process
+Enables the receiving of the credentials of the sending process in an
 ancillary message.
 When this option is set and the socket is not yet connected
 a unique name in the abstract namespace will be generated automatically.
 Expects an integer boolean flag.
 </DL>
 <A NAME="lbAG">&nbsp;</A>
+<H3>Autobind Feature</H3>
+
+If a
+<B>bind</B>()
+
+call specifies
+<I>addrlen</I>
+
+as
+<I>sizeof(sa_family_t)</I>,
+
+
+or the
+<B>SO_PASSCRED</B>
+
+socket option was specified for a socket that was
+not explicitly bound to an address,
+then the socket is autobound to an abstract address.
+The address consists of a null byte
+followed by 5 bytes in the character set
+<I>[0-9a-f]</I>.
+
+(Thus, there is a limit of 2^20 autobind addresses.)
+<A NAME="lbAH">&nbsp;</A>
 <H3>Sockets API</H3>
 
 The following paragraphs describe domain-specific details and
-unsupported features of the sockets API for Unix domain sockets on Linux.
+unsupported features of the sockets API for UNIX domain sockets on Linux.
 <P>
-Unix domain sockets do not support the transmission of
+UNIX domain sockets do not support the transmission of
 out-of-band data (the
 <B>MSG_OOB</B>
 
@@ -223,7 +250,7 @@ The
 
 <B>MSG_MORE</B>
 
-flag is not supported by Unix domain sockets.
+flag is not supported by UNIX domain sockets.
 <P>
 The use of
 <B>MSG_TRUNC</B>
@@ -234,12 +261,12 @@ in the
 argument of
 <B><A HREF="../man2/recv.2.html">recv</A></B>(2)
 
-is not supported by Unix domain sockets.
+is not supported by UNIX domain sockets.
 <P>
 The
 <B>SO_SNDBUF</B>
 
-socket option does have an effect for Unix domain sockets, but the
+socket option does have an effect for UNIX domain sockets, but the
 <B>SO_RCVBUF</B>
 
 option does not.
@@ -251,7 +278,7 @@ This limit is calculated as the doubled (see
 <B><A HREF="../man7/socket.7.html">socket</A></B>(7))
 
 option value less 32 bytes used for overhead.
-<A NAME="lbAH">&nbsp;</A>
+<A NAME="lbAI">&nbsp;</A>
 <H3>Ancillary Messages</H3>
 
 Ancillary data is sent and received using
@@ -296,7 +323,7 @@ The passed file descriptors behave as though they have been created with
 <DT><B>SCM_CREDENTIALS</B>
 
 <DD>
-Send or receive Unix credentials.
+Send or receive UNIX credentials.
 This can be used for authentication.
 The credentials are passed as a
 <I>struct ucred</I>
@@ -348,7 +375,7 @@ message the
 
 option must be enabled on the socket.
 </DL>
-<A NAME="lbAI">&nbsp;</A>
+<A NAME="lbAJ">&nbsp;</A>
 <H3>Ioctls</H3>
 
 The following
@@ -403,7 +430,7 @@ defined in
 
 
 </DL>
-<A NAME="lbAJ">&nbsp;</A>
+<A NAME="lbAK">&nbsp;</A>
 <H2>ERRORS</H2>
 
 <DL COMPACT>
@@ -504,7 +531,7 @@ Unknown socket type.
 Other errors can be generated by the generic socket layer or
 by the file system while generating a file system socket object.
 See the appropriate manual pages for more information.
-<A NAME="lbAK">&nbsp;</A>
+<A NAME="lbAL">&nbsp;</A>
 <H2>VERSIONS</H2>
 
 <B>SCM_CREDENTIALS</B>
@@ -513,7 +540,7 @@ and the abstract namespace were introduced with Linux 2.2 and should not
 be used in portable programs.
 (Some BSD-derived systems also support credential passing,
 but the implementation details differ.)
-<A NAME="lbAL">&nbsp;</A>
+<A NAME="lbAM">&nbsp;</A>
 <H2>NOTES</H2>
 
 In the Linux implementation, sockets which are visible in the
@@ -523,7 +550,7 @@ Creation of a new socket will fail if the process does not have write and
 search (execute) permission on the directory the socket is created in.
 Connecting to the socket object requires read/write permission.
 This behavior differs from many BSD-derived systems which
-ignore permissions for Unix sockets.
+ignore permissions for UNIX domain sockets.
 Portable programs should not rely on
 this feature for security.
 <P>
@@ -532,7 +559,7 @@ in the file system that must be deleted by the caller when it is no
 longer needed (using
 <B><A HREF="../man2/unlink.2.html">unlink</A></B>(2)).
 
-The usual Unix close-behind semantics apply; the socket can be unlinked
+The usual UNIX close-behind semantics apply; the socket can be unlinked
 at any time and will be finally removed from the file system when the last
 reference to it is closed.
 <P>
@@ -548,14 +575,14 @@ or
 
 call.
 <P>
-Unix domain stream sockets do not support the notion of out-of-band data.
-<A NAME="lbAM">&nbsp;</A>
+UNIX domain stream sockets do not support the notion of out-of-band data.
+<A NAME="lbAN">&nbsp;</A>
 <H2>EXAMPLE</H2>
 
 See
 <B><A HREF="../man2/bind.2.html">bind</A></B>(2).
 
-<A NAME="lbAN">&nbsp;</A>
+<A NAME="lbAO">&nbsp;</A>
 <H2>SEE ALSO</H2>
 
 <B><A HREF="../man2/recvmsg.2.html">recvmsg</A></B>(2),
@@ -585,20 +612,21 @@ See
 <DL>
 <DT><A HREF="#lbAE">Address Format</A><DD>
 <DT><A HREF="#lbAF">Socket Options</A><DD>
-<DT><A HREF="#lbAG">Sockets API</A><DD>
-<DT><A HREF="#lbAH">Ancillary Messages</A><DD>
-<DT><A HREF="#lbAI">Ioctls</A><DD>
+<DT><A HREF="#lbAG">Autobind Feature</A><DD>
+<DT><A HREF="#lbAH">Sockets API</A><DD>
+<DT><A HREF="#lbAI">Ancillary Messages</A><DD>
+<DT><A HREF="#lbAJ">Ioctls</A><DD>
 </DL>
-<DT><A HREF="#lbAJ">ERRORS</A><DD>
-<DT><A HREF="#lbAK">VERSIONS</A><DD>
-<DT><A HREF="#lbAL">NOTES</A><DD>
-<DT><A HREF="#lbAM">EXAMPLE</A><DD>
-<DT><A HREF="#lbAN">SEE ALSO</A><DD>
+<DT><A HREF="#lbAK">ERRORS</A><DD>
+<DT><A HREF="#lbAL">VERSIONS</A><DD>
+<DT><A HREF="#lbAM">NOTES</A><DD>
+<DT><A HREF="#lbAN">EXAMPLE</A><DD>
+<DT><A HREF="#lbAO">SEE ALSO</A><DD>
 </DL>
 <HR>
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:08:17 GMT, April 20, 2020
+Time: 03:08:52 GMT, April 20, 2020
 </BODY>
 </HTML>

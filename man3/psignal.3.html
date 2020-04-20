@@ -5,13 +5,13 @@ Copyright 1993 David Metcalfe (david@prism.demon.co.uk)
 <HTML><HEAD><TITLE>Man page of PSIGNAL</TITLE>
 </HEAD><BODY>
 <H1>PSIGNAL</H1>
-Section: Linux Programmer's Manual (3)<BR>Updated: 2008-08-21<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2010-10-06<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
 <H2>NAME</H2>
 
-psignal - print signal message
+psignal, psiginfo - print signal message
 <A NAME="lbAC">&nbsp;</A>
 <H2>SYNOPSIS</H2>
 
@@ -19,6 +19,7 @@ psignal - print signal message
 <B>#include &lt;<A HREF="file:///usr/include/signal.h">signal.h</A>&gt;</B>
 
 <B>void psignal(int </B><I>sig</I><B>, const char *</B><I>s</I><B>);</B>
+<B>void psiginfo(const siginfo_t *</B><I>pinfo</I><B>, const char *</B><I>s</I><B>);</B>
 
 <B>extern const char *const </B><I>sys_siglist</I><B>[];</B>
 </PRE>
@@ -35,6 +36,11 @@ Feature Test Macro Requirements for glibc (see
 _SVID_SOURCE || _BSD_SOURCE
 <BR>
 
+<B>psiginfo</B>():
+
+_XOPEN_SOURCE&nbsp;&gt;=&nbsp;700 || _POSIX_C_SOURCE&nbsp;&gt;=&nbsp;200809L
+<BR>
+
 <I>sys_siglist</I>:
 
 _BSD_SOURCE
@@ -45,12 +51,41 @@ The
 <B>psignal</B>()
 
 function displays a message on <I>stderr</I>
-consisting of the string <I>s</I>, a colon, a space, and a string
-describing the signal number <I>sig</I>.
+consisting of the string <I>s</I>, a colon, a space, a string
+describing the signal number <I>sig</I>, and a trailing newline.
+If the string <I>s</I> is NULL or empty, the colon and space are omitted.
 If <I>sig</I> is invalid,
 the message displayed will indicate an unknown signal.
 <P>
+The
+<B>psiginfo</B>()
 
+function is like
+<B>psignal</B>(),
+
+except that it displays information about the signal described by
+<I>pinfo</I>,
+
+which should point to a valid
+<I>siginfo_t</I>
+
+structure.
+As well as the signal description,
+<B>psiginfo</B>()
+
+displays information about the origin of the signal,
+and other information relevant to the signal
+(e.g., the relevant memory address for hardware-generated signals,
+the child process ID for
+<B>SIGCHLD</B>,
+
+and the user ID and process ID of the sender, for signals set using
+<B><A HREF="../man2/kill.2.html">kill</A></B>(2)
+
+or
+<B><A HREF="../man2/sigqueue.2.html">sigqueue</A></B>(2)).
+
+<P>
 The array <I>sys_siglist</I> holds the signal description strings
 indexed by signal number.
 <A NAME="lbAE">&nbsp;</A>
@@ -59,17 +94,48 @@ indexed by signal number.
 The
 <B>psignal</B>()
 
-function returns no value.
+and
+<B>psiginfo</B>()
+
+functions return no value.
 <A NAME="lbAF">&nbsp;</A>
+<H2>VERSIONS</H2>
+
+The
+<B>psiginfo()</B>
+
+function was added to glibc in version 2.10.
+<A NAME="lbAG">&nbsp;</A>
 <H2>CONFORMING TO</H2>
 
 POSIX.1-2008, 4.3BSD.
-<A NAME="lbAG">&nbsp;</A>
+<A NAME="lbAH">&nbsp;</A>
+<H2>BUGS</H2>
+
+In glibc versions up to 2.12,
+<B>psiginfo</B>()
+
+had the following bugs:
+<DL COMPACT>
+<DT>*<DD>
+In some circumstances, a trailing newline is not printed.
+
+
+<DT>*<DD>
+Additional details are not displayed for real-time signals.
+
+
+</DL>
+<A NAME="lbAI">&nbsp;</A>
 <H2>SEE ALSO</H2>
+
+<B><A HREF="../man2/sigaction.2.html">sigaction</A></B>(2),
 
 <B><A HREF="../man3/perror.3.html">perror</A></B>(3),
 
-<B><A HREF="../man3/strsignal.3.html">strsignal</A></B>(3)
+<B><A HREF="../man3/strsignal.3.html">strsignal</A></B>(3),
+
+<B><A HREF="../man7/signal.7.html">signal</A></B>(7)
 
 <P>
 
@@ -80,13 +146,15 @@ POSIX.1-2008, 4.3BSD.
 <DT><A HREF="#lbAC">SYNOPSIS</A><DD>
 <DT><A HREF="#lbAD">DESCRIPTION</A><DD>
 <DT><A HREF="#lbAE">RETURN VALUE</A><DD>
-<DT><A HREF="#lbAF">CONFORMING TO</A><DD>
-<DT><A HREF="#lbAG">SEE ALSO</A><DD>
+<DT><A HREF="#lbAF">VERSIONS</A><DD>
+<DT><A HREF="#lbAG">CONFORMING TO</A><DD>
+<DT><A HREF="#lbAH">BUGS</A><DD>
+<DT><A HREF="#lbAI">SEE ALSO</A><DD>
 </DL>
 <HR>
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:08:12 GMT, April 20, 2020
+Time: 03:08:47 GMT, April 20, 2020
 </BODY>
 </HTML>
