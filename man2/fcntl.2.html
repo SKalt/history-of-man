@@ -412,25 +412,25 @@ Get the process ID or process group currently receiving SIGIO
 and SIGURG signals for events on file descriptor
 <I>fd</I>.
 
-Process groups are returned as negative values (but see BUGS below).
+Process IDs are returned as positive values;
+process group IDs are returned as negative values (but see BUGS below).
 <DT><B>F_SETOWN</B>
 
 <DD>
-Set the process ID or process group that will receive SIGIO
+Set the process ID or process group ID that will receive SIGIO
 and SIGURG signals for events on file descriptor
 <I>fd</I>.
 
-Process groups are specified using negative values.
-(<B>F_SETSIG</B>
-
-can be used to specify a different signal instead of SIGIO).
+A process ID is specified as a positive value;
+a process group ID is specified as a negative value.
 <P>
 
 If you set the
 <B>O_ASYNC</B>
 
 status flag on a file descriptor (either by providing this flag with the
-<I><A HREF="../man2/open.2.html">open</A></I>(2)
+<B><A HREF="../man2/open.2.html">open</A></B>(2)
+
 
 call, or by using the
 <B>F_SETFL</B>
@@ -440,22 +440,90 @@ command of
 
 a SIGIO signal is sent whenever input or output becomes possible
 on that file descriptor.
+<B>F_SETSIG</B>
+
+can be used to obtain delivery of a signal other than SIGIO.
 <P>
-The process or process group to receive the signal can be selected by
-using the
+If the file descriptor
+<I>fd</I>
+
+refers to a socket,
 <B>F_SETOWN</B>
 
-command to the
-<B>fcntl</B>
-
-function.  If the file descriptor is a socket, this also selects
+also selects
 the recipient of SIGURG signals that are delivered when out-of-band
 data arrives on that socket.  (SIGURG is sent in any situation where
 <B><A HREF="../man2/select.2.html">select</A></B>(2)
 
 would report the socket as having an &quot;exceptional condition&quot;.)
-If the file descriptor corresponds to a terminal device, then SIGIO
-signals are sent to the foreground process group of the terminal.
+
+
+
+
+
+
+
+
+
+
+<P>
+If a non-zero value is given to
+<B>F_SETSIG</B>
+
+in a multi-threaded process running with a threading library
+that supports thread groups (e.g., NPTL),
+then a positive value value given to 
+<B>F_SETOWN</B>
+
+has a different meaning:
+
+
+instead of being a process ID identifying a whole process,
+it is a thread ID identifying a specific thread within a process.
+Consequently, it may be necessary to pass
+<B>F_SETOWN</B>
+
+the result of
+<B>gettid</B>()
+
+instead of
+<B>getpid</B>()
+
+to get sensible results when
+<B>F_SETSIG</B>
+
+is used.
+(In current Linux threading implementations,
+a main thread's thread ID is the same as its process ID.
+This means that a single-threaded program can equally use
+<B>gettid</B>()
+
+or
+<B>getpid</B>()
+
+in this scenario.)
+Note, however, that the statements in this paragraph do not apply
+to the SIGURG signal generated for out-of-band data on a socket:
+this signal is always sent to either a process or a process group,
+depending on the value given to
+<B>F_SETOWN</B>.
+
+
+
+
+
+Note also that Linux imposes a limit on the
+number of real-time signals that may be queued to a
+process (see
+<B><A HREF="../man2/getrlimit.2.html">getrlimit</A></B>(2)
+
+and
+<B><A HREF="../man7/signal.7.html">signal</A></B>(7))
+
+and if this limit is reached, then the kernel reverts to 
+delivering SIGIO, and this signal is delivered to the entire
+process rather than to a specifc thread.
+
 <DT><B>F_GETSIG</B>
 
 <DD>
@@ -471,7 +539,20 @@ zero means to send the default SIGIO signal.  Any other value (including
 SIGIO) is the signal to send instead, and in this case additional info
 is available to the signal handler if installed with SA_SIGINFO.
 <P>
-By using F_SETSIG with a non-zero value, and setting SA_SIGINFO for the
+Additionally, passing a non-zero value to
+<B>F_SETSIG</B>
+
+changes the signal recipient from a whole process to a specific thread
+within a process.
+See the desciption of
+<B>F_SETOWN </B>
+
+for more details.
+<P>
+By using
+<B>F_SETSIG</B>
+
+with a non-zero value, and setting SA_SIGINFO for the
 signal handler (see
 <B><A HREF="../man2/sigaction.2.html">sigaction</A></B>(2)),
 
@@ -973,11 +1054,9 @@ will contain the (positive) process group ID.
 <H2>CONFORMING TO</H2>
 
 SVr4, SVID, POSIX, X/OPEN, BSD 4.3.  Only the operations F_DUPFD,
-F_GETFD, F_SETFD, F_GETFL, F_SETFL, F_GETLK, F_SETLK and F_SETLKW are
-specified in POSIX.1.  F_GETOWN and F_SETOWN are BSDisms not supported
-in SVr4; F_GETSIG and F_SETSIG are specific to Linux.
-<B>F_NOTIFY</B>, <B>F_GETLEASE</B>, and <B>F_SETLEASE</B>
-
+F_GETFD, F_SETFD, F_GETFL, F_SETFL, F_GETLK, F_SETLK, F_SETLKW, 
+F_GETOWN, and F_SETOWN are specified in POSIX.1.
+F_GETSIG, F_SETSIG, F_NOTIFY, F_GETLEASE, and F_SETLEASE
 are Linux specific.
 (Define the _GNU_SOURCE macro before including &lt;<A HREF="file:///usr/include/fcntl.h">fcntl.h</A>&gt; to
 obtain these definitions.)
@@ -1037,6 +1116,6 @@ See also locks.txt, mandatory.txt, and dnotify.txt in
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 02:12:14 GMT, April 20, 2020
+Time: 02:12:46 GMT, April 20, 2020
 </BODY>
 </HTML>

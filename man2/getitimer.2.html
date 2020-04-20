@@ -118,11 +118,11 @@ or
 <B>ITIMER_PROF</B>).
 
 The element
-<B>it_value</B>
+<I>it_value</I>
 
 is set to the amount of time remaining on the timer, or zero if the timer
 is disabled.  Similarly,
-<B>it_interval</B>
+<I>it_interval</I>
 
 is set to the reset value.
 The function
@@ -209,7 +209,7 @@ or
 <A NAME="lbAG">&nbsp;</A>
 <H2>CONFORMING TO</H2>
 
-SVr4, 4.4BSD (This call first appeared in 4.2BSD).
+POSIX.1-2001, SVr4, 4.4BSD (this call first appeared in 4.2BSD).
 <A NAME="lbAH">&nbsp;</A>
 <H2>SEE ALSO</H2>
 
@@ -230,6 +230,27 @@ conceivable that under pathologically heavy loading,
 will expire before the signal from a previous expiration has been delivered.
 The second signal in such an event will be lost.
 <P>
+On Linux, timer values are represented in jiffies.
+If a request is made set a timer with a value whose jiffies 
+representation exceeds MAX_SEC_IN_JIFFIES
+(defined in
+<I>include/linux/jiffies.h</I>),
+
+then the timer is silently truncated to this ceiling value.
+On Linux 2.6 on x86 (where a jiffy is 0.001 seconds),
+this means that the ceiling value for a timer is
+approximately 24.86 days.
+<P>
+POSIX.1 says that
+<B>setitimer</B>
+
+should fail if a
+<I>tv_usec</I>
+
+value is specified that is outside of the range 0 to 999999.
+However, Linux does not give an error, but instead silently
+adjusts the corresponding seconds value for the timer.
+<P>
 
 <HR>
 <A NAME="index">&nbsp;</A><H2>Index</H2>
@@ -247,6 +268,6 @@ The second signal in such an event will be lost.
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 02:09:56 GMT, April 20, 2020
+Time: 02:12:46 GMT, April 20, 2020
 </BODY>
 </HTML>

@@ -5,13 +5,13 @@ Copyright (c) 1992 Drew Eckhardt (drew@cs.colorado.edu), March 28, 1992
 <HTML><HEAD><TITLE>Man page of USELIB</TITLE>
 </HEAD><BODY>
 <H1>USELIB</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2004-06-23<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2005-01-09<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
 <H2>NAME</H2>
 
-uselib - select shared library
+uselib - load shared library
 <A NAME="lbAC">&nbsp;</A>
 <H2>SYNOPSIS</H2>
 
@@ -23,8 +23,11 @@ uselib - select shared library
 <A NAME="lbAD">&nbsp;</A>
 <H2>DESCRIPTION</H2>
 
-<B>uselib</B> selects the shared library binary that will be used by
-the calling process.
+The system call <B>uselib</B> serves to load
+a shared library to be used by the calling process.
+It is given a pathname. The address where to load is found
+in the library itself. The library can have any recognized
+binary format.
 <A NAME="lbAE">&nbsp;</A>
 <H2>RETURN VALUE</H2>
 
@@ -50,8 +53,9 @@ the following may also be returned:
 The library specified by
 <I>library</I>
 
-is not readable, or the caller does not have search permission
-for one of the directories in the path prefix. (See also
+does not have read or execute permission, or the caller does not have
+search permission for one of the directories in the path prefix.
+(See also
 <B><A HREF="../man2/path_resolution.2.html">path_resolution</A></B>(2).)
 
 <DT><B>ENFILE</B>
@@ -64,7 +68,8 @@ The system limit on the total number of open files has been reached.
 The file specified by
 <I>library</I>
 
-is not executable, or does not have the correct magic numbers.
+is not an executable of known type,
+e.g., does not have the correct magic numbers.
 </DL>
 <A NAME="lbAG">&nbsp;</A>
 <H2>CONFORMING TO</H2>
@@ -72,6 +77,30 @@ is not executable, or does not have the correct magic numbers.
 <B>uselib()</B> is Linux specific, and should not be used in programs
 intended to be portable.
 <A NAME="lbAH">&nbsp;</A>
+<H2>NOTES</H2>
+
+<B>uselib()</B> was used by early libc startup code to load
+the shared libraries with names found in an array of names
+in the binary.
+<P>
+
+
+Since libc 4.3.2, startup code tries to prefix these names
+with &quot;/usr/lib&quot;, &quot;/lib&quot; and &quot;&quot; before giving up.
+
+In libc 4.3.4 and later these names are looked for in the directories
+found in LD_LIBRARY_PATH, and if not found there,
+prefixes &quot;/usr/lib&quot;, &quot;/lib&quot; and &quot;/&quot; are tried.
+<P>
+
+From libc 4.4.4 on only the library &quot;/lib/ld.so&quot; is loaded,
+so that this dynamic library can load the remaining libraries needed
+(again using this call).
+This is also the state of affairs in libc5.
+<P>
+
+glibc2 does not use this call.
+<A NAME="lbAI">&nbsp;</A>
 <H2>SEE ALSO</H2>
 
 <B><A HREF="../man1/ar.1.html">ar</A></B>(1),
@@ -85,6 +114,8 @@ intended to be portable.
 <B><A HREF="../man2/mmap.2.html">mmap</A></B>(2),
 
 <B><A HREF="../man2/open.2.html">open</A></B>(2),
+
+<B><A HREF="../man3/dlopen.3.html">dlopen</A></B>(3),
 
 <B><A HREF="../man7/capability.7.html">capability</A></B>(7),
 
@@ -101,12 +132,13 @@ intended to be portable.
 <DT><A HREF="#lbAE">RETURN VALUE</A><DD>
 <DT><A HREF="#lbAF">ERRORS</A><DD>
 <DT><A HREF="#lbAG">CONFORMING TO</A><DD>
-<DT><A HREF="#lbAH">SEE ALSO</A><DD>
+<DT><A HREF="#lbAH">NOTES</A><DD>
+<DT><A HREF="#lbAI">SEE ALSO</A><DD>
 </DL>
 <HR>
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 02:12:16 GMT, April 20, 2020
+Time: 02:12:48 GMT, April 20, 2020
 </BODY>
 </HTML>
