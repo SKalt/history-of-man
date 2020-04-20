@@ -18,15 +18,15 @@ poll - wait for some event on a file descriptor
 <B>#include &lt;<A HREF="file:///usr/include/sys/poll.h">sys/poll.h</A>&gt;</B>
 
 <P>
-<B>int poll(struct pollfd *</B><I>ufds</I><B>, unsigned int </B><I>nfds</I><B>, int </B><I>timeout</I><B>);</B>
+<B>int poll(struct pollfd *</B><I>ufds</I><B>, nfds_t </B><I>nfds</I><B>, int </B><I>timeout</I><B>);</B>
 
 <A NAME="lbAD">&nbsp;</A>
 <H2>DESCRIPTION</H2>
 
-<B>poll</B>
+<B>poll</B>()
 
 is a variation on the theme of 
-<B>select</B>.
+<B>select</B>().
 
 It specifies an array of
 <I>nfds</I>
@@ -35,11 +35,13 @@ structures of type
 <BR>
 
 <PRE>
-        struct pollfd {
-                int fd;           /* file descriptor */
-                short events;     /* requested events */
-                short revents;    /* returned events */
-        };
+
+    struct pollfd {
+        int fd;           /* file descriptor */
+        short events;     /* requested events */
+        short revents;    /* returned events */
+    };
+
 </PRE>
 
 and a
@@ -81,49 +83,54 @@ of the file descriptors, the kernel waits for
 <I>timeout</I>
 
 milliseconds for one of these events to occur.
-The following possible bits in these masks are defined in &lt;<A HREF="file:///usr/include/sys/poll.h">sys/poll.h</A>&gt;
+The following possible bits in these masks are defined in &lt;<A HREF="file:///usr/include/sys/poll.h">sys/poll.h</A>&gt;:
 <BR>
 
 <PRE>
+
     #define POLLIN      0x0001    /* There is data to read */
     #define POLLPRI     0x0002    /* There is urgent data to read */
     #define POLLOUT     0x0004    /* Writing now will not block */
     #define POLLERR     0x0008    /* Error condition */
     #define POLLHUP     0x0010    /* Hung up */
     #define POLLNVAL    0x0020    /* Invalid request: fd not open */
+
 </PRE>
 
-When compiling XPG4.2 source one also has
+When compiling XPG4.2 source one also has:
 <BR>
 
 <PRE>
-#ifdef _XOPEN_SOURCE
+
+    #ifdef _XOPEN_SOURCE
     #define POLLRDNORM  0x0040    /* Normal data may be read */
     #define POLLRDBAND  0x0080    /* Priority data may be read */
     #define POLLWRNORM  0x0100    /* Writing now will not block */
     #define POLLWRBAND  0x0200    /* Priority data may be written */
-#endif
+    #endif
+
 </PRE>
 
-Finally, Linux knows about
+Finally, Linux knows about:
 <BR>
 
 <PRE>
-#ifdef _GNU_SOURCE
+
+    #ifdef _GNU_SOURCE
     #define POLLMSG     0x0400
-#endif
+    #endif
 </PRE>
 
 <A NAME="lbAE">&nbsp;</A>
 <H2>RETURN VALUE</H2>
 
-On success, a positive number is returned, where the number returned
-is the number of structures which have non-zero
+On success, a positive number is returned; this is
+the number of structures which have non-zero
 <I>revents</I>
 
 fields (in other words, those descriptors with events or errors reported).
 A value of 0 indicates that the call timed out and no file
-descriptors have been selected. On error, -1 is returned, and
+descriptors were ready. On error, -1 is returned, and
 <I>errno</I>
 
 is set appropriately.
@@ -199,6 +206,6 @@ have a poll syscall).
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 02:14:45 GMT, April 20, 2020
+Time: 02:15:12 GMT, April 20, 2020
 </BODY>
 </HTML>

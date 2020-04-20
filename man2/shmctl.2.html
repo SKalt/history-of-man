@@ -157,21 +157,96 @@ will be set.
 
 The caller <I>must</I> ensure that a segment is eventually destroyed;
 otherwise its pages that were faulted in will remain in memory or swap.
-<A NAME="lbAE">&nbsp;</A>
-<H3>Linux additions</H3>
+<DL COMPACT>
+<DT><B>IPC_INFO</B> (Linux specific)
 
-The
-<B>IPC_INFO</B>,
+<DD>
+Returns information about system-wide shared memory limits and 
+parameters in the structure pointed to by
+<I>buf</I>.
 
-<B>SHM_STAT</B>
+This structure is of type
+<I>shminfo</I>
+
+(thus, a cast is required),
+defined in
+<I>&lt;<A HREF="file:///usr/include/sys/shm.h">sys/shm.h</A>&gt;</I>
+
+if the _GNU_SOURCE feature test macro is defined:
+<PRE>
+
+struct  shminfo {
+    unsigned long shmmax; /* Max. segment size */
+    unsigned long shmmin; /* Min. segment size; always 1 */
+    unsigned long shmmni; /* Max. # of segments */
+    unsigned long shmseg; /* Max. # of segments that a 
+                             process can attach; unused */
+    unsigned long shmall; /* Max. # of pages of shared 
+                             memory, system-wide */
+};
+
+</PRE>
+
+The 
+<I>shmmni</I>,
+
+<I>shmmax</I>,
 
 and
-<B>SHM_INFO</B>
+<I>shmall</I>
 
-control calls are used by the
-<B><A HREF="../man8/ipcs.8.html">ipcs</A></B>(8)
+settings can be changed via
+<I>/proc </I>
 
-program to provide information on allocated resources.
+files of the same name; see
+<B><A HREF="../man5/proc.5.html">proc</A></B>(5)
+
+for details.
+<DT><B>SHM_INFO</B> (Linux specific)
+
+<DD>
+Returns a
+<I>shm_info</I>
+
+structure whose fields contain information 
+about system resources consumed by shared memory.
+This structure is defined in
+<I>&lt;<A HREF="file:///usr/include/sys/shm.h">sys/shm.h</A>&gt;</I>
+
+if the _GNU_SOURCE feature test macro is defined:
+<PRE>
+
+struct shm_info {
+    int used_ids;           /* # of currently existing 
+                               segments */
+    unsigned long shm_tot;  /* Total number of shared 
+                               memory pages */
+    unsigned long shm_rss;  /* # of resident shared 
+                               memory pages */
+    unsigned long shm_swp;  /* # of swapped shared 
+                               memory pages */
+    unsigned long swap_attempts;  /* Unused since Linux 2.4 */
+    unsigned long swap_successes; /* Unused since Linux 2.4 */
+};
+
+</PRE>
+
+<DT><B>SHM_STAT</B> (Linux specific)
+
+<DD>
+Returns a 
+<I>shmid_ds </I>
+
+structure as for
+<B>IPC_STAT</B>.
+
+However, the
+<I>shmid</I>
+
+argument is not a segment identifier, but instead an index into
+the kernel's internal array that maintains information about
+all shared memory segments on the system.
+</DL>
 <P>
 
 The caller can prevent or allow swapping of a shared
@@ -179,7 +254,7 @@ memory segment with the following <I>cmd</I> values:
 <BR>
 
 <DL COMPACT>
-<DT><B>SHM_LOCK</B>
+<DT><B>SHM_LOCK</B> (Linux specific)
 
 <DD>
 Prevent swapping of the shared memory segment. The caller must fault in
@@ -194,7 +269,7 @@ field in the associated data structure retrieved by
 <B>IPC_STAT</B>
 
 will be set.
-<DT><B>SHM_UNLOCK</B>
+<DT><B>SHM_UNLOCK</B> (Linux specific)
 
 <DD>
 Unlock the segment, allowing it to be swapped out.
@@ -223,15 +298,37 @@ resource limit (see
 
 
 
-<A NAME="lbAF">&nbsp;</A>
+<A NAME="lbAE">&nbsp;</A>
 <H2>RETURN VALUE</H2>
 
-On success, zero is returned.
+A successful
+<B>IPC_INFO</B>
+
+or 
+<B>SHM_INFO</B>
+
+operation returns the index of the highest used entry in the
+kernel's internal array recording information about all
+shared memory segments.
+(This information can be used with repeated
+<B>SHM_STAT </B>
+
+operations to obtain information about all shared memory segments 
+on the system.)
+A successful
+<B>SHM_STAT</B>
+
+operation returns the identifier of the shared memory segment 
+whose index was given in
+<I>shmid</I>.
+
+Other operations return 0 on success.
+<P>
 On error, -1 is returned, and
 <I>errno</I>
 
 is set appropriately.
-<A NAME="lbAG">&nbsp;</A>
+<A NAME="lbAF">&nbsp;</A>
 <H2>ERRORS</H2>
 
 <DL COMPACT>
@@ -271,6 +368,13 @@ isn't accessible.
 <DD>
 <I>shmid</I> is not a valid identifier, or <I>cmd</I>
 is not a valid command.
+Or: for a
+<B>SHM_STAT</B>
+
+operation, the index value specified in 
+<I>shmid</I>
+
+referred to an array slot that is currently unused.
 <DT><B>ENOMEM</B>
 
 <DD>
@@ -326,9 +430,24 @@ capability).
 
 is 0 and the caller is not privileged.)
 </DL>
-<A NAME="lbAH">&nbsp;</A>
+<A NAME="lbAG">&nbsp;</A>
 <H2>NOTES</H2>
 
+The
+<B>IPC_INFO</B>,
+
+<B>SHM_STAT</B>
+
+and
+<B>SHM_INFO</B>
+
+operations are used by the
+<B><A HREF="../man8/ipcs.8.html">ipcs</A></B>(8)
+
+program to provide information on allocated resources.
+In the future these may modified or moved to a /proc file system
+interface.
+<P>
 Linux permits a process to attach 
 (<B>shmat</B>())
 
@@ -345,13 +464,13 @@ a recompilation under glibc-2.1.91 or later should suffice.
 (The kernel distinguishes old and new calls by an IPC_64 flag in
 <I>cmd</I>.)
 
-<A NAME="lbAI">&nbsp;</A>
+<A NAME="lbAH">&nbsp;</A>
 <H2>CONFORMING TO</H2>
 
 SVr4, SVID.  SVr4 documents additional error conditions EINVAL,
 ENOENT, ENOSPC, ENOMEM, EEXIST.  Neither SVr4 nor SVID documents
 an EIDRM error condition.
-<A NAME="lbAJ">&nbsp;</A>
+<A NAME="lbAI">&nbsp;</A>
 <H2>SEE ALSO</H2>
 
 <B><A HREF="../man2/mlock.2.html">mlock</A></B>(2),
@@ -372,19 +491,16 @@ an EIDRM error condition.
 <DT><A HREF="#lbAB">NAME</A><DD>
 <DT><A HREF="#lbAC">SYNOPSIS</A><DD>
 <DT><A HREF="#lbAD">DESCRIPTION</A><DD>
-<DL>
-<DT><A HREF="#lbAE">Linux additions</A><DD>
-</DL>
-<DT><A HREF="#lbAF">RETURN VALUE</A><DD>
-<DT><A HREF="#lbAG">ERRORS</A><DD>
-<DT><A HREF="#lbAH">NOTES</A><DD>
-<DT><A HREF="#lbAI">CONFORMING TO</A><DD>
-<DT><A HREF="#lbAJ">SEE ALSO</A><DD>
+<DT><A HREF="#lbAE">RETURN VALUE</A><DD>
+<DT><A HREF="#lbAF">ERRORS</A><DD>
+<DT><A HREF="#lbAG">NOTES</A><DD>
+<DT><A HREF="#lbAH">CONFORMING TO</A><DD>
+<DT><A HREF="#lbAI">SEE ALSO</A><DD>
 </DL>
 <HR>
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 02:14:45 GMT, April 20, 2020
+Time: 02:15:12 GMT, April 20, 2020
 </BODY>
 </HTML>

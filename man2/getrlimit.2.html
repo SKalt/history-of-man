@@ -6,7 +6,7 @@ Copyright (c) 2002 Michael Kerrisk
 <HTML><HEAD><TITLE>Man page of GETRLIMIT</TITLE>
 </HEAD><BODY>
 <H1>GETRLIMIT</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2004-06-16<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2005-09-20<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -263,6 +263,21 @@ The first addend in the formula, which includes
 (4 bytes on Linux/x86), ensures that the user cannot
 create an unlimited number of zero-length messages (such messages
 nevertheless each consume some system memory for bookkeeping overhead).
+<DT><B>RLIMIT_NICE</B> (since kernel 2.6.12, but see BUGS below)
+
+<DD>
+Specifies a ceiling to which the process's nice value can be raised using
+<B><A HREF="../man2/setpriority.2.html">setpriority</A></B>(2)
+
+or
+<B><A HREF="../man2/nice.2.html">nice</A></B>(2).
+
+The actual ceiling for the nice value is calculated as
+<I>20&nbsp;-&nbsp;rlim_cur</I>.
+
+(This strangeness occurs because negative numbers cannot be specified
+as resource limit values, since they typically have special meanings.
+For example, RLIM_INFINITY typically is the same as -1.)
 <DT><B>RLIMIT_NOFILE</B>
 
 <DD>
@@ -299,6 +314,16 @@ specifying
 
 
 
+
+<DT><B>RLIMIT_RTPRIO</B> (Since Linux 2.6.12, but see BUGS)
+
+<DD>
+Specifies a ceiling on the real-time priority that may be set for 
+this process using
+<B><A HREF="../man2/sched_setscheduler.2.html">sched_setscheduler</A></B>(2)
+
+and
+<B><A HREF="../man2/sched_setparam.2.html">sched_setparam</A></B>(2).
 
 <DT><B>RLIMIT_SIGPENDING</B> (Since Linux 2.6.8)
 
@@ -385,6 +410,22 @@ signals delivered when a process encountered the soft and hard
 
 limits were delivered one (CPU) second later than they should have been.
 This was fixed in kernel 2.6.8.
+<P>
+A kernel bug means that
+<B>RLIMIT_RTPRIO</B>
+
+does not work in kernel 2.6.12; the problem is fixed in kernel 2.6.13.
+<P>
+In kernel 2.6.12, there was an off-by-one mismatch 
+between the priority ranges returned by <A HREF="../man2/getpriority.2.html">getpriority</A>(2) and
+<B>RLIMIT_NICE</B>.
+
+This had the effect that actual ceiling for the nice value 
+was calculated as
+<I>19&nbsp;-&nbsp;rlim_cur</I>.
+
+This was fixed in kernel 2.6.13.
+
 <A NAME="lbAH">&nbsp;</A>
 <H2>CONFORMING TO</H2>
 
@@ -400,10 +441,14 @@ they are present on the BSDs and Linux, but on few other implementations.
 
 derives from BSD and is not specified in POSIX.1-2001;
 it is nevertheless present on most implementations.
-<B>RLIMIT_SIGPENDING</B>
+<B>RLIMIT_MSGQUEUE</B>,
+
+<B>RLIMIT_NICE</B>,
+
+<B>RLIMIT_RTPRIO</B>,
 
 and
-<B>RLIMIT_MSGQUEUE</B>
+<B>RLIMIT_SIGPENDING</B>,
 
 are Linux specific.
 <A NAME="lbAI">&nbsp;</A>
@@ -457,6 +502,6 @@ are Linux specific.
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 02:14:44 GMT, April 20, 2020
+Time: 02:15:11 GMT, April 20, 2020
 </BODY>
 </HTML>

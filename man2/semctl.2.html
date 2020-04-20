@@ -175,6 +175,93 @@ The argument
 <I>semnum</I>
 
 is ignored.
+<DT><B>IPC_INFO</B> (Linux specific)
+
+<DD>
+Returns information about system-wide semaphore limits and 
+parameters in the structure pointed to by
+<I>arg.__buf</I>.
+
+This structure is of type
+<I>seminfo</I>,
+
+defined in
+<I>&lt;<A HREF="file:///usr/include/sys/sem.h">sys/sem.h</A>&gt;</I>
+
+if the _GNU_SOURCE feature test macro is defined:
+<PRE>
+
+struct  seminfo {
+    int semmap;  /* # of entries in semaphore map; 
+                    unused */
+    int semmni;  /* Max. # of semaphore sets */
+    int semmns;  /* Max. # of semaphores in all 
+                    semaphore sets */
+    int semmnu;  /* System-wide max. # of undo 
+                    structures; unused */
+    int semmsl;  /* Max. # of semaphores in a set */
+    int semopm;  /* Max. # of operations for semop() */
+    int semume;  /* Max. # of undo entries per 
+                    process; unused */
+    int semusz;  /* size of struct sem_undo */
+    int semvmx;  /* Maximum semaphore value */
+    int semaem;  /* Max. value that can be recorded for 
+                    semaphore adjustment (SEM_UNDO) */
+};
+
+</PRE>
+
+The 
+<I>semmsl</I>,
+
+<I>semmns</I>,
+
+<I>semopm</I>,
+
+and
+<I>semmni</I>
+
+settings can be changed via
+<I>/proc/sys/kernel/sem</I>;
+
+see
+<B><A HREF="../man5/proc.5.html">proc</A></B>(5)
+
+for details.
+<DT><B>SEM_INFO</B> (Linux specific)
+
+<DD>
+Returns a
+<I>seminfo</I>
+
+structure containing the same information as for
+<B>IPC_INFO</B>,
+
+except that the following fields are returned with information 
+about system resources consumed by semaphores: the
+<I>semusz</I>
+
+field returns the number of semaphore sets that currently exist 
+on the system; and the
+<I>semaem</I>
+
+field returns the total number of semaphores in all semaphore sets 
+on the system.
+<DT><B>SEM_STAT</B> (Linux specific)
+
+<DD>
+Returns a 
+<I>semid_ds </I>
+
+structure as for
+<B>IPC_STAT</B>.
+
+However, the
+<I>semid</I>
+
+argument is not a semaphore identifier, but instead an index into
+the kernel's internal array that maintains information about
+all semaphore sets on the system.
 <DT><B>GETALL</B>
 
 <DD>
@@ -324,6 +411,7 @@ with
 <I>errno</I>
 
 indicating the error.
+<P>
 Otherwise the system call returns a nonnegative value depending on
 <I>cmd</I>
 
@@ -352,6 +440,28 @@ the value of
 <DD>
 the value of
 <B>semzcnt</B>.
+
+<DT><B>IPC_INFO</B>
+
+<DD>
+the index of the highest used entry in the
+kernel's internal array recording information about all
+semaphore sets.
+(This information can be used with repeated
+<B>SEM_STAT </B>
+
+operations to obtain information about all semaphore sets on the system.)
+<DT><B>SEM_INFO</B>
+
+<DD>
+As for 
+<B>IPC_INFO</B>.
+
+<DT><B>SEM_STAT</B>
+
+<DD>
+the identifier of the semaphore set whose index was given in
+<I>semid</I>.
 
 </DL>
 <P>
@@ -422,6 +532,13 @@ Invalid value for
 or
 <I>semid</I>.
 
+Or: for a
+<B>SEM_STAT</B>
+
+operation, the index value specified in 
+<I>semid</I>
+
+referred to an array slot that is currently unused.
 <DT><B>EPERM</B>
 
 <DD>
@@ -478,7 +595,7 @@ The
 and
 <B>SEM_INFO</B>
 
-control calls are used by the
+operations are used by the
 <B><A HREF="../man8/ipcs.8.html">ipcs</A></B>(8)
 
 program to provide information on allocated resources.
@@ -568,6 +685,6 @@ SVr4, SVID.  SVr4 documents more error conditions EINVAL and EOVERFLOW.
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 02:14:45 GMT, April 20, 2020
+Time: 02:15:12 GMT, April 20, 2020
 </BODY>
 </HTML>

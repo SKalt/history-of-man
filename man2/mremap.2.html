@@ -5,7 +5,7 @@ Copyright (c) 1996 Tom Bjorkholm &lt;tomb@mydata.se&gt;
 <HTML><HEAD><TITLE>Man page of MREMAP</TITLE>
 </HEAD><BODY>
 <H1>MREMAP</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 1996-04-12<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2005-09-13<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -14,6 +14,10 @@ Section: Linux Programmer's Manual (2)<BR>Updated: 1996-04-12<BR><A HREF="#index
 mremap - re-map a virtual memory address 
 <A NAME="lbAC">&nbsp;</A>
 <H2>SYNOPSIS</H2>
+
+<B>#define _GNU_SOURCE</B>
+
+<BR>
 
 <B>#include &lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;</B>
 
@@ -30,7 +34,7 @@ mremap - re-map a virtual memory address
 <A NAME="lbAD">&nbsp;</A>
 <H2>DESCRIPTION</H2>
 
-<B>mremap</B> expands (or shrinks) an existing memory mapping, potentially 
+<B>mremap</B>() expands (or shrinks) an existing memory mapping, potentially 
 moving it at the same time (controlled by the <I>flags</I> argument and 
 the available virtual address space).
 <P>
@@ -40,8 +44,6 @@ aligned. <I>old_size</I> is the old size of the
 virtual memory block.  <I>new_size</I> is the requested size of the
 virtual memory block after the resize. 
 <P>
-The <I>flags</I> argument is a bitmap of flags.
-<P>
 In Linux the memory is divided into pages.  A user process has (one or)
 several linear virtual memory segments.  Each virtual memory segment has one
 or more mappings to real memory pages (in the page table).  Each virtual
@@ -50,38 +52,60 @@ a segmentation violation if the memory is accessed incorrectly (e.g.,
 writing to a read-only segment).  Accessing virtual memory outside of the
 segments will also cause a segmentation violation.
 <P>
-<B>mremap</B> uses the Linux page table scheme.  <B>mremap</B> changes the 
+<B>mremap</B>() uses the Linux page table scheme.
+<B>mremap</B>() changes the 
 mapping between virtual addresses and memory pages.  This can be used to
-implement a very efficient <B>realloc</B>.
+implement a very efficient <B>realloc</B>().
 <P>
-<A NAME="lbAE">&nbsp;</A>
-<H2>FLAGS</H2>
-
+The <I>flags</I> bit-mask argument may be 0, or include the following flag:
 <DL COMPACT>
 <DT><B>MREMAP_MAYMOVE</B>
 
 <DD>
-indicates if the operation should fail, or change the virtual address 
-if the resize cannot be done at the current virtual address.
-<P>
+By default, if there is not sufficient space to expand a mapping
+at its current location, then
+<B>mremap</B>()
+
+fails.
+If this flag is specified, then the kernel is permitted to 
+relocate the mapping to a new virtual address, if necessary.
+If the mapping is relocated,
+then absolute pointers into the old mapping location 
+become invalid (offsets relative to the starting address of 
+the mapping should be employed).
 </DL>
-<A NAME="lbAF">&nbsp;</A>
+<P>
+
+If the memory segment specified by 
+<I>old_address</I>
+
+and 
+<I>old_size</I>
+
+is locked (using
+<B>mlock</B>()
+
+or similar), then this lock is maintained when the segment is
+resized and/or relocated.
+As a consequence, the amount memory locked by the process may change.
+<A NAME="lbAE">&nbsp;</A>
 <H2>RETURN VALUE</H2>
 
-On success <B>mremap</B> returns a pointer to the new virtual memory area.
+On success <B>mremap</B>() returns a pointer to the new virtual memory area.
 On error, the value
 <B>MAP_FAILED</B>
 
 (that is, (void *) -1) is returned, and <I>errno</I> is set appropriately.
-<P>
-<A NAME="lbAG">&nbsp;</A>
+<A NAME="lbAF">&nbsp;</A>
 <H2>ERRORS</H2>
 
 <DL COMPACT>
 <DT><B>EAGAIN</B>
 
 <DD>
-The memory segment is locked and cannot be re-mapped.
+The caller tried to expand a memory segment that is locked, 
+but this was not possible without exceeding the
+RLIMIT_MEMLOCK resource limit.
 <DT><B>EFAULT</B>
 
 <DD>
@@ -104,14 +128,7 @@ The memory area cannot be expanded at the current virtual address, and the
 flag is not set in <I>flags</I>. 
 Or, there is not enough (virtual) memory available.
 </DL>
-<A NAME="lbAH">&nbsp;</A>
-<H2>NOTES</H2>
-
-With current glibc includes, in order to get the definition of
-<B>MREMAP_MAYMOVE</B>,
-
-you need to define _GNU_SOURCE before including &lt;<A HREF="file:///usr/include/sys/mman.h">sys/mman.h</A>&gt;.
-<A NAME="lbAI">&nbsp;</A>
+<A NAME="lbAG">&nbsp;</A>
 <H2>CONFORMING TO</H2>
 
 This call is Linux-specific, and should not be used in programs
@@ -119,12 +136,16 @@ intended to be portable.  4.2BSD had a (never actually implemented)
 <B><A HREF="../man2/mremap.2.html">mremap</A></B>(2)
 
 call with completely different semantics.
-<A NAME="lbAJ">&nbsp;</A>
+<A NAME="lbAH">&nbsp;</A>
 <H2>SEE ALSO</H2>
 
 <B><A HREF="../man2/brk.2.html">brk</A></B>(2),
 
 <B><A HREF="../man2/getpagesize.2.html">getpagesize</A></B>(2),
+
+<B><A HREF="../man2/getrlimit.2.html">getrlimit</A></B>(2),
+
+<B><A HREF="../man2/mlock.2.html">mlock</A></B>(2),
 
 <B><A HREF="../man2/mmap.2.html">mmap</A></B>(2),
 
@@ -148,17 +169,15 @@ Your favorite OS text book for more information on paged memory.
 <DT><A HREF="#lbAB">NAME</A><DD>
 <DT><A HREF="#lbAC">SYNOPSIS</A><DD>
 <DT><A HREF="#lbAD">DESCRIPTION</A><DD>
-<DT><A HREF="#lbAE">FLAGS</A><DD>
-<DT><A HREF="#lbAF">RETURN VALUE</A><DD>
-<DT><A HREF="#lbAG">ERRORS</A><DD>
-<DT><A HREF="#lbAH">NOTES</A><DD>
-<DT><A HREF="#lbAI">CONFORMING TO</A><DD>
-<DT><A HREF="#lbAJ">SEE ALSO</A><DD>
+<DT><A HREF="#lbAE">RETURN VALUE</A><DD>
+<DT><A HREF="#lbAF">ERRORS</A><DD>
+<DT><A HREF="#lbAG">CONFORMING TO</A><DD>
+<DT><A HREF="#lbAH">SEE ALSO</A><DD>
 </DL>
 <HR>
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 02:10:00 GMT, April 20, 2020
+Time: 02:15:11 GMT, April 20, 2020
 </BODY>
 </HTML>

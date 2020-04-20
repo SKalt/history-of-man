@@ -5,14 +5,13 @@ Copyright (c) 1994,1995 Mike Battersby &lt;mib@deakin.edu.au&gt;
 <HTML><HEAD><TITLE>Man page of SIGACTION</TITLE>
 </HEAD><BODY>
 <H1>SIGACTION</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2004-11-11<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2005-09-15<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
 <H2>NAME</H2>
 
-sigaction, sigprocmask, sigpending, sigsuspend -
-POSIX signal handling API
+sigaction - examine and change a signal action
 <A NAME="lbAC">&nbsp;</A>
 <H2>SYNOPSIS</H2>
 
@@ -22,17 +21,6 @@ POSIX signal handling API
 <B>int sigaction(int </B><I>signum</I><B>, const struct sigaction *</B><I>act</I><B>,</B>
 
 <B>struct sigaction *</B><I>oldact</I><B>);</B>
-
-<P>
-<B>int sigprocmask(int </B><I>how</I><B>, const sigset_t *</B><I>set</I><B>,</B>
-
-<B>sigset_t *</B><I>oldset</I><B>);</B>
-
-<P>
-<B>int sigpending(sigset_t *</B><I>set</I><B>);</B>
-
-<P>
-<B>int sigsuspend(const sigset_t *</B><I>mask</I><B>);</B>
 
 <A NAME="lbAD">&nbsp;</A>
 <H2>DESCRIPTION</H2>
@@ -124,9 +112,19 @@ to ignore this signal, or a pointer to a signal handling function.
 This function receives the signal number as its only argument.
 <P>
 
+If
+<B>SA_SIGINFO</B>
+
+is specified in
+<I>sa_flags</I>,
+
+then
 <I>sa_sigaction</I>
 
-also specifies the action to be associated with
+(instead of
+<I>sa_handler</I>)
+
+specifies the signal-handling function for
 <I>signum</I>.
 
 This function receives the signal number as its first argument, a
@@ -400,88 +398,12 @@ values which are possible for any signal are listed in this table:
 </TABLE>
 
 <P>
-<P>
-
-The
-<B>sigprocmask</B>()
-
-call is used to change the list of currently blocked signals. The 
-behaviour of the call is dependent on the value of
-<I>how</I>,
-
-as follows.
-<DL COMPACT><DT><DD>
-<DL COMPACT>
-<DT><B>SIG_BLOCK</B>
-
-<DD>
-The set of blocked signals is the union of the current set and the
-<I>set</I>
-
-argument.
-<DT><B>SIG_UNBLOCK</B>
-
-<DD>
-The signals in
-<I>set</I>
-
-are removed from the current set of blocked signals.  It is legal to
-attempt to unblock a signal which is not blocked.
-<DT><B>SIG_SETMASK</B>
-
-<DD>
-The set of blocked signals is set to the argument
-<I>set</I>.
-
-</DL>
-</DL>
-
-<P>
-
-If
-<I>oldset</I>
-
-is non-null, the previous value of the signal mask is stored in
-<I>oldset</I>.
-
-<P>
-
-The
-<B>sigpending</B>()
-
-call allows the examination of pending signals (ones which have been
-raised while blocked).  The signal mask of pending signals is stored
-in
-<I>set</I>.
-
-<P>
-
-The
-<B>sigsuspend</B>()
-
-call temporarily replaces the signal mask for the process with that
-given by 
-<I>mask</I>
-
-and then suspends the process until a signal is received.
-<P>
 <A NAME="lbAE">&nbsp;</A>
 <H2>RETURN VALUE</H2>
 
-<B>sigaction</B>(),
+<B>sigaction</B>()
 
-<B>sigprocmask</B>(),
-
-and
-<B>sigpending</B>()
-
-return 0 on success and -1 on error.
-<B>sigsuspend</B>()
-
-always returns -1, normally with the error
-<B>EINTR</B>.
-
-<P>
+returns 0 on success and -1 on error.
 <A NAME="lbAF">&nbsp;</A>
 <H2>ERRORS</H2>
 
@@ -489,16 +411,9 @@ always returns -1, normally with the error
 <DT><B>EFAULT</B>
 
 <DD>
-<I>act</I>, <I>oldact</I>, <I>set</I>, <I>oldset</I>
+<I>act</I> or <I>oldact</I>
 
-or 
-<I>mask</I>
-
-point to memory which is not a valid part of the process address space.
-<DT><B>EINTR</B>
-
-<DD>
-System call was interrupted.
+points to memory which is not a valid part of the process address space.
 <DT><B>EINVAL</B>
 
 <DD>
@@ -506,15 +421,11 @@ An invalid signal was specified.  This will also be generated if an attempt
 is made to change the action for
 <B>SIGKILL</B> or <B>SIGSTOP</B>, 
 
-which cannot be caught.
+which cannot be caught or ignored.
 </DL>
 <A NAME="lbAG">&nbsp;</A>
 <H2>NOTES</H2>
 
-It is not possible to block 
-<B>SIGKILL</B> or <B>SIGSTOP</B>
-
-with the sigprocmask call.  Attempts to do so will be silently ignored.
 <P>
 
 According to POSIX, the behaviour of a process is undefined after it
@@ -608,14 +519,11 @@ allowed the receipt of any signal, not just the one we are installing
 <I>sa_mask</I>
 
 settings).
-<P>
 
 
-The
-<B>SA_RESETHAND</B> and <B>SA_NODEFER</B>
 
-names for SVr4 compatibility are present only in library versions 3.0.9
-and greater.
+
+
 <P>
 
 <B>sigaction</B>()
@@ -625,16 +533,38 @@ handler. It can also be used to check whether a given signal is valid for
 the current machine by calling it with null second and third arguments.
 <P>
 
+It is not possible to block 
+<B>SIGKILL</B> or <B>SIGSTOP</B>
+
+(by specifying them in
+<I>sa_mask</I>).
+
+Attempts to do so are silently ignored.
+<P>
+
 See
 <B><A HREF="../man3/sigsetops.3.html">sigsetops</A></B>(3)
 
 for details on manipulating signal sets.
 <A NAME="lbAH">&nbsp;</A>
+<H2>BUGS</H2>
+
+In kernels up to and including 2.6.13, specifying
+<B>SA_NODEFER</B>
+
+in
+<I>sa_flags</I>
+
+preventing not only the delivered signal from being masked during 
+execution of the handler, but also the signals specified in
+<I>sa_mask</I>.
+
+This bug is was fixed in kernel 2.6.14.
+<A NAME="lbAI">&nbsp;</A>
 <H2>CONFORMING TO</H2>
 
 POSIX, SVr4.  SVr4 does not document the EINTR condition.
-<P>
-<A NAME="lbAI">&nbsp;</A>
+<A NAME="lbAJ">&nbsp;</A>
 <H2>UNDOCUMENTED</H2>
 
 Before the introduction of
@@ -649,8 +579,7 @@ with second argument of type
 
 See the relevant kernel sources for details.
 This use is obsolete now.
-<P>
-<A NAME="lbAJ">&nbsp;</A>
+<A NAME="lbAK">&nbsp;</A>
 <H2>SEE ALSO</H2>
 
 <B><A HREF="../man1/kill.1.html">kill</A></B>(1),
@@ -663,7 +592,13 @@ This use is obsolete now.
 
 <B><A HREF="../man2/signal.2.html">signal</A></B>(2),
 
+<B><A HREF="../man2/sigpending.2.html">sigpending</A></B>(2),
+
+<B><A HREF="../man2/sigprocmask.2.html">sigprocmask</A></B>(2),
+
 <B><A HREF="../man2/sigqueue.2.html">sigqueue</A></B>(2),
+
+<B><A HREF="../man2/sigsuspend.2.html">sigsuspend</A></B>(2),
 
 <B><A HREF="../man2/sigvec.2.html">sigvec</A></B>(2),
 
@@ -690,14 +625,15 @@ This use is obsolete now.
 <DT><A HREF="#lbAE">RETURN VALUE</A><DD>
 <DT><A HREF="#lbAF">ERRORS</A><DD>
 <DT><A HREF="#lbAG">NOTES</A><DD>
-<DT><A HREF="#lbAH">CONFORMING TO</A><DD>
-<DT><A HREF="#lbAI">UNDOCUMENTED</A><DD>
-<DT><A HREF="#lbAJ">SEE ALSO</A><DD>
+<DT><A HREF="#lbAH">BUGS</A><DD>
+<DT><A HREF="#lbAI">CONFORMING TO</A><DD>
+<DT><A HREF="#lbAJ">UNDOCUMENTED</A><DD>
+<DT><A HREF="#lbAK">SEE ALSO</A><DD>
 </DL>
 <HR>
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 02:14:45 GMT, April 20, 2020
+Time: 02:15:12 GMT, April 20, 2020
 </BODY>
 </HTML>

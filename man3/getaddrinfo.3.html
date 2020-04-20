@@ -97,7 +97,7 @@ structure used by this function contains the following members:
 sets
 <I>res</I>
 
-to point to a dynamically-allocated link list of
+to point to a dynamically-allocated linked list of
 <B>addrinfo</B>
 
 structures, linked by the
@@ -105,7 +105,7 @@ structures, linked by the
 
 member.
 There are several reasons why
-the link list may have more than one
+the linked list may have more than one
 <B>addrinfo</B>
 
 structure, including: if the network host is
@@ -139,10 +139,10 @@ address family,
 (<I>ai_family</I>
 
 will be set to either
-<B>PF_INET</B>
+<B>AF_INET</B>
 
 or
-<B>PF_INET6</B>).
+<B>AF_INET6</B>).
 
 <P>
 
@@ -155,10 +155,7 @@ A NULL
 <I>hints</I>
 
 specifies that any network address or protocol is acceptable.
-If this parameter is not
-<B>NULL</B>
-
-it points to an
+If this parameter is not NULL it points to an
 <B>addrinfo</B>
 
 structure
@@ -171,7 +168,7 @@ and
 <I>ai_protocol</I>
 
 members specify the preferred socket type.
-<B>PF_UNSPEC</B>
+<B>AF_UNSPEC</B>
 
 in
 <I>ai_family</I>
@@ -208,13 +205,10 @@ parameter, but not both, may be NULL.
 specifies either a numerical network address
 (dotted-decimal format for IPv4, hexadecimal format for IPv6)
 or a network hostname, whose network addresses are looked up and resolved.
-If the
-<I>ai_flags</I>
+If
+<I>hints.ai_flags</I>
 
-member in the
-<I>hints</I>
-
-parameter contains the
+contains the
 <B>AI_NUMERICHOST</B>
 
 flag then the
@@ -230,7 +224,7 @@ flag suppresses any potentially lengthy network host address lookups.
 The
 <B><A HREF="../man3/getaddrinfo.3.html">getaddrinfo</A></B>(3)
 
-function creates a link list of
+function creates a linked list of
 <B>addrinfo</B>
 
 structures, one for each network address subject to any restrictions
@@ -238,18 +232,23 @@ imposed by the
 <I>hints</I>
 
 parameter.
+The
 <I>ai_canonname</I>
 
-is set to point to the official name of the host, if
-<I>ai_flags</I>
+field of the first of these 
+<B>addrinfo </B>
 
-in
-<I>hints</I>
+structures is set to point to the official name of the host, if
+<I>hints.ai_flags</I>
 
 includes the
 <B>AI_CANONNAME</B>
 
 flag.
+
+
+
+
 <I>ai_family</I>,
 
 <I>ai_socktype</I>,
@@ -276,13 +275,9 @@ the
 network address in each socket structure is initialized according to the
 <B>AI_PASSIVE</B>
 
-flag, which is set in the
-<I>ai_flags</I>
+flag, which is set in
+<I>hints.ai_flags</I>.
 
-member of the
-<I>hints</I>
-
-parameter.
 The network address in each socket structure will be left unspecified
 if
 <B>AI_PASSIVE</B>
@@ -299,6 +294,57 @@ This is used by client applications, which intend to connect
 to a server running on the same network host.
 <P>
 
+If
+<I>hints.ai_flags</I>
+
+includes the
+<B>AI_ADDRCONFIG</B>
+
+flag, then IPv4 addresses are returned in the list pointed to by
+<I>result</I>
+
+only if the local system has at least has at least one 
+IPv4 address configured, and IPv6 addresses are only returned 
+if the local system has at least one IPv6 address configured.
+<P>
+
+If
+<I>hint.ai_flags</I>
+
+specifies the
+<B>AI_V4MAPPED</B>
+
+flag, and
+<I>hints.ai_family</I>
+
+was specified as
+<B>AF_INET6</B>,
+
+and no matching IPv6 addresses could be found,
+then return IPv4-mapped IPv6 addresses in the list pointed to by
+<I>result</I>.
+
+If both
+<B>AI_V4MAPPED</B>
+
+and
+<B>AI_ALL</B>
+
+are specified in
+<I>hints.ai_family</I>,
+
+then return both IPv6 and IPv4-mapped IPv6 addresses 
+in the list pointed to by
+<I>result</I>.
+
+<B>AI_ALL</B>
+
+is ignored if
+<B>AI_V4MAPPED</B>
+
+is not also specified.
+<P>
+
 <I>service</I>
 
 sets the port number in the network address of each socket structure.
@@ -306,13 +352,28 @@ If
 <I>service</I>
 
 is NULL the port number will be left uninitialized.
+If
+<B>AI_NUMERICSERV</B>
+
+is specified in
+<I>hints.ai_flags</I>
+
+and
+<I>service</I>
+
+is not NULL, then 
+<I>service</I>
+
+must point to a string containing a numeric port number.
+This flag is used to inhibit the invocation of a name resolution service
+in cases where it is known not to be required.
 <P>
 
 The
 <B><A HREF="../man3/freeaddrinfo.3.html">freeaddrinfo</A></B>(3)
 
 function frees the memory that was allocated
-for the dynamically allocated link list
+for the dynamically allocated linked list
 <I>res</I>.
 
 <A NAME="lbAE">&nbsp;</A>
@@ -345,14 +406,22 @@ The
 or
 <I>service</I>
 
-is not known.
-This error is also returned if both
+is not known; or both
 <I>node</I>
 
 and
 <I>service</I>
 
-are NULL.
+are NULL; or
+<B>AI_NUMERICSERV</B>
+
+was specified in
+<I>hints.ai_flags</I>
+
+and 
+<I>service</I>
+
+was not a numeric port-number string.
 <DT><B>EAI_SERVICE</B>
 
 <DD>
@@ -403,8 +472,22 @@ POSIX 1003.1-2003.
 The
 <B>getaddrinfo()</B>
 
-function is documented in RFC 2553.
+function is documented in RFC&nbsp;2553.
 <A NAME="lbAG">&nbsp;</A>
+<H2>NOTES</H2>
+
+<B>AI_ADDRCONFIG</B>,
+
+<B>AI_ALL,</B>
+
+and
+<B>AI_V4MAPPED</B>
+
+are available since glibc 2.3.3.
+<B>AI_NUMERICSERV</B>
+
+is available since glibc 2.3.4.
+<A NAME="lbAH">&nbsp;</A>
 <H2>SEE ALSO</H2>
 
 <B><A HREF="../man3/getipnodebyaddr.3.html">getipnodebyaddr</A></B>(3),
@@ -421,12 +504,13 @@ function is documented in RFC 2553.
 <DT><A HREF="#lbAD">DESCRIPTION</A><DD>
 <DT><A HREF="#lbAE">RETURN VALUE</A><DD>
 <DT><A HREF="#lbAF">CONFORMING TO</A><DD>
-<DT><A HREF="#lbAG">SEE ALSO</A><DD>
+<DT><A HREF="#lbAG">NOTES</A><DD>
+<DT><A HREF="#lbAH">SEE ALSO</A><DD>
 </DL>
 <HR>
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 02:10:36 GMT, April 20, 2020
+Time: 02:15:15 GMT, April 20, 2020
 </BODY>
 </HTML>

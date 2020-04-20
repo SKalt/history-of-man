@@ -26,7 +26,7 @@ readv, writev - read or write data into multiple buffers
 <H2>DESCRIPTION</H2>
 
 The
-<B>readv()</B>
+<B>readv</B>()
 
 function reads
 <I>count</I>
@@ -40,7 +40,7 @@ into the multiple buffers described by
 <P>
 
 The
-<B>writev()</B>
+<B>writev</B>()
 
 function writes at most
 <I>count</I>
@@ -57,22 +57,24 @@ The pointer
 <I>vector</I>
 
 points to a
-<B>struct iovec</B>
+<I>struct iovec</I>
 
 defined in
-<B>&lt;<A HREF="file:///usr/include/sys/uio.h">sys/uio.h</A>&gt;</B>
+<I>&lt;<A HREF="file:///usr/include/sys/uio.h">sys/uio.h</A>&gt;</I>
 
 as
 <P>
 
 <BR>
 
+
 <PRE>
 struct iovec {
-void *iov_base;   /* Starting address */
-size_t iov_len;   /* Number of bytes */
+    void *iov_base;   /* Starting address */
+    size_t iov_len;   /* Number of bytes */
 };
 </PRE>
+
 
 <P>
 
@@ -80,7 +82,7 @@ Buffers are processed in the order specified.
 <P>
 
 The
-<B>readv()</B>
+<B>readv</B>()
 
 function works just like
 <B><A HREF="../man2/read.2.html">read</A></B>(2)
@@ -89,7 +91,7 @@ except that multiple buffers are filled.
 <P>
 
 The
-<B>writev()</B>
+<B>writev</B>()
 
 function works just like
 <B><A HREF="../man2/write.2.html">write</A></B>(2)
@@ -101,10 +103,10 @@ except that multiple buffers are written out.
 <H2>RETURN VALUE</H2>
 
 On success, the
-<B>readv()</B>
+<B>readv</B>()
 
 function returns the number of bytes read; the
-<B>writev()</B>
+<B>writev</B>()
 
 function returns the number of bytes written.
 On error, -1 is returned, and <I>errno</I> is set appropriately.
@@ -117,7 +119,7 @@ The errors are as given for
 and
 <B><A HREF="../man2/write.2.html">write</A></B>(2).
 
-Additionally the following error is defined.
+Additionally the following error is defined:
 <DL COMPACT>
 <DT><B>EINVAL</B>
 
@@ -126,19 +128,20 @@ The sum of the
 <I>iov_len</I>
 
 values overflows an
-<B>ssize_t</B>
+<I>ssize_t</I>
 
 value. Or,
-the vector count <I>count</I> is zero or greater than <B>MAX_IOVEC</B>.
+the vector count <I>count</I> is less than zero or greater than the
+permitted maximum.
 </DL>
 <A NAME="lbAG">&nbsp;</A>
 <H2>CONFORMING TO</H2>
 
 4.4BSD (the
-<B>readv</B>
+<B>readv</B>()
 
 and
-<B>writev</B>
+<B>writev</B>()
 
 functions first appeared in 4.2BSD), Unix98, POSIX 1003.1-2001.
 Linux libc5 used <B>size_t</B> as the type of the <I>count</I> parameter,
@@ -146,17 +149,60 @@ and <B>int</B> as return type for these functions.
 
 
 <A NAME="lbAH">&nbsp;</A>
+<H2>LINUX NOTES</H2>
+
+SUSv3 allows an implementation to place a limit on the number of items
+that can be passed in
+<I>vector</I>.
+
+An implementation can advertise its limit by defining
+<B>IOV_MAX</B>
+
+in
+<I>&lt;<A HREF="file:///usr/include/limits.h">limits.h</A>&gt;</I>
+
+or at run time via the return value from
+<I>sysconf(_SC_IOV_MAX)</I>.
+
+On Linux, the limit advertised by these mechanisms is 1024,
+which is the true kernel limit.
+However, the glibc wrapper functions do some extra work if
+they detect that the underlying kernel system call failed because this
+limit was exceeded.  In the case of
+<B>readv</B>()
+
+the wrapper function allocates a temporary buffer large enough 
+for all of the items specified by
+<I>vector</I>,
+
+passes that buffer in a call to 
+<B>read</B>(),
+
+copies data from the buffer to the locations specified by the
+<I>iov_base</I>
+
+fields of the elements of 
+<I>vector</I>,
+
+and then frees the buffer.
+The wrapper function for
+<B>writev</B>()
+
+performs the analogous task using a temporary buffer and a call to
+<B>write</B>().
+
+<A NAME="lbAI">&nbsp;</A>
 <H2>BUGS</H2>
 
 It is not advisable to mix calls to functions like
-<B>readv()</B>
+<B>readv</B>()
 
 or
-<B>writev()</B>,
+<B>writev</B>(),
 
 which operate on file descriptors, with the functions from the stdio
 library; the results will be undefined and probably not what you want.
-<A NAME="lbAI">&nbsp;</A>
+<A NAME="lbAJ">&nbsp;</A>
 <H2>SEE ALSO</H2>
 
 <B><A HREF="../man2/read.2.html">read</A></B>(2),
@@ -174,13 +220,14 @@ library; the results will be undefined and probably not what you want.
 <DT><A HREF="#lbAE">RETURN VALUE</A><DD>
 <DT><A HREF="#lbAF">ERRORS</A><DD>
 <DT><A HREF="#lbAG">CONFORMING TO</A><DD>
-<DT><A HREF="#lbAH">BUGS</A><DD>
-<DT><A HREF="#lbAI">SEE ALSO</A><DD>
+<DT><A HREF="#lbAH">LINUX NOTES</A><DD>
+<DT><A HREF="#lbAI">BUGS</A><DD>
+<DT><A HREF="#lbAJ">SEE ALSO</A><DD>
 </DL>
 <HR>
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 02:14:45 GMT, April 20, 2020
+Time: 02:15:12 GMT, April 20, 2020
 </BODY>
 </HTML>

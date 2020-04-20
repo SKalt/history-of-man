@@ -5,7 +5,7 @@ Copyright (C) Tom Bjorkholm, Markus Kuhn &amp; David A. Wheeler 1996-1999
 <HTML><HEAD><TITLE>Man page of SETSCHEDULER</TITLE>
 </HEAD><BODY>
 <H1>SETSCHEDULER</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2004-05-27<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2005-07-28<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -86,10 +86,8 @@ intended for special time-critical applications that need precise
 control over the way in which runnable processes are selected for
 execution. Processes scheduled with <I>SCHED_OTHER</I> must be assigned
 the static priority 0, processes scheduled under <I>SCHED_FIFO</I> or
-<I>SCHED_RR</I> can have a static priority in the range 1 to 99. Only
-processes with superuser privileges can get a static priority higher
-than 0 and can therefore be scheduled under <I>SCHED_FIFO</I> or
-<I>SCHED_RR</I>. The system calls <B>sched_get_priority_min</B> and
+<I>SCHED_RR</I> can have a static priority in the range 1 to 99. 
+The system calls <B>sched_get_priority_min</B> and
 <B>sched_get_priority_max</B> can be used to find out the valid
 priority range for a scheduling policy in a portable way on all
 POSIX.1b conforming systems.
@@ -130,7 +128,6 @@ runnable processes with equal static priority. A <I>SCHED_FIFO</I>
 process runs until either it is blocked by an I/O request, it is
 preempted by a higher priority process, or it calls <B>sched_yield</B>.
 <P>
-<P>
 <A NAME="lbAG">&nbsp;</A>
 <H3>SCHED_RR: Round Robin scheduling</H3>
 
@@ -162,6 +159,75 @@ the scheduler. This ensures fair progress among all <I>SCHED_OTHER</I>
 processes.
 <P>
 <A NAME="lbAI">&nbsp;</A>
+<H3>Privileges and resource limits</H3>
+
+
+
+
+
+
+
+
+
+
+
+In Linux kernels before 2.6.12, only privileged
+(<B>CAP_SYS_NICE</B>)
+
+processes can set a non-zero static priority.
+The only change that an unprivileged process can make is to set the
+<B>SCHED_OTHER</B>
+
+policy, and this can only be done if the effective user ID of the caller of
+<B>sched_setscheduler</B>
+
+matches the real or effective user ID of the target process 
+(i.e., the process specified by
+<I>pid</I>)
+
+whose policy is being changed.
+<P>
+Since Linux 2.6.12, the
+<B>RLIMIT_RTPRIO</B>
+
+resource limit defines a ceiling on an unprivileged process's
+priority for the
+<B>SCHED_RR</B>
+
+and
+<B>SCHED_FIFO</B>
+
+policies.
+If an unprivileged process has a non-zero 
+<B>RLIMIT_RTPRIO</B>
+
+soft limit, then it can change its scheduling policy and priority, 
+subject to the restriction that the priority cannot be set to a 
+value higher than the 
+<B>RLIMIT_RTPRIO</B>
+
+soft limit.
+If the 
+<B>RLIMIT_RTPRIO</B>
+
+soft limit is 0, then the only permitted change is to lower the priority.
+Subject to the same rules, 
+another unprivileged process can also make these changes, 
+as long as the effective user ID of the process making the change 
+matches the real or effective user ID of the target process.
+See
+<B><A HREF="../man2/getrlimit.2.html">getrlimit</A></B>(2)
+
+for further information on
+<B>RLIMIT_RTPRIO</B>.
+
+Privileged
+(<B>CAP_SYS_NICE</B>)
+
+processes ignore this limit; as with older older kernels,
+they can make arbitrary changes to scheduling policy and priority.
+<P>
+<A NAME="lbAJ">&nbsp;</A>
 <H3>Response time</H3>
 
 A blocked high priority process waiting for the I/O has a certain
@@ -171,7 +237,7 @@ interrupt handler.
 
 
 <P>
-<A NAME="lbAJ">&nbsp;</A>
+<A NAME="lbAK">&nbsp;</A>
 <H3>Miscellaneous</H3>
 
 Child processes inherit the scheduling algorithm and parameters across a
@@ -191,10 +257,7 @@ As a non-blocking end-less loop in a process scheduled under
 priority forever, a software developer should always keep available on
 the console a shell scheduled under a higher static priority than the
 tested application. This will allow an emergency kill of tested
-real-time applications that do not block or terminate as expected. As
-<I>SCHED_FIFO</I> and <I>SCHED_RR</I> processes can preempt other
-processes forever, only root processes are allowed to activate these
-policies under Linux.
+real-time applications that do not block or terminate as expected.
 <P>
 POSIX systems on which
 <B>sched_setscheduler</B>
@@ -207,7 +270,7 @@ are available define
 
 in &lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;.
 <P>
-<A NAME="lbAK">&nbsp;</A>
+<A NAME="lbAL">&nbsp;</A>
 <H2>RETURN VALUE</H2>
 
 On success,
@@ -222,7 +285,7 @@ On error, -1 is returned,
 <I>errno</I>
 
 is set appropriately.
-<A NAME="lbAL">&nbsp;</A>
+<A NAME="lbAM">&nbsp;</A>
 <H2>ERRORS</H2>
 
 <DL COMPACT>
@@ -234,30 +297,17 @@ or the parameter <I>p</I> does not make sense for the <I>policy</I>.
 <DT><B>EPERM</B>
 
 <DD>
-The calling process does not have appropriate privileges
-(Linux: does not have the
-<B>CAP_SYS_NICE</B>
-
-capability). Only privileged processes are allowed to
-activate the <I>SCHED_FIFO</I> and <I>SCHED_RR</I>
-policies. A process calling 
-<B>sched_setscheduler</B>
-
-needs an effective user ID equal to the user ID or effective user ID
-of the process identified by
-<I>pid</I>,
-
-or it must be privileged.
+The calling process does not have appropriate privileges.
 <DT><B>ESRCH</B>
 
 <DD>
 The process whose ID is <I>pid</I> could not be found.
 </DL>
-<A NAME="lbAM">&nbsp;</A>
+<A NAME="lbAN">&nbsp;</A>
 <H2>CONFORMING TO</H2>
 
 POSIX.1b (formerly POSIX.4)
-<A NAME="lbAN">&nbsp;</A>
+<A NAME="lbAO">&nbsp;</A>
 <H2>NOTE</H2>
 
 Standard Linux is a general-purpose operating system
@@ -288,7 +338,7 @@ consider using hard real-time extensions to Linux such as
 RTLinux (<A HREF="http://www.rtlinux.org)">http://www.rtlinux.org)</A> or RTAI (<A HREF="http://www.rtai.org)">http://www.rtai.org)</A>
 or use a different operating system
 designed specifically for hard real-time applications.
-<A NAME="lbAO">&nbsp;</A>
+<A NAME="lbAP">&nbsp;</A>
 <H2>SEE ALSO</H2>
 
 <B><A HREF="../man2/getpriority.2.html">getpriority</A></B>(2),
@@ -353,19 +403,20 @@ POSIX.1i(1995).
 <DT><A HREF="#lbAF">SCHED_FIFO: First In-First Out scheduling</A><DD>
 <DT><A HREF="#lbAG">SCHED_RR: Round Robin scheduling</A><DD>
 <DT><A HREF="#lbAH">SCHED_OTHER: Default Linux time-sharing scheduling</A><DD>
-<DT><A HREF="#lbAI">Response time</A><DD>
-<DT><A HREF="#lbAJ">Miscellaneous</A><DD>
+<DT><A HREF="#lbAI">Privileges and resource limits</A><DD>
+<DT><A HREF="#lbAJ">Response time</A><DD>
+<DT><A HREF="#lbAK">Miscellaneous</A><DD>
 </DL>
-<DT><A HREF="#lbAK">RETURN VALUE</A><DD>
-<DT><A HREF="#lbAL">ERRORS</A><DD>
-<DT><A HREF="#lbAM">CONFORMING TO</A><DD>
-<DT><A HREF="#lbAN">NOTE</A><DD>
-<DT><A HREF="#lbAO">SEE ALSO</A><DD>
+<DT><A HREF="#lbAL">RETURN VALUE</A><DD>
+<DT><A HREF="#lbAM">ERRORS</A><DD>
+<DT><A HREF="#lbAN">CONFORMING TO</A><DD>
+<DT><A HREF="#lbAO">NOTE</A><DD>
+<DT><A HREF="#lbAP">SEE ALSO</A><DD>
 </DL>
 <HR>
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 02:14:45 GMT, April 20, 2020
+Time: 02:15:12 GMT, April 20, 2020
 </BODY>
 </HTML>

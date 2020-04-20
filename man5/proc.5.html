@@ -641,7 +641,8 @@ IP address     HW type   Flags     HW address          Mask   Device
 
 <P>
 Here 'IP address' is the IPv4 address of the machine and the 'HW type'
-is the hardware type of the address from RFC 826. The flags are the internal 
+is the hardware type of the address from RFC&nbsp;826. 
+The flags are the internal 
 flags of the ARP structure (as defined in /usr/include/linux/if_arp.h) and
 the 'HW address' is the data link layer mapping for that IP address if
 it is known.
@@ -974,11 +975,14 @@ and files
 
 <I>file-nr</I>, <I>inode-max</I>, <I>inode-nr</I>, <I>inode-state</I>, 
 
-<I>lease-break-time</I>, <I>leases-enable</I>, <I>overflowgid</I>, <I>overflowuid</I>
+<I>lease-break-time</I>, <I>leases-enable</I>, 
 
-<I>super-max</I> and <I>super-nr</I>
+<I>overflowgid</I>, <I>overflowuid</I>, 
 
-with function fairly clear from the name.
+<I>suid_dumpable</I>, 
+
+<I>super-max</I>, and <I>super-nr</I>.
+
 <DT><I>/proc/sys/fs/binfmt_misc</I>
 
 <DD>
@@ -1152,10 +1156,14 @@ argument given to
 The default and minimum value for
 <I>msg_max</I>
 
-is 10; the upper limit is 
-<I>(131072 / sizeof(void&nbsp;*))</I>
+is 10; the upper limit is HARD_MAX:
+<I>(131072&nbsp;/&nbsp;sizeof(void&nbsp;*))</I>
 
 (32768 on Linux/86).
+This limit is ignored for privileged processes
+(<B>CAP_SYS_RESOURCE</B>),
+
+but the HARD_MAX ceiling is nevertheless imposed.
 <DT><I>/proc/sys/fs/mqueue/msgsize_max</I>
 
 <DD>
@@ -1172,11 +1180,18 @@ The default and minimum value for
 
 is 8192 bytes; the upper limit is INT_MAX
 (2147483647 on Linux/86).
+This limit is ignored for privileged processes
+(<B>CAP_SYS_RESOURCE</B>).
+
 <DT><I>/proc/sys/fs/mqueue/queues_max</I>
 
 <DD>
 This file can be used to view and change the system-wide limit on the 
 number of message queues that can be created.
+Only privileged processes 
+(<B>CAP_SYS_RESOURCE</B>)
+
+can create new message queues once this limit has been reached.
 The default value for
 <I>queues_max</I>
 
@@ -1191,138 +1206,40 @@ Some filesystems only support 16-bit UIDs and GIDs, although in Linux
 UIDs and GIDs are 32 bits. When one of these filesystems is mounted
 with writes enabled, any UID or GID that would exceed 65535 is translated
 to the overflow value before being written to disk.
-<DT><I>/proc/sys/fs/super-max </I>
+<DT><I>/proc/sys/fs/suid_dumpable</I> (since Linux 2.6.13)
 
 <DD>
-This file 
-controls the maximum number of superblocks, and
-thus the maximum number of mounted filesystems the kernel
-can have. You only need to increase super-max if you need to
-mount more filesystems than the current value in super-max
-allows you to.
-<DT><I>/proc/sys/fs/super-nr</I>
 
-<DD>
-This file 
-contains the number of filesystems currently mounted.
-<DT><I>/proc/sys/kernel</I>
-
-<DD>
-This directory contains files
-<I>acct</I>, <I>cad_pid</I>, <I>cap-bound</I>, 
-
-<I>core_pattern</I>, <I>core_uses_pid</I>, 
-
-<I>ctrl-alt-del</I>, <I>dentry-state</I>, <I>domainname</I>, 
-
-<I>hotplug</I>, <I>hostname</I>, 
-
-<I>htab-reclaim</I> (PowerPC only), 
-
-<I>java-appletviewer</I> (binfmt_java, obsolete), 
-
-<DT><I>/proc/sys/fs/mqueue/</I>
-
-<DD>
+The value in this file determines whether core dump files are 
+produced for set-user-ID or otherwise protected/tainted binaries.
+Three different integer values can be specified:
 <P>
-<DT><I>/proc/sys/fs/overflowgid</I> and <I>/proc/sys/fs/overflowuid</I>
+<I>0&nbsp;(default)</I>
+This provides the traditional (pre-Linux 2.6.13) behaviour.
+A core dump will not be produced for a process which has 
+changed credentials (by calling
+<B><A HREF="../man2/seteuid.2.html">seteuid</A></B>(2),
 
-<DD>
-These files
-allow you to change the value of the fixed UID and GID.
-The default is 65534.
-Some filesystems only support 16-bit UIDs and GIDs, although in Linux
-UIDs and GIDs are 32 bits. When one of these filesystems is mounted
-with writes enabled, any UID or GID that would exceed 65535 is translated
-to the overflow value before being written to disk.
-<DT><I>/proc/sys/fs/super-max </I>
+<B><A HREF="../man2/setgid.2.html">setgid</A></B>(2),
 
-<DD>
-This file 
-controls the maximum number of superblocks, and
-thus the maximum number of mounted filesystems the kernel
-can have. You only need to increase super-max if you need to
-mount more filesystems than the current value in super-max
-allows you to.
-<DT><I>/proc/sys/fs/super-nr</I>
-
-<DD>
-This file 
-contains the number of filesystems currently mounted.
-<DT><I>/proc/sys/kernel</I>
-
-<DD>
-This directory contains files
-<I>acct</I>, <I>cad_pid</I>, <I>cap-bound</I>, 
-
-<I>core_pattern</I>, <I>core_uses_pid</I>, 
-
-<I>ctrl-alt-del</I>, <I>dentry-state</I>, <I>domainname</I>, 
-
-<I>hotplug</I>, <I>hostname</I>, 
-
-<I>htab-reclaim</I> (PowerPC only), 
-
-<I>java-appletviewer</I> (binfmt_java, obsolete), 
-
-<DT><I>/proc/sys/fs/mqueue/</I>
-
-<DD>
+or similar, or by executing a set-user-ID or set-group-ID program) 
+or whose binary does not have read permission enabled.
 <P>
-<DT><I>/proc/sys/fs/overflowgid</I> and <I>/proc/sys/fs/overflowuid</I>
-
-<DD>
-These files
-allow you to change the value of the fixed UID and GID.
-The default is 65534.
-Some filesystems only support 16-bit UIDs and GIDs, although in Linux
-UIDs and GIDs are 32 bits. When one of these filesystems is mounted
-with writes enabled, any UID or GID that would exceed 65535 is translated
-to the overflow value before being written to disk.
-<DT><I>/proc/sys/fs/super-max </I>
-
-<DD>
-This file 
-controls the maximum number of superblocks, and
-thus the maximum number of mounted filesystems the kernel
-can have. You only need to increase super-max if you need to
-mount more filesystems than the current value in super-max
-allows you to.
-<DT><I>/proc/sys/fs/super-nr</I>
-
-<DD>
-This file 
-contains the number of filesystems currently mounted.
-<DT><I>/proc/sys/kernel</I>
-
-<DD>
-This directory contains files
-<I>acct</I>, <I>cad_pid</I>, <I>cap-bound</I>, 
-
-<I>core_pattern</I>, <I>core_uses_pid</I>, 
-
-<I>ctrl-alt-del</I>, <I>dentry-state</I>, <I>domainname</I>, 
-
-<I>hotplug</I>, <I>hostname</I>, 
-
-<I>htab-reclaim</I> (PowerPC only), 
-
-<I>java-appletviewer</I> (binfmt_java, obsolete), 
-
-<DT><I>/proc/sys/fs/mqueue/</I>
-
-<DD>
+<I>1&nbsp;(&quot;debug&quot;)</I>
+All processes dump core when possible.
+The core dump is owned by the file system user ID of the dumping process 
+and no security is applied.
+This is intended for system debugging situations only.
+Ptrace is unchecked.
 <P>
-<DT><I>/proc/sys/fs/overflowgid</I> and <I>/proc/sys/fs/overflowuid</I>
-
-<DD>
-These files
-allow you to change the value of the fixed UID and GID.
-The default is 65534.
-Some filesystems only support 16-bit UIDs and GIDs, although in Linux
-UIDs and GIDs are 32 bits. When one of these filesystems is mounted
-with writes enabled, any UID or GID that would exceed 65535 is translated
-to the overflow value before being written to disk.
+<I>2&nbsp;(&quot;suidsafe&quot;)</I>
+Any binary which normally would not be dumped (see &quot;0&quot; above) 
+is dumped readable by root only. 
+This allows the user to remove the core dump file but not to read it.
+For security reasons core dumps in this mode will not overwrite one 
+another or other files.
+This mode is appropriate when adminstrators are
+attempting to debug problems in a normal environment.
 <DT><I>/proc/sys/fs/super-max </I>
 
 <DD>
@@ -1369,9 +1286,8 @@ This directory contains files
 
 <I>shmall</I>, <I>shmmax</I>, <I>shmmni</I>, <I>sysrq</I>, <I>tainted</I>, <I>threads-max</I>,
 
-<I>version</I> and <I>zero-paged</I> (PowerPC only) 
+<I>version</I>, and <I>zero-paged</I> (PowerPC only).
 
-with function fairly clear from the name.
 <DT><I>/proc/sys/kernel/acct</I>
 
 <DD>
@@ -1861,6 +1777,12 @@ Linux version 1.0.9 (<A HREF="mailto:quinlan@phaze">quinlan@phaze</A>) #1 Sat Ma
 <DD>
 This file displays various virtual memory statistics.
 <P>
+<DT><I>/proc/zoneinfo</I> (since Linux 2.6.13)
+
+<DD>
+This file display information about memory zones.
+This is useful for analysing virtual memory behaviour.
+
 
 
 </DL>
@@ -1948,6 +1870,6 @@ kernel source documentation files written by Rik van Riel.
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 02:14:52 GMT, April 20, 2020
+Time: 02:15:20 GMT, April 20, 2020
 </BODY>
 </HTML>
