@@ -5,7 +5,7 @@ Copyright 1993 David Metcalfe (david@prism.demon.co.uk)
 <HTML><HEAD><TITLE>Man page of GETPWNAM</TITLE>
 </HEAD><BODY>
 <H1>GETPWNAM</H1>
-Section: Linux Programmer's Manual (3)<BR>Updated: 2008-08-29<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2008-11-07<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -23,13 +23,13 @@ getpwnam, getpwnam_r, getpwuid, getpwuid_r - get password file entry
 
 <B>struct passwd *getpwuid(uid_t </B><I>uid</I><B>);</B>
 
-<B>int getpwnam_r(const char *</B><I>name</I><B>, struct passwd *</B><I>pwbuf</I><B>,</B>
+<B>int getpwnam_r(const char *</B><I>name</I><B>, struct passwd *</B><I>pwd</I><B>,</B>
 <BR>
-<B>            char *</B><I>buf</I><B>, size_t </B><I>buflen</I><B>, struct passwd **</B><I>pwbufp</I><B>);</B>
+<B>            char *</B><I>buf</I><B>, size_t </B><I>buflen</I><B>, struct passwd **</B><I>result</I><B>);</B>
 
-<B>int getpwuid_r(uid_t </B><I>uid</I><B>, struct passwd *</B><I>pwbuf</I><B>,</B>
+<B>int getpwuid_r(uid_t </B><I>uid</I><B>, struct passwd *</B><I>pwd</I><B>,</B>
 <BR>
-<B>            char *</B><I>buf</I><B>, size_t </B><I>buflen</I><B>, struct passwd **</B><I>pwbufp</I><B>);</B>
+<B>            char *</B><I>buf</I><B>, size_t </B><I>buflen</I><B>, struct passwd **</B><I>result</I><B>);</B>
 </PRE>
 
 <P>
@@ -84,7 +84,7 @@ functions obtain the same information, but store the retrieved
 <I>passwd</I>
 
 structure in the space pointed to by
-<I>pwbuf</I>.
+<I>pwd</I>.
 
 This
 <I>passwd</I>
@@ -98,7 +98,7 @@ of size
 
 A pointer to the result (in case of success) or NULL (in case no entry
 was found or an error occurred) is stored in
-<I>*pwbufp</I>.
+<I>*result</I>.
 
 <P>
 
@@ -164,15 +164,25 @@ or
 
 <P>
 
-The
+On success,
 <B>getpwnam_r</B>()
 
 and
 <B>getpwuid_r</B>()
 
-functions return
-zero on success.
-In case of error, an error number is returned.
+return zero, and set
+<I>*result</I>
+
+to
+<I>pwd</I>.
+
+If no matching password record was found,
+these functions return 0 and store NULL in
+<I>*result</I>.
+
+In case of error, an error number is returned, and NULL is stored in
+<I>*result</I>.
+
 <A NAME="lbAF">&nbsp;</A>
 <H2>ERRORS</H2>
 
@@ -281,6 +291,62 @@ it is necessary to use
 
 or similar.
 <A NAME="lbAJ">&nbsp;</A>
+<H2>EXAMPLE</H2>
+
+The program below demonstrates the use of
+<B>getpwnam_r</B>()
+
+to find the full username and user ID for the username
+supplied as a command-line argument.
+<P>
+<PRE>
+#include &lt;<A HREF="file:///usr/include/pwd.h">pwd.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/stdlib.h">stdlib.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/errno.h">errno.h</A>&gt;
+
+int
+main(int argc, char *argv[])
+{
+    struct passwd pwd;
+    struct passwd *result;
+    char *buf;
+    size_t bufsize;
+    int s;
+
+    if (argc != 2) {
+        fprintf(stderr, &quot;Usage: %s username\n&quot;, argv[0]);
+        exit(EXIT_FAILURE);
+    }
+
+    bufsize = sysconf(_SC_GETPW_R_SIZE_MAX);
+    if (bufsize == -1)          /* Value was indeterminate */
+        bufsize = 16384;        /* Should be more than enough */
+
+    buf = malloc(bufsize);
+    if (buf == NULL) {
+        perror(&quot;malloc&quot;);
+        exit(EXIT_FAILURE);
+    }
+
+    s = getpwnam_r(argv[1], &amp;pwd, buf, bufsize, &amp;result);
+    if (result == NULL) {
+        if (s == 0)
+            printf(&quot;Not found\n&quot;);
+        else {
+            errno = s;
+            perror(&quot;getpwnam_r&quot;);
+        }
+        exit(EXIT_FAILURE);
+    }
+
+    printf(&quot;Name: %s; UID: %ld, pwd.pw_gecos, (long) pwd.pw_uid);
+    exit(EXIT_SUCCESS);
+}
+</PRE>
+
+<A NAME="lbAK">&nbsp;</A>
 <H2>SEE ALSO</H2>
 
 <B><A HREF="../man3/endpwent.3.html">endpwent</A></B>(3),
@@ -312,12 +378,13 @@ or similar.
 <DT><A HREF="#lbAG">FILES</A><DD>
 <DT><A HREF="#lbAH">CONFORMING TO</A><DD>
 <DT><A HREF="#lbAI">NOTES</A><DD>
-<DT><A HREF="#lbAJ">SEE ALSO</A><DD>
+<DT><A HREF="#lbAJ">EXAMPLE</A><DD>
+<DT><A HREF="#lbAK">SEE ALSO</A><DD>
 </DL>
 <HR>
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:00:07 GMT, April 20, 2020
+Time: 03:00:37 GMT, April 20, 2020
 </BODY>
 </HTML>

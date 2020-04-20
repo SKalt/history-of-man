@@ -5,7 +5,7 @@ Copyright (c) 1992 Drew Eckhardt &lt;drew@cs.colorado.edu&gt;, March 28, 1992
 <HTML><HEAD><TITLE>Man page of CLONE</TITLE>
 </HEAD><BODY>
 <H1>CLONE</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2008-09-23<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2008-11-25<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -151,34 +151,60 @@ may also be bitwise-or'ed with zero or more of the following constants,
 in order to specify what is shared between the calling process
 and the child process:
 <DL COMPACT>
-<DT><B>CLONE_PARENT</B> (since Linux 2.3.12)
+<DT><B>CLONE_CHILD_CLEARTID</B> (since Linux 2.5.49)
+
+<DD>
+Erase child thread ID at location
+<I>child_tidptr</I>
+
+in child memory when the child exits, and do a wakeup on the futex
+at that address.
+The address involved may be changed by the
+<B><A HREF="../man2/set_tid_address.2.html">set_tid_address</A></B>(2)
+
+system call.
+This is used by threading libraries.
+<DT><B>CLONE_CHILD_SETTID</B> (since Linux 2.5.49)
+
+<DD>
+Store child thread ID at location
+<I>child_tidptr</I>
+
+in child memory.
+<DT><B>CLONE_FILES</B>
 
 <DD>
 If
-<B>CLONE_PARENT</B>
+<B>CLONE_FILES</B>
 
-is set, then the parent of the new child (as returned by
-<B><A HREF="../man2/getppid.2.html">getppid</A></B>(2))
+is set, the calling process and the child process share the same file
+descriptor table.
+Any file descriptor created by the calling process or by the child
+process is also valid in the other process.
+Similarly, if one of the processes closes a file descriptor,
+or changes its associated flags (using the
+<B><A HREF="../man2/fcntl.2.html">fcntl</A></B>(2)
 
-will be the same as that of the calling process.
+<B>F_SETFD</B>
+
+operation), the other process is also affected.
 <P>
 If
-<B>CLONE_PARENT</B>
+<B>CLONE_FILES</B>
 
-is not set, then (as with
-<B><A HREF="../man2/fork.2.html">fork</A></B>(2))
+is not set, the child process inherits a copy of all file descriptors
+opened in the calling process at the time of
+<B>clone</B>().
 
-the child's parent is the calling process.
-<P>
-Note that it is the parent process, as returned by
-<B><A HREF="../man2/getppid.2.html">getppid</A></B>(2),
+(The duplicated file descriptors in the child refer to the
+same open file descriptions (see
+<B><A HREF="../man2/open.2.html">open</A></B>(2))
 
-which is signaled when the child terminates, so that
-if
-<B>CLONE_PARENT</B>
-
-is set, then the parent of the calling process, rather than the
-calling process itself, will be signaled.
+as the corresponding file descriptors in the calling process.)
+Subsequent operations that open or close file descriptors,
+or change file descriptor flags,
+performed by either the calling
+process or the child process do not affect the other process.
 <DT><B>CLONE_FS</B>
 
 <DD>
@@ -216,46 +242,136 @@ Calls to
 <B><A HREF="../man2/umask.2.html">umask</A></B>(2)
 
 performed later by one of the processes do not affect the other process.
-<DT><B>CLONE_FILES</B>
+<DT><B>CLONE_IO</B> (since Linux 2.6.25)
 
 <DD>
 If
-<B>CLONE_FILES</B>
+<B>CLONE_IO</B>
 
-is set, the calling process and the child process share the same file
-descriptor table.
-Any file descriptor created by the calling process or by the child
-process is also valid in the other process.
-Similarly, if one of the processes closes a file descriptor,
-or changes its associated flags (using the
-<B><A HREF="../man2/fcntl.2.html">fcntl</A></B>(2)
+is set, then the new process shares an I/O context with
+the calling process.
+If this flag is not set, then (as with
+<B><A HREF="../man2/fork.2.html">fork</A></B>(2))
 
-<B>F_SETFD</B>
+the new process has its own I/O context.
+<P>
 
-operation), the other process is also affected.
+The I/O context is the I/O scope of the disk scheduler (i.e,
+what the I/O scheduler uses to model scheduling of a process's I/O).
+If processes share the same I/O context,
+they are treated as one by the I/O scheduler.
+As a consequence, they get to share disk time.
+For some I/O schedulers,
+
+if two processes share an I/O context,
+they will be allowed to interleave their disk access.
+If several threads are doing I/O on behalf of the same process
+(<B><A HREF="../man3/aio_read.3.html">aio_read</A></B>(3),
+
+for instance), they should employ
+<B>CLONE_IO</B>
+
+to get better I/O performance.
+
+<P>
+If the kernel is not configured with the
+<B>CONFIG_BLOCK</B>
+
+option, this flag is a no-op.
+<DT><B>CLONE_NEWIPC</B> (since Linux 2.4.19)
+
+<DD>
+If
+<B>CLONE_NEWIPC</B>
+
+is set, then create the process in a new IPC namespace.
+If this flag is not set, then (as with
+<B><A HREF="../man2/fork.2.html">fork</A></B>(2)),
+
+the process is created in the same IPC namespace as
+the calling process.
+This flag is intended for the implementation of containers.
+<P>
+An IPC namespace consists of the set of identifiers for
+System V IPC objects.
+(These objects are created using
+<B><A HREF="../man2/msgctl.2.html">msgctl</A></B>(2),
+
+<B><A HREF="../man2/semctl.2.html">semctl</A></B>(2),
+
+and
+<B><A HREF="../man2/shmctl.2.html">shmctl</A></B>(2)).
+
+Objects created in an IPC namespace are visible to other processes
+that are members of that namespace,
+but are not visible to processes in other IPC namespaces.
+<P>
+When an IPC namespace is destroyed
+(i.e, when the last process that is a member of the namespace terminates),
+all IPC objects in the namespace are automatically destroyed.
+<P>
+Use of this flag requires: a kernel configured with the
+<B>CONFIG_SYSVIPC</B>
+
+and
+<B>CONFIG_IPC_NS</B>
+
+options and that the process be privileged
+(<B>CAP_SYS_ADMIN</B>).
+
+This flag can't be specified in conjunction with
+<B>CLONE_SYSVSEM</B>.
+
+<DT><B>CLONE_NEWNET</B> (since Linux 2.6.24)
+
+<DD>
+(The implementation of this flag is not yet complete,
+but probably will be mostly complete by about Linux 2.6.28.)
 <P>
 If
-<B>CLONE_FILES</B>
+<B>CLONE_NEWNET</B>
 
-is not set, the child process inherits a copy of all file descriptors
-opened in the calling process at the time of
-<B>clone</B>().
+is set, then create the process in a new network namespace.
+If this flag is not set, then (as with
+<B><A HREF="../man2/fork.2.html">fork</A></B>(2)),
 
-(The duplicated file descriptors in the child refer to the
-same open file descriptions (see
-<B><A HREF="../man2/open.2.html">open</A></B>(2))
+the process is created in the same network namespace as
+the calling process.
+This flag is intended for the implementation of containers.
+<P>
+A network namespace provides an isolated view of the networking stack
+(network device interfaces, IPv4 and IPv6 protocol stacks,
+IP routing tables, firewall rules, the
+<I>/proc/net</I>
 
-as the corresponding file descriptors in the calling process.)
-Subsequent operations that open or close file descriptors,
-or change file descriptor flags,
-performed by either the calling
-process or the child process do not affect the other process.
+and
+<I>/sys/class/net</I>
+
+directory trees, sockets, etc.).
+A physical network device can live in exactly one
+network namespace.
+A virtual network device (&quot;veth&quot;) pair provides a pipe-like abstraction
+that can be used to create tunnels between network namespaces,
+and can be used to create a bridge to a physical network device
+in another namespace.
+<P>
+When a network namespace is freed
+(i.e., when the last process in the namespace terminates),
+its physical network devices are moved back to the
+initial network namespace (not to the parent of the process).
+<P>
+Use of this flag requires: a kernel configured with the
+<B>CONFIG_NET_NS</B>
+
+option and that the process be privileged
+(<B>CAP_SYS_ADMIN</B>).
+
 <DT><B>CLONE_NEWNS</B> (since Linux 2.4.19)
 
 <DD>
-Start the child in a new namespace.
+Start the child in a new mount namespace.
 <P>
-Every process lives in a namespace.
+Every process lives in a mount namespace.
 The
 <I>namespace</I>
 
@@ -270,16 +386,17 @@ or
 where the
 <B>CLONE_NEWNS</B>
 
-flag is not set, the child lives in the same namespace as the parent.
+flag is not set, the child lives in the same mount
+namespace as the parent.
 The system calls
 <B><A HREF="../man2/mount.2.html">mount</A></B>(2)
 
 and
 <B><A HREF="../man2/umount.2.html">umount</A></B>(2)
 
-change the namespace of the calling process, and hence affect
+change the mount namespace of the calling process, and hence affect
 all processes that live in the same namespace, but do not affect
-processes in a different namespace.
+processes in a different mount namespace.
 <P>
 After a
 <B>clone</B>()
@@ -287,7 +404,7 @@ After a
 where the
 <B>CLONE_NEWNS</B>
 
-flag is set, the cloned child is started in a new namespace,
+flag is set, the cloned child is started in a new mount namespace,
 initialized with a copy of the namespace of the parent.
 <P>
 Only a privileged process (one having the <B>CAP_SYS_ADMIN</B> capability)
@@ -305,6 +422,213 @@ in the same
 <B>clone</B>()
 
 call.
+<DT><B>CLONE_NEWPID</B> (since Linux 2.6.24)
+
+<DD>
+
+
+
+
+
+
+
+If
+<B>CLONE_NEWPID</B>
+
+is set, then create the process in a new PID namespace.
+If this flag is not set, then (as with
+<B><A HREF="../man2/fork.2.html">fork</A></B>(2)),
+
+the process is created in the same PID namespace as
+the calling process.
+This flag is intended for the implementation of containers.
+<P>
+A PID namespace provides an isolated environment for PIDs:
+PIDs in a new namespace start at 1,
+somewhat like a standalone system, and calls to
+<B><A HREF="../man2/fork.2.html">fork</A></B>(2),
+
+<B><A HREF="../man2/vfork.2.html">vfork</A></B>(2),
+
+or
+<B><A HREF="../man2/clone.2.html">clone</A></B>(2)
+
+will produce processes with PIDs that are unique within the namespace.
+<P>
+The first process created in a new namespace
+(i.e., the process created using the
+<B>CLONE_NEWPID</B>
+
+flag) has the PID 1, and is the &quot;init&quot; process for the namespace.
+Children that are orphaned within the namespace will be reparented
+to this process rather than
+<B><A HREF="../man8/init.8.html">init</A></B>(8).
+
+Unlike the traditional
+<B>init</B>
+
+process, the &quot;init&quot; process of a PID namespace can terminate,
+and if it does, all of the processes in the namespace are terminated.
+<P>
+PID namespaces form a hierarchy.
+When a PID new namespace is created,
+the processes in that namespace are visible
+in the PID namespace of the process that created the new namespace;
+analogously, if the parent PID namespace is itself
+the child of another PID namespace,
+then processes in the child and parent PID namespaces will both be
+visible in the grandparent PID namespace.
+Conversely, the processes in the &quot;child&quot; PID namespace do not see
+the processes in the parent namespace.
+The existence of a namespace hierarchy means that each process
+may now have multiple PIDs:
+one for each namespace in which it is visible;
+each of these PIDs is unique within the corresponding namespace.
+(A call to
+<B><A HREF="../man2/getpid.2.html">getpid</A></B>(2)
+
+always returns the PID associated with the namespace in which
+the process lives.)
+<P>
+After creating the new namespace,
+it is useful for the child to change its root directory
+and mount a new procfs instance at
+<I>/proc</I>
+
+so that tools such as
+<B><A HREF="../man1/ps.1.html">ps</A></B>(1)
+
+work correctly.
+
+(If
+<B>CLONE_NEWNS</B>
+
+is also included in
+<I>flags</I>,
+
+then it isn't necessary to change the root directory:
+a new procfs instance can be mounted directly over
+<I>/proc</I>.)
+
+<P>
+Use of this flag requires: a kernel configured with the
+<B>CONFIG_PID_NS</B>
+
+option and that the process be privileged
+(<B>CAP_SYS_ADMIN</B>).
+
+This flag can't be specified in conjunction with
+<B>CLONE_THREAD</B>.
+
+<DT><B>CLONE_NEWUTS</B> (since Linux 2.6.19)
+
+<DD>
+If
+<B>CLONE_NEWUTS</B>
+
+is set, then create the process in a new UTS namespace,
+whose identifiers are initialized by duplicating the identifiers
+from the UTS namespace of the calling process.
+If this flag is not set, then (as with
+<B><A HREF="../man2/fork.2.html">fork</A></B>(2)),
+
+the process is created in the same UTS namespace as
+the calling process.
+This flag is intended for the implementation of containers.
+<P>
+A UTS namespace is the set of identifiers returned by
+<B><A HREF="../man2/uname.2.html">uname</A></B>(2);
+
+among these, the domain name and the host name can be modified by
+<B><A HREF="../man2/setdomainname.2.html">setdomainname</A></B>(2)
+
+and
+
+<B><A HREF="../man2/sethostname.2.html">sethostname</A></B>(2),
+
+respectively.
+Changes made to these identifiers in one UTS namespace
+are visible to other processes in the same namespace,
+but are not visible to processes in other UTS namespaces.
+<P>
+Use of this flag requires: a kernel configured with the
+<B>CONFIG_UTS_NS</B>
+
+option and that the process be privileged
+(<B>CAP_SYS_ADMIN</B>).
+
+<DT><B>CLONE_PARENT</B> (since Linux 2.3.12)
+
+<DD>
+If
+<B>CLONE_PARENT</B>
+
+is set, then the parent of the new child (as returned by
+<B><A HREF="../man2/getppid.2.html">getppid</A></B>(2))
+
+will be the same as that of the calling process.
+<P>
+If
+<B>CLONE_PARENT</B>
+
+is not set, then (as with
+<B><A HREF="../man2/fork.2.html">fork</A></B>(2))
+
+the child's parent is the calling process.
+<P>
+Note that it is the parent process, as returned by
+<B><A HREF="../man2/getppid.2.html">getppid</A></B>(2),
+
+which is signaled when the child terminates, so that
+if
+<B>CLONE_PARENT</B>
+
+is set, then the parent of the calling process, rather than the
+calling process itself, will be signaled.
+<DT><B>CLONE_PARENT_SETTID</B> (since Linux 2.5.49)
+
+<DD>
+Store child thread ID at location
+<I>parent_tidptr</I>
+
+in parent and child memory.
+(In Linux 2.5.32-2.5.48 there was a flag
+<B>CLONE_SETTID</B>
+
+that did this.)
+<DT><B>CLONE_PID</B> (obsolete)
+
+<DD>
+If
+<B>CLONE_PID</B>
+
+is set, the child process is created with the same process ID as
+the calling process.
+This is good for hacking the system, but otherwise
+of not much use.
+Since 2.3.21 this flag can be
+specified only by the system boot process (PID 0).
+It disappeared in Linux 2.5.16.
+<DT><B>CLONE_PTRACE</B>
+
+<DD>
+If
+<B>CLONE_PTRACE</B>
+
+is specified, and the calling process is being traced,
+then trace the child also (see
+<B><A HREF="../man2/ptrace.2.html">ptrace</A></B>(2)).
+
+<DT><B>CLONE_SETTLS</B> (since Linux 2.5.32)
+
+<DD>
+The
+<I>newtls</I>
+
+argument is the new TLS (Thread Local Storage) descriptor.
+(See
+<B><A HREF="../man2/set_thread_area.2.html">set_thread_area</A></B>(2).)
+
 <DT><B>CLONE_SIGHAND</B>
 
 <DD>
@@ -350,26 +674,6 @@ if
 <B>CLONE_SIGHAND</B>
 
 is specified
-<DT><B>CLONE_PTRACE</B>
-
-<DD>
-If
-<B>CLONE_PTRACE</B>
-
-is specified, and the calling process is being traced,
-then trace the child also (see
-<B><A HREF="../man2/ptrace.2.html">ptrace</A></B>(2)).
-
-<DT><B>CLONE_UNTRACED</B> (since Linux 2.5.46)
-
-<DD>
-If
-<B>CLONE_UNTRACED</B>
-
-is specified, then a tracing process cannot force
-<B>CLONE_PTRACE</B>
-
-on this child process.
 <DT><B>CLONE_STOPPED</B> (since Linux 2.6.0-test2)
 
 <DD>
@@ -388,72 +692,19 @@ signal.
 
 You probably never wanted to use it,
 you certainly shouldn't be using it, and soon it will go away.
-<DT><B>CLONE_VFORK</B>
+
+<DT><B>CLONE_SYSVSEM</B> (since Linux 2.5.10)
 
 <DD>
 If
-<B>CLONE_VFORK</B>
+<B>CLONE_SYSVSEM</B>
 
-is set, the execution of the calling process is suspended
-until the child releases its virtual memory
-resources via a call to
-<B><A HREF="../man2/execve.2.html">execve</A></B>(2)
+is set, then the child and the calling process share
+a single list of System V semaphore undo values (see
+<B><A HREF="../man2/semop.2.html">semop</A></B>(2)).
 
-or
-<B><A HREF="../man2/_exit.2.html">_exit</A></B>(2)
-
-(as with
-<B><A HREF="../man2/vfork.2.html">vfork</A></B>(2)).
-
-<P>
-If
-<B>CLONE_VFORK</B>
-
-is not set then both the calling process and the child are schedulable
-after the call, and an application should not rely on execution occurring
-in any particular order.
-<DT><B>CLONE_VM</B>
-
-<DD>
-If
-<B>CLONE_VM</B>
-
-is set, the calling process and the child process run in the same memory
-space.
-In particular, memory writes performed by the calling process
-or by the child process are also visible in the other process.
-Moreover, any memory mapping or unmapping performed with
-<B><A HREF="../man2/mmap.2.html">mmap</A></B>(2)
-
-or
-<B><A HREF="../man2/munmap.2.html">munmap</A></B>(2)
-
-by the child or calling process also affects the other process.
-<P>
-If
-<B>CLONE_VM</B>
-
-is not set, the child process runs in a separate copy of the memory
-space of the calling process at the time of
-<B>clone</B>().
-
-Memory writes or file mappings/unmappings performed by one of the
-processes do not affect the other, as with
-<B><A HREF="../man2/fork.2.html">fork</A></B>(2).
-
-<DT><B>CLONE_PID</B> (obsolete)
-
-<DD>
-If
-<B>CLONE_PID</B>
-
-is set, the child process is created with the same process ID as
-the calling process.
-This is good for hacking the system, but otherwise
-of not much use.
-Since 2.3.21 this flag can be
-specified only by the system boot process (PID 0).
-It disappeared in Linux 2.5.16.
+If this flag is not set, then the child has a separate undo list,
+which is initially empty.
 <DT><B>CLONE_THREAD</B> (since Linux 2.4.0-test8)
 
 <DD>
@@ -605,59 +856,69 @@ the kernel will arbitrarily select one of these threads
 to receive a signal sent using
 <B><A HREF="../man2/kill.2.html">kill</A></B>(2).
 
-<DT><B>CLONE_SYSVSEM</B> (since Linux 2.5.10)
+<DT><B>CLONE_UNTRACED</B> (since Linux 2.5.46)
 
 <DD>
 If
-<B>CLONE_SYSVSEM</B>
+<B>CLONE_UNTRACED</B>
 
-is set, then the child and the calling process share
-a single list of System V semaphore undo values (see
-<B><A HREF="../man2/semop.2.html">semop</A></B>(2)).
+is specified, then a tracing process cannot force
+<B>CLONE_PTRACE</B>
 
-If this flag is not set, then the child has a separate undo list,
-which is initially empty.
-<DT><B>CLONE_SETTLS</B> (since Linux 2.5.32)
+on this child process.
+<DT><B>CLONE_VFORK</B>
 
 <DD>
-The
-<I>newtls</I>
+If
+<B>CLONE_VFORK</B>
 
-argument is the new TLS (Thread Local Storage) descriptor.
-(See
-<B><A HREF="../man2/set_thread_area.2.html">set_thread_area</A></B>(2).)
+is set, the execution of the calling process is suspended
+until the child releases its virtual memory
+resources via a call to
+<B><A HREF="../man2/execve.2.html">execve</A></B>(2)
 
-<DT><B>CLONE_PARENT_SETTID</B> (since Linux 2.5.49)
+or
+<B><A HREF="../man2/_exit.2.html">_exit</A></B>(2)
 
-<DD>
-Store child thread ID at location
-<I>parent_tidptr</I>
+(as with
+<B><A HREF="../man2/vfork.2.html">vfork</A></B>(2)).
 
-in parent and child memory.
-(In Linux 2.5.32-2.5.48 there was a flag
-<B>CLONE_SETTID</B>
+<P>
+If
+<B>CLONE_VFORK</B>
 
-that did this.)
-<DT><B>CLONE_CHILD_SETTID</B> (since Linux 2.5.49)
-
-<DD>
-Store child thread ID at location
-<I>child_tidptr</I>
-
-in child memory.
-<DT><B>CLONE_CHILD_CLEARTID</B> (since Linux 2.5.49)
+is not set then both the calling process and the child are schedulable
+after the call, and an application should not rely on execution occurring
+in any particular order.
+<DT><B>CLONE_VM</B>
 
 <DD>
-Erase child thread ID at location
-<I>child_tidptr</I>
+If
+<B>CLONE_VM</B>
 
-in child memory when the child exits, and do a wakeup on the futex
-at that address.
-The address involved may be changed by the
-<B><A HREF="../man2/set_tid_address.2.html">set_tid_address</A></B>(2)
+is set, the calling process and the child process run in the same memory
+space.
+In particular, memory writes performed by the calling process
+or by the child process are also visible in the other process.
+Moreover, any memory mapping or unmapping performed with
+<B><A HREF="../man2/mmap.2.html">mmap</A></B>(2)
 
-system call.
-This is used by threading libraries.
+or
+<B><A HREF="../man2/munmap.2.html">munmap</A></B>(2)
+
+by the child or calling process also affects the other process.
+<P>
+If
+<B>CLONE_VM</B>
+
+is not set, the child process runs in a separate copy of the memory
+space of the calling process at the time of
+<B>clone</B>().
+
+Memory writes or file mappings/unmappings performed by one of the
+processes do not affect the other, as with
+<B><A HREF="../man2/fork.2.html">fork</A></B>(2).
+
 </DL>
 <A NAME="lbAE">&nbsp;</A>
 <H3>sys_clone</H3>
@@ -779,12 +1040,87 @@ were specified in
 <DT><B>EINVAL</B>
 
 <DD>
+Both
+<B>CLONE_NEWIPC</B>
+
+and
+<B>CLONE_SYSVSEM</B>
+
+were specified in
+<I>flags</I>.
+
+<DT><B>EINVAL</B>
+
+<DD>
+Both
+<B>CLONE_NEWPID</B>
+
+and
+<B>CLONE_THREAD</B>
+
+were specified in
+<I>flags</I>.
+
+<DT><B>EINVAL</B>
+
+<DD>
 Returned by
 <B>clone</B>()
 
 when a zero value is specified for
 <I>child_stack</I>.
 
+<DT><B>EINVAL</B>
+
+<DD>
+<B>CLONE_NEWIPC</B>
+
+was specified in
+<I>flags</I>,
+
+but the kernel was not configured with the
+<B>CONFIG_SYSVIPC</B>
+
+and
+<B>CONFIG_IPC_NS</B>
+
+options.
+<DT><B>EINVAL</B>
+
+<DD>
+<B>CLONE_NEWNET</B>
+
+was specified in
+<I>flags</I>,
+
+but the kernel was not configured with the
+<B>CONFIG_NET_NS</B>
+
+option.
+<DT><B>EINVAL</B>
+
+<DD>
+<B>CLONE_NEWPID</B>
+
+was specified in
+<I>flags</I>,
+
+but the kernel was not configured with the
+<B>CONFIG_PID_NS</B>
+
+option.
+<DT><B>EINVAL</B>
+
+<DD>
+<B>CLONE_NEWUTS</B>
+
+was specified in
+<I>flags</I>,
+
+but the kernel was not configured with the
+<B>CONFIG_UTS</B>
+
+option.
 <DT><B>ENOMEM</B>
 
 <DD>
@@ -794,7 +1130,16 @@ copied.
 <DT><B>EPERM</B>
 
 <DD>
-<B>CLONE_NEWNS</B>
+<B>CLONE_NEWIPC</B>,
+
+<B>CLONE_NEWNET</B>,
+
+<B>CLONE_NEWNS</B>,
+
+<B>CLONE_NEWPID</B>,
+
+or
+<B>CLONE_NEWUTS</B>
 
 was specified by a non-root process (process without <B>CAP_SYS_ADMIN</B>).
 <DT><B>EPERM</B>
@@ -910,7 +1255,7 @@ call, then a call to
 
 in a handler for the signal may return the PID
 of the calling process (&quot;the parent&quot;),
-if the clone wrappper has not yet had a chance to update the PID
+if the clone wrapper has not yet had a chance to update the PID
 cache in the child.
 (This discussion ignores the case where the child was created using
 <B>CLONE_THREAD</B>,
@@ -991,6 +1336,6 @@ To get the truth, it may be necessary to use code such as the following:
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 02:59:59 GMT, April 20, 2020
+Time: 03:00:29 GMT, April 20, 2020
 </BODY>
 </HTML>

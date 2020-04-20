@@ -4,7 +4,7 @@
 <HTML><HEAD><TITLE>Man page of UDP</TITLE>
 </HEAD><BODY>
 <H1>UDP</H1>
-Section: Linux Programmer's Manual (7)<BR>Updated: 2008-08-08<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (7)<BR>Updated: 2008-11-21<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -44,7 +44,7 @@ with a valid destination address as an argument.
 When
 <B><A HREF="../man2/connect.2.html">connect</A></B>(2)
 
-is called on the socket the default destination address is set and
+is called on the socket, the default destination address is set and
 datagrams can now be sent using
 <B><A HREF="../man2/send.2.html">send</A></B>(2)
 
@@ -59,7 +59,7 @@ address to
 or
 <B><A HREF="../man2/sendmsg.2.html">sendmsg</A></B>(2).
 
-In order to receive packets the socket can be bound to a local
+In order to receive packets, the socket can be bound to a local
 address first by using
 <B><A HREF="../man2/bind.2.html">bind</A></B>(2).
 
@@ -72,8 +72,8 @@ and bind the socket to
 
 <P>
 All receive operations return only one packet.
-When the packet is smaller than the passed buffer only that much
-data is returned, when it is bigger the packet is truncated and the
+When the packet is smaller than the passed buffer, only that much
+data is returned; when it is bigger, the packet is truncated and the
 <B>MSG_TRUNC</B>
 
 flag is set.
@@ -84,7 +84,9 @@ is not supported.
 IP options may be sent or received using the socket options described in
 <B><A HREF="../man7/ip.7.html">ip</A></B>(7).
 
-They are only processed by the kernel when the appropriate sysctl
+They are only processed by the kernel when the appropriate
+/proc
+parameter
 is enabled (but still passed to the user even when it is turned off).
 See
 <B><A HREF="../man7/ip.7.html">ip</A></B>(7).
@@ -93,29 +95,29 @@ See
 When the
 <B>MSG_DONTROUTE</B>
 
-flag is set on sending the destination address must refer to a local
+flag is set on sending, the destination address must refer to a local
 interface address and the packet is only sent to that interface.
 <P>
-By default Linux UDP does path MTU (Maximum Transmission Unit) discovery.
+By default, Linux UDP does path MTU (Maximum Transmission Unit) discovery.
 This means the kernel
 will keep track of the MTU to a specific target IP address and return
 <B>EMSGSIZE</B>
 
 when a UDP packet write exceeds it.
-When this happens the application should decrease the packet size.
+When this happens, the application should decrease the packet size.
 Path MTU discovery can be also turned off using the
 <B>IP_MTU_DISCOVER</B>
 
 socket option or the
-<I>ip_no_pmtu_disc</I>
+<I>/proc/sys/net/ipv4/ip_no_pmtu_disc</I>
 
-sysctl, see
+file; see
 <B><A HREF="../man7/ip.7.html">ip</A></B>(7)
 
 for details.
-When turned off UDP will fragment outgoing UDP packets
+When turned off, UDP will fragment outgoing UDP packets
 that exceed the interface MTU.
-However disabling it is not recommended
+However, disabling it is not recommended
 for performance and reliability reasons.
 <A NAME="lbAE">&nbsp;</A>
 <H3>Address Format</H3>
@@ -141,7 +143,7 @@ Linux's behavior is mandated by
 <B>RFC&nbsp;1122</B>.
 
 <P>
-For compatibility with legacy code in Linux 2.0 and 2.2
+For compatibility with legacy code, in Linux 2.0 and 2.2
 it was possible to set the
 <B>SO_BSDCOMPAT</B>
 
@@ -163,7 +165,7 @@ for further information.
 When the
 <B>IP_RECVERR</B>
 
-option is enabled all errors are stored in the socket error queue
+option is enabled, all errors are stored in the socket error queue,
 and can be received by
 <B><A HREF="../man2/recvmsg.2.html">recvmsg</A></B>(2)
 
@@ -172,6 +174,62 @@ with the
 
 flag set.
 <A NAME="lbAG">&nbsp;</A>
+<H3>/proc interfaces</H3>
+
+System-wide UDP parameter settings can be accessed by files in the directory
+<I>/proc/sys/net/ipv4/</I>.
+
+<DL COMPACT>
+<DT><I>udp_mem</I> (since Linux 2.6.25)
+
+<DD>
+This is a vector of three integers governing the number
+of pages allowed for queueing by all UDP sockets.
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT><I>min</I>
+
+<DD>
+Below this number of pages, UDP is not bothered about its
+memory appetite.
+When the amount of memory allocated by UDP exceeds
+this number, UDP starts to moderate memory usage.
+<DT><I>pressure</I>
+
+<DD>
+This value was introduced to follow the format of
+<I>tcp_mem</I>
+
+(see
+<B><A HREF="../man7/tcp.7.html">tcp</A></B>(7)).
+
+<DT><I>max</I>
+
+<DD>
+Number of pages allowed for queueing by all UDP sockets.
+</DL>
+</DL>
+
+<DT><DD>
+Defaults values for these three items are
+calculated at boot time from the amount of available memory.
+<DT><I>udp_rmem_min</I> (integer; default value: PAGE_SIZE; since Linux 2.6.25)
+
+<DD>
+Minimal size, in bites, of receive buffer used by UDP sockets in moderation.
+Each UDP socket is able to use the size for receiving data,
+even if total pages of UDP sockets exceed udp_mem pressure.
+<DT><I>udp_wmem_min</I> (integer; default value: PAGE_SIZE; since Linux 2.6.25)
+
+<DD>
+Minimal size, in bytes, of send buffer used by UDP sockets in moderation.
+Each UDP socket is able to use the size for sending data,
+even if total pages of UDP sockets exceed
+<I>udp_mem</I>
+
+pressure.
+</DL>
+<A NAME="lbAH">&nbsp;</A>
 <H3>Socket Options</H3>
 
 To set or get a UDP socket option, call
@@ -193,8 +251,13 @@ the option is disabled.
 This option should not be used in code intended to be
 portable.
 
+
+
+
+
+
 </DL>
-<A NAME="lbAH">&nbsp;</A>
+<A NAME="lbAI">&nbsp;</A>
 <H3>Ioctls</H3>
 
 These ioctls can be accessed using
@@ -233,7 +296,7 @@ and
 <B><A HREF="../man7/socket.7.html">socket</A></B>(7)
 
 are supported.
-<A NAME="lbAI">&nbsp;</A>
+<A NAME="lbAJ">&nbsp;</A>
 <H2>ERRORS</H2>
 
 All errors documented for
@@ -248,13 +311,15 @@ may be returned by a send or receive on a UDP socket.
 
 No receiver was associated with the destination address.
 This might be caused by a previous packet sent over the socket.
-<A NAME="lbAJ">&nbsp;</A>
+<A NAME="lbAK">&nbsp;</A>
 <H2>VERSIONS</H2>
 
-IP_RECVERR is a new feature in Linux 2.2.
+<B>IP_RECVERR</B>
+
+is a new feature in Linux 2.2.
 
 
-<A NAME="lbAK">&nbsp;</A>
+<A NAME="lbAL">&nbsp;</A>
 <H2>SEE ALSO</H2>
 
 <B><A HREF="../man7/ip.7.html">ip</A></B>(7),
@@ -284,17 +349,18 @@ RFC&nbsp;1191 for a description of path MTU discovery.
 <DL>
 <DT><A HREF="#lbAE">Address Format</A><DD>
 <DT><A HREF="#lbAF">Error Handling</A><DD>
-<DT><A HREF="#lbAG">Socket Options</A><DD>
-<DT><A HREF="#lbAH">Ioctls</A><DD>
+<DT><A HREF="#lbAG">/proc interfaces</A><DD>
+<DT><A HREF="#lbAH">Socket Options</A><DD>
+<DT><A HREF="#lbAI">Ioctls</A><DD>
 </DL>
-<DT><A HREF="#lbAI">ERRORS</A><DD>
-<DT><A HREF="#lbAJ">VERSIONS</A><DD>
-<DT><A HREF="#lbAK">SEE ALSO</A><DD>
+<DT><A HREF="#lbAJ">ERRORS</A><DD>
+<DT><A HREF="#lbAK">VERSIONS</A><DD>
+<DT><A HREF="#lbAL">SEE ALSO</A><DD>
 </DL>
 <HR>
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:00:14 GMT, April 20, 2020
+Time: 03:00:44 GMT, April 20, 2020
 </BODY>
 </HTML>

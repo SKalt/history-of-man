@@ -4,7 +4,7 @@
 <HTML><HEAD><TITLE>Man page of ICMP</TITLE>
 </HEAD><BODY>
 <H1>ICMP</H1>
-Section: Linux Programmer's Manual (7)<BR>Updated: 1999-04-27<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (7)<BR>Updated: 2008-11-24<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -47,17 +47,16 @@ and
 
 are also limited by the destination route of the incoming packets.
 <A NAME="lbAD">&nbsp;</A>
-<H3>Sysctls</H3>
+<H3>/proc interfaces</H3>
 
-ICMP supports a sysctl interface to configure some global IP parameters.
-The sysctls can be accessed by reading or writing the
-<I>/proc/sys/net/ipv4/*</I>
+ICMP supports a set of
+<I>/proc</I>
 
-files or with the
-<B><A HREF="../man2/sysctl.2.html">sysctl</A></B>(2)
+interfaces to configure some global IP parameters.
+The parameters can be accessed by reading or writing files in the directory
+<I>/proc/sys/net/ipv4/</I>.
 
-interface.
-Most of these sysctls are rate limitations for specific ICMP types.
+Most of these parameters are rate limitations for specific ICMP types.
 Linux 2.2 uses a token bucket filter to limit ICMPs.
 
 The value is the timeout in jiffies until the token bucket filter is
@@ -65,9 +64,10 @@ cleared after a burst.
 A jiffy is a system dependent unit, usually 10ms on i386 and
 about 1ms on alpha and ia64.
 <DL COMPACT>
-<DT><B>icmp_destunreach_rate</B>
+<DT><I>icmp_destunreach_rate</I> (Linux 2.2 to 2.4.9)
 
 <DD>
+
 Maximum rate to send ICMP Destination Unreachable packets.
 This limits the rate at which packets are sent to any individual
 route or destination.
@@ -75,23 +75,26 @@ The limit does not affect sending of
 <B>ICMP_FRAG_NEEDED</B>
 
 packets needed for path MTU discovery.
-<DT><B>icmp_echo_ignore_all</B>
+<DT><I>icmp_echo_ignore_all</I> (since Linux 2.2)
 
 <DD>
+
 If this value is non-zero, Linux will ignore all
 <B>ICMP_ECHO</B>
 
 requests.
-<DT><B>icmp_echo_ignore_broadcasts</B>
+<DT><I>icmp_echo_ignore_broadcasts</I> (since Linux 2.2)
 
 <DD>
+
 If this value is non-zero, Linux will ignore all
 <B>ICMP_ECHO</B>
 
 packets sent to broadcast addresses.
-<DT><B>icmp_echoreply_rate</B>
+<DT><I>icmp_echoreply_rate</I> (Linux 2.2 to 2.4.9)
 
 <DD>
+
 Maximum rate for sending
 <B>ICMP_ECHOREPLY</B>
 
@@ -99,15 +102,87 @@ packets in response to
 <B>ICMP_ECHOREQUEST</B>
 
 packets.
-<DT><B>icmp_paramprob_rate</B>
+<DT><I>icmp_errors_use_inbound_ifaddr</I> (Boolean; default: disabled; since Linux 2.6.12)
 
 <DD>
+
+If disabled, ICMP error messages are sent with the primary address of
+the exiting interface.
+<P>
+If enabled, the message will be sent with the primary address of
+the interface that received the packet that caused the ICMP error.
+This is the behavior that many network administrators will expect from
+a router.
+And it can make debugging complicated network layouts much easier.
+<P>
+Note that if no primary address exists for the interface selected,
+then the primary address of the first non-loopback interface that
+has one will be used regardless of this setting.
+<DT><B>icmp_ignore_bogus_error_responses</B> (Boolean; default: disabled; since Linux 2.2)
+
+<DD>
+
+
+Some routers violate RFC1122 by sending bogus responses to broadcast frames.
+Such violations are normally logged via a kernel warning.
+If this parameter is enabled, the kernel will not give such warnings,
+which will avoid log file clutter.
+<DT><I>icmp_paramprob_rate</I> (Linux 2.2 to 2.4.9)
+
+<DD>
+
 Maximum rate for sending
 <B>ICMP_PARAMETERPROB</B>
 
 packets.
 These packets are sent when a packet arrives with an invalid IP header.
-<DT><B>icmp_timeexceed_rate</B>
+<DT><I>icmp_ratelimit</I> (integer; default: 1000; since Linux 2.4.10)
+
+<DD>
+
+Limit the maximum rates for sending ICMP packets whose type matches
+<I>icmp_ratemask</I>
+
+(see below) to specific targets.
+0 to disable any limiting,
+otherwise the minimum space between responses in milliseconds.
+<DT><I>icmp_ratemask</I> (integer; default: see below; since Linux 2.4.10)
+
+<DD>
+
+Mask made of ICMP types for which rates are being limited.
+<P>
+Significant bits: IHGFEDCBA9876543210
+<BR>
+
+Default mask:     0000001100000011000 (0x1818)
+<P>
+Bit definitions (see the kernel source file
+<I>include/linux/icmp.h</I>):
+
+<P>
+
+<PRE>
+0 Echo Reply
+3 Destination Unreachable *
+4 Source Quench *
+5 Redirect
+8 Echo Request
+B Time Exceeded *
+C Parameter Problem *
+D Timestamp Request
+E Timestamp Reply
+F Info Request
+G Info Reply
+H Address Mask Request
+I Address Mask Reply
+</PRE>
+
+
+<P>
+The bits marked with an asterisk are rate limited by default
+(see the default mask above).
+<DT><I>icmp_timeexceed_rate</I> (Linux 2.2 to 2.4.9)
 
 <DD>
 Maximum rate for sending
@@ -177,7 +252,7 @@ RFC&nbsp;792 for a description of the ICMP protocol.
 <DT><A HREF="#lbAB">NAME</A><DD>
 <DT><A HREF="#lbAC">DESCRIPTION</A><DD>
 <DL>
-<DT><A HREF="#lbAD">Sysctls</A><DD>
+<DT><A HREF="#lbAD">/proc interfaces</A><DD>
 </DL>
 <DT><A HREF="#lbAE">VERSIONS</A><DD>
 <DT><A HREF="#lbAF">NOTES</A><DD>
@@ -187,6 +262,6 @@ RFC&nbsp;792 for a description of the ICMP protocol.
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:00:14 GMT, April 20, 2020
+Time: 03:00:44 GMT, April 20, 2020
 </BODY>
 </HTML>
