@@ -10,7 +10,7 @@ Section: Linux Programmer's Manual (2)<BR>Updated: 2004-06-21<BR><A HREF="#index
 <A NAME="lbAB">&nbsp;</A>
 <H2>NAME</H2>
 
-capget, capset - set/get process capabilities
+capget, capset - set/get capabilities
 <A NAME="lbAC">&nbsp;</A>
 <H2>SYNOPSIS</H2>
 
@@ -31,9 +31,9 @@ capget, capset - set/get process capabilities
 
 As of Linux 2.2, the power of the superuser (root) has been partitioned into
 a set of discrete capabilities.
-Every process has a set of effective capabilities identifying
+Every thread has a set of effective capabilities identifying
 which capabilities (if any) it may currently exercise.
-Every process also has a set of inheritable capabilities that may be
+Every thread also has a set of inheritable capabilities that may be
 passed through an
 <B><A HREF="../man2/execve.2.html">execve</A></B>(2)
 
@@ -73,30 +73,60 @@ The structs are defined as follows.
 #define _LINUX_CAPABILITY_VERSION  0x19980330
 
 typedef struct __user_cap_header_struct {
-        int version;
-        int pid;
+    int version;
+    int pid;
 } *cap_user_header_t;
 
 typedef struct __user_cap_data_struct {
-        int effective;
-        int permitted;
-        int inheritable;
+    int effective;
+    int permitted;
+    int inheritable;
 } *cap_user_data_t;
 </PRE>
 
 
 <P>
-The calls will return EINVAL, and set the version field of
+The calls will return EINVAL, and set the 
+<I>version </I>
+
+field of
 <I>hdr</I>
 
 to _LINUX_CAPABILITY_VERSION when another version was specified.
 <P>
-The calls refer to the capabilities of the process indicated by
-the pid field of
+The calls operate on the capabilities of the thread specified by the 
+<I>pid </I>
+
+field of
 <I>hdr</I>
 
-when that is non-zero, or to the current process otherwise.
-<P>
+when that is non-zero, or on the capabilities of the calling thread if
+<I>pid</I>
+
+is 0.
+If 
+<I>pid</I>
+
+refers to a single-threaded process, then 
+<I>pid</I>
+
+can be specified as a traditional process ID;
+operating on a thread of a multithreaded process requires a thread ID
+of the type returned by 
+<B><A HREF="../man2/gettid.2.html">gettid</A></B>(2).
+
+For 
+<B>capset</B>(),
+
+<I>pid</I>
+
+can also be: -1, meaning effect the change on all threads except the
+caller and
+<I><A HREF="../man8/init.8.html">init</A></I>(8);
+
+or a value less than -1, in which case the change is applied
+to all members of the process group whose ID is -<I>pid</I>.
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;
 For details on the data, see
 <B><A HREF="../man7/capabilities.7.html">capabilities</A></B>(7).
 
@@ -134,16 +164,16 @@ Permitted set.
 <DT><B>EPERM</B>
 
 <DD>
-The calling process attempted to use
+The caller attempted to use
 <B>capset</B>()
 
-to modify the capabilities of a process other than itself,
+to modify the capabilities of a thread other than itself,
 but lacked sufficient privilege; the
 <B>CAP_SETPCAP</B>
 
 capability is required.
 (A bug in kernels before 2.6.11 meant that this error could also 
-occur if a process without this capability tried to change its
+occur if a thread without this capability tried to change its
 own capabilities by specifying the
 <I>pid</I>
 
@@ -154,7 +184,7 @@ instead of 0.)
 <DT><B>ESRCH</B>
 
 <DD>
-No such process.
+No such thread.
 </DL>
 <A NAME="lbAH">&nbsp;</A>
 <H2>FURTHER INFORMATION</H2>
@@ -171,7 +201,9 @@ library and is available from here:
 <A NAME="lbAI">&nbsp;</A>
 <H2>SEE ALSO</H2>
 
+<B><A HREF="../man2/clone.2.html">clone</A>(2),</B>
 
+<B><A HREF="../man2/gettid.2.html">gettid</A></B>(2),
 
 <B><A HREF="../man7/capabilities.7.html">capabilities</A></B>(7)
 
@@ -195,6 +227,6 @@ library and is available from here:
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 02:26:45 GMT, April 20, 2020
+Time: 02:27:12 GMT, April 20, 2020
 </BODY>
 </HTML>
