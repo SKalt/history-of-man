@@ -25,7 +25,7 @@ License along with this manual; if not, see
 <HTML><HEAD><TITLE>Man page of FTW</TITLE>
 </HEAD><BODY>
 <H1>FTW</H1>
-Section: Linux Programmer's Manual (3)<BR>Updated: 2014-12-31<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2015-04-19<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -38,24 +38,33 @@ ftw, nftw - file tree walk
 <PRE>
 <B>#include &lt;<A HREF="file:///usr/include/ftw.h">ftw.h</A>&gt;</B>
 
-<B>int ftw(const char *</B><I>dirpath</I><B>,</B>
-<B>        int (*</B><I>fn</I><B>) (const char *</B><I>fpath</I><B>, const struct stat *</B><I>sb</I><B>,</B>
-<B>                   int </B><I>typeflag</I><B>),</B>
-<B>        int </B><I>nopenfd</I><B>);</B>
-
-<B>#define _XOPEN_SOURCE 500</B>   /* See <A HREF="../man7/feature_test_macros.7.html">feature_test_macros</A>(7) */
-<B>#include &lt;<A HREF="file:///usr/include/ftw.h">ftw.h</A>&gt;</B>
-
 <B>int nftw(const char *</B><I>dirpath</I><B>,</B>
 <B>        int (*</B><I>fn</I><B>) (const char *</B><I>fpath</I><B>, const struct stat *</B><I>sb</I><B>,</B>
 <B>                   int </B><I>typeflag</I><B>, struct FTW *</B><I>ftwbuf</I><B>),</B>
 <B>        int </B><I>nopenfd</I><B>, int </B><I>flags</I><B>);</B>
+
+<B>#include &lt;<A HREF="file:///usr/include/ftw.h">ftw.h</A>&gt;</B>
+
+<B>int ftw(const char *</B><I>dirpath</I><B>,</B>
+<B>        int (*</B><I>fn</I><B>) (const char *</B><I>fpath</I><B>, const struct stat *</B><I>sb</I><B>,</B>
+<B>                   int </B><I>typeflag</I><B>),</B>
+<B>        int </B><I>nopenfd</I><B>);</B>
 </PRE>
 
+<P>
+
+Feature Test Macro Requirements for glibc (see
+<B><A HREF="../man7/feature_test_macros.7.html">feature_test_macros</A></B>(7)):
+
+
+<P>
+<B>nftw</B>():
+
+_XOPEN_SOURCE &gt;= 500
 <A NAME="lbAD">&nbsp;</A>
 <H2>DESCRIPTION</H2>
 
-<B>ftw</B>()
+<B>nftw</B>()
 
 walks through the directory tree that is
 located under the directory <I>dirpath</I>,
@@ -65,38 +74,40 @@ subdirectories they contain (preorder traversal).
 <P>
 To avoid using up all of the calling process's file descriptors,
 <I>nopenfd</I> specifies the maximum number of directories that
-<B>ftw</B>()
+<B>nftw</B>()
 
 will hold open simultaneously.
 When
 the search depth exceeds this,
-<B>ftw</B>()
+<B>nftw</B>()
 
 will become slower because
 directories have to be closed and reopened.
-<B>ftw</B>()
+<B>nftw</B>()
 
 uses at most
 one file descriptor for each level in the directory tree.
 <P>
 For each entry found in the tree,
-<B>ftw</B>()
+<B>nftw</B>()
 
 calls
-<I>fn</I>() with three arguments:
+<I>fn</I>() with four arguments:
 <I>fpath</I>,
 
 <I>sb</I>,
 
+<I>typeflag</I>,
+
 and
-<I>typeflag</I>.
+<I>ftwbuf</I>.
 
 <I>fpath</I>
 
 is the pathname of the entry,
 and is expressed either as a pathname relative to the calling process's
 current working directory at the time of the call to
-<B>ftw</B>(),
+<B>nftw</B>(),
 
 if
 <I>dirpath</I>
@@ -139,6 +150,26 @@ is a directory.
 <I>fpath</I>
 
 is a directory which can't be read.
+<DT><B>FTW_DP</B>
+
+<DD>
+<I>fpath</I>
+
+is a directory, and <B>FTW_DEPTH</B> was specified in <I>flags</I>.
+(If
+<B>FTW_DEPTH</B>
+
+was not specified in
+<I>flags</I>,
+
+then directories will always be visited with
+<I>typeflag</I>
+
+set to
+<B>FTW_D</B>.)
+
+All of the files
+and subdirectories within <I>fpath</I> have been processed.
 <DT><B>FTW_NS</B>
 
 <DD>
@@ -158,27 +189,69 @@ but did not have execute permission,
 so that the file could not be reached for
 <B><A HREF="../man2/stat.2.html">stat</A></B>(2).
 
-<P>
-If
+<DT><B>FTW_SL</B>
+
+<DD>
 <I>fpath</I>
 
-is a symbolic link and
-<B><A HREF="../man2/stat.2.html">stat</A></B>(2)
+is a symbolic link, and <B>FTW_PHYS</B> was set in <I>flags</I>.
 
-failed, POSIX.1-2001 states
-that it is undefined whether <B>FTW_NS</B> or <B>FTW_SL</B> (see below)
-is passed in
-<I>typeflag</I>.
 
+
+
+
+
+
+<DT><B>FTW_SLN</B>
+
+<DD>
+<I>fpath</I>
+
+is a symbolic link pointing to a nonexistent file.
+(This occurs only if <B>FTW_PHYS</B> is not set.)
 </DL>
+<P>
+
+The fourth argument that
+<B>nftw</B>()
+
+supplies when calling
+<I>fn</I>()
+is a structure of type <I>FTW</I>:
+
+<PRE>
+
+struct FTW {
+    int base;
+    int level;
+};
+
+</PRE>
+
+
+<I>base</I>
+
+is the offset of the filename (i.e., basename component)
+in the pathname given in
+<I>fpath</I>.
+
+<I>level</I>
+
+is the depth of
+<I>fpath</I>
+
+in the directory tree, relative to the root of the tree
+(<I>dirpath</I>,
+
+which has depth 0).
 <P>
 
 To stop the tree walk, <I>fn</I>() returns a nonzero value; this
 value will become the return value of
-<B>ftw</B>().
+<B>nftw</B>().
 
 As long as <I>fn</I>() returns 0,
-<B>ftw</B>()
+<B>nftw</B>()
 
 will continue either until it has traversed the entire tree,
 in which case it will return zero,
@@ -189,7 +262,7 @@ failure), in which case it will return -1.
 <P>
 
 Because
-<B>ftw</B>()
+<B>nftw</B>()
 
 uses dynamic data structures, the only safe way to
 exit out of a tree walk is to return a nonzero value from <I>fn</I>().
@@ -199,19 +272,11 @@ have the handler set a global flag that is checked by <I>fn</I>().
 <B><A HREF="../man3/longjmp.3.html">longjmp</A></B>(3)
 
 unless the program is going to terminate.
-<A NAME="lbAE">&nbsp;</A>
-<H3>nftw()</H3>
-
-The function
+<P>
+The <I>flags</I> argument of
 <B>nftw</B>()
 
-is the same as
-<B>ftw</B>(),
-
-except that it has one additional argument, <I>flags</I>,
-and calls <I>fn</I>() with one more argument, <I>ftwbuf</I>.
-<P>
-This <I>flags</I> argument is formed by ORing zero or more of the
+is formed by ORing zero or more of the
 following flags:
 <DL COMPACT>
 <DT><B>FTW_ACTIONRETVAL</B> (since glibc 2.3.3)
@@ -321,105 +386,55 @@ then the function
 
 is never called for a directory that would be a descendant of itself.
 </DL>
-<P>
+<A NAME="lbAE">&nbsp;</A>
+<H3>ftw()</H3>
 
-For each entry in the directory tree,
-<B>nftw</B>()
+<B>ftw</B>()
 
-calls
-<I>fn</I>()
+is an older function that offers a subset of the functionality of
+<B>nftw</B>().
 
-with four arguments.
-<I>fpath</I>
-
-and
-<I>sb</I>
-
-are as for
-<B>ftw</B>().
-
-<I>typeflag</I>
-
-may receive any of the same values as with
-<B>ftw</B>(),
-
-or any of the following values:
+The notable differences are as follows:
 <DL COMPACT>
-<DT><B>FTW_DP</B>
+<DT>*<DD>
+<B>ftw</B>()
 
-<DD>
-<I>fpath</I>
+has no
+<I>flags</I>
 
-is a directory, and <B>FTW_DEPTH</B> was specified in <I>flags</I>.
-(If
-<B>FTW_DEPTH</B>
-
-was not specified in
-<I>flags</I>,
-
-then directories will always be visited with
-<I>typeflag</I>
-
-set to
-<B>FTW_D</B>.)
-
-All of the files
-and subdirectories within <I>fpath</I> have been processed.
-<DT><B>FTW_SL</B>
-
-<DD>
-<I>fpath</I>
-
-is a symbolic link, and <B>FTW_PHYS</B> was set in <I>flags</I>.
-
-
-
-
-
-
-
-<DT><B>FTW_SLN</B>
-
-<DD>
-<I>fpath</I>
-
-is a symbolic link pointing to a nonexistent file.
-(This occurs only if <B>FTW_PHYS</B> is not set.)
-</DL>
-<P>
-
-The fourth argument that
+argument.
+It behaves the same as when
 <B>nftw</B>()
 
-supplies when calling
+is called with
+<I>flags</I>
+
+specified as zero.
+<DT>*<DD>
+The callback function,
+<I>fn</I>(),
+
+is not supplied with a fourth argument.
+<DT>*<DD>
+The range of values that is passed via the
+<I>typeflag</I>
+
+argument supplied to
 <I>fn</I>()
-is a structure of type <I>FTW</I>:
 
-<PRE>
+is smaller: just
+<B>FTW_F</B>,
 
-struct FTW {
-    int base;
-    int level;
-};
+<B>FTW_D</B>,
 
-</PRE>
+<B>FTW_DNR</B>,
 
+<B>FTW_NS</B>,
 
-<I>base</I>
+and (possibly)
+<B>FTW_SL</B>.
 
-is the offset of the filename (i.e., basename component)
-in the pathname given in
-<I>fpath</I>.
-
-<I>level</I>
-
-is the depth of
-<I>fpath</I>
-
-in the directory tree, relative to the root of the tree
-(<I>dirpath</I>,
-
-which has depth 0).
+</DL>
 <A NAME="lbAF">&nbsp;</A>
 <H2>RETURN VALUE</H2>
 
@@ -452,7 +467,7 @@ is available under glibc since version 2.1.
 <A NAME="lbAH">&nbsp;</A>
 <H2>CONFORMING TO</H2>
 
-POSIX.1-2001, SVr4, SUSv1.
+POSIX.1-2001, POSIX.1-2008, SVr4, SUSv1.
 POSIX.1-2008 marks
 <B>ftw</B>()
 
@@ -460,7 +475,7 @@ as obsolete.
 <A NAME="lbAI">&nbsp;</A>
 <H2>NOTES</H2>
 
-POSIX.1-2001 note that the results are unspecified if
+POSIX.1-2008 notes that the results are unspecified if
 <I>fn</I>
 
 does not preserve the current working directory.
@@ -475,7 +490,7 @@ and the use of <B>FTW_SL</B> with
 were introduced in SUSv1.
 <P>
 
-On some systems
+In some implementations (e.g., glibc),
 <B>ftw</B>()
 
 will never use <B>FTW_SL</B>, on other systems <B>FTW_SL</B> occurs only
@@ -484,15 +499,20 @@ and again on other systems
 <B>ftw</B>()
 
 will use <B>FTW_SL</B> for each symbolic link.
-For predictable control, use
+If
+<I>fpath</I>
+
+is a symbolic link and
+<B><A HREF="../man2/stat.2.html">stat</A></B>(2)
+
+failed, POSIX.1-2008 states
+that it is undefined whether <B>FTW_NS</B> or <B>FTW_SL</B>
+is passed in
+<I>typeflag</I>.
+
+For predictable results, use
 <B>nftw</B>().
 
-<P>
-
-<B>FTW_F</B> is returned for all objects (files, symbolic links, FIFOs, etc.)
-that can be stat'ed but are not a directory.
-<P>
-<B>FTW_ACTIONRETVAL</B> is glibc-specific.
 <A NAME="lbAJ">&nbsp;</A>
 <H2>EXAMPLE</H2>
 
@@ -567,7 +587,7 @@ main(int argc, char *argv[])
 <DT><A HREF="#lbAC">SYNOPSIS</A><DD>
 <DT><A HREF="#lbAD">DESCRIPTION</A><DD>
 <DL>
-<DT><A HREF="#lbAE">nftw()</A><DD>
+<DT><A HREF="#lbAE">ftw()</A><DD>
 </DL>
 <DT><A HREF="#lbAF">RETURN VALUE</A><DD>
 <DT><A HREF="#lbAG">VERSIONS</A><DD>
@@ -583,6 +603,6 @@ main(int argc, char *argv[])
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:38:28 GMT, April 20, 2020
+Time: 03:39:00 GMT, April 20, 2020
 </BODY>
 </HTML>

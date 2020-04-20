@@ -26,7 +26,7 @@ the source, must acknowledge the copyright and authors of this work.
 <HTML><HEAD><TITLE>Man page of MOUNT</TITLE>
 </HEAD><BODY>
 <H1>MOUNT</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2014-09-21<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2015-04-19<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -163,6 +163,58 @@ Make directory changes on this filesystem synchronous.
 or subtrees using
 <B><A HREF="../man1/chattr.1.html">chattr</A></B>(1).)
 
+<DT><B>MS_LAZYTIME</B> (since Linux 4.0)
+
+<DD>
+
+
+
+Reduce on-disk updates of inode timestamps (atime, mtime, ctime)
+by maintaining these changes only in memory.
+The on-disk timestamps are updated only when:
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT>(a)<DD>
+the inode needs to be updated for some change unrelated to file timestamps;
+<DT>(b)<DD>
+the application employs
+<B><A HREF="../man2/fsync.2.html">fsync</A></B>(2),
+
+<B><A HREF="../man2/syncfs.2.html">syncfs</A></B>(2),
+
+or
+<B><A HREF="../man2/sync.2.html">sync</A></B>(2);
+
+<DT>(c)<DD>
+an undeleted inode is evicted from memory; or
+<DT>(d)<DD>
+more than 24 hours have passed since the inode was written to disk.
+</DL>
+</DL>
+
+<DT><DD>
+This mount option significantly reduces writes
+needed to update the inode's timestamps, especially mtime and atime.
+However, in the event of a system crash, the atime and mtime fields
+on disk might be out of date by up to 24 hours.
+<P>
+Examples of workloads where this option could be of significant benefit
+include frequent random writes to preallocated files,
+as well as cases where the
+<B>MS_STRICTATIME</B>
+
+mount option is also enabled.
+(The advantage of combining
+<B>MS_STRICTATIME</B>
+
+and
+<B>MS_LAZYTIME</B>
+
+is that
+<B><A HREF="../man2/stat.2.html">stat</A></B>(2)
+
+will return the correctly updated atime, but the atime updates
+will be flushed to disk only in the cases listed above.)
 <DT><B>MS_MANDLOCK</B>
 
 <DD>
@@ -660,6 +712,6 @@ for details.
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:38:21 GMT, April 20, 2020
+Time: 03:38:54 GMT, April 20, 2020
 </BODY>
 </HTML>

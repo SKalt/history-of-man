@@ -26,7 +26,7 @@ the source, must acknowledge the copyright and authors of this work.
 <HTML><HEAD><TITLE>Man page of GETCWD</TITLE>
 </HEAD><BODY>
 <H1>GETCWD</H1>
-Section: Linux Programmer's Manual (3)<BR>Updated: 2015-03-02<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2015-04-19<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -93,6 +93,21 @@ The pathname is returned as the function result and via the argument
 <I>buf</I>,
 
 if present.
+<P>
+If the current directory is not below the root directory of the current
+process (e.g., because the process set a new filesystem root using
+<B><A HREF="../man2/chroot.2.html">chroot</A></B>(2)
+
+without changing its current directory into the new root),
+then, since Linux 2.6.36,
+
+the returned path will be prefixed with the string &quot;(unreachable)&quot;.
+Such behavior can also be caused by an unprivileged user by changing
+the current directory into another mount namespace.
+When dealing with paths from untrusted sources, callers of these
+functions should consider checking whether the returned path starts
+with '/' or '(' to avoid misinterpreting an unreachable path
+as a relative path.
 <P>
 The
 <B>getcwd</B>()
@@ -243,19 +258,27 @@ argument is zero and
 <I>buf</I>
 
 is not a null pointer.
-<DT>EINVAL<DD>
+<DT><B>EINVAL</B>
+
+<DD>
 <B>getwd</B>():
 
 <I>buf</I>
 
 is NULL.
-<DT>ENAMETOOLONG<DD>
+<DT><B>ENAMETOOLONG</B>
+
+<DD>
 <B>getwd</B>():
 
 The size of the null-terminated absolute pathname string exceeds
 <B>PATH_MAX</B>
 
 bytes.
+<DT><B>ENOMEM</B>
+
+<DD>
+Out of memory.
 <DT><B>ENOENT</B>
 
 <DD>
@@ -382,6 +405,6 @@ many file descriptors are available, especially on platforms other than Linux.
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:38:28 GMT, April 20, 2020
+Time: 03:39:00 GMT, April 20, 2020
 </BODY>
 </HTML>

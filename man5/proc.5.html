@@ -622,14 +622,20 @@ $<B> foobar -i /dev/stdin -o /dev/stdout ...</B>
 <DD>
 This is a subdirectory containing one entry for each file which the
 process has open, named by its file descriptor.
+The files in this directory are readable only by the owner of the process.
 The contents of each file can be read to obtain information
-about the corresponding file descriptor, for example:
+about the corresponding file descriptor.
+The content depends on the type of file referred to by the
+corresponding descriptor.
+<P>
+For regular files and directories, we see something like:
 
 <PRE>
 
 $<B> cat /proc/12015/fdinfo/4</B>
 pos:    1000
 flags:  01002002
+mnt_id: 21
 </PRE>
 
 
@@ -645,8 +651,101 @@ field is an octal number that displays the
 file access mode and file status flags (see
 <B><A HREF="../man2/open.2.html">open</A></B>(2)).
 
+The
+<I>mnt_id</I>
+
+field, present since Linux 3.15,
+
+is the ID of the mount point containing this file.
+See the description of
+<I>/proc/[pid]/mountinfo</I>.
+
 <P>
-The files in this directory are readable only by the owner of the process.
+For eventfd file descriptors (see
+<B><A HREF="../man2/eventfd.2.html">eventfd</A></B>(2)),
+
+we see the following fields:
+<P>
+
+<PRE>
+pos:    0
+flags:  02
+mnt_id: 10
+eventfd-count:               40
+</PRE>
+
+
+<P>
+<I>eventfd-count</I>
+
+is the current value of the eventfd counter, in hexadecimal.
+<P>
+For epoll file descriptors (see
+<B><A HREF="../man7/epoll.7.html">epoll</A></B>(7)),
+
+we see the following fields:
+<P>
+
+<PRE>
+pos:    0
+flags:  02
+mnt_id: 10
+tfd:        9 events:       19 data: 74253d2500000009
+tfd:        7 events:       19 data: 74253d2500000007
+</PRE>
+
+
+<P>
+Each of the lines beginning
+<I>tfd</I>
+
+describes one of the file descriptors being monitored via
+the epoll file descriptor (see
+<B><A HREF="../man2/epoll_ctl.2.html">epoll_ctl</A></B>(2)
+
+for some details).
+The
+<I>tfd</I>
+
+field is the number of the file descriptor.
+The
+<I>events</I>
+
+field is a hexadecimal mask of the events being monitored for this file
+descriptor.
+The
+<I>data</I>
+
+field is the data value associated with this file descriptor.
+<P>
+For signalfd file descriptors (see
+<B><A HREF="../man2/signalfd.2.html">signalfd</A></B>(2)),
+
+we see the following fields:
+<P>
+
+<PRE>
+pos:    0
+flags:  02
+mnt_id: 10
+sigmask:        0000000000000006
+</PRE>
+
+
+<P>
+<I>sigmask</I>
+
+is the hexadecimal mask of signals that are accepted via this
+signalfd file descriptor.
+(In this example, bits 2 and 3 are set, corresponding to the signals
+<B>SIGINT</B>
+
+and
+<B>SIGQUIT</B>;
+
+see
+<B><A HREF="../man7/signal.7.html">signal</A></B>(7).)
+
 
 
 
@@ -2032,7 +2131,8 @@ Page table entries size (since Linux 2.6.10).
 <I>VmSwap</I>:
 
 
-Swapped-out virtual memory size (since Linux 2.6.34).
+Swapped-out virtual memory size by anonymous private pages;
+shmem swap usage is not included (since Linux 2.6.34).
 <DT>*<DD>
 <I>Threads</I>:
 
@@ -2286,7 +2386,7 @@ is set at kernel compilation time.
 
 
 A list of the POSIX timers for this process.
-Each timer is listed with a line that started with the string &quot;ID:&quot;.
+Each timer is listed with a line that starts with the string &quot;ID:&quot;.
 For example:
 <P>
 
@@ -2327,7 +2427,7 @@ structure (see
 <DD>
 This is the signal number that this timer uses to deliver notifications
 followed by a slash, and then the
-<I>sigev_value.sival_ptr</I>
+<I>sigev_value</I>
 
 value supplied to the signal handler.
 Valid only for timers that notify via a signal.
@@ -2342,7 +2442,8 @@ with
 <B>SIGEV_THREAD_ID</B>
 
 notification, or &quot;pid&quot; for timers that notify by other mechanisms.
-Following the &quot;.&quot; is the PID of the process that will be delivered
+Following the &quot;.&quot; is the PID of the process
+(or the kernel thread ID of the thread)  that will be delivered
 a signal if the timer delivers notifications via a signal.
 <DT><I>ClockID</I>
 
@@ -2364,6 +2465,10 @@ timers display with a value of -2
 in this field.
 </DL>
 </DL>
+
+<DT><DD>
+This file is available only when the kernel was configured with
+<B>CONFIG_CHECKPOINT_RESTORE</B>.
 
 <DT><I>/proc/bus/pccard/drivers</I>
 
@@ -3231,14 +3336,55 @@ Num RefCount Protocol Flags    Type St Path
 </PRE>
 
 <P>
-Here &quot;Num&quot; is the kernel table slot number, &quot;RefCount&quot; is the number
-of users of the socket, &quot;Protocol&quot; is currently always 0, &quot;Flags&quot;
-represent the internal kernel flags holding the status of the
-socket.
-Currently, type is always &quot;1&quot; (UNIX domain datagram sockets are
-not yet supported in the kernel).
-&quot;St&quot; is the internal state of the
-socket and Path is the bound path (if any) of the socket.
+The fields are as follows:
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT><I>Num</I>:
+
+<DD>
+the kernel table slot number.
+<DT><I>RefCount</I>:
+
+<DD>
+the number of users of the socket.
+<DT><I>Protocol</I>:
+
+<DD>
+currently always 0.
+<DT><I>Flags</I>:
+
+<DD>
+the internal kernel flags holding the status of the socket.
+<DT><I>Type</I>:
+
+<DD>
+the socket type.
+For
+<B>SOCK_STREAM</B>
+
+sockets, this is 0001; for
+<B>SOCK_DGRAM</B>
+
+sockets, it is 0002; and for
+<B>SOCK_SEQPACKET</B>
+
+sockets, it is 0005.
+<DT><I>St</I>:
+
+<DD>
+the internal state of the socket.
+<DT><I>Path</I>:
+
+<DD>
+the bound path (if any) of the socket.
+Sockets in the abstract namespace are included in the list,
+and are shown with a
+<I>Path</I>
+
+that commences with the character '@'.
+</DL>
+</DL>
+
 <DT><I>/proc/net/netfilter/nfnetlink_queue</I>
 
 <DD>
@@ -4453,6 +4599,44 @@ for further information.
 <DD>
 Each read from this read-only file returns a randomly generated 128-bit UUID,
 as a string in the standard UUID format.
+<DT><I>/proc/sys/kernel/randomize_va_space</I> (since Linux 2.6.12)
+
+<DD>
+
+Select the address space layout randomization (ASLR) policy for the system
+(on architectures that support ASLR).
+Three values are supported for this file:
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT>0<DD>
+Turn ASLR off.
+This is the default for architectures that don't support ASLR,
+and when the kernel is booted with the
+<I>norandmaps</I>
+
+parameter.
+<DT>1<DD>
+Make the addresses of
+<B><A HREF="../man2/mmap.2.html">mmap</A></B>(2)
+
+allocations, the stack, and the VDSO page randomized.
+Among other things, this means that shared libraries will be
+loaded at randomized addresses.
+The text segment of PIE-linked binaries will also be loaded
+at a randomized address.
+This value is the default if the kernel was configured with
+<B>CONFIG_COMPAT_BRK</B>.
+
+<DT>2<DD>
+(Since Linux 2.6.25)
+
+Also support heap randomization.
+This value is the default if the kernel was not configured with
+<B>CONFIG_COMPAT_BRK</B>.
+
+</DL>
+</DL>
+
 <DT><I>/proc/sys/kernel/real-root-dev</I>
 
 <DD>
@@ -5331,6 +5515,6 @@ and
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:38:34 GMT, April 20, 2020
+Time: 03:39:07 GMT, April 20, 2020
 </BODY>
 </HTML>

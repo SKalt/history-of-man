@@ -26,35 +26,38 @@ the source, must acknowledge the copyright and authors of this work.
 <HTML><HEAD><TITLE>Man page of GETDENTS</TITLE>
 </HEAD><BODY>
 <H1>GETDENTS</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2012-08-03<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2015-04-12<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
 <H2>NAME</H2>
 
-getdents - get directory entries
+getdents, getdents64 - get directory entries
 <A NAME="lbAC">&nbsp;</A>
 <H2>SYNOPSIS</H2>
 
 <PRE>
 <B>int getdents(unsigned int </B><I>fd</I><B>, struct linux_dirent *</B><I>dirp</I><B>,</B>
 <B>             unsigned int </B><I>count</I><B>);</B>
+<B>int getdents64(unsigned int </B><I>fd</I><B>, struct linux_dirent64 *</B><I>dirp</I><B>,</B>
+<B>             unsigned int </B><I>count</I><B>);</B>
 </PRE>
 
 <P>
 <I>Note</I>:
 
-There is no glibc wrapper for this system call; see NOTES.
+There are no glibc wrappers for these system calls; see NOTES.
 <A NAME="lbAD">&nbsp;</A>
 <H2>DESCRIPTION</H2>
 
-This is not the function you are interested in.
+These are not the interfaces you are interested in.
 Look at
 <B><A HREF="../man3/readdir.3.html">readdir</A></B>(3)
 
-for the POSIX conforming C library interface.
-This page documents the bare kernel system call interface.
-<P>
+for the POSIX-conforming C library interface.
+This page documents the bare kernel system call interfaces.
+<A NAME="lbAE">&nbsp;</A>
+<H3>getdents()</H3>
 
 The system call
 <B>getdents</B>()
@@ -95,7 +98,6 @@ struct linux_dirent {
     char           d_type;    // File type (only since Linux
                               // 2.6.4); offset is (d_reclen - 1)
     */
-
 }
 </PRE>
 
@@ -169,7 +171,7 @@ It occupies a space that was previously a zero-filled padding byte in the
 <I>linux_dirent</I>
 
 structure.
-Thus, on kernels before 2.6.3,
+Thus, on kernels up to and including 2.6.3,
 attempting to access this field always provides the value 0
 (<B>DT_UNKNOWN</B>).
 
@@ -185,7 +187,51 @@ have full support for returning the file type in
 All applications must properly handle a return of
 <B>DT_UNKNOWN</B>.
 
-<A NAME="lbAE">&nbsp;</A>
+<A NAME="lbAF">&nbsp;</A>
+<H3>getdents64()</H3>
+
+The original Linux
+<B>getdents</B>()
+
+system call did not handle large filesystems and large file offsets.
+Consequently, Linux 2.4 added
+<B>getdents64</B>(),
+
+with wider types for the
+<I>d_ino</I>
+
+and
+<I>d_off</I>
+
+fields.
+In addition,
+<B>getdents64</B>()
+
+supports an explicit
+<I>d_type</I>
+
+field.
+<P>
+The
+<B>getdents64</B>()
+
+system call is like
+<B>getdents</B>(),
+
+except that its second argument is a pointer to a buffer containing
+structures of the following type:
+<P>
+<PRE>
+struct linux_dirent64 {
+    ino64_t        d_ino;    /* 64-bit inode number */
+    off64_t        d_off;    /* 64-bit offset to next structure */
+    unsigned short d_reclen; /* Size of this dirent */
+    unsigned char  d_type;   /* File type */
+    char           d_name[]; /* Filename (null-terminated) */
+};
+</PRE>
+
+<A NAME="lbAG">&nbsp;</A>
 <H2>RETURN VALUE</H2>
 
 On success, the number of bytes read is returned.
@@ -194,7 +240,7 @@ On error, -1 is returned, and
 <I>errno</I>
 
 is set appropriately.
-<A NAME="lbAF">&nbsp;</A>
+<A NAME="lbAH">&nbsp;</A>
 <H2>ERRORS</H2>
 
 <DL COMPACT>
@@ -221,19 +267,22 @@ No such directory.
 <DD>
 File descriptor does not refer to a directory.
 </DL>
-<A NAME="lbAG">&nbsp;</A>
+<A NAME="lbAI">&nbsp;</A>
 <H2>CONFORMING TO</H2>
 
 SVr4.
 
-<A NAME="lbAH">&nbsp;</A>
+<A NAME="lbAJ">&nbsp;</A>
 <H2>NOTES</H2>
 
-Glibc does not provide a wrapper for this system call; call it using
+Glibc does not provide a wrapper for these system calls; call them using
 <B><A HREF="../man2/syscall.2.html">syscall</A></B>(2).
 
 You will need to define the
 <I>linux_dirent</I>
+
+or
+<I>linux_dirent64</I>
 
 structure yourself.
 However, you probably want to use
@@ -241,28 +290,10 @@ However, you probably want to use
 
 instead.
 <P>
-This call supersedes
+These calls supersede
 <B><A HREF="../man2/readdir.2.html">readdir</A></B>(2).
 
-<P>
-The original Linux
-<B>getdents</B>()
-
-system call did not handle large filesystems and large file offsets.
-Consequently, Linux 2.4 added
-<B>getdents64</B>(),
-
-with wider types for the
-<I>d_ino</I>
-
-and
-<I>d_off</I>
-
-fields employed in the
-<I>linux_dirent</I>
-
-structure.
-<A NAME="lbAI">&nbsp;</A>
+<A NAME="lbAK">&nbsp;</A>
 <H2>EXAMPLE</H2>
 
 
@@ -288,7 +319,7 @@ inode#    file type  d_reclen  d_off   d_name
 </PRE>
 
 
-<A NAME="lbAJ">&nbsp;</A>
+<A NAME="lbAL">&nbsp;</A>
 <H3>Program source</H3>
 
 
@@ -358,7 +389,7 @@ main(int argc, char *argv[])
 }
 </PRE>
 
-<A NAME="lbAK">&nbsp;</A>
+<A NAME="lbAM">&nbsp;</A>
 <H2>SEE ALSO</H2>
 
 <B><A HREF="../man2/readdir.2.html">readdir</A></B>(2),
@@ -373,20 +404,24 @@ main(int argc, char *argv[])
 <DT><A HREF="#lbAB">NAME</A><DD>
 <DT><A HREF="#lbAC">SYNOPSIS</A><DD>
 <DT><A HREF="#lbAD">DESCRIPTION</A><DD>
-<DT><A HREF="#lbAE">RETURN VALUE</A><DD>
-<DT><A HREF="#lbAF">ERRORS</A><DD>
-<DT><A HREF="#lbAG">CONFORMING TO</A><DD>
-<DT><A HREF="#lbAH">NOTES</A><DD>
-<DT><A HREF="#lbAI">EXAMPLE</A><DD>
 <DL>
-<DT><A HREF="#lbAJ">Program source</A><DD>
+<DT><A HREF="#lbAE">getdents()</A><DD>
+<DT><A HREF="#lbAF">getdents64()</A><DD>
 </DL>
-<DT><A HREF="#lbAK">SEE ALSO</A><DD>
+<DT><A HREF="#lbAG">RETURN VALUE</A><DD>
+<DT><A HREF="#lbAH">ERRORS</A><DD>
+<DT><A HREF="#lbAI">CONFORMING TO</A><DD>
+<DT><A HREF="#lbAJ">NOTES</A><DD>
+<DT><A HREF="#lbAK">EXAMPLE</A><DD>
+<DL>
+<DT><A HREF="#lbAL">Program source</A><DD>
+</DL>
+<DT><A HREF="#lbAM">SEE ALSO</A><DD>
 </DL>
 <HR>
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:38:21 GMT, April 20, 2020
+Time: 03:38:53 GMT, April 20, 2020
 </BODY>
 </HTML>

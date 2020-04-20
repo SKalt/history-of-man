@@ -25,7 +25,7 @@ License along with this manual; if not, see
 <HTML><HEAD><TITLE>Man page of PRINTF</TITLE>
 </HEAD><BODY>
 <H1>PRINTF</H1>
-Section: Linux Programmer's Manual (3)<BR>Updated: 2014-07-08<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2015-04-19<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -1151,6 +1151,41 @@ The complete conversion
 specification is '%%'.
 </DL>
 <A NAME="lbAL">&nbsp;</A>
+<H2>ATTRIBUTES</H2>
+
+For an explanation of the terms used in this section, see
+<B><A HREF="../man7/attributes.7.html">attributes</A></B>(7).
+
+<TABLE BORDER>
+<TR VALIGN=top><TD><B>Interface</B></TD><TD><B>Attribute</B></TD><TD><B>Value</B><BR></TD></TR>
+<TR VALIGN=top><TD>
+<B>printf</B>(),
+
+<B>fprintf</B>(),
+
+<BR>
+
+<B>sprintf</B>(),
+
+<B>snprintf</B>(),
+
+<BR>
+
+<B>vprintf</B>(),
+
+<B>vfprintf</B>(),
+
+<BR>
+
+<B>vsprintf</B>(),
+
+<B>vsnprintf</B>()
+
+</TD><TD>Thread safety</TD><TD>MT-Safe locale<BR></TD></TR>
+</TABLE>
+
+<P>
+<A NAME="lbAM">&nbsp;</A>
 <H2>CONFORMING TO</H2>
 
 The
@@ -1232,7 +1267,7 @@ and conversion characters <B>a</B> and <B>A</B>.
 
 glibc 2.2 adds the conversion character <B>F</B> with C99 semantics,
 and the flag character <B>I</B>.
-<A NAME="lbAM">&nbsp;</A>
+<A NAME="lbAN">&nbsp;</A>
 <H2>NOTES</H2>
 
 Some programs imprudently rely on code such as the following
@@ -1305,7 +1340,7 @@ when the output was truncated.
 
 
 
-<A NAME="lbAN">&nbsp;</A>
+<A NAME="lbAO">&nbsp;</A>
 <H2>BUGS</H2>
 
 Because
@@ -1362,7 +1397,7 @@ call to write to memory and creating a security hole.
 
 
 
-<A NAME="lbAO">&nbsp;</A>
+<A NAME="lbAP">&nbsp;</A>
 <H2>EXAMPLE</H2>
 
 To print
@@ -1439,48 +1474,33 @@ To allocate a sufficiently large string and print into it
 char *
 make_message(const char *fmt, ...)
 {
-    int n;
-    int size = 100;     /* Guess we need no more than 100 bytes */
-    char *p, *np;
+    int size = 0;
+    char *p = NULL;
     va_list ap;
 
+    /* Determine required size */
+
+    va_start(ap, fmt);
+    size = vsnprintf(p, size, fmt, ap);
+    va_end(ap);
+
+    if (size &lt; 0)
+        return NULL;
+
+    size++;             /* For '\0' */
     p = malloc(size);
     if (p == NULL)
         return NULL;
 
-    while (1) {
-
-        /* Try to print in the allocated space */
-
-        va_start(ap, fmt);
-        n = vsnprintf(p, size, fmt, ap);
-        va_end(ap);
-
-        /* Check error code */
-
-        if (n &lt; 0) {
-            free(p);
-            return NULL;
-        }
-
-        /* If that worked, return the string */
-
-        if (n &lt; size)
-            return p;
-
-        /* Else try again with more space */
-
-        size = n + 1;       /* Precisely what is needed */
-
-
-        np = realloc(p, size);
-        if (np == NULL) {
-            free(p);
-            return NULL;
-        } else {
-            p = np;
-        }
+    va_start(ap, fmt);
+    size = vsnprintf(p, size, fmt, ap);
+    if (size &lt; 0) {
+        free(p);
+        return NULL;
     }
+    va_end(ap);
+
+    return p;
 }
 </PRE>
 
@@ -1488,7 +1508,7 @@ make_message(const char *fmt, ...)
 
 If truncation occurs in glibc versions prior to 2.0.6, this is treated as an
 error instead of being handled gracefully.
-<A NAME="lbAP">&nbsp;</A>
+<A NAME="lbAQ">&nbsp;</A>
 <H2>SEE ALSO</H2>
 
 <B><A HREF="../man1/printf.1.html">printf</A></B>(1),
@@ -1524,16 +1544,17 @@ error instead of being handled gracefully.
 <DT><A HREF="#lbAJ">The length modifier</A><DD>
 <DT><A HREF="#lbAK">The conversion specifier</A><DD>
 </DL>
-<DT><A HREF="#lbAL">CONFORMING TO</A><DD>
-<DT><A HREF="#lbAM">NOTES</A><DD>
-<DT><A HREF="#lbAN">BUGS</A><DD>
-<DT><A HREF="#lbAO">EXAMPLE</A><DD>
-<DT><A HREF="#lbAP">SEE ALSO</A><DD>
+<DT><A HREF="#lbAL">ATTRIBUTES</A><DD>
+<DT><A HREF="#lbAM">CONFORMING TO</A><DD>
+<DT><A HREF="#lbAN">NOTES</A><DD>
+<DT><A HREF="#lbAO">BUGS</A><DD>
+<DT><A HREF="#lbAP">EXAMPLE</A><DD>
+<DT><A HREF="#lbAQ">SEE ALSO</A><DD>
 </DL>
 <HR>
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:38:30 GMT, April 20, 2020
+Time: 03:39:02 GMT, April 20, 2020
 </BODY>
 </HTML>
