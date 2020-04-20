@@ -5,7 +5,7 @@ Copyright (c) 1992 Drew Eckhardt, March 28, 1992
 <HTML><HEAD><TITLE>Man page of GETRLIMIT</TITLE>
 </HEAD><BODY>
 <H1>GETRLIMIT</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2010-11-06<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2010-12-03<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -49,7 +49,6 @@ _GNU_SOURCE
 <H2>DESCRIPTION</H2>
 
 The
-the
 <B>getrlimit</B>()
 
 and
@@ -527,7 +526,6 @@ The value specified in
 <I>resource</I>
 
 is not valid;
-The value specified in
 or, for
 <B>setrlimit</B>()
 
@@ -546,7 +544,7 @@ An unprivileged process tried to raise the hard limit; the
 <B>CAP_SYS_RESOURCE</B>
 
 capability is required to do this.
-Or, the the caller tried to increase the hard
+Or, the caller tried to increase the hard
 <B>RLIMIT_NOFILE</B>
 
 limit above the current kernel maximum
@@ -566,8 +564,7 @@ Could not find a process with the ID specified in
 <A NAME="lbAH">&nbsp;</A>
 <H2>VERSIONS</H2>
 
-<B>The</B>
-
+The
 <B>prlimit</B>()
 
 system call is available since Linux 2.6.36.
@@ -645,6 +642,63 @@ All new applications should be written using
 <B>setrlimit</B>().
 
 <A NAME="lbAK">&nbsp;</A>
+<H2>EXAMPLE</H2>
+
+The program below demonstrates the use of
+<B>prlimit</B>().
+
+<P>
+
+<PRE>
+#define _GNU_SOURCE
+#include &lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/time.h">time.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/stdlib.h">stdlib.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/sys/resource.h">sys/resource.h</A>&gt;
+
+int
+main(int argc, char *argv[])
+{
+    struct rlimit64 old, new;
+    struct rlimit64 *newp;
+    pid_t pid;
+
+    if (!(argc == 2 || argc == 4)) {
+        fprintf(stderr, &quot;Usage: %s &lt;pid&gt; [&lt;new-soft-limit&gt; &quot;
+                &quot;&lt;new-hard-limit&gt;]\n&quot;, argv[0]);
+        exit(EXIT_FAILURE);
+    }
+
+    pid = atoi(argv[1]);        /* PID of target process */
+
+    newp = NULL;
+    if (argc == 4) {
+        new.rlim_cur = atoi(argv[2]);
+        new.rlim_max = atoi(argv[3]);
+        newp = &amp;new;
+    }
+
+    /* Set CPU time limit of target prcess; retrieve and display
+       previous limit */
+
+    if (prlimit(pid, RLIMIT_CPU, newp, &amp;old) == -1)
+        errExit(&quot;prlimit-1&quot;);
+    printf(&quot;Previous limits: soft=%lld; hard=%lld\n&quot;,
+            (long long) old.rlim_cur, (long long) old.rlim_max);
+
+    /* Retrieve and display new CPU time limit */
+
+    if (prlimit(pid, RLIMIT_CPU, NULL, &amp;old) == -1)
+        errExit(&quot;prlimit-2&quot;);
+    printf(&quot;New limits: soft=%lld; hard=%lld\n&quot;,
+            (long long) old.rlim_cur, (long long) old.rlim_max);
+
+    exit(EXIT_FAILURE);
+}
+</PRE>
+
+<A NAME="lbAL">&nbsp;</A>
 <H2>BUGS</H2>
 
 
@@ -684,7 +738,7 @@ between the priority ranges returned by
 and
 <B>RLIMIT_NICE</B>.
 
-This had the effect that actual ceiling for the nice value
+This had the effect that the actual ceiling for the nice value
 was calculated as
 <I>19&nbsp;-&nbsp;rlim_cur</I>.
 
@@ -703,7 +757,7 @@ when
 was greater than
 <I>rlim-&gt;rlim_max</I>.
 
-<A NAME="lbAL">&nbsp;</A>
+<A NAME="lbAM">&nbsp;</A>
 <H2>SEE ALSO</H2>
 
 <B><A HREF="../man2/dup.2.html">dup</A></B>(2),
@@ -754,13 +808,14 @@ was greater than
 <DT><A HREF="#lbAH">VERSIONS</A><DD>
 <DT><A HREF="#lbAI">CONFORMING TO</A><DD>
 <DT><A HREF="#lbAJ">NOTES</A><DD>
-<DT><A HREF="#lbAK">BUGS</A><DD>
-<DT><A HREF="#lbAL">SEE ALSO</A><DD>
+<DT><A HREF="#lbAK">EXAMPLE</A><DD>
+<DT><A HREF="#lbAL">BUGS</A><DD>
+<DT><A HREF="#lbAM">SEE ALSO</A><DD>
 </DL>
 <HR>
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:09:39 GMT, April 20, 2020
+Time: 03:10:14 GMT, April 20, 2020
 </BODY>
 </HTML>

@@ -1,17 +1,17 @@
 <!--
-Copyright (C) 2007 Michael Kerrisk &lt;mtk.manpages@gmail.com&gt;
+Copyright (C) 2007, 2010 Michael Kerrisk &lt;mtk.manpages@gmail.com&gt;
 -->
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
 <HTML><HEAD><TITLE>Man page of READV</TITLE>
 </HEAD><BODY>
 <H1>READV</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2002-10-17<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2010-11-17<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
 <H2>NAME</H2>
 
-readv, writev - read or write data into multiple buffers
+readv, writev, preadv, pwritev - read or write data into multiple buffers
 <A NAME="lbAC">&nbsp;</A>
 <H2>SYNOPSIS</H2>
 
@@ -21,15 +21,33 @@ readv, writev - read or write data into multiple buffers
 <B>ssize_t readv(int </B><I>fd</I><B>, const struct iovec *</B><I>iov</I><B>, int </B><I>iovcnt</I><B>);</B>
 
 <B>ssize_t writev(int </B><I>fd</I><B>, const struct iovec *</B><I>iov</I><B>, int </B><I>iovcnt</I><B>);</B>
+
+<B>ssize_t preadv(int </B><I>fd</I><B>, const struct iovec *</B><I>iov</I><B>, int </B><I>iovcnt</I><B>,</B>
+<B>               off_t </B><I>offset</I><B>);</B>
+
+<B>ssize_t pwritev(int </B><I>fd</I><B>, const struct iovec *</B><I>iov</I><B>, int </B><I>iovcnt</I><B>,</B>
+<B>                off_t </B><I>offset</I><B>);</B>
 </PRE>
 
+<P>
+
+Feature Test Macro Requirements for glibc (see
+<B><A HREF="../man7/feature_test_macros.7.html">feature_test_macros</A></B>(7)):
+
+
+<P>
+<B>preadv</B>(),
+
+<B>pwritev</B>():
+
+_BSD_SOURCE
 <A NAME="lbAD">&nbsp;</A>
 <H2>DESCRIPTION</H2>
 
 The
 <B>readv</B>()
 
-function reads
+system call reads
 <I>iovcnt</I>
 
 buffers from the file associated with the file descriptor
@@ -44,7 +62,7 @@ into the buffers described by
 The
 <B>writev</B>()
 
-function writes
+system call writes
 <I>iovcnt</I>
 
 buffers of data described by
@@ -85,7 +103,7 @@ struct iovec {
 The
 <B>readv</B>()
 
-function works just like
+system call works just like
 <B><A HREF="../man2/read.2.html">read</A></B>(2)
 
 except that multiple buffers are filled.
@@ -94,7 +112,7 @@ except that multiple buffers are filled.
 The
 <B>writev</B>()
 
-function works just like
+system call works just like
 <B><A HREF="../man2/write.2.html">write</A></B>(2)
 
 except that multiple buffers are written out.
@@ -151,17 +169,67 @@ that have file descriptors referring to the same open file description
 <B><A HREF="../man2/open.2.html">open</A></B>(2)).
 
 <A NAME="lbAE">&nbsp;</A>
-<H2>RETURN VALUE</H2>
+<H3>preadv() and pwritev()</H3>
 
-On success, the
+The
+<B>preadv</B>()
+
+system call combines the functionality of
 <B>readv</B>()
 
-function returns the number of bytes read; the
+and
+<B><A HREF="../man2/pread.2.html">pread</A></B>(2).
+
+It performs the same task as
+<B>readv</B>(),
+
+but adds a fourth argument,
+<I>offset</I>,
+
+which specifies the file offset at which the input operation
+is to be performed.
+<P>
+The
+<B>pwritev</B>()
+
+system call combines the functionality of
 <B>writev</B>()
 
-function returns the number of bytes written.
-On error, -1 is returned, and <I>errno</I> is set appropriately.
+and
+<B><A HREF="../man2/pwrite.2.html">pwrite</A></B>(2).
+
+It performs the same task as
+<B>writev</B>(),
+
+but adds a fourth argument,
+<I>offset</I>,
+
+which specifies the file offset at which the output operation
+is to be performed.
+<P>
+The file offset is not changed by these system calls.
+The file referred to by
+<I>fd</I>
+
+must be capable of seeking.
 <A NAME="lbAF">&nbsp;</A>
+<H2>RETURN VALUE</H2>
+
+On success,
+<B>readv</B>()
+
+and
+<B>preadv</B>()
+
+return the number of bytes read;
+<B>writev</B>()
+
+and
+<B>pwritev</B>()
+
+return the number of bytes written.
+On error, -1 is returned, and <I>errno</I> is set appropriately.
+<A NAME="lbAG">&nbsp;</A>
 <H2>ERRORS</H2>
 
 The errors are as given for
@@ -170,7 +238,16 @@ The errors are as given for
 and
 <B><A HREF="../man2/write.2.html">write</A></B>(2).
 
-Additionally the following error is defined:
+Furthermore,
+<B>preadv</B>()
+
+and
+<B>pwritev</B>()
+
+can also fail for the same reasons as
+<B><A HREF="../man2/lseek.2.html">lseek</A></B>(2).
+
+Additionally, the following error is defined:
 <DL COMPACT>
 <DT><B>EINVAL</B>
 
@@ -185,24 +262,37 @@ value.
 Or, the vector count <I>iovcnt</I> is less than zero or greater than the
 permitted maximum.
 </DL>
-<A NAME="lbAG">&nbsp;</A>
-<H2>CONFORMING TO</H2>
+<A NAME="lbAH">&nbsp;</A>
+<H2>VERSIONS</H2>
 
-4.4BSD (the
-<B>readv</B>()
+<B>preadv</B>()
 
 and
-<B>writev</B>()
+<B>pwritev</B>()
 
-functions first appeared in 4.2BSD), POSIX.1-2001.
+first appeared in Linux 2.6.30; library support was added in glibc 2.10.
+<A NAME="lbAI">&nbsp;</A>
+<H2>CONFORMING TO</H2>
+
+<B>readv</B>(),
+
+<B>writev</B>():
+
+4.4BSD (these system calls first appeared in 4.2BSD), POSIX.1-2001.
 Linux libc5 used <I>size_t</I> as the type of the <I>iovcnt</I> argument,
-and <I>int</I> as return type for these functions.
+and <I>int</I> as the return type.
 
 
-<A NAME="lbAH">&nbsp;</A>
+<P>
+<B>preadv</B>(),
+
+<B>pwritev</B>():
+
+nonstandard, but present also on the modern BSDs.
+<A NAME="lbAJ">&nbsp;</A>
 <H2>NOTES</H2>
 
-<A NAME="lbAI">&nbsp;</A>
+<A NAME="lbAK">&nbsp;</A>
 <H3>Linux Notes</H3>
 
 POSIX.1-2001 allows an implementation to place a limit on
@@ -246,10 +336,10 @@ The wrapper function for
 performs the analogous task using a temporary buffer and a call to
 <B><A HREF="../man2/write.2.html">write</A></B>(2).
 
-<A NAME="lbAJ">&nbsp;</A>
+<A NAME="lbAL">&nbsp;</A>
 <H2>BUGS</H2>
 
-It is not advisable to mix calls to functions like
+It is not advisable to mix calls to
 <B>readv</B>()
 
 or
@@ -257,7 +347,7 @@ or
 
 which operate on file descriptors, with the functions from the stdio
 library; the results will be undefined and probably not what you want.
-<A NAME="lbAK">&nbsp;</A>
+<A NAME="lbAM">&nbsp;</A>
 <H2>EXAMPLE</H2>
 
 The following code sample demonstrates the use of
@@ -280,8 +370,10 @@ nwritten = writev(STDOUT_FILENO, iov, 2);
 </PRE>
 
 
-<A NAME="lbAL">&nbsp;</A>
+<A NAME="lbAN">&nbsp;</A>
 <H2>SEE ALSO</H2>
+
+<B><A HREF="../man2/pread.2.html">pread</A></B>(2),
 
 <B><A HREF="../man2/read.2.html">read</A></B>(2),
 
@@ -295,21 +387,25 @@ nwritten = writev(STDOUT_FILENO, iov, 2);
 <DT><A HREF="#lbAB">NAME</A><DD>
 <DT><A HREF="#lbAC">SYNOPSIS</A><DD>
 <DT><A HREF="#lbAD">DESCRIPTION</A><DD>
-<DT><A HREF="#lbAE">RETURN VALUE</A><DD>
-<DT><A HREF="#lbAF">ERRORS</A><DD>
-<DT><A HREF="#lbAG">CONFORMING TO</A><DD>
-<DT><A HREF="#lbAH">NOTES</A><DD>
 <DL>
-<DT><A HREF="#lbAI">Linux Notes</A><DD>
+<DT><A HREF="#lbAE">preadv() and pwritev()</A><DD>
 </DL>
-<DT><A HREF="#lbAJ">BUGS</A><DD>
-<DT><A HREF="#lbAK">EXAMPLE</A><DD>
-<DT><A HREF="#lbAL">SEE ALSO</A><DD>
+<DT><A HREF="#lbAF">RETURN VALUE</A><DD>
+<DT><A HREF="#lbAG">ERRORS</A><DD>
+<DT><A HREF="#lbAH">VERSIONS</A><DD>
+<DT><A HREF="#lbAI">CONFORMING TO</A><DD>
+<DT><A HREF="#lbAJ">NOTES</A><DD>
+<DL>
+<DT><A HREF="#lbAK">Linux Notes</A><DD>
+</DL>
+<DT><A HREF="#lbAL">BUGS</A><DD>
+<DT><A HREF="#lbAM">EXAMPLE</A><DD>
+<DT><A HREF="#lbAN">SEE ALSO</A><DD>
 </DL>
 <HR>
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:09:41 GMT, April 20, 2020
+Time: 03:10:15 GMT, April 20, 2020
 </BODY>
 </HTML>
