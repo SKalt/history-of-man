@@ -6,7 +6,7 @@ Copyright (c) 1983 The Regents of the University of California.
 <HTML><HEAD><TITLE>Man page of BIND</TITLE>
 </HEAD><BODY>
 <H1>BIND</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2004-06-23<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2007-06-08<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -126,50 +126,7 @@ pointer passed in
 <I>my_addr</I>
 
 in order to avoid compiler warnings.
-The following example shows how this is done when binding a socket
-in the Unix
-(<B>AF_UNIX</B>)
-
-domain:
-<P>
-
-<PRE>
-#include &lt;<A HREF="file:///usr/include/sys/socket.h">sys/socket.h</A>&gt;
-#include &lt;<A HREF="file:///usr/include/sys/un.h">sys/un.h</A>&gt;
-#include &lt;<A HREF="file:///usr/include/stdlib.h">stdlib.h</A>&gt;
-#include &lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;
-#include &lt;<A HREF="file:///usr/include/string.h">string.h</A>&gt;
-
-#define MY_SOCK_PATH &quot;/somepath&quot;
-
-int
-main(int argc, char *argv[])
-{
-    int sfd;
-    struct sockaddr_un addr;
-
-    sfd = socket(AF_UNIX, SOCK_STREAM, 0);
-    if (sfd == -1) {
-        perror(&quot;socket&quot;);
-        exit(EXIT_FAILURE);
-    }
-
-    memset(&amp;addr, 0, sizeof(struct sockaddr_un));
-                        /* Clear structure */
-    addr.sun_family = AF_UNIX;
-    strncpy(addr.sun_path, MY_SOCK_PATH,
-            sizeof(addr.sun_path) - 1);
-
-    if (bind(sfd, (struct sockaddr *) &amp;addr,
-            sizeof(struct sockaddr_un)) == -1) {
-        perror(&quot;bind&quot;);
-        exit(EXIT_FAILURE);
-    }
-    ...
-}
-</PRE>
-
-
+See EXAMPLE below.
 <A NAME="lbAE">&nbsp;</A>
 <H2>RETURN VALUE</H2>
 
@@ -221,7 +178,7 @@ sockets:
 <DD>
 Search permission is denied on a component of the path prefix.
 (See also
-<B><A HREF="../man2/path_resolution.2.html">path_resolution</A></B>(2).)
+<B><A HREF="../man7/path_resolution.7.html">path_resolution</A></B>(7).)
 
 <DT><B>EADDRNOTAVAIL</B>
 
@@ -306,10 +263,82 @@ See also
 <B><A HREF="../man2/accept.2.html">accept</A></B>(2).
 
 <A NAME="lbAI">&nbsp;</A>
+<H2>EXAMPLE</H2>
+
+An example of the use of
+<B>bind</B>()
+
+with Internet domain sockets can be found in
+<B><A HREF="../man3/getaddrinfo.3.html">getaddrinfo</A></B>(3).
+
+<P>
+The following example shows how to bind a stream socket in the Unix
+(<B>AF_UNIX</B>)
+
+domain, and accept connections:
+
+
+
+<P>
+
+<PRE>
+#include &lt;<A HREF="file:///usr/include/sys/socket.h">sys/socket.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/sys/un.h">sys/un.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/stdlib.h">stdlib.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/string.h">string.h</A>&gt;
+
+#define MY_SOCK_PATH &quot;/somepath&quot;
+#define LISTEN_BACKLOG 50
+
+int
+main(int argc, char *argv[])
+{
+    int sfd, cfd;
+    struct sockaddr_un my_addr, peer_addr;
+    socklen_t peer_addr_size;
+
+    sfd = socket(AF_UNIX, SOCK_STREAM, 0);
+    if (sfd == -1) {
+        perror(&quot;socket&quot;);
+        exit(EXIT_FAILURE);
+    }
+
+    memset(&amp;my_addr, 0, sizeof(struct sockaddr_un));
+                        /* Clear structure */
+    my_addr.sun_family = AF_UNIX;
+    strncpy(my_addr.sun_path, MY_SOCK_PATH,
+            sizeof(my_addr.sun_path) - 1);
+
+    if (bind(sfd, (struct sockaddr *) &amp;my_addr,
+            sizeof(struct sockaddr_un)) == -1) {
+        perror(&quot;bind&quot;);
+        exit(EXIT_FAILURE);
+    }
+    
+    if (listen(sfd, LISTEN_BACKLOG) == -1) {
+        perror(&quot;listen&quot;);
+        exit(EXIT_FAILURE);
+    }
+
+    /* Now we can accept incoming connections one 
+       at a time using <A HREF="../man2/accept.2.html">accept</A>(2) */
+
+    peer_addr_size = sizeof(struct sockaddr_un);
+    cfd = accept(sfd, (struct sockaddr *) &amp;peer_addr,
+                 &amp;peer_addr_size) == -1) {
+        perror(&quot;accept&quot;);
+        exit(EXIT_FAILURE);
+    }
+}
+</PRE>
+
+
+<A NAME="lbAJ">&nbsp;</A>
 <H2>BUGS</H2>
 
 The transparent proxy options are not described.
-<A NAME="lbAJ">&nbsp;</A>
+<A NAME="lbAK">&nbsp;</A>
 <H2>SEE ALSO</H2>
 
 <B><A HREF="../man2/accept.2.html">accept</A></B>(2),
@@ -320,8 +349,6 @@ The transparent proxy options are not described.
 
 <B><A HREF="../man2/listen.2.html">listen</A></B>(2),
 
-<B><A HREF="../man2/path_resolution.2.html">path_resolution</A></B>(2),
-
 <B><A HREF="../man2/socket.2.html">socket</A></B>(2),
 
 <B><A HREF="../man3/getaddrinfo.3.html">getaddrinfo</A></B>(3),
@@ -329,6 +356,8 @@ The transparent proxy options are not described.
 <B><A HREF="../man7/ip.7.html">ip</A></B>(7),
 
 <B><A HREF="../man7/ipv6.7.html">ipv6</A></B>(7),
+
+<B><A HREF="../man7/path_resolution.7.html">path_resolution</A></B>(7),
 
 <B><A HREF="../man7/socket.7.html">socket</A></B>(7),
 
@@ -346,13 +375,14 @@ The transparent proxy options are not described.
 <DT><A HREF="#lbAF">ERRORS</A><DD>
 <DT><A HREF="#lbAG">CONFORMING TO</A><DD>
 <DT><A HREF="#lbAH">NOTES</A><DD>
-<DT><A HREF="#lbAI">BUGS</A><DD>
-<DT><A HREF="#lbAJ">SEE ALSO</A><DD>
+<DT><A HREF="#lbAI">EXAMPLE</A><DD>
+<DT><A HREF="#lbAJ">BUGS</A><DD>
+<DT><A HREF="#lbAK">SEE ALSO</A><DD>
 </DL>
 <HR>
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 02:38:54 GMT, April 20, 2020
+Time: 02:39:23 GMT, April 20, 2020
 </BODY>
 </HTML>

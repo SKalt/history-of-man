@@ -5,7 +5,7 @@ Copyright (C) 1996 Andries Brouwer (aeb@cwi.nl)
 <HTML><HEAD><TITLE>Man page of SYSCTL</TITLE>
 </HEAD><BODY>
 <H1>SYSCTL</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 1996-04-11<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2007-06-01<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -18,14 +18,7 @@ sysctl - read/write system parameters
 <PRE>
 <B>#include &lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;</B>
 <BR>
-<B>#include &lt;<A HREF="file:///usr/include/linux/unistd.h">linux/unistd.h</A>&gt;</B>
-<BR>
 <B>#include &lt;<A HREF="file:///usr/include/linux/sysctl.h">linux/sysctl.h</A>&gt;</B>
-<BR>
-<B>#include &lt;<A HREF="file:///usr/include/errno.h">errno.h</A>&gt;</B>
-
-<B>_syscall1(int, _sysctl, struct __sysctl_args *, args)</B>
-          /* Using <B><A HREF="../man2/syscall.2.html">syscall</A></B>(2) may be preferable; see <B><A HREF="../man2/intro.2.html">intro</A></B>(2) */
 
 <B>int _sysctl(struct __sysctl_args *</B><I>args</I><B>);</B>
 </PRE>
@@ -146,39 +139,50 @@ It is not yet possible to change operating system by writing to
 <H2>EXAMPLE</H2>
 
 <PRE>
-#include &lt;<A HREF="file:///usr/include/linux/unistd.h">linux/unistd.h</A>&gt;
-#include &lt;<A HREF="file:///usr/include/linux/types.h">linux/types.h</A>&gt;
+#define _GNU_SOURCE
+#include &lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/sys/syscall.h">sys/syscall.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/string.h">string.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/stdlib.h">stdlib.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/linux/sysctl.h">linux/sysctl.h</A>&gt;
 
-_syscall1(int, _sysctl, struct __sysctl_args *, args);
-int sysctl(int *name, int nlen, void *oldval, size_t *oldlenp,
-           void *newval, size_t newlen)
-{
-    struct __sysctl_args args = { name, nlen, oldval, oldlenp,
-                                  newval, newlen };
-    return _sysctl(&amp;args);
-}
+int _sysctl(struct __sysctl_args *args );
 
-#define SIZE(x) sizeof(x)/sizeof(x[0])
 #define OSNAMESZ 100
-
-char osname[OSNAMESZ];
-int osnamelth;
-int name[] = { CTL_KERN, KERN_OSTYPE };
 
 int
 main(void)
 {
+    struct __sysctl_args args;
+    char osname[OSNAMESZ];
+    size_t osnamelth;
+    int name[] = { CTL_KERN, KERN_OSTYPE };
+
+    memset(&amp;args, 0, sizeof(struct __sysctl_args));
+    args.name = name;
+    args.nlen = sizeof(name)/sizeof(name[0]);
+    args.oldval = osname;
+    args.oldlenp = &amp;osnamelth;
+ 
     osnamelth = sizeof(osname);
-    if (sysctl(name, SIZE(name), osname, &amp;osnamelth, 0, 0))
-        perror(&quot;sysctl&quot;);
-    else
-        printf(&quot;This machine is running %*s\n&quot;, osnamelth, osname);
+    
+    if (syscall(SYS__sysctl, &amp;args) == -1) {
+        perror(&quot;_sysctl&quot;);
+        exit(EXIT_FAILURE);
+    }
+    printf(&quot;This machine is running %*s\n&quot;, osnamelth, osname);
     exit(EXIT_SUCCESS);
 }
 </PRE>
 
 <A NAME="lbAJ">&nbsp;</A>
+<H2>NOTES</H2>
+
+Glibc does not provide a wrapper for this system call; call it using
+<B><A HREF="../man2/syscall.2.html">syscall</A></B>(2).
+
+<A NAME="lbAK">&nbsp;</A>
 <H2>SEE ALSO</H2>
 
 <B><A HREF="../man5/proc.5.html">proc</A></B>(5)
@@ -196,12 +200,13 @@ main(void)
 <DT><A HREF="#lbAG">CONFORMING TO</A><DD>
 <DT><A HREF="#lbAH">BUGS</A><DD>
 <DT><A HREF="#lbAI">EXAMPLE</A><DD>
-<DT><A HREF="#lbAJ">SEE ALSO</A><DD>
+<DT><A HREF="#lbAJ">NOTES</A><DD>
+<DT><A HREF="#lbAK">SEE ALSO</A><DD>
 </DL>
 <HR>
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 02:38:58 GMT, April 20, 2020
+Time: 02:39:26 GMT, April 20, 2020
 </BODY>
 </HTML>
