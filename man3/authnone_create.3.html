@@ -1,0 +1,2310 @@
+<!--
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of RPC</TITLE>
+</HEAD><BODY>
+<H1>RPC</H1>
+Section: C Library Functions (3)<BR>Updated: 1988-02-16<BR><A HREF="#index">Index</A>
+<A HREF="../index.html">Return to Main Contents</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>NAME</H2>
+
+rpc - library routines for remote procedure calls
+<A NAME="lbAC">&nbsp;</A>
+<H2>SYNOPSIS AND DESCRIPTION</H2>
+
+These routines allow C programs to make procedure
+calls on other machines across the network.
+First, the client calls a procedure to send a
+data packet to the server.
+Upon receipt of the packet, the server calls a dispatch routine
+to perform the requested service, and then sends back a
+reply.
+Finally, the procedure call returns to the client.
+<P>
+
+Routines that are used for Secure RPC (DES authentication) are described in
+<B><A HREF="../man3/rpc_secure.3.html">rpc_secure</A></B>(3).
+
+Secure RPC can be used only if DES encryption is available.
+<P>
+
+<B>
+</B><PRE>
+
+#include &lt;<A HREF="file:///usr/include/rpc/rpc.h">rpc/rpc.h</A>&gt;
+</PRE>
+
+
+<BR>
+
+
+<P>
+
+<B>
+</B><PRE>
+
+void
+auth_destroy(auth)
+<FONT SIZE="-1">AUTH</FONT> *auth;
+</PRE>
+
+
+<DL COMPACT>
+<DT><DD>
+A macro that destroys the authentication information associated with
+<I>auth</I>.
+
+Destruction usually involves deallocation of private data
+structures. The use of
+<I>auth</I>
+
+is undefined after calling
+<B>auth_destroy()</B>.
+
+<BR>
+
+
+</DL>
+<P>
+
+<B>
+</B><PRE>
+
+<FONT SIZE="-1">AUTH</FONT> *
+authnone_create()
+</PRE>
+
+
+<DL COMPACT>
+<DT><DD>
+Create and returns an
+<FONT SIZE="-1">RPC</FONT>
+authentication handle that passes nonusable authentication
+information with each remote procedure call. This is the
+default authentication used by
+<FONT SIZE="-1">RPC.</FONT>
+
+</DL>
+<P>
+
+<B>
+</B><PRE>
+
+<FONT SIZE="-1">AUTH</FONT> *
+authunix_create(host, uid, gid, len, aup_gids)
+char *host;
+int uid, gid, len, *aup.gids;
+</PRE>
+
+
+<DL COMPACT>
+<DT><DD>
+Create and return an
+<FONT SIZE="-1">RPC</FONT>
+authentication handle that contains
+
+authentication information.
+The parameter
+<I>host</I>
+
+is the name of the machine on which the information was
+created;
+<I>uid</I>
+
+is the user's user
+<FONT SIZE="-1">ID ;</FONT>
+<I>gid</I>
+
+is the user's current group
+<FONT SIZE="-1">ID ;</FONT>
+<I>len</I>
+
+and
+<I>aup_gids</I>
+
+refer to a counted array of groups to which the user belongs.
+It is easy to impersonate a user.
+<BR>
+
+
+</DL>
+<P>
+
+<B>
+</B><PRE>
+
+<FONT SIZE="-1">AUTH</FONT> *
+authunix_create_default()
+</PRE>
+
+
+<DL COMPACT>
+<DT><DD>
+Calls
+<B>authunix_create()</B>
+
+with the appropriate parameters.
+<BR>
+
+
+</DL>
+<P>
+
+<B>
+</B><PRE>
+
+callrpc(host, prognum, versnum, procnum, inproc, in, outproc, out)
+char *host;
+u_long prognum, versnum, procnum;
+char *in, *out;
+xdrproc_t inproc, outproc;
+</PRE>
+
+
+<DL COMPACT>
+<DT><DD>
+Call the remote procedure associated with
+<I>prognum</I>,
+
+<I>versnum</I>,
+
+and
+<I>procnum</I>
+
+on the machine,
+<I>host</I>.
+
+The parameter
+<I>in</I>
+
+is the address of the procedure's argument(s), and
+<I>out</I>
+
+is the address of where to place the result(s);
+<I>inproc</I>
+
+is used to encode the procedure's parameters, and
+<I>outproc</I>
+
+is used to decode the procedure's results.
+This routine returns zero if it succeeds, or the value of
+<B>enum clnt_stat</B>
+
+cast to an integer if it fails.
+The routine
+<B>clnt_perrno()</B>
+
+is handy for translating failure statuses into messages.
+<DT><DD>
+Warning: calling remote procedures with this routine
+uses
+<FONT SIZE="-1">UDP/IP</FONT>
+as a transport; see
+<B>clntudp_create()</B>
+
+for restrictions.
+You do not have control of timeouts or authentication using
+this routine.
+<BR>
+
+
+</DL>
+<P>
+
+<B>
+</B><PRE>
+
+enum clnt_stat
+clnt_broadcast(prognum, versnum, procnum, inproc, in, outproc, out, eachresult)
+u_long prognum, versnum, procnum;
+char *in, *out;
+xdrproc_t inproc, outproc;
+resultproc_t eachresult;
+</PRE>
+
+
+<DL COMPACT>
+<DT><DD>
+Like
+<B>callrpc()</B>,
+
+except the call message is broadcast to all locally
+connected broadcast nets. Each time it receives a
+response, this routine calls
+<B>eachresult()</B>,
+
+whose form is:
+<DT><DD>
+<DL COMPACT><DT><DD>
+<B>
+</B><PRE>
+eachresult(out, addr)
+char *out;
+struct sockaddr_in *addr;
+</PRE>
+
+</DL>
+
+<DT><DD>
+where
+<I>out</I>
+
+is the same as
+<I>out</I>
+
+passed to
+<B>clnt_broadcast()</B>,
+
+except that the remote procedure's output is decoded there;
+<I>addr</I>
+
+points to the address of the machine that sent the results.
+If
+<B>eachresult()</B>
+
+returns zero,
+<B>clnt_broadcast()</B>
+
+waits for more replies; otherwise it returns with appropriate
+status.
+<DT><DD>
+Warning: broadcast sockets are limited in size to the
+maximum transfer unit of the data link. For ethernet,
+this value is 1500 bytes.
+<BR>
+
+
+</DL>
+<P>
+
+<B>
+</B><PRE>
+
+enum clnt_stat
+clnt_call(clnt, procnum, inproc, in, outproc, out, tout)
+<FONT SIZE="-1">CLIENT</FONT> *clnt;
+u_long
+procnum;
+xdrproc_t inproc, outproc;
+char *in, *out;
+struct timeval tout;
+</PRE>
+
+
+<DL COMPACT>
+<DT><DD>
+A macro that calls the remote procedure
+<I>procnum</I>
+
+associated with the client handle,
+<I>clnt</I>,
+
+which is obtained with an
+<FONT SIZE="-1">RPC</FONT>
+client creation routine such as
+<B>clnt_create()</B>.
+
+The parameter
+<I>in</I>
+
+is the address of the procedure's argument(s), and
+<I>out</I>
+
+is the address of where to place the result(s);
+<I>inproc</I>
+
+is used to encode the procedure's parameters, and
+<I>outproc</I>
+
+is used to decode the procedure's results;
+<I>tout</I>
+
+is the time allowed for results to come back.
+<BR>
+
+
+</DL>
+<P>
+
+<B>
+</B><PRE>
+
+clnt_destroy(clnt)
+<FONT SIZE="-1">CLIENT</FONT> *clnt;
+</PRE>
+
+
+<DL COMPACT>
+<DT><DD>
+A macro that destroys the client's
+<FONT SIZE="-1">RPC</FONT>
+handle. Destruction usually involves deallocation
+of private data structures, including
+<I>clnt</I>
+
+itself.  Use of
+<I>clnt</I>
+
+is undefined after calling
+<B>clnt_destroy()</B>.
+
+If the
+<FONT SIZE="-1">RPC</FONT>
+library opened the associated socket, it will close it also.
+Otherwise, the socket remains open.
+<BR>
+
+
+</DL>
+<P>
+
+<B>
+</B><PRE>
+
+<FONT SIZE="-1">CLIENT</FONT> *
+clnt_create(host, prog, vers, proto)
+char *host;
+u_long prog, vers;
+char *proto;
+</PRE>
+
+
+<DL COMPACT>
+<DT><DD>
+Generic client creation routine.
+<I>host</I>
+
+identifies the name of the remote host where the server
+is located.
+<I>proto</I>
+
+indicates which kind of transport protocol to use. The
+currently supported values for this field are "udp"
+and "tcp".
+Default timeouts are set, but can be modified using
+<B>clnt_control()</B>.
+
+<DT><DD>
+Warning: Using
+<FONT SIZE="-1">UDP</FONT>
+has its shortcomings.  Since
+<FONT SIZE="-1">UDP</FONT>-based
+<FONT SIZE="-1">RPC</FONT>
+messages can only hold up to 8 Kbytes of encoded data,
+this transport cannot be used for procedures that take
+large arguments or return huge results.
+<BR>
+
+
+</DL>
+<P>
+
+<B>
+</B><PRE>
+
+bool_t
+clnt_control(cl, req, info)
+<FONT SIZE="-1">CLIENT</FONT> *cl;
+char *info;
+</PRE>
+
+
+<DL COMPACT>
+<DT><DD>
+A macro used to change or retrieve various information
+about a client object.
+<I>req</I>
+
+indicates the type of operation, and
+<I>info</I>
+
+is a pointer to the information. For both
+<FONT SIZE="-1">UDP</FONT>
+and
+<FONT SIZE="-1">TCP</FONT>,
+the supported values of
+<I>req</I>
+
+and their argument types and what they do are:
+<DT><DD>
+<PRE>
+
+<FONT SIZE="-1">CLSET_TIMEOUT</FONT>       struct timeval      set total timeout<FONT SIZE="-1">CLGET_TIMEOUT</FONT>struct timevalget total timeout</PRE>
+
+<DT><DD>
+Note: if you set the timeout using<BR>
+<B>clnt_control()</B>,
+
+the timeout parameter passed to
+<B>clnt_call()</B>
+
+will be ignored in all future calls.
+<DT><DD>
+<PRE>
+<FONT SIZE="-1">CLGET_SERVER_ADDR</FONT>   struct sockaddr_in  get server's address</PRE>
+
+<BR>
+
+<DT><DD>
+The following operations are valid for<BR>
+<FONT SIZE="-1">UDP</FONT>
+only:
+<DT><DD>
+<PRE>
+
+<FONT SIZE="-1">CLSET_RETRY_TIMEOUT</FONT> struct timeval      set the retry timeout<FONT SIZE="-1">CLGET_RETRY_TIMEOUT</FONT>struct timevalget the retry timeout</PRE>
+
+<BR>
+
+<DT><DD>
+The retry timeout is the time that<BR>
+<FONT SIZE="-1">UDP RPC</FONT>
+waits for the server to reply before
+retransmitting the request.
+<BR>
+
+
+</DL>
+<P>
+
+<B>
+</B><PRE>
+
+clnt_freeres(clnt, outproc, out)
+<FONT SIZE="-1">CLIENT</FONT> *clnt;
+xdrproc_t outproc;
+char *out;
+</PRE>
+
+
+<DL COMPACT>
+<DT><DD>
+A macro that frees any data allocated by the
+<FONT SIZE="-1">RPC/XDR</FONT>
+system when it decoded the results of an
+<FONT SIZE="-1">RPC</FONT>
+call.  The
+parameter
+<I>out</I>
+
+is the address of the results, and
+<I>outproc</I>
+
+is the
+<FONT SIZE="-1">XDR</FONT>
+routine describing the results.
+This routine returns one if the results were successfully
+freed,
+and zero otherwise.
+<BR>
+
+
+</DL>
+<P>
+
+<B>
+</B><PRE>
+
+void
+clnt_geterr(clnt, errp)
+<FONT SIZE="-1">CLIENT</FONT> *clnt;
+struct rpc_err *errp;
+</PRE>
+
+
+<DL COMPACT>
+<DT><DD>
+A macro that copies the error structure out of the client
+handle
+to the structure at address
+<I>errp</I>.
+
+<BR>
+
+
+</DL>
+<P>
+
+<B>
+</B><PRE>
+
+void
+clnt_pcreateerror(s)
+char *s;
+</PRE>
+
+
+<DL COMPACT>
+<DT><DD>
+Print a message to standard error indicating
+why a client
+<FONT SIZE="-1">RPC</FONT>
+handle could not be created.
+The message is prepended with string
+<I>s</I>
+
+and a colon.
+Used when a
+<B>clnt_create()</B>,
+
+<B>clntraw_create()</B>,
+
+<B>clnttcp_create()</B>,
+
+or
+<B>clntudp_create()</B>
+
+call fails.
+<BR>
+
+
+</DL>
+<P>
+
+<B>
+</B><PRE>
+
+void
+clnt_perrno(stat)
+enum clnt_stat stat;
+</PRE>
+
+
+<DL COMPACT>
+<DT><DD>
+Print a message to standard error corresponding
+to the condition indicated by
+<I>stat</I>.
+
+Used after
+<B>callrpc()</B>.
+
+<BR>
+
+
+</DL>
+<P>
+
+<B>
+</B><PRE>
+
+clnt_perror(clnt, s)
+<FONT SIZE="-1">CLIENT</FONT> *clnt;
+char *s;
+</PRE>
+
+
+<DL COMPACT>
+<DT><DD>
+Print a message to standard error indicating why an
+<FONT SIZE="-1">RPC</FONT>
+call failed;
+<I>clnt</I>
+
+is the handle used to do the call.
+The message is prepended with string
+<I>s</I>
+
+and a colon.
+Used after
+<B>clnt_call()</B>.
+
+<BR>
+
+
+</DL>
+<P>
+
+<B>
+</B><PRE>
+
+char *
+clnt_spcreateerror
+char *s;
+</PRE>
+
+
+<DL COMPACT>
+<DT><DD>
+Like
+<B>clnt_pcreateerror()</B>,
+
+except that it returns a string
+instead of printing to the standard error.
+<DT><DD>
+Bugs: returns pointer to static data that is overwritten
+on each call.
+<BR>
+
+
+</DL>
+<P>
+
+<B>
+</B><PRE>
+
+char *
+clnt_sperrno(stat)
+enum clnt_stat stat;
+</PRE>
+
+
+<DL COMPACT>
+<DT><DD>
+Take the same arguments as
+<B>clnt_perrno()</B>,
+
+but instead of sending a message to the standard error
+indicating why an
+<FONT SIZE="-1">RPC</FONT>
+call failed, return a pointer to a string which contains
+the message.  The string ends with a
+<FONT SIZE="-1">NEWLINE</FONT>.
+<DT><DD>
+<B>clnt_sperrno()</B>
+
+is used instead of
+<B>clnt_perrno()</B>
+
+if the program does not have a standard error (as a program
+running as a server quite likely does not), or if the
+programmer
+does not want the message to be output with
+<B>printf</B>,
+
+or if a message format different than that supported by
+<B>clnt_perrno()</B>
+
+is to be used.
+Note: unlike
+<B>clnt_sperror()</B>
+
+and
+<B>clnt_spcreaterror()</B>,
+
+<B>clnt_sperrno()</B>
+
+returns pointer to static data, but the
+result will not get overwritten on each call.
+<BR>
+
+
+</DL>
+<P>
+
+<B>
+</B><PRE>
+
+char *
+clnt_sperror(rpch, s)
+<FONT SIZE="-1">CLIENT</FONT> *rpch;
+char *s;
+</PRE>
+
+
+<DL COMPACT>
+<DT><DD>
+Like
+<B>clnt_perror()</B>,
+
+except that (like
+<B>clnt_sperrno()</B>)
+
+it returns a string instead of printing to standard error.
+<DT><DD>
+Bugs: returns pointer to static data that is overwritten
+on each call.
+<BR>
+
+
+</DL>
+<P>
+
+<B>
+</B><PRE>
+
+<FONT SIZE="-1">CLIENT</FONT> *
+clntraw_create(prognum, versnum)
+u_long prognum, versnum;
+</PRE>
+
+
+<DL COMPACT>
+<DT><DD>
+This routine creates a toy
+<FONT SIZE="-1">RPC</FONT>
+client for the remote program
+<I>prognum</I>,
+
+version
+<I>versnum</I>.
+
+The transport used to pass messages to the service is
+actually a buffer within the process's address space, so the
+corresponding
+<FONT SIZE="-1">RPC</FONT>
+server should live in the same address space; see
+<B>svcraw_create()</B>.
+
+This allows simulation of
+<FONT SIZE="-1">RPC</FONT>
+and acquisition of
+<FONT SIZE="-1">RPC</FONT>
+overheads, such as round trip times, without any
+kernel interference. This routine returns
+<FONT SIZE="-1">NULL</FONT>
+if it fails.
+<BR>
+
+
+</DL>
+<P>
+
+<B>
+</B><PRE>
+
+<FONT SIZE="-1">CLIENT</FONT> *
+clnttcp_create(addr, prognum, versnum, sockp, sendsz, recvsz)
+struct sockaddr_in *addr;
+u_long prognum, versnum;
+int *sockp;
+u_int sendsz, recvsz;
+</PRE>
+
+
+<DL COMPACT>
+<DT><DD>
+This routine creates an
+<FONT SIZE="-1">RPC</FONT>
+client for the remote program
+<I>prognum</I>,
+
+version
+<I>versnum</I>;
+
+the client uses
+<FONT SIZE="-1">TCP/IP</FONT>
+as a transport. The remote program is located at Internet
+address
+<I>*addr</I>.
+
+If
+
+<B>addr-&gt;sin_port</B>
+is zero, then it is set to the actual port that the remote
+program is listening on (the remote
+<B>portmap</B>
+
+service is consulted for this information). The parameter
+<I>sockp</I>
+
+is a socket; if it is
+<B></B><FONT SIZE="-1"><B>RPC_ANYSOCK</B></FONT><B></B>,
+
+then this routine opens a new one and sets
+<I>sockp</I>.
+
+Since
+<FONT SIZE="-1">TCP</FONT>-based
+<FONT SIZE="-1">RPC</FONT>
+uses buffered
+<FONT SIZE="-1">I/O ,</FONT>
+the user may specify the size of the send and receive buffers
+with the parameters
+<I>sendsz</I>
+
+and
+<I>recvsz</I>;
+
+values of zero choose suitable defaults.
+This routine returns
+<FONT SIZE="-1">NULL</FONT>
+if it fails.
+<BR>
+
+
+</DL>
+<P>
+
+<B>
+</B><PRE>
+
+<FONT SIZE="-1">CLIENT</FONT> *
+clntudp_create(addr, prognum, versnum, wait, sockp)
+struct sockaddr_in *addr;
+u_long prognum, versnum;
+struct timeval wait;
+int *sockp;
+</PRE>
+
+
+<DL COMPACT>
+<DT><DD>
+This routine creates an
+<FONT SIZE="-1">RPC</FONT>
+client for the remote program
+<I>prognum</I>,
+
+version
+<I>versnum</I>;
+
+the client uses use
+<FONT SIZE="-1">UDP/IP</FONT>
+as a transport. The remote program is located at Internet
+address
+<I>addr</I>.
+
+If
+<B>addr-&gt;sin_port</B>
+is zero, then it is set to actual port that the remote
+program is listening on (the remote
+<B>portmap</B>
+
+service is consulted for this information). The parameter
+<I>sockp</I>
+
+is a socket; if it is
+<B></B><FONT SIZE="-1"><B>RPC_ANYSOCK</B></FONT><B></B>,
+
+then this routine opens a new one and sets
+<I>sockp</I>.
+
+The
+<FONT SIZE="-1">UDP</FONT>
+transport resends the call message in intervals of
+<B>wait</B>
+
+time until a response is received or until the call times
+out.
+The total time for the call to time out is specified by
+<B>clnt_call()</B>.
+
+<DT><DD>
+Warning: since
+<FONT SIZE="-1">UDP</FONT>-based
+<FONT SIZE="-1">RPC</FONT>
+messages can only hold up to 8 Kbytes
+of encoded data, this transport cannot be used for procedures
+that take large arguments or return huge results.
+<BR>
+
+
+</DL>
+<P>
+
+<B>
+</B><PRE>
+
+<FONT SIZE="-1">CLIENT</FONT> *
+clntudp_bufcreate(addr, prognum, versnum, wait, sockp, sendsize, recosize)
+struct sockaddr_in *addr;
+u_long prognum, versnum;
+struct timeval wait;
+int *sockp;
+unsigned int sendsize;
+unsigned int recosize;
+</PRE>
+
+
+<DL COMPACT>
+<DT><DD>
+This routine creates an
+<FONT SIZE="-1">RPC</FONT>
+client for the remote program
+<I>prognum</I>,
+
+on
+<I>versnum</I>;
+
+the client uses use
+<FONT SIZE="-1">UDP/IP</FONT>
+as a transport. The remote program is located at Internet
+address
+<I>addr</I>.
+
+If
+<B>addr-&gt;sin_port</B>
+is zero, then it is set to actual port that the remote
+program is listening on (the remote
+<B>portmap</B>
+
+service is consulted for this information). The parameter
+<I>sockp</I>
+
+is a socket; if it is
+<B></B><FONT SIZE="-1"><B>RPC_ANYSOCK</B></FONT><B></B>,
+
+then this routine opens a new one and sets
+<B>sockp</B>.
+
+The
+<FONT SIZE="-1">UDP</FONT>
+transport resends the call message in intervals of
+<B>wait</B>
+
+time until a response is received or until the call times
+out.
+The total time for the call to time out is specified by
+<B>clnt_call()</B>.
+
+<DT><DD>
+This allows the user to specify the maximum packet size for sending and receiving 
+<FONT SIZE="-1">UDP</FONT>-based
+<FONT SIZE="-1">RPC</FONT>
+messages.
+<BR>
+
+
+</DL>
+<P>
+
+<B>
+</B><PRE>
+
+void
+get_myaddress(addr)
+struct sockaddr_in *addr;
+</PRE>
+
+
+<DL COMPACT>
+<DT><DD>
+Stuff the machine's
+<FONT SIZE="-1">IP</FONT>
+address into
+<I>*addr</I>,
+
+without consulting the library routines that deal with
+<B>/etc/hosts</B>.
+
+The port number is always set to
+<B>htons(</B><FONT SIZE="-1"><B>PMAPPORT</B></FONT><B>)</B>.
+
+<BR>
+
+
+</DL>
+<P>
+
+<B>
+</B><PRE>
+
+struct pmaplist *
+pmap_getmaps(addr)
+struct sockaddr_in *addr;
+</PRE>
+
+
+<DL COMPACT>
+<DT><DD>
+A user interface to the
+<B>portmap</B>
+
+service, which returns a list of the current
+<FONT SIZE="-1">RPC</FONT>
+program-to-port mappings
+on the host located at
+<FONT SIZE="-1">IP</FONT>
+address
+<I>*addr</I>.
+
+This routine can return
+<FONT SIZE="-1">NULL .</FONT>
+The command
+`<B>rpcinfo -p</B>'
+
+uses this routine.
+<BR>
+
+
+</DL>
+<P>
+
+<B>
+</B><PRE>
+
+u_short
+pmap_getport(addr, prognum, versnum, protocol)
+struct sockaddr_in *addr;
+u_long prognum, versnum, protocol;
+</PRE>
+
+
+<DL COMPACT>
+<DT><DD>
+A user interface to the
+<B>portmap</B>
+
+service, which returns the port number
+on which waits a service that supports program number
+<I>prognum</I>,
+
+version
+<I>versnum</I>,
+
+and speaks the transport protocol associated with
+<I>protocol</I>.
+
+The value of
+<I>protocol</I>
+
+is most likely
+<B></B><FONT SIZE="-1"><B>IPPROTO_UDP</B></FONT><B>
+</B>
+
+or 
+<B></B><FONT SIZE="-1"><B>IPPROTO_TCP</B></FONT><B></B>.
+
+A return value of zero means that the mapping does not exist
+or that
+the
+<FONT SIZE="-1">RPC</FONT>
+system failed to contact the remote
+<B>portmap</B>
+
+service.  In the latter case, the global variable
+<B>rpc_createerr()</B>
+
+contains the
+<FONT SIZE="-1">RPC</FONT>
+status.
+<BR>
+
+
+</DL>
+<P>
+
+<B>
+</B><PRE>
+
+enum clnt_stat
+pmap_rmtcall(addr, prognum, versnum, procnum, inproc, in, outproc, out, tout, portp)
+struct sockaddr_in *addr;
+u_long prognum, versnum, procnum;
+char *in, *out;
+xdrproc_t inproc, outproc;
+struct timeval tout;
+u_long *portp;
+</PRE>
+
+
+<DL COMPACT>
+<DT><DD>
+A user interface to the
+<B>portmap</B>
+
+service, which instructs
+<B>portmap</B>
+
+on the host at
+<FONT SIZE="-1">IP</FONT>
+address
+<I>*addr</I>
+
+to make an
+<FONT SIZE="-1">RPC</FONT>
+call on your behalf to a procedure on that host.
+The parameter
+<I>*portp</I>
+
+will be modified to the program's port number if the
+procedure
+succeeds. The definitions of other parameters are discussed
+in
+<B>callrpc()</B>
+
+and
+<B>clnt_call()</B>.
+
+This procedure should be used for a "ping" and nothing
+else.
+See also
+<B>clnt_broadcast()</B>.
+
+<BR>
+
+
+</DL>
+<P>
+
+<B>
+</B><PRE>
+
+pmap_set(prognum, versnum, protocol, port)
+u_long prognum, versnum, protocol;
+u_short port;
+</PRE>
+
+
+<DL COMPACT>
+<DT><DD>
+A user interface to the
+<B>portmap</B>
+
+service, which establishes a mapping between the triple
+[<I>prognum</I>,<I>versnum</I>,<I>protocol</I>]
+
+and
+<I>port</I>
+
+on the machine's
+<B>portmap</B>
+
+service. The value of
+<I>protocol</I>
+
+is most likely
+<B></B><FONT SIZE="-1"><B>IPPROTO_UDP</B></FONT><B>
+</B>
+
+or 
+<B></B><FONT SIZE="-1"><B>IPPROTO_TCP</B></FONT><B></B>.
+
+This routine returns one if it succeeds, zero otherwise.
+Automatically done by
+<B>svc_register()</B>.
+
+<BR>
+
+
+</DL>
+<P>
+
+<B>
+</B><PRE>
+
+pmap_unset(prognum, versnum)
+u_long prognum, versnum;
+</PRE>
+
+
+<DL COMPACT>
+<DT><DD>
+A user interface to the
+<B>portmap</B>
+
+service, which destroys all mapping between the triple
+[<I>prognum</I>,<I>versnum</I>,<I>*</I>]
+
+and
+<B>ports</B>
+
+on the machine's
+<B>portmap</B>
+
+service. This routine returns one if it succeeds, zero
+otherwise.
+<BR>
+
+
+</DL>
+<P>
+
+<B>
+</B><PRE>
+
+registerrpc(prognum, versnum, procnum, procname, inproc, outproc)
+u_long prognum, versnum, procnum;
+char *(*procname) () ;
+xdrproc_t inproc, outproc;
+</PRE>
+
+
+<DL COMPACT>
+<DT><DD>
+Register procedure
+<I>procname</I>
+
+with the
+<FONT SIZE="-1">RPC</FONT>
+service package.  If a request arrives for program
+<I>prognum</I>,
+
+version
+<I>versnum</I>,
+
+and procedure
+<I>procnum</I>,
+
+<I>procname</I>
+
+is called with a pointer to its parameter(s);
+<I>progname</I>
+
+should return a pointer to its static result(s);
+<I>inproc</I>
+
+is used to decode the parameters while
+<I>outproc</I>
+
+is used to encode the results.
+This routine returns zero if the registration succeeded, -1
+otherwise.
+<DT><DD>
+Warning: remote procedures registered in this form
+are accessed using the
+<FONT SIZE="-1">UDP/IP</FONT>
+transport; see
+<B>svcudp_create()</B>
+
+for restrictions.
+<BR>
+
+
+</DL>
+<P>
+
+<B>
+</B><PRE>
+
+struct rpc_createerr     rpc_createerr;
+</PRE>
+
+
+<DL COMPACT>
+<DT><DD>
+A global variable whose value is set by any
+<FONT SIZE="-1">RPC</FONT>
+client creation routine
+that does not succeed.  Use the routine
+<B>clnt_pcreateerror()</B>
+
+to print the reason why.
+
+</DL>
+<P>
+
+<B>
+</B><PRE>
+
+svc_destroy(xprt)
+<FONT SIZE="-1">SVCXPRT</FONT> *
+xprt;
+</PRE>
+
+
+<DL COMPACT>
+<DT><DD>
+A macro that destroys the
+<FONT SIZE="-1">RPC</FONT>
+service transport handle,
+<I>xprt</I>.
+
+Destruction usually involves deallocation
+of private data structures, including
+<I>xprt</I>
+
+itself.  Use of
+<I>xprt</I>
+
+is undefined after calling this routine.
+<BR>
+
+
+</DL>
+<P>
+
+<B>
+</B><PRE>
+
+fd_set svc_fdset;
+</PRE>
+
+
+<DL COMPACT>
+<DT><DD>
+A global variable reflecting the
+<FONT SIZE="-1">RPC</FONT>
+service side's
+read file descriptor bit mask; it is suitable as a parameter
+to the
+<B>select</B>
+
+system call. This is only of interest
+if a service implementor does not call
+<B>svc_run()</B>,
+
+but rather does his own asynchronous event processing.
+This variable is read-only (do not pass its address to
+<B>select</B>!),
+
+yet it may change after calls to
+<B>svc_getreqset()</B>
+
+or any creation routines.
+<BR>
+
+
+</DL>
+<P>
+
+<B>
+</B><PRE>
+
+int svc_fds;
+</PRE>
+
+
+<DL COMPACT>
+<DT><DD>
+Similar to
+<B>svc_fdset</B>,
+
+but limited to 32 descriptors. This
+interface is obsoleted by
+<B>svc_fdset</B>.
+
+<BR>
+
+
+</DL>
+<P>
+
+<B>
+</B><PRE>
+
+svc_freeargs(xprt, inproc, in)
+<FONT SIZE="-1">SVCXPRT</FONT> *xprt;
+xdrproc_t inproc;
+char *in;
+</PRE>
+
+
+<DL COMPACT>
+<DT><DD>
+A macro that frees any data allocated by the
+<FONT SIZE="-1">RPC/XDR</FONT>
+system when it decoded the arguments to a service procedure
+using
+<B>svc_getargs()</B>.
+
+This routine returns 1 if the results were successfully
+freed,
+and zero otherwise.
+<BR>
+
+
+</DL>
+<P>
+
+<B>
+</B><PRE>
+
+svc_getargs(xprt, inproc, in)
+<FONT SIZE="-1">SVCXPRT</FONT> *xprt;
+xdrproc_t inproc;
+char *in;
+</PRE>
+
+
+<DL COMPACT>
+<DT><DD>
+A macro that decodes the arguments of an
+<FONT SIZE="-1">RPC</FONT>
+request
+associated with the
+<FONT SIZE="-1">RPC</FONT>
+service transport handle,
+<I>xprt</I>.
+
+The parameter
+<I>in</I>
+
+is the address where the arguments will be placed;
+<I>inproc</I>
+
+is the
+<FONT SIZE="-1">XDR</FONT>
+routine used to decode the arguments.
+This routine returns one if decoding succeeds, and zero
+otherwise.
+<BR>
+
+
+</DL>
+<P>
+
+<B>
+</B><PRE>
+
+struct sockaddr_in *
+svc_getcaller(xprt)
+<FONT SIZE="-1">SVCXPRT</FONT> *xprt;
+</PRE>
+
+
+<DL COMPACT>
+<DT><DD>
+The approved way of getting the network address of the caller
+of a procedure associated with the
+<FONT SIZE="-1">RPC</FONT>
+service transport handle,
+<I>xprt</I>.
+
+<BR>
+
+
+</DL>
+<P>
+
+<B>
+</B><PRE>
+
+svc_getreqset(rdfds)
+fd_set *rdfds;
+</PRE>
+
+
+<DL COMPACT>
+<DT><DD>
+This routine is only of interest if a service implementor
+does not call
+<B>svc_run()</B>,
+
+but instead implements custom asynchronous event processing.
+It is called when the
+<B>select</B>
+
+system call has determined that an
+<FONT SIZE="-1">RPC</FONT>
+request has arrived on some
+<FONT SIZE="-1">RPC</FONT>
+<B>socket(s) ;</B>
+
+<I>rdfds</I>
+
+is the resultant read file descriptor bit mask.
+The routine returns when all sockets associated with the
+value of
+<I>rdfds</I>
+
+have been serviced.
+<BR>
+
+
+</DL>
+<P>
+
+<B>
+</B><PRE>
+
+svc_getreq(rdfds)
+int rdfds;
+</PRE>
+
+
+<DL COMPACT>
+<DT><DD>
+Similar to
+<B>svc_getreqset()</B>,
+
+but limited to 32 descriptors. This interface is obsoleted by
+<B>svc_getreqset()</B>.
+
+<BR>
+
+
+</DL>
+<P>
+
+<B>
+</B><PRE>
+
+svc_register(xprt, prognum, versnum, dispatch, protocol)
+<FONT SIZE="-1">SVCXPRT</FONT> *xprt;
+u_long prognum, versnum;
+void (*dispatch) ();
+u_long protocol;
+</PRE>
+
+
+<DL COMPACT>
+<DT><DD>
+Associates
+<I>prognum</I>
+
+and
+<I>versnum</I>
+
+with the service dispatch procedure,
+<I>dispatch</I>.
+
+If
+<I>protocol</I>
+
+is zero, the service is not registered with the
+<B>portmap</B>
+
+service.  If
+<I>protocol</I>
+
+is non-zero, then a mapping of the triple
+[<I>prognum</I>,<I>versnum</I>,<I>protocol</I>]
+
+to
+<B>xprt-&gt;xp_port</B>
+is established with the local
+<B>portmap</B>
+
+service (generally
+<I>protocol</I>
+
+is zero,
+<B></B><FONT SIZE="-1"><B>IPPROTO_UDP</B></FONT><B>
+</B>
+
+or 
+<B></B><FONT SIZE="-1"><B>IPPROTO_TCP</B></FONT><B>
+</B>
+
+).
+The procedure
+<I>dispatch</I>
+
+has the following form:
+<DL COMPACT><DT><DD>
+<B>
+</B><PRE>
+dispatch(request, xprt)
+struct svc_req *request;
+<FONT SIZE="-1">SVCXPRT</FONT> *xprt;
+</PRE>
+
+</DL>
+
+<DT><DD>
+The
+<B>svc_register()</B>
+
+routine returns one if it succeeds, and zero otherwise.
+<BR>
+
+
+</DL>
+<P>
+
+<B>
+</B><PRE>
+
+svc_run()
+</PRE>
+
+
+<DL COMPACT>
+<DT><DD>
+This routine never returns. It waits for
+<FONT SIZE="-1">RPC</FONT>
+requests to arrive, and calls the appropriate service
+procedure using
+<B>svc_getreq()</B>
+
+when one arrives. This procedure is usually waiting for a
+<B>select()</B>
+
+system call to return.
+<BR>
+
+
+</DL>
+<P>
+
+<B>
+</B><PRE>
+
+svc_sendreply(xprt, outproc, out)
+<FONT SIZE="-1">SVCXPRT</FONT> *xprt;
+xdrproc_t outproc;
+char *out;
+</PRE>
+
+
+<DL COMPACT>
+<DT><DD>
+Called by an
+<FONT SIZE="-1">RPC</FONT>
+service's dispatch routine to send the results of a
+remote procedure call.  The parameter
+<I>xprt</I>
+
+is the request's associated transport handle;
+<I>outproc</I>
+
+is the
+<FONT SIZE="-1">XDR</FONT>
+routine which is used to encode the results; and
+<I>out</I>
+
+is the address of the results.
+This routine returns one if it succeeds, zero otherwise.
+<BR>
+
+
+</DL>
+<P>
+
+<B>
+</B><PRE>
+
+void
+svc_unregister(prognum, versnum)
+u_long prognum, versnum;
+</PRE>
+
+
+<DL COMPACT>
+<DT><DD>
+Remove all mapping of the double
+[<I>prognum</I>,<I>versnum</I>]
+
+to dispatch routines, and of the triple
+[<I>prognum</I>,<I>versnum</I>,<I>*</I>]
+
+to port number.
+<BR>
+
+
+</DL>
+<P>
+
+<B>
+</B><PRE>
+
+void
+svcerr_auth(xprt, why)
+<FONT SIZE="-1">SVCXPRT</FONT> *xprt;
+enum auth_stat why;
+</PRE>
+
+
+<DL COMPACT>
+<DT><DD>
+Called by a service dispatch routine that refuses to perform
+a remote procedure call due to an authentication error.
+<BR>
+
+
+</DL>
+<P>
+
+<B>
+</B><PRE>
+
+void
+svcerr_decode(xprt)
+<FONT SIZE="-1">SVCXPRT</FONT> *xprt;
+</PRE>
+
+
+<DL COMPACT>
+<DT><DD>
+Called by a service dispatch routine that cannot successfully
+decode its parameters. See also
+<B>svc_getargs()</B>.
+
+<BR>
+
+
+</DL>
+<P>
+
+<B>
+</B><PRE>
+
+void
+svcerr_noproc(xprt)
+<FONT SIZE="-1">SVCXPRT</FONT> *xprt;
+</PRE>
+
+
+<DL COMPACT>
+<DT><DD>
+Called by a service dispatch routine that does not implement
+the procedure number that the caller requests.
+<BR>
+
+
+</DL>
+<P>
+
+<B>
+</B><PRE>
+
+void
+svcerr_noprog(xprt)
+<FONT SIZE="-1">SVCXPRT</FONT> *xprt;
+</PRE>
+
+
+<DL COMPACT>
+<DT><DD>
+Called when the desired program is not registered with the
+<FONT SIZE="-1">RPC</FONT>
+package. Service implementors usually do not need this routine.
+<BR>
+
+
+</DL>
+<P>
+
+<B>
+</B><PRE>
+
+void
+svcerr_progvers(xprt)
+<FONT SIZE="-1">SVCXPRT</FONT> *xprt;
+</PRE>
+
+
+<DL COMPACT>
+<DT><DD>
+Called when the desired version of a program is not registered
+with the
+<FONT SIZE="-1">RPC</FONT>
+package. Service implementors usually do not need this routine.
+<BR>
+
+
+</DL>
+<P>
+
+<B>
+</B><PRE>
+
+void
+svcerr_systemerr(xprt)
+<FONT SIZE="-1">SVCXPRT</FONT> *xprt;
+</PRE>
+
+
+<DL COMPACT>
+<DT><DD>
+Called by a service dispatch routine when it detects a system
+error
+not covered by any particular protocol.
+For example, if a service can no longer allocate storage,
+it may call this routine.
+<BR>
+
+
+</DL>
+<P>
+
+<B>
+</B><PRE>
+
+void
+svcerr_weakauth(xprt)
+<FONT SIZE="-1">SVCXPRT</FONT> *xprt;
+</PRE>
+
+
+<DL COMPACT>
+<DT><DD>
+Called by a service dispatch routine that refuses to perform
+a remote procedure call due to insufficient
+authentication parameters.  The routine calls
+<B>svcerr_auth(xprt, </B><FONT SIZE="-1"><B>AUTH_TOOWEAK</B></FONT><B>)</B>.
+
+<BR>
+
+
+</DL>
+<P>
+
+<B>
+</B><PRE>
+
+<FONT SIZE="-1">SVCXPRT</FONT> *
+svcfd_create(fd, sendsize, recvsize)
+int fd;
+u_int sendsize;
+u_int recvsize;
+</PRE>
+
+
+<DL COMPACT>
+<DT><DD>
+Create a service on top of any open descriptor. Typically,
+this
+descriptor is a connected socket for a stream protocol such
+as
+<FONT SIZE="-1">TCP</FONT>.
+<I>sendsize</I>
+
+and
+<I>recvsize</I>
+
+indicate sizes for the send and receive buffers.  If they are
+zero, a reasonable default is chosen.
+<BR>
+
+
+</DL>
+<P>
+
+<B>
+</B><PRE>
+
+<FONT SIZE="-1">SVCXPRT</FONT> *
+svcraw_create()
+</PRE>
+
+
+<DL COMPACT>
+<DT><DD>
+This routine creates a toy
+<FONT SIZE="-1">RPC</FONT>
+service transport, to which it returns a pointer.  The
+transport
+is really a buffer within the process's address space,
+so the corresponding
+<FONT SIZE="-1">RPC</FONT>
+client should live in the same
+address space;
+see
+<B>clntraw_create()</B>.
+
+This routine allows simulation of
+<FONT SIZE="-1">RPC</FONT>
+and acquisition of
+<FONT SIZE="-1">RPC</FONT>
+overheads (such as round trip times), without any kernel
+interference.
+This routine returns
+<FONT SIZE="-1">NULL</FONT>
+if it fails.
+<BR>
+
+
+</DL>
+<P>
+
+<B>
+</B><PRE>
+
+<FONT SIZE="-1">SVCXPRT</FONT> *
+svctcp_create(sock, send_buf_size, recv_buf_size)
+int sock;
+u_int send_buf_size, recv_buf_size;
+</PRE>
+
+
+<DL COMPACT>
+<DT><DD>
+This routine creates a
+<FONT SIZE="-1">TCP/IP</FONT>-based
+<FONT SIZE="-1">RPC</FONT>
+service transport, to which it returns a pointer.
+The transport is associated with the socket
+<I>sock</I>,
+
+which may be
+<B></B><FONT SIZE="-1"><B>RPC_ANYSOCK</B></FONT><B></B>,
+
+in which case a new socket is created.
+If the socket is not bound to a local
+<FONT SIZE="-1">TCP</FONT>
+port, then this routine binds it to an arbitrary port.  Upon
+completion,
+<B>xprt-&gt;xp_sock</B>
+is the transport's socket descriptor, and
+<B>xprt-&gt;xp_port</B>
+is the transport's port number.
+This routine returns
+<FONT SIZE="-1">NULL</FONT>
+if it fails. Since
+<FONT SIZE="-1">TCP</FONT>-based
+<FONT SIZE="-1">RPC</FONT>
+uses buffered
+<FONT SIZE="-1">I/O ,</FONT>
+users may specify the size of buffers; values of zero
+choose suitable defaults.
+<BR>
+
+
+</DL>
+<P>
+
+<B>
+</B><PRE>
+
+<FONT SIZE="-1">SVCXPRT</FONT> *
+svcudp_bufcreate(sock, sendsize, recosize)
+int sock;
+</PRE>
+
+
+<DL COMPACT>
+<DT><DD>
+This routine creates a
+<FONT SIZE="-1">UDP/IP</FONT>-based
+<FONT SIZE="-1">RPC</FONT>
+service transport, to which it returns a pointer.
+The transport is associated with the socket
+<I>sock</I>,
+
+which may be
+<B></B><FONT SIZE="-1"><B>RPC_ANYSOCK</B></FONT><B> ,</B>
+
+in which case a new socket is created.
+If the socket is not bound to a local
+<FONT SIZE="-1">UDP</FONT>
+port, then this routine binds it to an arbitrary port. Upon
+completion,
+<B>xprt-&gt;xp_sock</B>
+is the transport's socket descriptor, and
+<B>xprt-&gt;xp_port</B>
+is the transport's port number.
+This routine returns
+<FONT SIZE="-1">NULL</FONT>
+if it fails.
+<DT><DD>
+This allows the user to specify the maximum packet size for sending and 
+receiving
+<FONT SIZE="-1">UDP</FONT>-based
+<FONT SIZE="-1">RPC messages.</FONT>
+<BR>
+
+
+</DL>
+<P>
+
+<B>
+</B><PRE>
+
+<FONT SIZE="-1">SVCXPRT</FONT> *
+svcudp_create(sock)
+int sock;
+</PRE>
+
+
+<DL COMPACT>
+<DT><DD>
+This call is equivalent to
+<I>svcudp_bufcreate(sock,SZ,SZ)</I>
+for some default size <I>SZ</I>.
+<BR>
+
+
+</DL>
+<P>
+
+<B>
+</B><PRE>
+
+xdr_accepted_reply(xdrs, ar)
+<FONT SIZE="-1">XDR</FONT> *xdrs;
+struct accepted_reply *ar;
+</PRE>
+
+
+<DL COMPACT>
+<DT><DD>
+Used for encoding
+<FONT SIZE="-1">RPC</FONT>
+reply messages. This routine is useful for users who
+wish to generate
+<FONT SIZE="-1">RPC</FONT>-style
+messages without using the
+<FONT SIZE="-1">RPC</FONT>
+package.
+<BR>
+
+
+</DL>
+<P>
+
+<B>
+</B><PRE>
+
+xdr_authunix_parms(xdrs, aupp)
+<FONT SIZE="-1">XDR</FONT> *xdrs;
+struct authunix_parms *aupp;
+</PRE>
+
+
+<DL COMPACT>
+<DT><DD>
+Used for describing
+<FONT SIZE="-1">UNIX</FONT>
+credentials. This routine is useful for users
+who wish to generate these credentials without using the
+<FONT SIZE="-1">RPC</FONT>
+authentication package.
+<BR>
+
+
+</DL>
+<P>
+
+<B>
+</B><PRE>
+
+void
+xdr_callhdr(xdrs, chdr)
+<FONT SIZE="-1">XDR</FONT> *xdrs;
+struct rpc_msg *chdr;
+</PRE>
+
+
+<DL COMPACT>
+<DT><DD>
+Used for describing
+<FONT SIZE="-1">RPC</FONT>
+call header messages.
+This routine is useful for users who wish to generate
+<FONT SIZE="-1">RPC</FONT>-style
+messages without using the
+<FONT SIZE="-1">RPC</FONT>
+package.
+<BR>
+
+
+</DL>
+<P>
+
+<B>
+</B><PRE>
+
+xdr_callmsg(xdrs, cmsg)
+<FONT SIZE="-1">XDR</FONT> *xdrs;
+struct rpc_msg *cmsg;
+</PRE>
+
+
+<DL COMPACT>
+<DT><DD>
+Used for describing
+<FONT SIZE="-1">RPC</FONT>
+call messages.
+This routine is useful for users who wish to generate
+<FONT SIZE="-1">RPC</FONT>-style
+messages without using the
+<FONT SIZE="-1">RPC</FONT>
+package.
+<BR>
+
+
+</DL>
+<P>
+
+<B>
+</B><PRE>
+
+xdr_opaque_auth(xdrs, ap)
+<FONT SIZE="-1">XDR</FONT> *xdrs;
+struct opaque_auth *ap;
+</PRE>
+
+
+<DL COMPACT>
+<DT><DD>
+Used for describing
+<FONT SIZE="-1">RPC</FONT>
+authentication information messages.
+This routine is useful for users who wish to generate
+<FONT SIZE="-1">RPC</FONT>-style
+messages without using the
+<FONT SIZE="-1">RPC</FONT>
+package.
+<BR>
+
+
+</DL>
+<P>
+
+<B>
+</B><PRE>
+
+xdr_pmap(xdrs, regs)
+<FONT SIZE="-1">XDR</FONT> *xdrs;
+struct pmap *regs;
+</PRE>
+
+
+<DL COMPACT>
+<DT><DD>
+Used for describing parameters to various
+<B>portmap</B>
+
+procedures, externally.
+This routine is useful for users who wish to generate
+these parameters without using the
+<B>pmap</B>
+
+interface.
+<BR>
+
+
+</DL>
+<P>
+
+<B>
+</B><PRE>
+
+xdr_pmaplist(xdrs, rp)
+<FONT SIZE="-1">XDR</FONT> *xdrs;
+struct pmaplist **rp;
+</PRE>
+
+
+<DL COMPACT>
+<DT><DD>
+Used for describing a list of port mappings, externally.
+This routine is useful for users who wish to generate
+these parameters without using the
+<B>pmap</B>
+
+interface.
+<BR>
+
+
+</DL>
+<P>
+
+<B>
+</B><PRE>
+
+xdr_rejected_reply(xdrs, rr)
+<FONT SIZE="-1">XDR</FONT> *xdrs;
+struct rejected_reply *rr;
+</PRE>
+
+
+<DL COMPACT>
+<DT><DD>
+Used for describing
+<FONT SIZE="-1">RPC</FONT>
+reply messages.
+This routine is useful for users who wish to generate
+<FONT SIZE="-1">RPC</FONT>-style
+messages without using the
+<FONT SIZE="-1">RPC</FONT>
+package.
+<BR>
+
+
+</DL>
+<P>
+
+<B>
+</B><PRE>
+
+xdr_replymsg(xdrs, rmsg)
+<FONT SIZE="-1">XDR</FONT> *xdrs;
+struct rpc_msg *rmsg;
+</PRE>
+
+
+<DL COMPACT>
+<DT><DD>
+Used for describing
+<FONT SIZE="-1">RPC</FONT>
+reply messages.
+This routine is useful for users who wish to generate
+<FONT SIZE="-1">RPC</FONT>
+style messages without using the
+<FONT SIZE="-1">RPC</FONT>
+package.
+<BR>
+
+
+</DL>
+<P>
+
+<B>
+</B><PRE>
+
+void
+xprt_register(xprt)
+<FONT SIZE="-1">SVCXPRT</FONT> *xprt;
+</PRE>
+
+
+<DL COMPACT>
+<DT><DD>
+After
+<FONT SIZE="-1">RPC</FONT>
+service transport handles are created,
+they should register themselves with the
+<FONT SIZE="-1">RPC</FONT>
+service package.
+This routine modifies the global variable
+<B>svc_fds()</B>.
+
+Service implementors usually do not need this routine.
+<BR>
+
+
+</DL>
+<P>
+
+<B>
+</B><PRE>
+
+void
+xprt_unregister(xprt)
+<FONT SIZE="-1">SVCXPRT</FONT> *xprt;
+</PRE>
+
+
+<DL COMPACT>
+<DT><DD>
+Before an
+<FONT SIZE="-1">RPC</FONT>
+service transport handle is destroyed,
+it should unregister itself with the
+<FONT SIZE="-1">RPC</FONT>
+service package.
+This routine modifies the global variable
+<B>svc_fds()</B>.
+
+Service implementors usually do not need this routine.
+</DL>
+<A NAME="lbAD">&nbsp;</A>
+<H2>SEE ALSO</H2>
+
+<B><A HREF="../man3/rpc_secure.3.html">rpc_secure</A></B>(3),
+
+<B><A HREF="../man3/xdr.3.html">xdr</A></B>(3)
+
+<BR>
+
+The following manuals:
+<DL COMPACT><DT><DD>
+<I>
+Remote Procedure Calls: Protocol Specification
+<BR>
+
+Remote Procedure Call Programming Guide
+<BR>
+
+rpcgen Programming Guide
+<BR>
+
+</I>
+</DL>
+
+<I></I><FONT SIZE="-1"><I>RPC</I></FONT><I>: Remote Procedure Call Protocol Specification</I>,
+
+<FONT SIZE="-1">RFC1050, Sun Microsystems, Inc.,</FONT>
+<FONT SIZE="-1">USC-ISI</FONT>.
+
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">NAME</A><DD>
+<DT><A HREF="#lbAC">SYNOPSIS AND DESCRIPTION</A><DD>
+<DT><A HREF="#lbAD">SEE ALSO</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
+using the manual pages.<BR>
+Time: 02:10:15 GMT, April 20, 2020
+</BODY>
+</HTML>

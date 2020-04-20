@@ -1,0 +1,511 @@
+<!--
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of DLOPEN</TITLE>
+</HEAD><BODY>
+<H1>DLOPEN</H1>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2003-11-17<BR><A HREF="#index">Index</A>
+<A HREF="../index.html">Return to Main Contents</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>NAME</H2>
+
+dladdr, dlclose, dlerror, dlopen, dlsym, dlvsym - programming interface to
+dynamic linking loader
+<A NAME="lbAC">&nbsp;</A>
+<H2>SYNOPSIS</H2>
+
+<B>#include &lt;<A HREF="file:///usr/include/dlfcn.h">dlfcn.h</A>&gt;</B>
+
+<P>
+<B>void *dlopen(const char *</B><I>filename</I><B>, int </B><I>flag</I><B>);</B>
+
+<P>
+<B>char *dlerror(void);</B>
+
+<P>
+<B>void *dlsym(void *</B><I>handle</I><B>, const char *</B><I>symbol</I><B>);</B>
+
+<P>
+<B>int dlclose(void *</B><I>handle</I><B>);</B>
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>DESCRIPTION</H2>
+
+The four functions
+<B>dlopen()</B>,
+
+<B>dlsym()</B>,
+
+<B>dlclose()</B>,
+
+<B>dlerror()</B>
+
+implement the interface to the dynamic linking loader.
+<A NAME="lbAE">&nbsp;</A>
+<H3>dlerror</H3>
+
+The function
+<B>dlerror()</B>
+
+returns a human readable string describing the most recent error
+that occurred from any of the dl routines (dlopen, dlsym or dlclose)
+since the last call to
+<B>dlerror()</B>.
+
+It returns NULL if no errors have occurred since initialization or since
+it was last called.
+<A NAME="lbAF">&nbsp;</A>
+<H3>dlopen</H3>
+
+The function
+<B>dlopen()</B>
+
+loads the dynamic library file named by the null-terminated
+string
+<I>filename</I>
+
+and returns an opaque &quot;handle&quot; for the dynamic library.
+If
+<I>filename</I>
+
+is NULL, then the returned handle is for the main program.
+If
+<I>filename</I>
+
+contains a slash (&quot;/&quot;), then it is interpreted as a (relative
+or absolute) pathname.
+Otherwise, the dynamic linker searches for the library as follows
+(see
+<B><A HREF="../man8/ld.so.8.html">ld.so</A></B>(8)
+
+for further details):
+<DL COMPACT>
+<DT>o<DD>
+(ELF only) If the executable file for the calling program
+contains a DT_RPATH tag, and does not contain a DT_RUNPATH tag,
+then the directories listed in the DT_RPATH tag are searched.
+<DT>o<DD>
+If the environment variable
+<B>LD_LIBRARY_PATH</B>
+
+is defined to contain a colon-separated list of directories,
+then these are searched.
+(As a security measure this variable is ignored for set-UID and 
+set-GID programs.)
+<DT>o<DD>
+(ELF only) If the executable file for the calling program
+contains a DT_RUNPATH tag, then the directories listed in that tag
+are searched.
+<DT>o<DD>
+The cache file
+<B>/etc/ld.so.cache</B>
+
+(maintained by
+<B><A HREF="../man8/ldconfig.8.html">ldconfig</A></B>(8))
+
+is checked to see whether it contains an entry for
+<I>filename</I>.
+
+<DT>o<DD>
+The directories
+<B>/lib </B>
+
+and 
+<B>/usr/lib </B>
+
+are searched (in that order).
+</DL>
+<P>
+
+If the library has dependencies on other shared libraries,
+then these are also automatically loaded by the dynamic linker
+using the same rules.  (This process may occur recursively,
+if those libraries in turn have dependencies, and so on.)
+<P>
+
+The value of
+<I>flag</I>
+
+can be either
+<B>RTLD_LAZY</B>
+
+or
+<B>RTLD_NOW</B>.
+
+When
+<B>RTLD_NOW</B>
+
+is specified, or the environment variable
+<B>LD_BIND_NOW</B>
+
+is set to a non-empty string,
+all undefined symbols in the library are resolved before
+<B>dlopen()</B>
+
+returns. If this cannot be done, an error is returned.
+Otherwise binding is lazy: symbol values are first resolved
+when needed.
+<P>
+
+Optionally,
+<B>RTLD_GLOBAL</B>
+
+may be or'ed into
+<I>flag</I>,
+
+in which case the external symbols defined in the library will be
+made available for symbol resolution of subsequently loaded libraries.
+(The converse of
+<B>RTLD_GLOBAL</B>
+
+is
+<B>RTLD_LOCAL</B>.
+
+
+
+This is the default.)
+<P>
+
+If
+<I>filename</I>
+
+is a NULL pointer, then the returned handle is for the main program.
+When given to
+<B>dlsym()</B>,
+
+this handle causes a search for a symbol in the main program,
+followed by all shared libraries loaded at program startup,
+and then all shared libraries loaded by 
+<B>dlopen()</B>
+
+with the flag
+<B>RTLD_GLOBAL.</B>
+
+<P>
+
+External references in the library are resolved using the libraries
+in that library's dependency list and any other libraries previously
+opened with the 
+<B>RTLD_GLOBAL</B>
+
+flag.
+If the executable was linked with the flag &quot;-rdynamic&quot;
+(or, synonymously, &quot;--export-dynamic&quot;),
+then the global symbols in the executable will also be used
+to resolve references in a dynamically loaded library.
+<P>
+
+If the same library is loaded again with
+<B>dlopen()</B>,
+
+the same file handle is returned. The dl library maintains reference
+counts for library handles, so a dynamic library is not
+deallocated until
+<B>dlclose()</B>
+
+has been called on it as many times as
+<B>dlopen()</B>
+
+has succeeded on it. The
+<B>_init</B>
+
+routine, if present, is only called once. But a subsequent call with
+<B>RTLD_NOW</B>
+
+may force symbol resolution for a library earlier loaded with
+<B>RTLD_LAZY</B>.
+
+<P>
+
+If
+<B>dlopen()</B>
+
+fails for any reason, it returns NULL.
+<A NAME="lbAG">&nbsp;</A>
+<H3>dlsym</H3>
+
+The function
+<B>dlsym()</B>
+
+takes a &quot;handle&quot; of a dynamic library returned by dlopen and the
+NUL-terminated symbol name, returning the address where that symbol is
+loaded into memory.  If the symbol is not found, in the specified
+library or any of the libraries that were automatically loaded by
+<B>dlopen()</B>
+
+when that library was loaded,
+<B>dlsym()</B>
+
+returns NULL.
+(The search performed by
+<B>dlsym()</B>
+
+is breadth first through the dependency tree of these libraries.)
+Since the value of the symbol could actually be NULL (so that a
+NULL return from
+<B>dlsym()</B>
+
+need not indicate an error), the correct way to test for an error
+is to call
+<B>dlerror()</B>
+
+to clear any old error conditions, then call
+<B>dlsym()</B>,
+
+and then call
+<B>dlerror()</B>
+
+again, saving its return value into a variable, and check whether
+this saved value is not NULL.
+<P>
+
+There are two special pseudo-handles,
+<B>RTLD_DEFAULT</B>
+
+and
+<B>RTLD_NEXT</B>.
+
+The former will find the first occurrence of the desired symbol
+using the default library search order. The latter
+will find the next occurrence of a function in the search order
+after the current library.  This allows one to provide a wrapper
+around a function in another shared library.
+<A NAME="lbAH">&nbsp;</A>
+<H3>dlclose</H3>
+
+The function
+<B>dlclose()</B>
+
+decrements the reference count on the dynamic library handle
+<I>handle</I>.
+
+If the reference count drops to zero and no other loaded libraries use
+symbols in it, then the dynamic library is unloaded.
+<P>
+
+The function
+<B>dlclose()</B>
+
+returns 0 on success, and non-zero on error.
+<A NAME="lbAI">&nbsp;</A>
+<H3>The obsolete symbols _init and _fini</H3>
+
+The linker recognizes special symbols
+<B>_init</B>
+
+and
+<B>_fini</B>.
+
+If a dynamic library exports a routine named
+<B>_init</B>,
+
+then that code is executed after the loading, before
+<B>dlopen()</B>
+
+returns. If the dynamic library exports a routine named
+<B>_fini</B>,
+
+then that routine is called just before the library is unloaded.
+In case you  need to  avoid  linking against the system startup files,
+this can be done by giving gcc the &quot;-nostartfiles&quot; parameter on
+the command line.
+<P>
+
+Using these routines, or the gcc
+<B>-nostartupfiles</B>
+
+or
+<B>-nostdlib</B>
+
+options, is not recommended. Their use may result in undesired behavior,
+since the constructor/destructor routines will not be executed
+(unless special measures are taken).
+
+
+<P>
+
+Instead, libraries should export routines using the
+<B>__attribute__((constructor))</B>
+
+and
+<B>__attribute__((destructor))</B>
+
+function attributes.  See the gcc info pages for information on these.
+Constructor routines are executed before
+<B>dlopen</B>
+
+returns, and destructor routines are executed before
+<B>dlclose</B>
+
+returns.
+<A NAME="lbAJ">&nbsp;</A>
+<H2>GNU EXTENSIONS</H2>
+
+Glibc adds two functions not described by POSIX, with prototypes
+<P>
+<PRE>
+<B>#define GNU_SOURCE</B>
+<B>#include &lt;<A HREF="file:///usr/include/dlfcn.h">dlfcn.h</A>&gt;</B>
+
+<B>int dladdr(void *</B><I>addr</I><B>, Dl_info *</B><I>info</I><B>);</B>
+
+<B>void *dlvsym(void *</B><I>handle</I><B>, char *</B><I>symbol</I><B>, char *</B><I>version</I><B>);</B>
+</PRE>
+
+<P>
+
+The function
+<B>dladdr()</B>
+
+takes a function pointer and tries to resolve name
+and file where it is located. Information is stored in the
+Dl_info structure:
+<P>
+<PRE>
+typedef struct {
+  const char *dli_fname;/* File name of defining object */
+  void *dli_fbase;      /* Load address of that object */
+  const char *dli_sname;/* Name of nearest lower symbol */
+  void *dli_saddr;      /* Exact value of nearest symbol */
+} Dl_info;
+</PRE>
+
+<P>
+<B>dladdr()</B>
+
+returns 0 on error, and non-zero on success.
+<P>
+
+The function
+<B>dlvsym()</B>
+
+does the same as
+<B>dlsym()</B>
+
+but takes a version string as additional argument.
+<P>
+<A NAME="lbAK">&nbsp;</A>
+<H2>EXAMPLE</H2>
+
+<B>Load the math library, and print the cosine of 2.0:</B>
+
+<DL COMPACT><DT><DD>
+<PRE>
+#include &lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/dlfcn.h">dlfcn.h</A>&gt;
+
+int main(int argc, char **argv) {
+    void *handle;
+    double (*cosine)(double);
+    char *error;
+
+    handle = dlopen (&quot;libm.so&quot;, RTLD_LAZY);
+    if (!handle) {
+        fprintf (stderr, &quot;%s\n&quot;, dlerror());
+        <A HREF="../man1/exit.1.html">exit</A>(1);
+    }
+
+    dlerror();    /* Clear any existing error */
+    *(void **) (&amp;cosine) = dlsym(handle, &quot;cos&quot;);
+    if ((error = dlerror()) != NULL)  {
+        fprintf (stderr, &quot;%s\n&quot;, error);
+        <A HREF="../man1/exit.1.html">exit</A>(1);
+    }
+
+    printf (&quot;%f\n&quot;, (*cosine)(2.0));
+    dlclose(handle);
+    return 0;
+}
+</PRE>
+
+</DL>
+
+<P>
+
+If this program were in a file named &quot;foo.c&quot;, you would build the program
+with the following command:
+<DL COMPACT><DT><DD>
+<P>
+
+gcc -rdynamic -o foo foo.c -ldl
+</DL>
+
+<P>
+
+Libraries exporting _init() and _fini() will want to be compiled as
+follows, using bar.c as the example name:
+<DL COMPACT><DT><DD>
+<P>
+
+gcc -shared -nostartfiles -o bar bar.c
+</DL>
+
+<A NAME="lbAL">&nbsp;</A>
+<H2>NOTES</H2>
+
+The symbols RTLD_DEFAULT and RTLD_NEXT are defined by
+<I>&lt;<A HREF="file:///usr/include/dlfcn.h">dlfcn.h</A>&gt;</I>
+
+only when _GNU_SOURCE was defined before including it.
+
+
+
+
+
+
+
+
+<A NAME="lbAM">&nbsp;</A>
+<H2>HISTORY</H2>
+
+The dlopen interface standard comes from SunOS. That system also has
+dladdr, but not dlvsym.
+<A NAME="lbAN">&nbsp;</A>
+<H2>CONFORMING TO</H2>
+
+POSIX 1003.1-2003 describes dlclose, dlerror, dlopen, dlsym.
+<A NAME="lbAO">&nbsp;</A>
+<H2>SEE ALSO</H2>
+
+<B><A HREF="../man1/ld.1.html">ld</A></B>(1),
+
+<B><A HREF="../man1/ldd.1.html">ldd</A></B>(1),
+
+<B><A HREF="../man3/dl_iterate_phdr.3.html">dl_iterate_phdr</A></B>(3),
+
+<B><A HREF="../man8/ld.so.8.html">ld.so</A></B>(8),
+
+<B><A HREF="../man8/ldconfig.8.html">ldconfig</A></B>(8),
+
+ld.so info pages, gcc info pages, ld info pages
+
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">NAME</A><DD>
+<DT><A HREF="#lbAC">SYNOPSIS</A><DD>
+<DT><A HREF="#lbAD">DESCRIPTION</A><DD>
+<DL>
+<DT><A HREF="#lbAE">dlerror</A><DD>
+<DT><A HREF="#lbAF">dlopen</A><DD>
+<DT><A HREF="#lbAG">dlsym</A><DD>
+<DT><A HREF="#lbAH">dlclose</A><DD>
+<DT><A HREF="#lbAI">The obsolete symbols _init and _fini</A><DD>
+</DL>
+<DT><A HREF="#lbAJ">GNU EXTENSIONS</A><DD>
+<DT><A HREF="#lbAK">EXAMPLE</A><DD>
+<DT><A HREF="#lbAL">NOTES</A><DD>
+<DT><A HREF="#lbAM">HISTORY</A><DD>
+<DT><A HREF="#lbAN">CONFORMING TO</A><DD>
+<DT><A HREF="#lbAO">SEE ALSO</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
+using the manual pages.<BR>
+Time: 02:10:24 GMT, April 20, 2020
+</BODY>
+</HTML>

@@ -1,0 +1,198 @@
+<!--
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of SYSCTL</TITLE>
+</HEAD><BODY>
+<H1>SYSCTL</H1>
+Section: Linux Programmer's Manual (2)<BR>Updated: 1996-04-11<BR><A HREF="#index">Index</A>
+<A HREF="../index.html">Return to Main Contents</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>NAME</H2>
+
+sysctl - read/write system parameters
+<A NAME="lbAC">&nbsp;</A>
+<H2>SYNOPSIS</H2>
+
+<B>#include &lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;</B>
+
+<P>
+<B>#include &lt;<A HREF="file:///usr/include/linux/unistd.h">linux/unistd.h</A>&gt;</B>
+
+<P>
+<B>#include &lt;<A HREF="file:///usr/include/linux/sysctl.h">linux/sysctl.h</A>&gt;</B>
+
+<P>
+<B>_syscall1(int, _sysctl, struct __sysctl_args *, args);</B>
+
+<P>
+<B>int _sysctl(struct __sysctl_args *</B><I>args</I><B>);</B>
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>DESCRIPTION</H2>
+
+The
+<B>_sysctl</B>
+
+call reads and/or writes kernel parameters. For example, the hostname,
+or the maximum number of open files. The argument has the form
+<P>
+
+<PRE>
+struct __sysctl_args {
+        int *name;        /* integer vector describing variable */
+        int nlen;         /* length of this vector */
+        void *oldval;     /* 0 or address where to store old value */
+        size_t *oldlenp;  /* available room for old value,
+                             overwritten by actual size of old value */
+        void *newval;     /* 0 or address of new value */
+        size_t newlen;    /* size of new value */
+};
+</PRE>
+
+<P>
+
+This call does a search in a tree structure, possibly resembling
+a directory tree under
+<B>/proc/sys</B>,
+
+and if the requested item is found calls some appropriate routine
+to read or modify the value.
+<P>
+<A NAME="lbAE">&nbsp;</A>
+<H2>EXAMPLE</H2>
+
+<PRE>
+#include &lt;<A HREF="file:///usr/include/linux/unistd.h">linux/unistd.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/linux/types.h">linux/types.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/linux/sysctl.h">linux/sysctl.h</A>&gt;
+
+_syscall1(int, _sysctl, struct __sysctl_args *, args);
+int sysctl(int *name, int nlen, void *oldval, size_t *oldlenp,
+           void *newval, size_t newlen)
+{
+        struct __sysctl_args args={name,nlen,oldval,oldlenp,newval,newlen};
+        return _sysctl(&amp;args);
+}
+
+#define SIZE(x) sizeof(x)/sizeof(x[0])
+#define OSNAMESZ 100
+
+char osname[OSNAMESZ];
+int osnamelth;
+int name[] = { CTL_KERN, KERN_OSTYPE };
+
+main(){
+        osnamelth = sizeof(osname);
+        if (sysctl(name, SIZE(name), osname, &amp;osnamelth, 0, 0))
+                perror(&quot;sysctl&quot;);
+        else
+                printf(&quot;This machine is running %*s\n&quot;, osnamelth, osname);
+        return 0;
+}
+</PRE>
+
+<P>
+<A NAME="lbAF">&nbsp;</A>
+<H2>RETURN VALUE</H2>
+
+Upon successful completion,
+<B>_sysctl</B>
+
+returns 0. Otherwise, a value of -1 is returned and
+<I>errno</I>
+
+is set to indicate the error.
+<A NAME="lbAG">&nbsp;</A>
+<H2>ERRORS</H2>
+
+<DL COMPACT>
+<DT><B>EFAULT</B>
+
+<DD>
+The invocation asked for the previous value by setting
+<I>oldval</I>
+
+non-NULL, but allowed zero room in
+<I>oldlenp</I>.
+
+<DT><B>ENOTDIR</B>
+
+<DD>
+<I>name</I>
+
+was not found.
+<DT><B>EPERM</B>
+
+<DD>
+No search permission for one of the encountered `directories',
+or no read permission where
+<I>oldval</I>
+
+was nonzero, or no write permission where
+<I>newval</I>
+
+was nonzero.
+</DL>
+<A NAME="lbAH">&nbsp;</A>
+<H2>CONFORMING TO</H2>
+
+This call is Linux-specific, and should not be used in programs
+intended to be portable.
+A
+<B>sysctl</B>
+
+call has been present in Linux since version 1.3.57. It originated in
+4.4BSD. Only Linux has the
+<I>/proc/sys</I>
+
+mirror, and the object naming schemes differ between Linux and BSD 4.4,
+but the declaration of the
+<B><A HREF="../man2/sysctl.2.html">sysctl</A></B>(2)
+
+function is the same in both.
+<A NAME="lbAI">&nbsp;</A>
+<H2>BUGS</H2>
+
+The object names vary between kernel versions.
+THIS MAKES THIS SYSTEM CALL WORTHLESS FOR APPLICATIONS.
+Use the
+<I>/proc/sys</I>
+
+interface instead.
+<BR>
+
+Not all available objects are properly documented.
+<BR>
+
+It is not yet possible to change operating system by writing to
+<I>/proc/sys/kernel/ostype</I>.
+
+<A NAME="lbAJ">&nbsp;</A>
+<H2>SEE ALSO</H2>
+
+<B><A HREF="../man5/proc.5.html">proc</A></B>(5)
+
+
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">NAME</A><DD>
+<DT><A HREF="#lbAC">SYNOPSIS</A><DD>
+<DT><A HREF="#lbAD">DESCRIPTION</A><DD>
+<DT><A HREF="#lbAE">EXAMPLE</A><DD>
+<DT><A HREF="#lbAF">RETURN VALUE</A><DD>
+<DT><A HREF="#lbAG">ERRORS</A><DD>
+<DT><A HREF="#lbAH">CONFORMING TO</A><DD>
+<DT><A HREF="#lbAI">BUGS</A><DD>
+<DT><A HREF="#lbAJ">SEE ALSO</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
+using the manual pages.<BR>
+Time: 02:09:53 GMT, April 20, 2020
+</BODY>
+</HTML>

@@ -1,0 +1,244 @@
+<!--
+Copyright (c) 1986 The Regents of the University of California.
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of RESOLV.CONF</TITLE>
+</HEAD><BODY>
+<H1>RESOLV.CONF</H1>
+Section: File Formats (5)<BR>Updated: 2004-10-31<BR><A HREF="#index">Index</A>
+<A HREF="../index.html">Return to Main Contents</A><HR>
+
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>NAME</H2>
+
+resolv.conf - resolver configuration file
+<A NAME="lbAC">&nbsp;</A>
+<H2>SYNOPSIS</H2>
+
+/etc/resolv.conf
+<A NAME="lbAD">&nbsp;</A>
+<H2>DESCRIPTION</H2>
+
+The
+<I>resolver</I>
+
+is a set of routines in the C library
+that provide access to the Internet Domain Name System (DNS).
+The resolver configuration file contains information that is read
+by the resolver routines the first time they are invoked by a process.
+The file is designed to be human readable and contains a list of
+keywords with values that provide various types of resolver information.
+<P>
+
+On a normally configured system this file should not be necessary.
+The only name server to be queried will be on the local machine;
+the domain name is determined from the host name
+and the domain search path is constructed from the domain name.
+<P>
+
+The different configuration options are:
+<DL COMPACT>
+<DT><B>nameserver</B> Name server IP address<DD>
+Internet address (in dot notation) of a name server
+that the resolver should query.
+Up to MAXNS (currently 3, see &lt;<A HREF="file:///usr/include/resolv.h">resolv.h</A>&gt;) name servers may be listed,
+one per keyword.
+If there are multiple servers,
+the resolver library queries them in the order listed.
+If no <B>nameserver</B> entries are present,
+the default is to use the name server on the local machine.
+(The algorithm used is to try a name server, and if the query times out,
+try the next, until out of name servers,
+then repeat trying all the name servers
+until a maximum number of retries are made.)
+<DT><B>domain</B> Local domain name.<DD>
+Most queries for names within this domain can use short names
+relative to the local domain.
+If no <B>domain</B> entry is present, the domain is determined
+from the local host name returned by
+<I>gethostname</I>();
+the domain part is taken to be everything after the first `.'.
+Finally, if the host name does not contain a domain part, the root
+domain is assumed.
+<DT><B>search</B> Search list for host-name lookup.<DD>
+The search list is normally determined from the local domain name;
+by default, it contains only the local domain name.
+This may be changed by listing the desired domain search path
+following the <I>search</I> keyword with spaces or tabs separating
+the names.
+Resolver queries having fewer than
+<I>ndots</I>
+
+dots (default is 1) in them will be attempted using each component
+of the search path in turn until a match is found.
+For environments with multiple subdomains please read
+<B>options ndots:</B><I>n</I>
+
+below to avoid man-in-the-middle attacks and unnecessary
+traffic for the root-dns-servers.
+
+
+
+
+
+
+
+
+
+
+
+Note that this process may be slow and will generate a lot of network
+traffic if the servers for the listed domains are not local,
+and that queries will time out if no server is available
+for one of the domains.
+<DT><DD>
+The search list is currently limited to six domains
+with a total of 256 characters.
+<DT><B>sortlist</B><DD>
+Sortlist allows addresses returned by gethostbyname to be sorted.
+A sortlist is specified by IP address netmask pairs. The netmask is
+optional and defaults to the natural netmask of the net. The IP address
+and optional network pairs are separated by slashes. Up to 10 pairs may
+be specified. E.g.,
+<BR>
+
+
+sortlist 130.155.160.0/255.255.240.0 130.155.0.0
+
+<BR>
+
+<DT><B>options</B><DD>
+Options allows certain internal resolver variables to be modified.
+The syntax is
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT><DD>
+<B>options</B> <I>option</I> <I>...</I>
+</DL>
+<P>
+
+where <I>option</I> is one of the following:
+<DL COMPACT>
+<DT><B>debug</B><DD>
+sets RES_DEBUG in
+<I>_res.options</I>.
+
+<DT><B>ndots:</B><I>n</I>
+
+<DD>
+sets a threshold for the number of dots which
+must appear in a name given to <B>res_query</B>() (see
+<B><A HREF="../man3/resolver.3.html">resolver</A></B>(3))
+
+before an <I>initial absolute query</I> will be made.  The default for
+<I>n</I> is ``1'', meaning that if there are any dots in a name, the name
+will be tried first as an absolute name before any <I>search list</I>
+elements are appended to it.
+<DT><B>timeout:</B><I>n</I>
+
+<DD>
+sets the amount of time the resolver will wait for a
+response from a remote name server before retrying the
+query via a different name server.  Measured in seconds,
+the default is RES_TIMEOUT (currently 5, see &lt;<A HREF="file:///usr/include/resolv.h">resolv.h</A>&gt;).
+<DT><B>attempts:</B><I>n</I>
+
+<DD>
+sets the number of times the resolver will send a
+query to its name servers before giving up and returning
+an error to the calling application.  The default
+is RES_DFLRETRY (currently 2, see &lt;<A HREF="file:///usr/include/resolv.h">resolv.h</A>&gt;).
+<DT><B>rotate</B>
+
+<DD>
+sets RES_ROTATE in
+<I>_res.options</I>,
+
+which causes round robin selection of nameservers from among those listed.
+This has the effect of spreading the query load among all listed servers,
+rather than having all clients try the first listed server first every time.
+<DT><B>no-check-names</B>
+
+<DD>
+sets RES_NOCHECKNAME in
+<I>_res.options</I>,
+
+which disables the modern BIND checking of incoming host names and
+mail names for invalid characters such as underscore (_), non-ASCII,
+or control characters.
+<DT><B>inet6</B>
+
+<DD>
+sets RES_USE_INET6 in
+<I>_res.options</I>.
+
+This has the effect of trying a AAAA query before an A query inside the
+<I>gethostbyname</I>()
+
+function, and of mapping IPv4 responses in IPv6 ``tunnelled form''
+if no AAAA records are found but an A record set exists.
+</DL>
+</DL>
+
+</DL>
+<P>
+
+The <I>domain</I> and <I>search</I> keywords are mutually exclusive.
+If more than one instance of these keywords is present,
+the last instance wins.
+<P>
+
+The <I>search</I> keyword of a system's <I>resolv.conf</I> file can be
+overridden on a per-process basis by setting the environment variable
+``<FONT SIZE="-1">LOCALDOMAIN</FONT>'' to a space-separated list of search domains.
+<P>
+
+The <I>options</I> keyword of a system's <I>resolv.conf</I> file can be
+amended on a per-process basis by setting the environment variable
+``<FONT SIZE="-1">RES_OPTIONS</FONT>'' to a space-separated list of resolver options
+as explained above under <B>options</B>.
+<P>
+
+The keyword and value must appear on a single line, and the keyword
+(e.g. <B>nameserver</B>) must start the line.  The value follows
+the keyword, separated by white space.
+<A NAME="lbAE">&nbsp;</A>
+<H2>FILES</H2>
+
+<I>/etc/resolv.conf</I>,
+
+<I>&lt;<A HREF="file:///usr/include/resolv.h">resolv.h</A>&gt;</I>
+
+<A NAME="lbAF">&nbsp;</A>
+<H2>SEE ALSO</H2>
+
+<B><A HREF="../man3/gethostbyname.3.html">gethostbyname</A></B>(3),
+
+<B><A HREF="../man3/resolver.3.html">resolver</A></B>(3),
+
+<B><A HREF="../man7/hostname.7.html">hostname</A></B>(7),
+
+<B><A HREF="../man8/named.8.html">named</A></B>(8)
+
+<BR>
+
+Name Server Operations Guide for BIND
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">NAME</A><DD>
+<DT><A HREF="#lbAC">SYNOPSIS</A><DD>
+<DT><A HREF="#lbAD">DESCRIPTION</A><DD>
+<DT><A HREF="#lbAE">FILES</A><DD>
+<DT><A HREF="#lbAF">SEE ALSO</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
+using the manual pages.<BR>
+Time: 02:11:23 GMT, April 20, 2020
+</BODY>
+</HTML>

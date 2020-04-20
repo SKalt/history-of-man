@@ -1,0 +1,245 @@
+<!--
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of GETGRNAM</TITLE>
+</HEAD><BODY>
+<H1>GETGRNAM</H1>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2003-11-15<BR><A HREF="#index">Index</A>
+<A HREF="../index.html">Return to Main Contents</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>NAME</H2>
+
+getgrnam, getgrnam_r, getgrgid, getgrgid_r - get group file entry
+<A NAME="lbAC">&nbsp;</A>
+<H2>SYNOPSIS</H2>
+
+<PRE>
+<B>#include &lt;<A HREF="file:///usr/include/sys/types.h">sys/types.h</A>&gt;</B>
+<B>#include &lt;<A HREF="file:///usr/include/grp.h">grp.h</A>&gt;</B>
+
+<B>struct group *getgrnam(const char *</B><I>name</I><B>);</B>
+
+<B>struct group *getgrgid(gid_t </B><I>gid</I><B>);</B>
+
+<B>int getgrnam_r(const char *</B><I>name</I><B>, struct group *</B><I>gbuf</I><B>,</B>
+<BR>
+<B>          char *</B><I>buf</I><B>, size_t </B><I>buflen</I><B>, struct group **</B><I>gbufp</I><B>);</B>
+
+<B>int getgrgid_r(gid_t </B><I>gid</I><B>, struct group *</B><I>gbuf</I><B>,</B>
+<BR>
+<B>          char *</B><I>buf</I><B>, size_t </B><I>buflen</I><B>, struct group **</B><I>gbufp</I><B>);</B>
+</PRE>
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>DESCRIPTION</H2>
+
+The
+<B>getgrnam()</B>
+
+function returns a pointer to a structure containing
+the group information from
+<I>/etc/group</I>
+
+for the entry that matches the group name
+<I>name</I>.
+
+<P>
+
+The
+<B>getgrgid()</B>
+
+function returns a pointer to a structure containing
+the group information from
+<I>/etc/group</I>
+
+for the entry that matches the group gid
+<I>gid</I>.
+
+<P>
+
+The
+<B>getgrnam_r()</B>
+
+and
+<B>getgrgid_r()</B>
+
+functions find the same information, but store the retrieved group structure
+in the space pointed to by
+<I>gbuf</I>.
+
+This group structure contains pointers to strings, and these strings
+are stored in the buffer
+<I>buf</I>
+
+of size
+<I>buflen</I>.
+
+A pointer to the result (in case of success) or NULL (in case no entry
+was found or an error occurred) is stored in
+*<I>gbufp</I>.
+
+<P>
+
+The <I>group</I> structure is defined in <I>&lt;<A HREF="file:///usr/include/grp.h">grp.h</A>&gt;</I> as follows:
+<P>
+<DL COMPACT><DT><DD>
+<PRE>
+struct group {
+      char    *gr_name;      /* group name */
+      char    *gr_passwd;    /* group password */
+      gid_t   gr_gid;        /* group id */
+      char    **gr_mem;      /* group members */
+};
+</PRE>
+
+</DL>
+
+<P>
+
+The maximum needed size for
+<I>buf</I>
+
+can be found using
+<B><A HREF="../man3/sysconf.3.html">sysconf</A></B>(3)
+
+with the _SC_GETGR_R_SIZE_MAX parameter.
+<A NAME="lbAE">&nbsp;</A>
+<H2>RETURN VALUE</H2>
+
+The <B>getgrnam()</B> and <B>getgrgid()</B> functions return a pointer
+to the group information structure, or NULL if the matching entry
+is not found or an error occurs. If an error occurs,
+<I>errno</I>
+
+is set appropriately. If one wants to check
+<I>errno</I>
+
+after the call, it should be set to zero before the call.
+<P>
+
+The return value may point to static area, and may be overwritten
+by subsequent calls to
+<B>getgrent()</B>,
+
+<B>getgrgid()</B>,
+
+or
+<B>getgrnam()</B>.
+
+<P>
+
+The  <B>getgrnam_r()</B> and <B>getgrgid_r()</B> functions return
+zero on success. In case of error, an error value is returned.
+<A NAME="lbAF">&nbsp;</A>
+<H2>ERRORS</H2>
+
+<DL COMPACT>
+<DT><B>0</B> or <B>ENOENT</B> or <B>ESRCH</B> or <B>EBADF</B> or <B>EPERM</B> or ... 
+
+<DD>
+The given
+<I>name</I>
+
+or
+<I>gid</I>
+
+was not found.
+<DT><B>EINTR</B>
+
+<DD>
+A signal was caught.
+<DT><B>EIO</B>
+
+<DD>
+I/O error.
+<DT><B>EMFILE</B>
+
+<DD>
+The maximum number (OPEN_MAX) of files was open already in the calling process.
+<DT><B>ENFILE</B>
+
+<DD>
+The maximum number of files was open already in the system.
+<DT><B>ENOMEM</B>
+
+<DD>
+Insufficient memory.
+
+<DT><B>ERANGE</B>
+
+<DD>
+Insufficient buffer space supplied.
+</DL>
+<A NAME="lbAG">&nbsp;</A>
+<H2>FILES</H2>
+
+<DL COMPACT>
+<DT><I>/etc/group</I>
+
+<DD>
+group database file
+</DL>
+<A NAME="lbAH">&nbsp;</A>
+<H2>CONFORMING TO</H2>
+
+SVID 3, BSD 4.3, POSIX 1003.1-2003
+<A NAME="lbAI">&nbsp;</A>
+<H2>NOTES</H2>
+
+The formulation given above under &quot;RETURN VALUE&quot; is from POSIX 1003.1-2001.
+It does not call &quot;not found&quot; an error, hence does not specify what value
+<I>errno</I>
+
+might have in this situation. But that makes it impossible to recognize
+errors. One might argue that according to POSIX
+<I>errno</I>
+
+should be left unchanged if an entry is not found. Experiments on various
+Unix-like systems shows that lots of different values occur in this
+situation: 0, ENOENT, EBADF, ESRCH, EWOULDBLOCK, EPERM and probably others.
+
+
+
+
+
+
+
+<A NAME="lbAJ">&nbsp;</A>
+<H2>SEE ALSO</H2>
+
+<B><A HREF="../man3/endgrent.3.html">endgrent</A></B>(3),
+
+<B><A HREF="../man3/fgetgrent.3.html">fgetgrent</A></B>(3),
+
+<B><A HREF="../man3/getgrent.3.html">getgrent</A></B>(3),
+
+<B><A HREF="../man3/getpwnam.3.html">getpwnam</A></B>(3),
+
+<B><A HREF="../man3/setgrent.3.html">setgrent</A></B>(3),
+
+<B><A HREF="../man5/group.5.html">group</A></B>(5)
+
+
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">NAME</A><DD>
+<DT><A HREF="#lbAC">SYNOPSIS</A><DD>
+<DT><A HREF="#lbAD">DESCRIPTION</A><DD>
+<DT><A HREF="#lbAE">RETURN VALUE</A><DD>
+<DT><A HREF="#lbAF">ERRORS</A><DD>
+<DT><A HREF="#lbAG">FILES</A><DD>
+<DT><A HREF="#lbAH">CONFORMING TO</A><DD>
+<DT><A HREF="#lbAI">NOTES</A><DD>
+<DT><A HREF="#lbAJ">SEE ALSO</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
+using the manual pages.<BR>
+Time: 02:10:37 GMT, April 20, 2020
+</BODY>
+</HTML>

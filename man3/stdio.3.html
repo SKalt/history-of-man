@@ -1,0 +1,489 @@
+<!--
+Copyright (c) 1990, 1991 Regents of the University of California.
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of STDIO</TITLE>
+</HEAD><BODY>
+<H1>STDIO</H1>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2001-12-26<BR><A HREF="#index">Index</A>
+<A HREF="../index.html">Return to Main Contents</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>NAME</H2>
+
+stdio - standard input/output library functions
+<A NAME="lbAC">&nbsp;</A>
+<H2>SYNOPSIS</H2>
+
+<B>#include &lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;</B>
+
+<P>
+<B>FILE *stdin;</B>
+
+<BR>
+
+<B>FILE *stdout;</B>
+
+<BR>
+
+<B>FILE *stderr;</B>
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>DESCRIPTION</H2>
+
+The standard I/O library provides a simple and efficient buffered stream
+I/O interface.  Input and output is mapped into logical data streams and the
+physical I/O characteristics are concealed. The functions and macros are
+listed below; more information is available from the individual man pages.
+<P>
+
+A stream is associated with an external file (which may be a physical
+device) by
+<I>opening</I>
+
+a file, which may involve creating a new file. Creating an existing file
+causes its former contents to be discarded.  If a file can support
+positioning requests (such as a disk file, as opposed to a terminal) then a
+<I>file position indicator</I>
+
+associated with the stream is positioned at the start of the file (byte
+zero), unless the file is opened with append mode. If append mode is used,
+it is unspecified whether the position indicator will be placed at the
+start or the end of the file.  The position indicator is maintained by
+subsequent reads, writes and positioning requests. All input occurs
+as if the characters were read by successive calls to the
+<B><A HREF="../man3/fgetc.3.html">fgetc</A></B>(3)
+
+function; all output takes place as if all characters were written by
+successive calls to the
+<B><A HREF="../man3/fputc.3.html">fputc</A></B>(3)
+
+function.
+<P>
+
+A file is disassociated from a stream by
+<I>closing</I>
+
+the file.  Output streams are flushed (any unwritten buffer contents are
+transferred to the host environment) before the stream is disassociated from
+the file.  The value of a pointer to a
+<B>FILE</B>
+
+object is indeterminate after a file is closed (garbage).
+<P>
+
+A file may be subsequently reopened, by the same or another program
+execution, and its contents reclaimed or modified (if it can be
+repositioned at the start).  If the main function returns to its original
+caller, or the
+<B><A HREF="../man3/exit.3.html">exit</A></B>(3)
+
+function is called, all open files are closed (hence all output streams are
+flushed) before program termination.  Other methods of program termination,
+such as
+<B><A HREF="../man3/abort.3.html">abort</A></B>(3)
+
+do not bother about closing files properly.
+<P>
+
+At program startup, three text streams are predefined and need not be
+opened explicitly ---
+<I>standard input </I>
+
+(for reading conventional input), ---
+<I>standard output </I>
+
+(for writing conventional input), and
+<I>standard error</I>
+
+(for writing diagnostic output).  These streams are abbreviated
+<I>stdin</I>,<I>stdout</I>
+
+and
+<I>stderr</I>.
+
+When opened, the standard error stream is not fully buffered; the standard
+input and output streams are fully buffered if and only if the streams do
+not to refer to an interactive device.
+<P>
+
+Output streams that refer to terminal devices are always line buffered by
+default; pending output to such streams is written automatically whenever
+an input stream that refers to a terminal device is read.  In cases where a
+large amount of computation is done after printing part of a line on an
+output terminal, it is necessary to
+<B><A HREF="../man3/fflush.3.html">fflush</A></B>(3)
+
+the standard output before going off and computing so that the output will
+appear.
+<P>
+
+The
+<B>stdio</B>
+
+library is a part of the library
+<B>libc</B>
+
+and routines are automatically loaded as needed by the compilers
+<B><A HREF="../man1/cc.1.html">cc</A></B>(1)
+
+and
+<B><A HREF="../man1/pc.1.html">pc</A></B>(1).
+
+The
+<B>SYNOPSIS</B>
+
+sections of the following manual pages indicate which include files are to
+be used, what the compiler declaration for the function looks like and
+which external variables are of interest.
+<P>
+
+The following are defined as macros; these names may not be re-used without
+first removing their current definitions with
+<B>#undef</B>:
+
+<B>BUFSIZ</B>,
+
+<B>EOF</B>,
+
+<B>FILENAME_MAX</B>,
+
+<B>FOPEN_MAX</B>,
+
+<B>L_cuserid</B>,
+
+<B>L_ctermid</B>,
+
+<B>L_tmpnam,</B>
+
+<B>NULL</B>,
+
+<B>SEEK_END</B>,
+
+<B>SEEK_SET</B>,
+
+<B>SEE_CUR</B>,
+
+<B>TMP_MAX</B>,
+
+<B>clearerr</B>,
+
+<B>feof</B>,
+
+<B>ferror</B>,
+
+<B>fileno</B>,
+
+<B>fropen</B>,
+
+<B>fwopen</B>,
+
+<B>getc</B>,
+
+<B>getchar</B>,
+
+<B>putc</B>,
+
+<B>putchar</B>,
+
+<B>stderr</B>,
+
+<B>stdin</B>,
+
+<B>stdout</B>.
+
+Function versions of the macro functions
+<B>feof</B>,
+
+<B>ferror</B>,
+
+<B>clearerr</B>,
+
+<B>fileno</B>,
+
+<B>getc</B>,
+
+<B>getchar</B>,
+
+<B>putc</B>,
+
+and
+<B>putchar</B>
+
+exist and will be used if the macros definitions are explicitly removed.
+<A NAME="lbAE">&nbsp;</A>
+<H2>LIST OF FUNCTIONS</H2>
+
+<DL COMPACT>
+<DT><B>Function</B>
+
+<DD>
+<B>Description</B>
+
+<DT><B>clearerr</B>
+
+<DD>
+check and reset stream status
+<DT><B>fclose</B>
+
+<DD>
+close a stream
+<DT><B>fdopen</B>
+
+<DD>
+stream open functions
+<DT><B>feof</B>
+
+<DD>
+check and reset stream status
+<DT><B>ferror</B>
+
+<DD>
+check and reset stream status
+<DT><B>fflush</B>
+
+<DD>
+flush a stream
+<DT><B>fgetc</B>
+
+<DD>
+get next character or word from input stream
+
+
+
+<DT><B>fgetpos</B>
+
+<DD>
+reposition a stream
+<DT><B>fgets</B>
+
+<DD>
+get a line from a stream
+<DT><B>fileno</B>
+
+<DD>
+return the integer descriptor of the argument stream
+<DT><B>fopen</B>
+
+<DD>
+stream open functions
+<DT><B>fprintf</B>
+
+<DD>
+formatted output conversion
+<DT><B>fpurge</B>
+
+<DD>
+flush a stream
+<DT><B>fputc</B>
+
+<DD>
+output a character or word to a stream
+<DT><B>fputs</B>
+
+<DD>
+output a line to a stream
+<DT><B>fread</B>
+
+<DD>
+binary stream input/output
+<DT><B>freopen</B>
+
+<DD>
+stream open functions
+<DT><B>fropen</B>
+
+<DD>
+open a stream
+<DT><B>fscanf</B>
+
+<DD>
+input format conversion
+<DT><B>fseek</B>
+
+<DD>
+reposition a stream
+<DT><B>fsetpos</B>
+
+<DD>
+reposition a stream
+<DT><B>ftell</B>
+
+<DD>
+reposition a stream
+<DT><B>fwrite</B>
+
+<DD>
+binary stream input/output
+<DT><B>getc</B>
+
+<DD>
+get next character or word from input stream
+<DT><B>getchar</B>
+
+<DD>
+get next character or word from input stream
+<DT><B>gets</B>
+
+<DD>
+get a line from a stream
+<DT><B>getw</B>
+
+<DD>
+get next character or word from input stream
+<DT><B>mktemp</B>
+
+<DD>
+make temporary file name (unique)
+<DT><B>perror</B>
+
+<DD>
+system error messages
+<DT><B>printf</B>
+
+<DD>
+formatted output conversion
+<DT><B>putc</B>
+
+<DD>
+output a character or word to a stream
+<DT><B>putchar</B>
+
+<DD>
+output a character or word to a stream
+<DT><B>puts</B>
+
+<DD>
+output a line to a stream
+<DT><B>putw</B>
+
+<DD>
+output a character or word to a stream
+<DT><B>remove</B>
+
+<DD>
+remove directory entry
+<DT><B>rewind</B>
+
+<DD>
+reposition a stream
+<DT><B>scanf</B>
+
+<DD>
+input format conversion
+<DT><B>setbuf</B>
+
+<DD>
+stream buffering operations
+<DT><B>setbuffer</B>
+
+<DD>
+stream buffering operations
+<DT><B>setlinebuf</B>
+
+<DD>
+stream buffering operations
+<DT><B>setvbuf</B>
+
+<DD>
+stream buffering operations
+<DT><B>sprintf</B>
+
+<DD>
+formatted output conversion
+<DT><B>sscanf</B>
+
+<DD>
+input format conversion
+<DT><B>strerror</B>
+
+<DD>
+system error messages
+<DT><B>sys_errlist</B>
+
+<DD>
+system error messages
+<DT><B>sys_nerr</B>
+
+<DD>
+system error messages
+<DT><B>tempnam</B>
+
+<DD>
+temporary file routines
+<DT><B>tmpfile</B>
+
+<DD>
+temporary file routines
+<DT><B>tmpnam</B>
+
+<DD>
+temporary file routines
+<DT><B>ungetc</B>
+
+<DD>
+un-get character from input stream
+<DT><B>vfprintf</B>
+
+<DD>
+formatted output conversion
+<DT><B>vfscanf</B>
+
+<DD>
+input format conversion
+<DT><B>vprintf</B>
+
+<DD>
+formatted output conversion
+<DT><B>vscanf</B>
+
+<DD>
+input format conversion
+<DT><B>vsprintf</B>
+
+<DD>
+formatted output conversion
+<DT><B>vsscanf</B>
+
+<DD>
+input format conversion
+</DL>
+<A NAME="lbAF">&nbsp;</A>
+<H2>CONFORMING TO</H2>
+
+The
+<B>stdio</B>
+
+library conforms to ANSI X3.159-1989 (``ANSI C'').
+<A NAME="lbAG">&nbsp;</A>
+<H2>SEE ALSO</H2>
+
+<B><A HREF="../man2/close.2.html">close</A></B>(2),
+
+<B><A HREF="../man2/open.2.html">open</A></B>(2),
+
+<B><A HREF="../man2/read.2.html">read</A></B>(2),
+
+<B><A HREF="../man2/write.2.html">write</A></B>(2),
+
+<B><A HREF="../man3/stdout.3.html">stdout</A></B>(3)
+
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">NAME</A><DD>
+<DT><A HREF="#lbAC">SYNOPSIS</A><DD>
+<DT><A HREF="#lbAD">DESCRIPTION</A><DD>
+<DT><A HREF="#lbAE">LIST OF FUNCTIONS</A><DD>
+<DT><A HREF="#lbAF">CONFORMING TO</A><DD>
+<DT><A HREF="#lbAG">SEE ALSO</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
+using the manual pages.<BR>
+Time: 02:11:04 GMT, April 20, 2020
+</BODY>
+</HTML>

@@ -1,0 +1,208 @@
+<!--
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of UNLINK</TITLE>
+</HEAD><BODY>
+<H1>UNLINK</H1>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2004-06-23<BR><A HREF="#index">Index</A>
+<A HREF="../index.html">Return to Main Contents</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>NAME</H2>
+
+unlink - delete a name and possibly the file it refers to
+<A NAME="lbAC">&nbsp;</A>
+<H2>SYNOPSIS</H2>
+
+<B>#include &lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;</B>
+
+<P>
+<B>int unlink(const char *</B><I>pathname</I><B>);</B>
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>DESCRIPTION</H2>
+
+<B>unlink</B>
+
+deletes a name from the filesystem. If that name was the
+last link to a file and no processes have the file open the file is
+deleted and the space it was using is made available for reuse.
+<P>
+If the name was the last link to a file but any processes still have
+the file open the file will remain in existence until the last file
+descriptor referring to it is closed.
+<P>
+If the name referred to a symbolic link the link is removed.
+<P>
+If the name referred to a socket, fifo or device the name for it is
+removed but processes which have the object open may continue to use
+it.
+<A NAME="lbAE">&nbsp;</A>
+<H2>RETURN VALUE</H2>
+
+On success, zero is returned.  On error, -1 is returned, and
+<I>errno</I>
+
+is set appropriately.
+<A NAME="lbAF">&nbsp;</A>
+<H2>ERRORS</H2>
+
+<DL COMPACT>
+<DT><B>EACCES</B>
+
+<DD>
+Write access to the directory containing
+<I>pathname</I>
+
+is not allowed for the process's effective UID, or one of the
+directories in
+<I>pathname</I>
+
+did not allow search permission.
+(See also
+<B><A HREF="../man2/path_resolution.2.html">path_resolution</A></B>(2).)
+
+<DT><B>EBUSY</B> (not on Linux)
+
+<DD>
+The file
+<I>pathname</I>
+
+cannot be unlinked because it is being used by the system
+or another process and the implementation considers this an error.
+<DT><B>EFAULT</B>
+
+<DD>
+<I>pathname</I>
+
+points outside your accessible address space.
+<DT><B>EIO</B>
+
+<DD>
+An I/O error occurred.
+<DT><B>EISDIR</B>
+
+<DD>
+<I>pathname</I>
+
+refers to a directory.
+(This is the non-POSIX value returned by Linux since 2.1.132.)
+<DT><B>ELOOP</B>
+
+<DD>
+Too many symbolic links were encountered in translating
+<I>pathname</I>.
+
+<DT><B>ENAMETOOLONG</B>
+
+<DD>
+<I>pathname</I> was too long.
+
+<DT><B>ENOENT</B>
+
+<DD>
+A component in
+<I>pathname</I>
+
+does not exist or is a dangling symbolic link, or
+<I>pathname</I>
+
+is empty.
+<DT><B>ENOMEM</B>
+
+<DD>
+Insufficient kernel memory was available.
+<DT><B>ENOTDIR</B>
+
+<DD>
+A component used as a directory in
+<I>pathname</I>
+
+is not, in fact, a directory.
+<DT><B>EPERM</B>
+
+<DD>
+The system does not allow unlinking of directories,
+or unlinking of directories requires privileges that the
+current process doesn't have.
+(This is the POSIX prescribed error return.)
+<DT><B>EPERM</B> (Linux only)
+
+<DD>
+The filesystem does not allow unlinking of files.
+<DT><B>EPERM</B> or <B>EACCES</B>
+
+<DD>
+The directory containing
+<I>pathname</I>
+
+has the sticky bit
+(<B>S_ISVTX</B>)
+
+set and the process's effective UID is neither the UID of the file to
+be deleted nor that of the directory containing it, and
+the process is not privileged (Linux: does not have the
+<B>CAP_FOWNER</B>
+
+capability).
+<DT><B>EROFS</B>
+
+<DD>
+<I>pathname</I>
+
+refers to a file on a read-only filesystem.
+</DL>
+<A NAME="lbAG">&nbsp;</A>
+<H2>CONFORMING TO</H2>
+
+SVr4, SVID, POSIX, X/OPEN, 4.3BSD.  SVr4 documents additional error
+conditions EINTR, EMULTIHOP, ETXTBSY, ENOLINK.
+<A NAME="lbAH">&nbsp;</A>
+<H2>BUGS</H2>
+
+Infelicities in the protocol underlying NFS can cause the unexpected
+disappearance of files which are still being used.
+<A NAME="lbAI">&nbsp;</A>
+<H2>SEE ALSO</H2>
+
+<B><A HREF="../man1/rm.1.html">rm</A></B>(1),
+
+<B><A HREF="../man2/chmod.2.html">chmod</A></B>(2),
+
+<B><A HREF="../man2/link.2.html">link</A></B>(2),
+
+<B><A HREF="../man2/mknod.2.html">mknod</A></B>(2),
+
+<B><A HREF="../man2/open.2.html">open</A></B>(2),
+
+<B><A HREF="../man2/path_resolution.2.html">path_resolution</A></B>(2),
+
+<B><A HREF="../man2/rename.2.html">rename</A></B>(2),
+
+<B><A HREF="../man2/rmdir.2.html">rmdir</A></B>(2),
+
+<B><A HREF="../man3/mkfifo.3.html">mkfifo</A></B>(3),
+
+<B><A HREF="../man3/remove.3.html">remove</A></B>(3)
+
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">NAME</A><DD>
+<DT><A HREF="#lbAC">SYNOPSIS</A><DD>
+<DT><A HREF="#lbAD">DESCRIPTION</A><DD>
+<DT><A HREF="#lbAE">RETURN VALUE</A><DD>
+<DT><A HREF="#lbAF">ERRORS</A><DD>
+<DT><A HREF="#lbAG">CONFORMING TO</A><DD>
+<DT><A HREF="#lbAH">BUGS</A><DD>
+<DT><A HREF="#lbAI">SEE ALSO</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
+using the manual pages.<BR>
+Time: 02:10:09 GMT, April 20, 2020
+</BODY>
+</HTML>

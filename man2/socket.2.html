@@ -1,0 +1,484 @@
+<!--
+Copyright (c) 1983, 1991 The Regents of the University of California.
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of SOCKET</TITLE>
+</HEAD><BODY>
+<H1>SOCKET</H1>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2004-06-17<BR><A HREF="#index">Index</A>
+<A HREF="../index.html">Return to Main Contents</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>NAME</H2>
+
+socket - create an endpoint for communication
+<A NAME="lbAC">&nbsp;</A>
+<H2>SYNOPSIS</H2>
+
+<B>#include &lt;<A HREF="file:///usr/include/sys/types.h">sys/types.h</A>&gt;</B>
+
+<BR>
+
+<B>#include &lt;<A HREF="file:///usr/include/sys/socket.h">sys/socket.h</A>&gt;</B>
+
+<P>
+<B>int socket(int </B><I>domain</I><B>, int </B><I>type</I><B>, int </B><I>protocol</I><B>);</B>
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>DESCRIPTION</H2>
+
+<B>Socket</B>
+
+creates an endpoint for communication and returns a descriptor.
+<P>
+
+The
+<I>domain</I>
+
+parameter specifies a communication domain; this selects the protocol
+family which will be used for communication.  These families are defined in 
+<B>&lt;<A HREF="file:///usr/include/sys/socket.h">sys/socket.h</A>&gt;</B>.
+
+The currently understood formats include:
+<P>
+
+<TABLE>
+<TR VALIGN=top><TD>Name</TD><TD>Purpose</TD><TD>Man page<BR></TD></TR>
+<TR VALIGN=top><TD>
+<B>PF_UNIX,&nbsp;PF_LOCAL</B>
+
+</TD><TD>
+Local communication
+</TD><TD>
+<B><A HREF="../man7/unix.7.html">unix</A></B>(7)
+
+<BR></TD></TR>
+<TR VALIGN=top><TD>
+<B>PF_INET</B>
+
+</TD><TD>IPv4 Internet protocols</TD><TD>
+<B><A HREF="../man7/ip.7.html">ip</A></B>(7)
+
+<BR></TD></TR>
+<TR VALIGN=top><TD>
+<B>PF_INET6</B>
+
+</TD><TD>IPv6 Internet protocols</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD>
+<B>PF_IPX</B>
+
+</TD><TD>IPX - Novell protocols</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD>
+<B>PF_NETLINK</B>
+
+</TD><TD>
+Kernel user interface device
+</TD><TD>
+<B><A HREF="../man7/netlink.7.html">netlink</A></B>(7)
+
+<BR></TD></TR>
+<TR VALIGN=top><TD>
+<B>PF_X25</B>
+
+</TD><TD>ITU-T X.25 / ISO-8208 protocol</TD><TD>
+<B><A HREF="../man7/x25.7.html">x25</A></B>(7)
+
+<BR></TD></TR>
+<TR VALIGN=top><TD>
+<B>PF_AX25</B>
+
+</TD><TD>
+Amateur radio AX.25 protocol
+</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD>
+<B>PF_ATMPVC</B>
+
+</TD><TD>Access to raw ATM PVCs</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD>
+<B>PF_APPLETALK</B>
+
+</TD><TD>Appletalk</TD><TD>
+<B><A HREF="../man7/ddp.7.html">ddp</A></B>(7)
+
+<BR></TD></TR>
+<TR VALIGN=top><TD>
+<B>PF_PACKET</B>
+
+</TD><TD>
+Low level packet interface
+</TD><TD>
+<B><A HREF="../man7/packet.7.html">packet</A></B>(7)
+
+<BR></TD></TR>
+</TABLE>
+
+<P>
+
+The socket has the indicated
+<I>type</I>,
+
+which specifies the communication semantics.  Currently defined types
+are:
+<DL COMPACT>
+<DT><B>SOCK_STREAM</B>
+
+<DD>
+Provides sequenced, reliable, two-way, connection-based byte streams.
+An out-of-band data transmission mechanism may be supported.  
+<DT><B>SOCK_DGRAM</B>
+
+<DD>
+Supports datagrams (connectionless, unreliable messages of a fixed
+maximum length).
+<DT><B>SOCK_SEQPACKET</B>
+
+<DD>
+Provides a sequenced, reliable, two-way connection-based data
+transmission path for datagrams of fixed maximum length; a consumer is
+required to read an entire packet with each read system call.  
+<DT><B>SOCK_RAW</B>
+
+<DD>
+Provides raw network protocol access.
+<DT><B>SOCK_RDM</B>
+
+<DD>
+Provides a reliable datagram layer that does not guarantee ordering.
+<DT><B>SOCK_PACKET</B>
+
+<DD>
+Obsolete and should not be used in new programs;
+see 
+<B><A HREF="../man7/packet.7.html">packet</A></B>(7).
+
+</DL>
+<P>
+
+Some socket types may not be implemented by all protocol families; for example,
+<B>SOCK_SEQPACKET</B>
+
+is not implemented for 
+<B>AF_INET</B>.
+
+<P>
+
+The
+<I>protocol</I>
+
+specifies a particular protocol to be used with the socket.  Normally only
+a single protocol exists to support a particular socket type within a given
+protocol family, in which a case
+<I>protocol</I>
+
+can be specified as 0.
+However, it is possible that many protocols may exist, in
+which case a particular protocol must be specified in this manner.  The
+protocol number to use is specific to the ``communication domain''
+in which communication is to take place; see
+<B><A HREF="../man5/protocols.5.html">protocols</A></B>(5).
+
+See
+<B><A HREF="../man3/getprotoent.3.html">getprotoent</A></B>(3)
+
+on how to map protocol name strings to protocol numbers.
+<P>
+
+Sockets of type
+<B>SOCK_STREAM</B>
+
+are full-duplex byte streams, similar to pipes.  They do not preserve
+record boundaries. A stream socket must be in
+a
+<I>connected</I>
+
+state before any data may be sent or received on it.  A connection to
+another socket is created with a
+<B><A HREF="../man2/connect.2.html">connect</A></B>(2)
+
+call.  Once connected, data may be transferred using
+<B><A HREF="../man2/read.2.html">read</A></B>(2)
+
+and
+<B><A HREF="../man2/write.2.html">write</A></B>(2)
+
+calls or some variant of the 
+<B><A HREF="../man2/send.2.html">send</A></B>(2)
+
+and
+<B><A HREF="../man2/recv.2.html">recv</A></B>(2)
+
+calls.  When a session has been completed a
+<B><A HREF="../man2/close.2.html">close</A></B>(2)
+
+may be performed.  Out-of-band data may also be transmitted as described in
+<B><A HREF="../man2/send.2.html">send</A></B>(2)
+
+and received as described in
+<B><A HREF="../man2/recv.2.html">recv</A></B>(2).
+
+<P>
+
+The communications protocols which implement a
+<B>SOCK_STREAM</B>
+
+ensure that data is not lost or duplicated.  If a piece of data for which
+the peer protocol has buffer space cannot be successfully transmitted
+within a reasonable length of time, then the connection is considered
+to be dead.
+When
+<B>SO_KEEPALIVE </B>
+
+is enabled on the socket the protocol checks in a protocol-specific
+manner if the other end is still alive.
+A
+<B>SIGPIPE</B>
+
+signal is raised if a process sends or receives
+on a broken stream; this causes naive processes,
+which do not handle the signal, to exit.
+<B>SOCK_SEQPACKET</B>
+
+sockets employ the same system calls as
+<B>SOCK_STREAM</B>
+
+sockets.  The only difference is that
+<B><A HREF="../man2/read.2.html">read</A></B>(2)
+
+calls will return only the amount of data requested, and any remaining in
+the arriving packet will be discarded. Also all message boundaries in
+incoming datagrams are preserved. 
+<P>
+
+<B>SOCK_DGRAM</B>
+
+and
+<B>SOCK_RAW</B>
+
+sockets allow sending of datagrams to correspondents named in
+<B><A HREF="../man2/send.2.html">send</A></B>(2)
+
+calls.  Datagrams are generally received with
+<B><A HREF="../man2/recvfrom.2.html">recvfrom</A></B>(2),
+
+which returns the next datagram with its return address.
+<P>
+
+<B>SOCK_PACKET</B>
+
+is an obsolete socket type to receive raw packets directly from the
+device driver. Use
+<B><A HREF="../man7/packet.7.html">packet</A></B>(7)
+
+instead.
+<P>
+
+An 
+<B><A HREF="../man2/fcntl.2.html">fcntl</A></B>(2)
+
+call with the the 
+<B>F_SETOWN </B>
+
+argument
+can be used to specify a process group to receive a
+<B>SIGURG</B>
+
+signal when the out-of-band data arrives or 
+<B>SIGPIPE </B>
+
+signal when a 
+<B>SOCK_STREAM </B>
+
+connection breaks unexpectedly.  
+It may also be used to set the process or process group that receives
+the I/O and asynchronous notification of I/O events via
+<B>SIGIO.</B>
+
+Using
+<B>F_SETOWN</B>
+
+is equivalent to an
+<B><A HREF="../man2/ioctl.2.html">ioctl</A></B>(2)
+
+call with the
+<B>FIOSETOWN</B>
+
+or
+<B>SIOCSPGRP</B>
+
+argument.
+<P>
+
+When the network signals an error condition to the protocol module (e.g.
+using a ICMP message for IP) the pending error flag is set for the socket.
+The next operation on this socket will return the error code of the pending
+error. For some protocols it is possible to enable a per-socket error queue
+to retrieve detailed information about the error; see
+<B>IP_RECVERR </B>
+
+in
+<B><A HREF="../man7/ip.7.html">ip</A></B>(7)<B>.</B>
+
+<P>
+
+The operation of sockets is controlled by socket level
+<I>options</I>.
+
+These options are defined in 
+<B>&lt;<A HREF="file:///usr/include/sys/socket.h">sys/socket.h</A>&gt;</B>.
+
+The functions
+<B><A HREF="../man2/setsockopt.2.html">setsockopt</A></B>(2)
+
+and
+<B><A HREF="../man2/getsockopt.2.html">getsockopt</A></B>(2)
+
+are used to set and get options, respectively.
+<A NAME="lbAE">&nbsp;</A>
+<H2>RETURN VALUE</H2>
+
+-1 is returned if an error occurs; otherwise the return value is a
+descriptor referencing the socket.
+<A NAME="lbAF">&nbsp;</A>
+<H2>ERRORS</H2>
+
+<DL COMPACT>
+<DT><B>EACCES</B>
+
+<DD>
+Permission to create a socket of the specified type and/or protocol
+is denied.
+<DT><B>EAFNOSUPPORT</B>
+
+<DD>
+The implementation does not support the specified address family.
+<DT><B>EINVAL</B>
+
+<DD>
+Unknown protocol, or protocol family not available.
+<DT><B>EMFILE</B>
+
+<DD>
+Process file table overflow.
+<DT><B>ENFILE</B>
+
+<DD>
+The system limit on the total number of open files has been reached.
+<DT><B>ENOBUFS</B> or <B>ENOMEM</B>
+
+<DD>
+Insufficient memory is available.  The socket cannot be
+created until sufficient resources are freed.
+<DT><B>EPROTONOSUPPORT</B>
+
+<DD>
+The protocol type or the specified protocol is not
+supported within this domain.
+</DL>
+<P>
+
+Other errors may be generated by the underlying protocol modules.
+<A NAME="lbAG">&nbsp;</A>
+<H2>CONFORMING TO</H2>
+
+4.4BSD, SUSv2, POSIX 1003.1-2001.
+The
+<B>socket</B>
+
+function call appeared in 4.2BSD. It is generally portable to/from
+non-BSD systems supporting clones of the BSD socket layer (including
+System V variants).
+<A NAME="lbAH">&nbsp;</A>
+<H2>NOTE</H2>
+
+The manifest constants used under BSD 4.* for protocol families
+are PF_UNIX, PF_INET, etc., while AF_UNIX etc. are used for address
+families. However, already the BSD man page promises: &quot;The protocol
+family generally is the same as the address family&quot;, and subsequent
+standards use AF_* everywhere.
+<A NAME="lbAI">&nbsp;</A>
+<H2>BUGS</H2>
+
+<B>SOCK_UUCP</B>
+
+is not implemented yet.
+<A NAME="lbAJ">&nbsp;</A>
+<H2>SEE ALSO</H2>
+
+<B><A HREF="../man2/accept.2.html">accept</A></B>(2),
+
+<B><A HREF="../man2/bind.2.html">bind</A></B>(2),
+
+<B><A HREF="../man2/connect.2.html">connect</A></B>(2),
+
+<B><A HREF="../man2/fcntl.2.html">fcntl</A></B>(2),
+
+<B><A HREF="../man2/getpeername.2.html">getpeername</A></B>(2),
+
+<B><A HREF="../man2/getsockname.2.html">getsockname</A></B>(2),
+
+<B><A HREF="../man2/getsockopt.2.html">getsockopt</A></B>(2),
+
+<B><A HREF="../man2/ioctl.2.html">ioctl</A></B>(2),
+
+<B><A HREF="../man2/listen.2.html">listen</A></B>(2),
+
+<B><A HREF="../man2/read.2.html">read</A></B>(2),
+
+<B><A HREF="../man2/recv.2.html">recv</A></B>(2),
+
+<B><A HREF="../man2/select.2.html">select</A></B>(2),
+
+<B><A HREF="../man2/send.2.html">send</A></B>(2),
+
+<B><A HREF="../man2/shutdown.2.html">shutdown</A></B>(2),
+
+<B><A HREF="../man2/socketpair.2.html">socketpair</A></B>(2),
+
+<B><A HREF="../man2/write.2.html">write</A></B>(2),
+
+<B><A HREF="../man3/getprotoent.3.html">getprotoent</A></B>(3),
+
+<B><A HREF="../man7/ip.7.html">ip</A></B>(7),
+
+<B><A HREF="../man7/socket.7.html">socket</A></B>(7),
+
+<B><A HREF="../man7/tcp.7.html">tcp</A></B>(7),
+
+<B><A HREF="../man7/udp.7.html">udp</A></B>(7),
+
+<B><A HREF="../man7/unix.7.html">unix</A></B>(7)
+
+<P>
+
+"An Introductory 4.3 BSD Interprocess Communication Tutorial"
+is reprinted in
+<I>UNIX Programmer's Supplementary Documents Volume 1.</I>
+
+<P>
+
+"BSD Interprocess Communication Tutorial"
+is reprinted in
+<I>UNIX Programmer's Supplementary Documents Volume 1.</I>
+
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">NAME</A><DD>
+<DT><A HREF="#lbAC">SYNOPSIS</A><DD>
+<DT><A HREF="#lbAD">DESCRIPTION</A><DD>
+<DT><A HREF="#lbAE">RETURN VALUE</A><DD>
+<DT><A HREF="#lbAF">ERRORS</A><DD>
+<DT><A HREF="#lbAG">CONFORMING TO</A><DD>
+<DT><A HREF="#lbAH">NOTE</A><DD>
+<DT><A HREF="#lbAI">BUGS</A><DD>
+<DT><A HREF="#lbAJ">SEE ALSO</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
+using the manual pages.<BR>
+Time: 02:10:08 GMT, April 20, 2020
+</BODY>
+</HTML>

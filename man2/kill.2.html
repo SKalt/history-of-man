@@ -1,0 +1,170 @@
+<!--
+Copyright (c) 1992 Drew Eckhardt (drew@cs.colorado.edu), March 28, 1992
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of KILL</TITLE>
+</HEAD><BODY>
+<H1>KILL</H1>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2004-06-24<BR><A HREF="#index">Index</A>
+<A HREF="../index.html">Return to Main Contents</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>NAME</H2>
+
+kill - send signal to a process
+<A NAME="lbAC">&nbsp;</A>
+<H2>SYNOPSIS</H2>
+
+<PRE>
+<B>#include &lt;<A HREF="file:///usr/include/sys/types.h">sys/types.h</A>&gt;</B>
+<BR>
+<B>#include &lt;<A HREF="file:///usr/include/signal.h">signal.h</A>&gt;</B>
+
+<B>int kill(pid_t </B><I>pid</I><B>, int </B><I>sig</I><B>);</B>
+</PRE>
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>DESCRIPTION</H2>
+
+The
+<B>kill</B>
+
+system call
+can be used to send any signal to any process group or process.
+<P>
+
+If <I>pid</I> is positive, then signal <I>sig</I> is sent to <I>pid</I>.
+<P>
+
+If <I>pid</I> equals 0, then <I>sig</I> is sent to every process in the
+process group of the current process.
+<P>
+
+If <I>pid</I> equals -1, then <I>sig</I> is sent to every process except
+for process 1 (init), but see below.
+<P>
+
+If <I>pid</I> is less than -1, then <I>sig</I> is sent to every process
+in the process group <I>-pid</I>.
+<P>
+
+If <I>sig</I> is 0, then no signal is sent, but error checking is still
+performed.
+<P>
+For a process to have permission to send a signal
+it must either be privileged (under Linux: have the
+<B>CAP_KILL</B>
+
+capability), or the real or effective
+user ID of the sending process must equal the real or
+saved set-user-ID of the target process.
+In the case of SIGCONT it suffices when the sending and receiving
+processes belong to the same session.
+<A NAME="lbAE">&nbsp;</A>
+<H2>RETURN VALUE</H2>
+
+On success (at least one signal was sent), zero is returned.
+On error, -1 is returned, and
+<I>errno</I>
+
+is set appropriately.
+<A NAME="lbAF">&nbsp;</A>
+<H2>ERRORS</H2>
+
+<DL COMPACT>
+<DT><B>EINVAL</B>
+
+<DD>
+An invalid signal was specified.
+<DT><B>EPERM</B>
+
+<DD>
+The process does not have permission to send the signal
+to any of the target processes.
+<DT><B>ESRCH</B>
+
+<DD>
+The pid or process group does not exist.
+Note that an existing process might be a zombie,
+a process which already committed termination, but
+has not yet been <B>wait()</B>ed for.
+</DL>
+<A NAME="lbAG">&nbsp;</A>
+<H2>NOTES</H2>
+
+It is impossible to send a signal to task number one, the init process, for
+which it has not installed a signal handler.  This is done to assure the
+system is not brought down accidentally.
+<P>
+
+POSIX 1003.1-2001 requires that <I>kill(-1,sig)</I> send <I>sig</I>
+to all processes that the current process may send signals to,
+except possibly for some implementation-defined system processes.
+Linux allows a process to signal itself, but on Linux the call
+<I>kill(-1,sig)</I> does not signal the current process.
+<P>
+
+POSIX 1003.1-2003 requires that if a process sends a signal to itself,
+and that process does not have the signal blocked, and no other thread
+has it unblocked or is waiting for it in <I>sigwait()</I>, at least one
+unblocked signal must be delivered to the sending thread before the
+call of <I>kill()</I> returns.
+<A NAME="lbAH">&nbsp;</A>
+<H2>LINUX HISTORY</H2>
+
+Across different kernel versions, Linux has enforced different rules
+for the permissions required for an unprivileged process
+to send a signal to another process.
+
+
+In kernels 1.0 to 1.2.2, a signal could be sent if the
+effective user ID of the sender matched that of the receiver,
+or the real user ID of the sender matched that of the receiver.
+From kernel 1.2.3 until 1.3.77, a signal could be sent if the
+effective user ID of the sender matched either the real or effective
+user ID of the receiver.
+The current rules, which conform to POSIX 1003.1-2001, were adopted
+in kernel 1.3.78.
+<A NAME="lbAI">&nbsp;</A>
+<H2>CONFORMING TO</H2>
+
+SVr4, SVID, POSIX.1, X/OPEN, BSD 4.3, POSIX 1003.1-2001
+<A NAME="lbAJ">&nbsp;</A>
+<H2>SEE ALSO</H2>
+
+<B><A HREF="../man2/_exit.2.html">_exit</A></B>(2),
+
+<B><A HREF="../man2/killpg.2.html">killpg</A></B>(2),
+
+<B><A HREF="../man2/signal.2.html">signal</A></B>(2),
+
+<B><A HREF="../man2/tkill.2.html">tkill</A></B>(2),
+
+<B><A HREF="../man3/exit.3.html">exit</A></B>(3),
+
+<B><A HREF="../man7/capabilities.7.html">capabilities</A></B>(7),
+
+<B><A HREF="../man7/signal.7.html">signal</A></B>(7)
+
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">NAME</A><DD>
+<DT><A HREF="#lbAC">SYNOPSIS</A><DD>
+<DT><A HREF="#lbAD">DESCRIPTION</A><DD>
+<DT><A HREF="#lbAE">RETURN VALUE</A><DD>
+<DT><A HREF="#lbAF">ERRORS</A><DD>
+<DT><A HREF="#lbAG">NOTES</A><DD>
+<DT><A HREF="#lbAH">LINUX HISTORY</A><DD>
+<DT><A HREF="#lbAI">CONFORMING TO</A><DD>
+<DT><A HREF="#lbAJ">SEE ALSO</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
+using the manual pages.<BR>
+Time: 02:09:58 GMT, April 20, 2020
+</BODY>
+</HTML>

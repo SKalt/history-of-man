@@ -1,0 +1,520 @@
+<!--
+Copyright 1993 Giorgio Ciucci (giorgio@crcc.it)
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of SEMCTL</TITLE>
+</HEAD><BODY>
+<H1>SEMCTL</H1>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2004-06-17<BR><A HREF="#index">Index</A>
+<A HREF="../index.html">Return to Main Contents</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>NAME</H2>
+
+semctl - semaphore control operations
+<A NAME="lbAC">&nbsp;</A>
+<H2>SYNOPSIS</H2>
+
+<PRE>
+<B>#include &lt;<A HREF="file:///usr/include/sys/types.h">sys/types.h</A>&gt;</B>
+<B>#include &lt;<A HREF="file:///usr/include/sys/ipc.h">sys/ipc.h</A>&gt;</B>
+<B>#include &lt;<A HREF="file:///usr/include/sys/sem.h">sys/sem.h</A>&gt;</B>
+
+<B>int semctl(int </B><I>semid</I><B>, int </B><I>semnum</I><B>, int </B><I>cmd</I><B>, ...);</B>
+</PRE>
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>DESCRIPTION</H2>
+
+The function
+<B>semctl</B>
+
+performs the control operation specified by
+<I>cmd</I>
+
+on the semaphore set identified by
+<I>semid</I>,
+
+or on the
+<I>semnum</I>-th
+
+semaphore of that set.
+(Semaphores are numbered starting at 0.)
+<P>
+
+This function has three or four arguments. When there
+are four, the call is
+<B>semctl(</B><I>semid</I><B>,</B><I>semnum</I><B>,</B><I>cmd</I><B>,</B><I>arg</I><B>);</B>
+
+where the fourth argument
+<I>arg</I>
+
+has a type
+<B>union semun</B>
+
+defined as follows:
+<P>
+<PRE>
+#if defined(__GNU_LIBRARY__) &amp;&amp; !defined(_SEM_SEMUN_UNDEFINED)
+/* union semun is defined by including &lt;<A HREF="file:///usr/include/sys/sem.h">sys/sem.h</A>&gt; */
+#else
+/* according to X/OPEN we have to define it ourselves */
+union semun {
+      int val;                  /* value for SETVAL */
+      struct semid_ds *buf;     /* buffer for IPC_STAT, IPC_SET */
+      unsigned short *array;    /* array for GETALL, SETALL */
+                                /* Linux specific part: */
+      struct seminfo *__buf;    /* buffer for IPC_INFO */
+};
+#endif
+</PRE>
+
+<P>
+
+Legal values for
+<I>cmd</I>
+
+are:
+<DL COMPACT>
+<DT><B>IPC_STAT</B>
+
+<DD>
+Copy info from the semaphore set data structure
+into the structure pointed to by
+<I>arg</I><B>.buf</B><I></I>.
+
+The argument
+<I>semnum</I>
+
+is ignored.
+The calling process must have read access privileges on the semaphore set.
+<DT><B>IPC_SET</B>
+
+<DD>
+Write the values of some members of the
+<B>semid_ds</B>
+
+structure pointed to by
+<I>arg</I><B>.buf</B>
+
+to the semaphore set data structure, updating also its
+<B>sem_ctime</B>
+
+member.
+Considered members from the user supplied
+<B>struct semid_ds</B>
+
+pointed to by
+<I>arg</I><B>.buf</B>
+
+are
+<PRE>
+
+<B>        sem_perm.uid
+        sem_perm.gid
+        sem_perm.mode   </B>/* only lowest 9-bits */
+</PRE>
+
+
+<P>
+The effective user-ID of the calling process must be that of the
+super-user, or match the creator or owner of the semaphore set.
+The argument
+<I>semnum</I>
+
+is ignored.
+<DT><B>IPC_RMID</B>
+
+<DD>
+Immediately remove the semaphore set and its data structures
+awakening all waiting processes (with an error return and
+<B>errno</B>
+
+set to
+<B>EIDRM</B>).
+
+The effective user-ID of the calling process must be that of the
+super-user, or match the creator or owner of the semaphore set.
+The argument
+<I>semnum</I>
+
+is ignored.
+<DT><B>GETALL</B>
+
+<DD>
+Return
+<B>semval</B>
+
+for all semaphores of the set into
+<I>arg</I><B>.array</B><I></I>.
+
+The argument
+<I>semnum</I>
+
+is ignored.
+The calling process must have read access privileges on the semaphore set.
+<DT><B>GETNCNT</B>
+
+<DD>
+The system call returns the value of
+<B>semncnt</B>
+
+for the
+<I>semnum</I>-th
+
+semaphore of the set
+(i.e. the number of processes waiting for an increase of
+<B>semval</B>
+
+for the
+<I>semnum</I>-th
+
+semaphore of the set).
+The calling process must have read access privileges on the semaphore set.
+<DT><B>GETPID</B>
+
+<DD>
+The system call returns the value of
+<B>sempid</B>
+
+for the
+<I>semnum</I>-th
+
+semaphore of the set
+(i.e. the pid of the process that executed the last
+<B>semop</B>
+
+call for the
+<I>semnum</I>-th
+
+semaphore of the set).
+The calling process must have read access privileges on the semaphore set.
+<DT><B>GETVAL</B>
+
+<DD>
+The system call returns the value of
+<B>semval</B>
+
+for the
+<I>semnum</I>-th
+
+semaphore of the set.
+The calling process must have read access privileges on the semaphore set.
+<DT><B>GETZCNT</B>
+
+<DD>
+The system call returns the value of
+<B>semzcnt</B>
+
+for the
+<I>semnum</I>-th
+
+semaphore of the set
+(i.e. the number of processes waiting for
+<B>semval</B>
+
+of the
+<I>semnum</I>-th
+
+semaphore of the set to become 0).
+The calling process must have read access privileges on the semaphore set.
+<DT><B>SETALL</B>
+
+<DD>
+Set
+<B>semval</B>
+
+for all semaphores of the set using
+<I>arg</I><B>.array</B><I>,</I>
+
+updating also the
+<B>sem_ctime</B>
+
+member of the
+<B>semid_ds</B>
+
+structure associated to the set.
+Undo entries are cleared for altered semaphores in all processes.
+Processes sleeping on the wait queue are awakened if some
+<B>semval</B>
+
+becomes 0 or increases.
+The argument
+<I>semnum</I>
+
+is ignored.
+The calling process must have alter access privileges on the semaphore set.
+<DT><B>SETVAL</B>
+
+<DD>
+Set the value of
+<B>semval</B>
+
+to
+<I>arg</I><B>.val</B>
+
+for the
+<I>semnum</I>-th
+
+semaphore of the set, updating also the
+<B>sem_ctime</B>
+
+member of the
+<B>semid_ds</B>
+
+structure associated to the set.
+Undo entries are cleared for altered semaphores in all processes.
+Processes sleeping on the wait queue are awakened if
+<B>semval</B>
+
+becomes 0 or increases.
+The calling process must have alter access privileges on the semaphore set.
+</DL>
+<A NAME="lbAE">&nbsp;</A>
+<H2>RETURN VALUE</H2>
+
+On failure
+<B>semctl</B>
+
+returns
+<B>-1</B>
+
+with
+<B>errno</B>
+
+indicating the error.
+Otherwise the system call returns a nonnegative value depending on
+<I>cmd</I>
+
+as follows:
+<DL COMPACT>
+<DT><B>GETNCNT</B>
+
+<DD>
+the value of
+<B>semncnt</B>.
+
+<DT><B>GETPID</B>
+
+<DD>
+the value of
+<B>sempid</B>.
+
+<DT><B>GETVAL</B>
+
+<DD>
+the value of
+<B>semval</B>.
+
+<DT><B>GETZCNT</B>
+
+<DD>
+the value of
+<B>semzcnt</B>.
+
+</DL>
+<P>
+
+All other
+<I>cmd</I>
+
+values return 0 on success.
+<A NAME="lbAF">&nbsp;</A>
+<H2>ERRORS</H2>
+
+On failure,
+<B>errno</B>
+
+will be set to one of the following:
+<DL COMPACT>
+<DT><B>EACCES</B>
+
+<DD>
+The argument
+<I>cmd</I>
+
+has one of the values
+<B>GETALL</B>,
+
+<B>GETPID</B>,
+
+<B>GETVAL</B>,
+
+<B>GETNCNT</B>,
+
+<B>GETZCNT</B>,
+
+<B>IPC_STAT</B>,
+
+<B>SEM_STAT</B>,
+
+<B>SETALL</B>,
+
+or
+<B>SETVAL</B>
+
+and the calling process does not have the required
+permissions on the semaphore set and does not have the
+<B>CAP_IPC_OWNER</B>
+
+capability.
+<DT><B>EFAULT</B>
+
+<DD>
+The address pointed to by
+<I>arg</I><B>.buf</B>
+
+or
+<I>arg</I><B>.array</B>
+
+isn't accessible.
+<DT><B>EIDRM</B>
+
+<DD>
+The semaphore set was removed.
+<DT><B>EINVAL</B>
+
+<DD>
+Invalid value for
+<I>cmd</I>
+
+or
+<I>semid</I>.
+
+<DT><B>EPERM</B>
+
+<DD>
+The argument
+<I>cmd</I>
+
+has value
+<B>IPC_SET</B>
+
+or
+<B>IPC_RMID</B>
+
+but the but the effective user ID of the calling process is not the creator
+(as found in
+<I>sem_perm.cuid</I>)
+
+or the owner
+(as found in
+<I>sem_perm.uid</I>)
+
+of the semaphore set,
+and the process does not have the
+<B>CAP_SYS_ADMIN</B>
+
+capability.
+<DT><B>ERANGE</B>
+
+<DD>
+The argument
+<I>cmd</I>
+
+has value
+<B>SETALL</B>
+
+or
+<B>SETVAL</B>
+
+and the value to which
+<B>semval</B>
+
+has to be set (for some semaphore of the set) is less than 0
+or greater than the implementation value
+<B>SEMVMX</B>.
+
+</DL>
+<A NAME="lbAG">&nbsp;</A>
+<H2>NOTES</H2>
+
+The
+<B>IPC_INFO</B>,
+
+<B>SEM_STAT</B>
+
+and
+<B>SEM_INFO</B>
+
+control calls are used by the
+<B><A HREF="../man8/ipcs.8.html">ipcs</A></B>(8)
+
+program to provide information on allocated resources.
+In the future these can be modified as needed or moved to a proc file system
+interface.
+<P>
+
+Various fields in a <I>struct semid_ds</I> were shorts under Linux 2.2
+and have become longs under Linux 2.4. To take advantage of this,
+a recompilation under glibc-2.1.91 or later should suffice.
+(The kernel distinguishes old and new calls by a IPC_64 flag in
+<I>cmd</I>.)
+
+<P>
+
+The following system limit on semaphore sets affects a
+<B>semctl</B>
+
+call:
+<DL COMPACT>
+<DT><B>SEMVMX</B>
+
+<DD>
+Maximum value for
+<B>semval</B>:
+
+implementation dependent (32767).
+</DL>
+<P>
+
+For greater portability it is best to always call
+<B>semctl</B>
+
+with four arguments.
+<P>
+
+Under Linux, the function
+<B>semctl</B>
+
+is not a system call, but is implemented via the system call
+<B><A HREF="../man2/ipc.2.html">ipc</A></B>(2).
+
+<A NAME="lbAH">&nbsp;</A>
+<H2>CONFORMING TO</H2>
+
+SVr4, SVID.  SVr4 documents more error conditions EINVAL and EOVERFLOW.
+<A NAME="lbAI">&nbsp;</A>
+<H2>SEE ALSO</H2>
+
+<B><A HREF="../man2/ipc.2.html">ipc</A></B>(2),
+
+<B><A HREF="../man2/semget.2.html">semget</A></B>(2),
+
+<B><A HREF="../man2/semop.2.html">semop</A></B>(2),
+
+<B><A HREF="../man5/ipc.5.html">ipc</A></B>(5),
+
+<B><A HREF="../man7/capabilities.7.html">capabilities</A></B>(7)
+
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">NAME</A><DD>
+<DT><A HREF="#lbAC">SYNOPSIS</A><DD>
+<DT><A HREF="#lbAD">DESCRIPTION</A><DD>
+<DT><A HREF="#lbAE">RETURN VALUE</A><DD>
+<DT><A HREF="#lbAF">ERRORS</A><DD>
+<DT><A HREF="#lbAG">NOTES</A><DD>
+<DT><A HREF="#lbAH">CONFORMING TO</A><DD>
+<DT><A HREF="#lbAI">SEE ALSO</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
+using the manual pages.<BR>
+Time: 02:10:04 GMT, April 20, 2020
+</BODY>
+</HTML>

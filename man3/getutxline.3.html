@@ -1,0 +1,259 @@
+<!--
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of GETUTENT</TITLE>
+</HEAD><BODY>
+<H1>GETUTENT</H1>
+Section: Library functions (3)<BR>Updated: 1996-07-25<BR><A HREF="#index">Index</A>
+<A HREF="../index.html">Return to Main Contents</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>NAME</H2>
+
+getutent, getutid, getutline, pututline, setutent, endutent, utmpname - access utmp file entries
+<A NAME="lbAC">&nbsp;</A>
+<H2>SYNOPSIS</H2>
+
+<B>#include &lt;<A HREF="file:///usr/include/utmp.h">utmp.h</A>&gt;</B>
+
+<P>
+<B>struct utmp *getutent(void);</B>
+
+<BR>
+
+<B>struct utmp *getutid(struct utmp *</B><I>ut</I><B>);</B>
+
+<BR>
+
+<B>struct utmp *getutline(struct utmp *</B><I>ut</I><B>);</B>
+
+<P>
+<B>struct utmp *pututline(struct utmp *</B><I>ut</I><B>);</B>
+
+<P>
+<B>void setutent(void);</B>
+
+<BR>
+
+<B>void endutent(void);</B>
+
+<P>
+<B>void utmpname(const char *</B><I>file</I><B>);</B>
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>DESCRIPTION</H2>
+
+<B>utmpname</B>() sets the name of the utmp-format file for the other utmp
+functions to access.  If <B>utmpname</B>() is not used to set the filename
+before the other functions are used, they assume <B>_PATH_UTMP</B>, as
+defined in <I>&lt;<A HREF="file:///usr/include/paths.h">paths.h</A>&gt;</I>.
+<P>
+
+<B>setutent</B>() rewinds the file pointer to the beginning of the utmp file.
+It is generally a Good Idea to call it before any of the other
+functions.
+<P>
+
+<B>endutent</B>() closes the utmp file.  It should be called when the user
+code is done accessing the file with the other functions.
+<P>
+
+<B>getutent</B>() reads a line from the current file position in the utmp
+file.  It returns a pointer to a structure containing the fields of
+the line.
+<P>
+
+<B>getutid</B>() searches forward from the current file position in the utmp
+file based upon <I>ut</I>.  If <I>ut</I>-&gt;ut_type is one of <B>RUN_LVL</B>,
+<B>BOOT_TIME</B>, <B>NEW_TIME</B>, or <B>OLD_TIME</B>, <B>getutid</B>() will
+find the first entry whose <I>ut_type</I> field matches <I>ut</I>-&gt;ut_type.
+If <I>ut</I>-&gt;ut_type is one of <B>INIT_PROCESS</B>, <B>LOGIN_PROCESS</B>,
+<B>USER_PROCESS</B>, or <B>DEAD_PROCESS</B>, <B>getutid</B>() will find the
+first entry whose ut_id field matches <I>ut</I>-&gt;ut_id.
+<P>
+
+<B>getutline</B>() searches forward from the current file position in the
+utmp file.  It scans entries whose ut_type is <B>USER_PROCESS</B>
+or <B>LOGIN_PROCESS</B> and returns the first one whose ut_line field
+matches <I>ut</I>-&gt;ut_line.
+<P>
+
+<B>pututline</B>() writes the utmp structure <I>ut</I> into the utmp file.  It
+uses <B>getutid</B>() to search for the proper place in the file to insert
+the new entry.  If it cannot find an appropriate slot for <I>ut</I>,
+<B>pututline</B>() will append the new entry to the end of the file.
+<A NAME="lbAE">&nbsp;</A>
+<H2>RETURN VALUE</H2>
+
+<B>getutent</B>(), <B>getutid</B>(), <B>getutline</B>() and <B>pututline</B>()
+return a pointer to a <B>struct utmp</B> on success, and NULL on failure.
+This <B>struct utmp</B> is allocated in static storage, and may be
+overwritten by subsequent calls.
+<A NAME="lbAF">&nbsp;</A>
+<H2>REENTRANT VERSIONS</H2>
+
+These above functions are not thread-safe. Glibc adds reentrant versions
+<P>
+<PRE>
+<B>#define _GNU_SOURCE</B>    /* or _SVID_SOURCE or _BSD_SOURCE */
+<B>#include &lt;<A HREF="file:///usr/include/utmp.h">utmp.h</A>&gt;</B>
+
+<B>int getutent_r(struct utmp *</B><I>ubuf</I><B>, struct utmp **</B><I>ubufp</I><B>);</B>
+
+<B>int getutid_r(struct utmp *</B><I>ut</I><B>,</B>
+<B>              struct utmp *</B><I>ubuf</I><B>, struct utmp **</B><I>ubufp</I><B>);</B>
+
+<B>int getutline_r(struct utmp *</B><I>ut</I><B>,</B>
+<B>                struct utmp *</B><I>ubuf</I><B>, struct utmp **</B><I>ubufp</I><B>);</B>
+</PRE>
+
+<P>
+These functions are GNU extensions, analogs of the functions of the
+same name without the _r suffix. The
+<I>ubuf</I>
+
+parameter gives these functions a place to store their result.
+On success they return 0, and a pointer to the result is written in
+*<I>ubufp</I>.
+
+On error these functions return -1.
+<A NAME="lbAG">&nbsp;</A>
+<H2>EXAMPLE</H2>
+
+The following example adds and removes a utmp record, assuming it is run
+from within a pseudo terminal.  For usage in a real application, you
+should check the return values of getpwuid() and ttyname().
+<P>
+
+<PRE>
+#include &lt;<A HREF="file:///usr/include/string.h">string.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/stdlib.h">stdlib.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/pwd.h">pwd.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/utmp.h">utmp.h</A>&gt;
+
+int main(int argc, char *argv[])
+{
+  struct utmp entry;
+
+  system(&quot;echo before adding entry:;who&quot;);
+
+  entry.ut_type=USER_PROCESS;
+  entry.ut_pid=getpid();
+  strcpy(entry.ut_line,ttyname(0)+strlen(&quot;/dev/&quot;));
+  /* only correct for ptys named /dev/tty[pqr][0-9a-z] */
+  strcpy(entry.ut_id,ttyname(0)+strlen(&quot;/dev/tty&quot;));
+  time(&amp;entry.ut_time);
+  strcpy(entry.ut_user,getpwuid(getuid())-&gt;pw_name);
+  memset(entry.ut_host,0,UT_HOSTSIZE);
+  entry.ut_addr=0;
+  setutent();
+  pututline(&amp;entry);
+
+  system(&quot;echo after adding entry:;who&quot;);
+
+  entry.ut_type=DEAD_PROCESS;
+  memset(entry.ut_line,0,UT_LINESIZE);
+  entry.ut_time=0;
+  memset(entry.ut_user,0,UT_NAMESIZE);
+  setutent();
+  pututline(&amp;entry);
+
+  system(&quot;echo after removing entry:;who&quot;);
+
+  endutent();
+  return 0;
+}
+</PRE>
+
+<A NAME="lbAH">&nbsp;</A>
+<H2>FILES</H2>
+
+/var/run/utmp<TT>&nbsp;&nbsp;</TT>database of currently logged-in users<BR>
+<BR>
+
+/var/log/wtmp<TT>&nbsp;&nbsp;</TT>database of past user logins<BR>
+<A NAME="lbAI">&nbsp;</A>
+<H2>CONFORMING TO</H2>
+
+XPG 2, SVID 2, Linux FSSTND 1.2
+<P>
+
+In XPG2 and SVID2  the function <I>pututline()</I> is documented
+to return void, and that is what it does on many systems
+(AIX, HPUX, Linux libc5).
+HPUX introduces a new function <I>_pututline()</I> with the prototype
+given above for <I>pututline()</I> (also found in Linux libc5).
+<P>
+
+All these functions are obsolete now on non-Linux systems.
+POSIX 1003.1-2001, following XPG4.2,
+does not have any of these functions, but instead uses
+<P>
+<B>#include &lt;<A HREF="file:///usr/include/utmpx.h">utmpx.h</A>&gt;</B>
+
+<P>
+<B>struct utmpx *getutxent(void);</B>
+
+<BR>
+
+<B>struct utmpx *getutxid(const struct utmpx *);</B>
+
+<BR>
+
+<B>struct utmpx *getutxline(const struct utmpx *);</B>
+
+<BR>
+
+<B>struct utmpx *pututxline(const struct utmpx *);</B>
+
+<BR>
+
+<B>void setutxent(void);</B>
+
+<BR>
+
+<B>void endutxent(void);</B>
+
+<P>
+The <I>utmpx</I> structure is a superset of the <I>utmp</I> structure,
+with additional fields, and larger versions of the existing fields.
+The corresponding files are often
+<I>/var/*/utmpx</I>
+
+and
+<I>/var/*/wtmpx</I>.
+
+<P>
+
+Linux glibc on the other hand does not use <I>utmpx</I> since its
+<I>utmp</I> structure is already large enough. The functions <I>getutxent</I>
+etc. are aliases for <I>getutent</I> etc.
+<A NAME="lbAJ">&nbsp;</A>
+<H2>SEE ALSO</H2>
+
+<B><A HREF="../man5/utmp.5.html">utmp</A></B>(5)
+
+
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">NAME</A><DD>
+<DT><A HREF="#lbAC">SYNOPSIS</A><DD>
+<DT><A HREF="#lbAD">DESCRIPTION</A><DD>
+<DT><A HREF="#lbAE">RETURN VALUE</A><DD>
+<DT><A HREF="#lbAF">REENTRANT VERSIONS</A><DD>
+<DT><A HREF="#lbAG">EXAMPLE</A><DD>
+<DT><A HREF="#lbAH">FILES</A><DD>
+<DT><A HREF="#lbAI">CONFORMING TO</A><DD>
+<DT><A HREF="#lbAJ">SEE ALSO</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
+using the manual pages.<BR>
+Time: 02:10:41 GMT, April 20, 2020
+</BODY>
+</HTML>

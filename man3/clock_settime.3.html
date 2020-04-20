@@ -1,0 +1,286 @@
+<!--
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of CLOCK_GETRES</TITLE>
+</HEAD><BODY>
+<H1>CLOCK_GETRES</H1>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2003-08-24<BR><A HREF="#index">Index</A>
+<A HREF="../index.html">Return to Main Contents</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>NAME</H2>
+
+clock_getres, clock_gettime, clock_settime - clock and time functions
+<A NAME="lbAC">&nbsp;</A>
+<H2>SYNOPSIS</H2>
+
+<B>#include &lt;<A HREF="file:///usr/include/time.h">time.h</A>&gt;</B>
+
+<P>
+<B>int clock_getres(clockid_t </B><I>clk_id</I><B>, struct timespec *</B><I>res</I><B>);</B>
+
+<BR>
+
+<B>int clock_gettime(clockid_t </B><I>clk_id</I><B>, struct timespec *</B><I>tp</I><B>);</B>
+
+<BR>
+
+<B>int clock_settime(clockid_t </B><I>clk_id</I><B>, const struct timespec *</B><I>tp</I><B>);</B>
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>DESCRIPTION</H2>
+
+The function
+<B>clock_getres</B>()
+
+finds the resolution (precision) of the specified clock
+<I>clk_id</I>,
+
+and, if
+<I>res</I>
+
+is non-NULL, stores it in the struct timespec pointed to by
+<I>res</I>.
+
+The resolution of clocks depends on the implementation and cannot be
+configured by a particular process.
+If the time value pointed to by the argument
+<I>tp</I>
+
+of
+<B>clock_settime</B>()
+
+is not a multiple of
+<I>res</I>,
+
+then it is truncated to a multiple of
+<I>res</I>.
+
+<P>
+
+The functions
+<B>clock_gettime</B>()
+
+and
+<B>clock_settime</B>()
+
+retrieve and set the time of the specified clock
+<I>clk_id</I>.
+
+<P>
+
+The
+<I>res</I>
+
+and
+<I>tp</I>
+
+arguments are
+<B>timespec</B>
+
+structs, as specified  in
+<I>&lt;<A HREF="file:///usr/include/time.h">time.h</A>&gt;</I>:
+
+<P>
+<PRE>
+struct timespec {
+time_t   tv_sec;        /* seconds */
+long     tv_nsec;       /* nanoseconds */
+};
+</PRE>
+
+<P>
+
+The    
+<I>clk_id</I>
+
+argument is the identifier of the particular clock on which to act.
+A clock may be system-wide and hence visible for all processes, or
+per-process if it measures time only within a single process.
+<P>
+
+All implementations support the system-wide realtime clock,
+which is identified by
+<B>CLOCK_REALTIME</B>.
+
+Its time represents seconds and nanoseconds since the Epoch.
+When its time is changed, timers for a relative interval are
+unaffected, but timers for an absolute point in time are affected.
+<P>
+
+More clocks may be implemented. The interpretation of the
+corresponding time values and the effect on timers is unspecified.
+<P>
+
+Sufficiently recent versions of GNU libc and the Linux kernel
+support the following clocks:
+<DL COMPACT>
+<DT><B>CLOCK_REALTIME</B>
+
+<DD>
+System-wide realtime clock.
+Setting this clock requires appropriate privileges.
+<DT><B>CLOCK_MONOTONIC</B>
+
+<DD>
+Clock that cannot be set and represents monotonic time since
+some unspecified starting point.
+<DT><B>CLOCK_PROCESS_CPUTIME_ID</B>
+
+<DD>
+High-resolution per-process timer from the CPU.
+<DT><B>CLOCK_THREAD_CPUTIME_ID</B>
+
+<DD>
+Thread-specific CPU-time clock.
+</DL>
+<A NAME="lbAE">&nbsp;</A>
+<H2>RETURN VALUE</H2>
+
+<B>clock_gettime</B>(), <B>clock_settime</B>()
+
+and
+<B>clock_getres</B>()
+
+return 0 for success, or -1 for failure (in which case
+<I>errno</I>
+
+is set appropriately).
+<A NAME="lbAF">&nbsp;</A>
+<H2>ERRORS</H2>
+
+<DL COMPACT>
+<DT><B>EFAULT</B>
+
+<DD>
+<I>tp</I>
+
+points outside the accessible address space.
+<DT><B>EINVAL</B>
+
+<DD>
+The 
+<I>clk_id</I>
+
+specified is not supported on this system.
+<DT><B>EPERM</B>
+
+<DD>
+<B>clock_settime</B>()
+
+does not have permission to set the clock indicated.
+</DL>
+<A NAME="lbAG">&nbsp;</A>
+<H2>NOTE</H2>
+
+Most systems require the program be linked with the librt
+library to use these functions.
+<A NAME="lbAH">&nbsp;</A>
+<H2>NOTE for SMP systems</H2>
+
+The
+<B>CLOCK_PROCESS_CPUTIME_ID</B>
+
+and
+<B>CLOCK_THREAD_CPUTIME_ID</B>
+
+clocks are realized on many platforms using timers from the CPUs
+(TSC on i386, AR.ITC on Itanium).
+These registers may differ between CPUs and as a consequence
+these clocks may return
+<B>bogus results</B>
+
+if a process is migrated to another CPU.
+<P>
+
+If the CPUs in an SMP system have different clock sources then
+there is no way to maintain a correlation between the timer registers since
+each CPU will run at a slightly different frequency. If that is the case then
+<I>clock_getcpuclockid(0)</I>
+
+will return
+<B>ENOENT</B>
+
+to signify this condition. The two clocks will then only be useful if it
+can be ensured that a process stays on a certain CPU.
+<P>
+
+The processors in an SMP system do not start all at exactly the same
+time and therefore the timer registers are typically running at an offset.
+Some architectures include code that attempts to limit these offsets on bootup.
+However, the code cannot guarantee to accurately tune the offsets.
+Glibc contains no provisions to deal with these offsets (unlike the Linux
+Kernel). Typically these offsets are small and therefore the effects may be
+negligible in most cases.
+<A NAME="lbAI">&nbsp;</A>
+<H2>AVAILABILITY</H2>
+
+On POSIX systems on which these functions are available, the symbol
+<B>_POSIX_TIMERS</B>
+
+is defined in &lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt; to a value greater than 0.
+The symbols
+<B>_POSIX_MONOTONIC_CLOCK</B>,
+
+<B>_POSIX_CPUTIME</B>,
+
+<B>_POSIX_THREAD_CPUTIME</B>
+
+indicate that
+<B>CLOCK_MONOTONIC</B>,
+
+<B>CLOCK_PROCESS_CPUTIME_ID</B>,
+
+<B>CLOCK_THREAD_CPUTIME_ID</B>
+
+are available.
+(See also
+<B><A HREF="../man3/sysconf.3.html">sysconf</A></B>(3).)
+
+<A NAME="lbAJ">&nbsp;</A>
+<H2>CONFORMING TO</H2>
+
+SUSv2, POSIX 1003.1-2001.
+<A NAME="lbAK">&nbsp;</A>
+<H2>SEE ALSO</H2>
+
+<B><A HREF="../man1/date.1.html">date</A></B>(1),
+
+<B><A HREF="../man2/adjtimex.2.html">adjtimex</A></B>(2),
+
+<B><A HREF="../man2/gettimeofday.2.html">gettimeofday</A></B>(2),
+
+<B><A HREF="../man2/settimeofday.2.html">settimeofday</A></B>(2),
+
+<B><A HREF="../man2/time.2.html">time</A></B>(2),
+
+<B><A HREF="../man3/ctime.3.html">ctime</A></B>(3),
+
+<B><A HREF="../man3/ftime.3.html">ftime</A></B>(3),
+
+<B><A HREF="../man3/sysconf.3.html">sysconf</A></B>(3)
+
+
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">NAME</A><DD>
+<DT><A HREF="#lbAC">SYNOPSIS</A><DD>
+<DT><A HREF="#lbAD">DESCRIPTION</A><DD>
+<DT><A HREF="#lbAE">RETURN VALUE</A><DD>
+<DT><A HREF="#lbAF">ERRORS</A><DD>
+<DT><A HREF="#lbAG">NOTE</A><DD>
+<DT><A HREF="#lbAH">NOTE for SMP systems</A><DD>
+<DT><A HREF="#lbAI">AVAILABILITY</A><DD>
+<DT><A HREF="#lbAJ">CONFORMING TO</A><DD>
+<DT><A HREF="#lbAK">SEE ALSO</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
+using the manual pages.<BR>
+Time: 02:10:20 GMT, April 20, 2020
+</BODY>
+</HTML>

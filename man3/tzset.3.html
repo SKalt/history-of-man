@@ -1,0 +1,224 @@
+<!--
+Copyright 1993 David Metcalfe (david@prism.demon.co.uk)
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of TZSET</TITLE>
+</HEAD><BODY>
+<H1>TZSET</H1>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2001-11-13<BR><A HREF="#index">Index</A>
+<A HREF="../index.html">Return to Main Contents</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>NAME</H2>
+
+tzset, tzname, timezone, daylight - initialize time conversion information
+<A NAME="lbAC">&nbsp;</A>
+<H2>SYNOPSIS</H2>
+
+<PRE>
+<B>#include &lt;<A HREF="file:///usr/include/time.h">time.h</A>&gt;</B>
+
+<B>void tzset (void);</B>
+
+<B>extern char *</B><I>tzname</I><B>[2];</B>
+<B>extern long </B><I>timezone</I><B>;</B>
+<B>extern int </B><I>daylight</I><B>;</B>
+</PRE>
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>DESCRIPTION</H2>
+
+The <B>tzset()</B> function initializes the <I>tzname</I> variable from the
+TZ environment variable.  This function is automatically called by the
+other time conversion functions that depend on the time zone.
+In a SysV-like environment it will also set the variables <I>timezone</I>
+(seconds West of GMT) and <I>daylight</I> (0 if this time zone does not
+have any daylight savings time rules, nonzero if there is a time during
+the year when daylight savings time applies).
+<P>
+
+If the TZ variable does not appear in the environment, the <I>tzname</I>
+variable is initialized with the best approximation of local wall clock
+time, as specified by the
+<B><A HREF="../man5/tzfile.5.html">tzfile</A></B>(5)-format
+
+file <I>localtime</I>
+found in the system timezone directory (see below).
+(One also often sees
+<I>/etc/localtime</I>
+
+used here, a symlink to the right file in the system timezone directory.)
+<P>
+
+If the TZ variable does appear in the environment but its value is NULL
+or its value cannot be interpreted using any of the formats specified
+below, Coordinated Universal Time (UTC) is used.
+<P>
+
+The value of TZ can be one of three formats.  The first format is used
+when there is no daylight saving time in the local time zone:
+<P>
+<DL COMPACT><DT><DD>
+<I>std offset</I>
+
+</DL>
+
+<P>
+The <I>std</I> string specifies the name of the time zone and must be 
+three or more alphabetic characters.  The <I>offset</I> string immediately
+follows <I>std</I> and specifies the time value to be added to the local
+time to get Coordinated Universal Time (UTC).  The <I>offset</I> is positive
+if the local time zone is west of the Prime Meridian and negative if it is
+east.  The hour must be between 0 and 24, and the minutes and seconds
+0 and 59.
+<P>
+
+The second format is used when there is daylight saving time:
+<P>
+<DL COMPACT><DT><DD>
+<I>std offset dst [offset],start[/time],end[/time]</I>
+
+</DL>
+
+<P>
+There are no spaces in the specification.  The initial <I>std</I> and 
+<I>offset</I> specify the standard time zone, as described above.  The 
+<I>dst</I> string and <I>offset</I> specify the name and offset for the 
+corresponding daylight savings time zone.  If the offset is omitted, 
+it defaults  to one hour ahead of standard time.
+<P>
+
+The <I>start</I> field specifies when daylight savings time goes into
+effect and the <I>end</I> field specifies when the change is made back to
+standard time.  These fields may have the following formats:
+<DL COMPACT>
+<DT>J<I>n</I><DD>
+This specifies the Julian day with <I>n</I> between 1 and 365.  February
+29 is never counted even in leap years.
+<DT><I>n</I>
+
+<DD>
+This specifies the Julian day with <I>n</I> between 1 and 365.  February
+29 is counted in leap years.
+<DT>M<I>m</I>.<I>w</I>.<I>d</I><DD>
+This specifies day <I>d</I> (0 &lt;= <I>d</I> &lt;= 6) of week <I>w</I> 
+(1 &lt;= <I>w</I> &lt;= 5) of month <I>m</I> (1 &lt;= <I>m</I> &lt;= 12).  Week 1 is
+the first week in which day <I>d</I> occurs and week 5 is the last week 
+in which day <I>d</I> occurs.  Day 0 is a Sunday.
+</DL>
+<P>
+
+The <I>time</I> fields specify when, in the local time currently in effect,
+the change to the other time occurs.  If omitted, the default is 02:00:00.
+<P>
+
+The third format specifies that the time zone information should be read
+from a file:
+<P>
+<DL COMPACT><DT><DD>
+:[filespec]
+</DL>
+
+<P>
+If the file specification <I>filespec</I> is omitted, the time zone
+information is read from the file
+<I>localtime</I>
+
+in the system timezone directory, which nowadays usually is
+<I>/usr/share/zoneinfo</I>.
+
+This file is in
+<B><A HREF="../man5/tzfile.5.html">tzfile</A></B>(5)
+
+format.  If <I>filespec</I> is given, it specifies another
+<B><A HREF="../man5/tzfile.5.html">tzfile</A></B>(5)-format
+
+file to read the time zone information from.  If 
+<I>filespec</I> does not begin with a `/', the file specification is 
+relative to the system timezone directory.
+<A NAME="lbAE">&nbsp;</A>
+<H2>FILES</H2>
+
+The system time zone directory used depends on the (g)libc version.
+Libc4 and libc5 use
+<I>/usr/lib/zoneinfo</I>,
+
+and, since libc-5.4.6,
+when this doesn't work, will try
+<I>/usr/share/zoneinfo</I>.
+
+Glibc2 will use the environment variable TZDIR, when that exists.
+Its default depends on how it was installed, but normally is
+<I>/usr/share/zoneinfo</I>.
+
+<P>
+
+This timezone directory contains the files
+<PRE>
+localtime      local time zone file
+posixrules     rules for POSIX-style TZ's
+</PRE>
+
+<P>
+
+Often
+<I>/etc/localtime</I>
+
+is a symlink to the file
+<I>localtime</I>
+
+or to the correct time zone file in the system time zone directory.
+<A NAME="lbAF">&nbsp;</A>
+<H2>CONFORMING TO</H2>
+
+SVID 3, POSIX, BSD 4.3
+<A NAME="lbAG">&nbsp;</A>
+<H2>NOTES</H2>
+
+Note that the variable <I>daylight</I> does not indicate that daylight
+savings time applies right now. It used to give the number of some
+algorithm (see the variable <I>tz_dsttime</I> in
+<B><A HREF="../man2/gettimeofday.2.html">gettimeofday</A></B>(2)).
+
+It has been obsolete for many years but is required by SUSv2.
+<P>
+
+BSD4.3 had a routine <I>char *timezone(zone,dst)</I> that returned the
+name of the time zone corresponding to its first argument (minutes
+West of GMT). If the second argument was 0, the standard name was used,
+otherwise the daylight savings time version.
+<A NAME="lbAH">&nbsp;</A>
+<H2>SEE ALSO</H2>
+
+<B><A HREF="../man1/date.1.html">date</A></B>(1),
+
+<B><A HREF="../man2/gettimeofday.2.html">gettimeofday</A></B>(2),
+
+<B><A HREF="../man2/time.2.html">time</A></B>(2),
+
+<B><A HREF="../man3/ctime.3.html">ctime</A></B>(3),
+
+<B><A HREF="../man3/getenv.3.html">getenv</A></B>(3),
+
+<B><A HREF="../man5/tzfile.5.html">tzfile</A></B>(5)
+
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">NAME</A><DD>
+<DT><A HREF="#lbAC">SYNOPSIS</A><DD>
+<DT><A HREF="#lbAD">DESCRIPTION</A><DD>
+<DT><A HREF="#lbAE">FILES</A><DD>
+<DT><A HREF="#lbAF">CONFORMING TO</A><DD>
+<DT><A HREF="#lbAG">NOTES</A><DD>
+<DT><A HREF="#lbAH">SEE ALSO</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
+using the manual pages.<BR>
+Time: 02:11:12 GMT, April 20, 2020
+</BODY>
+</HTML>

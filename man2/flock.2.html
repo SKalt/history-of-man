@@ -1,0 +1,254 @@
+<!--
+Copyright 1993 Rickard E. Faith (faith@cs.unc.edu) and 
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of FLOCK</TITLE>
+</HEAD><BODY>
+<H1>FLOCK</H1>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2002-04-24<BR><A HREF="#index">Index</A>
+<A HREF="../index.html">Return to Main Contents</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>NAME</H2>
+
+flock - apply or remove an advisory lock on an open file
+<A NAME="lbAC">&nbsp;</A>
+<H2>SYNOPSIS</H2>
+
+<B>#include &lt;<A HREF="file:///usr/include/sys/file.h">sys/file.h</A>&gt;</B>
+
+<P>
+<B>int flock(int </B>fd<B>, int </B>operation<B>);</B>
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>DESCRIPTION</H2>
+
+Apply or remove an advisory lock on the open file specified by
+<I>fd</I>.
+
+The parameter
+<I>operation</I>
+
+is one of the following:
+<DL COMPACT><DT><DD>
+<P>
+<DL COMPACT>
+<DT><B>LOCK_SH</B>
+
+<DD>
+Place a shared lock.
+More than one process may hold a shared lock for a given file
+at a given time.
+<DT><B>LOCK_EX</B>
+
+<DD>
+Place an exclusive lock.
+Only one process may hold an exclusive lock for a given
+file at a given time.
+<DT><B>LOCK_UN</B>
+
+<DD>
+Remove an existing lock held by this process.
+<P>
+</DL>
+</DL>
+
+<P>
+A call to
+<B>flock</B>()
+
+may block if an incompatible lock is held by another process.
+To make a non-blocking request, include
+<B>LOCK_NB</B>
+
+(by
+<I>OR</I>ing)
+
+with any of the above operations.
+<P>
+A single file may not simultaneously have both shared and exclusive locks.
+<P>
+Locks created by
+<B>flock</B>()
+
+are associated with a file, or, more precisely, an open file table entry.
+This means that duplicate file descriptors (created by, for example,
+<B><A HREF="../man2/fork.2.html">fork</A></B>(2) or <B><A HREF="../man2/dup.2.html">dup</A></B>(2))
+
+refer to the same lock, and this lock may be modified
+or released using any of these descriptors.
+Furthermore, the lock is released either by an explicit
+<B>LOCK_UN</B>
+
+operation on any of these duplicate descriptors, or when all
+such descriptors have been closed.
+<P>
+A process may only hold one type of lock (shared or exclusive)
+on a file.
+Subsequent
+<B>flock</B>()
+
+calls on an already locked file will convert an existing lock to the new
+lock mode.
+<P>
+Locks created by
+<B>flock</B>()
+
+are preserved across an
+<B><A HREF="../man2/execve.2.html">execve</A></B>(2).
+
+<P>
+A shared or exclusive lock can be placed on a file regardless of the
+mode in which the file was opened.
+<A NAME="lbAE">&nbsp;</A>
+<H2>RETURN VALUE</H2>
+
+On success, zero is returned.  On error, -1 is returned, and
+<I>errno</I>
+
+is set appropriately.
+<A NAME="lbAF">&nbsp;</A>
+<H2>ERRORS</H2>
+
+<DL COMPACT>
+<DT><B>EBADF</B>
+
+<DD>
+<I>fd</I>
+
+is not a not an open file descriptor.
+<DT><B>EINTR</B>
+
+<DD>
+While waiting to acquire a lock, the call was interrupted by
+delivery of a signal caught by a handler.
+<DT><B>EINVAL</B>
+
+<DD>
+<I>operation</I>
+
+is invalid.
+<DT><B>ENOLCK</B>
+
+<DD>
+The kernel ran out of memory for allocating lock records.
+<DT><B>EWOULDBLOCK</B>
+
+<DD>
+The file is locked and the
+<B>LOCK_NB</B>
+
+flag was selected.
+</DL>
+<A NAME="lbAG">&nbsp;</A>
+<H2>CONFORMING TO</H2>
+
+4.4BSD (the
+<B><A HREF="../man2/flock.2.html">flock</A></B>(2)
+
+call first appeared in 4.2BSD).
+A version of
+<B><A HREF="../man2/flock.2.html">flock</A></B>(2),
+
+possibly implemented in terms of
+<B><A HREF="../man2/fcntl.2.html">fcntl</A></B>(2),
+
+appears on most Unices.
+<A NAME="lbAH">&nbsp;</A>
+<H2>NOTES</H2>
+
+<B><A HREF="../man2/flock.2.html">flock</A></B>(2)
+
+does not lock files over NFS.  Use
+<B><A HREF="../man2/fcntl.2.html">fcntl</A></B>(2)
+
+instead: that does work over NFS, given a sufficiently recent version of
+Linux and a server which supports locking.
+<P>
+
+Since kernel 2.0,
+<B><A HREF="../man2/flock.2.html">flock</A></B>(2)
+
+is implemented as a system call in its own right rather
+than being emulated in the GNU C library as a call to
+<B><A HREF="../man2/fcntl.2.html">fcntl</A></B>(2).
+
+This yields true BSD semantics:
+there is no interaction between the types of lock
+placed by
+<B><A HREF="../man2/flock.2.html">flock</A></B>(2)
+
+and
+<B><A HREF="../man2/fcntl.2.html">fcntl</A></B>(2),
+
+and
+<B><A HREF="../man2/flock.2.html">flock</A></B>(2)
+
+does not detect deadlock.
+<P>
+
+<B><A HREF="../man2/flock.2.html">flock</A></B>(2)
+
+places advisory locks only; given suitable permissions on a file,
+a process is free to ignore the use of
+<B><A HREF="../man2/flock.2.html">flock</A></B>(2)
+
+and perform I/O on the file.
+<P>
+
+<B><A HREF="../man2/flock.2.html">flock</A></B>(2)
+
+and
+<B><A HREF="../man2/fcntl.2.html">fcntl</A></B>(2)
+
+locks have different semantics with respect to forked processes and
+<B><A HREF="../man2/dup.2.html">dup</A></B>(2).
+
+<A NAME="lbAI">&nbsp;</A>
+<H2>SEE ALSO</H2>
+
+<B><A HREF="../man2/close.2.html">close</A></B>(2),
+
+<B><A HREF="../man2/dup.2.html">dup</A></B>(2),
+
+<B><A HREF="../man2/execve.2.html">execve</A></B>(2),
+
+<B><A HREF="../man2/fcntl.2.html">fcntl</A></B>(2),
+
+<B><A HREF="../man2/fork.2.html">fork</A></B>(2),
+
+<B><A HREF="../man2/open.2.html">open</A></B>(2),
+
+<B><A HREF="../man3/lockf.3.html">lockf</A></B>(3)
+
+<P>
+There are also
+<I>locks.txt</I>
+
+and
+<I>mandatory.txt</I>
+
+in
+<I>/usr/src/linux/Documentation</I>.
+
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">NAME</A><DD>
+<DT><A HREF="#lbAC">SYNOPSIS</A><DD>
+<DT><A HREF="#lbAD">DESCRIPTION</A><DD>
+<DT><A HREF="#lbAE">RETURN VALUE</A><DD>
+<DT><A HREF="#lbAF">ERRORS</A><DD>
+<DT><A HREF="#lbAG">CONFORMING TO</A><DD>
+<DT><A HREF="#lbAH">NOTES</A><DD>
+<DT><A HREF="#lbAI">SEE ALSO</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
+using the manual pages.<BR>
+Time: 02:09:55 GMT, April 20, 2020
+</BODY>
+</HTML>

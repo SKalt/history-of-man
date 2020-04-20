@@ -1,0 +1,1340 @@
+<!--
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of PRINTF</TITLE>
+</HEAD><BODY>
+<H1>PRINTF</H1>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2000-10-16<BR><A HREF="#index">Index</A>
+<A HREF="../index.html">Return to Main Contents</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>NAME</H2>
+
+printf, fprintf, sprintf, snprintf, vprintf, vfprintf, vsprintf, vsnprintf - formatted output conversion
+<A NAME="lbAC">&nbsp;</A>
+<H2>SYNOPSIS</H2>
+
+<B>#include &lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;</B>
+
+<P>
+<B>int printf(const char *</B><I>format</I><B>, ...);</B>
+
+<BR>
+
+<B>int fprintf(FILE *</B><I>stream</I><B>, const char *</B><I>format</I><B>, ...);</B>
+
+<BR>
+
+<B>int sprintf(char *</B><I>str</I><B>, const char *</B><I>format</I><B>, ...);</B>
+
+<BR>
+
+<B>int snprintf(char *</B><I>str</I><B>, size_t </B><I>size</I><B>, const char *</B><I>format</I><B>, ...);</B>
+
+<P>
+<B>#include &lt;<A HREF="file:///usr/include/stdarg.h">stdarg.h</A>&gt;</B>
+
+<P>
+<B>int vprintf(const char *</B><I>format</I><B>, va_list </B><I>ap</I><B>);</B>
+
+<BR>
+
+<B>int vfprintf(FILE *</B><I>stream</I><B>, const char *</B><I>format</I><B>, va_list </B><I>ap</I><B>);</B>
+
+<BR>
+
+<B>int vsprintf(char *</B><I>str</I><B>, const char *</B><I>format</I><B>, va_list </B><I>ap</I><B>);</B>
+
+<BR>
+
+<B>int vsnprintf(char *</B><I>str</I><B>, size_t </B><I>size</I><B>, const char *</B><I>format</I><B>, va_list </B><I>ap</I><B>);</B>
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>DESCRIPTION</H2>
+
+The functions in the
+<B>printf</B>
+
+family produce output according to a
+<I>format</I>
+
+as described below. The functions
+<B>printf</B>
+
+and
+<B>vprintf</B>
+
+write output to
+<I>stdout</I>,
+
+the standard output stream;
+<B>fprintf</B>
+
+and
+<B>vfprintf</B>
+
+write output to the given output
+<I>stream</I>;
+
+<B>sprintf</B>,
+
+<B>snprintf</B>,
+
+<B>vsprintf</B>
+
+and
+<B>vsnprintf</B>
+
+write to the character string
+<I>str</I>.
+
+<P>
+
+The functions
+<B>vprintf</B>,
+
+<B>vfprintf</B>,
+
+<B>vsprintf</B>,
+
+<B>vsnprintf</B>
+
+are equivalent to the functions
+<B>printf</B>,
+
+<B>fprintf</B>,
+
+<B>sprintf</B>,
+
+<B>snprintf</B>,
+
+respectively, except that they are called with a va_list instead
+of a variable number of arguments. These functions do not call the
+<I>va_end</I>
+
+macro. Consequently, the value of
+<I>ap</I>
+
+is undefined after the call. The application should call
+<I>va_end(ap)</I>
+
+itself afterwards.
+<P>
+
+These eight functions write the output under the control of a
+<I>format</I>
+
+string that specifies how subsequent arguments (or arguments accessed via
+the variable-length argument facilities of
+<B><A HREF="../man3/stdarg.3.html">stdarg</A></B>(3))
+
+are converted for output.
+<A NAME="lbAE">&nbsp;</A>
+<H3>Return value</H3>
+
+Upon successful return, these functions return the number of characters
+printed (not including the trailing '\0' used to end output to strings).
+The functions
+<B>snprintf</B> and <B>vsnprintf</B>
+
+do not write more than
+<I>size</I>
+
+bytes (including the trailing '\0').
+If the output was truncated due to this limit then the return value
+is the number of characters (not including the trailing '\0')
+which would have been written to the final string if enough space
+had been available. Thus, a return value of
+<I>size</I>
+
+or more means that the output was truncated. (See also below
+under NOTES.)
+If an output error is encountered, a negative value is returned.
+<A NAME="lbAF">&nbsp;</A>
+<H3>Format of the format string</H3>
+
+The format string is a character string, beginning and ending
+in its initial shift state, if any.
+The format string is composed of zero or more directives: ordinary
+characters (not
+<B>%</B>),
+
+which are copied unchanged to the output stream;
+and conversion specifications, each of which results in fetching zero or
+more subsequent arguments.  Each conversion specification is introduced by
+the character
+<B>%</B>,
+
+and ends with a
+<I>conversion specifier</I>.
+
+In between there may be (in this order) zero or more
+<I>flags</I>,
+
+an optional minimum
+<I>field width</I>,
+
+an optional
+<I>precision</I>
+
+and an optional
+<I>length modifier</I>.
+
+<P>
+The arguments must correspond properly (after type promotion) with the
+conversion specifier. By default, the arguments are used in the order
+given, where each `*' and each conversion specifier asks for the next
+argument (and it is an error if insufficiently many arguments are given).
+One can also specify explicitly which argument is taken,
+at each place where an argument is required, by writing `%m$' instead
+of `%' and `*m$' instead of `*', where the decimal integer m denotes
+the position in the argument list of the desired argument, indexed starting
+from 1. Thus,
+<DL COMPACT><DT><DD>
+<PRE>
+        printf(&quot;%*d&quot;, width, num);
+</PRE>
+
+</DL>
+
+and
+<DL COMPACT><DT><DD>
+<PRE>
+        printf(&quot;%2$*1$d&quot;, width, num);
+</PRE>
+
+</DL>
+
+are equivalent. The second style allows repeated references to the
+same argument. The C99 standard does not include the style using `$',
+which comes from the Single Unix Specification.  If the style using
+`$' is used, it must be used throughout for all conversions taking an
+argument and all width and precision arguments, but it may be mixed
+with `%%' formats which do not consume an argument.  There may be no
+gaps in the numbers of arguments specified using `$'; for example, if
+arguments 1 and 3 are specified, argument 2 must also be specified
+somewhere in the format string.
+<P>
+For some numeric conversions a radix character (`decimal point') or
+thousands' grouping character is used. The actual character used
+depends on the LC_NUMERIC part of the locale. The POSIX locale
+uses `.' as radix character, and does not have a grouping character.
+Thus,
+<DL COMPACT><DT><DD>
+<PRE>
+        printf(&quot;%'.2f&quot;, 1234567.89);
+</PRE>
+
+</DL>
+
+results in `1234567.89' in the POSIX locale, in `1234567,89' in the
+nl_NL locale, and in `1.234.567,89' in the da_DK locale.
+<A NAME="lbAG">&nbsp;</A>
+<H3>The flag characters</H3>
+
+The character % is followed by zero or more of the following flags:
+<DL COMPACT>
+<DT><B>#</B>
+
+<DD>
+The value should be converted to an ``alternate form''.
+For
+<B>o</B>
+
+conversions, the first character of the output string is made zero
+(by prefixing a 0 if it was not zero already).
+For
+<B>x</B>
+
+and
+<B>X</B>
+
+conversions, a non-zero result has the string `0x' (or `0X' for
+<B>X</B>
+
+conversions) prepended to it.  For
+<B>a</B>,
+
+<B>A</B>,
+
+<B>e</B>,
+
+<B>E</B>,
+
+<B>f</B>,
+
+<B>F</B>,
+
+<B>g</B>,
+
+and
+<B>G</B>
+
+conversions, the result will always contain a decimal point, even if no
+digits follow it (normally, a decimal point appears in the results of those
+conversions only if a digit follows).  For
+<B>g</B>
+
+and
+<B>G</B>
+
+conversions, trailing zeros are not removed from the result as they would
+otherwise be.
+For other conversions, the result is undefined.
+<DT><B>0</B>
+
+<DD>
+The value should be zero padded.  For
+<B>d</B>,
+
+<B>i</B>,
+
+<B>o</B>,
+
+<B>u</B>,
+
+<B>x</B>,
+
+<B>X</B>,
+
+<B>a</B>,
+
+<B>A</B>,
+
+<B>e</B>,
+
+<B>E</B>,
+
+<B>f</B>,
+
+<B>F</B>,
+
+<B>g</B>,
+
+and
+<B>G</B>
+
+conversions, the converted value is padded on the left with zeros rather
+than blanks.
+If the
+<B>0</B>
+
+and
+<B>-</B>
+
+flags both appear, the
+<B>0</B>
+
+flag is ignored.
+If a precision is given with a numeric conversion
+<B></B>(<B>d</B>,
+
+<B>i</B>,
+
+<B>o</B>,
+
+<B>u</B>,
+
+<B>x</B>,
+
+and
+<B>X</B>),
+
+the
+<B>0</B>
+
+flag is ignored.
+For other conversions, the behavior is undefined.
+<DT><B>-</B>
+
+<DD>
+The converted value is to be left adjusted on the field boundary.
+(The default is right justification.) Except for
+<B>n</B>
+
+conversions, the converted value is padded on the right with blanks, rather
+than on the left with blanks or zeros.  A
+<B>-</B>
+
+overrides a
+<B>0</B>
+
+if both are given.
+<DT><B>' '</B>
+
+<DD>
+(a space) A blank should be left before a positive number
+(or empty string) produced by a signed conversion.
+<DT><B>+</B>
+
+<DD>
+A sign (+ or -) always be placed before a number produced by a signed
+conversion.  By default a sign is used only for negative numbers. A
+<B>+</B>
+
+overrides a space if both are used.
+</DL>
+<P>
+
+The five flag characters above are defined in the C standard.
+The SUSv2 specifies one further flag character.
+<DL COMPACT>
+<DT><B>'</B>
+
+<DD>
+For decimal conversion
+<B></B>(<B>i</B>,
+
+<B>d</B>,
+
+<B>u</B>,
+
+<B>f</B>,
+
+<B>F</B>,
+
+<B>g</B>,
+
+<B>G</B>)
+
+the output is to be grouped with thousands' grouping characters
+if the locale information indicates any.  Note that many versions of 
+<B>gcc</B>
+
+cannot parse this option and will issue a warning.  SUSv2 does not
+include %'F.
+</DL>
+<P>
+
+glibc 2.2 adds one further flag character.
+<DL COMPACT>
+<DT><B>I</B>
+
+<DD>
+For decimal integer conversion
+<B></B>(<B>i</B>,
+
+<B>d</B>,
+
+<B>u</B>)
+
+the output uses the locale's alternative output digits, if any.
+For example, since glibc 2.2.3 this will give Arabic-Indic digits
+in the Persian (`fa_IR') locale.
+
+</DL>
+<A NAME="lbAH">&nbsp;</A>
+<H3>The field width</H3>
+
+An optional decimal digit string (with nonzero first digit) specifying
+a minimum field width.  If the converted value has fewer characters
+than the field width, it will be padded with spaces on the left
+(or right, if the left-adjustment flag has been given).
+Instead of a decimal digit string one may write `*' or `*m$'
+(for some decimal integer m) to specify that the field width
+is given in the next argument, or in the m-th argument, respectively,
+which must be of type
+<I>int</I>.
+
+A negative field width is taken as a `-' flag followed by a
+positive field width.
+In no case does a non-existent or small field width cause truncation of a
+field; if the result of a conversion is wider than the field width, the
+field is expanded to contain the conversion result.
+<A NAME="lbAI">&nbsp;</A>
+<H3>The precision</H3>
+
+An optional precision, in the form of a period (`.')  followed by an
+optional decimal digit string.
+Instead of a decimal digit string one may write `*' or `*m$'
+(for some decimal integer m) to specify that the precision
+is given in the next argument, or in the m-th argument, respectively,
+which must be of type
+<I>int</I>.
+
+If the precision is given as just `.', or the precision is negative,
+the precision is taken to be zero.
+This gives the minimum number of digits to appear for
+<B>d</B>,
+
+<B>i</B>,
+
+<B>o</B>,
+
+<B>u</B>,
+
+<B>x</B>,
+
+and
+<B>X</B>
+
+conversions, the number of digits to appear after the radix character for
+<B>a</B>,
+
+<B>A</B>,
+
+<B>e</B>,
+
+<B>E</B>,
+
+<B>f</B>,
+
+and
+<B>F</B>
+
+conversions, the maximum number of significant digits for
+<B>g</B>
+
+and
+<B>G</B>
+
+conversions, or the maximum number of characters to be printed from a
+string for
+<B>s</B>
+
+and
+<B>S</B>
+
+conversions.
+<A NAME="lbAJ">&nbsp;</A>
+<H3>The length modifier</H3>
+
+Here, `integer conversion' stands for
+<B>d</B>,
+
+<B>i</B>,
+
+<B>o</B>,
+
+<B>u</B>,
+
+<B>x</B>,
+
+or
+<B>X</B>
+
+conversion.
+<DL COMPACT>
+<DT><B>hh</B>
+
+<DD>
+A following integer conversion corresponds to a
+<I>signed char</I>
+
+or
+<I>unsigned char</I>
+
+argument, or a following
+<B>n</B>
+
+conversion corresponds to a pointer to a
+<I>signed char</I>
+
+argument.
+<DT><B>h</B>
+
+<DD>
+A following integer conversion corresponds to a
+<I>short int</I>
+
+or
+<I>unsigned short int</I>
+
+argument, or a following
+<B>n</B>
+
+conversion corresponds to a pointer to a
+<I>short int</I>
+
+argument.
+<DT><B>l</B>
+
+<DD>
+(ell) A following integer conversion corresponds to a
+<I>long int</I>
+
+or
+<I>unsigned long int</I>
+
+argument, or a following
+<B>n</B>
+
+conversion corresponds to a pointer to a
+<I>long int</I>
+
+argument, or a following
+<B>c</B>
+
+conversion corresponds to a
+<I>wint_t</I>
+
+argument, or a following
+<B>s</B>
+
+conversion corresponds to a pointer to
+<I>wchar_t</I>
+
+argument.
+<DT><B>ll</B>
+
+<DD>
+(ell-ell).
+A following integer conversion corresponds to a
+<I>long long int</I>
+
+or
+<I>unsigned long long int</I>
+
+argument, or a following
+<B>n</B>
+
+conversion corresponds to a pointer to a
+<I>long long int</I>
+
+argument.
+<DT><B>L</B>
+
+<DD>
+A following
+<B>a</B>,
+
+<B>A</B>,
+
+<B>e</B>,
+
+<B>E</B>,
+
+<B>f</B>,
+
+<B>F</B>,
+
+<B>g</B>,
+
+or
+<B>G</B>
+
+conversion corresponds to a
+<I>long double</I>
+
+argument.
+(C99 allows %LF, but SUSv2 does not.)
+<DT><B>q</B>
+
+<DD>
+(`quad'. BSD 4.4 and Linux libc5 only. Don't use.)
+This is a synonym for
+<B>ll</B>.
+
+<DT><B>j</B>
+
+<DD>
+A following integer conversion corresponds to an
+<I>intmax_t</I>
+
+or
+<I>uintmax_t</I>
+
+argument.
+<DT><B>z</B>
+
+<DD>
+A following integer conversion corresponds to a
+<I>size_t</I>
+
+or
+<I>ssize_t</I>
+
+argument. (Linux libc5 has
+<B>Z</B>
+
+with this meaning. Don't use it.)
+<DT><B>t</B>
+
+<DD>
+A following integer conversion corresponds to a
+<I>ptrdiff_t</I>
+
+argument.
+</DL>
+<P>
+
+The SUSv2 only knows about the length modifiers
+<B>h</B>
+
+(in
+<B>hd</B>,
+
+<B>hi</B>,
+
+<B>ho</B>,
+
+<B>hx</B>,
+
+<B>hX</B>,
+
+<B>hn</B>)
+
+and
+<B>l</B>
+
+(in
+<B>ld</B>,
+
+<B>li</B>,
+
+<B>lo</B>,
+
+<B>lx</B>,
+
+<B>lX</B>,
+
+<B>ln</B>,
+
+<B>lc</B>,
+
+<B>ls</B>)
+
+and
+<B>L</B>
+
+(in
+<B>Le</B>,
+
+<B>LE</B>,
+
+<B>Lf</B>,
+
+<B>Lg</B>,
+
+<B>LG</B>).
+
+<P>
+<A NAME="lbAK">&nbsp;</A>
+<H3>The conversion specifier</H3>
+
+A character that specifies the type of conversion to be applied.
+The conversion specifiers and their meanings are:
+<DL COMPACT>
+<DT><B>d</B>,<B>i</B>
+
+<DD>
+The
+<I>int</I>
+
+argument is converted to signed decimal notation.
+The precision, if any, gives the minimum number of digits
+that must appear; if the converted value requires fewer digits, it is
+padded on the left with zeros. The default precision is 1.
+When 0 is printed with an explicit precision 0, the output is empty.
+<DT><B>o</B>,<B>u</B>,<B>x</B>,<B>X</B>
+
+<DD>
+The
+<I>unsigned int</I>
+
+argument is converted to unsigned octal
+<B></B>(<B>o</B>),
+
+unsigned decimal
+<B></B>(<B>u</B>),
+
+or unsigned hexadecimal
+<B></B>(<B>x</B>
+
+and
+<B>X</B>)
+
+notation.  The letters
+<B>abcdef</B>
+
+are used for
+<B>x</B>
+
+conversions; the letters
+<B>ABCDEF</B>
+
+are used for
+<B>X</B>
+
+conversions.  The precision, if any, gives the minimum number of digits
+that must appear; if the converted value requires fewer digits, it is
+padded on the left with zeros. The default precision is 1.
+When 0 is printed with an explicit precision 0, the output is empty.
+<DT><B>e</B>,<B>E</B>
+
+<DD>
+The
+<I>double</I>
+
+argument is rounded and converted in the style
+
+<B></B>[-]d<B>.</B>ddd<B>e</B>\*(Pmdd
+
+where there is one digit before the decimal-point character and the number
+of digits after it is equal to the precision; if the precision is missing,
+it is taken as 6; if the precision is zero, no decimal-point character
+appears.  An
+<B>E</B>
+
+conversion uses the letter
+<B>E</B>
+
+(rather than
+<B>e</B>)
+
+to introduce the exponent.  The exponent always contains at least two
+digits; if the value is zero, the exponent is 00.
+<DT><B>f</B>,<B>F</B>
+
+<DD>
+The
+<I>double</I>
+
+argument is rounded and converted to decimal notation in the style
+<B></B>[-]ddd<B>.</B>ddd,
+
+where the number of digits after the decimal-point character is equal to
+the precision specification.  If the precision is missing, it is taken as
+6; if the precision is explicitly zero, no decimal-point character appears.
+If a decimal point appears, at least one digit appears before it.
+<P>
+(The SUSv2 does not know about
+<B>F</B>
+
+and says that character string representations for infinity and NaN
+may be made available. The C99 standard specifies `[-]inf' or `[-]infinity'
+for infinity, and a string starting with `nan' for NaN, in the case of
+<B>f</B>
+
+conversion, and `[-]INF' or `[-]INFINITY' or `NAN*' in the case of
+<B>F</B>
+
+conversion.)
+<DT><B>g</B>,<B>G</B>
+
+<DD>
+The
+<I>double</I>
+
+argument is converted in style
+<B>f</B>
+
+or
+<B>e</B>
+
+(or
+<B>F</B>
+
+or
+<B>E</B>
+
+for
+<B>G</B>
+
+conversions).  The precision specifies the number of significant digits.
+If the precision is missing, 6 digits are given; if the precision is zero,
+it is treated as 1.  Style
+<B>e</B>
+
+is used if the exponent from its conversion is less than -4 or greater
+than or equal to the precision.  Trailing zeros are removed from the
+fractional part of the result; a decimal point appears only if it is
+followed by at least one digit.
+<DT><B>a</B>,<B>A</B>
+
+<DD>
+(C99; not in SUSv2) For
+<B>a</B>
+
+conversion, the
+<I>double</I>
+
+argument is converted to hexadecimal notation (using the letters abcdef)
+in the style
+<B></B>[-]<B>0x</B>h<B>.</B>hhhh<B>p</B>\*(Pmd;
+
+for
+<B>A</B>
+
+conversion the prefix
+<B>0X</B>,
+
+the letters ABCDEF, and the exponent separator
+<B>P</B>
+
+is used.
+There is one hexadecimal digit before the decimal point,
+and the number of digits after it is equal to the precision.
+The default precision suffices for an exact representation of the value
+if an exact representation in base 2 exists
+and otherwise is sufficiently large to distinguish values of type
+<I>double</I>.
+
+The digit before the decimal point is unspecified for non-normalized
+numbers, and nonzero but otherwise unspecified for normalized numbers.
+<DT><B>c</B>
+
+<DD>
+If no
+<B>l</B>
+
+modifier is present, the
+<I>int</I>
+
+argument is converted to an
+<I>unsigned char</I>,
+
+and the resulting character is written.
+If an
+<B>l</B>
+
+modifier is present, the
+<I>wint_t</I>
+
+(wide character) argument is converted to a multibyte sequence by a call
+to the
+<B>wcrtomb</B>
+
+function, with a conversion state starting in the initial state, and the
+resulting multibyte string is written.
+<DT><B>s</B>
+
+<DD>
+If no
+<B>l</B>
+
+modifier is present: The
+<I>const char *</I>
+
+argument is expected to be a pointer to an array of character type (pointer
+to a string).  Characters from the array are written up to (but not
+including) a terminating
+<B>NUL</B>
+
+character; if a precision is specified, no more than the number specified
+are written.  If a precision is given, no null character need be present;
+if the precision is not specified, or is greater than the size of the
+array, the array must contain a terminating
+<B>NUL</B>
+
+character.
+<P>
+If an
+<B>l</B>
+
+modifier is present: The
+<I>const wchar_t *</I>
+
+argument is expected to be a pointer to an array of wide characters.
+Wide characters from the array are converted to multibyte characters
+(each by a call to the
+<B>wcrtomb</B>
+
+function, with a conversion state starting in the initial state before
+the first wide character), up to and including a terminating null
+wide character. The resulting multibyte characters are written up to
+(but not including) the terminating null byte. If a precision is
+specified, no more bytes than the number specified are written, but
+no partial multibyte characters are written. Note that the precision
+determines the number of
+<I>bytes</I>
+
+written, not the number of
+<I>wide characters</I>
+
+or
+<I>screen positions</I>.
+
+The array must contain a terminating null wide character, unless a
+precision is given and it is so small that the number of bytes written
+exceeds it before the end of the array is reached.
+<DT><B>C</B>
+
+<DD>
+(Not in C99, but in SUSv2.)
+Synonym for
+<B>lc</B>.
+
+Don't use.
+<DT><B>S</B>
+
+<DD>
+(Not in C99, but in SUSv2.)
+Synonym for
+<B>ls</B>.
+
+Don't use.
+<DT><B>p</B>
+
+<DD>
+The
+<I>void *</I>
+
+pointer argument is printed in hexadecimal (as if by
+<B>%#x</B>
+
+or
+<B>%#lx</B>).
+
+<DT><B>n</B>
+
+<DD>
+The number of characters written so far is stored into the integer
+indicated by the
+<I>int *</I>
+
+(or variant) pointer argument.  No argument is converted.
+<DT><B>%</B>
+
+<DD>
+A `%' is written. No argument is converted. The complete conversion
+specification is `%%'.
+</DL>
+<P>
+
+<A NAME="lbAL">&nbsp;</A>
+<H2>EXAMPLES</H2>
+
+<BR>
+
+
+To print Pi to five decimal places:
+<DL COMPACT><DT><DD>
+<PRE>
+#include &lt;<A HREF="file:///usr/include/math.h">math.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;
+fprintf(stdout, &quot;pi = %.5f\n&quot;, 4 * atan(1.0));
+</PRE>
+
+</DL>
+
+<P>
+
+To print a date and time in the form `Sunday, July 3, 10:02',
+where
+<I>weekday</I>
+
+and
+<I>month</I>
+
+are pointers to strings:
+<DL COMPACT><DT><DD>
+<PRE>
+#include &lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;
+fprintf(stdout, &quot;%s, %s %d, %.2d:%.2d\n&quot;,
+        weekday, month, day, hour, min);
+</PRE>
+
+</DL>
+
+<P>
+
+Many countries use the day-month-year order.
+Hence, an internationalized version must be able to print
+the arguments in an order specified by the format:
+<DL COMPACT><DT><DD>
+<PRE>
+#include &lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;
+fprintf(stdout, format,
+        weekday, month, day, hour, min);
+</PRE>
+
+</DL>
+
+where
+<I>format</I>
+
+depends on locale, and may permute the arguments. With the value
+<DL COMPACT><DT><DD>
+<PRE>
+&quot;%1$s, %3$d. %2$s, %4$d:%5$.2d\n&quot;
+</PRE>
+
+</DL>
+
+one might obtain `Sonntag, 3. Juli, 10:02'.
+<P>
+
+To allocate a sufficiently large string and print into it
+(code correct for both glibc 2.0 and glibc 2.1):
+<DL COMPACT><DT><DD>
+<PRE>
+#include &lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/stdlib.h">stdlib.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/stdarg.h">stdarg.h</A>&gt;
+char *
+make_message(const char *fmt, ...) {
+   /* Guess we need no more than 100 bytes. */
+   int n, size = 100;
+   char *p;
+   va_list ap;
+   if ((p = malloc (size)) == NULL)
+      return NULL;
+   while (1) {
+      /* Try to print in the allocated space. */
+      va_start(ap, fmt);
+      n = vsnprintf (p, size, fmt, ap);
+      va_end(ap);
+      /* If that worked, return the string. */
+      if (n &gt; -1 &amp;&amp; n &lt; size)
+         return p;
+      /* Else try again with more space. */
+      if (n &gt; -1)    /* glibc 2.1 */
+         size = n+1; /* precisely what is needed */
+      else           /* glibc 2.0 */
+         size *= 2;  /* twice the old size */
+      if ((p = realloc (p, size)) == NULL)
+         return NULL;
+   }
+}
+</PRE>
+
+</DL>
+
+<P>
+<A NAME="lbAM">&nbsp;</A>
+<H2>NOTES</H2>
+
+The glibc implementation of the functions
+<B>snprintf</B>
+
+and
+<B>vsnprintf</B>
+
+conforms to the C99 standard, i.e., behaves as described above,
+since glibc version 2.1. Until glibc 2.0.6 they would return -1
+when the output was truncated.
+<A NAME="lbAN">&nbsp;</A>
+<H2>CONFORMING TO</H2>
+
+The
+<B>fprintf</B>,
+
+<B>printf</B>,
+
+<B>sprintf</B>,
+
+<B>vprintf</B>,
+
+<B>vfprintf</B>,
+
+and
+<B>vsprintf</B>
+
+functions conform to ANSI X3.159-1989 (``ANSI C'') and ISO/IEC 9899:1999
+(``ISO C99'').
+The
+<B>snprintf</B>
+
+and
+<B>vsnprintf</B>
+
+functions conform to ISO/IEC 9899:1999.
+<P>
+
+Concerning the return value of
+<B>snprintf</B>,
+
+the SUSv2 and the C99 standard contradict each other: when
+<B>snprintf</B>
+
+is called with
+<I>size</I>=0
+
+then SUSv2 stipulates an unspecified return value less than 1,
+while C99 allows
+<I>str</I>
+
+to be NULL in this case, and gives the return value (as always)
+as the number of characters that would have been written in case
+the output string has been large enough.
+<P>
+
+Linux libc4 knows about the five C standard flags.
+It knows about the length modifiers h,l,L, and the conversions
+cdeEfFgGinopsuxX, where F is a synonym for f.
+Additionally, it accepts D,O,U as synonyms for ld,lo,lu.
+(This is bad, and caused serious bugs later, when
+support for %D disappeared.) No locale-dependent radix character,
+no thousands' separator, no NaN or infinity, no %m$ and *m$.
+<P>
+
+Linux libc5 knows about the five C standard flags and the ' flag,
+locale, %m$ and *m$.
+It knows about the length modifiers h,l,L,Z,q, but accepts L and q
+both for long doubles and for long long integers (this is a bug).
+It no longer recognizes FDOU, but adds a new conversion character
+<B>m</B>,
+
+which outputs
+<I>strerror(errno)</I>.
+
+<P>
+
+glibc 2.0 adds conversion characters C and S.
+<P>
+
+glibc 2.1 adds length modifiers hh,j,t,z and conversion characters a,A.
+<P>
+
+glibc 2.2 adds the conversion character F with C99 semantics, and the
+flag character I.
+<A NAME="lbAO">&nbsp;</A>
+<H2>HISTORY</H2>
+
+Unix V7 defines the three routines 
+<B>printf</B>,
+
+<B>fprintf</B>,
+
+<B>sprintf</B>,
+
+and has the flag -, the width or precision *, the length modifier l,
+and the conversions doxfegcsu, and also D,O,U,X as synonyms for ld,lo,lu,lx.
+This is still true for BSD 2.9.1, but BSD 2.10 has the flags
+#, + and &lt;space&gt; and no longer mentions D,O,U,X.
+BSD 2.11 has 
+<B>vprintf</B>,
+
+<B>vfprintf</B>,
+
+<B>vsprintf</B>,
+
+and warns not to use D,O,U,X.
+BSD 4.3 Reno has the flag 0, the length modifiers h and L,
+and the conversions n, p, E, G, X (with current meaning)
+and deprecates D,O,U.
+BSD 4.4 introduces the functions
+<B>snprintf</B>
+
+and
+<B>vsnprintf</B>,
+
+and the length modifier q.
+FreeBSD also has functions
+<I>asprintf</I>
+
+and
+<I>vasprintf</I>,
+
+that allocate a buffer large enough for
+<B>sprintf</B>.
+
+In glibc there are functions
+<I>dprintf</I>
+
+and
+<I>vdprintf</I>
+
+that print to a file descriptor instead of a stream.
+<A NAME="lbAP">&nbsp;</A>
+<H2>BUGS</H2>
+
+Because
+<B>sprintf</B>
+
+and
+<B>vsprintf</B>
+
+assume an arbitrarily long string, callers must be careful not to overflow
+the actual space; this is often impossible to assure. Note that the length
+of the strings produced is locale-dependent and difficult to predict.
+Use
+<B>snprintf</B>
+
+and
+<B>vsnprintf</B>
+
+instead (or
+<B>asprintf</B>
+
+and
+<B>vasprintf</B>).
+
+<P>
+
+Linux libc4.[45] does not have a
+<B>snprintf</B>,
+
+but provides a libbsd that contains an
+<B>snprintf</B>
+
+equivalent to
+<B>sprintf</B>,
+
+i.e., one that ignores the
+<I>size</I>
+
+argument.
+Thus, the use of
+<B>snprintf</B>
+
+with early libc4 leads to serious security problems.
+<P>
+
+Code such as
+<B>printf(</B><I>foo</I><B>);</B>
+
+often indicates a bug, since
+<I>foo</I>
+
+may contain a % character.  If
+<I>foo</I>
+
+comes from untrusted user input, it may contain %n, causing the
+<B>printf</B>
+
+call to write to memory and creating a security hole.
+
+
+
+<P>
+<A NAME="lbAQ">&nbsp;</A>
+<H2>SEE ALSO</H2>
+
+<B><A HREF="../man1/printf.1.html">printf</A></B>(1),
+
+<B><A HREF="../man3/asprintf.3.html">asprintf</A></B>(3),
+
+<B><A HREF="../man3/dprintf.3.html">dprintf</A></B>(3),
+
+<B><A HREF="../man3/scanf.3.html">scanf</A></B>(3),
+
+<B><A HREF="../man3/wcrtomb.3.html">wcrtomb</A></B>(3),
+
+<B><A HREF="../man3/wprintf.3.html">wprintf</A></B>(3),
+
+<B><A HREF="../man5/locale.5.html">locale</A></B>(5)
+
+
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">NAME</A><DD>
+<DT><A HREF="#lbAC">SYNOPSIS</A><DD>
+<DT><A HREF="#lbAD">DESCRIPTION</A><DD>
+<DL>
+<DT><A HREF="#lbAE">Return value</A><DD>
+<DT><A HREF="#lbAF">Format of the format string</A><DD>
+<DT><A HREF="#lbAG">The flag characters</A><DD>
+<DT><A HREF="#lbAH">The field width</A><DD>
+<DT><A HREF="#lbAI">The precision</A><DD>
+<DT><A HREF="#lbAJ">The length modifier</A><DD>
+<DT><A HREF="#lbAK">The conversion specifier</A><DD>
+</DL>
+<DT><A HREF="#lbAL">EXAMPLES</A><DD>
+<DT><A HREF="#lbAM">NOTES</A><DD>
+<DT><A HREF="#lbAN">CONFORMING TO</A><DD>
+<DT><A HREF="#lbAO">HISTORY</A><DD>
+<DT><A HREF="#lbAP">BUGS</A><DD>
+<DT><A HREF="#lbAQ">SEE ALSO</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
+using the manual pages.<BR>
+Time: 02:10:33 GMT, April 20, 2020
+</BODY>
+</HTML>

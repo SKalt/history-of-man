@@ -1,0 +1,219 @@
+<!--
+Copyright (C) 2001 David Gómez &lt;davidge@jazzfree.com&gt;
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of MADVISE</TITLE>
+</HEAD><BODY>
+<H1>MADVISE</H1>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2001-06-10<BR><A HREF="#index">Index</A>
+<A HREF="../index.html">Return to Main Contents</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>NAME</H2>
+
+madvise - give advice about use of memory
+<A NAME="lbAC">&nbsp;</A>
+<H2>SYNOPSIS</H2>
+
+<BR>
+
+<B>#include &lt;<A HREF="file:///usr/include/sys/mman.h">sys/mman.h</A>&gt;</B>
+
+<P>
+<B>int madvise(void *</B><I>start</I><B>, size_t </B><I>length</I><B>, int </B><I>advice</I><B>);</B>
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>DESCRIPTION</H2>
+
+The
+<B>madvise</B>
+
+system call advises the kernel about how to handle paging input/output in
+the address range beginning at address
+<I>start</I>
+
+and with size
+<I>length</I>
+
+bytes. It allows an application to tell the kernel how it expects to use
+some mapped or shared memory areas, so that the kernel can choose
+appropriate read-ahead and caching techniques.
+This call does not influence the semantics of the application 
+(except in the case of
+<B>MADV_DONTNEED</B>),
+
+but
+may influence its performance. The kernel is free to ignore the advice.
+<P>
+
+The advice is indicated in the 
+<I>advice</I>
+
+parameter which can be
+<DL COMPACT>
+<DT><B>MADV_NORMAL</B>
+
+<DD>
+No special treatment. This is the default.
+<DT><B>MADV_RANDOM</B>
+
+<DD>
+Expect page references in random order.
+(Hence, read ahead may be less useful than normally.)
+<DT><B>MADV_SEQUENTIAL</B>
+
+<DD>
+Expect page references in sequential order.
+(Hence, pages in the given range can be aggressively read ahead,
+and may be freed soon after they are accessed.)
+<DT><B>MADV_WILLNEED</B>
+
+<DD>
+Expect access in the near future.
+(Hence, it might be a good idea to read some pages ahead.)
+<DT><B>MADV_DONTNEED</B>
+
+<DD>
+Do not expect access in the near future.
+(For the time being, the application is finished with the given range,
+so the kernel can free resources associated with it.)
+Subsequent accesses of pages in this range will succeed, but will result
+either in re-loading of the memory contents from the underlying mapped file
+(see <B>mmap</B>) or zero-fill-on-demand pages for mappings
+without an underlying file.
+</DL>
+<A NAME="lbAE">&nbsp;</A>
+<H2>RETURN VALUE</H2>
+
+On success 
+<B>madvise</B>
+
+returns zero. On error, it returns -1 and
+<I>errno</I>
+
+is set appropiately.
+<A NAME="lbAF">&nbsp;</A>
+<H2>ERRORS</H2>
+
+<DL COMPACT>
+<DT><B>EAGAIN</B>
+
+<DD>
+A kernel resource was temporarily unavailable.
+<DT><B>EBADF</B>
+
+<DD>
+The map exists, but the area maps something that isn't a file.
+<DT><B>EINVAL</B>
+
+<DD>
+The value 
+<I>len</I>
+
+is negative,
+
+
+<I>start</I>
+
+is not page-aligned,
+<I>advice </I>
+
+is not a valid value, or the application is attempting
+to release locked or shared pages (with MADV_DONTNEED).
+<DT><B>EIO</B>
+
+<DD>
+(for MADV_WILLNEED) Paging in this area would exceed the process's
+maximum resident set size.
+<DT><B>ENOMEM</B>
+
+<DD>
+(for MADV_WILLNEED) Not enough memory - paging in failed.
+<DT><B>ENOMEM</B>
+
+<DD>
+Addresses in the specified range are not currently
+mapped, or are outside the address space of the process.
+</DL>
+<A NAME="lbAG">&nbsp;</A>
+<H2>LINUX NOTES</H2>
+
+<P>
+
+The current Linux implementation (2.4.0) views this system call
+more as a command than as advice and hence may return an error
+when it cannot do what it usually would do in response to this
+advice. (See the ERRORS description above.)
+This is nonstandard behaviour.
+<P>
+
+The Linux implementation requires that the address
+<I>start</I>
+
+be page-aligned, and allows
+<I>length</I>
+
+to be zero. If there are some parts of the specified address range
+that are not mapped, the Linux version of
+<B>madvise</B>
+
+ignores them and applies the call to the rest (but returns 
+<B>ENOMEM</B>
+
+from the system call, as it should).
+<A NAME="lbAH">&nbsp;</A>
+<H2>HISTORY</H2>
+
+The
+<B>madvise</B>
+
+function first appeared in 4.4BSD.
+<A NAME="lbAI">&nbsp;</A>
+<H2>CONFORMING TO</H2>
+
+POSIX.1b (POSIX.4).
+POSIX 1003.1-2001 describes
+<B>posix_madvise</B>
+
+with constants POSIX_MADV_NORMAL, etc.,
+with a behaviour close to that described here. There is a similar
+<I>posix_fadvise</I>
+
+for file access.
+<A NAME="lbAJ">&nbsp;</A>
+<H2>SEE ALSO</H2>
+
+<B><A HREF="../man2/getrlimit.2.html">getrlimit</A></B>(2),
+
+<B><A HREF="../man2/mincore.2.html">mincore</A></B>(2),
+
+<B><A HREF="../man2/mmap.2.html">mmap</A></B>(2),
+
+<B><A HREF="../man2/mprotect.2.html">mprotect</A></B>(2),
+
+<B><A HREF="../man2/msync.2.html">msync</A></B>(2),
+
+<B><A HREF="../man2/munmap.2.html">munmap</A></B>(2)
+
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">NAME</A><DD>
+<DT><A HREF="#lbAC">SYNOPSIS</A><DD>
+<DT><A HREF="#lbAD">DESCRIPTION</A><DD>
+<DT><A HREF="#lbAE">RETURN VALUE</A><DD>
+<DT><A HREF="#lbAF">ERRORS</A><DD>
+<DT><A HREF="#lbAG">LINUX NOTES</A><DD>
+<DT><A HREF="#lbAH">HISTORY</A><DD>
+<DT><A HREF="#lbAI">CONFORMING TO</A><DD>
+<DT><A HREF="#lbAJ">SEE ALSO</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
+using the manual pages.<BR>
+Time: 02:09:59 GMT, April 20, 2020
+</BODY>
+</HTML>

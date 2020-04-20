@@ -1,0 +1,566 @@
+<!--
+Copyright (c) 2002 by Michael Kerrisk (mtk16@ext.canterbury.ac.nz)
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of CAPABILITIES</TITLE>
+</HEAD><BODY>
+<H1>CAPABILITIES</H1>
+Section: Linux Programmer's Manual (7)<BR>Updated: 2004-05-27<BR><A HREF="#index">Index</A>
+<A HREF="../index.html">Return to Main Contents</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>NAME</H2>
+
+capabilities - overview of Linux capabilities
+<A NAME="lbAC">&nbsp;</A>
+<H2>DESCRIPTION</H2>
+
+<P>
+For the purpose of performing permission checks,
+traditional Unix implementations distinguish two categories of processes:
+<I>privileged</I>
+
+processes (whose effective user ID is 0, referred to as superuser or root),
+and
+<I>unprivileged</I>
+
+processes (whose effective UID is non-zero).
+Privileged processes bypass all kernel permission checks,
+while unprivileged processes are subject to full permission
+checking based on the process's credentials
+(usually: effective UID, effective GID, and supplementary group list).
+<P>
+Starting with kernel 2.2, Linux provides an
+(as yet incomplete) system of
+<I>capabilities</I>,
+
+which divide the privileges traditionally associated with superuser
+into distinct units that can be independently enabled and disabled.
+<A NAME="lbAD">&nbsp;</A>
+<H3>Capabilities List</H3>
+
+<P>
+As at Linux 2.6.6, the following capabilities are implemented:
+<DL COMPACT>
+<DT><B>CAP_CHOWN</B>
+
+<DD>
+Allow arbitrary changes to file UIDs and GIDs (see
+<B><A HREF="../man2/chown.2.html">chown</A></B>(2)).
+
+<DT><B>CAP_DAC_OVERRIDE</B>
+
+<DD>
+Bypass file read, write, and execute permission checks.
+(DAC = &quot;discretionary access control&quot;.)
+<DT><B>CAP_DAC_READ_SEARCH</B>
+
+<DD>
+Bypass file read permission checks and
+directory read and execute permission checks.
+<DT><B>CAP_FOWNER</B>
+
+<DD>
+Bypass permission checks on operations that normally
+require the file system UID of the process to match the UID of
+the file (e.g.,
+<B><A HREF="../man2/chmod.2.html">chmod</A></B>(2),
+
+<B><A HREF="../man2/utime.2.html">utime</A></B>(2)),
+
+excluding those operations covered by the
+<B>CAP_DAC_OVERRIDE</B>
+
+and
+<B>CAP_DAC_READ_SEARCH</B>;
+
+set extended file attributes (see
+<B><A HREF="../man1/chattr.1.html">chattr</A></B>(1))
+
+on arbitrary files;
+set Access Control Lists (ACLs) on arbitrary files;
+ignore directory sticky bit on file deletion.
+<DT><B>CAP_FSETID</B>
+
+<DD>
+Don't clear set-user-ID and set-group-ID bits when a file is modified;
+permit setting of the set-group-ID bit for a file whose GID does not match
+the file system or any of the supplementary GIDs of the calling process.
+<DT><B>CAP_IPC_LOCK</B>
+
+<DD>
+Permit memory locking
+(<B><A HREF="../man2/mlock.2.html">mlock</A></B>(2),
+
+<B><A HREF="../man2/mlockall.2.html">mlockall</A></B>(2),
+
+<B><A HREF="../man2/mmap.2.html">mmap</A></B>(2),
+
+<B><A HREF="../man2/shmctl.2.html">shmctl</A></B>(2)).
+
+<DT><B>CAP_IPC_OWNER</B>
+
+<DD>
+Bypass permission checks for operations on System V IPC objects.
+<DT><B>CAP_KILL</B>
+
+<DD>
+Bypass permission checks for sending signals (see
+<B><A HREF="../man2/kill.2.html">kill</A></B>(2)).
+
+This includes use of the KDSIGACCEPT ioctl.
+
+
+<DT><B>CAP_LEASE</B>
+
+<DD>
+(Linux 2.4 onwards)  Allow file leases to be established on
+arbitrary files (see
+<B><A HREF="../man2/fcntl.2.html">fcntl</A></B>(2)).
+
+<DT><B>CAP_LINUX_IMMUTABLE</B>
+
+<DD>
+Allow setting of the
+<B>EXT2_APPEND_FL</B>
+
+and
+<B>EXT2_IMMUTABLE_FL</B>
+
+
+extended file attributes (see
+<B><A HREF="../man1/chattr.1.html">chattr</A></B>(1)).
+
+<DT><B>CAP_MKNOD</B>
+
+<DD>
+(Linux 2.4 onwards)
+Allow creation of special files using
+<B><A HREF="../man2/mknod.2.html">mknod</A></B>(2).
+
+<DT><B>CAP_NET_ADMIN</B>
+
+<DD>
+Allow various network-related operations
+(e.g., setting privileged socket options,
+enabling multicasting, interface configuration,
+modifying routing tables).
+<DT><B>CAP_NET_BIND_SERVICE</B>
+
+<DD>
+Allow binding to Internet domain reserved socket ports
+(port numbers less than 1024).
+<DT><B>CAP_NET_BROADCAST</B>
+
+<DD>
+(Unused)  Allow socket broadcasting, and listening multicasts.
+<DT><B>CAP_NET_RAW</B>
+
+<DD>
+Permit use of RAW and PACKET sockets.
+
+<DT><B>CAP_SETGID</B>
+
+<DD>
+Allow arbitrary manipulations of process GIDs and supplementary GID list;
+allow forged GID when passing socket credentials via Unix domain sockets.
+<DT><B>CAP_SETPCAP</B>
+
+<DD>
+Grant or remove any capability in the caller's
+permitted capability set to or from any other process.
+<DT><B>CAP_SETUID</B>
+
+<DD>
+Allow arbitrary manipulations of process UIDs
+(<B><A HREF="../man2/setuid.2.html">setuid</A></B>(2),
+
+<B><A HREF="../man2/setreuid.2.html">setreuid</A></B>(2),
+
+<B><A HREF="../man2/setresuid.2.html">setresuid</A></B>(2),
+
+<B><A HREF="../man2/setfsuid.2.html">setfsuid</A></B>(2));
+
+allow forged UID when passing socket credentials via Unix domain sockets.
+
+<DT><B>CAP_SYS_ADMIN</B>
+
+<DD>
+Permit a range of system administration operations including:
+<B><A HREF="../man2/quotactl.2.html">quotactl</A></B>(2),
+
+<B><A HREF="../man2/mount.2.html">mount</A></B>(2),
+
+<B><A HREF="../man2/umount.2.html">umount</A></B>(2),
+
+<B><A HREF="../man2/swapon.2.html">swapon</A></B>(2)<B>,</B>
+
+<B><A HREF="../man2/swapoff.2.html">swapoff</A></B>(2)<B>,</B>
+
+<B><A HREF="../man2/sethostname.2.html">sethostname</A></B>(2),
+
+<B><A HREF="../man2/setdomainname.2.html">setdomainname</A></B>(2),
+
+<B>IPC_SET</B>
+
+and
+<B>IPC_RMID</B>
+
+operations on arbitrary System V IPC objects;
+perform operations on
+<I>trusted</I>
+
+and
+<I>security</I>
+
+Extended Attributes (see
+<B><A HREF="../man5/attr.5.html">attr</A></B>(5));
+
+allow forged UID when passing socket credentials;
+exceed
+<I>/proc/sys/fs/file-max</I>
+
+limit in system calls that open files (e.g.,
+<B><A HREF="../man2/accept.2.html">accept</A></B>(2),
+
+<B><A HREF="../man2/execve.2.html">execve</A></B>(2),
+
+<B><A HREF="../man2/open.2.html">open</A></B>(2),
+
+<B><A HREF="../man2/pipe.2.html">pipe</A></B>(2))
+
+<DT><B>CAP_SYS_BOOT</B>
+
+<DD>
+Permit calls to
+<B><A HREF="../man2/reboot.2.html">reboot</A></B>(2).
+
+<DT><B>CAP_SYS_CHROOT</B>
+
+<DD>
+Permit calls to
+<B><A HREF="../man2/chroot.2.html">chroot</A></B>(2).
+
+<DT><B>CAP_SYS_MODULE</B>
+
+<DD>
+Allow loading and unloading of kernel modules;
+allow modifications to capability bounding set (see
+<B><A HREF="../man2/init_module.2.html">init_module</A></B>(2)
+
+and
+<B><A HREF="../man2/delete_module.2.html">delete_module</A></B>(2)).
+
+<DT><B>CAP_SYS_NICE</B>
+
+<DD>
+Allow raising process nice value
+(<B><A HREF="../man2/nice.2.html">nice</A></B>(2),
+
+<B><A HREF="../man2/setpriority.2.html">setpriority</A></B>(2))
+
+and changing of the nice value for arbitrary processes;
+allow setting of real-time scheduling policies for calling process,
+and setting scheduling policies and priorities for arbitrary processes
+(<B><A HREF="../man2/sched_setscheduler.2.html">sched_setscheduler</A></B>(2),
+
+<B><A HREF="../man2/sched_setparam.2.html">sched_setparam</A></B>(2));
+
+set CPU affinity for arbitrary processes
+(<B>sched_setaffinity</B>()).
+
+<DT><B>CAP_SYS_PACCT</B>
+
+<DD>
+Permit calls to
+<B><A HREF="../man2/acct.2.html">acct</A></B>(2).
+
+<DT><B>CAP_SYS_PTRACE</B>
+
+<DD>
+Allow arbitrary processes to be traced using
+<B><A HREF="../man2/ptrace.2.html">ptrace</A></B>(2)
+
+<DT><B>CAP_SYS_RAWIO</B>
+
+<DD>
+Permit I/O port operations
+(<B><A HREF="../man2/iopl.2.html">iopl</A></B>(2)
+
+and
+<B><A HREF="../man2/ioperm.2.html">ioperm</A></B>(2));
+
+access
+
+<DT><B>CAP_SYS_RESOURCE</B>
+
+<DD>
+Permit: use of reserved space on ext2 file systems;
+<B><A HREF="../man2/ioctl.2.html">ioctl</A></B>(2)
+
+calls controlling ext3 journaling;
+disk quota limits to be overridden;
+resource limits to be increased (see
+<B><A HREF="../man2/setrlimit.2.html">setrlimit</A></B>(2));
+
+<B>RLIMIT_NPROC</B>
+
+resource limit to be overridden;
+<I>msg_qbytes</I>
+
+limit for a message queue to be
+raised above the limit in
+<I>/proc/sys/kernel/msgmnb</I>
+
+(see
+<B><A HREF="../man2/msgop.2.html">msgop</A></B>(2)
+
+and
+<B><A HREF="../man2/msgctl.2.html">msgctl</A></B>(2).
+
+<DT><B>CAP_SYS_TIME</B>
+
+<DD>
+Allow modification of system clock
+(<B><A HREF="../man2/settimeofday.2.html">settimeofday</A></B>(2),
+
+<B><A HREF="../man2/stime.2.html">stime</A></B>(2),
+
+<B><A HREF="../man2/adjtimex.2.html">adjtimex</A></B>(2));
+
+allow modification of real-time (hardware) clock
+<DT><B>CAP_SYS_TTY_CONFIG</B>
+
+<DD>
+Permit calls to
+<B><A HREF="../man2/vhangup.2.html">vhangup</A></B>(2).
+
+</DL>
+<A NAME="lbAE">&nbsp;</A>
+<H3>Process Capabilities</H3>
+
+Each process has three capability sets containing zero or more
+of the above capabilities:
+<DL COMPACT>
+<DT><I>Effective</I>:
+
+<DD>
+the capabilities used by the kernel to
+perform permission checks for the process.
+<DT><I>Permitted</I>:
+
+<DD>
+the capabilities that the process may assume
+(i.e., a limiting superset for the effective and inheritable sets).
+If a process drops a capability from its permitted set,
+it can never re-acquire that capability (unless it execs a
+set-UID-root program).
+<DT><I>Inherited</I>:
+
+<DD>
+the capabilities preserved across an
+<B><A HREF="../man2/execve.2.html">execve</A></B>(2).
+
+</DL>
+<P>
+
+In the current implementation, a process is granted all permitted and
+effective capabilities (subject to the operation of the
+capability bounding set described below)
+when it execs a set-UID-root program,
+or if a process with a real UID of zero execs a new program.
+<P>
+
+A child created via
+<B><A HREF="../man2/fork.2.html">fork</A></B>(2)
+
+inherits copies of its parent's capability sets.
+<P>
+
+Using
+<B><A HREF="../man2/capset.2.html">capset</A></B>(2),
+
+a process may manipulate its own capability sets, or, if it has the
+<B>CAP_SETPCAP</B>
+
+capability, those of another process.
+<P>
+<A NAME="lbAF">&nbsp;</A>
+<H3>Capability bounding set</H3>
+
+When a program is execed, the permitted and  effective capabities are ANDed
+with the current value of the so-called
+<I>capability bounding set</I>,
+
+defined in the file
+<I>/proc/sys/kernel/cap-bound</I>.
+
+This parameter can be used to place a system-wide limit on the
+capabilities granted to all subsequently executed programs.
+(Confusingly, this bit mask parameter is expressed as a
+signed decimal number in
+<I>/proc/sys/kernel/cap-bound</I>.)
+
+<P>
+Only the
+<B>init</B>
+
+process may set bits in the capability bounding set;
+other than that, the superuser may only clear bits in this set.
+<P>
+On a standard system the capability bounding set always masks out the
+<B>CAP_SETPCAP</B>
+
+capability.
+To remove this restriction, modify the definition of
+<B>CAP_INIT_EFF_SET</B>
+
+in
+<I>include/linux/capability.h</I>
+
+and rebuild the kernel.
+<P>
+<A NAME="lbAG">&nbsp;</A>
+<H3>Current and Future Implementation</H3>
+
+A full implementation of capabilities requires:
+<DL COMPACT>
+<DT>1.<DD>
+that for all privileged operations,
+the kernel check whether the process has the required
+capability in its effective set.
+<DT>2.<DD>
+that the kernel provide 
+system calls allowing a process's capability sets to
+be changed and retrieved.
+<DT>3.<DD>
+file system support for attaching capabilities to an executable file,
+so that a process gains those capabilities when the file is execed.
+</DL>
+<P>
+
+As at Linux 2.6.6, only the first two of these requirements are met.
+<P>
+Eventually, it should be possible to associate three 
+capability sets with an executable file, which,
+in conjunction with the capability sets of the process,
+will determine the capabilities of a process after an
+<I>exec</I>:
+
+<DL COMPACT>
+<DT><I>Allowed</I>:
+
+<DD>
+this set is ANDed with the process's inherited set to determine which
+inherited capabilities are permitted to the process after the exec.
+<DT><I>Forced</I>:
+
+<DD>
+the capabilities automatically permitted to the process,
+regardless of the process's inherited capabilities.
+<DT><I>Effective</I>:
+
+<DD>
+those capabilities in the process's new permitted set are
+also to be set in the new effective set.
+(F(effective) would normally be either all zeroes or all ones.)
+</DL>
+<P>
+
+In the meantime, since the current implementation does not
+support file capability sets, during an exec:
+<DL COMPACT>
+<DT>1.<DD>
+All three file capability sets are initially assumed to be cleared.
+<DT>2.<DD>
+If a set-UID-root program is being execed,
+or the real user ID of the process is 0 (root)
+then the file allowed and forced sets are defined to be all ones
+(i.e., all capabilities set).
+<DT>3.<DD>
+If a set-UID-root program is being executed,
+then the file effective set is defined to be all ones.
+</DL>
+<P>
+
+During an exec, the kernel calculates the new capabilities of
+the process using the following algorithm:
+
+<PRE>
+
+P'(permitted) = (P(inherited) &amp; F(allowed)) | (F(forced) &amp; cap_bset)
+
+P'(effective) = P'(permitted) &amp; F(effective)
+
+P'(inherited) = P(inherited)    [i.e., unchanged]
+
+</PRE>
+
+
+where:
+<DL COMPACT>
+<DT>P<DD>
+denotes the value of a process capability set before the exec
+<DT>P'<DD>
+denotes the value of a capability set after the exec
+<DT>F<DD>
+denotes a file capability set
+<DT>cap_bset<DD>
+is the value of the capability bounding set.
+</DL>
+<A NAME="lbAH">&nbsp;</A>
+<H2>NOTES</H2>
+
+The
+<I>libcap</I>
+
+package provides a suite of routines for setting and
+getting process capabilities that is more comfortable and less likely
+to change than the interface provided by
+<B><A HREF="../man2/capset.2.html">capset</A></B>(2)
+
+and
+<B><A HREF="../man2/capget.2.html">capget</A></B>(2).
+
+<A NAME="lbAI">&nbsp;</A>
+<H2>CONFORMING TO</H2>
+
+No standards govern capabilities, but the Linux capability implementation
+is based on the withdrawn POSIX 1003.1e draft standard.
+<A NAME="lbAJ">&nbsp;</A>
+<H2>BUGS</H2>
+
+There is as yet no file system support allowing capabilities to be
+associated with executable files.
+<A NAME="lbAK">&nbsp;</A>
+<H2>SEE ALSO</H2>
+
+<B><A HREF="../man2/capget.2.html">capget</A></B>(2),
+
+<B><A HREF="../man2/prctl.2.html">prctl</A></B>(2)
+
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">NAME</A><DD>
+<DT><A HREF="#lbAC">DESCRIPTION</A><DD>
+<DL>
+<DT><A HREF="#lbAD">Capabilities List</A><DD>
+<DT><A HREF="#lbAE">Process Capabilities</A><DD>
+<DT><A HREF="#lbAF">Capability bounding set</A><DD>
+<DT><A HREF="#lbAG">Current and Future Implementation</A><DD>
+</DL>
+<DT><A HREF="#lbAH">NOTES</A><DD>
+<DT><A HREF="#lbAI">CONFORMING TO</A><DD>
+<DT><A HREF="#lbAJ">BUGS</A><DD>
+<DT><A HREF="#lbAK">SEE ALSO</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
+using the manual pages.<BR>
+Time: 02:11:24 GMT, April 20, 2020
+</BODY>
+</HTML>

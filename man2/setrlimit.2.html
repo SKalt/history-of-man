@@ -1,0 +1,429 @@
+<!--
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of GETRLIMIT</TITLE>
+</HEAD><BODY>
+<H1>GETRLIMIT</H1>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2004-06-16<BR><A HREF="#index">Index</A>
+<A HREF="../index.html">Return to Main Contents</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>NAME</H2>
+
+getrlimit, getrusage, setrlimit - get/set resource limits and usage
+<A NAME="lbAC">&nbsp;</A>
+<H2>SYNOPSIS</H2>
+
+<B>#include &lt;<A HREF="file:///usr/include/sys/time.h">sys/time.h</A>&gt;</B>
+
+<BR>
+
+<B>#include &lt;<A HREF="file:///usr/include/sys/resource.h">sys/resource.h</A>&gt;</B>
+
+<BR>
+
+<B>#include &lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;</B>
+
+<P>
+<B>int getrlimit(int </B><I>resource</I><B>, struct rlimit *</B><I>rlim</I><B>);</B>
+
+<BR>
+
+<B>int getrusage(int </B><I>who</I><B>, struct rusage *</B><I>usage</I><B>);</B>
+
+<BR>
+
+<B>int setrlimit(int </B><I>resource</I><B>, const struct rlimit *</B><I>rlim</I><B>);</B>
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>DESCRIPTION</H2>
+
+<B>getrlimit</B>
+
+and
+<B>setrlimit</B>
+
+get and set resource limits respectively.
+Each resource has an associated soft and hard limit, as defined by the 
+<B>rlimit</B>
+
+structure (the
+<I>rlim</I>
+
+argument to both
+<B>getrlimit</B>() and <B>setrlimit</B>()):
+
+<P>
+
+
+<PRE>
+struct rlimit {
+    rlim_t rlim_cur;   /* Soft limit */
+    rlim_t rlim_max;   /* Hard limit (ceiling 
+                          for rlim_cur) */
+};
+
+</PRE>
+
+
+The soft limit is the value that the kernel enforces for the
+corresponding resource.
+The hard limit acts as a ceiling for the soft limit:
+an unprivileged process may only set its soft limit to a value in the 
+range from 0 up to the hard limit, and (irreversibly) lower its hard limit.
+A privileged process (under Linux: one with the
+<B>CAP_SYS_RESOURCE</B>
+
+capability) may make arbitrary changes to either limit value.
+<P>
+
+The value
+<B>RLIM_INFINITY</B>
+
+denotes no limit on a resource (both in the structure returned by
+<B>getrlimit</B>()
+
+and in the structure passed to
+<B>setrlimit</B>()).
+
+<P>
+
+<I>resource</I>
+
+must be one of:
+<DL COMPACT>
+<DT><B>RLIMIT_AS</B>
+
+<DD>
+The maximum size of the process's virtual memory (address space) in bytes.
+
+This limit affects calls to
+<B><A HREF="../man2/brk.2.html">brk</A></B>(2),
+
+<B><A HREF="../man2/mmap.2.html">mmap</A></B>(2)
+
+and
+<B><A HREF="../man2/mremap.2.html">mremap</A></B>(2),
+
+which fail with the error
+<B>ENOMEM</B>
+
+upon exceeding this limit. Also automatic stack expansion will fail
+(and generate a SIGSEGV that kills the process when no alternate stack
+has been made available).
+Since the value is a long, on machines with a 32-bit long
+either this limit is at most 2 GiB, or this resource is unlimited.
+<DT><B>RLIMIT_CORE</B>
+
+<DD>
+Maximum size of
+<I>core</I>
+
+file. When 0 no core dump files are created.
+When nonzero, larger dumps are truncated to this size.
+<DT><B>RLIMIT_CPU</B>
+
+<DD>
+CPU time limit in seconds.
+When the process reaches the soft limit, it is sent a
+<B>SIGXCPU</B>
+
+signal.
+The default action for this signal is to terminate the process.
+However, the signal can be caught, and the handler can return control to
+the main program.
+If the process continues to consume CPU time, it will be sent
+<B>SIGXCPU</B>
+
+once per second until the hard limit is reached, at which time
+it is sent
+<B>SIGKILL</B>.
+
+(This latter point describes Linux 2.2 and 2.4 behaviour.
+Implementations vary in how they treat processes which continue to
+consume CPU time after reaching the soft limit.
+Portable applications that need to catch this signal should
+perform an orderly termination upon first receipt of
+<B>SIGXCPU</B>.)
+
+<DT><B>RLIMIT_DATA</B>
+
+<DD>
+The maximum size of the process's data segment (initialized data,
+uninitialized data, and heap).
+This limit affects calls to
+<B>brk</B>() and <B>sbrk</B>(),
+
+which fail with the error
+<B>ENOMEM</B>
+
+upon encountering the soft limit of this resource.
+<DT><B>RLIMIT_FSIZE</B>
+
+<DD>
+The maximum size of files that the process may create.
+Attempts to extend a file beyond this limit result in delivery of a
+<B>SIGXFSZ</B>
+
+signal.
+By default, this signal terminates a process, but a process can 
+catch this signal instead, in which case the relevant system call (e.g., 
+<B>write</B>(), <B>truncate</B>())
+
+fails with the error
+<B>EFBIG</B>.
+
+<DT><B>RLIMIT_LOCKS</B>
+
+<DD>
+A limit on the combined number of
+<B>flock</B>()
+
+locks and 
+<B>fcntl()</B>
+
+leases that this process may establish.
+(Early Linux 2.4 only.)
+
+<DT><B>RLIMIT_MEMLOCK</B>
+
+<DD>
+The maximum number of bytes of virtual memory that may be locked
+into RAM using
+<B>mlock</B>() and <B>mlockall</B>().
+
+<DT><B>RLIMIT_NOFILE</B>
+
+<DD>
+Specifies a value one greater than the maximum file descriptor number
+that can be opened by this process.
+Attempts
+(<B>open</B>(), <B>pipe</B>(), <B>dup</B>(), etc.)
+
+to exceed this limit yield the error
+<B>EMFILE</B>.
+
+<DT><B>RLIMIT_NPROC</B>
+
+<DD>
+The maximum number of processes that can be created for the real user
+ID of the calling process.
+Upon encountering this limit, 
+<B>fork</B>()
+
+fails with the error
+<B>EAGAIN</B>.
+
+<DT><B>RLIMIT_RSS</B>
+
+<DD>
+Specifies the limit (in pages) of the process's resident set
+(the number of virtual pages resident in RAM).
+This limit only has effect in Linux 2.4 onwatrds, and there only
+affects calls to
+<B>madvise</B>()
+
+specifying
+<B>MADVISE_WILLNEED</B>.
+
+<DT><B>RLIMIT_STACK</B>
+
+<DD>
+The maximum size of the process stack, in bytes.
+Upon reaching this limit, a
+<B>SIGSEGV</B>
+
+signal is generated.
+To handle this signal, a process must employ an alternate signal stack
+(<B><A HREF="../man2/sigaltstack.2.html">sigaltstack</A></B>(2)).
+
+</DL>
+<P>
+
+<B>RLIMIT_OFILE</B>
+
+is the BSD name for 
+<B>RLIMIT_NOFILE</B>.
+
+<P>
+
+<B>getrusage</B>
+
+returns the current resource usages, for a <I>who</I>
+of either 
+<B>RUSAGE_SELF</B>
+
+or 
+<B>RUSAGE_CHILDREN</B>.
+
+The former asks for resources used by the current process,
+the latter for resources used by those of its children
+that have terminated and have been waited for.
+<P>
+
+
+<PRE>
+struct rusage {
+    struct timeval ru_utime; /* user time used */
+    struct timeval ru_stime; /* system time used */
+    long   ru_maxrss;        /* maximum resident set size */
+    long   ru_ixrss;         /* integral shared memory size */
+    long   ru_idrss;         /* integral unshared data size */
+    long   ru_isrss;         /* integral unshared stack size */
+    long   ru_minflt;        /* page reclaims */
+    long   ru_majflt;        /* page faults */
+    long   ru_nswap;         /* swaps */
+    long   ru_inblock;       /* block input operations */
+    long   ru_oublock;       /* block output operations */
+    long   ru_msgsnd;        /* messages sent */
+    long   ru_msgrcv;        /* messages received */
+    long   ru_nsignals;      /* signals received */
+    long   ru_nvcsw;         /* voluntary context switches */
+    long   ru_nivcsw;        /* involuntary context switches */
+};
+</PRE>
+
+
+<A NAME="lbAE">&nbsp;</A>
+<H2>RETURN VALUE</H2>
+
+On success, zero is returned.  On error, -1 is returned, and
+<I>errno</I>
+
+is set appropriately.
+<A NAME="lbAF">&nbsp;</A>
+<H2>ERRORS</H2>
+
+<DL COMPACT>
+<DT><B>EFAULT</B>
+
+<DD>
+<I>rlim</I>
+
+or
+<I>usage</I>
+
+points outside the accessible address space.
+<DT><B>EINVAL</B>
+
+<DD>
+<B>getrlimit</B> or <B>setrlimit</B>
+
+is called with a bad <I>resource</I>, or <B>getrusage</B> is called with a
+bad <I>who</I>.
+<DT><B>EPERM</B>
+
+<DD>
+An unprivileged process tried to use <B>setrlimit()</B> to
+increase a soft or hard limit above the current hard limit; the
+<B>CAP_SYS_RESOURCE</B>
+
+capability is required to do this.
+Or, the process tried to use <B>setrlimit()</B> to increase
+the soft or hard RLIMIT_NOFILE limit above the current kernel
+maximum (NR_OPEN).
+</DL>
+<A NAME="lbAG">&nbsp;</A>
+<H2>CONFORMING TO</H2>
+
+SVr4, BSD 4.3
+<A NAME="lbAH">&nbsp;</A>
+<H2>NOTE</H2>
+
+Including
+<I>&lt;<A HREF="file:///usr/include/sys/time.h">sys/time.h</A>&gt;</I>
+
+is not required these days, but increases portability.
+(Indeed,
+<I>struct timeval</I>
+
+is defined in
+<I>&lt;<A HREF="file:///usr/include/sys/time.h">sys/time.h</A>&gt;</I>.)
+
+<P>
+
+On Linux, if the disposition of
+<B>SIGCHLD</B>
+
+is set to
+<B>SIG_IGN</B>
+
+then the resource usages of child processes
+are automatically included in the value returned by
+<B>RUSAGE_CHILDREN</B>,
+
+although POSIX 1003.1-2001 explicitly prohibits this.
+
+
+<P>
+
+The above struct was taken from BSD 4.3 Reno.
+Not all fields are meaningful under Linux.
+Right now (Linux 2.4, 2.6) only the fields
+<B>ru_utime</B>,
+
+<B>ru_stime</B>,
+
+<B>ru_minflt</B>,
+
+<B>ru_majflt</B>,
+
+and
+<B>ru_nswap</B>
+
+are maintained.
+<A NAME="lbAI">&nbsp;</A>
+<H2>SEE ALSO</H2>
+
+<B><A HREF="../man2/dup.2.html">dup</A></B>(2),
+
+<B><A HREF="../man2/fcntl.2.html">fcntl</A></B>(2),
+
+<B><A HREF="../man2/fork.2.html">fork</A></B>(2),
+
+<B><A HREF="../man2/mlock.2.html">mlock</A></B>(2),
+
+<B><A HREF="../man2/mlockall.2.html">mlockall</A></B>(2),
+
+<B><A HREF="../man2/mmap.2.html">mmap</A></B>(2),
+
+<B><A HREF="../man2/open.2.html">open</A></B>(2),
+
+<B><A HREF="../man2/quotactl.2.html">quotactl</A></B>(2),
+
+<B><A HREF="../man2/sbrk.2.html">sbrk</A></B>(2),
+
+<B><A HREF="../man2/wait3.2.html">wait3</A></B>(2),
+
+<B><A HREF="../man2/wait4.2.html">wait4</A></B>(2),
+
+<B><A HREF="../man3/malloc.3.html">malloc</A></B>(3),
+
+<B><A HREF="../man3/ulimit.3.html">ulimit</A></B>(3),
+
+<B><A HREF="../man7/capabilities.7.html">capabilities</A></B>(7),
+
+<B><A HREF="../man7/signal.7.html">signal</A></B>(7)
+
+
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">NAME</A><DD>
+<DT><A HREF="#lbAC">SYNOPSIS</A><DD>
+<DT><A HREF="#lbAD">DESCRIPTION</A><DD>
+<DT><A HREF="#lbAE">RETURN VALUE</A><DD>
+<DT><A HREF="#lbAF">ERRORS</A><DD>
+<DT><A HREF="#lbAG">CONFORMING TO</A><DD>
+<DT><A HREF="#lbAH">NOTE</A><DD>
+<DT><A HREF="#lbAI">SEE ALSO</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
+using the manual pages.<BR>
+Time: 02:10:06 GMT, April 20, 2020
+</BODY>
+</HTML>

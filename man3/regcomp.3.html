@@ -1,0 +1,458 @@
+<!--
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of REGCOMP</TITLE>
+</HEAD><BODY>
+<H1>REGCOMP</H1>
+Section: Linux Programmer's Manual (3)<BR>Updated: 1998-05-08<BR><A HREF="#index">Index</A>
+<A HREF="../index.html">Return to Main Contents</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>NAME</H2>
+
+regcomp, regexec, regerror, regfree - POSIX regex functions
+<A NAME="lbAC">&nbsp;</A>
+<H2>SYNOPSIS</H2>
+
+<B>#include &lt;<A HREF="file:///usr/include/sys/types.h">sys/types.h</A>&gt;</B>
+
+<BR>
+
+<B>#include &lt;<A HREF="file:///usr/include/regex.h">regex.h</A>&gt;</B>
+
+<P>
+
+
+<BR>
+u
+
+<B>int&nbsp;regcomp(regex_t *</B><I>preg</I><B>, const char *</B><I>regex</I><B>,</B>
+
+<B>int </B><I>cflags</I><B>);</B>
+
+
+
+<BR>
+u
+
+<B>int&nbsp;regexec(const regex_t *</B><I>preg</I><B>, const char *</B><I>string</I><B>,</B>
+
+<B>size_t </B><I>nmatch</I><B>, regmatch_t </B><I>pmatch[]</I><B>,</B>
+
+<B>int </B><I>eflags</I><B>);</B>
+
+
+
+<BR>
+u
+
+<B>size_t&nbsp;regerror(int </B><I>errcode</I><B>,</B>
+
+<B>const regex_t *</B><I>preg</I><B>, char *</B><I>errbuf</I><B>,</B>
+
+<B>size_t </B><I>errbuf_size</I><B>);</B>
+
+
+
+<BR>
+
+
+<B>void&nbsp;regfree(regex_t *</B><I>preg</I><B>);</B>
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>POSIX REGEX COMPILING</H2>
+
+<B>regcomp </B>
+
+is used to compile a regular expression into a form that is suitable
+for subsequent 
+<B>regexec</B>
+
+searches.
+<P>
+<B>regcomp</B>
+
+is supplied with 
+<I>preg</I>,
+
+a pointer to a pattern buffer storage area; 
+<I>regex</I>,
+
+a pointer to the null-terminated string and
+<I>cflags</I>,
+
+flags used to determine the type of compilation.
+<P>
+All regular expression searching must be done via a compiled pattern
+buffer, thus 
+<B>regexec</B>
+
+must always be supplied with the address of a 
+<B>regcomp</B>
+
+initialized pattern buffer.
+<P>
+<I>cflags </I>
+
+may be the 
+bitwise-<B>or</B>
+
+of one or more of the following:
+<DL COMPACT>
+<DT><B>REG_EXTENDED</B>
+
+<DD>
+Use 
+<B>POSIX</B>
+
+Extended Regular Expression syntax when interpreting 
+<I>regex</I>.
+
+If not set,
+<B>POSIX</B>
+
+Basic Regular Expression syntax is used.
+<DT><B>REG_ICASE</B>
+
+<DD>
+Do not differentiate case.  Subsequent 
+<B>regexec</B>
+
+searches using this pattern buffer will be case insensitive.
+<DT><B>REG_NOSUB</B>
+
+<DD>
+Support for substring addressing of matches is not required.
+The
+<I>nmatch</I>
+
+and
+<I>pmatch</I>
+
+parameters to 
+<B>regexec</B>
+
+are ignored if the pattern buffer supplied was compiled with this flag set.
+<DT><B>REG_NEWLINE</B>
+
+<DD>
+Match-any-character operators don't match a newline.
+<P>
+A non-matching list 
+(<B>[^...]</B>)
+
+not containing a newline does not match a newline.
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;
+Match-beginning-of-line operator
+(<B>^</B>)
+
+matches the empty string immediately after a newline, regardless of
+whether
+<I>eflags</I>,
+
+the execution flags of
+<B>regexec</B>,
+
+contains 
+<B>REG_NOTBOL</B>.
+
+<P>
+Match-end-of-line operator 
+(<B>$</B>)
+
+matches the empty string immediately before a newline, regardless of
+whether 
+<I>eflags</I>
+
+contains
+<B>REG_NOTEOL</B>.
+
+</DL>
+<A NAME="lbAE">&nbsp;</A>
+<H2>POSIX REGEX MATCHING</H2>
+
+<B>regexec</B>
+
+is used to match a null-terminated string
+against the precompiled pattern buffer, 
+<I>preg</I>.
+
+<I>nmatch</I>
+
+and
+<I>pmatch</I>
+
+are used to provide information regarding the location of any matches.  
+<I>eflags</I>
+
+may be the 
+bitwise-<B>or</B>
+
+of one or both of 
+<B>REG_NOTBOL</B>
+
+and
+<B>REG_NOTEOL </B>
+
+which cause changes in matching behaviour described below.
+<DL COMPACT>
+<DT><B>REG_NOTBOL</B>
+
+<DD>
+The match-beginning-of-line operator always fails to match (but see the
+compilation flag
+<B>REG_NEWLINE </B>
+
+above)
+This flag may be used when different portions of a string are passed to 
+<B>regexec</B>
+
+and the beginning of the string should not be interpreted as the
+beginning of the line.
+<DT><B>REG_NOTEOL</B>
+
+<DD>
+The match-end-of-line operator always fails to match (but see the
+compilation flag
+<B>REG_NEWLINE</B>
+
+above)
+</DL>
+<A NAME="lbAF">&nbsp;</A>
+<H3>BYTE OFFSETS</H3>
+
+Unless 
+<B>REG_NOSUB</B>
+
+was set for the compilation of the pattern buffer, it is possible to
+obtain substring match addressing information. 
+<I>pmatch</I>
+
+must be dimensioned to have at least
+<I>nmatch</I>
+
+elements.
+These are filled in by
+<B>regexec</B>
+
+with substring match addresses.  Any unused structure elements
+will contain the value -1.
+<P>
+The 
+<B>regmatch_t </B>
+
+structure which is the type of
+<I>pmatch</I>
+
+is defined in
+<I>regex.h</I>.
+
+<P>
+<DL COMPACT><DT><DD>
+<B>typedef struct</B>
+
+<BR>
+
+<B>{</B>
+
+<BR>
+
+<B>  regoff_t </B><I>rm_so</I><B>;</B>
+
+<BR>
+
+<B>  regoff_t </B><I>rm_eo</I><B>;</B>
+
+<BR>
+
+<B>}</B>
+
+<B>regmatch_t;</B>
+
+</DL>
+
+<P>
+Each 
+<I>rm_so</I>
+
+element that is not -1 indicates the start offset of the next largest
+substring match within the string.  The relative 
+<I>rm_eo </I>
+
+element indicates the end offset of the match.
+<A NAME="lbAG">&nbsp;</A>
+<H2>POSIX ERROR REPORTING</H2>
+
+<B>regerror</B>
+
+is used to turn the error codes that can be returned by both 
+<B>regcomp</B>
+
+and
+<B>regexec</B>
+
+into error message strings.
+<P>
+<B>regerror</B>
+
+is passed the error code,
+<I>errcode</I>,
+
+the pattern buffer,
+<I>preg</I>,
+
+a pointer to a character string buffer,
+<I>errbuf</I>,
+
+and the size of the string buffer,
+<I>errbuf_size</I>.
+
+It returns the size of the
+<I>errbuf</I>
+
+required to contain the null-terminated error message string.  If both
+<I>errbuf</I>
+
+and
+<I>errbuf_size</I>
+
+are non-zero, 
+<I>errbuf</I>
+
+is filled in with the first 
+<I>errbuf_size - 1</I>
+
+characters of the error message and a terminating null.
+<A NAME="lbAH">&nbsp;</A>
+<H2>POSIX PATTERN BUFFER FREEING</H2>
+
+Supplying 
+<B>regfree</B>
+
+with a precompiled pattern buffer,
+<I>preg</I>
+
+will free the memory allocated to the pattern buffer by the compiling
+process,
+<B>regcomp</B>.
+
+<A NAME="lbAI">&nbsp;</A>
+<H2>RETURN VALUE</H2>
+
+<B>regcomp</B>
+
+returns zero for a successful compilation or an error code for failure.
+<P>
+<B>regexec</B>
+
+returns zero for a successful match or 
+<B>REG_NOMATCH</B>
+
+for failure.
+<A NAME="lbAJ">&nbsp;</A>
+<H2>ERRORS</H2>
+
+The following errors can be returned by 
+<B>regcomp</B>:
+
+<DL COMPACT>
+<DT><B>REG_BADBR</B>
+
+<DD>
+Invalid use of back reference operator.
+<DT><B>REG_BADPAT</B>
+
+<DD>
+Invalid use of pattern operators such as group or list.
+<DT><B>REG_BADRPT</B>
+
+<DD>
+Invalid use of repetition operators such as using 
+`<B>*</B>'
+
+as the first character.
+<DT><B>REG_EBRACE</B>
+
+<DD>
+Un-matched brace interval operators.
+<DT><B>REG_EBRACK</B>
+
+<DD>
+Un-matched bracket list operators.
+<DT><B>REG_ECOLLATE</B>
+
+<DD>
+Invalid collating element.
+<DT><B>REG_ECTYPE</B>
+
+<DD>
+Unknown character class name.
+<DT><B>REG_EEND</B>
+
+<DD>
+Non specific error.  This is not defined by POSIX.2.
+<DT><B>REG_EESCAPE</B>
+
+<DD>
+Trailing backslash.
+<DT><B>REG_EPAREN</B>
+
+<DD>
+Un-matched parenthesis group operators.
+<DT><B>REG_ERANGE</B>
+
+<DD>
+Invalid use of the range operator, eg. the ending point of the range
+occurs prior to the starting point.
+<DT><B>REG_ESIZE</B>
+
+<DD>
+Compiled regular expression requires a pattern buffer larger than 64Kb.
+This is not defined by POSIX.2.
+<DT><B>REG_ESPACE</B>
+
+<DD>
+The regex routines ran out of memory.
+<DT><B>REG_ESUBREG</B>
+
+<DD>
+Invalid back reference to a subexpression.
+</DL>
+<A NAME="lbAK">&nbsp;</A>
+<H2>CONFORMING TO</H2>
+
+POSIX.2
+<A NAME="lbAL">&nbsp;</A>
+<H2>SEE ALSO</H2>
+
+<B><A HREF="../man7/regex.7.html">regex</A></B>(7),
+
+GNU regex manual
+<BR>&nbsp;
+
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">NAME</A><DD>
+<DT><A HREF="#lbAC">SYNOPSIS</A><DD>
+<DT><A HREF="#lbAD">POSIX REGEX COMPILING</A><DD>
+<DT><A HREF="#lbAE">POSIX REGEX MATCHING</A><DD>
+<DL>
+<DT><A HREF="#lbAF">BYTE OFFSETS</A><DD>
+</DL>
+<DT><A HREF="#lbAG">POSIX ERROR REPORTING</A><DD>
+<DT><A HREF="#lbAH">POSIX PATTERN BUFFER FREEING</A><DD>
+<DT><A HREF="#lbAI">RETURN VALUE</A><DD>
+<DT><A HREF="#lbAJ">ERRORS</A><DD>
+<DT><A HREF="#lbAK">CONFORMING TO</A><DD>
+<DT><A HREF="#lbAL">SEE ALSO</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
+using the manual pages.<BR>
+Time: 02:10:57 GMT, April 20, 2020
+</BODY>
+</HTML>

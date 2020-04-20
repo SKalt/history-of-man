@@ -1,0 +1,172 @@
+<!--
+Copyright 1992 Rickard E. Faith (faith@cs.unc.edu)
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of SD</TITLE>
+</HEAD><BODY>
+<H1>SD</H1>
+Section: Linux Programmer's Manual (4)<BR>Updated: 1992-12-17<BR><A HREF="#index">Index</A>
+<A HREF="../index.html">Return to Main Contents</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>NAME</H2>
+
+sd - Driver for SCSI Disk Drives
+<A NAME="lbAC">&nbsp;</A>
+<H2>SYNOPSIS</H2>
+
+#include &lt;<A HREF="file:///usr/include/linux/hdreg.h">linux/hdreg.h</A>&gt;        /* for HDIO_GETGEO */
+#include &lt;<A HREF="file:///usr/include/linux/fs.h">linux/fs.h</A>&gt;           /* for BLKGETSIZE and BLKRRPART */
+<A NAME="lbAD">&nbsp;</A>
+<H2>CONFIG</H2>
+
+The block device name has the following form:
+<B>sd</B><I>lp,</I>
+
+where
+<I>l</I>
+
+is a letter denoting the physical drive, and
+<I>p</I>
+
+is a number denoting the partition on that physical drive.  Often, the
+partition number,
+<I>p</I>,
+
+will be left off when the device corresponds to the whole drive.
+<P>
+SCSI disks have a major device number of 8, and a minor device number of
+the form (16 *
+<I>drive_number</I>) + <I>partition_number</I>,
+
+where
+<I>drive_number</I>
+
+is the number of the physical drive in order of detection, and
+<I>partition_number</I>
+
+is as follows:
+<P>
+partition 0 is the whole drive
+<BR>
+
+partitions 1-4 are the DOS &quot;primary&quot; partitions
+<BR>
+
+partitions 5-8 are the DOS &quot;extended&quot; (or &quot;logical&quot;) partitions
+<P>
+For example,
+<B>/dev/sda</B>
+
+will have major 8, minor 0, and will refer to all of the first SCSI drive
+in the system; and
+<B>/dev/sdb3</B>
+
+will have major 8, minor 19, and will refer to the third DOS &quot;primary&quot;
+partition on the second SCSI drive in the system.
+<P>
+At this time, only block devices are provided.  Raw devices have not yet
+been implemented.
+<A NAME="lbAE">&nbsp;</A>
+<H2>DESCRIPTION</H2>
+
+The following
+<I>ioctl</I>s
+
+are provided:
+<DL COMPACT>
+<DT>HDIO_GETGEO<DD>
+<DL COMPACT><DT><DD>
+Returns the BIOS disk parameters in the following structure:
+<DL COMPACT><DT><DD>
+<PRE>
+<B>struct hd_geometry {
+      unsigned char heads;
+      unsigned char sectors;
+      unsigned short cylinders;
+      unsigned long start;
+};
+</B></PRE>
+
+</DL>
+
+<P>
+A pointer to this structure is passed as the
+<B><A HREF="../man2/ioctl.2.html">ioctl</A></B>(2)
+
+parameter.
+<P>
+The information returned in the parameter is the disk geometry of the drive
+<I>as understood by DOS!</I>
+
+This geometry is
+<I>not</I>
+
+the physical geometry of the drive.  It is used when constructing the
+drive's partition table, however, and is needed for convenient operation
+of
+<B><A HREF="../man1/fdisk.1.html">fdisk</A></B>(1),
+
+<B><A HREF="../man1/efdisk.1.html">efdisk</A></B>(1),
+
+and
+<B><A HREF="../man1/lilo.1.html">lilo</A></B>(1).
+
+If the geometry information is not available, zero will be returned for all
+of the parameters.
+</DL>
+
+<DT>BLKGETSIZE<DD>
+Returns the device size in sectors.  The
+<B><A HREF="../man2/ioctl.2.html">ioctl</A></B>(2)
+
+parameter should be a pointer to a
+<B>long</B>.
+
+<DT>BLKRRPART<DD>
+Forces a re-read of the SCSI disk partition tables.  No parameter is needed.
+<P>
+The
+<B><A HREF="../man4/scsi.4.html">scsi</A></B>(4)
+
+<I>ioctl</I>s
+
+are also supported.  If the
+<B><A HREF="../man2/ioctl.2.html">ioctl</A></B>(2)
+
+parameter is required, and it is NULL, then
+<I>ioctl</I>()
+
+will return -EINVAL.
+</DL>
+<A NAME="lbAF">&nbsp;</A>
+<H2>FILES</H2>
+
+/dev/sd[a-h]: the whole device
+<BR>
+
+/dev/sd[a-h][0-8]: individual block partitions
+<A NAME="lbAG">&nbsp;</A>
+<H2>SEE ALSO</H2>
+
+<B><A HREF="../man4/scsi.4.html">scsi</A></B>(4)
+
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">NAME</A><DD>
+<DT><A HREF="#lbAC">SYNOPSIS</A><DD>
+<DT><A HREF="#lbAD">CONFIG</A><DD>
+<DT><A HREF="#lbAE">DESCRIPTION</A><DD>
+<DT><A HREF="#lbAF">FILES</A><DD>
+<DT><A HREF="#lbAG">SEE ALSO</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
+using the manual pages.<BR>
+Time: 02:11:21 GMT, April 20, 2020
+</BODY>
+</HTML>

@@ -1,0 +1,541 @@
+<!--
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of SELECT</TITLE>
+</HEAD><BODY>
+<H1>SELECT</H1>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2001-02-09<BR><A HREF="#index">Index</A>
+<A HREF="../index.html">Return to Main Contents</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>NAME</H2>
+
+select, pselect, FD_CLR, FD_ISSET, FD_SET, FD_ZERO - synchronous I/O multiplexing
+<A NAME="lbAC">&nbsp;</A>
+<H2>SYNOPSIS</H2>
+
+/* According to POSIX 1003.1-2001 */
+<BR>
+
+<B>#include &lt;<A HREF="file:///usr/include/sys/select.h">sys/select.h</A>&gt;</B>
+
+<P>
+/* According to earlier standards */
+<BR>
+
+<B>#include &lt;<A HREF="file:///usr/include/sys/time.h">sys/time.h</A>&gt;</B>
+
+<BR>
+
+<B>#include &lt;<A HREF="file:///usr/include/sys/types.h">sys/types.h</A>&gt;</B>
+
+<BR>
+
+<B>#include &lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;</B>
+
+<P>
+<B>int select(int </B><I>n</I><B>, fd_set *</B><I>readfds</I><B>,
+fd_set *</B><I>writefds</I><B>, fd_set *</B><I>exceptfds</I><B>,
+struct timeval *</B><I>timeout</I><B>);
+<P>
+int pselect(int </B><I>n</I><B>, fd_set *</B><I>readfds</I><B>,
+fd_set *</B><I>writefds</I><B>, fd_set *</B><I>exceptfds</I><B>,
+const struct timespec *</B><I>timeout</I><B>, const sigset_t *</B><I>sigmask</I><B>);
+<P>
+FD_CLR(int </B><I>fd</I><B>, fd_set *</B><I>set</I><B>);</B>
+
+<BR>
+
+<B>FD_ISSET(int </B><I>fd</I><B>, fd_set *</B><I>set</I><B>);</B>
+
+<BR>
+
+<B>FD_SET(int </B><I>fd</I><B>, fd_set *</B><I>set</I><B>);</B>
+
+<BR>
+
+<B>FD_ZERO(fd_set *</B><I>set</I><B>);</B>
+
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>DESCRIPTION</H2>
+
+The functions
+<B>select</B>
+
+and
+<B>pselect</B>
+
+wait for a number of file descriptors to change status.
+<P>
+
+Their function is identical, with three differences:
+<DL COMPACT>
+<DT>(i)<DD>
+The
+<B>select</B>
+
+function uses a timeout that is a
+<I>struct timeval</I>
+
+(with seconds and microseconds), while
+<B>pselect</B>
+
+uses a
+<I>struct timespec</I>
+
+(with seconds and nanoseconds).
+<DT>(ii)<DD>
+The
+<B>select</B>
+
+function may update the
+<I>timeout</I>
+
+parameter to indicate how much time was left. The
+<B>pselect</B>
+
+function does not change this parameter.
+<DT>(iii)<DD>
+The
+<B>select</B>
+
+function has no
+<I>sigmask</I>
+
+parameter, and behaves as
+<B>pselect</B>
+
+called with NULL
+<I>sigmask</I>.
+
+</DL>
+<P>
+
+Three independent sets of descriptors are watched.  Those listed in
+<I>readfds</I>
+
+will be watched to see if characters become
+available for reading (more precisely, to see if a read will not
+block - in particular, a file descriptor is also ready on end-of-file),
+those in
+<I>writefds</I>
+
+will be watched to see if a write will not block, and
+those in
+<I>exceptfds</I>
+
+will be watched for exceptions.  On exit, the sets are modified in place
+to indicate which descriptors actually changed status.
+<P>
+
+Four macros are provided to manipulate the sets.
+<B>FD_ZERO</B>
+
+will clear a set.
+<B>FD_SET</B>
+
+and
+<B>FD_CLR</B>
+
+add or remove a given descriptor from a set.
+<B>FD_ISSET</B>
+
+tests to see if a descriptor is part of the set; this is useful after
+<B>select</B>
+
+returns.
+<P>
+
+<I>n</I>
+
+is the highest-numbered descriptor in any of the three sets, plus 1.
+<P>
+
+<I>timeout</I>
+
+is an upper bound on the amount of time elapsed before
+<B>select</B>
+
+returns. It may be zero, causing
+<B>select</B>
+
+to return immediately. (This is useful for polling.) If
+<I>timeout</I>
+
+is NULL (no timeout),
+<B>select</B>
+
+can block indefinitely.
+<P>
+
+<I>sigmask</I>
+
+is a pointer to a signal mask (see
+<B><A HREF="../man2/sigprocmask.2.html">sigprocmask</A></B>(2));
+
+if it is not NULL, then
+<B>pselect</B>
+
+first replaces the current signal mask by the one pointed to by
+<I>sigmask</I>,
+
+then does the `select' function, and then restores the original
+signal mask again.
+<P>
+
+The idea of
+<B>pselect</B>
+
+is that if one wants to wait for an event, either a signal
+or something on a file descriptor, an atomic test is needed to prevent
+race conditions. (Suppose the signal handler sets a global flag and
+returns. Then a test of this global flag followed by a call of
+<B>select</B>()
+
+could hang indefinitely if the signal arrived just after the test
+but just before the call. On the other hand,
+<B>pselect</B>
+
+allows one to first block signals, handle the signals that have come in,
+then call
+<B>pselect</B>()
+
+with the desired
+<I>sigmask</I>,
+
+avoiding the race.)
+Since Linux today does not have a
+<B>pselect</B>()
+
+system call, the current glibc2 routine still contains this race.
+<A NAME="lbAE">&nbsp;</A>
+<H3>The timeout</H3>
+
+The time structures involved are defined in
+<I>&lt;<A HREF="file:///usr/include/sys/time.h">sys/time.h</A>&gt;</I>
+
+and look like
+<P>
+<DL COMPACT><DT><DD>
+<PRE>
+struct timeval { 
+    long    tv_sec;         /* seconds */
+    long    tv_usec;        /* microseconds */
+};
+</PRE>
+
+</DL>
+
+<P>
+and
+<P>
+<DL COMPACT><DT><DD>
+<PRE>
+struct timespec {
+    long    tv_sec;         /* seconds */
+    long    tv_nsec;        /* nanoseconds */
+};
+</PRE>
+
+</DL>
+
+<P>
+(However, see below on the POSIX 1003.1-2001 versions.)
+<P>
+
+Some code calls
+<B>select</B>
+
+with all three sets empty,
+<I>n</I>
+
+zero, and a non-null
+<I>timeout</I>
+
+as a fairly portable way to sleep with subsecond precision.
+<P>
+
+On Linux, the function
+<B>select</B>
+
+modifies
+<I>timeout</I>
+
+to reflect the amount of time not slept; most other implementations
+do not do this.  This causes problems both when Linux code which reads
+<I>timeout</I>
+
+is ported to other operating systems, and when code is ported to Linux
+that reuses a struct timeval for multiple
+<B>select</B>s
+
+in a loop without reinitializing it.  Consider
+<I>timeout</I>
+
+to be undefined after
+<B>select</B>
+
+returns.
+
+
+
+
+<A NAME="lbAF">&nbsp;</A>
+<H2>RETURN VALUE</H2>
+
+On success,
+<B>select</B>
+
+and
+<B>pselect</B>
+
+return the number of descriptors contained in the three returned
+descriptor sets (that is, the total number of one bits in
+<I>readfds</I>,
+
+<I>writefds</I>,
+
+<I>exceptfds</I>)
+
+which may be zero if the timeout expires before anything interesting happens.
+On error, -1 is returned, and
+<I>errno</I>
+
+is set appropriately; the sets and
+<I>timeout</I>
+
+become undefined, so do not
+rely on their contents after an error.
+<A NAME="lbAG">&nbsp;</A>
+<H2>ERRORS</H2>
+
+<DL COMPACT>
+<DT><B>EBADF</B>
+
+<DD>
+An invalid file descriptor was given in one of the sets.
+<DT><B>EINTR</B>
+
+<DD>
+A non blocked signal was caught.
+<DT><B>EINVAL</B>
+
+<DD>
+<I>n</I>
+
+is negative or the value contained within
+<I>timeout</I>
+
+is invalid.
+<DT><B>ENOMEM</B>
+
+<DD>
+<B>select</B>
+
+was unable to allocate memory for internal tables.
+</DL>
+<A NAME="lbAH">&nbsp;</A>
+<H2>EXAMPLE</H2>
+
+<PRE>
+#include &lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/sys/time.h">sys/time.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/sys/types.h">sys/types.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;
+
+int
+main(void) {
+    fd_set rfds;
+    struct timeval tv;
+    int retval;
+
+    /* Watch stdin (fd 0) to see when it has input. */
+    FD_ZERO(&amp;rfds);
+    FD_SET(0, &amp;rfds);
+    /* Wait up to five seconds. */
+    tv.tv_sec = 5;
+    tv.tv_usec = 0;
+
+    retval = select(1, &amp;rfds, NULL, NULL, &amp;tv);
+    /* Don't rely on the value of tv now! */
+
+    if (retval == -1)
+        perror(&quot;select()&quot;);
+    else if (retval)
+        printf(&quot;Data is available now.\n&quot;);
+        /* FD_ISSET(0, &amp;rfds) will be true. */
+    else
+        printf(&quot;No data within five seconds.\n&quot;);
+
+    return 0;
+}
+</PRE>
+
+<A NAME="lbAI">&nbsp;</A>
+<H2>CONFORMING TO</H2>
+
+4.4BSD (the
+<B>select</B>
+
+function first appeared in 4.2BSD).  Generally portable to/from
+non-BSD systems supporting clones of the BSD socket layer (including
+System V variants).  However, note that the System V variant typically
+sets the timeout variable before exit, but the BSD variant does not.
+<P>
+
+The
+<B>pselect</B>
+
+function is defined in IEEE Std 1003.1g-2000 (POSIX.1g), and part of
+POSIX 1003.1-2001.
+It is found in glibc2.1 and later.
+Glibc2.0 has a function with this name, that however does not take a
+<I>sigmask</I>
+
+parameter.
+<A NAME="lbAJ">&nbsp;</A>
+<H2>NOTES</H2>
+
+An fd_set is a fixed size buffer. Executing FD_CLR or FD_SET with a value of
+<I>fd</I>
+
+that is negative or is equal to or larger than FD_SETSIZE will result
+in undefined behavior. Moreover, POSIX requires
+<I>fd</I>
+
+to be a valid file descriptor.
+<P>
+Concerning the types involved, the classical situation is that
+the two fields of a struct timeval are longs (as shown above),
+and the struct is defined in
+<I>&lt;<A HREF="file:///usr/include/sys/time.h">sys/time.h</A>&gt;</I>.
+
+The POSIX 1003.1-2001 situation is
+<P>
+<DL COMPACT><DT><DD>
+<PRE>
+struct timeval {
+    time_t         tv_sec;     /* seconds */
+    suseconds_t    tv_usec;    /* microseconds */
+};
+</PRE>
+
+</DL>
+
+<P>
+where the struct is defined in
+<I>&lt;<A HREF="file:///usr/include/sys/select.h">sys/select.h</A>&gt;</I>
+
+and the data types time_t and suseconds_t are defined in
+<I>&lt;<A HREF="file:///usr/include/sys/types.h">sys/types.h</A>&gt;</I>.
+
+<P>
+
+Concerning prototypes, the classical situation is that one should
+include
+<I>&lt;<A HREF="file:///usr/include/time.h">time.h</A>&gt;</I>
+
+for
+<B>select</B>.
+
+The POSIX 1003.1-2001 situation is that one should include
+<I>&lt;<A HREF="file:///usr/include/sys/select.h">sys/select.h</A>&gt;</I>
+
+for
+<B>select</B>
+
+and
+<B>pselect</B>.
+
+Libc4 and libc5 do not have a
+<I>&lt;<A HREF="file:///usr/include/sys/select.h">sys/select.h</A>&gt;</I>
+
+header; under glibc 2.0 and later this header exists.
+Under glibc 2.0 it unconditionally gives the wrong prototype for
+<B>pselect</B>,
+
+under glibc 2.1-2.2.1 it gives
+<B>pselect</B>
+
+when
+<B>_GNU_SOURCE</B>
+
+is defined, under glibc 2.2.2-2.2.4 it gives it when
+<B>_XOPEN_SOURCE</B>
+
+is defined and has a value of 600 or larger.
+No doubt, since POSIX 1003.1-2001, it should give the prototype by default.
+<A NAME="lbAK">&nbsp;</A>
+<H2>BUGS</H2>
+
+<B>pselect</B>
+
+is currently emulated with a user-space wrapper that has a race condition.
+For reliable (and more portable) signal trapping, use the self-pipe trick.
+(Where a signal handler writes to a pipe whose other end is read by the
+main loop.)
+<P>
+Under Linux,
+<B>select</B>
+
+may report a socket file descriptor as &quot;ready for reading&quot;, while
+nevertheless a subsequent read blocks. This could for example
+happen when data has arrived but upon examination has wrong
+checksum and is discarded. There may be other circumstances.
+
+
+Thus it may be safer to use O_NONBLOCK on sockets that should not block.
+
+<A NAME="lbAL">&nbsp;</A>
+<H2>SEE ALSO</H2>
+
+For a tutorial with discussion and examples, see
+<B><A HREF="../man2/select_tut.2.html">select_tut</A></B>(2).
+
+<P>
+
+For vaguely related stuff, see
+<B><A HREF="../man2/accept.2.html">accept</A></B>(2),
+
+<B><A HREF="../man2/connect.2.html">connect</A></B>(2),
+
+<B><A HREF="../man2/poll.2.html">poll</A></B>(2),
+
+<B><A HREF="../man2/read.2.html">read</A></B>(2),
+
+<B><A HREF="../man2/recv.2.html">recv</A></B>(2),
+
+<B><A HREF="../man2/send.2.html">send</A></B>(2),
+
+<B><A HREF="../man2/sigprocmask.2.html">sigprocmask</A></B>(2),
+
+<B><A HREF="../man2/write.2.html">write</A></B>(2)
+
+
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">NAME</A><DD>
+<DT><A HREF="#lbAC">SYNOPSIS</A><DD>
+<DT><A HREF="#lbAD">DESCRIPTION</A><DD>
+<DL>
+<DT><A HREF="#lbAE">The timeout</A><DD>
+</DL>
+<DT><A HREF="#lbAF">RETURN VALUE</A><DD>
+<DT><A HREF="#lbAG">ERRORS</A><DD>
+<DT><A HREF="#lbAH">EXAMPLE</A><DD>
+<DT><A HREF="#lbAI">CONFORMING TO</A><DD>
+<DT><A HREF="#lbAJ">NOTES</A><DD>
+<DT><A HREF="#lbAK">BUGS</A><DD>
+<DT><A HREF="#lbAL">SEE ALSO</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
+using the manual pages.<BR>
+Time: 02:09:53 GMT, April 20, 2020
+</BODY>
+</HTML>

@@ -1,0 +1,381 @@
+<!--
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of SIGNAL</TITLE>
+</HEAD><BODY>
+<H1>SIGNAL</H1>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2000-04-28<BR><A HREF="#index">Index</A>
+<A HREF="../index.html">Return to Main Contents</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>NAME</H2>
+
+signal - ANSI C signal handling
+<A NAME="lbAC">&nbsp;</A>
+<H2>SYNOPSIS</H2>
+
+<B>#include &lt;<A HREF="file:///usr/include/signal.h">signal.h</A>&gt;</B>
+
+<P>
+<B>typedef void (*sighandler_t)(int);</B>
+
+<P>
+<B>sighandler_t signal(int </B><I>signum</I><B>, sighandler_t </B><I>handler</I><B>);</B>
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>DESCRIPTION</H2>
+
+The
+<B>signal</B>()
+
+system call installs a new signal handler for the signal with number
+<I>signum</I>.
+
+The signal handler is set to
+<I>sighandler</I>
+
+which may be a user specified function, or either
+<B>SIG_IGN</B>
+
+or
+<B>SIG_DFL</B>.
+
+<P>
+Upon arrival of a signal with number
+<I>signum</I>
+
+the following happens.
+If the corresponding handler is set to
+<B>SIG_IGN</B>,
+
+then the signal is ignored.
+If the handler is set to
+<B>SIG_DFL</B>,
+
+then the default action associated to the signal (see
+<B><A HREF="../man7/signal.7.html">signal</A></B>(7))
+
+occurs.
+Finally, if the handler is set to a function
+<I>sighandler</I>
+
+then first either the handler is reset to SIG_DFL
+or an implementation-dependent blocking of the signal
+is performed and next
+<I>sighandler</I>
+
+is called with argument
+<I>signum</I>.
+
+<P>
+Using a signal handler function for a signal
+is called &quot;catching the signal&quot;.
+The signals
+<B>SIGKILL</B>
+
+and
+<B>SIGSTOP</B>
+
+cannot be caught or ignored.
+<P>
+<A NAME="lbAE">&nbsp;</A>
+<H2>RETURN VALUE</H2>
+
+The
+<B>signal</B>()
+
+function returns the previous value of the signal handler, or
+<B>SIG_ERR</B>
+
+on error.
+<P>
+<A NAME="lbAF">&nbsp;</A>
+<H2>PORTABILITY</H2>
+
+The original Unix
+<B>signal</B>()
+
+would reset the handler to SIG_DFL, and System V
+(and the Linux kernel and libc4,5) does the same.
+On the other hand, BSD does not reset the handler, but blocks
+new instances of this signal from occurring during a call of the handler.
+The glibc2 library follows the BSD behaviour.
+<P>
+If one on a libc5 system includes
+<B>&lt;<A HREF="file:///usr/include/bsd/signal.h">bsd/signal.h</A>&gt;</B>
+
+instead of
+<B>&lt;<A HREF="file:///usr/include/signal.h">signal.h</A>&gt;</B>
+
+then 
+<B>signal</B>
+
+is redefined as
+<B>__bsd_signal</B>
+
+and signal has the BSD semantics. This is not recommended.
+<P>
+If one on a glibc2 system defines a feature test
+macro such as
+<B>_XOPEN_SOURCE</B>
+
+or uses a separate
+<B>sysv_signal</B>
+
+function, one obtains classical behaviour. This is not recommended.
+<P>
+Trying to change the semantics of this call using
+defines and includes is not a good idea. It is better to avoid
+<B>signal</B>
+
+altogether, and use
+<B><A HREF="../man2/sigaction.2.html">sigaction</A></B>(2)
+
+instead.
+<P>
+<A NAME="lbAG">&nbsp;</A>
+<H2>NOTES</H2>
+
+The effects of this call in a multi-threaded process are unspecified.
+<P>
+
+The routine
+<I>handler</I>
+
+must be very careful, since processing elsewhere was interrupted
+at some arbitrary point. POSIX has the concept of &quot;safe function&quot;.
+If a signal interrupts an unsafe function, and
+<I>handler</I>
+
+calls an unsafe function, then the behavior is undefined. Safe
+functions are listed explicitly in the various standards.
+The POSIX 1003.1-2003 list is
+<P>
+_Exit()
+_exit()
+abort()
+accept()
+access()
+aio_error()
+aio_return()
+aio_suspend()
+alarm()
+bind()
+cfgetispeed()
+cfgetospeed()
+cfsetispeed()
+cfsetospeed()
+chdir()
+chmod()
+chown()
+clock_gettime()
+close()
+connect()
+creat()
+dup()
+dup2()
+execle()
+execve()
+fchmod()
+fchown()
+fcntl()
+fdatasync()
+fork()
+fpathconf()
+fstat()
+fsync()
+ftruncate()
+getegid()
+geteuid()
+getgid()
+getgroups()
+getpeername()
+getpgrp()
+getpid()
+getppid()
+getsockname()
+getsockopt()
+getuid()
+kill()
+link()
+listen()
+lseek()
+lstat()
+mkdir()
+mkfifo()
+open()
+pathconf()
+pause()
+pipe()
+poll()
+posix_trace_event()
+pselect()
+raise()
+read()
+readlink()
+recv()
+recvfrom()
+recvmsg()
+rename()
+rmdir()
+select()
+sem_post()
+send()
+sendmsg()
+sendto()
+setgid()
+setpgid()
+setsid()
+setsockopt()
+setuid()
+shutdown()
+sigaction()
+sigaddset()
+sigdelset()
+sigemptyset()
+sigfillset()
+sigismember()
+signal()
+sigpause()
+sigpending()
+sigprocmask()
+sigqueue()
+sigset()
+sigsuspend()
+sleep()
+socket()
+socketpair()
+stat()
+symlink()
+sysconf()
+tcdrain()
+tcflow()
+tcflush()
+tcgetattr()
+tcgetpgrp()
+tcsendbreak()
+tcsetattr()
+tcsetpgrp()
+time()
+timer_getoverrun()
+timer_gettime()
+timer_settime()
+times()
+umask()
+uname()
+unlink()
+utime()
+wait()
+waitpid()
+write().
+<P>
+
+According to POSIX, the behaviour of a process is undefined after it
+ignores a
+<B>SIGFPE</B>,
+
+<B>SIGILL</B>,
+
+or
+<B>SIGSEGV</B>
+
+signal that was not generated by the
+<B><A HREF="../man2/kill.2.html">kill</A></B>(2)
+
+or the
+<B><A HREF="../man3/raise.3.html">raise</A></B>(3)
+
+functions.
+Integer division by zero has undefined result.
+On some architectures it will generate a
+<B>SIGFPE</B>
+
+signal.
+(Also dividing the most negative integer by -1 may generate
+<B>SIGFPE</B>.)
+
+Ignoring this signal might lead to an endless loop.
+<P>
+
+According to POSIX (3.3.1.3) it is unspecified what happens when
+<B>SIGCHLD</B>
+
+is set to
+<B>SIG_IGN</B>.
+
+Here the BSD and SYSV behaviours differ, causing BSD software
+that sets the action for
+<B>SIGCHLD</B>
+
+to
+<B>SIG_IGN</B>
+
+to fail on Linux.
+<P>
+
+The use of
+<B>sighandler_t</B>
+
+is a GNU extension.
+Various versions of libc predefine this type; libc4 and libc5 define
+<I>SignalHandler</I>,
+
+glibc defines
+<I>sig_t</I>
+
+and, when
+<B>_GNU_SOURCE</B>
+
+is defined, also
+<I>sighandler_t</I>.
+
+<A NAME="lbAH">&nbsp;</A>
+<H2>CONFORMING TO</H2>
+
+ANSI C
+<P>
+<A NAME="lbAI">&nbsp;</A>
+<H2>SEE ALSO</H2>
+
+<B><A HREF="../man1/kill.1.html">kill</A></B>(1),
+
+<B><A HREF="../man2/alarm.2.html">alarm</A></B>(2),
+
+<B><A HREF="../man2/kill.2.html">kill</A></B>(2),
+
+<B><A HREF="../man2/killpg.2.html">killpg</A></B>(2),
+
+<B><A HREF="../man2/pause.2.html">pause</A></B>(2),
+
+<B><A HREF="../man2/sigaction.2.html">sigaction</A></B>(2),
+
+<B><A HREF="../man2/sigvec.2.html">sigvec</A></B>(2),
+
+<B><A HREF="../man3/raise.3.html">raise</A></B>(3),
+
+<B><A HREF="../man3/sigsetops.3.html">sigsetops</A></B>(3),
+
+<B><A HREF="../man7/signal.7.html">signal</A></B>(7)
+
+
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">NAME</A><DD>
+<DT><A HREF="#lbAC">SYNOPSIS</A><DD>
+<DT><A HREF="#lbAD">DESCRIPTION</A><DD>
+<DT><A HREF="#lbAE">RETURN VALUE</A><DD>
+<DT><A HREF="#lbAF">PORTABILITY</A><DD>
+<DT><A HREF="#lbAG">NOTES</A><DD>
+<DT><A HREF="#lbAH">CONFORMING TO</A><DD>
+<DT><A HREF="#lbAI">SEE ALSO</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
+using the manual pages.<BR>
+Time: 02:10:06 GMT, April 20, 2020
+</BODY>
+</HTML>

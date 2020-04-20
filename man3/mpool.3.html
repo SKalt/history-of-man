@@ -1,0 +1,286 @@
+<!--
+Copyright (c) 1990, 1993
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of MPOOL</TITLE>
+</HEAD><BODY>
+<H1>MPOOL</H1>
+Section: C Library Functions (3)<BR>Updated: 1993-06-04<BR><A HREF="#index">Index</A>
+<A HREF="../index.html">Return to Main Contents</A><HR>
+
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>NAME</H2>
+
+mpool - shared memory buffer pool
+<A NAME="lbAC">&nbsp;</A>
+<H2>SYNOPSIS</H2>
+
+<PRE>
+<B>#include &lt;<A HREF="file:///usr/include/db.h">db.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/mpool.h">mpool.h</A>&gt;
+
+MPOOL *
+mpool_open (DBT *key, int fd, pgno_t pagesize, pgno_t maxcache);
+
+void
+mpool_filter (MPOOL *mp, void (*pgin)(void *, pgno_t, void *),
+<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;void (*pgout)(void *, pgno_t, void *), void *pgcookie);
+
+void *
+mpool_new (MPOOL *mp, pgno_t *pgnoaddr);
+
+void *
+mpool_get (MPOOL *mp, pgno_t pgno, u_int flags);
+
+int
+mpool_put (MPOOL *mp, void *pgaddr, u_int flags);
+
+int
+mpool_sync (MPOOL *mp);
+
+int
+mpool_close (MPOOL *mp);
+</B></PRE>
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>DESCRIPTION</H2>
+
+<I>Mpool</I>
+
+is the library interface intended to provide page oriented buffer management
+of files.
+The buffers may be shared between processes.
+<P>
+
+The function
+<I>mpool_open</I>
+
+initializes a memory pool.
+The
+<I>key</I>
+
+argument is the byte string used to negotiate between multiple
+processes wishing to share buffers.
+If the file buffers are mapped in shared memory, all processes using
+the same key will share the buffers.
+If
+<I>key</I>
+
+is NULL, the buffers are mapped into private memory.
+The
+<I>fd</I>
+
+argument is a file descriptor for the underlying file, which must be seekable.
+If
+<I>key</I>
+
+is non-NULL and matches a file already being mapped, the
+<I>fd</I>
+
+argument is ignored.
+<P>
+
+The
+<I>pagesize</I>
+
+argument is the size, in bytes, of the pages into which the file is broken up.
+The
+<I>maxcache</I>
+
+argument is the maximum number of pages from the underlying file to cache
+at any one time.
+This value is not relative to the number of processes which share a file's
+buffers, but will be the largest value specified by any of the processes
+sharing the file.
+<P>
+
+The
+<I>mpool_filter</I>
+
+function is intended to make transparent input and output processing of the
+pages possible.
+If the
+<I>pgin</I>
+
+function is specified, it is called each time a buffer is read into the memory
+pool from the backing file.
+If the
+<I>pgout</I>
+
+function is specified, it is called each time a buffer is written into the
+backing file.
+Both functions are are called with the
+<I>pgcookie</I>
+
+pointer, the page number and a pointer to the page to being read or written.
+<P>
+
+The function
+<I>mpool_new</I>
+
+takes an MPOOL pointer and an address as arguments.
+If a new page can be allocated, a pointer to the page is returned and
+the page number is stored into the
+<I>pgnoaddr</I>
+
+address.
+Otherwise, NULL is returned and errno is set.
+<P>
+
+The function
+<I>mpool_get</I>
+
+takes a MPOOL pointer and a page number as arguments.
+If the page exists, a pointer to the page is returned.
+Otherwise, NULL is returned and errno is set.
+The flags parameter is not currently used.
+<P>
+
+The function
+<I>mpool_put</I>
+
+unpins the page referenced by
+<I>pgaddr</I>.
+
+<I>Pgaddr</I>
+
+must be an address previously returned by
+<I>mpool_get</I>
+
+or
+<I>mpool_new</I>.
+
+The flag value is specified by
+<I>or</I>'ing
+
+any of the following values:
+<DL COMPACT>
+<DT>MPOOL_DIRTY<DD>
+The page has been modified and needs to be written to the backing file.
+</DL>
+<P>
+
+<I>Mpool_put</I>
+
+returns 0 on success and -1 if an error occurs.
+<P>
+
+The function
+<I>mpool_sync</I>
+
+writes all modified pages associated with the MPOOL pointer to the
+backing file.
+<I>Mpool_sync</I>
+
+returns 0 on success and -1 if an error occurs.
+<P>
+
+The
+<I>mpool_close</I>
+
+function free's up any allocated memory associated with the memory pool
+cookie.
+Modified pages are
+<B>not</B>
+
+written to the backing file.
+<I>Mpool_close</I>
+
+returns 0 on success and -1 if an error occurs.
+<A NAME="lbAE">&nbsp;</A>
+<H2>ERRORS</H2>
+
+The
+<I>mpool_open</I>
+
+function may fail and set
+<I>errno</I>
+
+for any of the errors specified for the library routine
+<I><A HREF="../man3/malloc.3.html">malloc</A></I>(3).
+
+<P>
+
+The
+<I>mpool_get</I>
+
+function may fail and set
+<I>errno</I>
+
+for the following:
+<DL COMPACT>
+<DT>[EINVAL]<DD>
+The requested record doesn't exist.
+</DL>
+<P>
+
+The
+<I>mpool_new</I>
+
+and
+<I>mpool_get</I>
+
+functions may fail and set
+<I>errno</I>
+
+for any of the errors specified for the library routines
+<I><A HREF="../man2/read.2.html">read</A></I>(2)<I>,</I>
+
+<I><A HREF="../man2/write.2.html">write</A></I>(2)<I>,</I>
+
+and
+<I><A HREF="../man3/malloc.3.html">malloc</A></I>(3).
+
+<P>
+
+The
+<I>mpool_sync</I>
+
+function may fail and set
+<I>errno</I>
+
+for any of the errors specified for the library routine
+<I><A HREF="../man2/write.2.html">write</A></I>(2).
+
+<P>
+
+The
+<I>mpool_close</I>
+
+function may fail and set
+<I>errno</I>
+
+for any of the errors specified for the library routine
+<I><A HREF="../man3/free.3.html">free</A></I>(3).
+
+<A NAME="lbAF">&nbsp;</A>
+<H2>SEE ALSO</H2>
+
+<I><A HREF="../man3/dbopen.3.html">dbopen</A></I>(3),
+
+<I><A HREF="../man3/btree.3.html">btree</A></I>(3),
+
+<I><A HREF="../man3/hash.3.html">hash</A></I>(3),
+
+<I><A HREF="../man3/recno.3.html">recno</A></I>(3)
+
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">NAME</A><DD>
+<DT><A HREF="#lbAC">SYNOPSIS</A><DD>
+<DT><A HREF="#lbAD">DESCRIPTION</A><DD>
+<DT><A HREF="#lbAE">ERRORS</A><DD>
+<DT><A HREF="#lbAF">SEE ALSO</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
+using the manual pages.<BR>
+Time: 02:10:52 GMT, April 20, 2020
+</BODY>
+</HTML>

@@ -1,0 +1,318 @@
+<!--
+Copyright 1993 Giorgio Ciucci &lt;giorgio@crcc.it&gt;
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of MSGGET</TITLE>
+</HEAD><BODY>
+<H1>MSGGET</H1>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2004-05-27<BR><A HREF="#index">Index</A>
+<A HREF="../index.html">Return to Main Contents</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>NAME</H2>
+
+msgget - get a message queue identifier
+<A NAME="lbAC">&nbsp;</A>
+<H2>SYNOPSIS</H2>
+
+<PRE>
+<B>#include &lt;<A HREF="file:///usr/include/sys/types.h">sys/types.h</A>&gt;</B>
+<B>#include &lt;<A HREF="file:///usr/include/sys/ipc.h">sys/ipc.h</A>&gt;</B>
+<B>#include &lt;<A HREF="file:///usr/include/sys/msg.h">sys/msg.h</A>&gt;</B>
+</PRE>
+
+<P>
+<B>int msgget(key_t </B><I>key</I><B>,</B>
+
+<B>int </B><I>msgflg</I><B>);</B>
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>DESCRIPTION</H2>
+
+The function returns the message queue identifier associated
+with the value of the
+<I>key</I>
+
+argument.
+A new message queue is created if
+<I>key</I>
+
+has the value
+<B>IPC_PRIVATE</B>
+
+or
+<I>key</I>
+
+isn't
+<B>IPC_PRIVATE</B>,
+
+no message queue with the given key
+<I>key</I>
+
+exists, and
+<B>IPC_CREAT</B>
+
+is asserted in
+<I>msgflg</I>
+
+(i.e.,
+<I>msgflg</I><B>&amp;</B><I>IPC_CREAT</I>
+
+is nonzero).
+The presence in
+<I>msgflg</I>
+
+of the fields
+<B>IPC_CREAT</B>
+
+and
+<B>IPC_EXCL</B>
+
+plays the same role, with respect to the existence
+of the message queue, as the presence
+of
+<B>O_CREAT</B>
+
+and
+<B>O_EXCL</B>
+
+in the mode argument of the
+<B><A HREF="../man2/open.2.html">open</A></B>(2)
+
+system call: i.e. the
+<B>msgget</B>
+
+function fails if
+<I>msgflg</I>
+
+asserts both
+<B>IPC_CREAT</B>
+
+and
+<B>IPC_EXCL</B>
+
+and a message queue already exists for
+<I>key</I>.
+
+<P>
+
+Upon creation, the lower 9 bits of the argument
+<I>msgflg</I>
+
+define the access permissions of the message queue.
+These permission bits have the same format and semantics
+as the access permissions parameter in 
+<B><A HREF="../man2/open.2.html">open</A></B>(2)
+
+or
+<B><A HREF="../man2/creat.2.html">creat</A></B>(2)
+
+system calls.  (The execute permissions are not used.)
+<P>
+
+If a new message queue is created,
+the system call initializes the system message queue data structure
+<B>msqid_ds</B>
+
+as follows:
+<DL COMPACT>
+<DT><DD>
+<B>msg_perm.cuid</B>
+
+and
+<B>msg_perm.uid</B>
+
+are set to the effective user-ID of the calling process.
+<DT><DD>
+<B>msg_perm.cgid</B>
+
+and
+<B>msg_perm.gid</B>
+
+are set to the effective group-ID of the calling process.
+<DT><DD>
+The lowest order 9 bits of
+<B>msg_perm.mode</B>
+
+are set to the lowest order 9 bit of
+<I>msgflg</I>.
+
+<DT><DD>
+<B>msg_qnum</B>,
+
+<B>msg_lspid</B>,
+
+<B>msg_lrpid</B>,
+
+<B>msg_stime</B>
+
+and
+<B>msg_rtime</B>
+
+are set to 0.
+<DT><DD>
+<B>msg_ctime</B>
+
+is set to the current time.
+<DT><DD>
+<B>msg_qbytes</B>
+
+is set to the system limit
+<B>MSGMNB</B>.
+
+</DL>
+<P>
+
+If the message queue already exists the access permissions are
+verified, and a check is made to see if it is marked for
+destruction.
+<A NAME="lbAE">&nbsp;</A>
+<H2>RETURN VALUE</H2>
+
+If successful, the return value will be the message queue identifier (a
+nonnegative integer), otherwise
+<B>-1</B>
+
+with
+<B>errno</B>
+
+indicating the error.
+<A NAME="lbAF">&nbsp;</A>
+<H2>ERRORS</H2>
+
+On failure,
+<B>errno</B>
+
+is set to one of the following values:
+<DL COMPACT>
+<DT><B>EACCES</B>
+
+<DD>
+A message queue exists for
+<I>key</I>,
+
+but the calling process does not have permission to access the queue,
+and does not have the
+<B>CAP_IPC_OWNER</B>
+
+capability.
+<DT><B>EEXIST</B>
+
+<DD>
+A message queue exists for
+<B>key</B>
+
+and
+<I>msgflg</I>
+
+was asserting both
+<B>IPC_CREAT</B>
+
+and
+<B>IPC_EXCL</B>.
+
+<DT><B>ENOENT</B>
+
+<DD>
+No message queue exists for
+<I>key</I>
+
+and
+<I>msgflg</I>
+
+wasn't asserting
+<B>IPC_CREAT</B>.
+
+<DT><B>ENOMEM</B>
+
+<DD>
+A message queue has to be created but the system has not enough memory for
+the new data structure.
+<DT><B>ENOSPC</B>
+
+<DD>
+A message queue has to be created but the system limit for the maximum
+number of message queues
+(<B>MSGMNI</B>)
+
+would be exceeded.
+</DL>
+<A NAME="lbAG">&nbsp;</A>
+<H2>NOTES</H2>
+
+<B>IPC_PRIVATE</B>
+
+isn't a flag field but a
+<B>key_t</B>
+
+type.
+If this special value is used for
+<I>key</I>,
+
+the system call ignores everything but the lowest order 9 bits of
+<I>msgflg</I>
+
+and creates a new message queue (on success).
+<P>
+
+The following is a system limit on message queue resources affecting a
+<B>msgget</B>
+
+call:
+<DL COMPACT>
+<DT><B>MSGMNI</B>
+
+<DD>
+System wide maximum number of message queues: policy
+dependent.
+</DL>
+<A NAME="lbAH">&nbsp;</A>
+<H2>BUGS</H2>
+
+The name choice IPC_PRIVATE was perhaps unfortunate, IPC_NEW
+would more clearly show its function.
+<A NAME="lbAI">&nbsp;</A>
+<H2>CONFORMING TO</H2>
+
+SVr4, SVID.
+Until version 2.3.20 Linux would return EIDRM for a
+<B>msgget</B>
+
+on a message queue scheduled for deletion.
+<A NAME="lbAJ">&nbsp;</A>
+<H2>SEE ALSO</H2>
+
+<B><A HREF="../man2/msgctl.2.html">msgctl</A></B>(2),
+
+<B><A HREF="../man2/msgrcv.2.html">msgrcv</A></B>(2),
+
+<B><A HREF="../man2/msgsnd.2.html">msgsnd</A></B>(2),
+
+<B><A HREF="../man3/ftok.3.html">ftok</A></B>(3),
+
+<B><A HREF="../man5/ipc.5.html">ipc</A></B>(5),
+
+<B><A HREF="../man7/capabilities.7.html">capabilities</A></B>(7)
+
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">NAME</A><DD>
+<DT><A HREF="#lbAC">SYNOPSIS</A><DD>
+<DT><A HREF="#lbAD">DESCRIPTION</A><DD>
+<DT><A HREF="#lbAE">RETURN VALUE</A><DD>
+<DT><A HREF="#lbAF">ERRORS</A><DD>
+<DT><A HREF="#lbAG">NOTES</A><DD>
+<DT><A HREF="#lbAH">BUGS</A><DD>
+<DT><A HREF="#lbAI">CONFORMING TO</A><DD>
+<DT><A HREF="#lbAJ">SEE ALSO</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
+using the manual pages.<BR>
+Time: 02:10:00 GMT, April 20, 2020
+</BODY>
+</HTML>

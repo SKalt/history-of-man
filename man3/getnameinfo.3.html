@@ -1,0 +1,313 @@
+<!--
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of getnameinfo</TITLE>
+</HEAD><BODY>
+<H1>getnameinfo</H1>
+Section: UNIX Programmer's Manual (3)<BR>Updated: 2000-12-11<BR><A HREF="#index">Index</A>
+<A HREF="../index.html">Return to Main Contents</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>NAME</H2>
+
+getnameinfo - address-to-name translation in protocol-independent manner
+<A NAME="lbAC">&nbsp;</A>
+<H2>SYNOPSIS</H2>
+
+<PRE>
+<B>#include &lt;<A HREF="file:///usr/include/sys/socket.h">sys/socket.h</A>&gt;</B>
+<B>#include &lt;<A HREF="file:///usr/include/netdb.h">netdb.h</A>&gt;</B>
+
+<B>int getnameinfo(const struct sockaddr *</B><I>sa</I><B>, socklen_t </B><I>salen</I><B>,</B>
+<B>                char *</B><I>host</I><B>, size_t </B><I>hostlen</I><B>,</B>
+<B>                char *</B><I>serv</I><B>, size_t </B><I>servlen</I><B>, int </B><I>flags</I><B>);</B>
+</PRE>
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>DESCRIPTION</H2>
+
+The
+<B><A HREF="../man3/getnameinfo.3.html">getnameinfo</A></B>(3)
+
+function is defined for protocol-independent address-to-nodename translation.
+It combines the functionality of
+<B><A HREF="../man3/gethostbyaddr.3.html">gethostbyaddr</A></B>(3)
+
+and
+<B><A HREF="../man3/getservbyport.3.html">getservbyport</A></B>(3)
+
+and is the inverse of
+<B><A HREF="../man3/getaddrinfo.3.html">getaddrinfo</A></B>(3).
+
+The
+<I>sa</I>
+
+argument is a pointer to a generic socket address structure
+(of type
+<I>sockaddr_in</I>
+
+or
+<I>sockaddr_in6</I>)
+
+of size
+<I>salen</I>
+
+that holds the input IP address and port number.
+The arguments
+<I>host</I>
+
+and
+<I>serv</I>
+
+are pointers to buffers (of size
+<I>hostlen</I>
+
+and
+<I>servlen</I>
+
+respectively) to hold the return values.
+<P>
+The caller can specify that no hostname (or no service name)
+is required by providing a NULL
+<I>host</I>
+
+(or
+<I>serv</I>)
+
+argument or a zero
+<I>hostlen</I>
+
+(or
+<I>servlen</I>)
+
+parameter. However, at least one of hostname or service name
+must be requested.
+<P>
+The
+<I>flags</I>
+
+argument modifies the behaviour of
+<B><A HREF="../man3/getnameinfo.3.html">getnameinfo</A></B>(3)
+
+as follows:
+<DL COMPACT>
+<DT><B>NI_NOFQDN</B>
+
+<DD>
+If set, return only the hostname part of the FQDN for local hosts.
+<DT><B>NI_NUMERICHOST</B>
+
+<DD>
+If set, then the numeric form of the hostname is returned.
+
+
+
+
+(When not set, this will still happen in case the node's name
+cannot be looked up.)
+<DT><B>NI_NAMEREQD</B>
+
+<DD>
+If set, then a error is returned if the hostname cannot be looked up.
+<DT><B>NI_NUMERICSERV</B>
+
+<DD>
+If set, then the service address is returned in numeric form,
+for example by its port number.
+<DT><B>NI_DGRAM</B>
+
+<DD>
+If set, then the service is datagram (UDP) based rather than
+stream (TCP) based. This is required for the few ports (512-514)
+that have different services for UDP and TCP.
+</DL>
+<A NAME="lbAE">&nbsp;</A>
+<H2>RETURN VALUE</H2>
+
+On success 0 is returned, and node and service names, if requested,
+are filled with NUL-terminated strings, possibly truncated to fit
+the specified buffer lengths.
+On error a nonzero value is returned, and
+<I>errno</I>
+
+is set appropriately.
+<A NAME="lbAF">&nbsp;</A>
+<H2>ERRORS</H2>
+
+<DL COMPACT>
+<DT><B>EAI_AGAIN</B>
+
+<DD>
+The name could not be resolved at this time. Try again later.
+<DT><B>EAI_BADFLAGS</B>
+
+<DD>
+The
+<I>flags</I>
+
+parameter has an invalid value.
+<DT><B>EAI_FAIL</B>
+
+<DD>
+A non-recoverable error occurred.
+<DT><B>EAI_FAMILY</B>
+
+<DD>
+The address family was not recognized,
+or the address length was invalid for the specified family.
+<DT><B>EAI_MEMORY</B>
+
+<DD>
+Out of memory.
+<DT><B>EAI_NONAME</B>
+
+<DD>
+The name does not resolve for the supplied parameters.
+NI_NAMEREQD is set and the host's name cannot be located,
+or neither hostname nor service name were requested.
+<DT><B>EAI_SYSTEM</B>
+
+<DD>
+A system error occurred. The error code can be found in
+<I>errno</I>.
+
+</DL>
+<A NAME="lbAG">&nbsp;</A>
+<H2>FILES</H2>
+
+/etc/hosts
+<BR>
+
+/etc/nsswitch.conf
+<BR>
+
+/etc/resolv.conf
+<A NAME="lbAH">&nbsp;</A>
+<H2>NOTE</H2>
+
+In order to assist the programmer in choosing reasonable sizes
+for the supplied buffers,
+<I>&lt;<A HREF="file:///usr/include/netdb.h">netdb.h</A>&gt;</I>
+
+defines the constants
+<DL COMPACT><DT><DD>
+<PRE>
+# define NI_MAXHOST      1025
+<BR>
+# define NI_MAXSERV      32
+</PRE>
+
+</DL>
+
+The former is the constant MAXDNAME in recent versions of BIND's
+<I>&lt;<A HREF="file:///usr/include/arpa/nameser.h">arpa/nameser.h</A>&gt;</I>
+
+header file. The latter is a guess based on the services listed
+in the current Assigned Numbers RFC.
+<A NAME="lbAI">&nbsp;</A>
+<H2>EXAMPLES</H2>
+
+The following code tries to get the numeric hostname and service name, for
+a given socket address. Note that there is no hardcoded reference to
+a particular address family.
+<P>
+<DL COMPACT><DT><DD>
+<PRE>
+  struct sockaddr *sa;    /* input */
+  char hbuf[NI_MAXHOST], sbuf[NI_MAXSERV];
+
+  if (getnameinfo(sa, sa-&gt;sa_len, hbuf, sizeof(hbuf), sbuf,
+      sizeof(sbuf), NI_NUMERICHOST | NI_NUMERICSERV) == 0)
+          printf(&quot;host=%s, serv=%s\n&quot;, hbuf, sbuf);
+</PRE>
+
+</DL>
+
+<P>
+The following version checks if the socket address has a
+reverse address mapping.
+<P>
+<DL COMPACT><DT><DD>
+
+<BR>&nbsp;&nbsp;struct&nbsp;sockaddr&nbsp;*sa;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;input&nbsp;*/
+<BR>&nbsp;&nbsp;char&nbsp;hbuf[NI_MAXHOST];
+<P>
+<BR>&nbsp;&nbsp;if&nbsp;(getnameinfo(sa,&nbsp;sa-&gt;sa_len,&nbsp;hbuf,&nbsp;sizeof(hbuf),
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;NULL,&nbsp;0,&nbsp;NI_NAMEREQD))
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;could&nbsp;not&nbsp;resolve&nbsp;hostname&quot;);
+<BR>&nbsp;&nbsp;else
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;host=%s\n&quot;,&nbsp;hbuf);
+
+</DL>
+
+<A NAME="lbAJ">&nbsp;</A>
+<H2>CONFORMING TO</H2>
+
+RFC 2553. (See also XNS, issue 5.2.)
+<A NAME="lbAK">&nbsp;</A>
+<H2>SEE ALSO</H2>
+
+<B><A HREF="../man3/getaddrinfo.3.html">getaddrinfo</A></B>(3),
+
+<B><A HREF="../man3/gethostbyaddr.3.html">gethostbyaddr</A></B>(3),
+
+<B><A HREF="../man3/getservbyname.3.html">getservbyname</A></B>(3),
+
+<B><A HREF="../man3/getservbyport.3.html">getservbyport</A></B>(3),
+
+<B><A HREF="../man3/inet_ntop.3.html">inet_ntop</A></B>(3),
+
+<B><A HREF="../man3/socket.3.html">socket</A></B>(3),
+
+<B><A HREF="../man5/hosts.5.html">hosts</A></B>(5),
+
+<B><A HREF="../man5/services.5.html">services</A></B>(5),
+
+<B><A HREF="../man7/hostname.7.html">hostname</A></B>(7),
+
+<B><A HREF="../man8/named.8.html">named</A></B>(8)
+
+<P>
+
+R. Gilligan, S. Thomson, J. Bound and W. Stevens,
+<I>Basic Socket Interface Extensions for IPv6</I>,
+
+RFC 2553, March 1999.
+<P>
+
+Tatsuya Jinmei and Atsushi Onoe,
+<I>An Extension of Format for IPv6 Scoped Addresses</I>,
+
+internet draft, work in progress.
+<A HREF="ftp://ftp.ietf.org/internet-drafts/draft-ietf-ipngwg-scopedaddr-format-02.txt">ftp://ftp.ietf.org/internet-drafts/draft-ietf-ipngwg-scopedaddr-format-02.txt</A>
+<P>
+
+Craig Metz,
+<I>Protocol Independence Using the Sockets API</I>,
+
+Proceedings of the freenix track:
+2000 USENIX annual technical conference, June 2000.
+<A HREF="http://www.usenix.org/publications/library/proceedings/usenix2000/freenix/metzprotocol.html">http://www.usenix.org/publications/library/proceedings/usenix2000/freenix/metzprotocol.html</A>
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">NAME</A><DD>
+<DT><A HREF="#lbAC">SYNOPSIS</A><DD>
+<DT><A HREF="#lbAD">DESCRIPTION</A><DD>
+<DT><A HREF="#lbAE">RETURN VALUE</A><DD>
+<DT><A HREF="#lbAF">ERRORS</A><DD>
+<DT><A HREF="#lbAG">FILES</A><DD>
+<DT><A HREF="#lbAH">NOTE</A><DD>
+<DT><A HREF="#lbAI">EXAMPLES</A><DD>
+<DT><A HREF="#lbAJ">CONFORMING TO</A><DD>
+<DT><A HREF="#lbAK">SEE ALSO</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
+using the manual pages.<BR>
+Time: 02:10:38 GMT, April 20, 2020
+</BODY>
+</HTML>

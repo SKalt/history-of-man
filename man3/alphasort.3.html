@@ -1,0 +1,192 @@
+<!--
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of SCANDIR</TITLE>
+</HEAD><BODY>
+<H1>SCANDIR</H1>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2001-12-26<BR><A HREF="#index">Index</A>
+<A HREF="../index.html">Return to Main Contents</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>NAME</H2>
+
+scandir, alphasort, versionsort - scan a directory for matching entries
+<A NAME="lbAC">&nbsp;</A>
+<H2>SYNOPSIS</H2>
+
+<PRE>
+<B>#include &lt;<A HREF="file:///usr/include/dirent.h">dirent.h</A>&gt;</B>
+
+<B>int scandir(const char *</B><I>dir</I><B>, struct dirent ***</B><I>namelist</I><B>,</B>
+<DL COMPACT><DT><DD><B>int(*</B><I>filter</I><B>)(const struct dirent *),</B>
+<B>int(*</B><I>compar</I><B>)(const struct dirent **, const struct dirent **));</B>
+</DL>
+
+<B>int alphasort(const void *</B><I>a</I><B>, const void *</B><I>b</I><B>);</B>
+<BR>
+<B>int versionsort(const void *</B><I>a</I><B>, const void *</B><I>b</I><B>);</B>
+</PRE>
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>DESCRIPTION</H2>
+
+The <B>scandir()</B> function scans the directory <I>dir</I>, calling
+<I>filter()</I> on each directory entry.  Entries for which 
+<I>filter()</I> returns non-zero are stored in strings allocated via
+<B>malloc()</B>, sorted using <B>qsort()</B> with the comparison
+function <I>compar()</I>, and collected in array <I>namelist</I>
+which is allocated via <B>malloc()</B>.
+If <I>filter</I> is NULL, all entries are selected.
+<P>
+
+The
+<B>alphasort()</B>
+
+and
+<B>versionsort()</B>
+
+functions can be used as the comparison function
+<I>compar()</I>.
+
+The former sorts directory entries using
+<B><A HREF="../man3/strcoll.3.html">strcoll</A></B>(3),
+
+the latter using
+<B><A HREF="../man3/strverscmp.3.html">strverscmp</A></B>(3)
+
+on the strings <I>(*a)-&gt;d_name</I> and <I>(*b)-&gt;d_name</I>.
+<A NAME="lbAE">&nbsp;</A>
+<H2>RETURN VALUE</H2>
+
+The <B>scandir()</B> function returns the number of directory entries
+selected or -1 if an error occurs.
+<P>
+
+The
+<B>alphasort()</B>
+
+and
+<B>versionsort()</B>
+
+functions return an integer less than, equal to, 
+or greater than zero if the first argument is considered to be 
+respectively less than, equal to, or greater than the second.
+<A NAME="lbAF">&nbsp;</A>
+<H2>ERRORS</H2>
+
+<DL COMPACT>
+<DT><B>ENOMEM</B>
+
+<DD>
+Insufficient memory to complete the operation.
+</DL>
+<A NAME="lbAG">&nbsp;</A>
+<H2>CONFORMING TO</H2>
+
+None of these functions is in POSIX.
+LSB has deprecated the library call
+<B>alphasort()</B>
+
+and never contained
+<B>scandir()</B>.
+
+<P>
+
+The functions
+<B>scandir()</B>
+
+and
+<B>alphasort()</B>
+
+are from BSD 4.3, and have been available under Linux since libc4.
+Libc4 and libc5 use the more precise prototype
+<P>
+<PRE>
+<B>int alphasort(const struct dirent **</B><I>a</I><B>, const struct dirent **</B><I>b</I><B>);</B>
+</PRE>
+
+<P>
+but glibc 2.0 returns to the imprecise BSD prototype.
+<P>
+
+The function
+<B>versionsort()</B>
+
+is a GNU extension, available since glibc 2.1.
+Since glibc 2.1,
+<B>alphasort()</B>
+
+calls
+<B><A HREF="../man3/strcoll.3.html">strcoll</A></B>(3);
+
+earlier it used
+<B><A HREF="../man3/strcmp.3.html">strcmp</A></B>(3).
+
+<A NAME="lbAH">&nbsp;</A>
+<H2>EXAMPLE</H2>
+
+<PRE>
+/* print files in current directory in reverse order */
+#include &lt;<A HREF="file:///usr/include/dirent.h">dirent.h</A>&gt;
+main(){
+    struct dirent **namelist;
+    int n;
+
+    n = scandir(&quot;.&quot;, &amp;namelist, 0, alphasort);
+    if (n &lt; 0)
+        perror(&quot;scandir&quot;);
+    else {
+        while(n--) {
+            printf(&quot;%s\n&quot;, namelist[n]-&gt;d_name);
+            free(namelist[n]);
+        }
+        free(namelist);
+    }
+}
+</PRE>
+
+<A NAME="lbAI">&nbsp;</A>
+<H2>SEE ALSO</H2>
+
+<B><A HREF="../man3/closedir.3.html">closedir</A></B>(3),
+
+<B><A HREF="../man3/fnmatch.3.html">fnmatch</A></B>(3),
+
+<B><A HREF="../man3/opendir.3.html">opendir</A></B>(3),
+
+<B><A HREF="../man3/readdir.3.html">readdir</A></B>(3),
+
+<B><A HREF="../man3/rewinddir.3.html">rewinddir</A></B>(3),
+
+<B><A HREF="../man3/seekdir.3.html">seekdir</A></B>(3),
+
+<B><A HREF="../man3/strcmp.3.html">strcmp</A></B>(3),
+
+<B><A HREF="../man3/strcoll.3.html">strcoll</A></B>(3),
+
+<B><A HREF="../man3/strverscmp.3.html">strverscmp</A></B>(3),
+
+<B><A HREF="../man3/telldir.3.html">telldir</A></B>(3)
+
+
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">NAME</A><DD>
+<DT><A HREF="#lbAC">SYNOPSIS</A><DD>
+<DT><A HREF="#lbAD">DESCRIPTION</A><DD>
+<DT><A HREF="#lbAE">RETURN VALUE</A><DD>
+<DT><A HREF="#lbAF">ERRORS</A><DD>
+<DT><A HREF="#lbAG">CONFORMING TO</A><DD>
+<DT><A HREF="#lbAH">EXAMPLE</A><DD>
+<DT><A HREF="#lbAI">SEE ALSO</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
+using the manual pages.<BR>
+Time: 02:10:13 GMT, April 20, 2020
+</BODY>
+</HTML>

@@ -1,0 +1,340 @@
+<!--
+Copyright (c) 1998, 1999 Thorsten Kukuk (kukuk@vt.uni-paderborn.de)
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of NSSWITCH.CONF</TITLE>
+</HEAD><BODY>
+<H1>NSSWITCH.CONF</H1>
+Section: Linux Programmer's Manual (5)<BR>Updated: 1999-01-17<BR><A HREF="#index">Index</A>
+<A HREF="../index.html">Return to Main Contents</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>NAME</H2>
+
+nsswitch.conf - System Databases and Name Service Switch configuration file
+<A NAME="lbAC">&nbsp;</A>
+<H2>DESCRIPTION</H2>
+
+Various functions in the C Library need to be configured to work
+correctly in the local environment.  Traditionally, this was done by
+using files (e.g., `/etc/passwd'), but other nameservices (like the
+Network Information Service (NIS) and the Domain Name Service (DNS))
+became popular, and were hacked into the C library, usually with a fixed
+search order.
+<P>
+
+The Linux libc5 with NYS support and the GNU C Library 2.x (libc.so.6)
+contain a cleaner solution of this problem.  It is designed after a method
+used by Sun Microsystems in the C library of Solaris 2. We follow their
+name and call this scheme &quot;Name Service Switch&quot; (NSS). The sources for
+the &quot;databases&quot; and their lookup order are specified in the
+<B>/etc/nsswitch.conf</B>
+
+file.
+<P>
+
+The following databases are available in the NSS:
+<DL COMPACT>
+<DT><B>aliases</B>
+
+<DD>
+Mail aliases, used by
+<B><A HREF="../man8/sendmail.8.html">sendmail</A></B>(8).
+
+Presently ignored.
+<DT><B>ethers</B>
+
+<DD>
+Ethernet numbers.
+<DT><B>group</B>
+
+<DD>
+Groups of users, used by
+<B><A HREF="../man3/getgrent.3.html">getgrent</A></B>(3)
+
+functions.
+<DT><B>hosts</B>
+
+<DD>
+Host names and numbers, used by
+<B><A HREF="../man3/gethostbyname.3.html">gethostbyname</A></B>(3)
+
+and similar functions.
+<DT><B>netgroup</B>
+
+<DD>
+Network wide list of hosts and users, used for access rules.
+C libraries before glibc 2.1 only support netgroups over NIS.
+<DT><B>network</B>
+
+<DD>
+Network names and numbers, used by
+<B><A HREF="../man3/getnetent.3.html">getnetent</A></B>(3)
+
+functions.
+<DT><B>passwd</B>
+
+<DD>
+User passwords, used by
+<B><A HREF="../man3/getpwent.3.html">getpwent</A></B>(3)
+
+functions.
+<DT><B>protocols</B>
+
+<DD>
+Network protocols, used by
+<B><A HREF="../man3/getprotoent.3.html">getprotoent</A></B>(3)
+
+functions.
+<DT><B>publickey</B>
+
+<DD>
+Public and secret keys for Secure_RPC used by NFS and NIS+.
+<DT><B>rpc</B>
+
+<DD>
+Remote procedure call names and numbers, used by
+<B><A HREF="../man3/getrpcbyname.3.html">getrpcbyname</A></B>(3)
+
+and similar functions.
+<DT><B>services</B>
+
+<DD>
+Network services, used by
+<B><A HREF="../man3/getservent.3.html">getservent</A></B>(3)
+
+functions.
+<DT><B>shadow</B>
+
+<DD>
+Shadow user passwords, used by
+<B><A HREF="../man3/getspnam.3.html">getspnam</A></B>(3).
+
+</DL>
+<P>
+
+An example
+<B>/etc/nsswitch.conf</B>
+
+(namely, the default used when
+<B>/etc/nsswitch.conf</B>
+
+is missing):
+<P>
+
+<DL COMPACT>
+<DT>passwd:<DD>
+compat
+<DT>group:<DD>
+compat
+<DT>shadow:<DD>
+compat
+<P>
+<DT>hosts:<DD>
+dns [!UNAVAIL=return] files
+<DT>networks:<DD>
+nis [NOTFOUND=return] files
+<DT>ethers:<DD>
+nis [NOTFOUND=return] files
+<DT>protocols:<DD>
+nis [NOTFOUND=return] files
+<DT>rpc:<DD>
+nis [NOTFOUND=return] files
+<DT>services:<DD>
+nis [NOTFOUND=return] files
+
+</DL>
+<P>
+
+The first column is the database.
+The rest of the line specifies how the lookup process works.
+You can specify the way it works for each database individually.
+<P>
+
+The configuration specification for each database can contain two
+different items:
+
+<DL COMPACT>
+<DT>* The service specification like `files', `db', or `nis'.<DD>
+<DT>* The reaction on lookup result like `[NOTFOUND=return]'.<DD>
+
+</DL>
+<P>
+
+For libc5 with NYS, the allowed service specifications are `files', `nis',
+and `nisplus'. For hosts, you could specify `dns' as extra service, for
+passwd and group `compat', but not for shadow.
+<P>
+
+For glibc, you must have a file called
+<B>/lib/libnss_SERVICE.so.</B><I>X</I>
+
+for every SERVICE you are using. On a standard installation, you could use
+`files', `db', `nis', and `nisplus'. For hosts, you could specify `dns' as
+extra service, for passwd, group, and shadow `compat'. These services will not
+be used by libc5 with NYS.
+The version number
+<I>X</I>
+
+is 1 for glibc 2.0 and 2 for glibc 2.1.
+<P>
+
+The second item in the specification gives the user much finer
+control on the lookup process.  Action items are placed between two
+service names and are written within brackets.  The general form is
+<P>
+
+`[' ( `!'? STATUS `=' ACTION )+ `]'
+<P>
+
+where
+<P>
+
+<DL COMPACT>
+<DT>STATUS =&gt; success | notfound | unavail | tryagain<DD>
+<DT>ACTION =&gt; return | continue<DD>
+
+</DL>
+<P>
+
+The case of the keywords is insignificant. The STATUS values are
+the results of a call to a lookup function of a specific service.  They
+mean:
+<DL COMPACT>
+<DT><B>success</B>
+
+<DD>
+No error occurred and the wanted entry is returned. The default
+action for this is `return'.
+<DT><B>notfound</B>
+
+<DD>
+The lookup process works ok but the needed value was not found.
+The default action is `continue'.
+<DT><B>unavail</B>
+
+<DD>
+The service is permanently unavailable.  This can either mean the
+needed file is not available, or, for DNS, the server is not
+available or does not allow queries.  The default action is
+`continue'.
+<DT><B>tryagain</B>
+
+<DD>
+The service is temporarily unavailable.  This could mean a file is
+locked or a server currently cannot accept more connections.  The
+default action is `continue'.
+</DL>
+<P>
+
+<A NAME="lbAD">&nbsp;</A>
+<H3>Interaction with +/- syntax (compat mode)</H3>
+
+Linux libc5 without NYS does not have the name service switch but does
+allow the user some policy control. In
+<B>/etc/passwd</B>
+
+you could have entries of the form +user or +@netgroup
+(include the specified user from the NIS passwd map),
+-user or -@netgroup (exclude the specified user),
+and + (include every user, except the excluded ones, from the NIS
+passwd map). Since most people only put a + at the end of
+<B>/etc/passwd</B>
+
+to include everything from NIS, the switch provides a faster
+alternative for this case (`passwd: files nis') which doesn't
+require the single + entry in
+<B>/etc/passwd</B>,
+
+<B>/etc/group</B>,
+
+and
+<B>/etc/shadow</B>.
+
+If this is not sufficient, the NSS `compat' service provides full
++/- semantics. By default, the source is `nis', but this may be
+overriden by specifying `nisplus' as source for the pseudo-databases
+<B>passwd_compat,</B>
+
+<B>group_compat</B>
+
+and
+<B>shadow_compat.</B>
+
+This pseudo-databases are only available in GNU C Library.
+<A NAME="lbAE">&nbsp;</A>
+<H2>FILES</H2>
+
+A service named SERVICE is implemented by a shared object library named
+<B>libnss_SERVICE.so.</B><I>X</I>
+
+that resides in
+<I>/lib</I>.
+
+<DL COMPACT>
+<DT>
+<DD>
+<B>/etc/nsswitch.conf</B>
+
+configuration file
+<DT><B>/lib/libnss_compat.so.</B><I>X</I>
+
+<DD>
+implements `compat' source for glibc2
+<DT><B>/lib/libnss_db.so.</B><I>X</I>
+
+<DD>
+implements `db' source for glibc2
+<DT><B>/lib/libnss_dns.so.</B><I>X</I>
+
+<DD>
+implements `dns' source for glibc2
+<DT><B>/lib/libnss_files.so.</B><I>X</I>
+
+<DD>
+implements `files' source for glibc2
+<DT><B>/lib/libnss_hesiod.so.</B><I>X</I>
+
+<DD>
+implements `hesiod' source for glibc2
+<DT><B>/lib/libnss_nis.so.</B><I>X</I>
+
+<DD>
+implements `nis' source for glibc2
+<DT><B>/lib/libnss_nisplus.so.2</B>
+
+<DD>
+implements `nisplus' source for glibc 2.1
+</DL>
+<A NAME="lbAF">&nbsp;</A>
+<H2>NOTES</H2>
+
+Within each process that uses
+<B>nsswitch.conf</B>,
+
+the entire file is read only once; if the file is later changed, the
+process will continue using the old configuration.
+<P>
+
+With Solaris, it isn't possible to link programs using the NSS Service
+statically. With Linux, this is no problem.
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">NAME</A><DD>
+<DT><A HREF="#lbAC">DESCRIPTION</A><DD>
+<DL>
+<DT><A HREF="#lbAD">Interaction with +/- syntax (compat mode)</A><DD>
+</DL>
+<DT><A HREF="#lbAE">FILES</A><DD>
+<DT><A HREF="#lbAF">NOTES</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
+using the manual pages.<BR>
+Time: 02:11:23 GMT, April 20, 2020
+</BODY>
+</HTML>

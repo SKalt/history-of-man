@@ -1,0 +1,200 @@
+<!--
+Copyright (c) 1995 Michael Chastain (mec@shell.portal.com), 15 April 1995.
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of ADJTIMEX</TITLE>
+</HEAD><BODY>
+<H1>ADJTIMEX</H1>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2004-05-27<BR><A HREF="#index">Index</A>
+<A HREF="../index.html">Return to Main Contents</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>NAME</H2>
+
+adjtimex - tune kernel clock
+<A NAME="lbAC">&nbsp;</A>
+<H2>SYNOPSIS</H2>
+
+<B>#include &lt;<A HREF="file:///usr/include/sys/timex.h">sys/timex.h</A>&gt;</B>
+
+<P>
+<B>int adjtimex(struct timex *</B><I>buf</I><B>);</B>
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>DESCRIPTION</H2>
+
+Linux uses David L. Mills' clock adjustment algorithm (see RFC 1305).
+The system call
+<B>adjtimex</B>
+
+reads and optionally sets adjustment parameters for this algorithm.
+It takes a pointer to a
+<I>timex </I>
+
+structure, updates kernel parameters from field values,
+and returns the same structure with current kernel values.
+This structure is declared as follows:
+<P>
+
+<DL COMPACT><DT><DD>
+<PRE>
+struct timex {
+    int modes;           /* mode selector */
+    long offset;         /* time offset (usec) */
+    long freq;           /* frequency offset (scaled ppm) */
+    long maxerror;       /* maximum error (usec) */
+    long esterror;       /* estimated error (usec) */
+    int status;          /* clock command/status */
+    long constant;       /* pll time constant */
+    long precision;      /* clock precision (usec) (read only) */
+    long tolerance;      /* clock frequency tolerance (ppm)
+                            (read only) */
+    struct timeval time; /* current time (read only) */
+    long tick;           /* usecs between clock ticks */
+};
+</PRE>
+
+</DL>
+
+<P>
+
+The
+<I>modes</I>
+
+field determines which parameters, if any, to set.
+It may contain a
+bitwise-<I>or</I>
+
+combination of zero or more of the following bits:
+<P>
+
+<DL COMPACT><DT><DD>
+<PRE>
+#define ADJ_OFFSET            0x0001 /* time offset */
+#define ADJ_FREQUENCY         0x0002 /* frequency offset */
+#define ADJ_MAXERROR          0x0004 /* maximum time error */
+#define ADJ_ESTERROR          0x0008 /* estimated time error */
+#define ADJ_STATUS            0x0010 /* clock status */
+#define ADJ_TIMECONST         0x0020 /* pll time constant */
+#define ADJ_TICK              0x4000 /* tick value */
+#define ADJ_OFFSET_SINGLESHOT 0x8001 /* old-fashioned adjtime */
+</PRE>
+
+</DL>
+
+<P>
+
+Ordinary users are restricted to a zero value for
+<I>mode</I>.
+
+Only the superuser may set any parameters.
+<BR>
+
+
+<A NAME="lbAE">&nbsp;</A>
+<H2>RETURN VALUE</H2>
+
+On success,
+<B>adjtimex</B>
+
+returns the clock state:
+<P>
+
+<DL COMPACT><DT><DD>
+<PRE>
+#define TIME_OK   0 /* clock synchronized */
+#define TIME_INS  1 /* insert leap second */
+#define TIME_DEL  2 /* delete leap second */
+#define TIME_OOP  3 /* leap second in progress */
+#define TIME_WAIT 4 /* leap second has occurred */
+#define TIME_BAD  5 /* clock not synchronized */
+</PRE>
+
+</DL>
+
+<P>
+
+On failure,
+<B>adjtimex</B>
+
+returns -1 and sets
+<I>errno</I>.
+
+<A NAME="lbAF">&nbsp;</A>
+<H2>ERRORS</H2>
+
+<DL COMPACT>
+<DT><B>EFAULT</B>
+
+<DD>
+<I>buf</I>
+
+does not point to writable memory.
+<DT><B>EINVAL</B>
+
+<DD>
+An attempt is made to set
+<I>buf.offset</I>
+
+to a value outside the range -131071 to +131071,
+or to set
+<I>buf.status</I>
+
+to a value other than those listed above,
+or to set
+<I>buf.tick</I>
+
+to a value outside the range 
+900000/<B>HZ</B>
+
+to 
+1100000/<B>HZ</B>,
+
+where
+<B>HZ</B>
+
+is the system timer interrupt frequency.
+<DT><B>EPERM</B>
+
+<DD>
+<I>buf.mode</I>
+
+is non-zero and the caller does not have sufficient privilege.
+Under Linux the
+<B>CAP_SYS_TIME</B>
+
+capability is required.
+</DL>
+<A NAME="lbAG">&nbsp;</A>
+<H2>CONFORMING TO</H2>
+
+<B>adjtimex</B> is Linux specific and should not be used in programs
+intended to be portable.  There is a similar but less general call 
+<B>adjtime</B> in SVr4.
+<A NAME="lbAH">&nbsp;</A>
+<H2>SEE ALSO</H2>
+
+<B><A HREF="../man2/settimeofday.2.html">settimeofday</A></B>(2),
+
+<B><A HREF="../man7/capabilities.7.html">capabilities</A></B>(7)
+
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">NAME</A><DD>
+<DT><A HREF="#lbAC">SYNOPSIS</A><DD>
+<DT><A HREF="#lbAD">DESCRIPTION</A><DD>
+<DT><A HREF="#lbAE">RETURN VALUE</A><DD>
+<DT><A HREF="#lbAF">ERRORS</A><DD>
+<DT><A HREF="#lbAG">CONFORMING TO</A><DD>
+<DT><A HREF="#lbAH">SEE ALSO</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
+using the manual pages.<BR>
+Time: 02:09:53 GMT, April 20, 2020
+</BODY>
+</HTML>

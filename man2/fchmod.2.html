@@ -1,0 +1,268 @@
+<!--
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of CHMOD</TITLE>
+</HEAD><BODY>
+<H1>CHMOD</H1>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2004-06-23<BR><A HREF="#index">Index</A>
+<A HREF="../index.html">Return to Main Contents</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>NAME</H2>
+
+chmod, fchmod - change permissions of a file
+<A NAME="lbAC">&nbsp;</A>
+<H2>SYNOPSIS</H2>
+
+<B>#include &lt;<A HREF="file:///usr/include/sys/types.h">sys/types.h</A>&gt;</B>
+
+<BR>
+
+<B>#include &lt;<A HREF="file:///usr/include/sys/stat.h">sys/stat.h</A>&gt;</B>
+
+<P>
+<B>int chmod(const char *</B><I>path</I><B>, mode_t </B><I>mode</I><B>);</B>
+
+<BR>
+
+<B>int fchmod(int </B><I>fildes</I><B>, mode_t </B><I>mode</I><B>);</B>
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>DESCRIPTION</H2>
+
+The mode of the file given by
+<I>path</I>
+
+or referenced by
+<I>fildes</I>
+
+is changed.
+<P>
+Modes are specified by
+<I>or'ing</I>
+
+the following:
+<DL COMPACT><DT><DD>
+<P>
+<DL COMPACT>
+<DT>S_ISUID<DD>
+04000 set user ID on execution
+<DT>S_ISGID<DD>
+02000 set group ID on execution
+<DT>S_ISVTX<DD>
+01000 sticky bit
+<DT>S_IRUSR (S_IREAD)<DD>
+00400 read by owner
+<DT>S_IWUSR (S_IWRITE)<DD>
+00200 write by owner
+<DT>S_IXUSR (S_IEXEC)<DD>
+00100 execute/search by owner
+<DT>S_IRGRP<DD>
+00040 read by group
+<DT>S_IWGRP<DD>
+00020 write by group
+<DT>S_IXGRP<DD>
+00010 execute/search by group
+<DT>S_IROTH<DD>
+00004 read by others
+<DT>S_IWOTH<DD>
+00002 write by others
+<DT>S_IXOTH<DD>
+00001 execute/search by others
+<P>
+</DL>
+</DL>
+
+<P>
+The effective UID of the calling process must match the owner of the file,
+or the process must be privileged (Linux: it must have the
+<B>CAP_FOWNER</B>
+
+capability).
+<P>
+If the calling process is not privileged (Linux: does not have the
+<B>CAP_FSETID</B>
+
+capability), and the group of the file does not match
+the effective group ID of the process or one of its
+supplementary group IDs, the S_ISGID bit will be turned off,
+but this will not cause an error to be returned.
+<P>
+As a security measure, depending on the file system,
+the set user ID and set group ID execution bits
+may be turned off if a file is written.
+(On Linux this occurs if the writing process does not have the
+<B>CAP_FSETID</B>
+
+capability.)
+On some file systems, only the super-user can set the sticky bit,
+which may have a special meaning.
+For the sticky bit, and for set user ID and set group ID bits on
+directories, see
+<B><A HREF="../man2/stat.2.html">stat</A></B>(2).
+
+<P>
+On NFS file systems, restricting the permissions will immediately influence
+already open files, because the access control is done on the server, but
+open files are maintained by the client.  Widening the permissions may be
+delayed for other clients if attribute caching is enabled on them.
+<A NAME="lbAE">&nbsp;</A>
+<H2>RETURN VALUE</H2>
+
+On success, zero is returned.  On error, -1 is returned, and
+<I>errno</I>
+
+is set appropriately.
+<A NAME="lbAF">&nbsp;</A>
+<H2>ERRORS</H2>
+
+Depending on the file system, other errors can be returned.  The more
+general errors for
+<B>chmod</B>
+
+are listed below:
+<P>
+<DL COMPACT>
+<DT><B>EACCES</B>
+
+<DD>
+Search permission is denied on a component of the path prefix.
+(See also
+<B><A HREF="../man2/path_resolution.2.html">path_resolution</A></B>(2).)
+
+<DT><B>EFAULT</B>
+
+<DD>
+<I>path</I>
+
+points outside your accessible address space.
+<DT><B>EIO</B>
+
+<DD>
+An I/O error occurred.
+<DT><B>ELOOP</B>
+
+<DD>
+Too many symbolic links were encountered in resolving
+<I>path</I>.
+
+<DT><B>ENAMETOOLONG</B>
+
+<DD>
+<I>path</I>
+
+is too long.
+<DT><B>ENOENT</B>
+
+<DD>
+The file does not exist.
+<DT><B>ENOMEM</B>
+
+<DD>
+Insufficient kernel memory was available.
+<DT><B>ENOTDIR</B>
+
+<DD>
+A component of the path prefix is not a directory.
+<DT><B>EPERM</B>
+
+<DD>
+The effective UID does not match the owner of the file,
+and the process is not privileged (Linux: it does not have the
+<B>CAP_FOWNER</B>
+
+capability).
+<DT><B>EROFS</B>
+
+<DD>
+The named file resides on a read-only file system.
+</DL>
+<P>
+
+The general errors for
+<B>fchmod</B>
+
+are listed below:
+<DL COMPACT>
+<DT><B>EBADF</B>
+
+<DD>
+The file descriptor
+<I>fildes</I>
+
+is not valid.
+<DT><B>EIO</B>
+
+<DD>
+See above.
+<DT><B>EPERM</B>
+
+<DD>
+See above.
+<DT><B>EROFS</B>
+
+<DD>
+See above.
+</DL>
+<A NAME="lbAG">&nbsp;</A>
+<H2>CONFORMING TO</H2>
+
+The
+<B>chmod</B>
+
+call conforms to SVr4, SVID, POSIX, X/OPEN, 4.4BSD.
+SVr4 documents EINTR, ENOLINK and EMULTIHOP returns, but no
+ENOMEM.  POSIX.1 does not document EFAULT, ENOMEM, ELOOP or EIO error
+conditions, or the macros <B>S_IREAD</B>, <B>S_IWRITE</B> and <B>S_IEXEC</B>.
+<P>
+
+The 
+<B>fchmod</B>
+
+call conforms to 4.4BSD and SVr4.
+SVr4 documents additional EINTR and ENOLINK error conditions.
+POSIX requires the
+<B>fchmod</B>
+
+function if at least one of
+<B>_POSIX_MAPPED_FILES</B>
+
+and
+<B>_POSIX_SHARED_MEMORY_OBJECTS</B>
+
+is defined, and documents additional ENOSYS and EINVAL error
+conditions, but does not document EIO.
+<A NAME="lbAH">&nbsp;</A>
+<H2>SEE ALSO</H2>
+
+<B><A HREF="../man2/chown.2.html">chown</A></B>(2),
+
+<B><A HREF="../man2/execve.2.html">execve</A></B>(2),
+
+<B><A HREF="../man2/open.2.html">open</A></B>(2),
+
+<B><A HREF="../man2/path_resolution.2.html">path_resolution</A></B>(2),
+
+<B><A HREF="../man2/stat.2.html">stat</A></B>(2)
+
+
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">NAME</A><DD>
+<DT><A HREF="#lbAC">SYNOPSIS</A><DD>
+<DT><A HREF="#lbAD">DESCRIPTION</A><DD>
+<DT><A HREF="#lbAE">RETURN VALUE</A><DD>
+<DT><A HREF="#lbAF">ERRORS</A><DD>
+<DT><A HREF="#lbAG">CONFORMING TO</A><DD>
+<DT><A HREF="#lbAH">SEE ALSO</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
+using the manual pages.<BR>
+Time: 02:09:55 GMT, April 20, 2020
+</BODY>
+</HTML>

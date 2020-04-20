@@ -1,0 +1,136 @@
+<!--
+Copyright (C) 2004 Andries Brouwer (aeb@cwi.nl)
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of SET_TID_ADDRESS</TITLE>
+</HEAD><BODY>
+<H1>SET_TID_ADDRESS</H1>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2004-09-10<BR><A HREF="#index">Index</A>
+<A HREF="../index.html">Return to Main Contents</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>NAME</H2>
+
+set_tid_address - set pointer to thread ID
+<A NAME="lbAC">&nbsp;</A>
+<H2>SYNOPSIS</H2>
+
+<PRE>
+<B>#include &lt;<A HREF="file:///usr/include/linux/unistd.h">linux/unistd.h</A>&gt;</B>
+
+<B>long set_tid_address(int *</B><I>tidptr</I><B>);</B>
+</PRE><A NAME="lbAD">&nbsp;</A>
+<H2>DESCRIPTION</H2>
+
+The kernel keeps for each process two values called
+<I>set_child_tid</I>
+
+and
+<I>clear_child_tid</I>
+
+that are NULL by default.
+<P>
+<A NAME="lbAE">&nbsp;</A>
+<H3>set_child_tid</H3>
+
+If a process is started using
+<B><A HREF="../man2/clone.2.html">clone</A></B>(2)
+
+with the
+<B>CLONE_CHILD_SETTID</B>
+
+flag,
+<I>set_child_tid</I>
+
+is set to
+<I>child_tidptr</I>,
+
+the fifth parameter of that system call.
+<P>
+
+When
+<I>set_child_tid</I>
+
+is set, the very first thing the new process does
+is writing its PID at this address.
+<P>
+<A NAME="lbAF">&nbsp;</A>
+<H3>clear_child_tid</H3>
+
+If a process is started using
+<B><A HREF="../man2/clone.2.html">clone</A></B>(2)
+
+with the
+<B>CLONE_CHILD_CLEARTID</B>
+
+flag, 
+<I>clear_child_tid</I>
+
+is set to
+<I>child_tidptr</I>,
+
+the fifth parameter of that system call.
+<P>
+
+The system call
+<B>set_tid_address</B>
+
+sets the
+<I>clear_child_tid</I>
+
+value for the calling process to
+<I>tidptr</I>.
+
+<P>
+
+When
+<I>clear_child_tid</I>
+
+is set, and the process exits, and the process was sharing memory
+with other processes or threads, then 0 is written at this address,
+and a
+<I>futex(child_tidptr, FUTEX_WAKE, 1, NULL, NULL, 0);</I>
+
+call is done. (That is, wake a single process waiting on this futex.)
+Errors are ignored.
+<A NAME="lbAG">&nbsp;</A>
+<H2>RETURN VALUE</H2>
+
+<B>set_tid_address</B>
+
+returns the PID of the current process.
+<A NAME="lbAH">&nbsp;</A>
+<H2>HISTORY</H2>
+
+This call is present since Linux 2.5.48.
+Details as given here are valid since Linux 2.5.49.
+<A NAME="lbAI">&nbsp;</A>
+<H2>SEE ALSO</H2>
+
+<B><A HREF="../man2/clone.2.html">clone</A></B>(2),
+
+<B><A HREF="../man2/futex.2.html">futex</A></B>(2)
+
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">NAME</A><DD>
+<DT><A HREF="#lbAC">SYNOPSIS</A><DD>
+<DT><A HREF="#lbAD">DESCRIPTION</A><DD>
+<DL>
+<DT><A HREF="#lbAE">set_child_tid</A><DD>
+<DT><A HREF="#lbAF">clear_child_tid</A><DD>
+</DL>
+<DT><A HREF="#lbAG">RETURN VALUE</A><DD>
+<DT><A HREF="#lbAH">HISTORY</A><DD>
+<DT><A HREF="#lbAI">SEE ALSO</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
+using the manual pages.<BR>
+Time: 02:10:05 GMT, April 20, 2020
+</BODY>
+</HTML>

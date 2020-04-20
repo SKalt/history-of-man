@@ -1,0 +1,248 @@
+<!--
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of SETPGID</TITLE>
+</HEAD><BODY>
+<H1>SETPGID</H1>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2003-01-20<BR><A HREF="#index">Index</A>
+<A HREF="../index.html">Return to Main Contents</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>NAME</H2>
+
+setpgid, getpgid, setpgrp, getpgrp - set/get process group
+<A NAME="lbAC">&nbsp;</A>
+<H2>SYNOPSIS</H2>
+
+<B>#include &lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;</B>
+
+<P>
+<B>int setpgid(pid_t </B><I>pid</I><B>, pid_t </B><I>pgid</I><B>);</B>
+
+<BR>
+
+<B>pid_t getpgid(pid_t </B><I>pid</I><B>);</B>
+
+<BR>
+
+<B>int setpgrp(void);</B>
+
+<BR>
+
+<B>pid_t getpgrp(void);</B>
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>DESCRIPTION</H2>
+
+<B>setpgid</B>
+
+sets the process group ID of the process specified by
+<I>pid</I>
+
+to
+<I>pgid</I>.
+
+If
+<I>pid</I>
+
+is zero, the process ID of the current process is used.  If
+<I>pgid</I>
+
+is zero, the process ID of the process specified by
+<I>pid</I>
+
+is used.  If <B>setpgid</B> is used to move a process from one process
+group to another (as is done by some shells when creating pipelines),
+both process groups must be part of the same session.  In this case,
+the <I>pgid</I> specifies an existing process group to be joined and the
+session ID of that group must match the session ID of the joining process.
+<P>
+<B>getpgid</B>
+
+returns the process group ID of the process specified by
+<I>pid</I>.
+
+If
+<I>pid</I>
+
+is zero, the process ID of the current process is used.
+<P>
+The call
+<B>setpgrp()</B>
+
+is equivalent to
+<B>setpgid(0,0)</B>.
+
+<P>
+Similarly,
+<B>getpgrp()</B>
+
+is equivalent to
+<B>getpgid(0)</B>.
+
+Each process group is a member of a session and each process is a
+member of the session of which its process group is a member.
+<P>
+Process groups are used for distribution of signals, and by terminals to
+arbitrate requests for their input: Processes that have the same process
+group as the terminal are foreground and may read, while others will
+block with a signal if they attempt to read.
+These calls are thus used by programs such as
+<B><A HREF="../man1/csh.1.html">csh</A></B>(1)
+
+to create process groups in implementing job control.  The
+<B>TIOCGPGRP</B>
+
+and
+<B>TIOCSPGRP</B>
+
+calls described in
+<B><A HREF="../man3/termios.3.html">termios</A></B>(3)
+
+are used to get/set the process group of the control terminal.
+<P>
+If a session has a controlling terminal, CLOCAL is not set and a hangup
+occurs, then the session leader is sent a SIGHUP.  If the session leader
+exits, the SIGHUP signal will be sent to each process in the foreground
+process group of the controlling terminal.
+<P>
+If the exit of the process causes a process group to become orphaned,
+and if any member of the newly-orphaned process group is stopped, then a
+SIGHUP signal followed by a SIGCONT signal will be sent to each process
+in the newly-orphaned process group.
+<P>
+<A NAME="lbAE">&nbsp;</A>
+<H2>RETURN VALUE</H2>
+
+On success,
+<B>setpgid</B> and <B>setpgrp</B>
+
+return zero.  On error, -1 is returned, and
+<I>errno</I>
+
+is set appropriately.
+<P>
+<B>getpgid</B>
+
+returns a process group on success.
+On error, -1 is returned, and
+<I>errno</I>
+
+is set appropriately.
+<P>
+<B>getpgrp</B>
+
+always returns the current process group.
+<A NAME="lbAF">&nbsp;</A>
+<H2>ERRORS</H2>
+
+<DL COMPACT>
+<DT><B>EACCES</B>
+
+<DD>
+An attempt was made to change the process group ID
+of one of the children of the calling process and the child had
+already performed an <B>execve</B>
+(<B>setpgid</B>, <B>setpgrp</B>).
+<DT><B>EINVAL</B>
+
+<DD>
+<I>pgid</I>
+
+is less than 0
+(<B>setpgid</B>, <B>setpgrp</B>).
+<DT><B>EPERM</B>
+
+<DD>
+An attempt was made to move a process into a process group in a 
+different session, or to change the process 
+group ID of one of the children of the calling process and the 
+child was in a different session, or to change the process group ID of
+a session leader
+(<B>setpgid</B>, <B>setpgrp</B>).
+<DT><B>ESRCH</B>
+
+<DD>
+For
+<B>getpgid</B>:
+
+<I>pid</I>
+
+does not match any process.
+For
+<B>setpgid</B>:
+
+<I>pid</I>
+
+is not the current process and not a child of the current process.
+</DL>
+<A NAME="lbAG">&nbsp;</A>
+<H2>CONFORMING TO</H2>
+
+The functions
+<B>setpgid</B>
+
+and
+<B>getpgrp</B>
+
+conform to POSIX.1.
+The function
+<B>setpgrp</B>
+
+is from BSD 4.2.
+The function
+<B>getpgid</B>
+
+conforms to SVr4.
+<A NAME="lbAH">&nbsp;</A>
+<H2>NOTES</H2>
+
+POSIX took
+<B>setpgid</B>
+
+from the BSD function
+<B>setpgrp</B>.
+
+Also SysV has a function with the same name, but it is identical to
+<B><A HREF="../man2/setsid.2.html">setsid</A></B>(2).
+
+<P>
+
+To get the prototypes under glibc, define both _XOPEN_SOURCE and
+_XOPEN_SOURCE_EXTENDED, or use &quot;#define _XOPEN_SOURCE <I>n</I>&quot;
+for some integer <I>n</I> larger than or equal to 500.
+<A NAME="lbAI">&nbsp;</A>
+<H2>SEE ALSO</H2>
+
+<B><A HREF="../man2/getuid.2.html">getuid</A></B>(2),
+
+<B><A HREF="../man2/setsid.2.html">setsid</A></B>(2),
+
+<B><A HREF="../man3/tcgetpgrp.3.html">tcgetpgrp</A></B>(3),
+
+<B><A HREF="../man3/tcsetpgrp.3.html">tcsetpgrp</A></B>(3),
+
+<B><A HREF="../man3/termios.3.html">termios</A></B>(3)
+
+
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">NAME</A><DD>
+<DT><A HREF="#lbAC">SYNOPSIS</A><DD>
+<DT><A HREF="#lbAD">DESCRIPTION</A><DD>
+<DT><A HREF="#lbAE">RETURN VALUE</A><DD>
+<DT><A HREF="#lbAF">ERRORS</A><DD>
+<DT><A HREF="#lbAG">CONFORMING TO</A><DD>
+<DT><A HREF="#lbAH">NOTES</A><DD>
+<DT><A HREF="#lbAI">SEE ALSO</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
+using the manual pages.<BR>
+Time: 02:09:56 GMT, April 20, 2020
+</BODY>
+</HTML>

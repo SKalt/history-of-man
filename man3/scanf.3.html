@@ -1,0 +1,566 @@
+<!--
+Copyright (c) 1990, 1991 The Regents of the University of California.
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of SCANF</TITLE>
+</HEAD><BODY>
+<H1>SCANF</H1>
+Section: Linux Programmer's Manual (3)<BR>Updated: 1995-11-01<BR><A HREF="#index">Index</A>
+<A HREF="../index.html">Return to Main Contents</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>NAME</H2>
+
+scanf, fscanf, sscanf, vscanf, vsscanf, vfscanf - input format conversion
+<A NAME="lbAC">&nbsp;</A>
+<H2>SYNOPSIS</H2>
+
+<PRE>
+<B>#include &lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;</B>
+<B>int scanf(const char *</B><I>format</I><B>, ...</B><I>);</I>
+<BR>
+<B>int fscanf(FILE *</B><I>stream</I><B>, const char *</B><I>format</I><B>, ...</B><I>);</I>
+<BR>
+<B>int sscanf(const char *</B><I>str</I><B>, const char *</B><I>format</I><B>, ...</B><I>);</I>
+
+<B>#include &lt;<A HREF="file:///usr/include/stdarg.h">stdarg.h</A>&gt;</B>
+<B>int vscanf(const char *</B><I>format</I><B>, va_list </B><I>ap</I><B>);</B>
+<BR>
+<B>int vsscanf(const char *</B><I>str</I><B>, const char *</B><I>format</I><B>, va_list </B><I>ap</I><B>);</B>
+<BR>
+<B>int vfscanf(FILE *</B><I>stream</I><B>, const char *</B><I>format</I><B>, va_list </B><I>ap</I><B>);</B>
+</PRE><A NAME="lbAD">&nbsp;</A>
+<H2>DESCRIPTION</H2>
+
+The
+<B>scanf</B>
+
+family of functions scans input according to a
+<I>format</I>
+
+as described below.  This format may contain
+<I>conversion specifiers</I>;
+
+the results from such conversions, if any, are stored through the
+<I>pointer</I>
+
+arguments.  The
+<B>scanf</B>
+
+function reads input from the standard input stream
+<I>stdin</I>,
+
+<B>fscanf</B>
+
+reads input from the stream pointer
+<I>stream</I>,
+
+and
+<B>sscanf</B>
+
+reads its input from the character string pointed to by
+<I>str</I>.
+
+<P>
+
+The
+<B>vfscanf</B>
+
+function is analogous to
+<B><A HREF="../man3/vfprintf.3.html">vfprintf</A></B>(3)
+
+and reads input from the stream pointer
+<I>stream</I>
+
+using a variable argument list of pointers (see
+<B><A HREF="../man3/stdarg.3.html">stdarg</A></B>(3).
+
+The
+<B>vscanf</B>
+
+function scans a variable argument list from the standard input and the
+<B>vsscanf</B>
+
+function scans it from a string; these are analogous to the
+<B>vprintf</B>
+
+and
+<B>vsprintf</B>
+
+functions respectively.
+<P>
+
+Each successive
+<I>pointer</I>
+
+argument must correspond properly with each successive conversion specifier
+(but see `suppression' below).  All conversions are introduced by the
+<B>%</B>
+
+(percent sign) character.  The
+<I>format</I>
+
+string may also contain other characters.  White space (such as blanks,
+tabs, or newlines) in the
+<I>format</I>
+
+string match any amount of white space, including none, in the input.
+Everything else matches only itself.  Scanning stops when an input
+character does not match such a format character.  Scanning also stops when
+an input conversion cannot be made (see below).
+<A NAME="lbAE">&nbsp;</A>
+<H2>CONVERSIONS</H2>
+
+Following the
+<B>%</B>
+
+character introducing a conversion there may be a number of
+<I>flag</I>
+
+characters, as follows:
+<DL COMPACT>
+<DT><B>*</B>
+
+<DD>
+Suppresses assignment.  The conversion that follows occurs as usual, but no
+pointer is used; the result of the conversion is simply discarded.
+<DT><B>a </B>
+
+<DD>
+(glibc) Indicates that the conversion will be 
+<B>s</B>,
+
+the needed memory space for the string will be malloc'ed  and
+the pointer to it will be assigned to the  
+<I>char</I>
+
+pointer variable, which does not have to be initialized before.
+This flag does not exist in 
+<I>ANSI C</I>
+
+(C89) and has a different meaning in C99.
+<DT><B>a</B>
+
+<DD>
+(C99) Equivalent to
+<B>f</B>.
+
+<DT><B>h</B>
+
+<DD>
+Indicates that the conversion will be one of
+<B>dioux</B>
+
+or
+<B>n</B>
+
+and the next pointer is a pointer to a
+<I>short  int</I>
+
+(rather than
+<I>int</I>).
+
+<DT><B>l</B>
+
+<DD>
+Indicates either that the conversion will be one of
+<B>dioux</B>
+
+or
+<B>n</B>
+
+and the next pointer is a pointer to a
+<I>long  int</I>
+
+(rather than
+<I>int</I>),
+
+or that the conversion will be one of
+<B>efg</B>
+
+and the next pointer is a pointer to
+<I>double</I>
+
+(rather than
+<I>float</I>).
+
+Specifying two 
+<B>l</B>
+
+flags is equivalent to the 
+<B>L</B>
+
+flag.
+<DT><B>L</B>
+
+<DD>
+Indicates that the conversion will be either
+<B>efg</B>
+
+and the next pointer is a pointer to
+<I>long double</I>
+
+or the conversion will be 
+<B>dioux</B>
+
+and the next pointer is a pointer to
+<I>long long</I>.
+
+(Note that long long is not an 
+<I>ANSI C </I>
+
+type. Any program using this will not be portable to all
+architectures).
+<DT><B>q</B>
+
+<DD>
+equivalent to L. 
+This flag does not exist in 
+<I>ANSI C</I>.
+
+</DL>
+<P>
+
+In addition to these flags, there may be an optional maximum field width,
+expressed as a decimal integer, between the
+<B>%</B>
+
+and the conversion.  If no width is given, a default of `infinity' is used
+(with one exception, below); otherwise at most this many characters are
+scanned in processing the conversion.  Before conversion begins, most
+conversions skip white space; this white space is not counted against the
+field width.
+<P>
+
+The following conversions are available:
+<DL COMPACT>
+<DT><B>%</B>
+
+<DD>
+Matches a literal `%'.  That is, `%%' in the format string matches a
+single input `%' character.  No conversion is done, and assignment does not
+occur.
+<DT><B>d</B>
+
+<DD>
+Matches an optionally signed decimal integer;
+the next pointer must be a pointer to
+<I>int</I>.
+
+<DT><B>D</B>
+
+<DD>
+Equivalent to
+<B>ld</B>;
+
+this exists only for backwards compatibility.
+(Note: thus only in libc4. In libc5 and glibc the %D is
+silently ignored, causing old programs to fail mysteriously.)
+<DT><B>i</B>
+
+<DD>
+Matches an optionally signed integer; the next pointer must be a pointer to
+<I>int</I>.
+
+The integer is read in base 16 if it begins with `0x' or `0X', in base 8 if
+it begins with `0', and in base 10 otherwise.  Only characters that
+correspond to the base are used.
+<DT><B>o</B>
+
+<DD>
+Matches an unsigned octal integer; the next pointer must be a pointer to
+<I>unsigned int</I>.
+
+<DT><B>u</B>
+
+<DD>
+Matches an unsigned decimal integer; the next pointer must be a
+pointer to
+<I>unsigned int</I>.
+
+<DT><B>x</B>
+
+<DD>
+Matches an unsigned hexadecimal integer; the next pointer must
+be a pointer to
+<I>unsigned int</I>.
+
+<DT><B>X</B>
+
+<DD>
+Equivalent to
+<B>x</B>.
+
+<DT><B>f</B>
+
+<DD>
+Matches an optionally signed floating-point number; the next pointer must
+be a pointer to
+<I>float</I>.
+
+<DT><B>e</B>
+
+<DD>
+Equivalent to
+<B>f</B>.
+
+<DT><B>g</B>
+
+<DD>
+Equivalent to
+<B>f</B>.
+
+<DT><B>E</B>
+
+<DD>
+Equivalent to
+<B>f</B>.
+
+<DT><B>s</B>
+
+<DD>
+Matches a sequence of non-white-space characters; the next pointer must be
+a pointer to
+<I>char</I>,
+
+and the array must be large enough to accept all the sequence and the
+terminating
+<B>NUL</B>
+
+character.  The input string stops at white space or at the maximum field
+width, whichever occurs first.
+<DT><B>c</B>
+
+<DD>
+Matches a sequence of
+<I>width</I>
+
+count characters (default 1); the next pointer must be a pointer to
+<I>char</I>,
+
+and there must be enough room for all the characters (no terminating
+<B>NUL</B>
+
+is added).  The usual skip of leading white space is suppressed.  To skip
+white space first, use an explicit space in the format.
+<DT><B>[</B>
+
+<DD>
+Matches a nonempty sequence of characters from the specified set of
+accepted characters; the next pointer must be a pointer to
+<I>char</I>,
+
+and there must be enough room for all the characters in the string, plus a
+terminating
+<B>NUL</B>
+
+character.  The usual skip of leading white space is suppressed.  The
+string is to be made up of characters in (or not in) a particular set; the
+set is defined by the characters between the open bracket
+<B>[</B>
+
+character and a close bracket
+<B>]</B>
+
+character.  The set
+<I>excludes</I>
+
+those characters if the first character after the open bracket is a
+circumflex
+<B>^</B>.
+
+To include a close bracket in the set, make it the first character after
+the open bracket or the circumflex; any other position will end the set.
+The hyphen character
+<B>-</B>
+
+is also special; when placed between two other characters, it adds all
+intervening characters to the set.  To include a hyphen, make it the last
+character before the final close bracket.  For instance, `[^]0-9-]' means
+the set `everything except close bracket, zero through nine, and hyphen'.
+The string ends with the appearance of a character not in the (or, with a
+circumflex, in) set or when the field width runs out.
+<DT><B>p</B>
+
+<DD>
+Matches a pointer value (as printed by `%p' in
+<B><A HREF="../man3/printf.3.html">printf</A></B>(3);
+
+the next pointer must be a pointer to
+<I>void</I>.
+
+<DT><B>n</B>
+
+<DD>
+Nothing is expected; instead, the number of characters consumed thus far
+from the input is stored through the next pointer, which must be a pointer
+to
+<I>int</I>.
+
+This is
+<I>not</I>
+
+a conversion, although it can be suppressed with the
+<B>*</B>
+
+flag.
+The C standard says: `Execution of a %n directive does not increment
+the assignment count returned at the completion of execution'
+but the Corrigendum seems to contradict this. Probably it is wise
+not to make any assumptions on the effect of %n conversions on
+the return value.
+<P>
+</DL>
+<P>
+
+<A NAME="lbAF">&nbsp;</A>
+<H2>RETURN VALUE</H2>
+
+These functions return the number of input items assigned, which can be
+fewer than provided for, or even zero, in the event of a matching failure.
+Zero indicates that, while there was input available, no conversions were
+assigned; typically this is due to an invalid input character, such as an
+alphabetic character for a `%d' conversion.  The value
+<B>EOF</B>
+
+is returned if an input failure occurs before any conversion such as an
+end-of-file occurs. If an error or end-of-file occurs after conversion has
+begun, the number of conversions which were successfully completed is
+returned.
+<A NAME="lbAG">&nbsp;</A>
+<H2>SEE ALSO</H2>
+
+<B><A HREF="../man3/getc.3.html">getc</A></B>(3),
+
+<B><A HREF="../man3/printf.3.html">printf</A></B>(3),
+
+<B><A HREF="../man3/strtod.3.html">strtod</A></B>(3),
+
+<B><A HREF="../man3/strtol.3.html">strtol</A></B>(3),
+
+<B><A HREF="../man3/strtoul.3.html">strtoul</A></B>(3)
+
+<A NAME="lbAH">&nbsp;</A>
+<H2>CONFORMING TO</H2>
+
+The functions
+<B>fscanf</B>,
+
+<B>scanf</B>,
+
+and
+<B>sscanf</B>
+
+conform to ANSI X3.159-1989 (``ANSI C'').
+<P>
+
+The 
+<B>q</B>
+
+flag is the 
+<I>BSD 4.4</I>
+
+notation for 
+<I>long long</I>,
+
+while
+<B>ll</B>
+
+or the usage of
+<B>L</B>
+
+in integer conversions is the GNU notation.
+<P>
+
+The Linux version of these functions is based on the 
+<I>GNU </I>
+
+<I>libio</I>
+
+library. Take a look at the 
+<I>info</I>
+
+documentation of 
+<I>GNU</I>
+
+<I>libc (glibc-1.08)</I>
+
+for a more concise description. 
+<A NAME="lbAI">&nbsp;</A>
+<H2>BUGS</H2>
+
+All functions are fully ANSI X3.159-1989 conformant, but provide the 
+additional flags 
+<B>q</B>
+
+and
+<B>a</B>
+
+as well as an additional behaviour of the
+<B>L</B>
+
+and 
+<B>l </B>
+
+flags. The latter may be considered to be a bug, as it changes the
+behaviour of flags defined in ANSI X3.159-1989.
+<P>
+
+Some combinations of flags defined by
+<I>ANSI C</I>
+
+are not making sense in 
+<I>ANSI C</I>
+
+(e.g. 
+<B>%Ld</B>).
+
+While they may have a well-defined behaviour on Linux, this need not
+to be so on other architectures. Therefore it usually is better to use
+flags that are not defined by 
+<I>ANSI C</I>
+
+at all, i.e. use 
+<B>q</B>
+
+instead of 
+<B>L</B>
+
+in combination with 
+<B>diouxX</B>
+
+conversions or 
+<B>ll</B>.
+
+<P>
+
+The usage of
+<B>q</B>
+
+is not the same as on
+<I>BSD 4.4</I>,
+
+as it may be used in float conversions equivalently to 
+<B>L</B>.
+
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">NAME</A><DD>
+<DT><A HREF="#lbAC">SYNOPSIS</A><DD>
+<DT><A HREF="#lbAD">DESCRIPTION</A><DD>
+<DT><A HREF="#lbAE">CONVERSIONS</A><DD>
+<DT><A HREF="#lbAF">RETURN VALUE</A><DD>
+<DT><A HREF="#lbAG">SEE ALSO</A><DD>
+<DT><A HREF="#lbAH">CONFORMING TO</A><DD>
+<DT><A HREF="#lbAI">BUGS</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
+using the manual pages.<BR>
+Time: 02:11:00 GMT, April 20, 2020
+</BODY>
+</HTML>

@@ -1,0 +1,260 @@
+<!--
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of SETLOCALE</TITLE>
+</HEAD><BODY>
+<H1>SETLOCALE</H1>
+Section: Linux Programmer's Manual (3)<BR>Updated: 1999-07-04<BR><A HREF="#index">Index</A>
+<A HREF="../index.html">Return to Main Contents</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>NAME</H2>
+
+setlocale - set the current locale
+<A NAME="lbAC">&nbsp;</A>
+<H2>SYNOPSIS</H2>
+
+<PRE>
+<B>#include &lt;<A HREF="file:///usr/include/locale.h">locale.h</A>&gt;</B>
+
+<B>char *setlocale(int </B><I>category</I><B>, const char *</B><I>locale</I><B>);</B>
+</PRE>
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>DESCRIPTION</H2>
+
+The 
+<B>setlocale()</B>
+
+function is used to set or query the program's current locale.
+<P>
+
+If
+<I>locale</I>
+
+is not
+<B>NULL</B>,
+
+the program's current locale is modified according to the arguments.
+The argument
+<I>category</I>
+
+determines which parts of the program's current locale should be modified.
+<DL COMPACT>
+<DT><B>LC_ALL</B>
+
+<DD>
+for all of the locale.
+<DT><B>LC_COLLATE</B>
+
+<DD>
+for regular expression matching (it determines the meaning
+of range expressions and equivalence classes) and string collation.
+<DT><B>LC_CTYPE</B>
+
+<DD>
+for regular expression matching, character classification, conversion,
+case-sensitive comparison, and wide character functions.
+<DT><B>LC_MESSAGES</B>
+
+<DD>
+for localizable natural-language messages.
+<DT><B>LC_MONETARY</B>
+
+<DD>
+for monetary formatting.
+<DT><B>LC_NUMERIC</B>
+
+<DD>
+for number formatting (such as the decimal point and the thousands separator).
+<DT><B>LC_TIME</B>
+
+<DD>
+for time and date formatting.
+</DL>
+<P>
+
+The argument
+<I>locale</I>
+
+is a pointer to a character string containing the
+required setting of
+<I>category</I>.
+
+Such a string is either a well-known constant like &quot;C&quot; or &quot;da_DK&quot;
+(see below), or an opaque string that was returned by another call of
+<B>setlocale</B>.
+
+<P>
+
+If
+<I>locale</I>
+
+is
+<B>&quot;&quot;</B>,
+
+each part of the locale that should be modified is set according to the
+environment variables. The details are implementation dependent.
+For glibc, first
+
+
+
+
+
+(regardless of
+<I>category</I>),
+
+the environment variable LC_ALL is inspected,
+next the environment variable with the same name as the category
+(LC_COLLATE, LC_CTYPE, LC_MESSAGES, LC_MONETARY, LC_NUMERIC, LC_TIME)
+and finally the environment variable LANG.
+The first existing environment variable is used.
+If its value is not a valid locale specification, the locale
+is unchanged, and
+<B>setlocale</B>
+
+returns NULL.
+
+
+<P>
+
+The locale
+<B>C</B>
+
+or
+<B>POSIX</B>
+
+is a portable locale; its LC_CTYPE part corresponds to the 7-bit ASCII
+character set.
+<P>
+
+A locale name is typically of the form
+<I>language</I>[_<I>territory</I>][.<I>codeset</I>][@<I>modifier</I>],
+
+where
+<I>language</I>
+
+is an ISO 639 language code,
+<I>territory</I>
+
+is an ISO 3166 country code, and
+<I>codeset</I>
+
+is a character set or encoding identifier like
+<B>ISO-8859-1</B>
+
+or
+<B>UTF-8</B>.
+
+For a list of all supported locales, try &quot;locale -a&quot;, cf.
+<B><A HREF="../man1/locale.1.html">locale</A></B>(1).
+
+<P>
+
+If
+<I>locale</I>
+
+is
+<B>NULL</B>,
+
+the current locale is only queried, not modified.
+<P>
+
+On startup of the main program, the portable
+<B>C</B>
+
+locale is selected as default.
+A program may be made portable to all locales by calling
+<B>setlocale(LC_ALL, )</B>
+
+after program  initialization, by using the values returned
+from a
+<B>localeconv()</B>
+
+call
+for locale - dependent information, by using the multi-byte and wide
+character functions for text processing if
+<B>MB_CUR_MAX &gt; 1</B>,
+
+and by using
+<B>strcoll()</B>, <B>wcscoll()</B>
+
+or 
+<B>strxfrm()</B>, <B>wcsxfrm()</B>
+
+to compare strings.
+<A NAME="lbAE">&nbsp;</A>
+<H2>RETURN VALUE</H2>
+
+A successful call to
+<B>setlocale()</B>
+
+returns an opaque string that corresponds to the locale set.
+This string may be allocated in static storage.
+The string returned is such that a subsequent call with that string
+and its associated category will restore that part of the process's
+locale. The return value is
+<B>NULL</B>
+
+if the request cannot be honored.
+<A NAME="lbAF">&nbsp;</A>
+<H2>CONFORMING TO</H2>
+
+ANSI C, POSIX.1
+<A NAME="lbAG">&nbsp;</A>
+<H2>NOTES</H2>
+
+Linux (that is, GNU libc) supports the portable locales
+<B>&quot;C&quot;</B> and <B>&quot;POSIX&quot;</B>.
+
+In the good old days there used to be support for
+the European Latin-1 
+<B>ISO-8859-1</B>
+
+locale (e.g. in libc-4.5.21 and libc-4.6.27), and the Russian
+<B>KOI-8</B>
+
+(more precisely, &quot;koi-8r&quot;) locale (e.g. in libc-4.6.27),
+so that having an environment variable LC_CTYPE=ISO-8859-1
+sufficed to make isprint() return the right answer.
+These days non-English speaking Europeans have to work a bit harder,
+and must install actual locale files.
+<A NAME="lbAH">&nbsp;</A>
+<H2>SEE ALSO</H2>
+
+<B><A HREF="../man1/locale.1.html">locale</A></B>(1),
+
+<B><A HREF="../man1/localedef.1.html">localedef</A></B>(1),
+
+<B><A HREF="../man3/isalpha.3.html">isalpha</A></B>(3),
+
+<B><A HREF="../man3/localeconv.3.html">localeconv</A></B>(3),
+
+<B><A HREF="../man3/strcoll.3.html">strcoll</A></B>(3),
+
+<B><A HREF="../man3/strftime.3.html">strftime</A></B>(3),
+
+<B><A HREF="../man4/charsets.4.html">charsets</A></B>(4),
+
+<B><A HREF="../man7/locale.7.html">locale</A></B>(7)
+
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">NAME</A><DD>
+<DT><A HREF="#lbAC">SYNOPSIS</A><DD>
+<DT><A HREF="#lbAD">DESCRIPTION</A><DD>
+<DT><A HREF="#lbAE">RETURN VALUE</A><DD>
+<DT><A HREF="#lbAF">CONFORMING TO</A><DD>
+<DT><A HREF="#lbAG">NOTES</A><DD>
+<DT><A HREF="#lbAH">SEE ALSO</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
+using the manual pages.<BR>
+Time: 02:11:01 GMT, April 20, 2020
+</BODY>
+</HTML>

@@ -1,0 +1,640 @@
+<!--
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of SEMOP</TITLE>
+</HEAD><BODY>
+<H1>SEMOP</H1>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2003-04-28<BR><A HREF="#index">Index</A>
+<A HREF="../index.html">Return to Main Contents</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>NAME</H2>
+
+semop, semtimedop - semaphore operations
+<A NAME="lbAC">&nbsp;</A>
+<H2>SYNOPSIS</H2>
+
+<PRE>
+<B>#include &lt;<A HREF="file:///usr/include/sys/types.h">sys/types.h</A>&gt;</B>
+<B>#include &lt;<A HREF="file:///usr/include/sys/ipc.h">sys/ipc.h</A>&gt;</B>
+<B>#include &lt;<A HREF="file:///usr/include/sys/sem.h">sys/sem.h</A>&gt;</B>
+</PRE>
+
+<P>
+<B>int semop(int </B><I>semid</I><B>,</B>
+
+<B>struct sembuf *</B><I>sops</I><B>,</B>
+
+<B>unsigned </B><I>nsops</I><B>);</B>
+
+<P>
+<B>int semtimedop(int </B><I>semid</I><B>,</B>
+
+<B>struct sembuf *</B><I>sops</I><B>,</B>
+
+<B>unsigned </B><I>nsops</I><B>,</B>
+
+<B>struct timespec *</B><I>timeout</I><B>);</B>
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>DESCRIPTION</H2>
+
+A semaphore is represented by an anonymous structure
+including the following members:
+<P>
+
+<PRE>
+unsigned short  semval;   /* semaphore value */
+unsigned short  semzcnt;  /* # waiting for zero */
+unsigned short  semncnt;  /* # waiting for increase */
+pid_t           sempid;   /* process that did last op */
+
+</PRE>
+
+The function
+<B>semop</B>
+
+performs operations on selected members of the semaphore set indicated by
+<I>semid</I>.
+
+Each of the
+<I>nsops</I>
+
+elements in the array pointed to by
+<I>sops</I>
+
+specifies an operation to be performed on a semaphore by a
+<B>struct sembuf</B>
+
+including the following members:
+<P>
+
+<PRE>
+unsigned short sem_num; /* semaphore number */
+short sem_op;                   /* semaphore operation */
+short sem_flg;                  /* operation flags */
+
+</PRE>
+
+Flags recognized in
+<I>sem_flg</I>
+
+are
+<B>IPC_NOWAIT</B>
+
+and
+<B>SEM_UNDO</B>.
+
+If an operation asserts
+<B>SEM_UNDO</B>,
+
+it will be undone when the process exits.
+<P>
+
+The set of operations contained in
+<I>sops</I>
+
+is performed
+<I>atomically</I>,
+
+that is, the operations are performed at the same time, and only
+if they can all be simultaneously performed.
+The behaviour of the system call if not all operations can be
+performed immediately depends on the presence of the
+<B>IPC_NOWAIT</B>
+
+flag in the individual
+<I>sem_flg</I>
+
+fields, as noted below.
+<P>
+Each operation is performed on the
+<I>sem_num</I>-th
+
+semaphore of the semaphore set, where the first semaphore of the set
+is semaphore
+<B>0</B>.
+
+There are three types of operation, distinguished by the value of
+<I>sem_op</I>.
+
+<P>
+
+If
+<I>sem_op</I>
+
+is a positive integer, the operation adds this value to
+the semaphore value
+(<I>semval</I>).
+
+Furthermore, if
+<B>SEM_UNDO</B>
+
+is asserted for this operation, the system updates the process undo count
+(<I>semadj</I>)
+
+for this semaphore.
+This operation can always proceed - it never forces a process to wait.
+The calling process must have alter permission on the semaphore set.
+<P>
+
+If
+<I>sem_op</I>
+
+is zero, the process must have read access permission on the semaphore
+set.
+This is a &quot;wait-for-zero&quot; operation: if
+<I>semval</I>
+
+is zero, the operation can immediately proceed.
+Otherwise, if
+<B>IPC_NOWAIT</B>
+
+is asserted in
+<I>sem_flg</I>,
+
+the system call fails with
+<I>errno</I>
+
+set to
+<B>EAGAIN</B>
+
+(and none of the operations in
+<I>sops</I>
+
+is performed).
+Otherwise
+<I>semzcnt</I>
+
+(the count of processes waiting until this semaphore's value becomes zero)
+is incremented by one and the process sleeps until
+one of the following occurs:
+<DL COMPACT>
+<DT>&bull;<DD>
+<I>semval</I>
+
+becomes 0, at which time the value of
+<I>semzcnt</I>
+
+is decremented.
+<DT>&bull;<DD>
+The semaphore set
+is removed: the system call fails, with
+<I>errno</I>
+
+set to
+<B>EIDRM</B>.
+
+<DT>&bull;<DD>
+The calling process catches a signal:
+the value of
+<I>semzcnt</I>
+
+is decremented and the system call fails, with
+<I>errno</I>
+
+set to
+<B>EINTR</B>.
+
+<DT>&bull;<DD>
+The time limit specified by
+<I>timeout</I>
+
+in a
+<B>semtimedop</B>
+
+call expires: the system call fails, with
+<I>errno</I>
+
+set to
+<B>EAGAIN</B>.
+
+</DL>
+<P>
+
+If
+<I>sem_op</I>
+
+is less than zero, the process must have alter permission on the
+semaphore set.
+If
+<I>semval</I>
+
+is greater than or equal to the absolute value of
+<I>sem_op</I>,
+
+the operation can proceed immediately:
+the absolute value of
+<I>sem_op</I>
+
+is subtracted from
+<I>semval</I>,
+
+and, if
+<B>SEM_UNDO</B>
+
+is asserted for this operation, the system updates the process undo count
+(<I>semadj</I>)
+
+for this semaphore.
+If the absolute value of
+<I>sem_op</I>
+
+is greater than
+<I>semval</I>,
+
+and
+<B>IPC_NOWAIT</B>
+
+is asserted in
+<I>sem_flg</I>,
+
+the system call fails, with
+<I>errno</I>
+
+set to
+<B>EAGAIN</B>
+
+(and none of the operations in
+<I>sops</I>
+
+is performed).
+Otherwise
+<I>semncnt</I>
+
+(the counter of processes waiting for this semaphore's value to increase)
+is incremented by one and the process sleeps until
+one of the following occurs:
+<DL COMPACT>
+<DT>&bull;<DD>
+<I>semval</I>
+
+becomes greater than or equal to the absolute value of
+<I>sem_op</I>,
+
+at which time the value of
+<I>semncnt</I>
+
+is decremented, the absolute value of
+<I>sem_op</I>
+
+is subtracted from
+<I>semval</I>
+
+and, if
+<B>SEM_UNDO</B>
+
+is asserted for this operation, the system updates the process undo count
+(<I>semadj</I>)
+
+for this semaphore.
+<DT>&bull;<DD>
+The semaphore set is removed from the system: the system call fails with
+<I>errno</I>
+
+set to
+<B>EIDRM</B>.
+
+<DT>&bull;<DD>
+The calling process catches a signal:
+the value of
+<I>semncnt</I>
+
+is decremented and the system call fails with
+<I>errno</I>
+
+set to
+<B>EINTR</B>.
+
+<DT>&bull;<DD>
+The time limit specified by
+<I>timeout</I>
+
+in a
+<B>semtimedop</B>
+
+call expires: the system call fails, with
+<I>errno</I>
+
+set to
+<B>EAGAIN</B>.
+
+</DL>
+<P>
+
+On successful completion, the
+<I>sempid</I>
+
+value for each semaphore specified in the array pointed to by
+<I>sops</I>
+
+is set to the process ID of the calling process.
+In addition, the
+<I>sem_otime</I>
+
+
+
+is set to the current time.
+<P>
+
+The function
+<B>semtimedop</B>
+
+behaves identically to the function
+<B>semop</B>
+
+except that in those cases were the calling process would sleep,
+the duration of that sleep is limited by the amount of elapsed
+time specified by the
+<B>timespec</B>
+
+structure whose address is passed in the
+<I>timeout</I>
+
+parameter.  If the specified time limit has been reached,
+the system call fails with
+<I>errno</I>
+
+set to
+<B>EAGAIN</B>
+
+(and none of the operations in
+<I>sops</I>
+
+is performed).
+If the
+<I>timeout</I>
+
+parameter is
+<B>NULL</B>,
+
+then
+<B>semtimedop</B>
+
+behaves exactly like
+<B>semop</B>.
+
+<A NAME="lbAE">&nbsp;</A>
+<H2>RETURN VALUE</H2>
+
+If successful the system call returns
+<B>0</B>,
+
+otherwise it returns
+<B>-1</B>
+
+with
+<I>errno</I>
+
+indicating the error.
+<A NAME="lbAF">&nbsp;</A>
+<H2>ERRORS</H2>
+
+On failure,
+<I>errno</I>
+
+is set to one of the following:
+<DL COMPACT>
+<DT><B>E2BIG</B>
+
+<DD>
+The argument
+<I>nsops</I>
+
+is greater than
+<B>SEMOPM</B>,
+
+the maximum number of operations allowed per system
+call.
+<DT><B>EACCES</B>
+
+<DD>
+The calling process does not have the permissions required
+to perform the specified semaphore operations,
+and does not have the
+<B>CAP_IPC_OWNER</B>
+
+capability.
+<DT><B>EAGAIN</B>
+
+<DD>
+An operation could not proceed immediately and either
+<B>IPC_NOWAIT</B>
+
+was asserted in its
+<I>sem_flg</I>
+
+or the time limit specified in
+<I>timeout</I>
+
+expired.
+<DT><B>EFAULT</B>
+
+<DD>
+An address specified in either the
+<I>sops</I>
+
+or
+<I>timeout</I>
+
+parameters isn't accessible.
+<DT><B>EFBIG</B>
+
+<DD>
+For some operation the value of
+<I>sem_num</I>
+
+is less than 0 or greater than or equal to the number
+of semaphores in the set.
+<DT><B>EIDRM</B>
+
+<DD>
+The semaphore set was removed.
+<DT><B>EINTR</B>
+
+<DD>
+While blocked in this system call, the process caught a signal.
+<DT><B>EINVAL</B>
+
+<DD>
+The semaphore set doesn't exist, or
+<I>semid</I>
+
+is less than zero, or
+<I>nsops</I>
+
+has a non-positive value.
+<DT><B>ENOMEM</B>
+
+<DD>
+The
+<I>sem_flg</I>
+
+of some operation asserted
+<B>SEM_UNDO</B>
+
+and the system does not have enough memory to allocate the undo
+structure.
+<DT><B>ERANGE</B>
+
+<DD>
+For some operation
+<I>sem_op+semval</I>
+
+is greater than
+<B>SEMVMX</B>,
+
+the implementation dependent maximum value for
+<I>semval</I>.
+
+</DL>
+<A NAME="lbAG">&nbsp;</A>
+<H2>NOTES</H2>
+
+The
+<I>sem_undo</I>
+
+structures of a process aren't inherited across a
+<B><A HREF="../man2/fork.2.html">fork</A></B>(2)
+
+system call, but they are inherited across a
+<B><A HREF="../man2/execve.2.html">execve</A></B>(2)
+
+system call.
+<P>
+
+<B>semop</B>
+
+is never automatically restarted after being interrupted by a signal handler,
+regardless of the setting of the
+<B>SA_RESTART</B>
+
+flags when establishing a signal handler.
+<P>
+
+<I>semadj</I>
+
+is a per-process integer which is simply the (negative) count
+of all semaphore operations performed specifying the
+<B>SEM_UNDO</B>
+
+flag.
+When a semaphore's value is directly set using the
+<B>SETVAL</B>
+
+or
+<B>SETALL</B>
+
+request to
+<B><A HREF="../man2/semctl.2.html">semctl</A></B>(2),
+
+the corresponding
+<I>semadj</I>
+
+values in all processes are cleared.
+<P>
+
+The <I>semval</I>, <I>sempid</I>, <I>semzcnt</I>, and <I>semnct</I> values
+for a semaphore can all be retrieved using appropriate
+<B><A HREF="../man2/semctl.2.html">semctl</A></B>(2)
+
+calls.
+<P>
+
+The followings are limits on semaphore set resources affecting a
+<B>semop</B>
+
+call:
+<DL COMPACT>
+<DT><B>SEMOPM</B>
+
+<DD>
+Maximum number of operations allowed for one
+<B>semop</B>
+
+call (32).
+<DT><B>SEMVMX</B>
+
+<DD>
+Maximum allowable value for
+<I>semval</I>:
+
+implementation dependent (32767).
+</DL>
+<P>
+
+The implementation has no intrinsic limits for
+the adjust on exit maximum value
+(<B>SEMAEM</B>),
+
+the system wide maximum number of undo structures
+(<B>SEMMNU</B>)
+
+and the per-process maximum number of undo entries system parameters.
+<A NAME="lbAH">&nbsp;</A>
+<H2>BUGS</H2>
+
+When a process terminates, its set of associated
+<I>semadj</I>
+
+structures is used to undo the effect of all of the
+semaphore operations it performed with the
+<B>SEM_UNDO</B>
+
+flag.
+This raises a difficulty: if one (or more) of these semaphore adjustments
+would result in an attempt to decrease a semaphore's value below zero,
+what should an implementation do?
+One possible approach would be to block until all the semaphore
+adjustments could be performed.
+This is however undesirable since it could force process termination to
+block for arbitrarily long periods.
+Another possibility is that such semaphore adjustments could be ignored
+altogether (somewhat analogously to failing when
+<B>IPC_NOWAIT</B>
+
+is specified for a semaphore operation).
+Linux adopts a third approach: decreasing the semaphore value
+as far as possible (i.e., to zero) and allowing process
+termination to proceed immediately.
+<A NAME="lbAI">&nbsp;</A>
+<H2>CONFORMING TO</H2>
+
+SVr4, SVID.  SVr4 documents additional error conditions EINVAL, EFBIG,
+ENOSPC.
+<A NAME="lbAJ">&nbsp;</A>
+<H2>SEE ALSO</H2>
+
+<B><A HREF="../man2/semctl.2.html">semctl</A></B>(2),
+
+<B><A HREF="../man2/semget.2.html">semget</A></B>(2),
+
+<B><A HREF="../man2/sigaction.2.html">sigaction</A></B>(2),
+
+<B><A HREF="../man5/ipc.5.html">ipc</A></B>(5),
+
+<B><A HREF="../man7/capabilities.7.html">capabilities</A></B>(7)
+
+
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">NAME</A><DD>
+<DT><A HREF="#lbAC">SYNOPSIS</A><DD>
+<DT><A HREF="#lbAD">DESCRIPTION</A><DD>
+<DT><A HREF="#lbAE">RETURN VALUE</A><DD>
+<DT><A HREF="#lbAF">ERRORS</A><DD>
+<DT><A HREF="#lbAG">NOTES</A><DD>
+<DT><A HREF="#lbAH">BUGS</A><DD>
+<DT><A HREF="#lbAI">CONFORMING TO</A><DD>
+<DT><A HREF="#lbAJ">SEE ALSO</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
+using the manual pages.<BR>
+Time: 02:10:04 GMT, April 20, 2020
+</BODY>
+</HTML>

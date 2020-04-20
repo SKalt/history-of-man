@@ -1,0 +1,205 @@
+<!--
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of TZFILE</TITLE>
+</HEAD><BODY>
+<H1>TZFILE</H1>
+Section: File Formats (5)<BR><A HREF="#index">Index</A>
+<A HREF="../index.html">Return to Main Contents</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>NAME</H2>
+
+tzfile - time zone information
+<A NAME="lbAC">&nbsp;</A>
+<H2>SYNOPSIS</H2>
+
+<B>#include &lt;<A HREF="file:///usr/include/tzfile.h">tzfile.h</A>&gt;</B>
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>DESCRIPTION</H2>
+
+The time zone information files used by
+<B><A HREF="../man3/tzset.3.html">tzset</A></B>(3)
+
+begin with the magic characters &quot;TZif&quot; to identify then as
+time zone information files,
+followed by sixteen bytes reserved for future use,
+followed by six four-byte values of type
+<B>long</B>,
+
+written in a ``standard'' byte order
+(the high-order byte of the value is written first).
+These values are,
+in order:
+<DL COMPACT>
+<DT><I>tzh_ttisgmtcnt</I>
+
+<DD>
+The number of UTC/local indicators stored in the file.
+<DT><I>tzh_ttisstdcnt</I>
+
+<DD>
+The number of standard/wall indicators stored in the file.
+<DT><I>tzh_leapcnt</I>
+
+<DD>
+The number of leap seconds for which data is stored in the file.
+<DT><I>tzh_timecnt</I>
+
+<DD>
+The number of &quot;transition times&quot; for which data is stored
+in the file.
+<DT><I>tzh_typecnt</I>
+
+<DD>
+The number of &quot;local time types&quot; for which data is stored
+in the file (must not be zero).
+<DT><I>tzh_charcnt</I>
+
+<DD>
+The number of characters of &quot;time zone abbreviation strings&quot;
+stored in the file.
+</DL>
+<P>
+
+The above header is followed by
+<I>tzh_timecnt</I>
+
+four-byte values of type
+<B>long</B>,
+
+sorted in ascending order.
+These values are written in ``standard'' byte order.
+Each is used as a transition time (as returned by
+<B><A HREF="../man2/time.2.html">time</A></B>(2))
+
+at which the rules for computing local time change.
+Next come
+<I>tzh_timecnt</I>
+
+one-byte values of type
+<B>unsigned char</B>;
+
+each one tells which of the different types of ``local time'' types
+described in the file is associated with the same-indexed transition time.
+These values serve as indices into an array of
+<I>ttinfo</I>
+
+structures that appears next in the file;
+these structures are defined as follows:
+
+<P>
+<PRE>
+
+struct ttinfo {
+     long          tt_gmtoff;
+     int           tt_isdst;
+     unsigned int  tt_abbrind;
+};
+</PRE>
+
+<P>
+Each structure is written as a four-byte value for
+<I>tt_gmtoff</I>
+
+of type
+<B>long</B>,
+
+in a standard byte order, followed by a one-byte value for
+<I>tt_isdst</I>
+
+and a one-byte value for
+<I>tt_abbrind</I>.
+
+In each structure,
+<I>tt_gmtoff</I>
+
+gives the number of seconds to be added to UTC,
+<I>tt_isdst</I>
+
+tells whether
+<I>tm_isdst</I>
+
+should be set by
+<B><A HREF="../man3/localtime.3.html">localtime</A></B>(3),
+
+and
+<I>tt_abbrind</I>
+
+serves as an index into the array of time zone abbreviation characters
+that follow the
+<I>ttinfo</I>
+
+structure(s) in the file.
+<P>
+
+Then there are
+<I>tzh_leapcnt</I>
+
+pairs of four-byte values, written in standard byte order;
+the first value of each pair gives the time
+(as returned by
+<B><A HREF="../man2/time.2.html">time</A></B>(2))
+
+at which a leap second occurs;
+the second gives the
+<I>total</I>
+
+number of leap seconds to be applied after the given time.
+The pairs of values are sorted in ascending order by time.
+<P>
+
+Then there are
+<I>tzh_ttisstdcnt</I>
+
+standard/wall indicators, each stored as a one-byte value;
+they tell whether the transition times associated with local time types
+were specified as standard time or wall clock time,
+and are used when a time zone file is used in handling POSIX-style
+time zone environment variables.
+<P>
+
+Finally, there are
+<I>tzh_ttisgmtcnt</I>
+
+UTC/local indicators, each stored as a one-byte value;
+they tell whether the transition times associated with local time types
+were specified as UTC or local time,
+and are used when a time zone file is used in handling POSIX-style
+time zone environment variables.
+<P>
+
+<I>Localtime</I>
+
+uses the first standard-time
+<I>ttinfo</I>
+
+structure in the file
+(or simply the first
+<I>ttinfo</I>
+
+structure in the absence of a standard-time structure)
+if either
+<I>tzh_timecnt</I>
+
+is zero or the time argument is less than the first transition time recorded
+in the file.
+
+
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">NAME</A><DD>
+<DT><A HREF="#lbAC">SYNOPSIS</A><DD>
+<DT><A HREF="#lbAD">DESCRIPTION</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
+using the manual pages.<BR>
+Time: 02:11:24 GMT, April 20, 2020
+</BODY>
+</HTML>

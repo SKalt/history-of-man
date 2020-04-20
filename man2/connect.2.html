@@ -1,0 +1,285 @@
+<!--
+Copyright 1993 Rickard E. Faith (faith@cs.unc.edu)
+Copyright (c) 1983 The Regents of the University of California.
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of CONNECT</TITLE>
+</HEAD><BODY>
+<H1>CONNECT</H1>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2004-06-23<BR><A HREF="#index">Index</A>
+<A HREF="../index.html">Return to Main Contents</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>NAME</H2>
+
+connect - initiate a connection on a socket
+<A NAME="lbAC">&nbsp;</A>
+<H2>SYNOPSIS</H2>
+
+<B>#include &lt;<A HREF="file:///usr/include/sys/types.h">sys/types.h</A>&gt;</B>
+
+<BR>
+
+<B>#include &lt;<A HREF="file:///usr/include/sys/socket.h">sys/socket.h</A>&gt;</B>
+
+<P>
+<B>int connect(int </B><I>sockfd</I><B>, const struct sockaddr *</B><I>serv_addr</I><B>,</B>
+
+<B>socklen_t </B><I>addrlen</I><B>);</B>
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>DESCRIPTION</H2>
+
+The file descriptor
+<I>sockfd</I>
+
+must refer to a socket.
+If the socket is of type
+<B>SOCK_DGRAM</B>
+
+then the
+<I>serv_addr</I>
+
+address is the address to which datagrams are sent by default, and the only
+address from which datagrams are received.  If the socket is of type
+<B>SOCK_STREAM</B>
+
+or
+<B>SOCK_SEQPACKET</B>,
+
+this call attempts to make a connection to another socket.  The other
+socket is specified by
+<I>serv_addr</I>,
+
+which is an address (of length
+<I>addrlen</I>)
+
+in the communications space of the socket.  Each
+communications space interprets the
+<I>serv_addr</I>
+
+parameter in its own way.
+<P>
+
+Generally, connection-based protocol sockets may successfully
+<B>connect</B>
+
+only once; connectionless protocol sockets may use
+<B>connect</B>
+
+multiple times to change their association.  Connectionless sockets may
+dissolve the association by connecting to an address with the 
+<I>sa_family</I>
+
+member of
+<B>sockaddr </B>
+
+set to 
+<B>AF_UNSPEC</B>.
+
+<A NAME="lbAE">&nbsp;</A>
+<H2>RETURN VALUE</H2>
+
+If the connection or binding succeeds, zero is returned.  On error, -1 is
+returned, and
+<I>errno</I>
+
+is set appropriately.
+<A NAME="lbAF">&nbsp;</A>
+<H2>ERRORS</H2>
+
+The following are general socket errors only.  There may be other
+domain-specific error codes. 
+<DL COMPACT>
+<DT><B>EACCES</B>
+
+<DD>
+For Unix domain sockets, which are identified by pathname:
+Write permission is denied on the socket file,
+or search permission is denied for one of the directories
+in the path prefix.
+(See also
+<B><A HREF="../man2/path_resolution.2.html">path_resolution</A></B>(2).)
+
+<DT><B>EACCES, EPERM</B>
+
+<DD>
+The user tried to connect to a broadcast address without having the socket 
+broadcast flag enabled or the connection request failed because of a local
+firewall rule.
+<DT><B>EADDRINUSE</B>
+
+<DD>
+Local address is already in use.
+<DT><B>EAFNOSUPPORT</B>
+
+<DD>
+The passed address didn't have the correct address family in its 
+<I>sa_family</I>
+
+field.
+<DT><B>EAGAIN</B>
+
+<DD>
+No more free local ports or insufficient entries in the routing cache. For
+<B>PF_INET</B>
+
+see the 
+<B>net.ipv4.ip_local_port_range</B>
+
+sysctl in 
+<B><A HREF="../man7/ip.7.html">ip</A></B>(7)
+
+on how to increase the number of local ports.
+<DT><B>EALREADY</B>
+
+<DD>
+The socket is non-blocking and a previous connection attempt has not yet
+been completed.
+<DT><B>EBADF</B>
+
+<DD>
+The file descriptor is not a valid index in the descriptor table.
+<DT><B>ECONNREFUSED</B>
+
+<DD>
+No one listening on the remote address.
+<DT><B>EFAULT</B>
+
+<DD>
+The socket structure address is outside the user's address space.
+<DT><B>EINPROGRESS</B>
+
+<DD>
+The socket is non-blocking and the connection cannot be completed
+immediately.  It is possible to
+<B><A HREF="../man2/select.2.html">select</A></B>(2)
+
+or 
+<B><A HREF="../man2/poll.2.html">poll</A></B>(2)
+
+for completion by selecting the socket for writing. After 
+<B>select</B>
+
+indicates writability, use
+<B><A HREF="../man2/getsockopt.2.html">getsockopt</A></B>(2)
+
+to read the 
+<B>SO_ERROR</B>
+
+option at level 
+<B>SOL_SOCKET</B>
+
+to determine whether 
+<B>connect</B>
+
+completed successfully 
+(<B>SO_ERROR</B>
+
+is zero) or unsuccessfully 
+(<B>SO_ERROR</B>
+
+is one of the usual error codes listed here, 
+explaining the reason for the failure).
+<DT><B>EISCONN</B>
+
+<DD>
+The socket is already connected.
+<DT><B>ENETUNREACH</B>
+
+<DD>
+Network is unreachable.
+<DT><B>ENOTSOCK</B>
+
+<DD>
+The file descriptor is not associated with a socket.
+<DT><B>ETIMEDOUT</B>
+
+<DD>
+Timeout while attempting connection. The server may be too 
+busy to accept new connections. Note that for IP sockets the timeout may
+be very long when syncookies are enabled on the server.
+</DL>
+<A NAME="lbAG">&nbsp;</A>
+<H2>CONFORMING TO</H2>
+
+SVr4, 4.4BSD (the
+<B>connect</B>
+
+function first appeared in BSD 4.2).  SVr4 documents the additional
+general error codes 
+<B>EADDRNOTAVAIL</B>,
+
+<B>EINVAL</B>,
+
+<B>EAFNOSUPPORT</B>,
+
+<B>EALREADY</B>,
+
+<B>EINTR</B>,
+
+<B>EPROTOTYPE</B>,
+
+and
+<B>ENOSR</B>.
+
+It also
+documents many additional error conditions not described here.
+<A NAME="lbAH">&nbsp;</A>
+<H2>NOTE</H2>
+
+The third argument of
+<B>connect</B>
+
+is in reality an int (and this is what BSD 4.* and libc4 and libc5 have).
+Some POSIX confusion resulted in the present socklen_t, also used by glibc.
+See also
+<B><A HREF="../man2/accept.2.html">accept</A></B>(2).
+
+<A NAME="lbAI">&nbsp;</A>
+<H2>BUGS</H2>
+
+Unconnecting a socket by calling
+<B>connect</B>
+
+with a
+<B>AF_UNSPEC</B>
+
+address is not yet implemented.
+<A NAME="lbAJ">&nbsp;</A>
+<H2>SEE ALSO</H2>
+
+<B><A HREF="../man2/accept.2.html">accept</A></B>(2),
+
+<B><A HREF="../man2/bind.2.html">bind</A></B>(2),
+
+<B><A HREF="../man2/getsockname.2.html">getsockname</A></B>(2),
+
+<B><A HREF="../man2/listen.2.html">listen</A></B>(2),
+
+<B><A HREF="../man2/path_resolution.2.html">path_resolution</A></B>(2),
+
+<B><A HREF="../man2/socket.2.html">socket</A></B>(2)
+
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">NAME</A><DD>
+<DT><A HREF="#lbAC">SYNOPSIS</A><DD>
+<DT><A HREF="#lbAD">DESCRIPTION</A><DD>
+<DT><A HREF="#lbAE">RETURN VALUE</A><DD>
+<DT><A HREF="#lbAF">ERRORS</A><DD>
+<DT><A HREF="#lbAG">CONFORMING TO</A><DD>
+<DT><A HREF="#lbAH">NOTE</A><DD>
+<DT><A HREF="#lbAI">BUGS</A><DD>
+<DT><A HREF="#lbAJ">SEE ALSO</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
+using the manual pages.<BR>
+Time: 02:09:54 GMT, April 20, 2020
+</BODY>
+</HTML>

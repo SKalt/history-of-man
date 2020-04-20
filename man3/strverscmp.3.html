@@ -1,0 +1,119 @@
+<!--
+Copyright (C) 2001 Andries Brouwer &lt;aeb@cwi.nl&gt;
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of STRVERSCMP</TITLE>
+</HEAD><BODY>
+<H1>STRVERSCMP</H1>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2001-12-19<BR><A HREF="#index">Index</A>
+<A HREF="../index.html">Return to Main Contents</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>NAME</H2>
+
+strverscmp - compare two version strings
+<A NAME="lbAC">&nbsp;</A>
+<H2>SYNOPSIS</H2>
+
+<PRE>
+<B>#define _GNU_SOURCE</B>
+<BR>
+<B>#include &lt;<A HREF="file:///usr/include/string.h">string.h</A>&gt;</B>
+
+<B>int strverscmp(const char *</B><I>s1</I><B>, const char *</B><I>s2</I><B>);</B>
+</PRE>
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>DESCRIPTION</H2>
+
+Often one has files
+<I>jan1</I>, <I>jan2</I>, ..., <I>jan9</I>, <I>jan10</I>, ...
+
+and it feels wrong when
+<B>ls</B>
+
+orders them
+<I>jan1</I>, <I>jan10</I>, ..., <I>jan2</I>, ..., <I>jan9</I>.
+
+
+In order to rectify this, GNU introduced the
+<B>-v</B>
+
+option to
+<B><A HREF="../man1/ls.1.html">ls</A></B>(1),
+
+which is implemented using
+<B><A HREF="../man3/versionsort.3.html">versionsort</A></B>(3),
+
+which again uses
+<B>strverscmp</B>.
+
+<P>
+Thus, the task of
+<B>strverscmp</B>
+
+is to compare two strings and find the &quot;right&quot; order, while
+<B>strcmp</B>
+
+only finds the lexicographic order. This function does not use
+the locale category LC_COLLATE, so is meant mostly for situations
+where the strings are expected to be in ASCII.
+<P>
+What this function does is the following.
+If both strings are equal, return 0. Otherwise find the position
+between two bytes with the property that before it both strings are equal,
+while directly after it there is a difference.
+Find the largest consecutive digit strings containing (or starting at,
+or ending at) this position. If one or both of these is empty,
+then return what
+<B>strcmp</B>
+
+would have returned (numerical ordering of byte values).
+Otherwise, compare both digit strings numerically, where digit strings with
+one or more leading zeroes are interpreted as if they have a decimal point
+in front (so that in particular digit strings with more leading zeroes
+come before digit strings with fewer leading zeroes).
+Thus, the ordering is
+<I>000</I>, <I>00</I>, <I>01</I>, <I>010</I>, <I>09</I>, <I>0</I>, <I>1</I>, <I>9</I>, <I>10</I>.
+
+<A NAME="lbAE">&nbsp;</A>
+<H2>RETURN VALUE</H2>
+
+The <B>strverscmp()</B> function returns an integer 
+less than, equal to, or greater than zero if <I>s1</I>
+is found, respectively, to be earlier than, equal to,
+or later than <I>s2</I>.
+<A NAME="lbAF">&nbsp;</A>
+<H2>CONFORMING TO</H2>
+
+This function is a GNU extension.
+<A NAME="lbAG">&nbsp;</A>
+<H2>SEE ALSO</H2>
+
+<B><A HREF="../man1/rename.1.html">rename</A></B>(1),
+
+<B><A HREF="../man3/strcasecmp.3.html">strcasecmp</A></B>(3),
+
+<B><A HREF="../man3/strcmp.3.html">strcmp</A></B>(3),
+
+<B><A HREF="../man3/strcoll.3.html">strcoll</A></B>(3)
+
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">NAME</A><DD>
+<DT><A HREF="#lbAC">SYNOPSIS</A><DD>
+<DT><A HREF="#lbAD">DESCRIPTION</A><DD>
+<DT><A HREF="#lbAE">RETURN VALUE</A><DD>
+<DT><A HREF="#lbAF">CONFORMING TO</A><DD>
+<DT><A HREF="#lbAG">SEE ALSO</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
+using the manual pages.<BR>
+Time: 02:11:07 GMT, April 20, 2020
+</BODY>
+</HTML>

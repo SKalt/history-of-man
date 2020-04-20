@@ -1,0 +1,360 @@
+<!--
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of GLOB</TITLE>
+</HEAD><BODY>
+<H1>GLOB</H1>
+Section: Linux Programmer's Manual (3)<BR>Updated: 1999-09-12<BR><A HREF="#index">Index</A>
+<A HREF="../index.html">Return to Main Contents</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>NAME</H2>
+
+glob, globfree - find pathnames matching a pattern, free memory from glob()
+<A NAME="lbAC">&nbsp;</A>
+<H2>SYNOPSIS</H2>
+
+<PRE>
+<B>#include &lt;<A HREF="file:///usr/include/glob.h">glob.h</A>&gt;</B>
+
+<B>int glob(const char *</B><I>pattern</I><B>, int </B><I>flags</I><B>,</B>
+<B>         int </B><I>errfunc</I><B>(const char *</B><I>epath</I><B>, int </B><I>eerrno</I><B>),</B>
+<B>         glob_t *</B><I>pglob</I><B>);</B>
+<B>void globfree(glob_t *</B><I>pglob</I><B>);</B>
+</PRE>
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>DESCRIPTION</H2>
+
+The
+<B>glob()</B>
+
+function searches for all the pathnames matching
+<I>pattern</I>
+
+according to the rules used by the shell (see
+<B><A HREF="../man7/glob.7.html">glob</A></B>(7)).
+
+No tilde expansion or parameter substitution is done; if you want
+these, use
+<B><A HREF="../man3/wordexp.3.html">wordexp</A></B>(3).
+
+<P>
+
+The
+<B>globfree()</B>
+
+function frees the dynamically allocated storage from an earlier call
+to
+<B>glob()</B>.
+
+<P>
+
+The results of a
+<B>glob()</B>
+
+call are stored in the structure pointed to by
+<I>pglob</I>,
+
+which is a
+<B>glob_t</B>
+
+which is declared in
+<B>&lt;<A HREF="file:///usr/include/glob.h">glob.h</A>&gt;</B>
+
+and includes the following elements defined by POSIX.2 (more may be
+present as an extension):
+<P>
+
+<BR>
+
+<PRE>
+typedef struct
+{
+    size_t gl_pathc;    /* Count of paths matched so far  */
+    char **gl_pathv;    /* List of matched pathnames.  */
+    size_t gl_offs;     /* Slots to reserve in `gl_pathv'.  */
+} glob_t;
+</PRE>
+
+<P>
+
+Results are stored in dynamically allocated storage.
+<P>
+
+The parameter
+<I>flags</I>
+
+is made up of bitwise OR of zero or more the following symbolic
+constants, which modify the of behaviour of
+<B>glob()</B>:
+
+<DL COMPACT>
+<DT><B>GLOB_ERR</B>
+
+<DD>
+which means to return upon read error (because a directory does not
+have read permission, for example),
+<DT><B>GLOB_MARK</B>
+
+<DD>
+which means to append a slash to each path which corresponds to a directory,
+<DT><B>GLOB_NOSORT</B>
+
+<DD>
+which means don't sort the returned pathnames (they are by default),
+<DT><B>GLOB_DOOFFS</B>
+
+<DD>
+which means that
+<I>pglob-&gt;gl_offs</I>
+
+slots will be reserved at the beginning of the list of strings in
+<I>pglob-&gt;pathv</I>,
+
+<DT><B>GLOB_NOCHECK</B>
+
+<DD>
+which means that, if no pattern matches, to return the original pattern,
+<DT><B>GLOB_APPEND</B>
+
+<DD>
+which means to append to the results of a previous call.  Do not set
+this flag on the first invocation of
+<B>glob()</B>.
+
+<DT><B>GLOB_NOESCAPE</B>
+
+<DD>
+which means that meta characters cannot be quoted by backslashes.
+</DL>
+<P>
+
+The flags may also include some of the following, which are GNU
+extensions and not defined by POSIX.2:
+<DL COMPACT>
+<DT><B>GLOB_PERIOD</B>
+
+<DD>
+which means that a leading period can be matched by meta characters,
+<DT><B>GLOB_ALTDIRFUNC</B>
+
+<DD>
+which means that alternative functions
+<I>pglob-&gt;gl_closedir</I>,
+
+<I>pglob-&gt;gl_readdir</I>,
+
+<I>pglob-&gt;gl_opendir</I>,
+
+<I>pglob-&gt;gl_lstat</I>, and
+
+<I>pglob-&gt;gl_stat</I>
+
+are used for file system access instead of the normal library
+functions,
+<DT><B>GLOB_BRACE</B>
+
+<DD>
+which means that
+<B><A HREF="../man1/csh.1.html">csh</A></B>(1)
+
+style brace expresions <B>{a,b}</B> are expanded,
+<DT><B>GLOB_NOMAGIC</B>
+
+<DD>
+which means that the pattern is returned if it contains no metacharacters,
+<DT><B>GLOB_TILDE</B>
+
+<DD>
+which means that tilde expansion is carried out, and
+<DT><B>GLOB_ONLYDIR</B>
+
+<DD>
+which means that only directories are matched.
+</DL>
+<P>
+
+If
+<I>errfunc</I>
+
+is not
+<B>NULL</B>,
+
+it will be called in case of an error with the arguments
+<I>epath</I>,
+
+a pointer to the path which failed, and
+<I>eerrno</I>,
+
+the value of
+<I>errno</I>
+
+as returned from one of the calls to
+<B>opendir()</B>, <B>readdir()</B>, or <B>stat()</B>.
+
+If 
+<I>errfunc</I>
+
+returns non-zero, or if
+<B>GLOB_ERR</B>
+
+is set, 
+<B>glob()</B>
+
+will terminate after the call to
+<I>errfunc</I>.
+
+<P>
+
+Upon successful return, 
+<I>pglob-&gt;gl_pathc</I>
+
+contains the number of matched pathnames and
+<I>pglob-&gt;gl_pathv</I>
+
+a pointer to the list of matched pathnames.  The first pointer after
+the last pathname is
+<B>NULL</B>.
+
+<P>
+
+It is possible to call
+<B>glob()</B>
+
+several times.  In that case, the
+<B>GLOB_APPEND</B>
+
+flag has to be set in
+<I>flags</I>
+
+on the second and later invocations.
+<P>
+
+As a GNU extension,
+<I>pglob-&gt;gl_flags</I>
+
+is set to the flags specified, <B>or</B>ed with
+<B>GLOB_MAGCHAR</B>
+
+if any metacharacters were found.
+<A NAME="lbAE">&nbsp;</A>
+<H2>RETURN VALUE</H2>
+
+On successful completion, 
+<B>glob()</B>
+
+returns zero.
+Other possible returns are:
+<DL COMPACT>
+<DT><B>GLOB_NOSPACE</B>
+
+<DD>
+for running out of memory,
+<DT><B>GLOB_ABORTED</B>
+
+<DD>
+for a read error, and
+<DT><B>GLOB_NOMATCH</B>
+
+<DD>
+for no found matches.
+</DL>
+<A NAME="lbAF">&nbsp;</A>
+<H2>EXAMPLES</H2>
+
+One example of use is the following code, which simulates typing
+
+<B>ls -l *.c ../*.c</B>
+
+
+in the shell.
+<PRE>
+
+glob_t globbuf;
+
+globbuf.gl_offs = 2;
+glob(&quot;*.c&quot;, GLOB_DOOFFS, NULL, &amp;globbuf);
+glob(&quot;../*.c&quot;, GLOB_DOOFFS | GLOB_APPEND, NULL, &amp;globbuf);
+globbuf.gl_pathv[0] = &quot;ls&quot;;
+globbuf.gl_pathv[1] = &quot;-l&quot;;
+execvp(&quot;ls&quot;, &amp;globbuf.gl_pathv[0]);
+</PRE>
+
+<A NAME="lbAG">&nbsp;</A>
+<H2>CONFORMING TO</H2>
+
+POSIX.2
+<A NAME="lbAH">&nbsp;</A>
+<H2>BUGS</H2>
+
+The
+<B>glob()</B>
+
+function may fail due to failure of underlying function calls, such as
+<B>malloc()</B> or <B>opendir()</B>.
+
+These will store their error code in
+<I>errno</I>.
+
+<A NAME="lbAI">&nbsp;</A>
+<H2>NOTES</H2>
+
+The structure elements
+<I>gl_pathc</I>
+
+and
+<I>gl_offs</I>
+
+are declared as
+<B>size_t</B>
+
+in glibc 2.1, as they should according to POSIX.2,
+but are declared as
+<B>int</B>
+
+in libc4, libc5 and glibc 2.0.
+<A NAME="lbAJ">&nbsp;</A>
+<H2>SEE ALSO</H2>
+
+<B><A HREF="../man1/ls.1.html">ls</A></B>(1),
+
+<B><A HREF="../man1/sh.1.html">sh</A></B>(1),
+
+<B><A HREF="../man2/stat.2.html">stat</A></B>(2),
+
+<B><A HREF="../man3/exec.3.html">exec</A></B>(3),
+
+<B><A HREF="../man3/malloc.3.html">malloc</A></B>(3),
+
+<B><A HREF="../man3/opendir.3.html">opendir</A></B>(3),
+
+<B><A HREF="../man3/readdir.3.html">readdir</A></B>(3),
+
+<B><A HREF="../man3/wordexp.3.html">wordexp</A></B>(3),
+
+<B><A HREF="../man7/glob.7.html">glob</A></B>(7)
+
+
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">NAME</A><DD>
+<DT><A HREF="#lbAC">SYNOPSIS</A><DD>
+<DT><A HREF="#lbAD">DESCRIPTION</A><DD>
+<DT><A HREF="#lbAE">RETURN VALUE</A><DD>
+<DT><A HREF="#lbAF">EXAMPLES</A><DD>
+<DT><A HREF="#lbAG">CONFORMING TO</A><DD>
+<DT><A HREF="#lbAH">BUGS</A><DD>
+<DT><A HREF="#lbAI">NOTES</A><DD>
+<DT><A HREF="#lbAJ">SEE ALSO</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
+using the manual pages.<BR>
+Time: 02:10:41 GMT, April 20, 2020
+</BODY>
+</HTML>

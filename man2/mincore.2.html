@@ -1,0 +1,185 @@
+<!--
+Copyright (C) 2001 Bert Hubert &lt;ahu@ds9a.nl&gt;
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of MINCORE</TITLE>
+</HEAD><BODY>
+<H1>MINCORE</H1>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2004-04-30<BR><A HREF="#index">Index</A>
+<A HREF="../index.html">Return to Main Contents</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>NAME</H2>
+
+mincore - get information on whether pages are in core
+<A NAME="lbAC">&nbsp;</A>
+<H2>SYNOPSIS</H2>
+
+<B>#include &lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;</B>
+
+<BR>
+
+<B>#include &lt;<A HREF="file:///usr/include/sys/mman.h">sys/mman.h</A>&gt;</B>
+
+<P>
+<B>int mincore(void *</B><I>start</I><B>, size_t </B><I>length</I><B>, unsigned char *</B><I>vec</I><B>);</B>
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>DESCRIPTION</H2>
+
+The
+<B>mincore</B>
+
+function requests a vector describing which pages of a file are in core and
+can be read without disk access. The kernel will supply data for
+<I>length</I>
+
+bytes following the 
+<I>start</I>
+
+address. On return, the kernel will have filled
+<I>vec</I>
+
+with bytes, of which the least significant bit indicates if a page is 
+core resident. (The other bits are undefined, reserved for possible
+later use.)
+Of course this is only a snapshot - pages that are not
+locked in core can come and go any moment, and the contents of
+<I>vec</I>
+
+may be stale already when this call returns.
+<P>
+For
+<B>mincore</B>
+
+to return successfully, 
+<I>start</I>
+
+must lie on a page boundary. It is the caller's responsibility to
+round up to the nearest page. The
+<I>length</I>
+
+parameter need not be a multiple of the page size. The vector
+<I>vec</I>
+
+must be large enough to contain (length+PAGE_SIZE-1) / PAGE_SIZE bytes.
+One may obtain the page size from
+<B><A HREF="../man2/getpagesize.2.html">getpagesize</A></B>(2).
+
+<P>
+<A NAME="lbAE">&nbsp;</A>
+<H2>RETURN VALUE</H2>
+
+On success,
+<B>mincore</B>
+
+returns zero.
+On error, -1 is returned, and
+<I>errno</I>
+
+is set appropriately.
+<A NAME="lbAF">&nbsp;</A>
+<H2>ERRORS</H2>
+
+<B>EAGAIN</B>
+
+kernel is temporarily out of resources
+<DL COMPACT>
+<DT><B>EFAULT</B>
+
+<DD>
+<I>vec</I>
+
+points to an invalid address
+<DT><B>EINVAL</B>
+
+<DD>
+<I>start</I>
+
+is not a multiple of the page size, or
+<I>len</I>
+
+has a non-positive value
+<DT><B>ENOMEM</B>
+
+<DD>
+<I>address</I>
+
+to
+<I>address</I>
+
++
+<I>length</I>
+
+contained unmapped memory, or memory not part of a file.
+<P>
+</DL>
+<A NAME="lbAG">&nbsp;</A>
+<H2>BUGS</H2>
+
+Up to now (Linux 2.6.5),
+<B>mincore</B>
+
+does not return correct information for MAP_PRIVATE mappings.
+<P>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<A NAME="lbAH">&nbsp;</A>
+<H2>CONFORMING TO</H2>
+
+<B>mincore</B>
+
+does not appear to be part of POSIX or the Single Unix Specification. 
+<A NAME="lbAI">&nbsp;</A>
+<H2>HISTORY</H2>
+
+The mincore() function first appeared in 4.4BSD.
+<A NAME="lbAJ">&nbsp;</A>
+<H2>AVAILABILITY</H2>
+
+Since Linux 2.3.99pre1 and glibc 2.2.
+<A NAME="lbAK">&nbsp;</A>
+<H2>SEE ALSO</H2>
+
+<B><A HREF="../man2/getpagesize.2.html">getpagesize</A></B>(2),
+
+<B><A HREF="../man2/mlock.2.html">mlock</A></B>(2),
+
+<B><A HREF="../man2/mmap.2.html">mmap</A></B>(2)
+
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">NAME</A><DD>
+<DT><A HREF="#lbAC">SYNOPSIS</A><DD>
+<DT><A HREF="#lbAD">DESCRIPTION</A><DD>
+<DT><A HREF="#lbAE">RETURN VALUE</A><DD>
+<DT><A HREF="#lbAF">ERRORS</A><DD>
+<DT><A HREF="#lbAG">BUGS</A><DD>
+<DT><A HREF="#lbAH">CONFORMING TO</A><DD>
+<DT><A HREF="#lbAI">HISTORY</A><DD>
+<DT><A HREF="#lbAJ">AVAILABILITY</A><DD>
+<DT><A HREF="#lbAK">SEE ALSO</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
+using the manual pages.<BR>
+Time: 02:09:59 GMT, April 20, 2020
+</BODY>
+</HTML>

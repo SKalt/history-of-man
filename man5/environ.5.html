@@ -1,0 +1,313 @@
+<!--
+Copyright (c) 1993 Michael Haardt (michael@moria.de),
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of ENVIRON</TITLE>
+</HEAD><BODY>
+<H1>ENVIRON</H1>
+Section: Linux Programmer's Manual (5)<BR>Updated: 2001-12-14<BR><A HREF="#index">Index</A>
+<A HREF="../index.html">Return to Main Contents</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>NAME</H2>
+
+environ - user environment
+<A NAME="lbAC">&nbsp;</A>
+<H2>SYNOPSIS</H2>
+
+
+<PRE>
+<B>extern char **environ;</B>
+<BR>
+</PRE>
+
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>DESCRIPTION</H2>
+
+The variable
+<I>environ</I>
+
+points to an array of strings called the `environment'.
+(This variable must be declared in the user program,
+but is declared in the header file
+<I>unistd.h</I>
+
+in case the header files came from libc4 or libc5, and
+in case they came from glibc and
+<B>_GNU_SOURCE</B>
+
+was defined.)
+This array of strings is made available to the process by the
+<B><A HREF="../man3/exec.3.html">exec</A></B>(3)
+
+call that started the process.  By convention these strings
+have the form `<I>name</I><B>=</B><I>value</I>'.  Common examples are:
+<DL COMPACT>
+<DT><B>USER</B>
+
+<DD>
+The name of the logged-in user (used by some BSD-derived programs).
+<DT><B>LOGNAME</B>
+
+<DD>
+The name of the logged-in user (used by some System-V derived programs).
+<DT><B>HOME</B>
+
+<DD>
+A user's login directory, set by
+<B><A HREF="../man1/login.1.html">login</A></B>(1)
+
+from the password file
+<B><A HREF="../man5/passwd.5.html">passwd</A></B>(5).
+
+<DT><B>LANG</B>
+
+<DD>
+The name of a locale to use for locale categories when not overridden
+by <B>LC_ALL</B> or more specific environment variables like
+<B>LC_COLLATE</B>, <B>LC_CTYPE</B>, <B>LC_MESSAGES</B>, <B>LC_MONETARY</B>,
+<B>LC_NUMERIC</B>, <B>LC_TIME</B>, cf.
+<B><A HREF="../man5/locale.5.html">locale</A></B>(5).
+
+<DT><B>PATH</B>
+
+<DD>
+The sequence of directory prefixes that <B><A HREF="../man1/sh.1.html">sh</A></B>(1) and many other
+programs apply in searching for a file known by an incomplete path name.
+The prefixes are separated by `<B>:</B>'.
+(Similarly one has <B>CDPATH</B> used by some shells to find the target
+of a change directory command, <B>MANPATH</B> used by <B><A HREF="../man1/man.1.html">man</A></B>(1) to
+find manual pages, etc.)
+<DT><B>PWD</B>
+
+<DD>
+The current working directory. Set by some shells.
+<DT><B>SHELL</B>
+
+<DD>
+The file name of the user's login shell.
+<DT><B>TERM</B>
+
+<DD>
+The terminal type for which output is to be prepared.
+<DT><B>PAGER</B>
+
+<DD>
+The user's preferred utility to display text files.
+<DT><B>EDITOR</B>/<B>VISUAL</B>
+
+<DD>
+The user's preferred utility to edit text files.
+<DT><B>BROWSER</B>
+
+<DD>
+The user's preferred utility to browse URLs. Sequence of colon-separated
+browser commands. See <A HREF="http://www.catb.org/~esr/BROWSER/">http://www.catb.org/~esr/BROWSER/</A> .
+</DL>
+<P>
+
+Further names may be placed in the environment by the <B>export</B>
+command and `name=value' in
+<B><A HREF="../man1/sh.1.html">sh</A></B>(1),
+
+or by the <B>setenv</B> command if you use
+<B><A HREF="../man1/csh.1.html">csh</A></B>(1).
+
+Arguments may also be placed in the
+environment at the point of an
+<B><A HREF="../man3/exec.3.html">exec</A></B>(3).
+
+A C program can manipulate its environment using the functions
+<B><A HREF="../man3/getenv.3.html">getenv</A></B>(3),
+
+<B><A HREF="../man3/putenv.3.html">putenv</A></B>(3),
+
+<B><A HREF="../man3/setenv.3.html">setenv</A></B>(3),
+
+and
+<B><A HREF="../man3/unsetenv.3.html">unsetenv</A></B>(3).
+
+<P>
+Note that the behaviour of many programs and library routines is
+influenced by the presence or value of certain environment variables.
+A random collection:
+<P>
+
+The variables
+<B>LANG</B>, <B>LANGUAGE</B>, <B>NLSPATH</B>, <B>LOCPATH</B>, <B>LC_ALL</B>, <B>LC_MESSAGES</B>, 
+
+etc. influence locale handling, cf.
+<B><A HREF="../man5/locale.5.html">locale</A></B>(5).
+
+<P>
+
+<B>TMPDIR</B>
+
+influences the path prefix of names created by
+<B><A HREF="../man3/tmpnam.3.html">tmpnam</A>(3)</B> and other routines, the temporary directory used by
+<B><A HREF="../man1/sort.1.html">sort</A></B>(1) and other programs, etc.
+<P>
+
+<B>LD_LIBRARY_PATH</B>, <B>LD_PRELOAD</B>
+
+and other LD_* variables influence
+the behaviour of the dynamic loader/linker.
+<P>
+
+<B>POSIXLY_CORRECT</B>
+
+makes certain programs and library routines follow
+the prescriptions of POSIX.
+<P>
+
+The behaviour of <B><A HREF="../man3/malloc.3.html">malloc</A></B>(3) is influenced by MALLOC_* variables.
+<P>
+
+The variable
+<B>HOSTALIASES</B>
+
+gives the name of a file containing aliases
+to be used with <B><A HREF="../man3/gethostbyname.3.html">gethostbyname</A></B>(3).
+<P>
+
+<B>TZ</B> and <B>TZDIR</B>
+
+give time zone information used by
+<B><A HREF="../man3/tzset.3.html">tzset</A></B>(3)
+
+and through that by functions like
+<I>ctime</I>(),
+
+<I>localtime</I>(),
+
+<I>mktime</I>(),
+
+<I>strftime</I>().
+
+See also
+<B><A HREF="../man1/tzselect.1.html">tzselect</A></B>(1).
+
+<P>
+
+<B>TERMCAP</B>
+
+gives information on how to address a given terminal
+(or gives the name of a file containing such information).
+<P>
+
+<B>COLUMNS</B> and <B>LINES</B>
+
+tell applications about the window size, possibly overriding the actual size.
+<P>
+
+<B>PRINTER</B> or <B>LPDEST</B>
+
+may specify the desired printer to use. See
+<B><A HREF="../man1/lpr.1.html">lpr</A></B>(1).
+
+<P>
+
+Etc.
+<A NAME="lbAE">&nbsp;</A>
+<H2>BUGS</H2>
+
+Clearly there is a security risk here. Many a system command has been
+tricked into mischief by a user who specified unusual values for
+<B>IFS</B> or <B>LD_LIBRARY_PATH</B>.
+
+<P>
+There is also the risk of name space pollution.
+Programs like
+<I>make</I>
+
+and
+<I>autoconf</I>
+
+allow overriding of default utility names from the
+environment with similarly named variables in all caps.
+Thus one uses
+<B>CC</B>
+
+to select the desired C compiler (and similarly
+<B>MAKE</B>,
+
+<B>AR</B>,
+
+<B>AS</B>,
+
+<B>FC</B>,
+
+<B>LD</B>,
+
+<B>LEX</B>,
+
+<B>RM</B>,
+
+<B>YACC</B>,
+
+etc.).
+However, in some traditional uses such an environment variable
+gives options for the program instead of a pathname.
+Thus, one has
+<B>MORE</B>,
+
+<B>LESS</B>,
+
+and
+<B>GZIP</B>.
+
+Such usage is considered mistaken, and to be avoided in new
+programs. The authors of
+<I>gzip</I>
+
+should consider renaming their option to
+<B>GZIP_OPT</B>.
+
+<A NAME="lbAF">&nbsp;</A>
+<H2>SEE ALSO</H2>
+
+<B><A HREF="../man1/bash.1.html">bash</A></B>(1),
+
+<B><A HREF="../man1/csh.1.html">csh</A></B>(1),
+
+<B><A HREF="../man1/login.1.html">login</A></B>(1),
+
+<B><A HREF="../man1/sh.1.html">sh</A></B>(1),
+
+<B><A HREF="../man1/tcsh.1.html">tcsh</A></B>(1),
+
+<B><A HREF="../man2/execve.2.html">execve</A></B>(2),
+
+<B><A HREF="../man3/clearenv.3.html">clearenv</A></B>(3),
+
+<B><A HREF="../man3/exec.3.html">exec</A></B>(3),
+
+<B><A HREF="../man3/getenv.3.html">getenv</A></B>(3),
+
+<B><A HREF="../man3/putenv.3.html">putenv</A></B>(3),
+
+<B><A HREF="../man3/setenv.3.html">setenv</A></B>(3),
+
+<B><A HREF="../man3/unsetenv.3.html">unsetenv</A></B>(3),
+
+<B><A HREF="../man5/locale.5.html">locale</A></B>(5)
+
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">NAME</A><DD>
+<DT><A HREF="#lbAC">SYNOPSIS</A><DD>
+<DT><A HREF="#lbAD">DESCRIPTION</A><DD>
+<DT><A HREF="#lbAE">BUGS</A><DD>
+<DT><A HREF="#lbAF">SEE ALSO</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
+using the manual pages.<BR>
+Time: 02:11:22 GMT, April 20, 2020
+</BODY>
+</HTML>

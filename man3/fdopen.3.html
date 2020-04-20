@@ -1,0 +1,320 @@
+<!--
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of FOPEN</TITLE>
+</HEAD><BODY>
+<H1>FOPEN</H1>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2002-01-03<BR><A HREF="#index">Index</A>
+<A HREF="../index.html">Return to Main Contents</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>NAME</H2>
+
+fopen, fdopen, freopen - stream open functions
+<A NAME="lbAC">&nbsp;</A>
+<H2>SYNOPSIS</H2>
+
+<B>#include &lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;</B>
+
+<P>
+<B>FILE *fopen(const char *</B><I>path</I><B>, const char *</B><I>mode</I><B>);</B>
+
+<BR>
+
+<B>FILE *fdopen(int </B><I>fildes</I><B>, const char *</B><I>mode</I><B>);</B>
+
+<BR>
+
+<B>FILE *freopen(const char *</B><I>path</I><B>, const char *</B><I>mode</I><B>, FILE *</B><I>stream</I><B>);</B>
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>DESCRIPTION</H2>
+
+The
+<B>fopen</B>
+
+function opens the file whose name is the string pointed to by
+<I>path</I>
+
+and associates a stream with it.
+<P>
+
+The argument
+<I>mode</I>
+
+points to a string beginning with one of the following sequences
+(Additional characters may follow these sequences.):
+<DL COMPACT>
+<DT><B>r</B>
+
+<DD>
+Open text file for reading.  The stream is positioned at the beginning of
+the file.
+<DT><B>r+</B>
+
+<DD>
+Open for reading and writing.  The stream is positioned at the beginning of
+the file.
+<DT><B>w</B>
+
+<DD>
+Truncate file to zero length or create text file for writing.  The stream
+is positioned at the beginning of the file.
+<DT><B>w+</B>
+
+<DD>
+Open for reading and writing.  The file is created if it does not exist,
+otherwise it is truncated.  The stream is positioned at the beginning of
+the file.
+<DT><B>a</B>
+
+<DD>
+Open for appending (writing at end of file).  The file is created
+if it does not exist.  The stream is positioned at the end of the file.
+<DT><B>a+</B>
+
+<DD>
+Open for reading and appending (writing at end of file).  The file
+is created if it does not exist.
+The stream is positioned at the end of the file.
+</DL>
+<P>
+
+The
+<I>mode</I>
+
+string can also include the letter ``b'' either as a last character or as
+a character between the characters in any of the two-character strings
+described above.  This is strictly for compatibility with ANSI X3.159-1989
+(``ANSI C'') and has no effect; the ``b'' is ignored on all POSIX
+conforming systems, including Linux.
+(Other systems may treat text files and binary files differently,
+and adding the ``b'' may be a good idea if you do I/O to a binary
+file and expect that your program may be ported to non-Unix
+environments.)
+<P>
+
+Any created files will have mode
+<B>S_IRUSR</B>|<B>S_IWUSR</B>|<B>S_IRGRP</B>|<B>S_IWGRP</B>|<B>S_IROTH</B>|<B>S_IWOTH</B>
+
+(0666), as modified by the process' umask value (see
+<B><A HREF="../man2/umask.2.html">umask</A></B>(2)).
+
+<P>
+
+Reads and writes may be intermixed on read/write streams in any order.
+Note that ANSI C requires that a file positioning function intervene
+between output and input, unless an input operation encounters end-of-file.
+(If this condition is not met, then a read is allowed to return the
+result of writes other than the most recent.)
+Therefore it is good practice (and indeed sometimes necessary
+under Linux) to put an
+<B>fseek</B>
+
+or
+<B>fgetpos</B>
+
+operation between write and read operations on such a stream.  This
+operation may be an apparent no-op (as in <I>fseek(..., 0L,
+SEEK_CUR)</I> called for its synchronizing side effect.
+<P>
+
+Opening a file in append mode (<B>a</B> as the first character of
+<I>mode</I>)
+
+causes all subsequent write operations to this stream to occur
+at end-of-file, as if preceded by an
+<DL COMPACT><DT><DD>
+fseek(stream,0,SEEK_END);
+</DL>
+
+call.
+<P>
+
+The
+<B>fdopen</B>
+
+function associates a stream with the existing file descriptor,
+<I>fildes</I>.
+
+The
+<I>mode</I>
+
+of the stream (one of the values &quot;r&quot;, &quot;r+&quot;, &quot;w&quot;, &quot;w+&quot;, &quot;a&quot;, &quot;a+&quot;)
+must be compatible with the mode of the file descriptor.
+The file position indicator of the new stream is set to that
+belonging to
+<I>fildes</I>,
+
+and the error and end-of-file indicators are cleared.
+Modes &quot;w&quot; or &quot;w+&quot; do not cause truncation of the file.
+The file descriptor is not dup'ed, and will be closed when
+the stream created by
+<B>fdopen</B>
+
+is closed.
+The result of applying
+<B>fdopen</B>
+
+to a shared memory object is undefined.
+<P>
+
+The
+<B>freopen</B>
+
+function opens the file whose name is the string pointed to by
+<I>path</I>
+
+and associates the stream pointed to by
+<I>stream</I>
+
+with it.  The original stream (if it exists) is closed.  The
+<I>mode</I>
+
+argument is used just as in the
+<B>fopen</B>
+
+function.  The primary use of the
+<B>freopen</B>
+
+function is to change the file associated with a standard text stream
+<I></I>(<I>stderr</I>, <I>stdin</I>, or <I>stdout</I>).
+
+<A NAME="lbAE">&nbsp;</A>
+<H2>RETURN VALUE</H2>
+
+Upon successful completion
+<B>fopen</B>,
+
+<B>fdopen</B>
+
+and
+<B>freopen</B>
+
+return a
+<B>FILE</B>
+
+pointer.  Otherwise,
+<B>NULL</B>
+
+is returned and the global variable
+<I>errno</I>
+
+is set to indicate the error.
+<A NAME="lbAF">&nbsp;</A>
+<H2>ERRORS</H2>
+
+<DL COMPACT>
+<DT><B>EINVAL</B>
+
+<DD>
+The
+<I>mode</I>
+
+provided to
+<B>fopen</B>,
+
+<B>fdopen</B>,
+
+or
+<B>freopen</B>
+
+was invalid.
+</DL>
+<P>
+
+The
+<B>fopen</B>,
+
+<B>fdopen</B>
+
+and
+<B>freopen</B>
+
+functions may also fail and set
+<I>errno</I>
+
+for any of the errors specified for the routine
+<B><A HREF="../man3/malloc.3.html">malloc</A></B>(3).
+
+<P>
+
+The
+<B>fopen</B>
+
+function may also fail and set
+<I>errno</I>
+
+for any of the errors specified for the routine
+<B><A HREF="../man2/open.2.html">open</A></B>(2).
+
+<P>
+
+The
+<B>fdopen</B>
+
+function may also fail and set
+<I>errno</I>
+
+for any of the errors specified for the routine
+<B><A HREF="../man2/fcntl.2.html">fcntl</A></B>(2).
+
+<P>
+
+The
+<B>freopen</B>
+
+function may also fail and set
+<I>errno</I>
+
+for any of the errors specified for the routines
+<B><A HREF="../man2/open.2.html">open</A></B>(2),
+
+<B><A HREF="../man3/fclose.3.html">fclose</A></B>(3)
+
+and
+<B><A HREF="../man3/fflush.3.html">fflush</A></B>(3).
+
+<A NAME="lbAG">&nbsp;</A>
+<H2>CONFORMING TO</H2>
+
+The
+<B>fopen</B>
+
+and
+<B>freopen</B>
+
+functions conform to ANSI X3.159-1989 (``ANSI C'').  The
+<B>fdopen</B>
+
+function conforms to IEEE Std1003.1-1988 (``POSIX.1'').
+<A NAME="lbAH">&nbsp;</A>
+<H2>SEE ALSO</H2>
+
+<B><A HREF="../man2/open.2.html">open</A></B>(2),
+
+<B><A HREF="../man3/fclose.3.html">fclose</A></B>(3),
+
+<B><A HREF="../man3/fileno.3.html">fileno</A></B>(3)
+
+
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">NAME</A><DD>
+<DT><A HREF="#lbAC">SYNOPSIS</A><DD>
+<DT><A HREF="#lbAD">DESCRIPTION</A><DD>
+<DT><A HREF="#lbAE">RETURN VALUE</A><DD>
+<DT><A HREF="#lbAF">ERRORS</A><DD>
+<DT><A HREF="#lbAG">CONFORMING TO</A><DD>
+<DT><A HREF="#lbAH">SEE ALSO</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
+using the manual pages.<BR>
+Time: 02:10:29 GMT, April 20, 2020
+</BODY>
+</HTML>

@@ -1,0 +1,136 @@
+<!--
+Copyright (c) Bruno Haible &lt;haible@clisp.cons.org&gt;
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of ICONV</TITLE>
+</HEAD><BODY>
+<H1>ICONV</H1>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2001-11-15<BR><A HREF="#index">Index</A>
+<A HREF="../index.html">Return to Main Contents</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>NAME</H2>
+
+iconv - perform character set conversion
+<A NAME="lbAC">&nbsp;</A>
+<H2>SYNOPSIS</H2>
+
+<PRE>
+<B>#include &lt;<A HREF="file:///usr/include/iconv.h">iconv.h</A>&gt;</B>
+
+<B>size_t iconv(iconv_t </B><I>cd</I><B>,</B>
+<B>              char **</B><I>inbuf</I><B>, size_t *</B><I>inbytesleft</I><B>,</B>
+<B>              char **</B><I>outbuf</I><B>, size_t *</B><I>outbytesleft</I><B>);</B>
+</PRE>
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>DESCRIPTION</H2>
+
+The argument <I>cd</I> must be a conversion descriptor created using the
+function <B>iconv_open</B>.
+<P>
+
+The main case is when <I>inbuf</I> is not NULL and <I>*inbuf</I> is not NULL.
+In this case, the <B>iconv</B> function converts the multibyte sequence
+starting at <I>*inbuf</I> to a multibyte sequence starting at <I>*outbuf</I>.
+At most <I>*inbytesleft</I> bytes, starting at <I>*inbuf</I>, will be read.
+At most <I>*outbytesleft</I> bytes, starting at <I>*outbuf</I>, will be written.
+<P>
+
+The <B>iconv</B> function converts one multibyte character at a time, and for
+each character conversion it increments <I>*inbuf</I> and decrements
+<I>*inbytesleft</I> by the number of converted input bytes, it increments
+<I>*outbuf</I> and decrements <I>*outbytesleft</I> by the number of converted
+output bytes, and it updates the conversion state contained in <I>cd</I>.
+The conversion can stop for four reasons:
+<P>
+
+1. An invalid multibyte sequence is encountered in the input. In this case
+it sets <B>errno</B> to <B>EILSEQ</B> and returns (size_t)(-1). <I>*inbuf</I>
+is left pointing to the beginning of the invalid multibyte sequence.
+<P>
+
+2. The input byte sequence has been entirely converted, i.e. <I>*inbytesleft</I>
+has gone down to 0. In this case <B>iconv</B> returns the number of
+non-reversible conversions performed during this call.
+<P>
+
+3. An incomplete multibyte sequence is encountered in the input, and the
+input byte sequence terminates after it. In this case it sets <B>errno</B> to
+<B>EINVAL</B> and returns (size_t)(-1). <I>*inbuf</I> is left pointing to the
+beginning of the incomplete multibyte sequence.
+<P>
+
+4. The output buffer has no more room for the next converted character. In
+this case it sets <B>errno</B> to <B>E2BIG</B> and returns (size_t)(-1).
+<P>
+
+A different case is when <I>inbuf</I> is NULL or <I>*inbuf</I> is NULL, but
+<I>outbuf</I> is not NULL and <I>*outbuf</I> is not NULL. In this case, the
+<B>iconv</B> function attempts to set <I>cd</I>'s conversion state to the
+initial state and store a corresponding shift sequence at <I>*outbuf</I>.
+At most <I>*outbytesleft</I> bytes, starting at <I>*outbuf</I>, will be written.
+If the output buffer has no more room for this reset sequence, it sets
+<B>errno</B> to <B>E2BIG</B> and returns (size_t)(-1). Otherwise it increments
+<I>*outbuf</I> and decrements <I>*outbytesleft</I> by the number of bytes
+written.
+<P>
+
+A third case is when <I>inbuf</I> is NULL or <I>*inbuf</I> is NULL, and
+<I>outbuf</I> is NULL or <I>*outbuf</I> is NULL. In this case, the <B>iconv</B>
+function sets <I>cd</I>'s conversion state to the initial state.
+<A NAME="lbAE">&nbsp;</A>
+<H2>RETURN VALUE</H2>
+
+The <B>iconv</B> function returns the number of characters converted in a
+non-reversible way during this call; reversible conversions are not counted.
+In case of error, it sets <B>errno</B> and returns (size_t)(-1).
+<A NAME="lbAF">&nbsp;</A>
+<H2>ERRORS</H2>
+
+The following errors can occur, among others:
+<DL COMPACT>
+<DT><B>E2BIG</B>
+
+<DD>
+There is not sufficient room at <I>*outbuf</I>.
+<DT><B>EILSEQ</B>
+
+<DD>
+An invalid multibyte sequence has been encountered in the input.
+<DT><B>EINVAL</B>
+
+<DD>
+An incomplete multibyte sequence has been encountered in the input.
+</DL>
+<A NAME="lbAG">&nbsp;</A>
+<H2>CONFORMING TO</H2>
+
+UNIX98
+<A NAME="lbAH">&nbsp;</A>
+<H2>SEE ALSO</H2>
+
+<B><A HREF="../man3/iconv_close.3.html">iconv_close</A></B>(3),
+
+<B><A HREF="../man3/iconv_open.3.html">iconv_open</A></B>(3)
+
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">NAME</A><DD>
+<DT><A HREF="#lbAC">SYNOPSIS</A><DD>
+<DT><A HREF="#lbAD">DESCRIPTION</A><DD>
+<DT><A HREF="#lbAE">RETURN VALUE</A><DD>
+<DT><A HREF="#lbAF">ERRORS</A><DD>
+<DT><A HREF="#lbAG">CONFORMING TO</A><DD>
+<DT><A HREF="#lbAH">SEE ALSO</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
+using the manual pages.<BR>
+Time: 02:10:42 GMT, April 20, 2020
+</BODY>
+</HTML>

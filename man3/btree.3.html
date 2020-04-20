@@ -1,0 +1,277 @@
+<!--
+Copyright (c) 1990, 1993
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of BTREE</TITLE>
+</HEAD><BODY>
+<H1>BTREE</H1>
+Section: C Library Functions (3)<BR>Updated: 1994-08-18<BR><A HREF="#index">Index</A>
+<A HREF="../index.html">Return to Main Contents</A><HR>
+
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>NAME</H2>
+
+btree - btree database access method
+<A NAME="lbAC">&nbsp;</A>
+<H2>SYNOPSIS</H2>
+
+<PRE>
+<B>#include &lt;<A HREF="file:///usr/include/sys/types.h">sys/types.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/db.h">db.h</A>&gt;
+</B></PRE>
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>DESCRIPTION</H2>
+
+The routine
+<I>dbopen</I>
+
+is the library interface to database files.
+One of the supported file formats is btree files.
+The general description of the database access methods is in
+<I><A HREF="../man3/dbopen.3.html">dbopen</A></I>(3),
+
+this manual page describes only the btree specific information.
+<P>
+
+The btree data structure is a sorted, balanced tree structure storing
+associated key/data pairs.
+<P>
+
+The btree access method specific data structure provided to
+<I>dbopen</I>
+
+is defined in the &lt;<A HREF="file:///usr/include/db.h">db.h</A>&gt; include file as follows:
+<P>
+
+typedef struct {
+<DL COMPACT><DT><DD>
+u_long flags;
+<BR>
+
+u_int cachesize;
+<BR>
+
+int maxkeypage;
+<BR>
+
+int minkeypage;
+<BR>
+
+u_int psize;
+<BR>
+
+int (*compare)(const DBT *key1, const DBT *key2);
+<BR>
+
+size_t (*prefix)(const DBT *key1, const DBT *key2);
+<BR>
+
+int lorder;
+</DL>
+
+} BTREEINFO;
+<P>
+
+The elements of this structure are as follows:
+<DL COMPACT>
+<DT>flags<DD>
+The flag value is specified by
+<I>or</I>'ing
+
+any of the following values:
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT>R_DUP<DD>
+Permit duplicate keys in the tree, i.e. permit insertion if the key to be
+inserted already exists in the tree.
+The default behavior, as described in
+<I><A HREF="../man3/dbopen.3.html">dbopen</A></I>(3),
+
+is to overwrite a matching key when inserting a new key or to fail if
+the R_NOOVERWRITE flag is specified.
+The R_DUP flag is overridden by the R_NOOVERWRITE flag, and if the
+R_NOOVERWRITE flag is specified, attempts to insert duplicate keys into
+the tree will fail.
+<DT><DD>
+If the database contains duplicate keys, the order of retrieval of
+key/data pairs is undefined if the
+<I>get</I>
+
+routine is used, however,
+<I>seq</I>
+
+routine calls with the R_CURSOR flag set will always return the logical
+``first'' of any group of duplicate keys.
+</DL>
+</DL>
+
+<DT>cachesize<DD>
+A suggested maximum size (in bytes) of the memory cache.
+This value is
+<B>only</B>
+
+advisory, and the access method will allocate more memory rather than fail.
+Since every search examines the root page of the tree, caching the most
+recently used pages substantially improves access time.
+In addition, physical writes are delayed as long as possible, so a moderate
+cache can reduce the number of I/O operations significantly.
+Obviously, using a cache increases (but only increases) the likelihood of
+corruption or lost data if the system crashes while a tree is being modified.
+If
+<I>cachesize</I>
+
+is 0 (no size is specified) a default cache is used.
+<DT>maxkeypage<DD>
+The maximum number of keys which will be stored on any single page.
+Not currently implemented.
+
+
+
+
+
+
+
+
+<DT>minkeypage<DD>
+The minimum number of keys which will be stored on any single page.
+This value is used to determine which keys will be stored on overflow
+pages, i.e. if a key or data item is longer than the pagesize divided
+by the minkeypage value, it will be stored on overflow pages instead
+of in the page itself.
+If
+<I>minkeypage</I>
+
+is 0 (no minimum number of keys is specified) a value of 2 is used.
+<DT>psize<DD>
+Page size is the size (in bytes) of the pages used for nodes in the tree.
+The minimum page size is 512 bytes and the maximum page size is 64K.
+If
+<I>psize</I>
+
+is 0 (no page size is specified) a page size is chosen based on the
+underlying file system I/O block size.
+<DT>compare<DD>
+Compare is the key comparison function.
+It must return an integer less than, equal to, or greater than zero if the
+first key argument is considered to be respectively less than, equal to,
+or greater than the second key argument.
+The same comparison function must be used on a given tree every time it
+is opened.
+If
+<I>compare</I>
+
+is NULL (no comparison function is specified), the keys are compared
+lexically, with shorter keys considered less than longer keys.
+<DT>prefix<DD>
+Prefix is the prefix comparison function.
+If specified, this routine must return the number of bytes of the second key
+argument which are necessary to determine that it is greater than the first
+key argument.
+If the keys are equal, the key length should be returned.
+Note, the usefulness of this routine is very data dependent, but, in some
+data sets can produce significantly reduced tree sizes and search times.
+If
+<I>prefix</I>
+
+is NULL (no prefix function is specified),
+<B>and</B>
+
+no comparison function is specified, a default lexical comparison routine
+is used.
+If
+<I>prefix</I>
+
+is NULL and a comparison routine is specified, no prefix comparison is
+done.
+<DT>lorder<DD>
+The byte order for integers in the stored database metadata.
+The number should represent the order as an integer; for example, 
+big endian order would be the number 4,321.
+If
+<I>lorder</I>
+
+is 0 (no order is specified) the current host order is used.
+</DL>
+<P>
+
+If the file already exists (and the O_TRUNC flag is not specified), the
+values specified for the parameters flags, lorder and psize are ignored
+in favor of the values used when the tree was created.
+<P>
+
+Forward sequential scans of a tree are from the least key to the greatest.
+<P>
+
+Space freed up by deleting key/data pairs from the tree is never reclaimed,
+although it is normally made available for reuse.
+This means that the btree storage structure is grow-only.
+The only solutions are to avoid excessive deletions, or to create a fresh
+tree periodically from a scan of an existing one.
+<P>
+
+Searches, insertions, and deletions in a btree will all complete in
+O lg base N where base is the average fill factor.
+Often, inserting ordered data into btrees results in a low fill factor.
+This implementation has been modified to make ordered insertion the best
+case, resulting in a much better than normal page fill factor.
+<A NAME="lbAE">&nbsp;</A>
+<H2>ERRORS</H2>
+
+The
+<I>btree</I>
+
+access method routines may fail and set
+<I>errno</I>
+
+for any of the errors specified for the library routine
+<I><A HREF="../man3/dbopen.3.html">dbopen</A></I>(3).
+
+<A NAME="lbAF">&nbsp;</A>
+<H2>SEE ALSO</H2>
+
+<I><A HREF="../man3/dbopen.3.html">dbopen</A></I>(3),
+
+<I><A HREF="../man3/hash.3.html">hash</A></I>(3),
+
+<I><A HREF="../man3/mpool.3.html">mpool</A></I>(3),
+
+<I><A HREF="../man3/recno.3.html">recno</A></I>(3)
+
+<P>
+<I>The Ubiquitous B-tree</I>,
+
+Douglas Comer, ACM Comput. Surv. 11, 2 (June 1979), 121-138.
+<P>
+<I>Prefix B-trees</I>,
+
+Bayer and Unterauer, ACM Transactions on Database Systems, Vol. 2, 1
+(March 1977), 11-26.
+<P>
+<I>The Art of Computer Programming Vol. 3: Sorting and Searching</I>,
+
+D.E. Knuth, 1968, pp 471-480.
+<A NAME="lbAG">&nbsp;</A>
+<H2>BUGS</H2>
+
+Only big and little endian byte order is supported.
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">NAME</A><DD>
+<DT><A HREF="#lbAC">SYNOPSIS</A><DD>
+<DT><A HREF="#lbAD">DESCRIPTION</A><DD>
+<DT><A HREF="#lbAE">ERRORS</A><DD>
+<DT><A HREF="#lbAF">SEE ALSO</A><DD>
+<DT><A HREF="#lbAG">BUGS</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
+using the manual pages.<BR>
+Time: 02:10:15 GMT, April 20, 2020
+</BODY>
+</HTML>

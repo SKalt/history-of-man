@@ -1,0 +1,350 @@
+<!--
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of ARP</TITLE>
+</HEAD><BODY>
+<H1>ARP</H1>
+Section: Linux Programmer's Manual (7)<BR>Updated: 1999-06-03<BR><A HREF="#index">Index</A>
+<A HREF="../index.html">Return to Main Contents</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>NAME</H2>
+
+arp - Linux ARP kernel module. 
+<A NAME="lbAC">&nbsp;</A>
+<H2>DESCRIPTION</H2>
+
+This kernel protocol module implements the Address Resolution
+Protocol defined in RFC 826.
+It is used to convert between Layer2 hardware addresses
+and IPv4 protocol addresses on directly connected networks. 
+The user normally doesn't interact directly with this module except to 
+configure it; 
+instead it provides a service for other protocols in the kernel.
+<P>
+A user process can receive ARP packets by using
+<B><A HREF="../man7/packet.7.html">packet</A></B>(7)
+
+sockets.  There is also a mechanism for managing the ARP cache
+in user-space by using
+<B><A HREF="../man7/netlink.7.html">netlink</A></B>(7)
+
+sockets. The ARP table can also be controlled via 
+<B>ioctl (2) </B>
+
+on any 
+<B>PF_INET </B>
+
+socket.
+<P>
+The ARP module maintains a cache of mappings between hardware addresses
+and protocol addresses.  The cache has a limited size so old and less
+frequently used entries are garbage-collected.  Entries which are marked
+as permanent are never deleted by the garbage-collector.  The cache can
+be directly manipulated by the use of ioctls and its behaviour can be
+tuned by the sysctls defined below.  
+<P>
+When there is no positive feedback for an existing mapping after some
+time (see the sysctls below) a neighbour cache entry is considered stale.
+Positive feedback can be gotten from a higher layer; for example from
+a successful TCP ACK. Other protocols can signal forward progress
+using the
+<B>MSG_CONFIRM</B>
+
+flag to
+<B><A HREF="../man2/sendmsg.2.html">sendmsg</A></B>(2).
+
+When there is no forward progress ARP tries to reprobe.
+It first tries to ask a local arp daemon
+<B>app_solicit </B>
+
+times for an updated MAC address.
+If that fails and an old MAC address is known an unicast probe is send
+<B>ucast_solicit</B>
+
+times. If that fails too it will broadcast a new ARP 
+request to the network. Requests are only send when there is data queued
+for sending. 
+<P>
+Linux will automatically add a non-permanent proxy arp entry when it receives
+a request for an address it forwards to and proxy arp is enabled on the 
+receiving interface. When there is a reject route for the target
+no proxy arp entry is added.
+<P>
+<A NAME="lbAD">&nbsp;</A>
+<H2>IOCTLS</H2>
+
+Three ioctls are available on all 
+<B>PF_INET</B>
+
+sockets.
+They take a pointer to a
+<B>struct arpreq</B>
+
+as their parameter.
+<P>
+<PRE>
+
+struct arpreq
+{
+    struct sockaddr arp_pa;      /* protocol address */
+    struct sockaddr arp_ha;      /* hardware address */
+    int             arp_flags;   /* flags */
+    struct sockaddr arp_netmask; /* netmask of protocol address */
+    char            arp_dev[16];
+};
+</PRE>
+
+<P>
+<B>SIOCSARP</B>, <B>SIOCDARP</B> and <B>SIOCGARP</B>
+
+respectively set, delete and get an ARP mapping.
+Setting &amp; deleting ARP maps are privileged operations and may
+only be performed by a process with the
+<B>CAP_NET_ADMIN</B>
+
+capability or an effective UID of 0.
+<P>
+<I>arp_pa</I>
+
+must be an
+<B>AF_INET</B>
+
+socket and
+<I>arp_ha</I>
+
+must have the same type as the device which is specified in
+<I>arp_dev</I>.
+
+<I>arp_dev</I>
+
+is a zero-terminated string which names a device.
+<P>
+<TABLE BORDER>
+<TR VALIGN=top><TD ALIGN=center COLSPAN=2><I>arp_flags</I><BR></TD></TR>
+<TR VALIGN=top><TD>flag</TD><TD>meaning<BR></TD></TR>
+<TR VALIGN=top><TD>ATF_COM</TD><TD>Lookup complete<BR></TD></TR>
+<TR VALIGN=top><TD>ATF_PERM</TD><TD>Permanent entry<BR></TD></TR>
+<TR VALIGN=top><TD>ATF_PUBL</TD><TD>Publish entry<BR></TD></TR>
+<TR VALIGN=top><TD>ATF_USETRAILERS</TD><TD>Trailers requested<BR></TD></TR>
+<TR VALIGN=top><TD>ATF_NETMASK</TD><TD>Use a netmask<BR></TD></TR>
+<TR VALIGN=top><TD>ATF_DONTPUB</TD><TD>Don't answer<BR></TD></TR>
+</TABLE>
+
+<P>
+<P>
+
+<P>
+If the
+<B>ATF_NETMASK</B>
+
+flag is set, then
+<I>arp_netmask</I>
+
+should be valid.  
+Linux 2.2 does not support proxy network ARP entries, so this
+should be set to 0xffffffff, or 0 to remove an existing proxy arp entry. 
+<B>ATF_USETRAILERS</B>
+
+is obsolete and should not be used.
+<P>
+<A NAME="lbAE">&nbsp;</A>
+<H2>SYSCTLS</H2>
+
+ARP supports a sysctl interface to configure parameters on a global
+or per-interface basis.
+The sysctls can be accessed by reading or writing the 
+<B>/proc/sys/net/ipv4/neigh/*/*</B>
+
+files or with the 
+<B><A HREF="../man2/sysctl.2.html">sysctl</A></B>(2)
+
+interface.  Each interface in the system has its own directory in
+/proc/sys/net/ipv4/neigh/.
+The setting in the `default' directory is used for all newly created devices.
+Unless otherwise specified time related sysctls are specified in seconds.
+<DL COMPACT>
+<DT><B>anycast_delay</B>
+
+<DD>
+The maximum number of jiffies to delay before replying to a
+IPv6 neighbour solicitation message.
+Anycast support is not yet implemented.
+Defaults to 1 second.
+<DT><B>app_solicit</B>
+
+<DD>
+The maximum number of probes to send to the user space ARP daemon via
+netlink before dropping back to multicast probes (see
+<I>mcast_solicit</I>).
+
+Defaults to 0.
+<DT><B>base_reachable_time</B>
+
+<DD>
+Once a neighbour has been found, the entry is considered to be valid
+for at least a random value between
+<I>base_reachable_time</I>/2 and 3*<I>base_reachable_time</I>/2.
+
+An entry's validity will be extended if it receives positive feedback
+from higher level protocols.
+Defaults to 30 seconds.
+<DT><B>delay_first_probe_time</B>
+
+<DD>
+Delay before first probe after it has been decided that a neighbour
+is stale. 
+Defaults to 5 seconds.
+<DT><B>gc_interval</B>
+
+<DD>
+How frequently the garbage collector for neighbour entries 
+should attempt to run.
+Defaults to 30 seconds.
+<DT><B>gc_stale_time</B>
+
+<DD>
+Determines how often to check for stale neighbour entries.  When 
+a neighbour entry is considered stale it is resolved again before 
+sending data to it. 
+Defaults to 60 seconds.
+<DT><B>gc_thresh1</B>
+
+<DD>
+The minimum number of entries to keep in the ARP cache.
+The garbage collector will not run if there are fewer than
+this number of entries in the cache.
+Defaults to 128.
+<DT><B>gc_thresh2</B>
+
+<DD>
+The soft maximum number of entries to keep in the ARP cache.
+The garbage collector will allow the number of entries to exceed
+this for 5 seconds before collection will be performed.
+Defaults to 512.
+<DT><B>gc_thresh3</B>
+
+<DD>
+The hard maximum number of entries to keep in the ARP cache.
+The garbage collector will always run if there are more than
+this number of entries in the cache.
+Defaults to 1024.
+<DT><B>locktime</B>
+
+<DD>
+The minimum number of jiffies to keep an ARP entry in the cache.
+This prevents ARP cache thrashing if there is more than one potential
+mapping (generally due to network misconfiguration).
+Defaults to 1 second.
+<DT><B>mcast_solicit</B>
+
+<DD>
+The maximum number of attempts to resolve an address by multicast/broadcast 
+before marking the entry as unreachable.
+Defaults to 3.
+<DT><B>proxy_delay</B>
+
+<DD>
+When an ARP request for a known proxy-ARP address is received, delay up to
+<I>proxy_delay</I>
+
+jiffies before replying.
+This is used to prevent network flooding in some cases.
+Defaults to 0.8 seconds.
+<DT><B>proxy_qlen</B>
+
+<DD>
+The maximum number of packets which may be queued to proxy-ARP addresses.
+Defaults to 64.
+<DT><B>retrans_time</B>
+
+<DD>
+The number of jiffies to delay before retransmitting a request.
+Defaults to 1 second.
+<DT><B>ucast_solicit</B>
+
+<DD>
+The maximum number of attempts to send unicast probes before asking
+the ARP daemon (see
+<I>app_solicit</I>).
+
+Defaults to 3.
+<DT><B>unres_qlen</B>
+
+<DD>
+The maximum number of packets which may be queued for each unresolved
+address by other network layers.
+Defaults to 3.
+<P>
+</DL>
+<A NAME="lbAF">&nbsp;</A>
+<H2>BUGS</H2>
+
+Some timer settings are specified in jiffies, which is architecture related.
+On the Alpha a jiffy is 1/1024 of a second, on most other architectures it
+is 1/100s.
+<P>
+There is no way to signal positive feedback from user space. This means
+connection oriented protocols implemented in user space will generate 
+excessive ARP traffic, because ndisc will regularly reprobe the MAC address.
+The same problem applies for some kernel protocols (e.g. NFS over UDP).
+<P>
+This man page mashes IPv4 specific and shared between IPv4 and IPv6 
+functionality together.
+<P>
+<A NAME="lbAG">&nbsp;</A>
+<H2>VERSIONS</H2>
+
+The
+<B>struct arpreq</B>
+
+changed in Linux 2.0 to include the
+<I>arp_dev</I>
+
+member and the ioctl numbers changed at the same time.
+Support for the old ioctls was dropped in Linux 2.2.
+<P>
+Support for proxy arp entries for networks (netmask not equal 0xffffffff) 
+was dropped in Linux 2.2. It is replaced by automatic proxy arp setup by
+the kernel for all reachable hosts on other interfaces (when forwarding and 
+proxy arp is enabled for the interface).
+<P>
+The neigh/* sysctls did not exist before Linux 2.2.
+<P>
+<A NAME="lbAH">&nbsp;</A>
+<H2>SEE ALSO</H2>
+
+<B><A HREF="../man7/capabilities.7.html">capabilities</A></B>(7),
+
+<B><A HREF="../man7/ip.7.html">ip</A></B>(7)
+
+<P>
+
+RFC826 for a description of ARP.
+<BR>
+
+RFC2461 for a description of IPv6 neighbour discovery and the base
+algorithms used.
+<P>
+
+Linux 2.2+ IPv4 ARP uses the IPv6 algorithms when applicable.
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">NAME</A><DD>
+<DT><A HREF="#lbAC">DESCRIPTION</A><DD>
+<DT><A HREF="#lbAD">IOCTLS</A><DD>
+<DT><A HREF="#lbAE">SYSCTLS</A><DD>
+<DT><A HREF="#lbAF">BUGS</A><DD>
+<DT><A HREF="#lbAG">VERSIONS</A><DD>
+<DT><A HREF="#lbAH">SEE ALSO</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
+using the manual pages.<BR>
+Time: 02:11:24 GMT, April 20, 2020
+</BODY>
+</HTML>

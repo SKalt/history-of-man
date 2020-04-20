@@ -1,0 +1,195 @@
+<!--
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of RTNETLINK</TITLE>
+</HEAD><BODY>
+<H1>RTNETLINK</H1>
+Section: Linux Programmer's Manual (3)<BR>Updated: 1999-05-14<BR><A HREF="#index">Index</A>
+<A HREF="../index.html">Return to Main Contents</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>NAME</H2>
+
+rtnetlink - Macros to manipuate rtnetlink messages
+<A NAME="lbAC">&nbsp;</A>
+<H2>SYNOPSIS</H2>
+
+<B>#include &lt;<A HREF="file:///usr/include/asm/types.h">asm/types.h</A>&gt;</B>
+
+<BR>
+
+<B>#include &lt;<A HREF="file:///usr/include/linux/netlink.h">linux/netlink.h</A>&gt;</B>
+
+<BR>
+
+<B>#include &lt;<A HREF="file:///usr/include/linux/rtnetlink.h">linux/rtnetlink.h</A>&gt;</B>
+
+<BR>
+
+<B>#include &lt;<A HREF="file:///usr/include/sys/socket.h">sys/socket.h</A>&gt;</B>
+
+<P>
+<B>rtnetlink_socket = socket(PF_NETLINK, int </B><I>socket_type</I><B>, NETLINK_ROUTE);</B>
+
+<BR>
+
+<B>int RTA_OK(struct rtattr *rta, int rtabuflen); </B>
+
+<BR>
+
+<B>void *RTA_DATA(struct rtattr *rta); </B>
+
+<BR>
+
+<B>unsigned int RTA_PAYLOAD(struct rtattr *rta); </B>
+
+<BR>
+
+<B>struct rtattr *RTA_NEXT(struct rtattr *rta, unsigned int rtabuflen); </B>
+
+<BR>
+
+<B>unsigned int RTA_LENGTH(unsigned int length); </B>
+
+<BR>
+
+<B>unsigned int RTA_SPACE(unsigned int length); </B>
+
+<BR>
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>DESCRIPTION</H2>
+
+All 
+<B><A HREF="../man7/rtnetlink.7.html">rtnetlink</A></B>(7)
+
+messages consist of a 
+<B><A HREF="../man7/netlink.7.html">netlink</A></B>(7)
+
+message header and appended attributes. The attributes should be only
+manipulated using the macros provided here.
+<P>
+<P>
+
+<B>RTA_OK(</B><I>rta</I><B>, </B><I>attrlen</I><B>)</B>
+
+returns true if
+<I>rta</I>
+
+points to a valid routing attribute;
+<I>attrlen</I>
+
+is the  running length of the attribute buffer.
+When not true then you must assume there are no more attributes in the
+message, even if
+<I>attrlen</I>
+
+is non-zero.
+<BR>
+
+<B>RTA_DATA(</B><I>rta</I><B>)</B>
+
+returns a pointer to the start of this attribute's data.
+<BR>
+
+<B>RTA_PAYLOAD(</B><I>rta</I><B>)</B>
+
+returns the length of this attribute's data.
+<BR>
+
+<B>RTA_NEXT(</B><I>rta</I><B>, </B><I>attrlen</I><B>)</B>
+
+gets the next attribute after
+<I>rta</I>.
+
+Calling this macro will update
+<I>attrlen</I>.
+
+You should use
+<B>RTA_OK</B>
+
+to check for the validity of the returned pointer.
+<BR>
+
+<B>RTA_LENGTH(</B><I>len</I><B>)</B>
+
+returns the length which is required for
+<I>len</I>
+
+bytes of data plus the header.
+<BR>
+
+<B>RTA_SPACE(</B><I>len</I><B>)</B>
+
+returns the amount of space which will be needed in the message with
+<I>len</I>
+
+bytes of data.
+<P>
+<A NAME="lbAE">&nbsp;</A>
+<H2>EXAMPLE</H2>
+
+
+<P>
+Creating a rtnetlink message to set a MTU of a device.
+<PRE>
+        struct {
+               struct nlmsghdr nh;
+               struct ifinfomsg   if;
+               char            attrbuf[512];
+        } req;
+        struct rtattr *rta;
+        unsigned int mtu = 1000; 
+        int rtnetlink_sk = socket(PF_NETLINK, SOCK_DGRAM, NETLINK_ROUTE); 
+
+        memset(&amp;req, 0, sizeof(req));
+        req.nh.nlmsg_len = NLMSG_LENGTH(sizeof(struct ifinfomsg)); 
+        req.nh.nlmsg_flags = NLM_F_REQUEST; 
+        req.nh.nlmsg_type = RTML_NEWLINK;
+        req.if.ifi_family = AF_UNSPEC;
+        req.if.ifi_index = INTERFACE_INDEX; 
+        req.if.ifi_change = 0xffffffff; /* ???*/
+        rta = (struct rtattr *)(((char *) &amp;req) + 
+                        NLMSG_ALIGN(n-&gt;nlmsg_len));
+        rta-&gt;rta_type = IFLA_MTU;
+        rta-&gt;rta_len = sizeof(unsigned int);
+        req.n.nlmsg_len = NLMSG_ALIGN(req.n.nlmsg_len) + 
+                        RTA_LENGTH(sizeof(mtu)); 
+        memcpy(RTA_DATA(rta), &amp;mtu, sizeof (mtu));
+        send(rtnetlink_sk, &amp;req, req.n.nlmsg_len); 
+</PRE>
+
+<P>
+<A NAME="lbAF">&nbsp;</A>
+<H2>BUGS</H2>
+
+This manual page is lacking and incomplete.
+<P>
+<A NAME="lbAG">&nbsp;</A>
+<H2>SEE ALSO</H2>
+
+<B><A HREF="../man3/netlink.3.html">netlink</A></B>(3),
+
+<B><A HREF="../man7/netlink.7.html">netlink</A></B>(7),
+
+<B><A HREF="../man7/rtnetlink.7.html">rtnetlink</A></B>(7)
+
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">NAME</A><DD>
+<DT><A HREF="#lbAC">SYNOPSIS</A><DD>
+<DT><A HREF="#lbAD">DESCRIPTION</A><DD>
+<DT><A HREF="#lbAE">EXAMPLE</A><DD>
+<DT><A HREF="#lbAF">BUGS</A><DD>
+<DT><A HREF="#lbAG">SEE ALSO</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
+using the manual pages.<BR>
+Time: 02:10:59 GMT, April 20, 2020
+</BODY>
+</HTML>

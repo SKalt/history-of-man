@@ -1,0 +1,105 @@
+<!--
+Copyright (c) Bruno Haible &lt;haible@clisp.cons.org&gt;
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of MBSINIT</TITLE>
+</HEAD><BODY>
+<H1>MBSINIT</H1>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2000-11-20<BR><A HREF="#index">Index</A>
+<A HREF="../index.html">Return to Main Contents</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>NAME</H2>
+
+mbsinit - test for initial shift state
+<A NAME="lbAC">&nbsp;</A>
+<H2>SYNOPSIS</H2>
+
+<PRE>
+<B>#include &lt;<A HREF="file:///usr/include/wchar.h">wchar.h</A>&gt;</B>
+
+<B>int mbsinit(const mbstate_t *</B><I>ps</I><B>);</B>
+</PRE>
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>DESCRIPTION</H2>
+
+Character conversion between the multibyte representation and the wide
+character representation uses conversion state, of type <B>mbstate_t</B>.
+Conversion of a string uses a finite-state machine; when it is interrupted
+after the complete conversion of a number of characters, it may need to
+save a state for processing the remaining characters. Such a conversion
+state is needed for the sake of encodings such as ISO-2022 and UTF-7.
+<P>
+
+The initial state is the state at the beginning of conversion of a string.
+There are two kinds of state: The one used by multibyte to wide character
+conversion functions, such as <B>mbsrtowcs</B>, and the one used by wide
+character to multibyte conversion functions, such as <B>wcsrtombs</B>,
+but they both fit in a <B>mbstate_t</B>, and they both have the same
+representation for an initial state.
+<P>
+
+For 8-bit encodings, all states are equivalent to the initial state.
+For multibyte encodings like UTF-8, EUC-*, BIG5 or SJIS, the wide character
+to multibyte conversion functions never produce non-initial states, but the
+multibyte to wide character conversion functions like <B>mbrtowc</B> do
+produce non-initial states when interrupted in the middle of a character.
+<P>
+
+One possible way to create an mbstate_t in initial state is to set it to zero:
+<PRE>
+  mbstate_t state;
+  memset(&amp;state,0,sizeof(mbstate_t));
+</PRE>
+
+On Linux, the following works as well, but might generate compiler warnings:
+<PRE>
+  mbstate_t state = { 0 };
+</PRE>
+
+<P>
+
+The function <B>mbsinit</B> tests whether <I>*ps</I> corresponds to an
+initial state.
+<A NAME="lbAE">&nbsp;</A>
+<H2>RETURN VALUE</H2>
+
+<B>mbsinit</B> returns non-zero if <I>*ps</I> is an initial state, or if
+<I>ps</I> is a null pointer. Otherwise it returns 0.
+<A NAME="lbAF">&nbsp;</A>
+<H2>CONFORMING TO</H2>
+
+ISO/ANSI C, UNIX98
+<A NAME="lbAG">&nbsp;</A>
+<H2>SEE ALSO</H2>
+
+<B><A HREF="../man3/mbsrtowcs.3.html">mbsrtowcs</A></B>(3),
+
+<B><A HREF="../man3/wcsrtombs.3.html">wcsrtombs</A></B>(3)
+
+<A NAME="lbAH">&nbsp;</A>
+<H2>NOTES</H2>
+
+The behaviour of <B>mbsinit</B> depends on the LC_CTYPE category of the
+current locale.
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">NAME</A><DD>
+<DT><A HREF="#lbAC">SYNOPSIS</A><DD>
+<DT><A HREF="#lbAD">DESCRIPTION</A><DD>
+<DT><A HREF="#lbAE">RETURN VALUE</A><DD>
+<DT><A HREF="#lbAF">CONFORMING TO</A><DD>
+<DT><A HREF="#lbAG">SEE ALSO</A><DD>
+<DT><A HREF="#lbAH">NOTES</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
+using the manual pages.<BR>
+Time: 02:10:51 GMT, April 20, 2020
+</BODY>
+</HTML>

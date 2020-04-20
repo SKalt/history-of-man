@@ -1,0 +1,227 @@
+<!--
+Copyright (c) 2003 Andries Brouwer (aeb@cwi.nl)
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of GETPWENT_R</TITLE>
+</HEAD><BODY>
+<H1>GETPWENT_R</H1>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2003-11-15<BR><A HREF="#index">Index</A>
+<A HREF="../index.html">Return to Main Contents</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>NAME</H2>
+
+getpwent_r, fgetpwent_r - get passwd file entry reentrantly
+<A NAME="lbAC">&nbsp;</A>
+<H2>SYNOPSIS</H2>
+
+<PRE>
+<B>#define _GNU_SOURCE</B>
+<BR>
+<B>#include &lt;<A HREF="file:///usr/include/pwd.h">pwd.h</A>&gt;</B>
+
+<B>int getpwent_r(struct passwd *</B><I>pwbuf</I><B>, char *</B><I>buf</I><B>,</B>
+<BR>
+<B>               size_t </B><I>buflen</I><B>, struct passwd **</B><I>pwbufp</I><B>);</B>
+
+<B>int fgetpwent_r(FILE *</B><I>fp</I><B>, struct passwd *</B><I>pwbuf</I><B>, char *</B><I>buf</I><B>,</B>
+<BR>
+<B>                size_t </B><I>buflen</I><B>, struct passwd **</B><I>pwbufp</I><B>);</B>
+</PRE><A NAME="lbAD">&nbsp;</A>
+<H2>DESCRIPTION</H2>
+
+The functions
+<B>getpwent_r()</B>
+
+and
+<B>fgetpwent_r()</B>
+
+are the reentrant versions of
+<B><A HREF="../man3/getpwent.3.html">getpwent</A></B>(3)
+
+and
+<B><A HREF="../man3/fgetpwent.3.html">fgetpwent</A></B>(3).
+
+The former reads the next passwd entry from the stream initialized by
+<B><A HREF="../man3/setpwent.3.html">setpwent</A></B>(3).
+
+The latter reads the next passwd entry from the stream
+<I>fp</I>
+
+given as parameter.
+<P>
+
+The <I>passwd</I> structure is defined in
+<I>&lt;<A HREF="file:///usr/include/pwd.h">pwd.h</A>&gt;</I>
+
+as follows:
+<P>
+<DL COMPACT><DT><DD>
+<PRE>
+struct passwd {
+      char    *pw_name;      /* user name */
+      char    *pw_passwd;    /* user password */
+      uid_t   pw_uid;        /* user id */
+      gid_t   pw_gid;        /* group id */
+      char    *pw_gecos;     /* real name */
+      char    *pw_dir;       /* home directory */
+      char    *pw_shell;     /* shell program */
+};
+</PRE>
+
+</DL>
+
+<P>
+The non-reentrant functions return a pointer to static storage,
+where this static storage contains further pointers to user
+name, password, gecos field, home directory and shell.
+The reentrant functions described here return all of that in
+caller-provided buffers. First of all there is the buffer
+<I>pwbuf</I>
+
+that can hold a struct passwd. And next the buffer
+<I>buf</I>
+
+of size
+<I>buflen</I>
+
+that can hold additional strings.
+The result of these functions, the struct passwd read from the stream,
+is stored in the provided buffer
+*<I>pwbuf</I>,
+
+and a pointer to this struct passwd is returned in
+*<I>pwbufp</I>.
+
+<A NAME="lbAE">&nbsp;</A>
+<H2>RETURN VALUE</H2>
+
+On success, these functions return 0 and
+*<I>pwbufp</I>
+
+is a pointer to the struct passwd.
+On error, these functions return an error value and
+*<I>pwbufp</I>
+
+is NULL.
+<A NAME="lbAF">&nbsp;</A>
+<H2>ERRORS</H2>
+
+<DL COMPACT>
+<DT><B>ENOENT</B>
+
+<DD>
+No more entries.
+<DT><B>ERANGE</B>
+
+<DD>
+Insufficient buffer space supplied. Try again with larger buffer.
+</DL>
+<A NAME="lbAG">&nbsp;</A>
+<H2>EXAMPLE</H2>
+
+<PRE>
+#define _GNU_SOURCE
+#include &lt;<A HREF="file:///usr/include/pwd.h">pwd.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;
+#define BUFLEN 4096
+
+int main() {
+      struct passwd pw, *pwp;
+      char buf[BUFLEN];
+      int i;
+
+      setpwent();
+      while (1) {
+            i = getpwent_r(&amp;pw, buf, BUFLEN, &amp;pwp);
+            if (i)
+                  break;
+            printf(&quot;%s (%d)\tHOME %s\tSHELL %s\n&quot;,
+                  pwp-&gt;pw_name, pwp-&gt;pw_uid,
+                  pwp-&gt;pw_dir, pwp-&gt;pw_shell);
+      }
+      endpwent();
+      return 0;
+}
+</PRE>
+
+
+
+
+
+
+
+
+
+
+<A NAME="lbAH">&nbsp;</A>
+<H2>CONFORMING TO</H2>
+
+These functions are GNU extensions, done in a style resembling
+the POSIX version of functions like
+<B><A HREF="../man3/getpwnam_r.3.html">getpwnam_r</A></B>(3).
+
+Other systems use prototype
+<P>
+<PRE>
+struct passwd *
+getpwent_r(struct passwd *pwd, char *buf, int buflen);
+</PRE>
+
+<P>
+or, better,
+<P>
+<PRE>
+int
+getpwent_r(struct passwd *pwd, char *buf, int buflen,
+           FILE **pw_fp);
+</PRE>
+
+<P>
+<A NAME="lbAI">&nbsp;</A>
+<H2>NOTES</H2>
+
+The function
+<B>getpwent_r()</B>
+
+is not really reentrant since it shares the reading position
+in the stream with all other threads.
+<A NAME="lbAJ">&nbsp;</A>
+<H2>SEE ALSO</H2>
+
+<B><A HREF="../man3/fgetpwent.3.html">fgetpwent</A></B>(3),
+
+<B><A HREF="../man3/getpw.3.html">getpw</A></B>(3),
+
+<B><A HREF="../man3/getpwent.3.html">getpwent</A></B>(3),
+
+<B><A HREF="../man3/getpwnam.3.html">getpwnam</A></B>(3),
+
+<B><A HREF="../man3/getpwuid.3.html">getpwuid</A></B>(3),
+
+<B><A HREF="../man3/putpwent.3.html">putpwent</A></B>(3),
+
+<B><A HREF="../man5/passwd.5.html">passwd</A></B>(5)
+
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">NAME</A><DD>
+<DT><A HREF="#lbAC">SYNOPSIS</A><DD>
+<DT><A HREF="#lbAD">DESCRIPTION</A><DD>
+<DT><A HREF="#lbAE">RETURN VALUE</A><DD>
+<DT><A HREF="#lbAF">ERRORS</A><DD>
+<DT><A HREF="#lbAG">EXAMPLE</A><DD>
+<DT><A HREF="#lbAH">CONFORMING TO</A><DD>
+<DT><A HREF="#lbAI">NOTES</A><DD>
+<DT><A HREF="#lbAJ">SEE ALSO</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
+using the manual pages.<BR>
+Time: 02:10:39 GMT, April 20, 2020
+</BODY>
+</HTML>

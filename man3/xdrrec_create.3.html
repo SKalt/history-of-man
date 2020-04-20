@@ -1,0 +1,1121 @@
+<!--
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of XDR</TITLE>
+</HEAD><BODY>
+<H1>XDR</H1>
+Section: C Library Functions (3)<BR>Updated: 1988-02-16<BR><A HREF="#index">Index</A>
+<A HREF="../index.html">Return to Main Contents</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>NAME</H2>
+
+xdr - library routines for external data representation
+<A NAME="lbAC">&nbsp;</A>
+<H2>SYNOPSIS AND DESCRIPTION</H2>
+
+<P>
+
+These routines allow C programmers to describe
+arbitrary data structures in a machine-independent fashion.
+Data for remote procedure calls are transmitted using these
+routines.
+<P>
+
+<B>
+</B><PRE>
+
+xdr_array(xdrs, arrp, sizep, maxsize, elsize, elproc)
+<FONT SIZE="-1">XDR</FONT> *xdrs;
+char **arrp;
+u_int *sizep, maxsize, elsize;
+xdrproc_t elproc;
+</PRE>
+
+
+<DL COMPACT>
+<DT><DD>
+A filter primitive that translates between variable-length
+arrays
+and their corresponding external representations. The
+parameter
+<I>arrp</I>
+
+is the address of the pointer to the array, while
+<I>sizep</I>
+
+is the address of the element count of the array;
+this element count cannot exceed
+<I>maxsize</I>.
+
+The parameter
+<I>elsize</I>
+
+is the
+<I>sizeof</I>
+
+each of the array's elements, and
+<I>elproc</I>
+
+is an
+<FONT SIZE="-1">XDR</FONT>
+filter that translates between
+the array elements' C form, and their external
+representation.
+This routine returns one if it succeeds, zero otherwise.
+<BR>
+
+
+</DL>
+<P>
+
+<B>
+</B><PRE>
+
+xdr_bool(xdrs, bp)
+<FONT SIZE="-1">XDR</FONT> *xdrs;
+bool_t *bp;
+</PRE>
+
+
+<DL COMPACT>
+<DT><DD>
+A filter primitive that translates between booleans (C
+integers)
+and their external representations. When encoding data, this
+filter produces values of either one or zero.
+This routine returns one if it succeeds, zero otherwise.
+<BR>
+
+
+</DL>
+<P>
+
+<B>
+</B><PRE>
+
+xdr_bytes(xdrs, sp, sizep, maxsize)
+<FONT SIZE="-1">XDR</FONT> *xdrs;
+char **sp;
+u_int *sizep, maxsize;
+</PRE>
+
+
+<DL COMPACT>
+<DT><DD>
+A filter primitive that translates between counted byte
+strings and their external representations.
+The parameter
+<I>sp</I>
+
+is the address of the string pointer. The length of the
+string is located at address
+<I>sizep</I>;
+
+strings cannot be longer than
+<I>maxsize</I>.
+
+This routine returns one if it succeeds, zero otherwise.
+<BR>
+
+
+</DL>
+<P>
+
+<B>
+</B><PRE>
+
+xdr_char(xdrs, cp)
+<FONT SIZE="-1">XDR</FONT> *xdrs;
+char *cp;
+</PRE>
+
+
+<DL COMPACT>
+<DT><DD>
+A filter primitive that translates between C characters
+and their external representations.
+This routine returns one if it succeeds, zero otherwise.
+Note: encoded characters are not packed, and occupy 4 bytes
+each. For arrays of characters, it is worthwhile to
+consider
+<B>xdr_bytes()</B>,
+
+<B>xdr_opaque()</B>
+
+or
+<B>xdr_string()</B>.
+
+<BR>
+
+
+</DL>
+<P>
+
+<B>
+</B><PRE>
+
+void
+xdr_destroy(xdrs)
+<FONT SIZE="-1">XDR</FONT> *xdrs;
+</PRE>
+
+
+<DL COMPACT>
+<DT><DD>
+A macro that invokes the destroy routine associated with the
+<FONT SIZE="-1">XDR</FONT>
+stream,
+<I>xdrs</I>.
+
+Destruction usually involves freeing private data structures
+associated with the stream.  Using
+<I>xdrs</I>
+
+after invoking
+<B>xdr_destroy()</B>
+
+is undefined.
+<BR>
+
+
+</DL>
+<P>
+
+<B>
+</B><PRE>
+
+xdr_double(xdrs, dp)
+<FONT SIZE="-1">XDR</FONT> *xdrs;
+double *dp;
+</PRE>
+
+
+<DL COMPACT>
+<DT><DD>
+A filter primitive that translates between C
+<B>double</B>
+
+precision numbers and their external representations.
+This routine returns one if it succeeds, zero otherwise.
+<BR>
+
+
+</DL>
+<P>
+
+<B>
+</B><PRE>
+
+xdr_enum(xdrs, ep)
+<FONT SIZE="-1">XDR</FONT> *xdrs;
+enum_t *ep;
+</PRE>
+
+
+<DL COMPACT>
+<DT><DD>
+A filter primitive that translates between C
+<B>enum</B>s
+
+(actually integers) and their external representations.
+This routine returns one if it succeeds, zero otherwise.
+<BR>
+
+
+</DL>
+<P>
+
+<B>
+</B><PRE>
+
+xdr_float(xdrs, fp)
+<FONT SIZE="-1">XDR</FONT> *xdrs;
+float *fp;
+</PRE>
+
+
+<DL COMPACT>
+<DT><DD>
+A filter primitive that translates between C
+<B>float</B>s
+
+and their external representations.
+This routine returns one if it succeeds, zero otherwise.
+<BR>
+
+
+</DL>
+<P>
+
+<B>
+</B><PRE>
+
+void
+xdr_free(proc, objp)
+xdrproc_t proc;
+char *objp;
+</PRE>
+
+
+<DL COMPACT>
+<DT><DD>
+Generic freeing routine. The first argument is the
+<FONT SIZE="-1">XDR</FONT>
+routine for the object being freed. The second argument
+is a pointer to the object itself. Note: the pointer passed
+to this routine is
+<I>not</I>
+
+freed, but what it points to
+<I>is</I>
+
+freed (recursively).
+<BR>
+
+
+</DL>
+<P>
+
+<B>
+</B><PRE>
+
+u_int
+xdr_getpos(xdrs)
+<FONT SIZE="-1">XDR</FONT> *xdrs;
+</PRE>
+
+
+<DL COMPACT>
+<DT><DD>
+A macro that invokes the get-position routine
+associated with the
+<FONT SIZE="-1">XDR</FONT>
+stream,
+<I>xdrs</I>.
+
+The routine returns an unsigned integer,
+which indicates the position of the
+<FONT SIZE="-1">XDR</FONT>
+byte stream.
+A desirable feature of
+<FONT SIZE="-1">XDR</FONT>
+streams is that simple arithmetic works with this number,
+although the
+<FONT SIZE="-1">XDR</FONT>
+stream instances need not guarantee this.
+<BR>
+
+
+</DL>
+<P>
+
+<B>
+</B><PRE>
+
+<BR>
+long *
+xdr_inline(xdrs, len)
+<FONT SIZE="-1">XDR</FONT> *xdrs;
+int len;
+</PRE>
+
+
+<DL COMPACT>
+<DT><DD>
+A macro that invokes the in-line routine associated with the
+<FONT SIZE="-1">XDR</FONT>
+stream,
+<I>xdrs</I>.
+
+The routine returns a pointer
+to a contiguous piece of the stream's buffer;
+<I>len</I>
+
+is the byte length of the desired buffer.
+Note: pointer is cast to
+<B>long *</B>.
+
+<DT><DD>
+Warning:
+<B>xdr_inline()</B>
+
+may return
+<FONT SIZE="-1">NULL</FONT>
+(0)
+if it cannot allocate a contiguous piece of a buffer.
+Therefore the behavior may vary among stream instances;
+it exists for the sake of efficiency.
+<BR>
+
+
+</DL>
+<P>
+
+<B>
+</B><PRE>
+
+xdr_int(xdrs, ip)
+<FONT SIZE="-1">XDR</FONT> *xdrs;
+int *ip;
+</PRE>
+
+
+<DL COMPACT>
+<DT><DD>
+A filter primitive that translates between C integers
+and their external representations.
+This routine returns one if it succeeds, zero otherwise.
+<BR>
+
+
+</DL>
+<P>
+
+<B>
+</B><PRE>
+
+xdr_long(xdrs, lp)
+<FONT SIZE="-1">XDR</FONT> *xdrs;
+long *lp;
+</PRE>
+
+
+<DL COMPACT>
+<DT><DD>
+A filter primitive that translates between C
+<B>long</B>
+
+integers and their external representations.
+This routine returns one if it succeeds, zero otherwise.
+<BR>
+
+
+</DL>
+<P>
+
+<B>
+</B><PRE>
+
+void
+xdrmem_create(xdrs, addr, size, op)
+<FONT SIZE="-1">XDR</FONT> *xdrs;
+char *addr;
+u_int size;
+enum xdr_op op;
+</PRE>
+
+
+<DL COMPACT>
+<DT><DD>
+This routine initializes the
+<FONT SIZE="-1">XDR</FONT>
+stream object pointed to by
+<I>xdrs</I>.
+
+The stream's data is written to, or read from,
+a chunk of memory at location
+<I>addr</I>
+
+whose length is no more than
+<I>size</I>
+
+bytes long.  The
+<I>op</I>
+
+determines the direction of the
+<FONT SIZE="-1">XDR</FONT>
+stream
+(either
+<B></B><FONT SIZE="-1"><B>XDR_ENCODE</B></FONT><B></B>,
+
+<B></B><FONT SIZE="-1"><B>XDR_DECODE</B></FONT><B></B>,
+
+or
+<B></B><FONT SIZE="-1"><B>XDR_FREE</B></FONT><B></B>).
+
+<BR>
+
+
+</DL>
+<P>
+
+<B>
+</B><PRE>
+
+xdr_opaque(xdrs, cp, cnt)
+<FONT SIZE="-1">XDR</FONT> *xdrs;
+char *cp;
+u_int cnt;
+</PRE>
+
+
+<DL COMPACT>
+<DT><DD>
+A filter primitive that translates between fixed size opaque data
+and its external representation.
+The parameter
+<I>cp</I>
+
+is the address of the opaque object, and
+<I>cnt</I>
+
+is its size in bytes.
+This routine returns one if it succeeds, zero otherwise.
+<BR>
+
+
+</DL>
+<P>
+
+<B>
+</B><PRE>
+
+xdr_pointer(xdrs, objpp, objsize, xdrobj)
+<FONT SIZE="-1">XDR</FONT> *xdrs;
+char **objpp;
+u_int objsize;
+xdrproc_t xdrobj;
+</PRE>
+
+
+<DL COMPACT>
+<DT><DD>
+Like
+<B>xdr_reference()</B>
+
+except that it serializes
+<FONT SIZE="-1">NULL</FONT>
+pointers, whereas
+<B>xdr_reference()</B>
+
+does not.  Thus,
+<B>xdr_pointer()</B>
+
+can represent
+recursive data structures, such as binary trees or
+linked lists.
+<BR>
+
+
+</DL>
+<P>
+
+<B>
+</B><PRE>
+
+void
+xdrrec_create(xdrs, sendsize, recvsize, handle, readit, writeit)
+<FONT SIZE="-1">XDR</FONT> *xdrs;
+u_int sendsize, recvsize;
+char *handle;
+int (*readit) (), (*writeit) ();
+</PRE>
+
+
+<DL COMPACT>
+<DT><DD>
+This routine initializes the
+<FONT SIZE="-1">XDR</FONT>
+stream object pointed to by
+<I>xdrs</I>.
+
+The stream's data is written to a buffer of size
+<I>sendsize</I>;
+
+a value of zero indicates the system should use a suitable
+default. The stream's data is read from a buffer of size
+<I>recvsize</I>;
+
+it too can be set to a suitable default by passing a zero
+value.
+When a stream's output buffer is full,
+<I>writeit</I>
+
+is called.  Similarly, when a stream's input buffer is empty,
+<I>readit</I>
+
+is called.  The behavior of these two routines is similar to
+the
+system calls
+<B>read</B>
+
+and
+<B>write</B>,
+
+except that
+<I>handle</I>
+
+is passed to the former routines as the first parameter.
+Note: the
+<FONT SIZE="-1">XDR</FONT>
+stream's
+<I>op</I>
+
+field must be set by the caller.
+<DT><DD>
+Warning: this
+<FONT SIZE="-1">XDR</FONT>
+stream implements an intermediate record stream.
+Therefore there are additional bytes in the stream
+to provide record boundary information.
+<BR>
+
+
+</DL>
+<P>
+
+<B>
+</B><PRE>
+
+xdrrec_endofrecord(xdrs, sendnow)
+<FONT SIZE="-1">XDR</FONT> *xdrs;
+int sendnow;
+</PRE>
+
+
+<DL COMPACT>
+<DT><DD>
+This routine can be invoked only on
+streams created by
+<B>xdrrec_create()</B>.
+
+The data in the output buffer is marked as a completed
+record,
+and the output buffer is optionally written out if
+<I>sendnow</I>
+
+is non-zero. This routine returns one if it succeeds, zero
+otherwise.
+<BR>
+
+
+</DL>
+<P>
+
+<B>
+</B><PRE>
+
+xdrrec_eof(xdrs)
+<FONT SIZE="-1">XDR</FONT> *xdrs;
+int empty;
+</PRE>
+
+
+<DL COMPACT>
+<DT><DD>
+This routine can be invoked only on
+streams created by
+<B>xdrrec_create()</B>.
+
+After consuming the rest of the current record in the stream,
+this routine returns one if the stream has no more input,
+zero otherwise.
+<BR>
+
+
+</DL>
+<P>
+
+<B>
+</B><PRE>
+
+xdrrec_skiprecord(xdrs)
+<FONT SIZE="-1">XDR</FONT> *xdrs;
+</PRE>
+
+
+<DL COMPACT>
+<DT><DD>
+This routine can be invoked only on
+streams created by
+<B>xdrrec_create()</B>.
+
+It tells the
+<FONT SIZE="-1">XDR</FONT>
+implementation that the rest of the current record
+in the stream's input buffer should be discarded.
+This routine returns one if it succeeds, zero otherwise.
+<BR>
+
+
+</DL>
+<P>
+
+<B>
+</B><PRE>
+
+xdr_reference(xdrs, pp, size, proc)
+<FONT SIZE="-1">XDR</FONT> *xdrs;
+char **pp;
+u_int size;
+xdrproc_t proc;
+</PRE>
+
+
+<DL COMPACT>
+<DT><DD>
+A primitive that provides pointer chasing within structures.
+The parameter
+<I>pp</I>
+
+is the address of the pointer;
+<I>size</I>
+
+is the
+<I>sizeof</I>
+
+the structure that
+<I>*pp</I>
+
+points to; and
+<I>proc</I>
+
+is an
+<FONT SIZE="-1">XDR</FONT>
+procedure that filters the structure
+between its C form and its external representation.
+This routine returns one if it succeeds, zero otherwise.
+<DT><DD>
+Warning: this routine does not understand
+<FONT SIZE="-1">NULL</FONT>
+pointers. Use
+<B>xdr_pointer()</B>
+
+instead.
+<BR>
+
+
+</DL>
+<P>
+
+<B>
+</B><PRE>
+
+xdr_setpos(xdrs, pos)
+<FONT SIZE="-1">XDR</FONT> *xdrs;
+u_int pos;
+</PRE>
+
+
+<DL COMPACT>
+<DT><DD>
+A macro that invokes the set position routine associated with
+the
+<FONT SIZE="-1">XDR</FONT>
+stream
+<I>xdrs</I>.
+
+The parameter
+<I>pos</I>
+
+is a position value obtained from
+<B>xdr_getpos()</B>.
+
+This routine returns one if the
+<FONT SIZE="-1">XDR</FONT>
+stream could be repositioned,
+and zero otherwise.
+<DT><DD>
+Warning: it is difficult to reposition some types of
+<FONT SIZE="-1">XDR</FONT>
+streams, so this routine may fail with one
+type of stream and succeed with another.
+<BR>
+
+
+</DL>
+<P>
+
+<B>
+</B><PRE>
+
+xdr_short(xdrs, sp)
+<FONT SIZE="-1">XDR</FONT> *xdrs;
+short *sp;
+</PRE>
+
+
+<DL COMPACT>
+<DT><DD>
+A filter primitive that translates between C
+<B>short</B>
+
+integers and their external representations.
+This routine returns one if it succeeds, zero otherwise.
+<BR>
+
+
+</DL>
+<P>
+
+<B>
+</B><PRE>
+
+void
+xdrstdio_create(xdrs, file, op)
+<FONT SIZE="-1">XDR</FONT> *xdrs;
+<FONT SIZE="-1">FILE</FONT> *file;
+enum xdr_op op;
+</PRE>
+
+
+<DL COMPACT>
+<DT><DD>
+This routine initializes the
+<FONT SIZE="-1">XDR</FONT>
+stream object pointed to by
+<I>xdrs</I>.
+
+The
+<FONT SIZE="-1">XDR</FONT>
+stream data is written to, or read from, the Standard
+<B>I/O</B>
+
+stream
+<I>file</I>.
+
+The parameter
+<I>op</I>
+
+determines the direction of the
+<FONT SIZE="-1">XDR</FONT>
+stream (either
+<B></B><FONT SIZE="-1"><B>XDR_ENCODE</B></FONT><B></B>,
+
+<B></B><FONT SIZE="-1"><B>XDR_DECODE</B></FONT><B></B>,
+
+or
+<B></B><FONT SIZE="-1"><B>XDR_FREE</B></FONT><B></B>).
+
+<DT><DD>
+Warning: the destroy routine associated with such
+<FONT SIZE="-1">XDR</FONT>
+streams calls
+<B>fflush()</B>
+
+on the
+<I>file</I>
+
+stream, but never
+<B>fclose()</B>.
+
+<BR>
+
+
+</DL>
+<P>
+
+<B>
+</B><PRE>
+
+xdr_string(xdrs, sp, maxsize)
+<FONT SIZE="-1">XDR</FONT>
+*xdrs;
+char **sp;
+u_int maxsize;
+</PRE>
+
+
+<DL COMPACT>
+<DT><DD>
+A filter primitive that translates between C strings and
+their
+corresponding external representations.
+Strings cannot be longer than
+<I>maxsize</I>.
+
+Note: 
+<I>sp</I>
+
+is the address of the string's pointer.
+This routine returns one if it succeeds, zero otherwise.
+<BR>
+
+
+</DL>
+<P>
+
+<B>
+</B><PRE>
+
+xdr_u_char(xdrs, ucp)
+<FONT SIZE="-1">XDR</FONT> *xdrs;
+unsigned char *ucp;
+</PRE>
+
+
+<DL COMPACT>
+<DT><DD>
+A filter primitive that translates between
+<B>unsigned</B>
+
+C characters and their external representations.
+This routine returns one if it succeeds, zero otherwise.
+<BR>
+
+
+</DL>
+<P>
+
+<B>
+</B><PRE>
+
+xdr_u_int(xdrs, up)
+<FONT SIZE="-1">XDR</FONT> *xdrs;
+unsigned *up;
+</PRE>
+
+
+<DL COMPACT>
+<DT><DD>
+A filter primitive that translates between C
+<B>unsigned</B>
+
+integers and their external representations.
+This routine returns one if it succeeds, zero otherwise.
+<BR>
+
+
+</DL>
+<P>
+
+<B>
+</B><PRE>
+
+xdr_u_long(xdrs, ulp)
+<FONT SIZE="-1">XDR</FONT> *xdrs;
+unsigned long *ulp;
+</PRE>
+
+
+<DL COMPACT>
+<DT><DD>
+A filter primitive that translates between C
+<B>unsigned long</B>
+
+integers and their external representations.
+This routine returns one if it succeeds, zero otherwise.
+<BR>
+
+
+</DL>
+<P>
+
+<B>
+</B><PRE>
+
+xdr_u_short(xdrs, usp)
+<FONT SIZE="-1">XDR</FONT> *xdrs;
+unsigned short *usp;
+</PRE>
+
+
+<DL COMPACT>
+<DT><DD>
+A filter primitive that translates between C
+<B>unsigned short</B>
+
+integers and their external representations.
+This routine returns one if it succeeds, zero otherwise.
+<BR>
+
+
+</DL>
+<P>
+
+<B>
+</B><PRE>
+
+xdr_union(xdrs, dscmp, unp, choices, dfault)
+<FONT SIZE="-1">XDR</FONT> *xdrs;
+int *dscmp;
+char *unp;
+struct xdr_discrim *choices;
+bool_t (*defaultarm) ();  /* may equal <FONT SIZE="-1">NULL</FONT> */
+</PRE>
+
+
+<DL COMPACT>
+<DT><DD>
+A filter primitive that translates between a discriminated C
+<B>union</B>
+
+and its corresponding external representation. It first
+translates the discriminant of the union located at
+<I>dscmp</I>.
+
+This discriminant is always an
+<B>enum_t</B>.
+
+Next the union located at
+<I>unp</I>
+
+is translated.  The parameter
+<I>choices</I>
+
+is a pointer to an array of
+<B>xdr_discrim()</B>
+
+structures. Each structure contains an ordered pair of
+[<I>value</I>,<I>proc</I>].
+
+If the union's discriminant is equal to the associated
+<I>value</I>,
+
+then the
+<I>proc</I>
+
+is called to translate the union.  The end of the
+<B>xdr_discrim()</B>
+
+structure array is denoted by a routine of value
+<FONT SIZE="-1">NULL</FONT>.
+If the discriminant is not found in the
+<I>choices</I>
+
+array, then the
+<I>defaultarm</I>
+
+procedure is called (if it is not
+<FONT SIZE="-1">NULL</FONT>).
+Returns one if it succeeds, zero otherwise.
+<BR>
+
+
+</DL>
+<P>
+
+<B>
+</B><PRE>
+
+xdr_vector(xdrs, arrp, size, elsize, elproc)
+<FONT SIZE="-1">XDR</FONT> *xdrs;
+char *arrp;
+u_int size, elsize;
+xdrproc_t elproc;
+</PRE>
+
+
+<DL COMPACT>
+<DT><DD>
+A filter primitive that translates between fixed-length
+arrays
+and their corresponding external representations.  The
+parameter
+<I>arrp</I>
+
+is the address of the pointer to the array, while
+<I>size</I>
+
+is is the element count of the array.  The parameter
+<I>elsize</I>
+
+is the
+<I>sizeof</I>
+
+each of the array's elements, and
+<I>elproc</I>
+
+is an
+<FONT SIZE="-1">XDR</FONT>
+filter that translates between
+the array elements' C form, and their external
+representation.
+This routine returns one if it succeeds, zero otherwise.
+<BR>
+
+
+</DL>
+<P>
+
+<B>
+</B><PRE>
+
+xdr_void()
+</PRE>
+
+
+<DL COMPACT>
+<DT><DD>
+This routine always returns one.
+It may be passed to
+<FONT SIZE="-1">RPC</FONT>
+routines that require a function parameter,
+where nothing is to be done.
+<BR>
+
+
+</DL>
+<P>
+
+<B>
+</B><PRE>
+
+xdr_wrapstring(xdrs, sp)
+<FONT SIZE="-1">XDR</FONT> *xdrs;
+char **sp;
+</PRE>
+
+
+<DL COMPACT>
+<DT><DD>
+A primitive that calls
+<B>xdr_string(xdrs, sp,</B><FONT SIZE="-1"><B>MAXUN.UNSIGNED</B></FONT><B> );</B>
+
+where
+<B></B><FONT SIZE="-1"><B>MAXUN.UNSIGNED</B></FONT><B>
+</B>
+
+is the maximum value of an unsigned integer.
+<B>xdr_wrapstring()</B>
+
+is handy because the
+<FONT SIZE="-1">RPC</FONT>
+package passes a maximum of two
+<FONT SIZE="-1">XDR</FONT>
+routines as parameters, and
+<B>xdr_string()</B>,
+
+one of the most frequently used primitives, requires three.
+Returns one if it succeeds, zero otherwise.
+</DL>
+<A NAME="lbAD">&nbsp;</A>
+<H2>SEE ALSO</H2>
+
+<B><A HREF="../man3/rpc.3.html">rpc</A></B>(3)
+
+<P>
+
+The following manuals:
+<DL COMPACT><DT><DD>
+<I>
+eXternal Data Representation Standard: Protocol Specification
+<BR>
+
+eXternal Data Representation: Sun Technical Notes
+</I>
+<BR>
+
+<I></I><FONT SIZE="-1"><I>XDR</I></FONT><I>: External Data Representation Standard</I>,
+
+<FONT SIZE="-1">RFC1014, Sun Microsystems, Inc.,</FONT>
+<FONT SIZE="-1">USC-ISI</FONT>.
+
+<P>
+</DL>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">NAME</A><DD>
+<DT><A HREF="#lbAC">SYNOPSIS AND DESCRIPTION</A><DD>
+<DT><A HREF="#lbAD">SEE ALSO</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
+using the manual pages.<BR>
+Time: 02:11:19 GMT, April 20, 2020
+</BODY>
+</HTML>

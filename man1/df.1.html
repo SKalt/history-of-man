@@ -1,0 +1,310 @@
+<!--
+Copyright Andries Brouwer, Ragnar Hojland Espinosa and A. Wik, 1998.
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of DF</TITLE>
+</HEAD><BODY>
+<H1>DF</H1>
+Section: User Commands  (1)<BR>Updated: 1998-11<BR><A HREF="#index">Index</A>
+<A HREF="../index.html">Return to Main Contents</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>NAME</H2>
+
+df - report filesystem disk space usage
+<A NAME="lbAC">&nbsp;</A>
+<H2>SYNOPSIS</H2>
+
+<B>df [</B><I>options</I><B>] [</B><I>file...</I><B>]</B>
+
+<P>
+POSIX options:
+<B>[-kP] [--]</B>
+
+<P>
+GNU options (shortest form):
+<B>[-ahHiklmPv]</B>
+
+<B>[-t </B><I>fstype</I><B>]</B>
+
+<B>[-x </B><I>fstype</I><B>]</B>
+
+<B>[--block-size=</B><I>size</I><B>]</B>
+
+<B>[--print-type]</B>
+
+<B>[--no-sync]</B>
+
+<B>[--sync]</B>
+
+<B>[--help] [--version] [--]</B>
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>DESCRIPTION</H2>
+
+<B>df</B>
+
+reports the amount of disk space used and available on
+filesystems.
+<P>
+
+With no arguments,
+<B>df</B>
+
+reports the space used and available on all
+currently mounted filesystems (of all types).
+Otherwise,
+<B>df</B>
+
+reports on the filesystem containing each argument
+<I>file</I>.
+
+<A NAME="lbAE">&nbsp;</A>
+<H2>POSIX DETAILS</H2>
+
+The output is in 512-byte units by default, but in
+1024-byte units when the -k option is given.
+The output format is undefined, unless the -P option is given.
+If
+<I>file</I>
+
+is not a regular file, a directory or a FIFO, the result
+is unspecified.
+<A NAME="lbAF">&nbsp;</A>
+<H2>GNU DETAILS</H2>
+
+The output is in 1024-byte units (when no units are
+specified by options), unless the environment variable
+<B>POSIXLY_CORRECT</B>
+
+is set, in which case POSIX is followed.
+<P>
+
+If an argument
+<I>file</I>
+
+is a disk device file containing a mounted filesystem,
+<B>df</B>
+
+shows the space available on that filesystem rather
+than on the filesystem containing the device node.
+<A NAME="lbAG">&nbsp;</A>
+<H2>POSIX OPTIONS</H2>
+
+<DL COMPACT>
+<DT><B>-k</B>
+
+<DD>
+Use 1024-byte units instead of the default 512-byte units.
+<DT><B>-P</B>
+
+<DD>
+Output in six columns, with heading `Filesystem N-blocks
+Used Available Capacity Mounted on' (with N=512, but N=1024
+when the -k option is given).
+<DT><B>--</B>
+
+<DD>
+Terminate option list.
+</DL>
+<A NAME="lbAH">&nbsp;</A>
+<H2>GNU OPTIONS</H2>
+
+<DL COMPACT>
+<DT><B>-a, --all</B>
+
+<DD>
+Include in the listing filesystems that have a size of 0 blocks,
+which are omitted by default.  Such filesystems are typically
+special-purpose pseudo-filesystems, such as automounter entries.
+Also, filesystems of type &quot;ignore&quot; or &quot;auto&quot;, supported by some
+operating systems, are only included if this option is specified.
+<DT><B>--block-size=</B><I>size</I>
+
+<DD>
+Print sizes in blocks of
+<I>size</I>
+
+bytes. (New but broken in fileutils-4.0.)
+<DT><B>-h, --human-readable</B>
+
+<DD>
+Append a size letter such as
+<B>M</B>
+
+for binary megabytes (`mebibytes') to each size.
+<DT><B>-H, --si</B>
+
+<DD>
+Do the same as for
+<B>-h</B>,
+
+but use the official SI units (with powers of 1000 instead of 1024,
+so that M stands for 1000000 instead of 1048576).
+(New in fileutils-4.0.)
+<DT><B>-i, --inodes</B>
+
+<DD>
+List inode usage information instead of block usage.  An inode
+(short for index node) contains information about a file such
+as its owner, permissions, timestamps, and location on the disk.
+<DT><B>-k, --kilobytes</B>
+
+<DD>
+Print sizes in 1024-byte blocks.
+<DT><B>-l, --local</B>
+
+<DD>
+Limit the output to local filesystems only.
+(New in fileutils-4.0.)
+<DT><B>-m, --megabytes</B>
+
+<DD>
+Print sizes in binary megabyte (that's 1048576 bytes) blocks.
+Note that the four options -h, -H, -k, -m are mutually exclusive
+and only the last one is effective; for example, it is not the case
+that giving both the --si and -m options would result in output
+in (actual, 1000000-byte) megabytes. [The interpretation of blocksizes
+is also influenced by the environment variable BLOCK_SIZE, but this
+does not work in the fileutils-4.0 version.]
+<DT><B>--no-sync</B>
+
+<DD>
+Do not invoke the
+<B>sync</B>
+
+system call before getting any usage data.
+This may make
+<B>df</B>
+
+run significantly faster, but on some systems (notably SunOS)
+the results may be slightly out of date.  This is the default.
+<DT><B>-P, --portability</B>
+
+<DD>
+Use the
+<FONT SIZE="-1">POSIX</FONT>
+output format.  This is like the default format
+except that the information about each filesystem is always
+printed on exactly one line; a mount device is never put on a line
+by itself.  This means that if the mount device name is more than
+20 characters long (e.g., for some network mounts), the columns
+are misaligned.
+<DT><B>--sync</B>
+
+<DD>
+Invoke the
+<B>sync</B>
+
+system call before getting any usage data.  On some systems 
+(notably SunOS), doing this yields more up to date results,
+but in general this option makes
+<B>df</B>
+
+much slower, especially when there are many or very busy filesystems.
+<DT><B>-t </B><I>fstype, </I><B>--type=</B><I>fstype</I>
+
+<DD>
+Limit the listing to filesystems of type
+<I>fstype</I>.
+
+Multiple filesystem types can be specified by giving multiple
+<B>-t</B>
+
+options. By default, nothing is omitted.
+<DT><B>-T, --print-type</B>
+
+<DD>
+Print each filesystem's type.
+The types given are those reported by the system
+(and are found in a system-dependent way, for example by reading
+<I>/etc/mtab</I>).
+
+See also
+<B><A HREF="../man8/mount.8.html">mount</A></B>(8).
+
+<DT><B>-x </B><I>fstype, </I><B>--exclude-type=</B><I>fstype</I>
+
+<DD>
+Limit the listing to filesystems not of type
+<I>fstype.</I>
+
+Multiple filesystem types can be eliminated by giving multiple
+<B>-x</B>
+
+options.  By default, no filesystem types are omitted.
+<DT><B>-v</B>
+
+<DD>
+Ignored; for compatibility with System V versions of
+<B>df.</B>
+
+</DL>
+<A NAME="lbAI">&nbsp;</A>
+<H2>GNU STANDARD OPTIONS</H2>
+
+<DL COMPACT>
+<DT><B>--help</B>
+
+<DD>
+Print a usage message on standard output and exit successfully.
+<DT><B>--version</B>
+
+<DD>
+Print version information on standard output, then exit successfully.
+<DT><B>--</B>
+
+<DD>
+Terminate option list.
+</DL>
+<A NAME="lbAJ">&nbsp;</A>
+<H2>ENVIRONMENT</H2>
+
+The variable POSIXLY_CORRECT determines the choice of unit.
+If it is not set, and the variable BLOCKSIZE has a value starting
+with `HUMAN', then behaviour is as for the -h option,
+unless overridden by -k or -m options.
+The variables LANG, LC_ALL, LC_CTYPE and LC_MESSAGES have the
+usual meaning.
+<A NAME="lbAK">&nbsp;</A>
+<H2>CONFORMING TO</H2>
+
+POSIX 1003.2
+<A NAME="lbAL">&nbsp;</A>
+<H2>SEE ALSO</H2>
+
+<B><A HREF="../man8/mount.8.html">mount</A></B>(8)
+
+<A NAME="lbAM">&nbsp;</A>
+<H2>NOTES</H2>
+
+This page describes
+<B>df</B>
+
+as found in the fileutils-4.0 package;
+other versions may differ slightly.
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">NAME</A><DD>
+<DT><A HREF="#lbAC">SYNOPSIS</A><DD>
+<DT><A HREF="#lbAD">DESCRIPTION</A><DD>
+<DT><A HREF="#lbAE">POSIX DETAILS</A><DD>
+<DT><A HREF="#lbAF">GNU DETAILS</A><DD>
+<DT><A HREF="#lbAG">POSIX OPTIONS</A><DD>
+<DT><A HREF="#lbAH">GNU OPTIONS</A><DD>
+<DT><A HREF="#lbAI">GNU STANDARD OPTIONS</A><DD>
+<DT><A HREF="#lbAJ">ENVIRONMENT</A><DD>
+<DT><A HREF="#lbAK">CONFORMING TO</A><DD>
+<DT><A HREF="#lbAL">SEE ALSO</A><DD>
+<DT><A HREF="#lbAM">NOTES</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
+using the manual pages.<BR>
+Time: 02:09:51 GMT, April 20, 2020
+</BODY>
+</HTML>

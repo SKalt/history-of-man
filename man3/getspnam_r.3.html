@@ -1,0 +1,317 @@
+<!--
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of GETSPNAM</TITLE>
+</HEAD><BODY>
+<H1>GETSPNAM</H1>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2003-11-15<BR><A HREF="#index">Index</A>
+<A HREF="../index.html">Return to Main Contents</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>NAME</H2>
+
+getspnam, getspnam_r, getspent, getspent_r, setspent, endspent,
+fgetspent, fgetspent_r, sgetspent, sgetspent_r, putspent,
+lckpwdf, ulckpwdf - get shadow password file entry
+<A NAME="lbAC">&nbsp;</A>
+<H2>SYNOPSIS</H2>
+
+<PRE>
+/* General shadow password file API */
+<BR>
+<B>#include &lt;<A HREF="file:///usr/include/shadow.h">shadow.h</A>&gt;</B>
+
+<B>struct spwd *getspnam(const char *</B><I>name</I><B>);</B>
+
+<B>struct spwd *getspent(void);</B>
+
+<B>void setspent(void);</B>
+
+<B>void endspent(void);</B>
+
+<B>struct spwd *fgetspent(FILE *</B><I>fp</I><B>);</B>
+
+<B>struct spwd *sgetspent(const char *</B><I>s</I><B>);</B>
+
+<B>int putspent(struct spwd *</B><I>p</I><B>, FILE *</B><I>fp</I><B>);</B>
+
+<B>int lckpwdf(void);</B>
+
+<B>int ulckpwdf(void);</B>
+
+/* GNU extension */
+<BR>
+<B>#define _SVID_SOURCE</B>    /* or _BSD_SOURCE */
+<BR>
+<B>#include &lt;<A HREF="file:///usr/include/shadow.h">shadow.h</A>&gt;</B>
+
+<B>int getspent_r(struct spwd *</B><I>spbuf</I><B>,</B>
+<BR>
+<B>        char *</B><I>buf</I><B>, size_t </B><I>buflen</I><B>, struct spwd **</B><I>spbufp</I><B>);</B>
+
+<B>int getspnam_r(const char *</B><I>name</I><B>, struct spwd *</B><I>spbuf</I><B>,</B>
+<BR>
+<B>        char *</B><I>buf</I><B>, size_t </B><I>buflen</I><B>, struct spwd **</B><I>spbufp</I><B>);</B>
+
+<B>int fgetspent_r(FILE *</B><I>fp</I><B>, struct spwd *</B><I>spbuf</I><B>,</B>
+<BR>
+<B>        char *</B><I>buf</I><B>, size_t </B><I>buflen</I><B>, struct spwd **</B><I>spbufp</I><B>);</B>
+
+<B>int sgetspent_r(const char *</B><I>s</I><B>, struct spwd *</B><I>spbuf</I><B>,</B>
+<BR>
+<B>        char *</B><I>buf</I><B>, size_t </B><I>buflen</I><B>, struct spwd **</B><I>spbufp</I><B>);</B>
+
+</PRE>
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>DESCRIPTION</H2>
+
+Long ago it was considered safe to have encrypted passwords openly
+visible in the password file. When computers got faster and people
+got more security-conscious, this was no longer acceptable.
+Julianne Frances Haugh implemented the shadow password suite
+that keeps the encrypted passwords in
+<I>/etc/shadow</I>,
+
+readable only by root.
+<P>
+
+The access routines described below resemble those for
+<I>/etc/passwd</I>.
+
+This shadow password setup has been superseded by PAM
+(pluggable authentication modules), and the file
+<I>/etc/nsswitch.conf</I>
+
+now describes the sources to be used.
+<P>
+
+The
+<B>getspnam()</B>
+
+function returns a pointer to a structure containing
+the broken out fields of a line from
+<I>/etc/shadow</I>
+
+for the entry that matches the user name
+<I>name</I>.
+
+<P>
+
+The
+<B>getspent()</B>
+
+function returns a pointer to the next entry in the shadow password file.
+The position in the input stream is initialized by
+<B>setspent()</B>.
+
+When done reading, the program may call
+<B>endspent()</B>
+
+so that resources can be deallocated.
+
+
+<P>
+
+The
+<B>fgetspent()</B>
+
+function is similar to
+<B>getspent()</B>
+
+but uses the supplied stream instead of the one implicitly opened by
+<B>setspent()</B>.
+
+<P>
+
+The
+<B>sgetspent()</B>
+
+function parses the supplied string
+<I>s</I>
+
+into a struct spwd.
+<P>
+
+The
+<B>putspent()</B>
+
+function writes the contents of the supplied struct spwd
+*<I>p</I>
+
+as a text line in the shadow password file format to the stream
+<I>fp</I>.
+
+String entries with value NULL and numerical entries with value -1
+are written as an empty string.
+<P>
+
+The
+<B>lckpwdf()</B>
+
+function is intended to protect against multiple access of the shadow
+password database. It tries to acquire a lock, and returns 0 on success,
+-1 on failure (lock not obtained within 15 seconds).
+The
+<B>ulckpwdf()</B>
+
+function releases the lock again.
+Note that there is no protection against direct access of the shadow
+password file. Only programs that use
+<B>lckpwdf()</B>
+
+will notice the lock.
+<P>
+
+These were the routines that formed the original shadow API.
+They are widely available.
+
+
+<A NAME="lbAE">&nbsp;</A>
+<H3>Reentrant versions</H3>
+
+Analogous to the &quot;reentrant&quot; routines for the password file, glibc
+also has reentrant versions here.
+The
+<B>getspnam_r()</B>
+
+function is like
+<B>getspnam()</B>
+
+but stores the retrieved shadow passwd structure in the space pointed to by
+<I>spbuf</I>.
+
+This shadow passwd structure contains pointers to strings, and these strings
+are stored in the buffer
+<I>buf</I>
+
+of size
+<I>buflen</I>.
+
+A pointer to the result (in case of success) or NULL (in case no entry
+was found or an error occurred) is stored in
+*<I>spbufp</I>.
+
+<P>
+
+The functions
+<B>getspent_r()</B>,
+
+<B>fgetspent_r()</B>,
+
+and
+<B>sgetspent_r()</B>
+
+are completely analogous.
+<P>
+
+Some non-glibc systems also have functions with these names,
+often with different prototypes.
+
+<A NAME="lbAF">&nbsp;</A>
+<H3>Structure</H3>
+
+The shadow passwd structure is defined in <I>&lt;<A HREF="file:///usr/include/shadow.h">shadow.h</A>&gt;</I> as follows:
+<P>
+<PRE>
+struct spwd {
+    char *sp_namp;         /* Login name */
+    char *sp_pwdp;         /* Encrypted password */
+    long sp_lstchg;        /* Date of last change */
+    long sp_min;           /* Min #days between changes */
+    long sp_max;           /* Max #days between changes */
+    long sp_warn;          /* #days before pwd expires
+                              to warn user to change it */
+    long sp_inact;         /* #days after pwd expires
+                              until account is disabled */
+    long sp_expire;        /* #days since 1970-01-01
+                              until account is disabled */
+    unsigned long sp_flag; /* Reserved */
+};
+</PRE>
+
+<A NAME="lbAG">&nbsp;</A>
+<H2>RETURN VALUE</H2>
+
+Routines return NULL if no more entries are available or if an
+error occurs during processing.
+Routines which have <B>int</B> as the return value return 0 for
+success and -1 for failure.
+<P>
+
+For the non-reentrant functions, the return value may point to static area,
+and may be overwritten by subsequent calls to these functions.
+<P>
+
+The reentrant functions return zero on success.
+In case of error, an error value is returned.
+<A NAME="lbAH">&nbsp;</A>
+<H2>ERRORS</H2>
+
+<DL COMPACT>
+<DT><B>ERANGE</B>
+
+<DD>
+Supplied buffer is too small.
+</DL>
+<A NAME="lbAI">&nbsp;</A>
+<H2>FILES</H2>
+
+<DL COMPACT>
+<DT><I>/etc/shadow</I>
+
+<DD>
+shadow password database file
+<DT><I>/etc/.pwd.lock</I>
+
+<DD>
+lock file
+</DL>
+<P>
+
+The include file
+<I>&lt;<A HREF="file:///usr/include/paths.h">paths.h</A>&gt;</I>
+
+defines the constant _PATH_SHADOW to the pathname of the shadow
+password file.
+<A NAME="lbAJ">&nbsp;</A>
+<H2>CONFORMING TO</H2>
+
+<P>
+<A NAME="lbAK">&nbsp;</A>
+<H2>SEE ALSO</H2>
+
+<B><A HREF="../man3/getgrnam.3.html">getgrnam</A></B>(3),
+
+<B><A HREF="../man3/getpwnam.3.html">getpwnam</A></B>(3),
+
+<B><A HREF="../man3/getpwnam_r.3.html">getpwnam_r</A></B>(3),
+
+<B><A HREF="../man5/shadow.5.html">shadow</A></B>(5)
+
+
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">NAME</A><DD>
+<DT><A HREF="#lbAC">SYNOPSIS</A><DD>
+<DT><A HREF="#lbAD">DESCRIPTION</A><DD>
+<DL>
+<DT><A HREF="#lbAE">Reentrant versions</A><DD>
+<DT><A HREF="#lbAF">Structure</A><DD>
+</DL>
+<DT><A HREF="#lbAG">RETURN VALUE</A><DD>
+<DT><A HREF="#lbAH">ERRORS</A><DD>
+<DT><A HREF="#lbAI">FILES</A><DD>
+<DT><A HREF="#lbAJ">CONFORMING TO</A><DD>
+<DT><A HREF="#lbAK">SEE ALSO</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
+using the manual pages.<BR>
+Time: 02:10:40 GMT, April 20, 2020
+</BODY>
+</HTML>

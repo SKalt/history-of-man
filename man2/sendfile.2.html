@@ -1,0 +1,185 @@
+<!--
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of SENDFILE</TITLE>
+</HEAD><BODY>
+<H1>SENDFILE</H1>
+Section: Linux Programmer's Manual (2)<BR>Updated: 1998-12-01<BR><A HREF="#index">Index</A>
+<A HREF="../index.html">Return to Main Contents</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>NAME</H2>
+
+sendfile - transfer data between file descriptors
+<A NAME="lbAC">&nbsp;</A>
+<H2>SYNOPSIS</H2>
+
+<B>#include &lt;<A HREF="file:///usr/include/sys/sendfile.h">sys/sendfile.h</A>&gt;</B>
+
+<P>
+<B>ssize_t sendfile(int</B><I> out_fd</I><B>, int</B><I> in_fd</I><B>, off_t *</B><I>offset</I><B>, size_t</B><I> count</I><B>);</B>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>DESCRIPTION</H2>
+
+This call copies data between one file descriptor and another.
+Either or both of these file descriptors may refer to a socket (but see below).
+<I>in_fd</I>
+
+should be a file descriptor opened for reading and
+<I>out_fd</I>
+
+should be a descriptor opened for writing.
+<I>offset</I>
+
+is a pointer to a variable holding the input file pointer position from
+which
+<B>sendfile</B>()
+
+will start reading data.  When 
+<B>sendfile</B>()
+
+returns, this variable
+will be set to the offset of the byte following the last byte that was read.
+<I>count</I>
+
+is the number of bytes to copy between file descriptors.
+<P>
+Because this copying is done within the kernel,
+<B>sendfile</B>()
+
+does not need to spend time transferring data
+to and from user space.
+<P>
+<A NAME="lbAE">&nbsp;</A>
+<H2>NOTES</H2>
+
+Sendfile does not modify the current file pointer of 
+<I>in_fd</I>,
+
+but does for
+<I>out_fd</I>.
+
+<P>
+If you plan to use sendfile for sending files to a TCP socket, but need
+to send some header data in front of the file contents, please see
+the 
+<B>TCP_CORK </B>
+
+option in
+<B><A HREF="../man7/tcp.7.html">tcp</A></B>(7)
+
+to minimize the number of packets and to tune performance.
+<P>
+Presently the descriptor from which data is read cannot
+correspond to a socket, it must correspond to a file
+which supports mmap()-like operations.
+<P>
+<A NAME="lbAF">&nbsp;</A>
+<H2>RETURN VALUE</H2>
+
+If the transfer was successful, the number of bytes written to
+<I>out_fd</I>
+
+is returned.  On error, -1 is returned, and
+<I>errno</I>
+
+is set appropriately.
+<P>
+<A NAME="lbAG">&nbsp;</A>
+<H2>ERRORS</H2>
+
+<DL COMPACT>
+<DT><B>EAGAIN</B>
+
+<DD>
+Non-blocking I/O has been selected using
+<B>O_NONBLOCK</B>
+
+and the write would block.
+<DT><B>EBADF</B>
+
+<DD>
+The input file was not opened for reading or the output file
+was not opened for writing.
+<DT><B>EFAULT</B>
+
+<DD>
+Bad address.
+<DT><B>EINVAL</B>
+
+<DD>
+Descriptor is not valid or locked.
+<DT><B>EIO</B>
+
+<DD>
+Unspecified error while reading from
+<I>in_fd</I>.
+
+<DT><B>ENOMEM</B>
+
+<DD>
+Insufficient memory to read from
+<I>in_fd</I>.
+
+</DL>
+<A NAME="lbAH">&nbsp;</A>
+<H2>VERSIONS</H2>
+
+<B>sendfile</B>
+
+is a new feature in Linux 2.2.
+The include file &lt;<A HREF="file:///usr/include/sys/sendfile.h">sys/sendfile.h</A>&gt; is present since glibc2.1.
+<P>
+Other Unixes often implement 
+<B>sendfile </B>
+
+with different semantics and prototypes. It should
+not be used in portable programs.
+<A NAME="lbAI">&nbsp;</A>
+<H2>SEE ALSO</H2>
+
+<B><A HREF="../man2/open.2.html">open</A></B>(2),
+
+<B><A HREF="../man2/socket.2.html">socket</A></B>(2)
+
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">NAME</A><DD>
+<DT><A HREF="#lbAC">SYNOPSIS</A><DD>
+<DT><A HREF="#lbAD">DESCRIPTION</A><DD>
+<DT><A HREF="#lbAE">NOTES</A><DD>
+<DT><A HREF="#lbAF">RETURN VALUE</A><DD>
+<DT><A HREF="#lbAG">ERRORS</A><DD>
+<DT><A HREF="#lbAH">VERSIONS</A><DD>
+<DT><A HREF="#lbAI">SEE ALSO</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
+using the manual pages.<BR>
+Time: 02:10:05 GMT, April 20, 2020
+</BODY>
+</HTML>

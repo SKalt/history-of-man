@@ -1,0 +1,252 @@
+<!--
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of STDIN</TITLE>
+</HEAD><BODY>
+<H1>STDIN</H1>
+Section: C Library Functions (3)<BR><A HREF="#index">Index</A>
+<A HREF="../index.html">Return to Main Contents</A><HR>
+<BR>BSD mandoc<BR>
+Linux 2.0
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>NAME</H2>
+
+<B>stdin</B>
+
+ 
+<B>stdout</B>
+
+ 
+<B>stderr</B>
+
+ - standard I/O streams
+
+<A NAME="lbAC">&nbsp;</A>
+<H2>SYNOPSIS</H2>
+
+Fd #include &lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;
+
+Fd extern FILE *stdin;
+
+Fd extern FILE *stdout;
+
+Fd extern FILE *stderr;
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>DESCRIPTION</H2>
+
+Under normal circumstances every Unix program has three streams opened
+for it when it starts up, one for input, one for output, and one for
+printing diagnostic or error messages. These are typically attached to
+the user's terminal (see
+<A HREF="../man4/tty.4.html">tty</A>(4))
+
+
+but might instead refer to files or other devices, depending on what
+the parent process chose to set up. (See also the ``Redirection'' section of
+<A HREF="../man1/sh.1.html">sh</A>(1).)
+
+
+<P>
+
+The input stream is referred to as ``standard input''; the output stream is
+referred to as ``standard output''; and the error stream is referred to
+as ``standard error''. These terms are abbreviated to form the symbols
+used to refer to these files, namely
+<B>stdin</B>
+
+ 
+<B>stdout</B>
+
+ 
+and
+<B>stderr</B>
+
+ 
+<P>
+
+Each of these symbols is a
+<A HREF="../man3/stdio.3.html">stdio</A>(3)
+
+
+macro of type pointer to FILE, and can be used with functions like
+<A HREF="../man3/fprintf.3.html">fprintf</A>(3)
+
+
+or
+<A HREF="../man3/fread.3.html">fread</A>(3).
+
+
+<P>
+
+Since FILEs are a buffering wrapper around Unix file descriptors, the
+same underlying files may also be accessed using the raw Unix file
+interface, that is, the functions like
+<A HREF="../man2/read.2.html">read</A>(2)
+
+
+and
+<A HREF="../man2/lseek.2.html">lseek</A>(2).
+
+
+The integer file descriptors associated with the streams
+<B>stdin</B>
+
+ 
+<B>stdout</B>
+
+ 
+and
+<B>stderr</B>
+
+are 0, 1, and 2, respectively. The preprocessor symbols STDIN_FILENO,
+STDOUT_FILENO, and STDERR_FILENO are defined with these values in 
+&lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;.
+<P>
+
+Note that mixing use of FILEs and raw file descriptors can produce
+unexpected results and should generally be avoided.
+(For the masochistic among you: POSIX.1, section 8.2.3, describes
+in detail how this interaction is supposed to work.)
+A general rule is that file descriptors are handled in the kernel,
+while stdio is just a library. This means for example, that after an
+exec, the child inherits all open file descriptors, but all old streams
+have become inaccessible. 
+<P>
+
+Since the symbols
+<B>stdin</B>
+
+ 
+<B>stdout</B>
+
+ 
+and
+<B>stderr</B>
+
+are specified to be macros, assigning to them is non-portable.
+The standard streams can be made to refer to different files
+with help of the library function
+<A HREF="../man3/freopen.3.html">freopen</A>(3),
+
+
+specially introduced to make it possible to reassign
+<B>stdin</B>
+
+ 
+<B>stdout</B>
+
+ 
+and
+<B>stderr</B>
+
+ 
+The standard streams are closed by a call to
+<A HREF="../man3/exit.3.html">exit</A>(3)
+
+
+and by normal program termination.
+<A NAME="lbAE">&nbsp;</A>
+<H2>SEE ALSO</H2>
+
+<A HREF="../man1/sh.1.html">sh</A>(1),
+
+
+<A HREF="../man1/csh.1.html">csh</A>(1),
+
+
+<A HREF="../man2/open.2.html">open</A>(2),
+
+
+<A HREF="../man3/fopen.3.html">fopen</A>(3),
+
+
+<A HREF="../man3/stdio.3.html">stdio</A>(3)
+
+
+<A NAME="lbAF">&nbsp;</A>
+<H2>CONSIDERATIONS</H2>
+
+The stream
+<B>stderr</B>
+
+is unbuffered. The stream
+<B>stdout</B>
+
+is line-buffered when it points to a terminal. Partial lines will not
+appear until
+<A HREF="../man3/fflush.3.html">fflush</A>(3)
+
+
+or
+<A HREF="../man3/exit.3.html">exit</A>(3)
+
+
+is called, or a newline is printed. This can produce unexpected
+results, especially with debugging output.
+The buffering mode of the standard streams (or any other stream)
+can be changed using the
+<A HREF="../man3/setbuf.3.html">setbuf</A>(3)
+
+
+or
+<A HREF="../man3/setvbuf.3.html">setvbuf</A>(3)
+
+
+call.
+Note that in case
+<B>stdin</B>
+
+is associated with a terminal, there may also be input buffering
+in the terminal driver, entirely unrelated to stdio buffering.
+(Indeed, normally terminal input is line buffered in the kernel.)
+This kernel input handling can be modified using calls like
+<A HREF="../man3/tcsetattr.3.html">tcsetattr</A>(3);
+
+
+see also
+<A HREF="../man1/stty.1.html">stty</A>(1),
+
+
+and
+<A HREF="../man3/termios.3.html">termios</A>(3).
+
+
+<A NAME="lbAG">&nbsp;</A>
+<H2>CONFORMING TO</H2>
+
+The
+<B>stdin</B>
+
+ 
+<B>stdout</B>
+
+ 
+and
+<B>stderr</B>
+
+macros conform to
+St -ansiC ,
+
+and this standard also stipulates that these three
+streams shall be open at program startup.
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">NAME</A><DD>
+<DT><A HREF="#lbAC">SYNOPSIS</A><DD>
+<DT><A HREF="#lbAD">DESCRIPTION</A><DD>
+<DT><A HREF="#lbAE">SEE ALSO</A><DD>
+<DT><A HREF="#lbAF">CONSIDERATIONS</A><DD>
+<DT><A HREF="#lbAG">CONFORMING TO</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
+using the manual pages.<BR>
+Time: 02:11:04 GMT, April 20, 2020
+</BODY>
+</HTML>

@@ -1,0 +1,214 @@
+<!--
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of SETALIASENT</TITLE>
+</HEAD><BODY>
+<H1>SETALIASENT</H1>
+Section: access mail aliases database (3)<BR>Updated: 2003-09-09<BR><A HREF="#index">Index</A>
+<A HREF="../index.html">Return to Main Contents</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>NAME</H2>
+
+setaliasent, endaliasent, getaliasent, getaliasent_r,
+getaliasbyname, getaliasbyname_r - read an alias entry
+<A NAME="lbAC">&nbsp;</A>
+<H2>SYNOPSIS</H2>
+
+<B>#include &lt;<A HREF="file:///usr/include/aliases.h">aliases.h</A>&gt;</B>
+
+<P>
+<B>void setaliasent(void);</B>
+
+<P>
+<B>void endaliasent(void);</B>
+
+<P>
+<B>struct aliasent *getaliasent(void);</B>
+
+<P>
+<B>int getaliasent_r(struct aliasent *</B><I>result</I><B>,</B>
+
+<BR>
+
+<B>    char *</B><I>buffer</I><B>, size_t </B><I>buflen</I><B>, struct aliasent **</B><I>res</I><B>);</B>
+
+<P>
+<B>struct aliasent *getaliasbyname(const char *</B><I>name</I><B>);</B>
+
+<P>
+<B>int getaliasbyname_r(const char *</B><I>name</I><B>,</B>
+
+<BR>
+
+<B>    struct aliasent *</B><I>result</I><B>,</B>
+
+<BR>
+
+<B>    char *</B><I>buffer</I><B>, size_t </B><I>buflen</I><B>, struct aliasent **</B><I>res</I><B>);</B>
+
+<P>
+<A NAME="lbAD">&nbsp;</A>
+<H2>DESCRIPTION</H2>
+
+One of the databases available with the Name Service Switch (NSS)
+is the aliases database, that contains mail aliases. (To find out
+which databases are supported, try  getent --help .)
+Six functions are provided to access the aliases database.
+<P>
+
+The 
+<B>getaliasent()</B>
+
+function returns a pointer to a structure containing
+the group information from the aliases database.
+The first time it is called it returns the first entry; 
+thereafter, it returns successive entries.
+<P>
+
+The 
+<B>setaliasent() </B>
+
+function rewinds the file pointer to the beginning of the
+aliases database.
+<P>
+
+The 
+<B>endaliasent() </B>
+
+function closes the aliases database.
+<P>
+
+<B>getaliasent_r()</B>
+
+is the reentrant version of the previous function. The requested structure
+is stored via the first argument but the programmer needs to fill the other
+arguments also. Not providing enough space causes the function to fail.
+<P>
+
+The function
+<B>getaliasbyname()</B>
+
+takes the name argument and searches the aliases database. The entry is
+returned as a pointer to a struct aliasent. 
+<P>
+
+<B>getaliasbyname_r()</B>
+
+is the reentrant version of the previous function. The requested structure
+is stored via the second argument but the programmer need to fill the other
+arguments also. Not providing enough space causes the function to fail.
+<P>
+
+The struct aliasent is defined in &lt;<A HREF="file:///usr/include/aliases.h">aliases.h</A>&gt;.
+<PRE>
+struct aliasent {
+    char *alias_name;              /* alias name */
+    size_t alias_members_len;           
+    char **alias_members;          /* alias name list */
+    int alias_local;
+};
+</PRE>
+
+<A NAME="lbAE">&nbsp;</A>
+<H2>FILES</H2>
+
+The default alias database is the file
+<I>/etc/aliases</I>.
+
+This can be changed in the
+<I>/etc/nsswitch.conf</I>
+
+file.
+<A NAME="lbAF">&nbsp;</A>
+<H2>RETURN VALUE</H2>
+
+The functions
+<B>getaliasent_r()</B>
+
+and
+<B>getaliasbyname_r()</B>
+
+return a non-zero value on error.
+<A NAME="lbAG">&nbsp;</A>
+<H2>EXAMPLE</H2>
+
+The following example compiles with gcc example.c -o example .
+It will dump all names in the alias database.
+<P>
+<PRE>
+#include &lt;<A HREF="file:///usr/include/aliases.h">aliases.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/stdlib.h">stdlib.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/errno.h">errno.h</A>&gt;
+
+int main() {
+  struct aliasent *al;
+  setaliasent();
+  for (;;) {
+    al = getaliasent();
+    if (al == NULL) break;
+    printf(&quot;Name: %s\n&quot;, al-&gt;alias_name);
+  }
+  if (errno) {
+      perror(&quot;reading alias&quot;);
+      exit(EXIT_FAILURE);
+  }
+  endaliasent();
+  exit(EXIT_SUCCESS);
+}
+</PRE>
+
+<A NAME="lbAH">&nbsp;</A>
+<H2>CONFORMING TO</H2>
+
+These routines are glibc-specific.
+The NeXT has similar routines
+<DL COMPACT><DT><DD>
+<PRE>
+#include &lt;<A HREF="file:///usr/include/aliasdb.h">aliasdb.h</A>&gt;
+void alias_setent(void);
+void alias_endent(void);
+alias_ent *alias_getent(void);
+alias_ent *alias_getbyname(char *name);
+</PRE>
+
+</DL>
+
+<A NAME="lbAI">&nbsp;</A>
+<H2>SEE ALSO</H2>
+
+<B><A HREF="../man3/getgrent.3.html">getgrent</A></B>(3),
+
+<B><A HREF="../man3/getpwent.3.html">getpwent</A></B>(3),
+
+<B><A HREF="../man3/getspent.3.html">getspent</A></B>(3),
+
+<B><A HREF="../man5/aliases.5.html">aliases</A></B>(5)
+
+
+
+
+
+
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">NAME</A><DD>
+<DT><A HREF="#lbAC">SYNOPSIS</A><DD>
+<DT><A HREF="#lbAD">DESCRIPTION</A><DD>
+<DT><A HREF="#lbAE">FILES</A><DD>
+<DT><A HREF="#lbAF">RETURN VALUE</A><DD>
+<DT><A HREF="#lbAG">EXAMPLE</A><DD>
+<DT><A HREF="#lbAH">CONFORMING TO</A><DD>
+<DT><A HREF="#lbAI">SEE ALSO</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
+using the manual pages.<BR>
+Time: 02:10:25 GMT, April 20, 2020
+</BODY>
+</HTML>

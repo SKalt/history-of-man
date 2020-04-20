@@ -1,0 +1,194 @@
+<!--
+Copyright (c) 1990, 1993
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of HASH</TITLE>
+</HEAD><BODY>
+<H1>HASH</H1>
+Section: C Library Functions (3)<BR>Updated: 1994-08-18<BR><A HREF="#index">Index</A>
+<A HREF="../index.html">Return to Main Contents</A><HR>
+
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>NAME</H2>
+
+hash - hash database access method
+<A NAME="lbAC">&nbsp;</A>
+<H2>SYNOPSIS</H2>
+
+<PRE>
+<B>#include &lt;<A HREF="file:///usr/include/sys/types.h">sys/types.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/db.h">db.h</A>&gt;
+</B></PRE>
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>DESCRIPTION</H2>
+
+The routine
+<I>dbopen</I>
+
+is the library interface to database files.
+One of the supported file formats is hash files.
+The general description of the database access methods is in
+<I><A HREF="../man3/dbopen.3.html">dbopen</A></I>(3),
+
+this manual page describes only the hash specific information.
+<P>
+
+The hash data structure is an extensible, dynamic hashing scheme.
+<P>
+
+The access method specific data structure provided to
+<I>dbopen</I>
+
+is defined in the &lt;<A HREF="file:///usr/include/db.h">db.h</A>&gt; include file as follows:
+<P>
+typedef struct {
+<DL COMPACT><DT><DD>
+u_int bsize;
+<BR>
+
+u_int ffactor;
+<BR>
+
+u_int nelem;
+<BR>
+
+u_int cachesize;
+<BR>
+
+u_int32_t (*hash)(const void *, size_t);
+<BR>
+
+int lorder;
+</DL>
+
+} HASHINFO;
+<P>
+
+The elements of this structure are as follows:
+<DL COMPACT>
+<DT>bsize<DD>
+<I>Bsize</I>
+
+defines the hash table bucket size, and is, by default, 256 bytes.
+It may be preferable to increase the page size for disk-resident tables
+and tables with large data items.
+<DT>ffactor<DD>
+<I>Ffactor</I>
+
+indicates a desired density within the hash table.
+It is an approximation of the number of keys allowed to accumulate in any
+one bucket, determining when the hash table grows or shrinks.
+The default value is 8.
+<DT>nelem<DD>
+<I>Nelem</I>
+
+is an estimate of the final size of the hash table.
+If not set or set too low, hash tables will expand gracefully as keys
+are entered, although a slight performance degradation may be noticed.
+The default value is 1.
+<DT>cachesize<DD>
+A suggested maximum size, in bytes, of the memory cache.
+This value is
+<B>only</B>
+
+advisory, and the access method will allocate more memory rather
+than fail.
+<DT>hash<DD>
+<I>Hash</I>
+
+is a user defined hash function.
+Since no hash function performs equally well on all possible data, the
+user may find that the built-in hash function does poorly on a particular
+data set.
+User specified hash functions must take two arguments (a pointer to a byte
+string and a length) and return a 32-bit quantity to be used as the hash
+value.
+<DT>lorder<DD>
+The byte order for integers in the stored database metadata.
+The number should represent the order as an integer; for example, 
+big endian order would be the number 4,321.
+If
+<I>lorder</I>
+
+is 0 (no order is specified) the current host order is used.
+If the  file already exists, the specified value is ignored and the
+value specified when the tree was created is used.
+</DL>
+<P>
+
+If the file already exists (and the O_TRUNC flag is not specified), the
+values specified for the parameters bsize, ffactor, lorder and nelem are
+ignored and the values specified when the tree was created are used.
+<P>
+
+If a hash function is specified,
+<I>hash_open</I>
+
+will attempt to determine if the hash function specified is the same as
+the one with which the database was created, and will fail if it is not.
+<P>
+
+Backward compatible interfaces to the routines described in
+<I><A HREF="../man3/dbm.3.html">dbm</A></I>(3),
+
+and
+<I><A HREF="../man3/ndbm.3.html">ndbm</A></I>(3)
+
+are provided, however these interfaces are not compatible with
+previous file formats.
+<A NAME="lbAE">&nbsp;</A>
+<H2>ERRORS</H2>
+
+The
+<I>hash</I>
+
+access method routines may fail and set
+<I>errno</I>
+
+for any of the errors specified for the library routine
+<I><A HREF="../man3/dbopen.3.html">dbopen</A></I>(3).
+
+<A NAME="lbAF">&nbsp;</A>
+<H2>SEE ALSO</H2>
+
+<I><A HREF="../man3/btree.3.html">btree</A></I>(3),
+
+<I><A HREF="../man3/dbopen.3.html">dbopen</A></I>(3),
+
+<I><A HREF="../man3/mpool.3.html">mpool</A></I>(3),
+
+<I><A HREF="../man3/recno.3.html">recno</A></I>(3)
+
+<P>
+<I>Dynamic Hash Tables</I>,
+
+Per-Ake Larson, Communications of the ACM, April 1988.
+<P>
+<I>A New Hash Package for UNIX</I>,
+
+Margo Seltzer, USENIX Proceedings, Winter 1991.
+<A NAME="lbAG">&nbsp;</A>
+<H2>BUGS</H2>
+
+Only big and little endian byte order is supported.
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">NAME</A><DD>
+<DT><A HREF="#lbAC">SYNOPSIS</A><DD>
+<DT><A HREF="#lbAD">DESCRIPTION</A><DD>
+<DT><A HREF="#lbAE">ERRORS</A><DD>
+<DT><A HREF="#lbAF">SEE ALSO</A><DD>
+<DT><A HREF="#lbAG">BUGS</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
+using the manual pages.<BR>
+Time: 02:10:42 GMT, April 20, 2020
+</BODY>
+</HTML>

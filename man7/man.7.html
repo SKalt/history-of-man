@@ -1,0 +1,1010 @@
+<!--
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of MAN</TITLE>
+</HEAD><BODY>
+<H1>MAN</H1>
+Section: Linux Programmer's Manual (7)<BR>Updated: 2004-07-27<BR><A HREF="#index">Index</A>
+<A HREF="../index.html">Return to Main Contents</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>NAME</H2>
+
+man - macros to format man pages
+<A NAME="lbAC">&nbsp;</A>
+<H2>SYNOPSIS</H2>
+
+<B>groff -Tascii -man</B>
+
+<I>file</I>
+
+...
+<P>
+
+<B>groff -Tps -man</B>
+
+<I>file</I>
+
+...
+<P>
+
+<B>man</B>
+
+[<I>section</I>]
+
+<I>title</I>
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>DESCRIPTION</H2>
+
+This manual page explains the
+<B>groff tmac.an</B>
+
+macro package (often called the
+<B>man</B>
+
+macro package) and related conventions for creating manual (man) pages.
+This macro package should be used by developers when
+writing or porting man pages for Linux.  It is fairly compatible with other
+versions of this macro package, so porting man pages should not be a major
+problem (exceptions include the NET-2 BSD release, which uses a totally
+different macro package called mdoc; see
+<B><A HREF="../man7/mdoc.7.html">mdoc</A></B>(7)).
+
+<P>
+
+Note that NET-2 BSD mdoc man pages can be used with
+<B>groff</B>
+
+simply by specifying the
+<B>-mdoc</B>
+
+option instead of the
+<B>-man</B>
+
+option.  Using the
+<B>-mandoc</B>
+
+option is, however, recommended, since this will automatically detect which
+macro package is in use.
+<A NAME="lbAE">&nbsp;</A>
+<H2>PREAMBLE</H2>
+
+The first command in a man page (after comment lines) should be
+<DL COMPACT><DT><DD>
+<P>
+<B>.TH</B>
+
+<I>title section date source manual</I>,
+
+<P>
+</DL>
+
+where:
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT><I>title</I>
+
+<DD>
+The title of the man page (e.g.,
+<I>MAN</I>).
+
+<DT><I>section</I>
+
+<DD>
+The section number the man page should be placed in (e.g.,
+<I>7</I>).
+
+<DT><I>date</I>
+
+<DD>
+The date of the last revision---remember to change this every time a
+change is made to the man page, since this is the most general way of doing
+version control.
+<DT><I>source</I>
+
+<DD>
+The source of the command.
+<P>
+For binaries, use something like:
+<I>GNU</I>, <I>NET-2</I>, <I>SLS Distribution</I>, <I>MCC Distribution</I>.
+
+<P>
+For system calls, use the version of the kernel that you are currently
+looking at:
+<I>Linux 0.99.11</I>.
+
+<P>
+For library calls, use the source of the function:
+<I>GNU</I>, <I>BSD 4.3</I>, <I>Linux DLL 4.4.1</I>.
+
+<DT><I>manual</I>
+
+<DD>
+The title of the manual (e.g.,
+<I>Linux Programmer's Manual</I>).
+
+</DL>
+</DL>
+
+<P>
+
+Note that BSD mdoc-formatted pages begin with the
+<B>Dd</B>
+
+command, not the
+<B>TH</B>
+
+command.
+<P>
+
+The manual sections are traditionally defined as follows:
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT><B>1 Commands</B>
+
+<DD>
+Those commands that can be executed by the user from within
+a shell.
+<DT><B>2 System calls</B>
+
+<DD>
+Those functions which must be performed by the kernel.
+<DT><B>3 Library calls</B>
+
+<DD>
+Most of the
+<I>libc</I>
+
+functions, such as
+<B><A HREF="../man3/qsort.3.html">qsort</A></B>(3).
+
+<DT><B>4 Special files</B>
+
+<DD>
+Files found in
+<I>/dev</I>.
+
+<DT><B>5 File formats and conventions</B>
+
+<DD>
+The format for
+<I>/etc/passwd</I>
+
+and other human-readable files.
+<DT><B>6 Games</B>
+
+<DD>
+<DT><B>7 Conventions and miscellaneous</B>
+
+<DD>
+A description of the standard file system layout, network protocols,
+ASCII and other character codes, this man page, and other things.
+<DT><B>8 System management commands</B>
+
+<DD>
+Commands like
+<B><A HREF="../man8/mount.8.html">mount</A></B>(8),
+
+many of which only root can execute.
+<DT><B>9 Kernel routines</B>
+
+<DD>
+This is an obsolete manual section.
+Once it was thought a good idea to document the Linux kernel here,
+but in fact very little has been documented, and the documentation
+that exists is outdated already. There are better sources of
+information for kernel developers. 
+</DL>
+</DL>
+
+<A NAME="lbAF">&nbsp;</A>
+<H2>SECTIONS</H2>
+
+Sections are started with
+<B>.SH</B>
+
+followed by the heading name.  If the name contains spaces and appears
+on the same line as
+<B>.SH</B>,
+
+then place the heading in double quotes.  Traditional or suggested
+headings include:
+NAME, SYNOPSIS, DESCRIPTION, RETURN VALUE,
+EXIT STATUS, ERROR HANDLING, ERRORS,
+OPTIONS, USAGE, EXAMPLES, FILES, ENVIRONMENT, DIAGNOSTICS, SECURITY,
+CONFORMING TO, NOTES, BUGS, AUTHOR, and SEE ALSO.
+Where a traditional heading would apply, please use it;
+this kind of consistency can make the information easier to understand.
+However, feel free to create your own headings if they make things easier
+to understand.
+The only required heading is NAME, which should be the first section and
+be followed on the next line by a one line description of the program:
+<DL COMPACT><DT><DD>
+<P>
+.SH NAME
+<BR>
+
+chess \- the game of chess
+<P>
+</DL>
+
+It is extremely important that this format is followed, and that there is a
+backslash before the single dash which follows the command name.  This
+syntax is used by the
+<B><A HREF="../man8/makewhatis.8.html">makewhatis</A></B>(8)
+
+program to create a database of short command descriptions for the
+<B><A HREF="../man1/whatis.1.html">whatis</A></B>(1)
+
+and
+<B><A HREF="../man1/apropos.1.html">apropos</A></B>(1)
+
+commands.
+<P>
+
+Some other traditional sections have the following contents:
+<DL COMPACT>
+<DT><B>SYNOPSIS</B>
+
+<DD>
+briefly describes the command or function's interface.
+For commands, this shows the syntax of the command and its arguments
+(including options);
+boldface is used for as-is text and italics are used to indicate replaceable
+arguments. Brackets ([]) surround optional arguments, vertical bars (|)
+separate choices, and ellipses (...) can be repeated.
+For functions, it shows any required data declarations or
+<B>#include</B>
+
+directives, followed by the function declaration.
+<DT><B>DESCRIPTION</B>
+
+<DD>
+gives an explanation of what the command, function, or format does.
+Discuss how it interacts with files and standard input, and what it
+produces on standard output or standard error.
+Omit internals and implementation details unless they're critical for
+understanding the interface.
+Describe the usual case; for information on options use the
+<B>OPTIONS</B>
+
+section.
+If there is some kind of input grammar or complex set of subcommands,
+consider describing them in a separate
+<B>USAGE</B>
+
+section (and just place an overview in the
+<B>DESCRIPTION</B>
+
+section).
+<DT><B>RETURN VALUE</B>
+
+<DD>
+gives a
+list of the values the library routine will return to the caller
+and the conditions that cause these values to be returned.
+<DT><B>EXIT STATUS</B>
+
+<DD>
+lists the possible exit status values or a program and
+the conditions that cause these values to be returned.
+<DT><B>OPTIONS</B>
+
+<DD>
+describes the options accepted by the program and how they change
+its behavior.
+<DT><B>USAGE</B>
+
+<DD>
+describes the grammar of any sublanguage this implements.
+<DT><B>EXAMPLES</B>
+
+<DD>
+provides one or more examples describing how this function, file or
+command is used.
+<DT><B>FILES</B>
+
+<DD>
+lists the files the program or function uses, such as
+configuration files, startup files,
+and files the program directly operates on.
+Give the full pathname of these files, and use the installation
+process to modify the directory part to match user preferences.
+For many programs, the default installation location is in
+<I>/usr/local</I>,
+
+so your base manual page should use
+<I>/usr/local</I>
+
+as the base.
+<DT><B>ENVIRONMENT</B>
+
+<DD>
+lists all environment variables that affect your program or function
+and how they affect it.
+<DT><B>DIAGNOSTICS</B>
+
+<DD>
+gives an overview of the most common error messages and how to
+cope with them.  You don't need to explain system error messages
+or fatal signals that can appear during execution of any program
+unless they're special in some way to your program.
+<DT><B>SECURITY</B>
+
+<DD>
+discusses security issues and implications.
+Warn about configurations or environments that should be avoided,
+commands that may have security implications, and so on, especially
+if they aren't obvious.
+Discussing security in a separate section isn't necessary;
+if it's easier to understand, place security information in the
+other sections (such as the
+<B>DESCRIPTION</B>
+
+or
+<B>USAGE</B>
+
+section).
+However, please include security information somewhere!
+<DT><B>CONFORMING TO</B>
+
+<DD>
+describes any standards or conventions this implements.
+<DT><B>NOTES</B>
+
+<DD>
+provides miscellaneous notes.
+<DT><B>BUGS</B>
+
+<DD>
+lists limitations, known defects or inconveniences,
+and other questionable activities.
+<DT><B>AUTHOR</B>
+
+<DD>
+lists authors of the documentation or program so you can mail in bug
+reports.
+<DT><B>SEE ALSO</B>
+
+<DD>
+lists related man pages in alphabetical order, possibly followed by
+other related pages or documents.
+Conventionally this is the last section.
+</DL>
+<A NAME="lbAG">&nbsp;</A>
+<H2>FONTS</H2>
+
+Although there are many arbitrary conventions for man pages in the UNIX
+world, the existence of several hundred Linux-specific man pages defines our
+font standards:
+<DL COMPACT>
+<DT><DD>
+For functions, the arguments are always specified using italics,
+<I>even in the SYNOPSIS section</I>,
+
+where the rest of the function is specified in bold:
+<DL COMPACT><DT><DD>
+<B>int myfunction(int </B><I>argc</I><B>, char **</B><I>argv</I><B>);</B>
+
+</DL>
+
+<DT><DD>
+Filenames are always in italics (e.g.,
+<I>/usr/include/stdio.h</I>),
+
+except in the SYNOPSIS section, where included files are in bold (e.g.,
+<B>#include &lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;</B>).
+
+<DT><DD>
+Special macros, which are usually in upper case, are in bold (e.g.,
+<B>MAXINT</B>).
+
+<DT><DD>
+When enumerating a list of error codes, the codes are in bold (this list
+usually uses the
+<B>.TP</B>
+
+macro).
+<DT><DD>
+Any reference to another man page (or to the subject of the current man
+page) is in bold.  If the manual section number is given, it is given in
+Roman (normal) font, without any spaces (e.g.,
+<B><A HREF="../man7/man.7.html">man</A></B>(7)).
+
+</DL>
+<P>
+
+The commands to select the type face are:
+<DL COMPACT>
+<DT><B>.B</B>
+
+<DD>
+Bold
+<DT><B>.BI</B>
+
+<DD>
+Bold alternating with italics
+(especially useful for function specifications)
+<DT><B>.BR</B>
+
+<DD>
+Bold alternating with Roman
+(especially useful for referring to other
+manual pages)
+<DT><B>.I</B>
+
+<DD>
+Italics
+<DT><B>.IB</B>
+
+<DD>
+Italics alternating with bold
+<DT><B>.IR</B>
+
+<DD>
+Italics alternating with Roman
+<DT><B>.RB</B>
+
+<DD>
+Roman alternating with bold
+<DT><B>.RI</B>
+
+<DD>
+Roman alternating with italics
+<DT><B>.SB</B>
+
+<DD>
+Small alternating with bold
+<DT><B>.SM</B>
+
+<DD>
+Small (useful for acronyms)
+</DL>
+<P>
+
+Traditionally, each command can have up to six arguments, but the GNU
+implementation removes this limitation (you might still want to limit
+yourself to 6 arguments for portability's sake).
+Arguments are delimited by
+spaces.  Double quotes can be used to specify an argument which contains
+spaces.  All of the arguments will be printed next to each other without
+intervening spaces, so that the
+<B>.BR</B>
+
+command can be used to specify a word in bold followed by a mark of
+punctuation in Roman.
+If no arguments are given, the command is applied to the following line
+of text.
+<A NAME="lbAH">&nbsp;</A>
+<H2>OTHER MACROS AND STRINGS</H2>
+
+<P>
+
+Below are other relevant macros and predefined strings.
+Unless noted otherwise, all macros
+cause a break (end the current line of text).
+Many of these macros set or use the &quot;prevailing indent.&quot;
+The &quot;prevailing indent&quot; value is set by any macro with the parameter
+<I>i</I>
+
+below;
+macros may omit
+<I>i</I>
+
+in which case the current prevailing indent will be used.
+As a result, successive indented paragraphs can use the same indent without
+re-specifying the indent value.
+A normal (non-indented) paragraph resets the prevailing indent value
+to its default value (0.5 inches).
+By default a given indent is measured in ens; try to ens or ems as units for
+indents, since these will automatically adjust to font size changes.
+The other key macro definitions are:
+<A NAME="lbAI">&nbsp;</A>
+<H3>Normal Paragraphs</H3>
+
+<DL COMPACT>
+<DT><B>.LP</B>
+
+<DD>
+Same as
+<B>.PP</B>
+
+(begin a new paragraph).
+<DT><B>.P</B>
+
+<DD>
+Same as
+<B>.PP</B>
+
+(begin a new paragraph).
+<DT><B>.PP</B>
+
+<DD>
+Begin a new paragraph and reset prevailing indent.
+</DL>
+<A NAME="lbAJ">&nbsp;</A>
+<H3>Relative Margin Indent</H3>
+
+<DL COMPACT>
+<DT><B>.RS</B><I> i</I>
+
+<DD>
+Start relative margin indent - moves the left margin
+<I>i</I>
+
+to the right (if
+<I>i</I>
+
+is omitted, the prevailing indent value is used).
+A new prevailing indent is set to 0.5 inches.
+As a result, all following paragraph(s) will be
+indented until the corresponding
+<B>.RE</B>.
+
+<DT><B>.RE</B>
+
+<DD>
+End relative margin indent and
+restores the previous value of the prevailing indent.
+</DL>
+<A NAME="lbAK">&nbsp;</A>
+<H3>Indented Paragraph Macros</H3>
+
+<DL COMPACT>
+<DT><B>.HP</B><I> i</I>
+
+<DD>
+Begin paragraph with a hanging indent
+(the first line of the paragraph is at the left margin of
+normal paragraphs, and the rest of the paragraph's lines are indented).
+<DT><B>.IP</B><I> x i</I>
+
+<DD>
+Indented paragraph with optional hanging tag.
+If the tag
+<I>x</I>
+
+is omitted, the entire following paragraph is indented by
+<I>i</I>.
+
+If the tag
+<I>x</I>
+
+is provided, it is hung at the left margin
+before the following indented paragraph
+(this is just like
+<B>.TP</B>
+
+except the tag is included with the command instead of being on the
+following line).
+If the tag is too long, the text after the tag will be moved down to the
+next line (text will not be lost or garbled).
+For bulleted lists, use this macro with \(bu (bullet) or \(em (em dash)
+as the tag, and for numbered lists, use the number or letter followed by
+a period as the tag;
+this simplifies translation to other formats.
+<DT><B>.TP</B><I> i</I>
+
+<DD>
+Begin paragraph with hanging tag.  The tag is given on the next line, but
+its results are like those of the
+<B>.IP</B>
+
+command.
+</DL>
+<A NAME="lbAL">&nbsp;</A>
+<H3>Hypertext Link Macros</H3>
+
+(Feature supported with groff only.)
+In order to use hypertext link macros, it is necessary to load the
+<B><A HREF="http://www.tmac">www.tmac</A></B>
+
+macro package.
+Use the request
+<B>.mso <A HREF="http://www.tmac">www.tmac</A></B>
+
+to do this.
+<DL COMPACT>
+<DT><B>.URL</B><I> url link trailer</I>
+
+<DD>
+Inserts a hypertext link to the URI (URL)
+<I>url</I>,
+
+with
+<I>link</I>
+
+as the text of the link.
+The
+<I>trailer</I>
+
+will be printed immediately afterwards.
+When generating HTML this should translate into the HTML command
+<B>&lt;A HREF=&quot;</B><I>url</I><B>&quot;&gt;</B><I>link</I><B>&lt;/A&gt;</B><I>trailer</I>.
+
+<DT><B> </B>
+
+<DD>
+This and other related macros are new, and
+many tools won't do anything with them, but
+since many tools (including troff) will simply ignore undefined macros
+(or at worst insert their text) these are safe to insert.
+</DL>
+<P>
+
+A number of other link macros are available.  See
+<B><A HREF="../man7/groff_www.7.html">groff_www</A></B>(7)
+
+for more details.
+<A NAME="lbAM">&nbsp;</A>
+<H3>Miscellaneous Macros</H3>
+
+<DL COMPACT>
+<DT><B>.DT</B>
+
+<DD>
+Reset tabs to default tab values (every 0.5 inches);
+does not cause a break.
+<DT><B>.PD</B><I> d</I>
+
+<DD>
+Set inter-paragraph vertical distance to d
+(if omitted, d=0.4v);
+does not cause a break.
+<DT><B>.SS</B><I> t</I>
+
+<DD>
+Subheading
+<I>t</I>
+
+(like
+<B>.SH</B>,
+
+but used for a subsection inside a section).
+</DL>
+<A NAME="lbAN">&nbsp;</A>
+<H3>Predefined Strings</H3>
+
+The
+<B>man</B>
+
+package has the following predefined strings:
+<DL COMPACT>
+<DT>\*R<DD>
+Registration Symbol: &#174;
+<DT>\*S<DD>
+Change to default font size
+<DT>\*(Tm<DD>
+Trademark Symbol: 
+<DT>\*(lq<DD>
+Left angled doublequote: ``
+<DT>\*(rq<DD>
+Right angled doublequote: ''
+</DL>
+<A NAME="lbAO">&nbsp;</A>
+<H2>SAFE SUBSET</H2>
+
+Although technically
+<B>man</B>
+
+is a troff macro package, in reality a large number of other tools
+process man page files that don't implement all of troff's abilities.
+Thus, it's best to avoid some of troff's more exotic abilities where possible
+to permit these other tools to work correctly.
+Avoid using the various troff preprocessors
+(if you must, go ahead and use
+<B><A HREF="../man1/tbl.1.html">tbl</A></B>(1),
+
+but try to use the
+<B>IP</B>
+
+and 
+<B>TP</B>
+
+commands instead for two-column tables).
+Avoid using computations; most other tools can't process them.
+Use simple commands that are easy to translate to other formats.
+The following troff macros are believed to be safe (though in many cases
+they will be ignored by translators):
+<B>\ ,</B>
+
+<B>.</B>,
+
+<B>ad</B>,
+
+<B>bp</B>,
+
+<B>br</B>,
+
+<B>ce</B>,
+
+<B>de</B>,
+
+<B>ds</B>,
+
+<B>el</B>,
+
+<B>ie</B>,
+
+<B>if</B>,
+
+<B>fi</B>,
+
+<B>ft</B>,
+
+<B>hy</B>,
+
+<B>ig</B>,
+
+<B>in</B>,
+
+<B>na</B>,
+
+<B>ne</B>,
+
+<B>nf</B>,
+
+<B>nh</B>,
+
+<B>ps</B>,
+
+<B>so</B>,
+
+<B>sp</B>,
+
+<B>ti</B>,
+
+<B>tr</B>.
+
+<P>
+
+You may also use many troff escape sequences (those sequences beginning
+with \).
+When you need to include the backslash character as normal text,
+use \e.
+Other sequences you may use, where x or xx are any characters and N
+is any digit, include:
+<B>\'</B>,
+
+<B>\`</B>,
+
+<B>\-</B>,
+
+<B>\.</B>,
+
+<B>\ ,</B>
+
+<B>\%</B>,
+
+<B>\*x</B>,
+
+<B>\*(xx</B>,
+
+<B>\(xx</B>,
+
+<B>\$N</B>,
+
+<B>\nx</B>,
+
+<B>\n(xx</B>,
+
+<B>\fx</B>,
+
+and
+<B>\f(xx</B>.
+
+Avoid using the escape sequences for drawing graphics.
+<P>
+
+Do not use the optional parameter for
+<B>bp</B>
+
+(break page).
+Use only positive values for
+<B>sp</B>
+
+(vertical space).
+Don't define a macro
+(<B>de</B>)
+
+with the same name as a macro in this or the
+mdoc macro package with a different meaning; it's likely that
+such redefinitions will be ignored.
+Every positive indent
+(<B>in</B>)
+
+should be paired with a matching negative indent
+(although you should be using the
+<B>RS</B>
+
+and
+<B>RE</B>
+
+macros instead).
+The condition test
+(<B>if,ie</B>)
+
+should only have 't' or 'n' as the condition.
+Only translations 
+(<B>tr</B>)
+
+that can be ignored should be used.
+Font changes
+(<B>ft</B>
+
+and the <B>\f</B> escape sequence)
+should only have the values 1, 2, 3, 4, R, I, B, P, or CW
+(the ft command may also have no parameters).
+<P>
+
+If you use capabilities beyond these, check the
+results carefully on several tools.
+Once you've confirmed that the additional capability is safe,
+let the maintainer of this
+document know about the safe command or sequence
+that should be added to this list.
+<A NAME="lbAP">&nbsp;</A>
+<H2>NOTES</H2>
+
+<P>
+
+By all means include full URLs (or URIs) in the text itself;
+some tools such as
+<B><A HREF="../man1/man2html.1.html">man2html</A></B>(1)
+
+can automatically turn them into hypertext links.
+You can also use the new
+<B>URL</B>
+
+macro to identify links to related information.
+If you include URLs, use the full URL
+(e.g., &lt;<A HREF="http://www.kernelnotes.org">http://www.kernelnotes.org</A>&gt;) to ensure that tools
+can automatically find the URLs.
+<P>
+
+Tools processing these files should open the file and examine the first
+non-whitespace character. A period (.) or single quote (')
+at the beginning of a line indicates a troff-based file (such as man or mdoc).
+A left angle bracket (&lt;) indicates an SGML/XML-based
+file (such as HTML or Docbook). Anything else suggests simple ASCII
+text (e.g., a &quot;catman&quot; result).
+<P>
+
+Many man pages begin with '\&quot; followed by a space and a list of characters,
+indicating how the page is to be preprocessed.
+For portability's sake to non-troff translators we recommend that you avoid
+using anything other than
+<B><A HREF="../man1/tbl.1.html">tbl</A></B>(1),
+
+and Linux can detect that automatically.
+However, you might want to include this information so your man page
+can be handled by other (less capable) systems.
+Here are the definitions of the preprocessors invoked by these characters:
+<DL COMPACT>
+<DT><B>e</B>
+
+<DD>
+<A HREF="../man1/eqn.1.html">eqn</A>(1)
+<DT><B>g</B>
+
+<DD>
+<A HREF="../man1/grap.1.html">grap</A>(1)
+<DT><B>p</B>
+
+<DD>
+<A HREF="../man1/pic.1.html">pic</A>(1)
+<DT><B>r</B>
+
+<DD>
+<A HREF="../man1/refer.1.html">refer</A>(1)
+<DT><B>t</B>
+
+<DD>
+<A HREF="../man1/tbl.1.html">tbl</A>(1)
+<DT><B>v</B>
+
+<DD>
+<A HREF="../man1/vgrind.1.html">vgrind</A>(1)
+</DL>
+<A NAME="lbAQ">&nbsp;</A>
+<H2>FILES</H2>
+
+<I>/usr/share/groff/</I>[*/]<I>tmac/tmac.an</I>
+
+<BR>
+
+<I>/usr/man/whatis</I>
+
+<A NAME="lbAR">&nbsp;</A>
+<H2>BUGS</H2>
+
+<P>
+
+Most of the macros describe formatting (e.g., font type and spacing) instead
+of marking semantic content (e.g., this text is a reference to another page),
+compared to formats like mdoc and DocBook (even HTML has more semantic
+markings).
+This situation makes it harder to vary the
+<B>man</B>
+
+format for different media,
+to make the formatting consistent for a given media, and to automatically
+insert cross-references.
+By sticking to the safe subset described above, it should be easier to
+automate transitioning to a different reference page format in the future.
+<P>
+
+The Sun macro
+<B>TX</B>
+
+is not implemented.
+<A NAME="lbAS">&nbsp;</A>
+<H2>AUTHORS</H2>
+
+<DL COMPACT>
+<DT>---<DD>
+James Clark (<A HREF="mailto:jjc@jclark.com">jjc@jclark.com</A>) wrote the implementation of the macro package.
+<DT>---<DD>
+Rickard E. Faith (<A HREF="mailto:faith@cs.unc.edu">faith@cs.unc.edu</A>) wrote the initial version of
+this manual page.
+<DT>---<DD>
+Jens Schweikhardt (<A HREF="mailto:schweikh@noc.fdn.de">schweikh@noc.fdn.de</A>) wrote the Linux Man-Page Mini-HOWTO
+(which influenced this manual page).
+<DT>---<DD>
+David A. Wheeler (<A HREF="mailto:dwheeler@ida.org">dwheeler@ida.org</A>) heavily modified this
+manual page, such as adding detailed information on sections and macros.
+</DL>
+<A NAME="lbAT">&nbsp;</A>
+<H2>SEE ALSO</H2>
+
+<B><A HREF="../man1/apropos.1.html">apropos</A></B>(1),
+
+<B><A HREF="../man1/groff.1.html">groff</A></B>(1),
+
+<B><A HREF="../man1/man.1.html">man</A></B>(1),
+
+<B><A HREF="../man1/man2html.1.html">man2html</A></B>(1),
+
+<B><A HREF="../man7/mdoc.7.html">mdoc</A></B>(7),
+
+<B><A HREF="../man7/mdoc.samples.7.html">mdoc.samples</A></B>(7),
+
+<B><A HREF="../man7/groff_www.7.html">groff_www</A></B>(7),
+
+<B><A HREF="../man1/whatis.1.html">whatis</A></B>(1)
+
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">NAME</A><DD>
+<DT><A HREF="#lbAC">SYNOPSIS</A><DD>
+<DT><A HREF="#lbAD">DESCRIPTION</A><DD>
+<DT><A HREF="#lbAE">PREAMBLE</A><DD>
+<DT><A HREF="#lbAF">SECTIONS</A><DD>
+<DT><A HREF="#lbAG">FONTS</A><DD>
+<DT><A HREF="#lbAH">OTHER MACROS AND STRINGS</A><DD>
+<DL>
+<DT><A HREF="#lbAI">Normal Paragraphs</A><DD>
+<DT><A HREF="#lbAJ">Relative Margin Indent</A><DD>
+<DT><A HREF="#lbAK">Indented Paragraph Macros</A><DD>
+<DT><A HREF="#lbAL">Hypertext Link Macros</A><DD>
+<DT><A HREF="#lbAM">Miscellaneous Macros</A><DD>
+<DT><A HREF="#lbAN">Predefined Strings</A><DD>
+</DL>
+<DT><A HREF="#lbAO">SAFE SUBSET</A><DD>
+<DT><A HREF="#lbAP">NOTES</A><DD>
+<DT><A HREF="#lbAQ">FILES</A><DD>
+<DT><A HREF="#lbAR">BUGS</A><DD>
+<DT><A HREF="#lbAS">AUTHORS</A><DD>
+<DT><A HREF="#lbAT">SEE ALSO</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
+using the manual pages.<BR>
+Time: 02:11:26 GMT, April 20, 2020
+</BODY>
+</HTML>

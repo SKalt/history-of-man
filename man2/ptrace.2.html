@@ -1,0 +1,332 @@
+<!--
+Copyright (c) 1993 Michael Haardt
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of PTRACE</TITLE>
+</HEAD><BODY>
+<H1>PTRACE</H1>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2004-05-27<BR><A HREF="#index">Index</A>
+<A HREF="../index.html">Return to Main Contents</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>NAME</H2>
+
+ptrace - process trace
+<A NAME="lbAC">&nbsp;</A>
+<H2>SYNOPSIS</H2>
+
+<B>#include &lt;<A HREF="file:///usr/include/sys/ptrace.h">sys/ptrace.h</A>&gt;</B>
+
+<P>
+<B>long ptrace(enum __ptrace_request </B><I>request</I><B>, pid_t </B><I>pid</I><B>, void *</B><I>addr</I><B>, void *</B><I>data</I><B>);</B>
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>DESCRIPTION</H2>
+
+The
+<B>ptrace</B>
+
+system call provides a means by which a parent process may observe and control
+the execution of another process, and examine and change its core image and
+registers.  It is primarily used to implement breakpoint debugging and system
+call tracing.
+<P>
+
+The parent can initiate a trace by calling
+<B><A HREF="../man2/fork.2.html">fork</A></B>(2)
+
+and having the resulting child do a PTRACE_TRACEME, followed (typically) by an
+<B><A HREF="../man3/exec.3.html">exec</A></B>(3).
+
+Alternatively, the parent may commence trace of an existing process using
+PTRACE_ATTACH.
+<P>
+
+While being traced, the child will stop each time a signal is delivered, even
+if the signal is being ignored.  (The exception is SIGKILL, which has its
+usual effect.)  The parent will be notified at its next
+<B><A HREF="../man2/wait.2.html">wait</A></B>(2)
+
+and may inspect and modify the child process while it is stopped.  The parent
+then causes the child to continue, optionally ignoring the delivered signal
+(or even delivering a different signal instead).
+<P>
+
+When the parent is finished tracing, it can terminate the child with
+PTRACE_KILL or cause it to continue executing in a normal, untraced mode
+via PTRACE_DETACH.
+<P>
+
+The value of <I>request</I> determines the action to be performed:
+<DL COMPACT>
+<DT>PTRACE_TRACEME<DD>
+Indicates that this process is to be traced by its parent.  Any signal
+(except SIGKILL) delivered to this process will cause it to stop and its
+parent to be notified via
+<B>wait.</B>
+
+Also, all subsequent calls to
+<B>exec</B>
+
+by this process will cause a SIGTRAP to be sent to it, giving the parent a
+chance to gain control before the new program begins execution.  A process
+probably shouldn't make this request if its parent isn't expecting to trace
+it.  (<I>pid</I>, <I>addr</I>, and <I>data</I> are ignored.)
+</DL>
+<P>
+
+The above request is used only by the child process; the rest are used only by
+the parent.  In the following requests, <I>pid</I> specifies the child process
+to be acted on.  For requests other than PTRACE_KILL, the child process must
+be stopped.
+<DL COMPACT>
+<DT>PTRACE_PEEKTEXT, PTRACE_PEEKDATA<DD>
+Reads a word at the location
+<I>addr</I>
+
+in the child's memory, returning the word as the result of the
+<B>ptrace</B>
+
+call.  Linux does not have separate text and data address spaces, so the two
+requests are currently equivalent.  (The argument <I>data</I> is ignored.)
+<DT>PTRACE_PEEKUSR<DD>
+Reads a word at offset
+<I>addr</I>
+
+in the child's
+<B>USER</B>
+
+area, which holds the registers and other information about the process (see
+&lt;<A HREF="file:///usr/include/linux/user.h">linux/user.h</A>&gt; and &lt;<A HREF="file:///usr/include/sys/user.h">sys/user.h</A>&gt;).  The word is returned as the result of the
+<B>ptrace</B>
+
+call.  Typically the offset must be word-aligned, though this might vary by
+architecture.  (<I>data</I> is ignored.)
+<DT>PTRACE_POKETEXT, PTRACE_POKEDATA<DD>
+Copies the word
+<I>data</I>
+
+to location
+<I>addr</I>
+
+in the child's memory.  As above, the two requests are currently equivalent.
+<DT>PTRACE_POKEUSR<DD>
+Copies the word
+<I>data</I>
+
+to offset
+<I>addr</I>
+
+in the child's
+<B>USER</B>
+
+area.  As above, the offset must typically be word-aligned.  In order to
+maintain the integrity of the kernel, some modifications to the
+<B>USER</B>
+
+area are disallowed.
+<DT>PTRACE_GETREGS, PTRACE_GETFPREGS<DD>
+Copies the child's general purpose or floating-point registers, respectively,
+to location <I>data</I> in the parent.  See &lt;<A HREF="file:///usr/include/linux/user.h">linux/user.h</A>&gt; for information on
+the format of this data.  (<I>addr</I> is ignored.)
+<DT>PTRACE_SETREGS, PTRACE_SETFPREGS<DD>
+Copies the child's general purpose or floating-point registers, respectively,
+from location <I>data</I> in the parent.  As for PTRACE_POKEUSER, some general
+purpose register modifications may be disallowed.  (<I>addr</I> is ignored.)
+<DT>PTRACE_CONT<DD>
+Restarts the stopped child process.  If <I>data</I> is non-zero and not
+SIGSTOP, it is interpreted as a signal to be delivered to the child;
+otherwise, no signal is delivered.  Thus, for example, the parent can control
+whether a signal sent to the child is delivered or not.  (<I>addr</I> is
+ignored.)
+<DT>PTRACE_SYSCALL, PTRACE_SINGLESTEP<DD>
+Restarts the stopped child as for PTRACE_CONT, but arranges for the child to
+be stopped at the next entry to or exit from a system call, or after execution
+of a single instruction, respectively.  (The child will also, as usual, be
+stopped upon receipt of a signal.)  From the parent's perspective, the child
+will appear to have been stopped by receipt of a SIGTRAP.  So, for
+PTRACE_SYSCALL, for example, the idea is to inspect the arguments to the
+system call at the first stop, then do another PTRACE_SYSCALL and inspect the
+return value of the system call at the second stop.  (<I>addr</I> is ignored.)
+<DT>PTRACE_KILL<DD>
+Sends the child a SIGKILL to terminate it.  (<I>addr</I> and <I>data</I> are
+ignored.)
+<DT>PTRACE_ATTACH<DD>
+Attaches to the process specified in
+<I>pid</I>,
+
+making it a traced &quot;child&quot; of the current process; the behavior of the child
+is as if it had done a PTRACE_TRACEME.  The current process actually becomes
+the parent of the child process for most purposes (e.g., it will receive
+notification of child events and appears in
+<B><A HREF="../man1/ps.1.html">ps</A></B>(1)
+
+output as the child's parent), but a
+<B><A HREF="../man2/getppid.2.html">getppid</A></B>(2)
+
+by the child will still return the pid of the original parent.  The child is
+sent a SIGSTOP, but will not necessarily have stopped by the completion of
+this call; use
+<B>wait</B>
+
+to wait for the child to stop.  (<I>addr</I> and <I>data</I> are ignored.)
+<DT>PTRACE_DETACH<DD>
+Restarts the stopped child as for PTRACE_CONT, but first detaches from the
+process, undoing the reparenting effect of PTRACE_ATTACH, and the effects of
+PTRACE_TRACEME.  Although perhaps not intended, under Linux a traced child
+can be detached in this way regardless of which method was used to initiate
+tracing.  (<I>addr</I> is ignored.)
+</DL>
+<A NAME="lbAE">&nbsp;</A>
+<H2>NOTES</H2>
+
+Although arguments to
+<B>ptrace</B>
+
+are interpreted according to the prototype given, GNU libc currently declares
+<B>ptrace</B>
+
+as a variadic function with only the <I>request</I> argument fixed.  This means
+that unneeded trailing arguments may be omitted, though doing so makes use of
+undocumented
+<B><A HREF="../man1/gcc.1.html">gcc</A>(1)</B>
+
+behavior.
+<P>
+
+<B><A HREF="../man8/init.8.html">init</A></B>(8),
+
+the process with pid 1, may not be traced.
+<P>
+
+The layout of the contents of memory and the USER area are quite OS- and
+architecture-specific.
+<P>
+
+The size of a &quot;word&quot; is determined by the OS variant (e.g., for 32-bit Linux
+it's 32 bits, etc.).
+<P>
+
+Tracing causes a few subtle differences in the semantics of traced processes.
+For example, if a process is attached to with PTRACE_ATTACH, its original
+parent can no longer receive notification via 
+<B>wait</B>
+
+when it stops, and there is no way for the new parent to effectively simulate
+this notification.
+<P>
+
+This page documents the way the
+<B>ptrace</B>
+
+call works currently in Linux.  Its behavior differs noticeably on other
+flavors of Unix.  In any case, use of
+<B>ptrace</B>
+
+is highly OS- and architecture-specific.
+<P>
+
+The SunOS man page describes 
+<B>ptrace</B>
+
+as &quot;unique and arcane&quot;, which it is.  The proc-based debugging interface
+present in Solaris 2 implements a superset of
+<B>ptrace</B>
+
+functionality in a more powerful and uniform way.
+<A NAME="lbAF">&nbsp;</A>
+<H2>RETURN VALUE</H2>
+
+On success, PTRACE_PEEK* requests return the requested data, while other requests
+return zero.  On error, all requests return -1, and
+<I><A HREF="../man3/errno.3.html">errno</A></I>(3)
+
+is set appropriately.  Since the value returned by a successful PTRACE_PEEK*
+request may be -1, the caller must check
+<I>errno</I>
+
+after such requests to determine whether or not an error occurred.
+<A NAME="lbAG">&nbsp;</A>
+<H2>ERRORS</H2>
+
+<DL COMPACT>
+<DT><B>EBUSY</B>
+
+<DD>
+(i386 only) There was an error with allocating or freeing a debug register.
+<DT><B>EFAULT</B>
+
+<DD>
+There was an attempt to read from or write to an invalid area in the parent's
+or child's memory, probably because the area wasn't mapped or accessible.
+Unfortunately, under Linux, different variations of this fault will return EIO
+or EFAULT more or less arbitrarily.
+<DT><B>EIO</B>
+
+<DD>
+<I>request</I> is invalid, or an attempt was made to read from or write to an
+invalid area in the parent's or child's memory, or there was a word-alignment
+violation, or an invalid signal was specified during a restart request.
+<DT><B>EPERM</B>
+
+<DD>
+The specified process cannot be traced.  This could be because the 
+parent has insufficient privileges (the required capability is
+<B>CAP_SYS_PTRACE</B>);
+
+non-root processes cannot trace processes that they
+cannot send signals to or those running setuid/setgid programs, for obvious
+reasons.  Alternatively, the process may already be being traced, or be
+<B>init</B>
+
+(pid 1).
+<DT><B>ESRCH</B>
+
+<DD>
+The specified process does not exist, or is not currently being traced by the
+caller, or is not stopped (for requests that require that).
+</DL>
+<A NAME="lbAH">&nbsp;</A>
+<H2>CONFORMING TO</H2>
+
+SVr4, SVID EXT, AT&amp;T, X/OPEN, BSD 4.3
+<A NAME="lbAI">&nbsp;</A>
+<H2>SEE ALSO</H2>
+
+<B><A HREF="../man1/gdb.1.html">gdb</A></B>(1),
+
+<B><A HREF="../man1/strace.1.html">strace</A></B>(1),
+
+<B><A HREF="../man2/execve.2.html">execve</A></B>(2),
+
+<B><A HREF="../man2/fork.2.html">fork</A></B>(2),
+
+<B><A HREF="../man2/signal.2.html">signal</A></B>(2),
+
+<B><A HREF="../man2/wait.2.html">wait</A></B>(2),
+
+<B><A HREF="../man3/exec.3.html">exec</A></B>(3),
+
+<B><A HREF="../man7/capabilities.7.html">capabilities</A></B>(7)
+
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">NAME</A><DD>
+<DT><A HREF="#lbAC">SYNOPSIS</A><DD>
+<DT><A HREF="#lbAD">DESCRIPTION</A><DD>
+<DT><A HREF="#lbAE">NOTES</A><DD>
+<DT><A HREF="#lbAF">RETURN VALUE</A><DD>
+<DT><A HREF="#lbAG">ERRORS</A><DD>
+<DT><A HREF="#lbAH">CONFORMING TO</A><DD>
+<DT><A HREF="#lbAI">SEE ALSO</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
+using the manual pages.<BR>
+Time: 02:10:02 GMT, April 20, 2020
+</BODY>
+</HTML>

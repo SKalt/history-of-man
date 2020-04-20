@@ -1,0 +1,252 @@
+<!--
+Copyright 1993 Giorgio Ciucci (giorgio@crcc.it)
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of MSGCTL</TITLE>
+</HEAD><BODY>
+<H1>MSGCTL</H1>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2004-06-17<BR><A HREF="#index">Index</A>
+<A HREF="../index.html">Return to Main Contents</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>NAME</H2>
+
+msgctl - message control operations
+<A NAME="lbAC">&nbsp;</A>
+<H2>SYNOPSIS</H2>
+
+<PRE>
+<B>#include &lt;<A HREF="file:///usr/include/sys/types.h">sys/types.h</A>&gt;</B>
+<B>#include &lt;<A HREF="file:///usr/include/sys/ipc.h">sys/ipc.h</A>&gt;</B>
+<B>#include &lt;<A HREF="file:///usr/include/sys/msg.h">sys/msg.h</A>&gt;</B>
+</PRE>
+
+<P>
+<B>int msgctl(int </B><I>msqid</I><B>,</B>
+
+<B>int </B><I>cmd</I><B>,</B>
+
+<B>struct msqid_ds *</B><I>buf</I><B>);</B>
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>DESCRIPTION</H2>
+
+This function performs the control operation specified by
+<I>cmd</I>
+
+on the message queue with identifier
+<I>msqid</I>.
+
+Legal values for
+<I>cmd</I>
+
+are:
+<DL COMPACT>
+<DT><B>IPC_STAT</B>
+
+<DD>
+Copy info from the message queue data structure associated with
+<I>msqid</I>
+
+into the structure pointed to by
+<I>buf</I>.
+
+The caller must have read permission on the message queue.
+<DT><B>IPC_SET</B>
+
+<DD>
+Write the values of some members of the
+<B>msqid_ds</B>
+
+structure pointed to by
+<I>buf</I>
+
+to the message queue data structure, updating also its
+<B>msg_ctime</B>
+
+member.
+The following members of the structure can be updated:
+<PRE>
+
+<B>        msg_perm.uid
+        msg_perm.gid
+        msg_perm.mode   </B>/* only lowest 9-bits */
+        msg_qbytes
+</PRE>
+
+
+<P>
+The calling process must have appropriate (probably, root) privileges
+or its effective user-ID must be that of the creator
+(<I>msg_perm.cuid</I>)
+
+or owner
+(<I>msg_perm.uid</I>)
+
+of the message queue.
+Appropriate privilege (Linux: the
+<B>CAP_IPC_RESOURCE</B>
+
+capability) is required to raise the
+<B>msg_qbytes</B>
+
+value beyond the system parameter
+<B>MSGMNB</B>.
+
+<DT><B>IPC_RMID</B>
+
+<DD>
+Immediately remove the message queue and its associated data structure,
+awakening all waiting reader and writer processes (with an error
+return and
+<B>errno</B>
+
+set to
+<B>EIDRM</B>).
+
+The calling process must have appropriate (probably, root) privileges
+or its effective user-ID must be either that of the creator or owner
+of the message queue.
+</DL>
+<A NAME="lbAE">&nbsp;</A>
+<H2>RETURN VALUE</H2>
+
+On success, the return value will be
+<B>0</B>,
+
+otherwise
+<B>-1</B>
+
+with
+<B>errno</B>
+
+indicating the error.
+<A NAME="lbAF">&nbsp;</A>
+<H2>ERRORS</H2>
+
+On failure,
+<B>errno</B>
+
+is set to one of the following:
+<DL COMPACT>
+<DT><B>EACCES</B>
+
+<DD>
+The argument
+<I>cmd</I>
+
+is equal to
+<B>IPC_STAT</B>
+
+or
+<B>MSG_STAT</B>,
+
+but the calling process does not have read permission on the message queue
+<I>msqid</I>,
+
+and does not have the
+<B>CAP_IPC_OWNER</B>
+
+capability.
+<DT><B>EFAULT</B>
+
+<DD>
+The argument
+<I>cmd</I>
+
+has the value
+<B>IPC_SET</B>
+
+or
+<B>IPC_STAT</B>,
+
+but the address pointed to by
+<I>buf</I>
+
+isn't accessible.
+<DT><B>EIDRM</B>
+
+<DD>
+The message queue was removed.
+<DT><B>EINVAL</B>
+
+<DD>
+Invalid value for
+<I>cmd</I>
+
+or
+<I>msqid</I>.
+
+<DT><B>EPERM</B>
+
+<DD>
+The argument
+<I>cmd</I>
+
+has the value
+<B>IPC_SET</B>
+
+or
+<B>IPC_RMID</B>,
+
+but the effective user ID of the calling process is not the creator
+(as found in
+<I>msg_perm.cuid</I>)
+
+or the owner
+(as found in
+<I>msg_perm.uid</I>)
+
+of the message queue,
+and the process is not privileged (Linux: it does not have the
+<B>CAP_SYS_ADMIN</B>
+
+capability).
+</DL>
+<A NAME="lbAG">&nbsp;</A>
+<H2>NOTES</H2>
+
+Various fields in a <I>struct msqid_ds</I> were shorts under Linux 2.2
+and have become longs under Linux 2.4. To take advantage of this,
+a recompilation under glibc-2.1.91 or later should suffice.
+(The kernel distinguishes old and new calls by a IPC_64 flag in
+<I>cmd</I>.)
+
+<A NAME="lbAH">&nbsp;</A>
+<H2>CONFORMING TO</H2>
+
+SVr4, SVID.  SVID does not document the EIDRM error condition.
+<A NAME="lbAI">&nbsp;</A>
+<H2>SEE ALSO</H2>
+
+<B><A HREF="../man2/msgget.2.html">msgget</A></B>(2),
+
+<B><A HREF="../man2/msgrcv.2.html">msgrcv</A></B>(2),
+
+<B><A HREF="../man2/msgsnd.2.html">msgsnd</A></B>(2),
+
+<B><A HREF="../man5/ipc.5.html">ipc</A></B>(5),
+
+<B><A HREF="../man7/capabilities.7.html">capabilities</A></B>(7)
+
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">NAME</A><DD>
+<DT><A HREF="#lbAC">SYNOPSIS</A><DD>
+<DT><A HREF="#lbAD">DESCRIPTION</A><DD>
+<DT><A HREF="#lbAE">RETURN VALUE</A><DD>
+<DT><A HREF="#lbAF">ERRORS</A><DD>
+<DT><A HREF="#lbAG">NOTES</A><DD>
+<DT><A HREF="#lbAH">CONFORMING TO</A><DD>
+<DT><A HREF="#lbAI">SEE ALSO</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
+using the manual pages.<BR>
+Time: 02:10:00 GMT, April 20, 2020
+</BODY>
+</HTML>

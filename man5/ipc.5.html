@@ -1,0 +1,526 @@
+<!--
+Copyright 1993 Giorgio Ciucci (giorgio@crcc.it)
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of IPC</TITLE>
+</HEAD><BODY>
+<H1>IPC</H1>
+Section: Linux Programmer's Manual (5)<BR>Updated: 1993-11-01<BR><A HREF="#index">Index</A>
+<A HREF="../index.html">Return to Main Contents</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>NAME</H2>
+
+ipc - System V interprocess communication mechanisms
+<A NAME="lbAC">&nbsp;</A>
+<H2>SYNOPSIS</H2>
+
+<PRE>
+<B># include &lt;<A HREF="file:///usr/include/sys/types.h">sys/types.h</A>&gt;</B>
+<B># include &lt;<A HREF="file:///usr/include/sys/ipc.h">sys/ipc.h</A>&gt;</B>
+<B># include &lt;<A HREF="file:///usr/include/sys/msg.h">sys/msg.h</A>&gt;</B>
+<B># include &lt;<A HREF="file:///usr/include/sys/sem.h">sys/sem.h</A>&gt;</B>
+<B># include &lt;<A HREF="file:///usr/include/sys/shm.h">sys/shm.h</A>&gt;</B>
+</PRE><A NAME="lbAD">&nbsp;</A>
+<H2>DESCRIPTION</H2>
+
+This manual page refers to the Linux implementation of the System V
+interprocess communication mechanisms:
+message queues, semaphore sets, and shared memory segments.
+In the following, the word
+<B>resource</B>
+
+means an instantiation of one among such mechanisms.
+<A NAME="lbAE">&nbsp;</A>
+<H3>Resource Access Permissions</H3>
+
+For each resource, the system uses a common structure of type
+<B>struct ipc_perm</B>
+
+to store information needed in determining permissions to perform an
+ipc operation.
+The
+<B>ipc_perm</B>
+
+structure, defined by the
+<I>&lt;<A HREF="file:///usr/include/sys/ipc.h">sys/ipc.h</A>&gt;</I>
+
+system header file, includes the following members:
+<P>
+<B><TT>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT>ushort cuid;<TT>&nbsp;&nbsp;&nbsp;&nbsp;</TT> </B>
+
+/* creator user id */<BR>
+<BR>
+
+<B><TT>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT>ushort cgid;<TT>&nbsp;&nbsp;&nbsp;&nbsp;</TT> </B>
+
+/* creator group id */<BR>
+<BR>
+
+<B><TT>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT>ushort uid;<TT>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT> </B>
+
+/* owner user id */<BR>
+<BR>
+
+<B><TT>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT>ushort gid;<TT>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT></B>
+
+/* owner group id */<BR>
+<BR>
+
+<B><TT>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT>ushort mode;<TT>&nbsp;&nbsp;&nbsp;&nbsp;</TT></B>
+
+/* r/w permissions */<BR>
+<P>
+
+The
+<B>mode</B>
+
+member of the
+<B>ipc_perm</B>
+
+structure defines, with its lower 9 bits, the access permissions to the
+resource for a process executing an ipc system call.
+The permissions are interpreted as follows:
+<P>
+<PRE>
+        0400    Read by user.
+        0200    Write by user.
+
+        0040    Read by group.
+        0020    Write by group.
+
+        0004    Read by others.
+        0002    Write by others.
+</PRE>
+
+<P>
+
+Bits 0100, 0010, and 0001 (the execute bits) are unused by the system.
+Furthermore,
+&quot;write&quot;
+effectively means
+&quot;alter&quot;
+for a semaphore set.
+<P>
+
+The same system header file also defines the following symbolic
+constants:
+<DL COMPACT>
+<DT><B>IPC_CREAT</B>
+
+<DD>
+Create entry if key doesn't exist.
+<DT><B>IPC_EXCL</B>
+
+<DD>
+Fail if key exists.
+<DT><B>IPC_NOWAIT</B>
+
+<DD>
+Error if request must wait.
+<DT><B>IPC_PRIVATE</B>
+
+<DD>
+Private key.
+<DT><B>IPC_RMID</B>
+
+<DD>
+Remove resource.
+<DT><B>IPC_SET</B>
+
+<DD>
+Set resource options.
+<DT><B>IPC_STAT</B>
+
+<DD>
+Get resource options.
+</DL>
+<P>
+
+Note that
+<B>IPC_PRIVATE</B>
+
+is a
+<B>key_t</B>
+
+type, while all the other symbolic constants are flag fields and can
+be OR'ed into an
+<B>int</B>
+
+type variable.
+<A NAME="lbAF">&nbsp;</A>
+<H3>Message Queues</H3>
+
+A message queue is uniquely identified by a positive integer
+(its <I>msqid</I>)
+
+and has an associated data structure of type
+<B>struct msqid_ds</B>,
+
+defined in
+<I>&lt;<A HREF="file:///usr/include/sys/msg.h">sys/msg.h</A>&gt;</I>,
+
+containing the following members:
+<P>
+<B><TT>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT>struct ipc_perm msg_perm;</B>
+
+<BR>
+
+<B><TT>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT>ushort msg_qnum;<TT>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT></B>
+
+/* no of messages on queue */<BR>
+<BR>
+
+<B><TT>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT>ushort msg_qbytes;<TT>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT></B>
+
+/* bytes max on a queue */<BR>
+<BR>
+
+<B><TT>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT>ushort msg_lspid;<TT>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT></B>
+
+/* pid of last msgsnd call */<BR>
+<BR>
+
+<B><TT>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT>ushort msg_lrpid;<TT>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT></B>
+
+/* pid of last msgrcv call */<BR>
+<BR>
+
+<B><TT>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT>time_t msg_stime;<TT>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT></B>
+
+/* last msgsnd time */<BR>
+<BR>
+
+<B><TT>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT>time_t msg_rtime;<TT>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT></B>
+
+/* last msgrcv time */<BR>
+<BR>
+
+<B><TT>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT>time_t msg_ctime;<TT>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT></B>
+
+/* last change time */<BR>
+<DL COMPACT>
+<DT><B>msg_perm</B>
+
+<DD>
+<B>ipc_perm</B>
+
+structure that specifies the access permissions on the message
+queue.
+<DT><B>msg_qnum</B>
+
+<DD>
+Number of messages currently on the message queue.
+<DT><B>msg_qbytes</B>
+
+<DD>
+Maximum number of bytes of message text allowed on the message
+queue.
+<DT><B>msg_lspid</B>
+
+<DD>
+ID of the process that performed the last
+<B>msgsnd</B>
+
+system call.
+<DT><B>msg_lrpid</B>
+
+<DD>
+ID of the process that performed the last
+<B>msgrcv</B>
+
+system call.
+<DT><B>msg_stime</B>
+
+<DD>
+Time of the last
+<B>msgsnd</B>
+
+system call.
+<DT><B>msg_rtime</B>
+
+<DD>
+Time of the last
+<B>msgcv</B>
+
+system call.
+<DT><B>msg_ctime</B>
+
+<DD>
+Time of the last
+system call that changed a member of the
+<B>msqid_ds</B>
+
+structure.
+</DL>
+<A NAME="lbAG">&nbsp;</A>
+<H3>Semaphore Sets</H3>
+
+A semaphore set is uniquely identified by a positive integer
+(its <I>semid</I>)
+
+and has an associated data structure of type
+<B>struct semid_ds</B>,
+
+defined in
+<I>&lt;<A HREF="file:///usr/include/sys/sem.h">sys/sem.h</A>&gt;</I>,
+
+containing the following members:
+<P>
+<B><TT>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT>struct ipc_perm sem_perm;</B>
+
+<BR>
+
+<B><TT>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT>time_t sem_otime;<TT>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT></B>
+
+/* last operation time */<BR>
+<BR>
+
+<B><TT>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT>time_t sem_ctime;<TT>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT></B>
+
+/* last change time */<BR>
+<BR>
+
+<B><TT>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT>ushort sem_nsems;<TT>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT></B>
+
+/* count of sems in set */<BR>
+<DL COMPACT>
+<DT><B>sem_perm</B>
+
+<DD>
+<B>ipc_perm</B>
+
+structure that specifies the access permissions on the semaphore
+set.
+<DT><B>sem_otime</B>
+
+<DD>
+Time of last
+<B>semop</B>
+
+system call.
+<DT><B>sem_ctime</B>
+
+<DD>
+Time of last
+<B>semctl</B>
+
+system call that changed a member of the above structure or of one
+semaphore belonging to the set.
+<DT><B>sem_nsems</B>
+
+<DD>
+Number of semaphores in the set.
+Each semaphore of the set is referenced by a non-negative integer
+ranging from
+<B>0</B>
+
+to
+<B>sem_nsems-1</B>.
+
+</DL>
+<P>
+
+A semaphore is a data structure of type
+<B>struct sem</B>
+
+containing the following members:
+<P>
+<B><TT>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT>ushort semval;<TT>&nbsp;&nbsp;</TT></B>
+
+/* semaphore value */<BR>
+<BR>
+
+<B><TT>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT>short sempid;<TT>&nbsp;&nbsp;&nbsp;</TT></B>
+
+/* pid for last operation */<BR>
+<BR>
+
+<B><TT>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT>ushort semncnt;</B>
+
+/* nr awaiting semval to increase */<BR>
+<BR>
+
+<B><TT>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT>ushort semzcnt;</B>
+
+/* nr awaiting semval = 0 */<BR>
+<DL COMPACT>
+<DT><B>semval</B>
+
+<DD>
+Semaphore value: a non-negative integer.
+<DT><B>sempid</B>
+
+<DD>
+ID of the last process that performed a semaphore operation
+on this semaphore.
+<DT><B>semncnt</B>
+
+<DD>
+Number of processes suspended awaiting for
+<B>semval</B>
+
+to increase.
+<DT><B>semznt</B>
+
+<DD>
+Number of processes suspended awaiting for
+<B>semval</B>
+
+to become zero.
+</DL>
+<A NAME="lbAH">&nbsp;</A>
+<H3>Shared Memory Segments</H3>
+
+A shared memory segment is uniquely identified by a positive integer
+(its <I>shmid</I>)
+
+and has an associated data structure of type
+<B>struct shmid_ds</B>,
+
+defined in
+<I>&lt;<A HREF="file:///usr/include/sys/shm.h">sys/shm.h</A>&gt;</I>,
+
+containing the following members:
+<P>
+<B><TT>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT>struct ipc_perm shm_perm;</B>
+
+<BR>
+
+<B><TT>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT>int shm_segsz; <TT>&nbsp;</TT></B>
+
+/* size of segment */<BR>
+<BR>
+
+<B><TT>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT>ushort shm_cpid;<TT>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT></B>
+
+/* pid of creator */<BR>
+<BR>
+
+<B><TT>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT>ushort shm_lpid;<TT>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT></B>
+
+/* pid, last operation */<BR>
+<BR>
+
+<B><TT>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT>short shm_nattch;<TT>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT></B>
+
+/* no. of current attaches */<BR>
+<BR>
+
+<B><TT>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT>time_t shm_atime;<TT>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT></B>
+
+/* time of last attach */<BR>
+<BR>
+
+<B><TT>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT>time_t shm_dtime;<TT>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT></B>
+
+/* time of last detach */<BR>
+<BR>
+
+<B><TT>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT>time_t shm_ctime;<TT>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT></B>
+
+/* time of last change */<BR>
+<DL COMPACT>
+<DT><B>shm_perm</B>
+
+<DD>
+<B>ipc_perm</B>
+
+structure that specifies the access permissions on the shared memory
+segment.
+<DT><B>shm_segsz</B>
+
+<DD>
+Size in bytes of the shared memory segment.
+<DT><B>shm_cpid</B>
+
+<DD>
+ID of the process that created the shared memory segment.
+<DT><B>shm_lpid</B>
+
+<DD>
+ID of the last process that executed a
+<B>shmat</B>
+
+or
+<B>shmdt</B>
+
+system call.
+<DT><B>shm_nattch</B>
+
+<DD>
+Number of current alive attaches for this shared memory segment.
+<DT><B>shm_atime</B>
+
+<DD>
+Time of the last
+<B>shmat</B>
+
+system call.
+<DT><B>shm_dtime</B>
+
+<DD>
+Time of the last
+<B>shmdt</B>
+
+system call.
+<DT><B>shm_ctime</B>
+
+<DD>
+Time of the last
+<B>shmctl</B>
+
+system call that changed
+<B>shmid_ds</B>.
+
+</DL>
+<A NAME="lbAI">&nbsp;</A>
+<H2>SEE ALSO</H2>
+
+<B><A HREF="../man2/msgctl.2.html">msgctl</A></B>(2),
+
+<B><A HREF="../man2/msgget.2.html">msgget</A></B>(2),
+
+<B><A HREF="../man2/msgrcv.2.html">msgrcv</A></B>(2),
+
+<B><A HREF="../man2/msgsnd.2.html">msgsnd</A></B>(2),
+
+<B><A HREF="../man2/semctl.2.html">semctl</A></B>(2),
+
+<B><A HREF="../man2/semget.2.html">semget</A></B>(2),
+
+<B><A HREF="../man2/semop.2.html">semop</A></B>(2),
+
+<B><A HREF="../man2/shmat.2.html">shmat</A></B>(2),
+
+<B><A HREF="../man2/shmctl.2.html">shmctl</A></B>(2),
+
+<B><A HREF="../man2/shmdt.2.html">shmdt</A></B>(2),
+
+<B><A HREF="../man2/shmget.2.html">shmget</A></B>(2),
+
+<B><A HREF="../man3/ftok.3.html">ftok</A></B>(3)
+
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">NAME</A><DD>
+<DT><A HREF="#lbAC">SYNOPSIS</A><DD>
+<DT><A HREF="#lbAD">DESCRIPTION</A><DD>
+<DL>
+<DT><A HREF="#lbAE">Resource Access Permissions</A><DD>
+<DT><A HREF="#lbAF">Message Queues</A><DD>
+<DT><A HREF="#lbAG">Semaphore Sets</A><DD>
+<DT><A HREF="#lbAH">Shared Memory Segments</A><DD>
+</DL>
+<DT><A HREF="#lbAI">SEE ALSO</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
+using the manual pages.<BR>
+Time: 02:11:22 GMT, April 20, 2020
+</BODY>
+</HTML>

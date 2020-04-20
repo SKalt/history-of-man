@@ -1,0 +1,192 @@
+<!--
+Copyright (c) 2000 Andries Brouwer (aeb@cwi.nl)
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of STRFMON</TITLE>
+</HEAD><BODY>
+<H1>STRFMON</H1>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2000-12-05<BR><A HREF="#index">Index</A>
+<A HREF="../index.html">Return to Main Contents</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>NAME</H2>
+
+strfmon - convert monetary value to a string
+<A NAME="lbAC">&nbsp;</A>
+<H2>SYNOPSIS</H2>
+
+<PRE>
+<B>#include &lt;<A HREF="file:///usr/include/monetary.h">monetary.h</A>&gt;</B>
+
+<B>ssize_t strfmon(char *</B><I>s</I><B>, size_t </B><I>max</I><B>, const char *</B><I>format</I><B>,</B>
+<B>...);</B>
+</PRE>
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>DESCRIPTION</H2>
+
+The <B>strfmon()</B> function formats the specified amounts
+according to the format specification <I>format</I> and places the
+result in the character array <I>s</I> of size <I>max</I>.
+<P>
+
+Ordinary characters in <I>format</I> are copied to <I>s</I>
+without conversion.  Conversion specifiers are introduced by a `%'
+character. Immediately following it there can be zero or more
+of the following flags:
+<DL COMPACT>
+<DT><B>=</B><I>f</I>
+
+<DD>
+The single-byte character
+<I>f</I>
+
+is used as the numeric fill character (to be used with
+a left precision, see below).
+When not specified, the space character is used.
+<DT><B>^</B>
+
+<DD>
+Do not use any grouping characters that might be defined
+for the current locale. By default, grouping is enabled.
+<DT><B>(</B> or <B>+</B>
+
+<DD>
+The ( flag indicates that negative amounts should be enclosed between
+parentheses. The + flag indicates that signs should be handled
+in the default way, that is, amounts are preceded by the locale's
+sign indication, e.g., nothing for positive, &quot;-&quot; for negative.
+<DT><B>!</B>
+
+<DD>
+Omit the currency symbol.
+<DT><B>-</B>
+
+<DD>
+Left justify all fields. The default is right justification.
+</DL>
+<P>
+
+Next, there may be a field width: a decimal digit string specifying
+a minimum field width in bytes. The default is 0.
+A result smaller than this width is padded with spaces
+(on the left, unless the left-justify flag was given).
+<P>
+
+Next, there may be a left precision of the form &quot;#&quot; followed by
+a decimal digit string. If the number of digits left of the
+radix character is smaller than this, the representation is
+padded on the left with the numeric fill character.
+Grouping characters are not counted in this field width.
+<P>
+
+Next, there may be a right precision of the form &quot;.&quot; followed by
+a decimal digit string. The amount being formatted is rounded to
+the specified number of digits prior to formatting.
+The default is specified in the
+<I>frac_digits</I>
+
+and
+<I>int_frac_digits</I>
+
+items of the current locale.
+If the right precision is 0, no radix character is printed.
+(The radix character here is determined by LC_MONETARY, and may
+differ from that specified by LC_NUMERIC.)
+<P>
+
+Finally, the conversion specification must be ended with a
+conversion character. The three conversion characters are
+<DL COMPACT>
+<DT><B>%</B>
+
+<DD>
+(In this case the entire specification must be exactly &quot;%%&quot;.)
+Put a `%' character in the result string.
+<DT><B>i</B>
+
+<DD>
+One argument of type double is converted using the locale's
+international currency format.
+<DT><B>n</B>
+
+<DD>
+One argument of type double is converted using the locale's
+national currency format.
+</DL>
+<A NAME="lbAE">&nbsp;</A>
+<H2>RETURN VALUE</H2>
+
+The <B>strfmon()</B> function returns the number of characters placed
+in the array <I>s</I>, not including the terminating NUL character,
+provided the string, including the terminating NUL, fits.
+Otherwise, it sets
+<I>errno</I>
+
+to E2BIG, returns -1, and the contents of the array is undefined.
+<A NAME="lbAF">&nbsp;</A>
+<H2>EXAMPLE</H2>
+
+The call
+<DL COMPACT><DT><DD>
+<PRE>
+strfmon(buf, sizeof(buf), &quot;[%^=*#6n] [%=*#6i]&quot;,
+        1234.567, 1234.567);
+</PRE>
+
+</DL>
+
+outputs
+<DL COMPACT><DT><DD>
+[ fl **1234,57] [ NLG  **1 234,57]
+</DL>
+
+in the Dutch locale (with fl for &quot;florijnen&quot; and NLG for Netherlands Guilders).
+The grouping character is very ugly because it takes as much space
+as a digit, while it should not take more than half that,
+and will no doubt cause confusion.
+Surprisingly, the &quot;fl&quot; is preceded and followed by a space,
+and &quot;NLG&quot; is preceded by one and followed by two spaces.
+This may be a bug in the locale files. The Italian, Australian, Swiss
+and Portuguese locales yield
+<DL COMPACT><DT><DD>
+[ L. **1235] [ ITL  **1.235]
+<BR>
+
+[ $**1234.57] [ AUD **1,234.57]
+<BR>
+
+[Fr. **1234,57] [CHF  **1.234,57]
+<BR>
+
+[ **1234$57Esc] [ **1.234$57PTE ]
+</DL>
+
+<A NAME="lbAG">&nbsp;</A>
+<H2>SEE ALSO</H2>
+
+<B><A HREF="../man3/setlocale.3.html">setlocale</A></B>(3),
+
+<B><A HREF="../man3/sprintf.3.html">sprintf</A></B>(3),
+
+<B><A HREF="../man7/locale.7.html">locale</A></B>(7)
+
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">NAME</A><DD>
+<DT><A HREF="#lbAC">SYNOPSIS</A><DD>
+<DT><A HREF="#lbAD">DESCRIPTION</A><DD>
+<DT><A HREF="#lbAE">RETURN VALUE</A><DD>
+<DT><A HREF="#lbAF">EXAMPLE</A><DD>
+<DT><A HREF="#lbAG">SEE ALSO</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
+using the manual pages.<BR>
+Time: 02:11:05 GMT, April 20, 2020
+</BODY>
+</HTML>

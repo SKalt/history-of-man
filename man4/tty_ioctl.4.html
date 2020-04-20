@@ -1,0 +1,676 @@
+<!--
+Copyright 2002 Walter Harms &lt;walter.harms@informatik.uni-oldenburg.de&gt;
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of TTY_IOCTL</TITLE>
+</HEAD><BODY>
+<H1>TTY_IOCTL</H1>
+Section: Linux Programmer's Manual (4)<BR>Updated: 2002-12-29<BR><A HREF="#index">Index</A>
+<A HREF="../index.html">Return to Main Contents</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>NAME</H2>
+
+tty ioctl - ioctls for terminals and serial lines
+<A NAME="lbAC">&nbsp;</A>
+<H2>SYNOPSIS</H2>
+
+<P>
+<B>#include &lt;<A HREF="file:///usr/include/termios.h">termios.h</A>&gt;</B>
+
+<P>
+<B>int ioctl(int </B><I>fd</I><B>, int </B><I>cmd</I><B>, ...);</B>
+
+<P>
+<A NAME="lbAD">&nbsp;</A>
+<H2>DESCRIPTION</H2>
+
+The
+<I>ioctl()</I>
+
+call for terminals and serial ports accepts many possible command arguments.
+Most require a third argument, of varying type, here called <I>argp</I>
+or <I>arg</I>.
+<P>
+
+Use of
+<I>ioctl</I>
+
+makes for non-portable programs. Use the POSIX interface described in
+<B><A HREF="../man3/termios.3.html">termios</A></B>(3)
+
+whenever possible.
+<P>
+<A NAME="lbAE">&nbsp;</A>
+<H3>Get and Set Terminal Attributes</H3>
+
+<DL COMPACT>
+<DT><B>TCGETS<TT>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT>struct termios *</B><I>argp</I>
+
+<DD>
+Equivalent to<BR>
+<I>tcgetattr(fd, argp)</I>.
+
+<BR>
+
+Get the current serial port settings.
+<DT><B>TCSETS<TT>&nbsp;</TT>const struct termios *</B><I>argp</I>
+
+<DD>
+Equivalent to<BR>
+<I>tcsetattr(fd, TCSANOW, argp)</I>.
+
+<BR>
+
+Set the current serial port settings.
+<DT><B>TCSETSW<TT>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT>const struct termios *</B><I>argp</I>
+
+<DD>
+Equivalent to<BR>
+<I>tcsetattr(fd, TCSADRAIN, argp)</I>.
+
+<BR>
+
+Allow the output buffer to drain, and
+set the current serial port settings.
+<DT><B>TCSETSF<TT>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT>const struct termios *</B><I>argp</I>
+
+<DD>
+Equivalent to<BR>
+<I>tcsetattr(fd, TCSAFLUSH, argp)</I>.
+
+<BR>
+
+Allow the output buffer to drain, discard pending input, and
+set the current serial port settings.
+</DL>
+<P>
+
+The following four ioctls are just like TCGETS, TCSETS, TCSETSW, TCSETSF,
+except that they take a
+<B>struct termio *</B>
+
+instead of a
+<B>struct termios *</B>.
+
+<DL COMPACT>
+<DT><B>TCGETA<TT>&nbsp;&nbsp;&nbsp;&nbsp;</TT>struct termio *</B><I>argp</I>
+
+<DD>
+<DT><B>TCSETA<TT>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT>const struct termio *</B><I>argp</I>
+
+<DD>
+<DT><B>TCSETAW<TT>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT>const struct termio *</B><I>argp</I>
+
+<DD>
+<DT><B>TCSETAF<TT>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT>const struct termio *</B><I>argp</I>
+
+<DD>
+<P><BR>
+</DL>
+<A NAME="lbAF">&nbsp;</A>
+<H3>Locking the termios structure</H3>
+
+The termios structure of a tty can be locked. The lock is itself
+a termios structure, with nonzero bits or fields indicating a
+locked value.
+<DL COMPACT>
+<DT><B>TIOCGLCKTRMIOS<TT>&nbsp;</TT>struct termios *</B><I>argp</I>
+
+<DD>
+Gets the locking status of the termios structure of <BR>
+the terminal.
+<DT><B>TIOCSLCKTRMIOS<TT>&nbsp;</TT>const struct termios *</B><I>argp</I>
+
+<DD>
+Sets the locking status of the termios structure of <BR>
+the terminal. Only root can do this.
+<P>
+</DL>
+<A NAME="lbAG">&nbsp;</A>
+<H3>Get and Set Window Size</H3>
+
+Window sizes are kept in the kernel, but not used by the kernel
+(except in the case of virtual consoles, where the kernel will
+update the window size when the size of the virtual console changes,
+e.g. by loading a new font).
+<DL COMPACT>
+<DT><B>TIOCGWINSZ<TT>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT>struct winsize *</B><I>argp</I>
+
+<DD>
+Get window size.<BR>
+<DT><B>TIOCSWINSZ<TT>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT>const struct winsize *</B><I>argp</I>
+
+<DD>
+Set window size.<BR>
+</DL>
+<P>
+
+The struct used by these ioctls is defined as
+<P>
+<PRE>
+struct winsize {
+        unsigned short ws_row;
+        unsigned short ws_col;
+        unsigned short ws_xpixel;   /* unused */
+        unsigned short ws_ypixel;   /* unused */
+};
+</PRE>
+
+<P>
+When the window size changes, a SIGWINCH signal is sent to the
+foreground process group.
+<P>
+<A NAME="lbAH">&nbsp;</A>
+<H3>Sending a Break</H3>
+
+<DL COMPACT>
+<DT><B>TCSBRK<TT>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT>int </B><I>arg</I>
+
+<DD>
+Equivalent to<BR>
+<I>tcsendbreak(fd, arg)</I>.
+
+<BR>
+
+If the terminal is using asynchronous serial data transmission, and
+<I>arg</I>
+
+is zero, then send a break (a stream of zero bits) for between
+0.25 and 0.5 seconds. If the terminal is not using asynchronous
+serial data transmission, then either a break is sent, or the function
+returns without doing anything.
+When
+<I>arg</I>
+
+is nonzero, nobody knows what will happen.
+<P>
+(SVR4, UnixWare, Solaris, Linux treat
+<I>tcsendbreak(fd,arg)</I>
+
+with nonzero
+<I>arg</I>
+
+like
+<I>tcdrain(fd)</I>.
+
+SunOS treats
+<I>arg</I>
+
+as a multiplier, and sends a stream of bits
+<I>arg</I>
+
+times as long as done for zero
+<I>arg</I>.
+
+DG-UX and AIX treat
+<I>arg</I>
+
+(when nonzero) as a timeinterval measured in milliseconds.
+HP-UX ignores
+<I>arg</I>.)
+
+<DT><B>TCSBRKP<TT>&nbsp;</TT>int </B><I>arg</I>
+
+<DD>
+So-called &quot;POSIX version&quot; of TCSBRK. It treats nonzero<BR>
+<I>arg</I>
+
+as a timeinterval measured in deciseconds, and does nothing
+when the driver does not support breaks.
+<DT><B>TIOCSBRK<TT>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT>void</B>
+
+<DD>
+Turn break on, that is, start sending zero bits.<BR>
+<DT><B>TIOCCBRK<TT>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT>void</B>
+
+<DD>
+Turn break off, that is, stop sending zero bits.<BR>
+<P>
+</DL>
+<A NAME="lbAI">&nbsp;</A>
+<H3>Software flow control</H3>
+
+<DL COMPACT>
+<DT><B>TCXONC<TT>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT>int </B><I>arg</I>
+
+<DD>
+Equivalent to<BR>
+<I>tcflow(fd, arg)</I>.
+
+<BR>
+
+See
+<B><A HREF="../man3/tcflow.3.html">tcflow</A></B>(3)
+
+for the argument values TCOOFF, TCOON, TCIOFF, TCION.
+<P>
+</DL>
+<A NAME="lbAJ">&nbsp;</A>
+<H3>Buffer count and flushing</H3>
+
+<DL COMPACT>
+<DT><B>FIONREAD<TT>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT>int *</B><I>argp</I>
+
+<DD>
+Get the number of bytes in the input buffer.<BR>
+<DT><B>TIOCINQ<TT>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT>int *</B><I>argp</I>
+
+<DD>
+Same as FIONREAD.<BR>
+<DT><B>TIOCOUTQ<TT>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT>int *</B><I>argp</I>
+
+<DD>
+Get the number of bytes in the output buffer.<BR>
+<DT><B>TCFLSH<TT>&nbsp;</TT>int </B><I>arg</I>
+
+<DD>
+Equivalent to<BR>
+<I>tcflush(fd, arg)</I>.
+
+<BR>
+
+See
+<B><A HREF="../man3/tcflush.3.html">tcflush</A></B>(3)
+
+for the argument values TCIFLUSH, TCOFLUSH, TCIOFLUSH.
+<P>
+</DL>
+<A NAME="lbAK">&nbsp;</A>
+<H3>Faking input</H3>
+
+<DL COMPACT>
+<DT><B>TIOCSTI<TT>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT>const char *</B><I>argp</I>
+
+<DD>
+Insert the given byte in the input queue.<BR>
+<P>
+</DL>
+<A NAME="lbAL">&nbsp;</A>
+<H3>Redirecting console output</H3>
+
+<DL COMPACT>
+<DT><B>TIOCCONS<TT>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT>void</B>
+
+<DD>
+Redirect output that would have gone to<BR>
+<I>/dev/console</I>
+
+or
+<I>/dev/tty0</I>
+
+to the given tty. If that was a pty master, send it to the slave.
+Anybody can do this as long as the output was not redirected yet.
+If it was redirected already EBUSY is returned,
+but root may stop redirection by using this ioctl with
+<I>fd</I>
+
+pointing at
+<I>/dev/console</I>
+
+or
+<I>/dev/tty0</I>.
+
+<P>
+</DL>
+<A NAME="lbAM">&nbsp;</A>
+<H3>Controlling tty</H3>
+
+<DL COMPACT>
+<DT><B>TIOCSCTTY<TT>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT>int </B><I>arg</I>
+
+<DD>
+Make the given tty the controlling tty of the current process.<BR>
+The current process must be a session leader and not have a
+controlling tty already. If this tty is already the controlling tty
+of a different session group then the ioctl fails with EPERM,
+unless the caller is root and
+<I>arg</I>
+
+equals 1, in which case the tty is stolen, and all processes that had
+it as controlling tty lose it.
+<DT><B>TIOCNOTTY</B><I>void</I>
+
+<DD>
+If the given tty was the controlling tty of the current process,
+give up this controlling tty. If the process was session leader,
+then send SIGHUP and SIGCONT to the foreground process group
+and all processes in the current session lose their controlling tty.
+<P>
+</DL>
+<A NAME="lbAN">&nbsp;</A>
+<H3>Process group and session ID</H3>
+
+<DL COMPACT>
+<DT><B>TIOCGPGRP<TT>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT>pid_t *</B><I>argp</I>
+
+<DD>
+When successful, equivalent to<BR>
+<I>*argp = tcgetpgrp(fd)</I>.
+
+<BR>
+
+Get the process group ID of the foreground proces group on this tty.
+<DT><B>TIOCSPGRP<TT>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT>const pid_t *</B><I>argp</I>
+
+<DD>
+Equivalent to<BR>
+<I>tcsetpgrp(fd, *argp)</I>.
+
+<BR>
+
+Set the foreground process group id of this tty.
+<DT><B>TIOCGSID<TT>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT>pid_t *</B><I>argp</I>
+
+<DD>
+Get the session ID of the given tty. This will fail with ENOTTY<BR>
+in case the tty is not a master pty and not our controlling tty. Strange.
+<P>
+</DL>
+<A NAME="lbAO">&nbsp;</A>
+<H3>Exclusive mode</H3>
+
+<DL COMPACT>
+<DT><B>TIOCEXCL<TT>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT>void</B>
+
+<DD>
+Put the tty into exclusive mode.<BR>
+No further
+<B><A HREF="../man2/open.2.html">open</A></B>(2)
+
+operations on the terminal are permitted.
+(They will fail with EBUSY, except for root.)
+<DT><B>TIOCNXCL<TT>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT>void</B>
+
+<DD>
+Disable exclusive mode.<BR>
+<P>
+</DL>
+<A NAME="lbAP">&nbsp;</A>
+<H3>Line discipline</H3>
+
+<DL COMPACT>
+<DT><B>TIOCGETD<TT>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT>int *</B><I>argp</I>
+
+<DD>
+Get the line discipline of the tty.<BR>
+<DT><B>TIOCSETD<TT>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT>const int *</B><I>argp</I>
+
+<DD>
+Set the line discipline of the tty.<BR>
+<P>
+</DL>
+<A NAME="lbAQ">&nbsp;</A>
+<H3>Pseudo-tty ioctls</H3>
+
+<DL COMPACT>
+<DT><B>TIOCPKT<TT>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT>const int *</B><I>argp</I>
+
+<DD>
+Enable (when<BR>
+*<I>argp</I>
+
+is nonzero) or disable packet mode.
+Can be applied to the master side of a pseudotty only (and will return
+ENOTTY otherwise). In packet mode, each subsequent
+<B><A HREF="../man2/read.2.html">read</A></B>(2)
+
+will return a packet that either contains a single nonzero control byte,
+or has a single zero byte followed by data written on the slave side of
+the pty. If the first byte is not TIOCPKT_DATA (0), it is an OR of one
+or more of the following bits:
+<P>
+<PRE>
+TIOCPKT_FLUSHREAD   The read queue for the terminal is flushed.
+TIOCPKT_FLUSHWRITE  The write queue for the terminal is flushed.
+TIOCPKT_STOP        Output to the terminal is stopped.
+TIOCPKT_START       Output to the terminal is restarted.
+TIOCPKT_DOSTOP      t_stopc is `^S' and t_startc is `^Q'.
+TIOCPKT_NOSTOP      the start and stop characters are not `^S/^Q'.
+</PRE>
+
+<P>
+While this mode is in use, the presence
+of control status information to be read
+from the master side may be detected by a
+<B><A HREF="../man2/select.2.html">select</A></B>(2)
+
+for exceptional conditions.
+<P>
+This mode is used by
+<B><A HREF="../man1/rlogin.1.html">rlogin</A></B>(1)
+
+and
+<B><A HREF="../man8/rlogind.8.html">rlogind</A></B>(8)
+
+to implement a remote-echoed, locally `^S/^Q' flow-controlled remote login.
+<P>
+The BSD ioctls TIOCSTOP, TIOCSTART, TIOCUCNTL, TIOCREMOTE
+have not been implemented under Linux.
+<P>
+</DL>
+<A NAME="lbAR">&nbsp;</A>
+<H3>Modem control</H3>
+
+<DL COMPACT>
+<DT><B>TIOCMGET<TT>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT>int *</B><I>argp</I>
+
+<DD>
+get the status of modem bits.<BR>
+<DT><B>TIOCMSET<TT>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT>const int *</B><I>argp</I>
+
+<DD>
+set the status of modem bits.<BR>
+<DT><B>TIOCMBIC<TT>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT>const int *</B><I>argp</I>
+
+<DD>
+clear the indicated modem bits.<BR>
+<DT><B>TIOCMBIS<TT>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT>const int *</B><I>argp</I>
+
+<DD>
+set the indicated modem bits.<BR>
+</DL>
+<P>
+
+Bits used by these four ioctls:
+<P>
+<PRE>
+TIOCM_LE        DSR (data set ready/line enable)
+TIOCM_DTR       DTR (data terminal ready)
+TIOCM_RTS       RTS (request to send)
+TIOCM_ST        Secondary TXD (transmit)
+TIOCM_SR        Secondary RXD (receive)
+TIOCM_CTS       CTS (clear to send)
+TIOCM_CAR       DCD (data carrier detect)
+TIOCM_CD         see TIOCM_CAR
+TIOCM_RNG       RNG (ring)
+TIOCM_RI         see TIOCM_RNG
+TIOCM_DSR       DSR (data set ready)
+</PRE>
+
+<P>
+<A NAME="lbAS">&nbsp;</A>
+<H3>Marking a line as local</H3>
+
+<DL COMPACT>
+<DT><B>TIOCGSOFTCAR<TT>&nbsp;&nbsp;</TT>int *</B><I>argp</I>
+
+<DD>
+(&quot;Get software carrier flag&quot;)<BR>
+Get the status of the CLOCAL flag in the c_cflag field of the
+termios structure.
+<DT><B>TIOCSSOFTCAR<TT>&nbsp;&nbsp;&nbsp;</TT>const int *</B><I>argp</I>
+
+<DD>
+(&quot;Set software carrier flag&quot;)<BR>
+Set the CLOCAL flag in the termios structure when
+*<I>argp</I>
+
+is nonzero, and clear it otherwise.
+</DL>
+<P>
+
+If the CLOCAL flag for a line is off, the hardware carrier detect (DCD)
+signal is significant, and an
+<B><A HREF="../man2/open.2.html">open</A></B>(2)
+
+of the corresponding tty will block until DCD is asserted,
+unless the O_NONBLOCK flag is given.
+If CLOCAL is set, the line behaves as if DCD is always asserted.
+The software carrier flag is usually turned on for local devices,
+and is off for lines with modems.
+<P>
+<A NAME="lbAT">&nbsp;</A>
+<H3>Linux specific</H3>
+
+For the TIOCLINUX ioctl, see
+<B><A HREF="../man4/console_ioctl.4.html">console_ioctl</A></B>(4).
+
+<P>
+<A NAME="lbAU">&nbsp;</A>
+<H3>Kernel debugging</H3>
+
+<P>
+<B>#include &lt;<A HREF="file:///usr/include/linux/tty.h">linux/tty.h</A>&gt;</B>
+
+<P>
+<DL COMPACT>
+<DT><B>TIOCTTYGSTRUCT<TT>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT>struct tty_struct *</B><I>argp</I>
+
+<DD>
+Get the tty_struct corresponding to<BR>
+<I>fd</I>.
+
+
+
+
+
+
+
+
+
+
+
+
+<P>
+</DL>
+<A NAME="lbAV">&nbsp;</A>
+<H2>RETURN VALUE</H2>
+
+The
+<I>ioctl()</I>
+
+system call returns 0 on success. On error it returns -1 and sets
+<I>errno</I>
+
+appropriately.
+<P>
+<A NAME="lbAW">&nbsp;</A>
+<H2>ERRORS</H2>
+
+<DL COMPACT>
+<DT><B>ENOIOCTLCMD</B>
+
+<DD>
+Unknown command.
+<DT><B>EINVAL</B>
+
+<DD>
+Invalid command parameter.
+<DT><B>EPERM</B>
+
+<DD>
+Insufficient permission.
+<DT><B>ENOTTY</B>
+
+<DD>
+Inappropriate
+<I>fd</I>.
+
+</DL>
+<A NAME="lbAX">&nbsp;</A>
+<H2>EXAMPLE</H2>
+
+Check the condition of DTR on the serial port.
+<P>
+<PRE>
+#include &lt;<A HREF="file:///usr/include/termios.h">termios.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/fcntl.h">fcntl.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/sys/ioctl.h">sys/ioctl.h</A>&gt;
+
+main() {
+    int fd, serial;
+
+    fd = open(&quot;/dev/ttyS0&quot;, O_RDONLY);
+    ioctl(fd, TIOCMGET, &amp;serial);
+    if (serial &amp; TIOCM_DTR)
+        puts(&quot;TIOCM_DTR is not set&quot;);
+    else
+        puts(&quot;TIOCM_DTR is set&quot;);
+    close(fd);
+}
+</PRE>
+
+<P>
+<A NAME="lbAY">&nbsp;</A>
+<H2>SEE ALSO</H2>
+
+<B><A HREF="../man2/ioctl.2.html">ioctl</A></B>(2),
+
+<B><A HREF="../man3/termios.3.html">termios</A></B>(3),
+
+<B><A HREF="../man4/console_ioctl.4.html">console_ioctl</A></B>(4)
+
+<P>
+
+
+
+
+
+
+
+
+
+
+
+
+
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">NAME</A><DD>
+<DT><A HREF="#lbAC">SYNOPSIS</A><DD>
+<DT><A HREF="#lbAD">DESCRIPTION</A><DD>
+<DL>
+<DT><A HREF="#lbAE">Get and Set Terminal Attributes</A><DD>
+<DT><A HREF="#lbAF">Locking the termios structure</A><DD>
+<DT><A HREF="#lbAG">Get and Set Window Size</A><DD>
+<DT><A HREF="#lbAH">Sending a Break</A><DD>
+<DT><A HREF="#lbAI">Software flow control</A><DD>
+<DT><A HREF="#lbAJ">Buffer count and flushing</A><DD>
+<DT><A HREF="#lbAK">Faking input</A><DD>
+<DT><A HREF="#lbAL">Redirecting console output</A><DD>
+<DT><A HREF="#lbAM">Controlling tty</A><DD>
+<DT><A HREF="#lbAN">Process group and session ID</A><DD>
+<DT><A HREF="#lbAO">Exclusive mode</A><DD>
+<DT><A HREF="#lbAP">Line discipline</A><DD>
+<DT><A HREF="#lbAQ">Pseudo-tty ioctls</A><DD>
+<DT><A HREF="#lbAR">Modem control</A><DD>
+<DT><A HREF="#lbAS">Marking a line as local</A><DD>
+<DT><A HREF="#lbAT">Linux specific</A><DD>
+<DT><A HREF="#lbAU">Kernel debugging</A><DD>
+</DL>
+<DT><A HREF="#lbAV">RETURN VALUE</A><DD>
+<DT><A HREF="#lbAW">ERRORS</A><DD>
+<DT><A HREF="#lbAX">EXAMPLE</A><DD>
+<DT><A HREF="#lbAY">SEE ALSO</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
+using the manual pages.<BR>
+Time: 02:11:21 GMT, April 20, 2020
+</BODY>
+</HTML>

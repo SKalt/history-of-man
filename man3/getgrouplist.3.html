@@ -1,0 +1,130 @@
+<!--
+Copyright 2002 Walter Harms (walter.harms@informatik.uni-oldenburg.de)
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of GETGROUPLIST</TITLE>
+</HEAD><BODY>
+<H1>GETGROUPLIST</H1>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2003-11-18<BR><A HREF="#index">Index</A>
+<A HREF="../index.html">Return to Main Contents</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>NAME</H2>
+
+getgrouplist -  list of groups a user belongs to
+<A NAME="lbAC">&nbsp;</A>
+<H2>SYNOPSIS</H2>
+
+<P>
+<B>#include &lt;<A HREF="file:///usr/include/grp.h">grp.h</A>&gt;</B>
+
+<P>
+<B>int getgrouplist (const char *</B><I>user</I><B>, gid_t </B><I>group</I><B>,</B>
+
+
+<B>gid_t *</B><I>groups</I><B>, int *</B><I>ngroups</I><B>);</B>
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>DESCRIPTION</H2>
+
+The 
+<B>getgrouplist()</B>
+
+function scans the group database for all the groups
+<I>user</I>
+
+belongs to.  Up to
+*<I>ngroups</I>
+
+group IDs corresponding to these groups are stored in the array
+<I>groups</I>;
+
+the return value from the function is the number of group IDs
+actually stored. The group
+<I>group</I>
+
+is automatically included in the list of groups returned by 
+<B>getgrouplist()</B>.
+
+<A NAME="lbAE">&nbsp;</A>
+<H2>RETURN VALUE</H2>
+
+If
+*<I>ngroups</I>
+
+is smaller than the total number of groups found, then
+<B>getgrouplist()</B>
+
+returns a value of `-1'.
+In all cases the actual number of groups is stored in
+*<I>ngroups</I>.
+
+<A NAME="lbAF">&nbsp;</A>
+<H2>BUGS</H2>
+
+The glibc 2.3.2 implementation of this function is broken:
+it overwrites memory when the actual number of groups is larger than
+*<I>ngroups</I>.
+
+<A NAME="lbAG">&nbsp;</A>
+<H2>CONFORMING TO</H2>
+
+This function is present since glibc 2.2.4.
+<A NAME="lbAH">&nbsp;</A>
+<H2>EXAMPLE</H2>
+
+<PRE>
+/* This crashes with glibc 2.3.2 */
+#include &lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/stdlib.h">stdlib.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/grp.h">grp.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/pwd.h">pwd.h</A>&gt;
+
+int main() {
+        int i, ng = 0;
+        char *user = &quot;who&quot;;     /* username here */
+        gid_t *groups = NULL;
+        struct passwd *pw = getpwnam(user);
+        if (pw == NULL)
+                return 0;
+
+        if (getgrouplist(user, pw-&gt;pw_gid, NULL, &amp;ng) &lt; 0) {
+                groups = (gid_t *) malloc(ng * sizeof (gid_t));
+                getgrouplist(user, pw-&gt;pw_gid, groups, &amp;ng);
+        }
+
+        for(i = 0; i &lt; ng; i++)
+                printf(&quot;%d\n&quot;, groups[i]);
+
+        return 0;
+}
+</PRE>
+
+<A NAME="lbAI">&nbsp;</A>
+<H2>SEE ALSO</H2>
+
+<B><A HREF="../man3/getgroups.3.html">getgroups</A></B>(3),
+
+<B><A HREF="../man3/setgroups.3.html">setgroups</A></B>(3)
+
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">NAME</A><DD>
+<DT><A HREF="#lbAC">SYNOPSIS</A><DD>
+<DT><A HREF="#lbAD">DESCRIPTION</A><DD>
+<DT><A HREF="#lbAE">RETURN VALUE</A><DD>
+<DT><A HREF="#lbAF">BUGS</A><DD>
+<DT><A HREF="#lbAG">CONFORMING TO</A><DD>
+<DT><A HREF="#lbAH">EXAMPLE</A><DD>
+<DT><A HREF="#lbAI">SEE ALSO</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
+using the manual pages.<BR>
+Time: 02:10:37 GMT, April 20, 2020
+</BODY>
+</HTML>

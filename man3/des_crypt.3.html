@@ -1,0 +1,186 @@
+<!--
+Copyright (C) 1993 Eric Young - can be distributed under GPL.
+Copyright Sun Microsystems, Inc (and is provided for unrestricted use,
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of DES_CRYPT</TITLE>
+</HEAD><BODY>
+<H1>DES_CRYPT</H1>
+Section: C Library Functions (3)<BR>Updated: 6 October 1987<BR><A HREF="#index">Index</A>
+<A HREF="../index.html">Return to Main Contents</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>NAME</H2>
+
+des_crypt, ecb_crypt, cbc_crypt, des_setparity, DES_FAILED - fast DES encryption
+<A NAME="lbAC">&nbsp;</A>
+<H2>SYNOPSIS</H2>
+
+<PRE>
+<B>#include &lt;<A HREF="file:///usr/include/rpc/des_crypt.h">rpc/des_crypt.h</A>&gt;</B>
+
+<B>int ecb_crypt(char *</B><I>key</I><B>, char *</B><I>data</I><B>, unsigned </B><I>datalen</I><B>,</B>
+<B>              unsigned </B><I>mode</I><B>);</B>
+
+<B>int cbc_crypt(char *</B><I>key</I><B>, char *</B><I>data</I><B>, unsigned </B><I>datalen</I><B>,</B>
+<B>              unsigned </B><I>mode</I><B>, char *</B><I>ivec</I><B>);</B>
+
+<B>void des_setparity(char *</B><I>key</I><B>);</B>
+
+<B>int DES_FAILED(int </B><I>status</I><B>);</B>
+</PRE>
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>DESCRIPTION</H2>
+
+<B>ecb_crypt()</B>
+
+and
+<B>cbc_crypt()</B>
+
+implement the
+<FONT SIZE="-1">NBS</FONT>
+<FONT SIZE="-1">DES</FONT>
+(Data Encryption Standard).
+These routines are faster and more general purpose than
+<B><A HREF="../man3/crypt.3.html">crypt</A></B>(3).
+
+They also are able to utilize
+<FONT SIZE="-1">DES</FONT>
+hardware if it is available.
+<B>ecb_crypt()</B>
+
+encrypts in
+<FONT SIZE="-1">ECB</FONT>
+(Electronic Code Book)
+mode, which encrypts blocks of data independently.
+<B>cbc_crypt()</B>
+
+encrypts in
+<FONT SIZE="-1">CBC</FONT>
+(Cipher Block Chaining)
+mode, which chains together
+successive blocks.
+<FONT SIZE="-1">CBC</FONT>
+mode protects against insertions, deletions and
+substitutions of blocks. Also, regularities in the clear text will
+not appear in the cipher text.
+<P>
+
+Here is how to use these routines.  The first parameter,
+<I>key</I>,
+
+is the 8-byte encryption key with parity.
+To set the key's parity, which for
+<FONT SIZE="-1">DES</FONT>
+is in the low bit of each byte, use
+<B>des_setparity</B>.
+
+The second parameter,
+<I>data</I>,
+
+contains the data to be encrypted or decrypted. The
+third parameter,
+<I>datalen</I>,
+
+is the length in bytes of
+<I>data</I>,
+
+which must be a multiple of 8. The fourth parameter,
+<I>mode</I>,
+
+is formed by
+<FONT SIZE="-1">OR</FONT>'ing
+together some things.  For the encryption direction 'or' in either
+<FONT SIZE="-1">DES_ENCRYPT</FONT>
+or
+<FONT SIZE="-1">DES_DECRYPT</FONT>.
+For software versus hardware
+encryption, 'or' in either
+<FONT SIZE="-1">DES_HW</FONT>
+or
+<FONT SIZE="-1">DES_SW</FONT>.
+If
+<FONT SIZE="-1">DES_HW</FONT>
+is specified, and there is no hardware, then the encryption is performed
+in software and the routine returns
+<FONT SIZE="-1">DESERR_NOHWDEVICE</FONT>.
+For
+<B>cbc_crypt</B>,
+
+the parameter
+<I>ivec</I>
+
+is the the 8-byte initialization
+vector for the chaining.  It is updated to the next initialization
+vector upon return.
+<P>
+
+<A NAME="lbAE">&nbsp;</A>
+<H2>SEE ALSO</H2>
+
+<B><A HREF="../man1/des.1.html">des</A></B>(1),
+
+<B><A HREF="../man3/crypt.3.html">crypt</A></B>(3)
+
+
+and
+<B><A HREF="../man3/xcrypt.3.html">xcrypt</A></B>(3)
+
+<A NAME="lbAF">&nbsp;</A>
+<H2>DIAGNOSTICS</H2>
+
+
+<DL COMPACT>
+<DT><FONT SIZE="-1">DESERR_NONE</FONT>
+<DD>
+No error.
+<DT><FONT SIZE="-1">DESERR_NOHWDEVICE</FONT>
+<DD>
+Encryption succeeded, but done in software instead of the requested hardware.
+<DT><FONT SIZE="-1">DESERR_HWERROR</FONT>
+<DD>
+An error occurred in the hardware or driver.
+<DT><FONT SIZE="-1">DESERR_BADPARAM</FONT>
+<DD>
+Bad parameter to routine.
+
+</DL>
+<P>
+
+Given a result status
+<I>stat</I>,
+
+the macro
+
+
+<B>DES_FAILED(</B><I>stat</I><B>)</B>
+
+is false only for the first two statuses.
+<P>
+
+
+<A NAME="lbAG">&nbsp;</A>
+<H2>AVAILABILITY</H2>
+
+These routines are present in libc 4.6.27 and later, and in
+glibc 2.1 and later.
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">NAME</A><DD>
+<DT><A HREF="#lbAC">SYNOPSIS</A><DD>
+<DT><A HREF="#lbAD">DESCRIPTION</A><DD>
+<DT><A HREF="#lbAE">SEE ALSO</A><DD>
+<DT><A HREF="#lbAF">DIAGNOSTICS</A><DD>
+<DT><A HREF="#lbAG">AVAILABILITY</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
+using the manual pages.<BR>
+Time: 02:10:23 GMT, April 20, 2020
+</BODY>
+</HTML>

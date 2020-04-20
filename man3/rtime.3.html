@@ -1,0 +1,182 @@
+<!--
+Copyright 2003 walter harms (walter.harms@informatik.uni-oldenburg.de)
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of RTIME</TITLE>
+</HEAD><BODY>
+<H1>RTIME</H1>
+Section: RPC time function (3)<BR>Updated: 2003-04-04<BR><A HREF="#index">Index</A>
+<A HREF="../index.html">Return to Main Contents</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>NAME</H2>
+
+rtime - get time from a remote machine
+<A NAME="lbAC">&nbsp;</A>
+<H2>SYNOPSIS</H2>
+
+<P>
+<B>#include &lt;<A HREF="file:///usr/include/rpc/des_crypt.h">rpc/des_crypt.h</A>&gt;</B>
+
+<P>
+<B>int rtime(struct sockaddr_in *</B><I>addrp</I><B>,</B>
+
+<B>struct rpc_timeval *</B><I>timep</I><B>,</B>
+
+<B>struct rpc_timeval *</B><I>timeout</I><B>);</B>
+
+<P>
+<A NAME="lbAD">&nbsp;</A>
+<H2>DESCRIPTION</H2>
+
+This function uses the Time Server Protocol as described in
+RFC 868 to obtain the time from a remote machine.
+<P>
+
+The Time Server Protocol gives the time in seconds since midnight 1900-01-01,
+and this function subtracts the appropriate constant in order to
+convert the result to seconds since midnight 1970-01-01, the Unix epoch.
+<P>
+
+When
+<I>timeout</I>
+
+is non-NULL, the udp/time socket (port 37) is used.
+Otherwise, the tcp/time socket (port 37) is used.
+<A NAME="lbAE">&nbsp;</A>
+<H2>RETURN VALUE</H2>
+
+On success, 0 is returned, and the obtained 32-bit time value is stored in
+<I>timep-&gt;tv_sec</I>.
+
+In case of error -1 is returned, and
+<I>errno</I>
+
+is set appropriately.
+<A NAME="lbAF">&nbsp;</A>
+<H2>ERRORS</H2>
+
+All errors for underlying functions (sendto, poll, recvfrom, connect, read)
+can occur. Moreover:
+<DL COMPACT>
+<DT><B>EIO</B>
+
+<DD>
+The number of returned bytes is not 4.
+<DT><B>ETIMEDOUT</B>
+
+<DD>
+The waiting time as defined in timeout has expired.
+</DL>
+<A NAME="lbAG">&nbsp;</A>
+<H2>EXAMPLE</H2>
+
+This example requires that port 37 is up and open. You may check
+that the time entry within
+<I>/etc/inetd.conf</I>
+
+is not commented out.
+<BR>
+
+The program connects to a computer called 'linux'.
+Using 'localhost' does not work.
+The result is the localtime of the computer 'linux'.
+<P>
+<PRE>
+#include &lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/errno.h">errno.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/string.h">string.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/time.h">time.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/rpc/auth_des.h">rpc/auth_des.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/netdb.h">netdb.h</A>&gt;
+
+int use_tcp = 0;
+char *servername = &quot;linux&quot;;
+
+int main() {
+  struct sockaddr_in name;
+  struct rpc_timeval time1 = {0,0};
+  struct rpc_timeval timeout = {1,0};
+  struct hostent *hent;
+  int ret;
+
+  memset((char *)&amp;name, 0, sizeof(name));
+  <A HREF="../man1/sethostent.1.html">sethostent</A>(1);
+  hent = gethostbyname(servername);
+  memcpy((char *)&amp;name.sin_addr, hent-&gt;h_addr, hent-&gt;h_length); 
+
+  ret = rtime(&amp;name, &amp;time1, use_tcp ? NULL : &amp;timeout);
+  if (ret &lt; 0)
+    perror(&quot;rtime error&quot;);
+  else
+    printf(&quot;%s&quot;, ctime((time_t *)&amp;time1.tv_sec));
+
+  return 0;
+}
+</PRE>
+
+<A NAME="lbAH">&nbsp;</A>
+<H2>NOTES</H2>
+
+Only IPV4 is supported.
+<P>
+
+Some
+<I>in.timed</I>
+
+versions only support TCP. Try the above example program with
+<I>use_tcp</I>
+
+set to 1.
+<P>
+
+Libc5 uses the prototype
+<BR>
+
+int rtime(struct sockaddr_in *, struct timeval *, struct timeval *);
+<BR>
+
+and requires
+<I>&lt;<A HREF="file:///usr/include/sys/time.h">sys/time.h</A>&gt;</I>
+
+instead of
+<I>&lt;<A HREF="file:///usr/include/rpc/auth_des.h">rpc/auth_des.h</A>&gt;</I>.
+
+<P>
+<A NAME="lbAI">&nbsp;</A>
+<H2>BUGS</H2>
+
+rtime() in glibc &lt;= 2.2.5 does not work properly on 64bit machines.
+<A NAME="lbAJ">&nbsp;</A>
+<H2>SEE ALSO</H2>
+
+<B><A HREF="../man1/netdate.1.html">netdate</A></B>(1),
+
+<B><A HREF="../man1/ntpdate.1.html">ntpdate</A></B>(1),
+
+<B><A HREF="../man1/rdate.1.html">rdate</A></B>(1),
+
+<B><A HREF="../man8/inetd.8.html">inetd</A></B>(8)
+
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">NAME</A><DD>
+<DT><A HREF="#lbAC">SYNOPSIS</A><DD>
+<DT><A HREF="#lbAD">DESCRIPTION</A><DD>
+<DT><A HREF="#lbAE">RETURN VALUE</A><DD>
+<DT><A HREF="#lbAF">ERRORS</A><DD>
+<DT><A HREF="#lbAG">EXAMPLE</A><DD>
+<DT><A HREF="#lbAH">NOTES</A><DD>
+<DT><A HREF="#lbAI">BUGS</A><DD>
+<DT><A HREF="#lbAJ">SEE ALSO</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
+using the manual pages.<BR>
+Time: 02:10:59 GMT, April 20, 2020
+</BODY>
+</HTML>

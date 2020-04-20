@@ -1,0 +1,269 @@
+<!--
+Copyright 1993 Rickard E. Faith (faith@cs.unc.edu)
+Copyright (c) 1983 The Regents of the University of California.
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of BIND</TITLE>
+</HEAD><BODY>
+<H1>BIND</H1>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2004-06-23<BR><A HREF="#index">Index</A>
+<A HREF="../index.html">Return to Main Contents</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>NAME</H2>
+
+bind - bind a name to a socket
+<A NAME="lbAC">&nbsp;</A>
+<H2>SYNOPSIS</H2>
+
+<B>#include &lt;<A HREF="file:///usr/include/sys/types.h">sys/types.h</A>&gt;</B>
+
+<BR>
+
+<B>#include &lt;<A HREF="file:///usr/include/sys/socket.h">sys/socket.h</A>&gt;</B>
+
+<P>
+<B>int bind(int </B><I>sockfd</I><B>, struct sockaddr *</B><I>my_addr</I><B>, socklen_t </B><I>addrlen</I><B>);</B>
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>DESCRIPTION</H2>
+
+<B>bind</B>
+
+gives the socket
+<I>sockfd</I>
+
+the local address
+<I>my_addr</I>.
+
+<I>my_addr</I>
+
+is
+<I>addrlen</I>
+
+bytes long.  Traditionally, this is called "assigning a name to a socket."
+When a socket is created with
+<B><A HREF="../man2/socket.2.html">socket</A></B>(2),
+
+it exists in a name space (address family) but has no name assigned.
+<P>
+
+It is normally necessary to assign a local address using
+<B>bind</B>
+
+before a
+<B>SOCK_STREAM</B>
+
+socket may receive connections (see
+<B><A HREF="../man2/accept.2.html">accept</A></B>(2)).
+
+<P>
+The rules used in name binding vary between address families.  Consult
+the manual entries in Section 7 for detailed information. For
+<B>AF_INET</B>
+
+see
+<B><A HREF="../man7/ip.7.html">ip</A></B>(7),
+
+for
+<B>AF_UNIX</B>
+
+see
+<B><A HREF="../man7/unix.7.html">unix</A></B>(7),
+
+for
+<B>AF_APPLETALK</B>
+
+see
+<B><A HREF="../man7/ddp.7.html">ddp</A></B>(7),
+
+for
+<B>AF_PACKET</B>
+
+see
+<B><A HREF="../man7/packet.7.html">packet</A></B>(7),
+
+for
+<B>AF_X25</B>
+
+see
+<B><A HREF="../man7/x25.7.html">x25</A></B>(7)
+
+and for
+<B>AF_NETLINK</B>
+
+see
+<B><A HREF="../man7/netlink.7.html">netlink</A></B>(7).
+
+<P>
+<A NAME="lbAE">&nbsp;</A>
+<H2>RETURN VALUE</H2>
+
+On success, zero is returned.  On error, -1 is returned, and
+<I>errno</I>
+
+is set appropriately.
+<A NAME="lbAF">&nbsp;</A>
+<H2>ERRORS</H2>
+
+<DL COMPACT>
+<DT><B>EACCES</B>
+
+<DD>
+The address is protected, and the user is not the super-user.
+<DT><B>EBADF</B>
+
+<DD>
+<I>sockfd</I>
+
+is not a valid descriptor.
+<DT><B>EINVAL</B>
+
+<DD>
+The socket is already bound to an address.  This may change in the future:
+see
+<I>linux/unix/sock.c</I>
+
+for details.
+<DT><B>ENOTSOCK</B>
+
+<DD>
+Argument is a descriptor for a file, not a socket.
+</DL>
+<P>
+
+The following errors are specific to UNIX domain 
+(<B>AF_UNIX</B>)
+
+sockets:
+<DL COMPACT>
+<DT><B>EACCES</B>
+
+<DD>
+Search permission is denied on a component of the path prefix.
+(See also
+<B><A HREF="../man2/path_resolution.2.html">path_resolution</A></B>(2).)
+
+<DT><B>EFAULT</B>
+
+<DD>
+<I>my_addr</I>
+
+points outside the user's accessible address space.
+<DT><B>EINVAL</B>
+
+<DD>
+The
+<I>addrlen</I>
+
+is wrong, or the socket was not in the
+<B>AF_UNIX</B>
+
+family.
+<DT><B>ELOOP</B>
+
+<DD>
+Too many symbolic links were encountered in resolving
+<I>my_addr</I>.
+
+<DT><B>ENAMETOOLONG</B>
+
+<DD>
+<I>my_addr</I>
+
+is too long.
+<DT><B>ENOENT</B>
+
+<DD>
+The file does not exist.
+<DT><B>ENOMEM</B>
+
+<DD>
+Insufficient kernel memory was available.
+<DT><B>ENOTDIR</B>
+
+<DD>
+A component of the path prefix is not a directory.
+<DT><B>EROFS</B>
+
+<DD>
+The socket inode would reside on a read-only file system.
+</DL>
+<A NAME="lbAG">&nbsp;</A>
+<H2>BUGS</H2>
+
+The transparent proxy options are not described.
+<A NAME="lbAH">&nbsp;</A>
+<H2>CONFORMING TO</H2>
+
+SVr4, 4.4BSD (the
+<B>bind</B>
+
+function first appeared in BSD 4.2).  SVr4 documents additional
+<B>EADDRNOTAVAIL</B>,
+
+<B>EADDRINUSE</B>,
+
+and
+<B>ENOSR </B>
+
+general error conditions, and
+additional 
+<B>EIO</B>
+
+and
+<B>EISDIR</B>
+
+Unix-domain error conditions.
+<A NAME="lbAI">&nbsp;</A>
+<H2>NOTE</H2>
+
+The third argument of
+<B>bind</B>
+
+is in reality an int (and this is what BSD 4.* and libc4 and libc5 have).
+Some POSIX confusion resulted in the present socklen_t, also used by glibc.
+See also
+<B><A HREF="../man2/accept.2.html">accept</A></B>(2).
+
+<A NAME="lbAJ">&nbsp;</A>
+<H2>SEE ALSO</H2>
+
+<B><A HREF="../man2/accept.2.html">accept</A></B>(2),
+
+<B><A HREF="../man2/connect.2.html">connect</A></B>(2),
+
+<B><A HREF="../man2/getsockname.2.html">getsockname</A></B>(2),
+
+<B><A HREF="../man2/listen.2.html">listen</A></B>(2),
+
+<B><A HREF="../man2/path_resolution.2.html">path_resolution</A></B>(2),
+
+<B><A HREF="../man2/socket.2.html">socket</A></B>(2),
+
+<B><A HREF="../man7/ip.7.html">ip</A></B>(7),
+
+<B><A HREF="../man7/socket.7.html">socket</A></B>(7)
+
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">NAME</A><DD>
+<DT><A HREF="#lbAC">SYNOPSIS</A><DD>
+<DT><A HREF="#lbAD">DESCRIPTION</A><DD>
+<DT><A HREF="#lbAE">RETURN VALUE</A><DD>
+<DT><A HREF="#lbAF">ERRORS</A><DD>
+<DT><A HREF="#lbAG">BUGS</A><DD>
+<DT><A HREF="#lbAH">CONFORMING TO</A><DD>
+<DT><A HREF="#lbAI">NOTE</A><DD>
+<DT><A HREF="#lbAJ">SEE ALSO</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
+using the manual pages.<BR>
+Time: 02:09:53 GMT, April 20, 2020
+</BODY>
+</HTML>

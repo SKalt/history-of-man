@@ -1,0 +1,215 @@
+<!--
+Copyright (C) 1999 Andries Brouwer (aeb@cwi.nl)
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of REALPATH</TITLE>
+</HEAD><BODY>
+<H1>REALPATH</H1>
+Section: Linux Programmer's Manual (3)<BR>Updated: 1999-08-24<BR><A HREF="#index">Index</A>
+<A HREF="../index.html">Return to Main Contents</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>NAME</H2>
+
+realpath - return the canonicalized absolute pathname
+<A NAME="lbAC">&nbsp;</A>
+<H2>SYNOPSIS</H2>
+
+<PRE>
+<B>#include &lt;<A HREF="file:///usr/include/limits.h">limits.h</A>&gt;</B>
+<B>#include &lt;<A HREF="file:///usr/include/stdlib.h">stdlib.h</A>&gt;</B>
+
+<B>char *realpath(const char *</B><I>path</I><B>, char *</B><I>resolved_path</I><B>);</B>
+</PRE><A NAME="lbAD">&nbsp;</A>
+<H2>DESCRIPTION</H2>
+
+<B>realpath</B>
+
+expands all symbolic links and resolves references
+to
+<I>'/./'</I>, <I>'/../'</I>
+
+and extra 
+<I>'/' </I>
+
+characters in the null terminated string named by 
+<I>path</I>
+
+and stores the canonicalized absolute pathname in the buffer of size
+<B>PATH_MAX</B>
+
+named by
+<I>resolved_path</I>.
+
+The resulting path will have no symbolic link,
+<I>'/./'</I>
+
+or
+<I>'/../'</I>
+
+components.
+<A NAME="lbAE">&nbsp;</A>
+<H2>RETURN VALUE</H2>
+
+If there is no error, it returns a pointer to the
+<I>resolved_path</I>.
+
+<P>
+Otherwise it returns a NULL pointer, and the contents
+of the array
+<I>resolved_path  </I>
+
+are undefined. The global variable
+<I>errno </I>
+
+is set to indicate the error. 
+<A NAME="lbAF">&nbsp;</A>
+<H2>ERRORS</H2>
+
+<DL COMPACT>
+<DT><B>EACCES</B>
+
+<DD>
+Read or search permission was denied for a component of the path prefix.
+<DT><B>EINVAL</B>
+
+<DD>
+Either
+<I>path</I>
+
+or
+<I>resolved_path</I>
+
+is NULL. (In libc5 this would just cause a segfault.)
+<DT><B>EIO</B>
+
+<DD>
+An I/O error occurred while reading from the file system.
+<DT><B>ELOOP</B>
+
+<DD>
+Too many symbolic links were encountered in translating the pathname.
+<DT><B>ENAMETOOLONG</B>
+
+<DD>
+A component of a path name exceeded 
+<B>NAME_MAX</B>
+
+characters, or an entire path name exceeded 
+<B>PATH_MAX</B>
+
+characters.
+<DT><B>ENOENT</B>
+
+<DD>
+The named file does not exist.
+<DT><B>ENOTDIR</B>
+
+<DD>
+A component of the path prefix is not a directory.
+</DL>
+<A NAME="lbAG">&nbsp;</A>
+<H2>BUGS</H2>
+
+Never use this function. It is broken by design since it is
+impossible to determine a suitable size for the output buffer.
+According to POSIX a buffer of size PATH_MAX suffices, but
+PATH_MAX need not be a defined constant, and may have to be
+obtained using
+<I>pathconf()</I>.
+
+And asking
+<I>pathconf()</I>
+
+does not really help, since on the one hand POSIX warns that
+the result of
+<I>pathconf()</I>
+
+may be huge and unsuitable for mallocing memory. And on the other
+hand
+<I>pathconf()</I>
+
+may return -1 to signify that PATH_MAX is not bounded.
+<P>
+
+The libc4 and libc5 implementation contains a buffer overflow
+(fixed in libc-5.4.13).
+Thus, suid programs like mount need a private version.
+<A NAME="lbAH">&nbsp;</A>
+<H2>HISTORY</H2>
+
+The
+<B>realpath</B>
+
+function first appeared in BSD 4.4, contributed by Jan-Simon Pendry.
+In Linux this function appears in libc 4.5.21.
+<A NAME="lbAI">&nbsp;</A>
+<H2>CONFORMING TO</H2>
+
+In BSD 4.4 and Solaris the limit on the pathname length is MAXPATHLEN
+(found in &lt;<A HREF="file:///usr/include/sys/param.h">sys/param.h</A>&gt;). The SUSv2 prescribes PATH_MAX and
+NAME_MAX, as found in &lt;<A HREF="file:///usr/include/limits.h">limits.h</A>&gt; or provided by the
+<I>pathconf()</I>
+
+function. A typical source fragment would be
+<P>
+
+<DL COMPACT><DT><DD>
+<PRE>
+#ifdef PATH_MAX
+  path_max = PATH_MAX;
+#else
+  path_max = pathconf (path, _PC_PATH_MAX);
+  if (path_max &lt;= 0)
+    path_max = 4096;
+#endif
+</PRE>
+
+</DL>
+
+(But see the BUGS section.)
+<P>
+
+The BSD 4.4, Linux and SUSv2 versions always return an absolute
+path name. Solaris may return a relative path name when the
+<I>path</I>
+
+argument is relative.
+The prototype of
+<B>realpath</B>
+
+is given in &lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt; in libc4 and libc5,
+but in &lt;<A HREF="file:///usr/include/stdlib.h">stdlib.h</A>&gt; everywhere else.
+<A NAME="lbAJ">&nbsp;</A>
+<H2>SEE ALSO</H2>
+
+<B><A HREF="../man2/readlink.2.html">readlink</A></B>(2),
+
+<B><A HREF="../man3/getcwd.3.html">getcwd</A></B>(3),
+
+<B><A HREF="../man3/pathconf.3.html">pathconf</A></B>(3),
+
+<B><A HREF="../man3/sysconf.3.html">sysconf</A></B>(3)
+
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">NAME</A><DD>
+<DT><A HREF="#lbAC">SYNOPSIS</A><DD>
+<DT><A HREF="#lbAD">DESCRIPTION</A><DD>
+<DT><A HREF="#lbAE">RETURN VALUE</A><DD>
+<DT><A HREF="#lbAF">ERRORS</A><DD>
+<DT><A HREF="#lbAG">BUGS</A><DD>
+<DT><A HREF="#lbAH">HISTORY</A><DD>
+<DT><A HREF="#lbAI">CONFORMING TO</A><DD>
+<DT><A HREF="#lbAJ">SEE ALSO</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
+using the manual pages.<BR>
+Time: 02:10:57 GMT, April 20, 2020
+</BODY>
+</HTML>

@@ -1,0 +1,412 @@
+<!--
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of fmtmsg</TITLE>
+</HEAD><BODY>
+<H1>fmtmsg</H1>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2003-11-01<BR><A HREF="#index">Index</A>
+<A HREF="../index.html">Return to Main Contents</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>NAME</H2>
+
+fmtmsg - print formatted error messages
+<A NAME="lbAC">&nbsp;</A>
+<H2>SYNOPSIS</H2>
+
+<PRE>
+
+<B>#include &lt;<A HREF="file:///usr/include/fmtmsg.h">fmtmsg.h</A>&gt;</B>
+
+<B>int fmtmsg(long </B><I>classification</I><B>, const char *</B><I>label</I><B>,</B>
+<BR>
+<B>           int </B><I>severity</I><B>, const char *</B><I>text</I><B>,</B>
+<BR>
+<B>           const char *</B><I>action</I><B>, const char *</B><I>tag</I><B>);</B>
+
+</PRE>
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>DESCRIPTION</H2>
+
+This function displays a message described by its parameters on the device(s)
+specified in the
+<I>classification</I>
+
+parameter. For messages written to
+<I>stderr</I>,
+
+the format depends on the
+<B>MSGVERB</B>
+
+environment variable.
+<P>
+
+The
+<I>label</I>
+
+parameter identifies the source of the message.  The string must consist
+of two colon separated parts where the first part has not more
+than 10 and the second part not more than 14 characters.  
+<P>
+
+The
+<I>text</I>
+
+parameter describes the condition of the error.
+<P>
+
+The
+<I>action</I>
+
+parameter describes possible steps to recover from the error.
+If it is printed, it is prefixed by &quot;TO FIX: &quot;.
+<P>
+
+The
+<I>tag</I>
+
+parameter is a reference to the online documentation where more
+information can be found.  It should contain the
+<I>label</I>
+
+value and a unique identification number.
+<A NAME="lbAE">&nbsp;</A>
+<H3>Dummy parameters</H3>
+
+Each of the parameters can have a dummy value. The dummy classification value
+<B>MM_NULLMC</B>
+
+(0L) does not specify any output, so nothing is printed.
+The dummy severity value
+<B>NO_SEV</B>
+
+(0) says that no severity is supplied.
+The values
+<B>MM_NULLLBL</B>,
+
+<B>MM_NULLTXT</B>,
+
+<B>MM_NULLACT</B>,
+
+<B>MM_NULLTAG</B>
+
+are synonyms for ((char *) 0), the empty string, and
+<B>MM_NULLSEV</B>
+
+is a synonym for
+<B>NO_SEV</B>.
+
+<A NAME="lbAF">&nbsp;</A>
+<H3>The classification parameter</H3>
+
+The 
+<I>classification </I>
+
+parameter is the sum of values describing 4 types of information.
+<BR>
+
+<P>
+The first value defines the output channel.
+<DL COMPACT>
+<DT><B>MM_PRINT</B>
+
+<DD>
+Output to
+<I>stderr</I>.
+
+<DT><B>MM_CONSOLE</B>
+
+<DD>
+Output to the system console.
+<DT><B>MM_PRINT | MM_CONSOLE</B>
+
+<DD>
+Output to both.
+</DL>
+<P>
+
+The second value is the source of the error:
+<DL COMPACT>
+<DT><B>MM_HARD</B>
+
+<DD>
+A hardware error occurred.
+<DT><B>MM_FIRM</B>
+
+<DD>
+A firmware error occurred.
+<DT><B>MM_SOFT</B>
+
+<DD>
+A software error occurred.
+</DL>
+<P>
+
+The third value encodes the detector of the problem:
+<DL COMPACT>
+<DT><B>MM_APPL</B>
+
+<DD>
+It is detected by an application.
+<DT><B>MM_UTIL</B>
+
+<DD>
+It is detected by a utility.
+<DT><B>MM_OPSYS</B>
+
+<DD>
+It is detected by the operating system.
+</DL>
+<P>
+
+The fourth value shows the severity of the incident:
+<DL COMPACT>
+<DT><B>MM_RECOVER</B>
+
+<DD>
+It is a recoverable error.
+<DT><B>MM_NRECOV</B>
+
+<DD>
+It is a non-recoverable error.
+</DL>
+<A NAME="lbAG">&nbsp;</A>
+<H3>The severity parameter</H3>
+
+The 
+<I>severity </I>
+
+parameter can take one of the following values:
+<DL COMPACT>
+<DT><B>MM_NOSEV</B>
+
+<DD>
+No severity is printed.
+<DT><B>MM_HALT</B>
+
+<DD>
+This value is printed as HALT.
+<DT><B>MM_ERROR</B>
+
+<DD>
+This value is printed as ERROR.
+<DT><B>MM_WARNING</B>
+
+<DD>
+This value is printed as WARNING.
+<DT><B>MM_INFO</B>
+
+<DD>
+This value is printed as INFO.
+</DL>
+<P>
+
+The numeric values are between 0 and 4. Using 
+<B>addseverity()</B>
+
+or the environment variable
+<B>SEV_LEVEL</B>
+
+you can add more levels and strings to print.
+<A NAME="lbAH">&nbsp;</A>
+<H2>ENVIRONMENT</H2>
+
+The environment variable 
+<B>MSGVERB</B>
+
+(&quot;message verbosity&quot;) can be used to suppress parts of
+the output to
+<I>stderr</I>.
+
+(It does not influence output to the console.)
+When this variable is defined, is non-NULL, and is a colon-separated
+list of valid keywords, then only the parts of the message corresponding
+to these keywords is printed.
+Valid keywords are &quot;label&quot;, &quot;severity&quot;, &quot;text&quot;, &quot;action&quot; and &quot;tag&quot;.
+<P>
+
+The environment variable
+<B>SEV_LEVEL</B>
+
+can be used to introduce new severity levels.
+By default, only the five severity levels described
+above are available.  Any other numeric value would make fmtmsg() print
+nothing.
+If the user puts 
+<B>SEV_LEVEL</B>
+
+with a format like
+<P>
+<DL COMPACT><DT><DD>
+SEV_LEVEL=[description[:description[:...]]]
+</DL>
+
+<P>
+in the environment of the process before the first call to fmtmsg(),
+where each description is of the form
+<P>
+<DL COMPACT><DT><DD>
+severity-keyword,level,printstring
+</DL>
+
+<P>
+then
+<I>fmtmsg()</I>
+
+will also accept the indicated values for the level (in addition to
+the standard levels 0-4), and use the indicated printstring when
+such a level occurs.
+<P>
+
+The severity-keyword part is not used by
+<I>fmtmsg()</I>
+
+but it has to be present.  
+The level part is a string representation of a number.  
+The numeric value must be a number greater than 4.
+This value must be used in the severity parameter of 
+<I>fmtmsg()</I>
+
+to select this class.  It is not possible to overwrite
+any of the predefined classes.  The printstring
+is the string printed when a message of this class is processed by
+<I>fmtmsg()</I>.
+
+<A NAME="lbAI">&nbsp;</A>
+<H2>RETURN VALUES</H2>
+
+The function can return 4 values:
+<DL COMPACT>
+<DT><B>MM_OK</B>
+
+<DD>
+Everything went smooth.
+<DT><B>MM_NOTOK</B>
+
+<DD>
+Complete failure.
+<DT><B>MM_NOMSG</B>
+
+<DD>
+Error writing to
+<I>stderr</I>.
+
+<DT><B>MM_NOCON</B>
+
+<DD>
+Error writing to the console.
+</DL>
+<A NAME="lbAJ">&nbsp;</A>
+<H2>CONFORMING TO</H2>
+
+The functions
+<I>fmtmsg()</I>
+
+and
+<I>addseverity()</I>,
+
+and environment variables
+<B>MSGVERB</B>
+
+and
+<B>SEV_LEVEL</B>
+
+come from System V (XPG4-UNIX).
+The function
+<I>fmtmsg()</I>
+
+and the environment variable
+<B>MSGVERB</B>
+
+are described in POSIX 1003.1-2001.
+<A NAME="lbAK">&nbsp;</A>
+<H2>NOTES</H2>
+
+System V and Unixware man pages tell us that these functions
+have been replaced by &quot;pfmt() and addsev()&quot; or by &quot;pfmt(),
+vpfmt(), lfmt(), and vlfmt()&quot;, and will be removed later.
+<A NAME="lbAL">&nbsp;</A>
+<H2>EXAMPLE</H2>
+
+<PRE>
+#include &lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/fmtmsg.h">fmtmsg.h</A>&gt;
+
+int main() {
+  long class = MM_PRINT | MM_SOFT | MM_OPSYS | MM_RECOVER;
+  int err;
+  err = fmtmsg(class, &quot;util-linux:mount&quot;, MM_ERROR,
+        &quot;unknown mount option&quot;, &quot;See <A HREF="../man8/mount.8.html">mount</A>(8).&quot;, &quot;util-linux:mount:017&quot;);
+  switch(err) {
+    case MM_OK:
+      break;
+    case MM_NOTOK:
+      printf(&quot;Nothing printed\n&quot;);
+      break;
+    case MM_NOMSG:
+      printf(&quot;Nothing printed to stderr\n&quot;);
+      break;
+    case MM_NOCON:
+      printf(&quot;No console output\n&quot;);
+      break;
+    default:
+      printf(&quot;Unknown error from fmtmsg()\n&quot;);
+  }
+  return 0;
+}
+</PRE>
+
+<P>
+
+The output should be:
+<PRE>
+  util-linux:mount: ERROR: unknown mount option
+  TO FIX: See <A HREF="../man8/mount.8.html">mount</A>(8).  util-linux:mount:017
+</PRE>
+
+and after
+<PRE>
+  MSGVERB=text:action; export MSGVERB
+</PRE>
+
+the output becomes:
+<PRE>
+  unknown mount option
+  TO FIX: See <A HREF="../man8/mount.8.html">mount</A>(8).
+</PRE>
+
+<A NAME="lbAM">&nbsp;</A>
+<H2>SEE ALSO</H2>
+
+<B><A HREF="../man3/addseverity.3.html">addseverity</A></B>(3),
+
+<B><A HREF="../man3/perror.3.html">perror</A></B>(3)
+
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">NAME</A><DD>
+<DT><A HREF="#lbAC">SYNOPSIS</A><DD>
+<DT><A HREF="#lbAD">DESCRIPTION</A><DD>
+<DL>
+<DT><A HREF="#lbAE">Dummy parameters</A><DD>
+<DT><A HREF="#lbAF">The classification parameter</A><DD>
+<DT><A HREF="#lbAG">The severity parameter</A><DD>
+</DL>
+<DT><A HREF="#lbAH">ENVIRONMENT</A><DD>
+<DT><A HREF="#lbAI">RETURN VALUES</A><DD>
+<DT><A HREF="#lbAJ">CONFORMING TO</A><DD>
+<DT><A HREF="#lbAK">NOTES</A><DD>
+<DT><A HREF="#lbAL">EXAMPLE</A><DD>
+<DT><A HREF="#lbAM">SEE ALSO</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
+using the manual pages.<BR>
+Time: 02:10:32 GMT, April 20, 2020
+</BODY>
+</HTML>

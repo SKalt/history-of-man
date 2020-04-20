@@ -1,0 +1,401 @@
+<!--
+Copyright 1993 Giorgio Ciucci (giorgio@crcc.it)
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of SHMOP</TITLE>
+</HEAD><BODY>
+<H1>SHMOP</H1>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2004-05-27<BR><A HREF="#index">Index</A>
+<A HREF="../index.html">Return to Main Contents</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>NAME</H2>
+
+shmop - shared memory operations
+<A NAME="lbAC">&nbsp;</A>
+<H2>SYNOPSIS</H2>
+
+<PRE>
+<B>#include &lt;<A HREF="file:///usr/include/sys/types.h">sys/types.h</A>&gt;</B>
+<B>#include &lt;<A HREF="file:///usr/include/sys/shm.h">sys/shm.h</A>&gt;</B>
+</PRE>
+
+<P>
+<B>void *shmat(int </B><I>shmid</I><B>,</B>
+
+<B>const void *</B><I>shmaddr</I><B>,</B>
+
+<B>int </B><I>shmflg</I><B>);</B>
+
+<P>
+<B>int shmdt(const void *</B><I>shmaddr</I><B>);</B>
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>DESCRIPTION</H2>
+
+The function
+<B>shmat</B>
+
+attaches the shared memory segment identified by
+<B>shmid</B>
+
+to the address space of the calling process.
+The attaching address is specified by
+<I>shmaddr</I>
+
+with one of the following criteria:
+<P>
+
+If
+<I>shmaddr</I>
+
+is
+<B>NULL</B>,
+
+the system chooses a suitable (unused) address at which to attach
+the segment.
+<P>
+
+If
+<I>shmaddr</I>
+
+isn't
+<B>NULL</B>
+
+and
+<B>SHM_RND</B>
+
+is asserted in
+<I>shmflg</I>,
+
+the attach occurs at the address equal to
+<I>shmaddr</I>
+
+rounded down to the nearest multiple of
+<B>SHMLBA</B>.
+
+Otherwise
+<I>shmaddr</I>
+
+must be a page-aligned address at which the attach occurs.
+<P>
+
+If
+<B>SHM_RDONLY</B>
+
+is asserted in
+<I>shmflg</I>,
+
+the segment is attached for reading and the process must have
+read permission for the segment.
+Otherwise the segment is attached for read and write
+and the process must have read and write permission for the segment.
+There is no notion of a write-only shared memory segment.
+<P>
+
+The (Linux-specific)
+<B>SHM_REMAP</B>
+
+flag may be asserted in
+<I>shmflg</I>
+
+to indicate that the mapping of the segment should replace
+any existing mapping in the range starting at 
+<I>shmaddr</I>
+
+and continuing for the size of the segment.
+(Normally an
+<B>EINVAL</B>
+
+error would result if a mapping already exists in this address range.)
+In this case,
+<I>shmaddr</I>
+
+must not be
+<B>NULL</B>.
+
+<P>
+
+The
+<B>brk</B>
+
+value of the calling process is not altered by the attach.
+The segment will automatically be detached at process exit.
+The same segment may be attached as a read and as a read-write
+one, and more than once, in the process's address space.
+<P>
+
+On a successful
+<B>shmat</B>
+
+call the system updates the members of the
+<B>shmid_ds</B>
+
+structure associated to the shared memory segment as follows:
+<DL COMPACT>
+<DT><DD>
+<B>shm_atime</B>
+
+is set to the current time.
+<DT><DD>
+<B>shm_lpid</B>
+
+is set to the process-ID of the calling process.
+<DT><DD>
+<B>shm_nattch</B>
+
+is incremented by one.
+</DL>
+<P>
+
+Note that the attach succeeds also if the shared memory segment is
+marked to be deleted.
+<P>
+
+The function
+<B>shmdt</B>
+
+detaches the shared memory segment located at the address specified by
+<I>shmaddr</I>
+
+from the address space of the calling process.
+The to-be-detached segment must be currently
+attached with
+<I>shmaddr</I>
+
+equal to the value returned by the its attaching
+<B>shmat</B>
+
+call.
+<P>
+
+On a successful
+<B>shmdt</B>
+
+call the system updates the members of the
+<B>shmid_ds</B>
+
+structure associated with the shared memory segment as follows:
+<DL COMPACT>
+<DT><DD>
+<B>shm_dtime</B>
+
+is set to the current time.
+<DT><DD>
+<B>shm_lpid</B>
+
+is set to the process-ID of the calling process.
+<DT><DD>
+<B>shm_nattch</B>
+
+is decremented by one.
+If it becomes 0 and the segment is marked for deletion,
+the segment is deleted.
+</DL>
+<P>
+
+The occupied region in the user space of the calling process is
+unmapped.
+<A NAME="lbAE">&nbsp;</A>
+<H2>SYSTEM CALLS</H2>
+
+<DL COMPACT>
+<DT><B>fork()</B>
+
+<DD>
+After a
+<B>fork()</B>
+
+the child inherits the attached shared memory segments.
+<DT><B>exec()</B>
+
+<DD>
+After an
+<B>exec()</B>
+
+all attached shared memory segments are detached from the process.
+<DT><B>exit()</B>
+
+<DD>
+Upon
+<B>exit()</B>
+
+all attached shared memory segments are detached from the process.
+</DL>
+<A NAME="lbAF">&nbsp;</A>
+<H2>RETURN VALUE</H2>
+
+On success
+<B>shmat</B>
+
+returns the address of the attached shared memory segment, and
+<B>shmdt</B>
+
+returns 0.
+On failure both functions return -1 with
+<I>errno</I>
+
+indicating the error.
+<A NAME="lbAG">&nbsp;</A>
+<H2>ERRORS</H2>
+
+When
+<B>shmat</B>
+
+fails,
+<I>errno</I>
+
+is set to one of the following:
+<DL COMPACT>
+<DT><B>EACCES</B>
+
+<DD>
+The calling process does not have the required permissions for
+the requested attach type, and does not have the
+<B>CAP_IPC_OWNER</B>
+
+capability.
+<DT><B>EINVAL</B>
+
+<DD>
+Invalid
+<I>shmid</I>
+
+value, unaligned (i.e., not page-aligned and <B>SHM_RND</B> was not
+specified) or invalid
+<I>shmaddr</I>
+
+value, or failing attach at
+<B>brk</B>,
+
+
+or 
+<B>SHM_REMAP</B>
+
+was specified and
+<I>shmaddr</I>
+
+was 
+<B>NULL</B>.
+
+<DT><B>ENOMEM</B>
+
+<DD>
+Could not allocate memory for the descriptor or for the page tables.
+</DL>
+<P>
+
+The function
+<B>shmdt</B>
+
+can fail only if there is no shared memory segment attached at
+<I>shmaddr</I>,
+
+in such a case at return
+<I>errno</I>
+
+will be set to
+<B>EINVAL</B>.
+
+<A NAME="lbAH">&nbsp;</A>
+<H2>NOTES</H2>
+
+Using
+<B>shmat</B>
+
+with
+<I>shmaddr</I>
+
+equal to
+<B>NULL</B>
+
+is the preferred, portable way of attaching a shared memory segment.
+Be aware that the shared memory segment attached in this way
+may be attached at different addresses in different processes.
+Therefore, any pointers maintained within the shared memory must be
+made relative (typically to the starting address of the segment),
+rather than absolute.
+<P>
+
+The following system parameter affects a
+<B>shmat</B>
+
+system call:
+<DL COMPACT>
+<DT><B>SHMLBA</B>
+
+<DD>
+Segment low boundary address multiple.
+Must be page aligned.
+For the current implementation the
+<B>SHMBLA</B>
+
+value is
+<B>PAGE_SIZE</B>.
+
+</DL>
+<P>
+
+The implementation has no intrinsic limit to the per-process maximum
+number of shared memory segments
+(<B>SHMSEG</B>).
+
+<A NAME="lbAI">&nbsp;</A>
+<H2>CONFORMING TO</H2>
+
+SVr4, SVID.  SVr4 documents an additional error condition EMFILE.
+In SVID-v4 the type of the <I>shmaddr</I> argument was changed from
+<B>char *</B>
+
+into
+<B>const void *</B>,
+
+and the returned type of <I>shmat</I>() from
+<B>char *</B>
+
+into
+<B>void *</B>.
+
+(Linux libc4 and libc5 have the
+<B>char *</B>
+
+prototypes; glibc2 has
+<B>void *</B>.)
+
+<A NAME="lbAJ">&nbsp;</A>
+<H2>SEE ALSO</H2>
+
+<B><A HREF="../man2/brk.2.html">brk</A></B>(2),
+
+<B><A HREF="../man2/mmap.2.html">mmap</A></B>(2),
+
+<B><A HREF="../man2/shmctl.2.html">shmctl</A></B>(2),
+
+<B><A HREF="../man2/shmget.2.html">shmget</A></B>(2),
+
+<B><A HREF="../man5/ipc.5.html">ipc</A></B>(5),
+
+<B><A HREF="../man7/capabilities.7.html">capabilities</A></B>(7)
+
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">NAME</A><DD>
+<DT><A HREF="#lbAC">SYNOPSIS</A><DD>
+<DT><A HREF="#lbAD">DESCRIPTION</A><DD>
+<DT><A HREF="#lbAE">SYSTEM CALLS</A><DD>
+<DT><A HREF="#lbAF">RETURN VALUE</A><DD>
+<DT><A HREF="#lbAG">ERRORS</A><DD>
+<DT><A HREF="#lbAH">NOTES</A><DD>
+<DT><A HREF="#lbAI">CONFORMING TO</A><DD>
+<DT><A HREF="#lbAJ">SEE ALSO</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
+using the manual pages.<BR>
+Time: 02:10:07 GMT, April 20, 2020
+</BODY>
+</HTML>

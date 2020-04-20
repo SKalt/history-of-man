@@ -1,0 +1,267 @@
+<!--
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of SERVICES</TITLE>
+</HEAD><BODY>
+<H1>SERVICES</H1>
+Section: Linux Programmer's Manual (5)<BR>Updated: 1996-01-11<BR><A HREF="#index">Index</A>
+<A HREF="../index.html">Return to Main Contents</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>NAME</H2>
+
+services - Internet network services list
+<A NAME="lbAC">&nbsp;</A>
+<H2>DESCRIPTION</H2>
+
+<B>services</B>
+
+is a plain ASCII file providing a mapping between friendly textual
+names for internet services, and their underlying assigned port
+numbers and protocol types. Every networking program should look into
+this file to get the port number (and protocol) for its service.
+The C library routines
+<B><A HREF="../man3/getservent.3.html">getservent</A></B>(3),
+
+<B><A HREF="../man3/getservbyname.3.html">getservbyname</A></B>(3),
+
+<B><A HREF="../man3/getservbyport.3.html">getservbyport</A></B>(3),
+
+<B><A HREF="../man3/setservent.3.html">setservent</A></B>(3),
+
+and 
+<B><A HREF="../man3/endservent.3.html">endservent</A></B>(3)
+
+support querying this file from programs.
+<P>
+Port numbers are assigned by the IANA (Internet Assigned Numbers
+Authority), and their current policy is to assign both TCP and UDP
+protocols when assigning a port number. Therefore, most entries will
+have two entries, even for TCP only services.
+<P>
+Port numbers below 1024 (so-called 'low numbered' ports) can only be
+bound to by root (see
+<B><A HREF="../man2/bind.2.html">bind</A></B>(2),
+
+<B><A HREF="../man7/tcp.7.html">tcp</A></B>(7),
+
+and 
+<B><A HREF="../man7/udp.7.html">udp</A></B>(7)).
+
+This is so clients connecting to low numbered ports can trust
+that the service running on the port is the standard implementation,
+and not a rogue service run by a user of the machine.  Well-known port
+numbers specified by the IANA are normally located in this root-only
+space.
+<P>
+The presence of an entry for a service in the 
+<B>services</B>
+
+file does not necessarily mean that the service is currently running
+on the machine. See
+<B><A HREF="../man5/inetd.conf.5.html">inetd.conf</A></B>(5)
+
+for the configuration of Internet services offered. Note that not all
+networking services are started by
+<B><A HREF="../man8/inetd.8.html">inetd</A></B>(8),
+
+and so won't appear in
+<B><A HREF="../man5/inetd.conf.5.html">inetd.conf</A></B>(5).
+
+In particular, news (NNTP) and mail (SMTP) servers are often
+initialized from the system boot scripts.
+<P>
+The location of the
+<B>services</B>
+
+file is defined by
+<B>_PATH_SERVICES</B>
+
+in
+<I>/usr/include/netdb.h</I>.
+
+This is usually set to
+<I>/etc/services</I>.
+
+<P>
+Each line describes one service, and is of the form:
+<DL COMPACT>
+<DT><DD>
+<I>service-name&nbsp;&nbsp;&nbsp;port</I><B>/</B><I>protocol&nbsp;&nbsp;&nbsp;</I>[<I>aliases ...</I>]
+<DT>where:<DD>
+<DT><I>service-name</I>
+
+<DD>
+is the friendly name the service is known by and looked up under. It
+is case sensitive. Often, the client program is named after the
+<I>service-name</I>.
+
+<DT><I>port</I>
+
+<DD>
+is the port number (in decimal) to use for this service.
+<DT><I>protocol</I>
+
+<DD>
+is the type of protocol to be used. This field should match an entry
+in the
+<B><A HREF="../man5/protocols.5.html">protocols</A></B>(5)
+
+file. Typical values include
+<B>tcp</B>
+
+and
+<B>udp</B>.
+
+<DT><I>aliases</I>
+
+<DD>
+is an optional space or tab separated list of other names for this
+service (but see the BUGS section below). Again, the names are case
+sensitive.
+</DL>
+<P>
+
+<P>
+Either spaces or tabs may be used to separate the fields.
+<P>
+Comments are started by the hash sign (#) and continue until the end
+of the line. Blank lines are skipped.
+<P>
+The
+<I>service-name</I>
+
+should begin in the first column of the file, since leading spaces are
+not stripped.
+<I>service-names</I>
+
+can be any printable characters excluding space and tab. However,
+a conservative choice of characters should be used to minimize
+inter-operability problems. E.g., a-z, 0-9, and hyphen (-) would seem a
+sensible choice.
+<P>
+Lines not matching this format should not be present in the
+file. (Currently, they are silently skipped by
+<B><A HREF="../man3/getservent.3.html">getservent</A></B>(3),
+
+<B><A HREF="../man3/getservbyname.3.html">getservbyname</A></B>(3),
+
+and
+<B><A HREF="../man3/getservbyport.3.html">getservbyport</A></B>(3).
+
+However, this behaviour should not be relied on.)
+<P>
+As a backwards compatibility feature, the slash (/) between the
+<I>port</I>
+
+number and
+<I>protocol</I>
+
+name can in fact be either a slash or a comma (,). Use of the comma in
+modern installations is depreciated.
+<P>
+This file might be distributed over a network using a network-wide
+naming service like Yellow Pages/NIS or BIND/Hesiod.
+<P>
+A sample
+<B>services</B>
+
+file might look like this:
+<DL COMPACT><DT><DD>
+<PRE>
+
+
+netstat         15/tcp
+qotd            17/tcp          quote
+msp             18/tcp          # message send protocol
+msp             18/udp          # message send protocol
+chargen         19/tcp          ttytst source
+chargen         19/udp          ttytst source
+ftp             21/tcp
+# 22 - unassigned
+telnet          23/tcp
+
+</PRE>
+
+</DL>
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>BUGS</H2>
+
+There is a maximum of 35 aliases, due to the way the
+<B><A HREF="../man3/getservent.3.html">getservent</A></B>(3)
+
+code is written.
+<P>
+Lines longer than
+<B>BUFSIZ</B>
+
+(currently 1024) characters will be ignored by
+<B><A HREF="../man3/getservent.3.html">getservent</A></B>(3),
+
+<B><A HREF="../man3/getservbyname.3.html">getservbyname</A></B>(3),
+
+and
+<B><A HREF="../man3/getservbyport.3.html">getservbyport</A></B>(3).
+
+However, this will also cause the next line to be mis-parsed.
+<A NAME="lbAE">&nbsp;</A>
+<H2>FILES</H2>
+
+<DL COMPACT>
+<DT><I>/etc/services</I>
+
+<DD>
+The Internet network services list
+<DT><I>/usr/include/netdb.h</I>
+
+<DD>
+Definition of
+<B>_PATH_SERVICES</B>
+
+</DL>
+<A NAME="lbAF">&nbsp;</A>
+<H2>SEE ALSO</H2>
+
+<B><A HREF="../man2/listen.2.html">listen</A></B>(2),
+
+<B><A HREF="../man3/endservent.3.html">endservent</A></B>(3),
+
+<B><A HREF="../man3/getservbyname.3.html">getservbyname</A></B>(3),
+
+<B><A HREF="../man3/getservbyport.3.html">getservbyport</A></B>(3),
+
+<B><A HREF="../man3/getservent.3.html">getservent</A></B>(3),
+
+<B><A HREF="../man3/setservent.3.html">setservent</A></B>(3),
+
+<B><A HREF="../man5/inetd.conf.5.html">inetd.conf</A></B>(5),
+
+<B><A HREF="../man5/protocols.5.html">protocols</A></B>(5),
+
+<B><A HREF="../man8/inetd.8.html">inetd</A></B>(8)
+
+<P>
+Assigned Numbers RFC, most recently RFC 1700, (AKA STD0002)
+<P>
+Guide to Yellow Pages Service
+<P>
+Guide to BIND/Hesiod Service
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">NAME</A><DD>
+<DT><A HREF="#lbAC">DESCRIPTION</A><DD>
+<DT><A HREF="#lbAD">BUGS</A><DD>
+<DT><A HREF="#lbAE">FILES</A><DD>
+<DT><A HREF="#lbAF">SEE ALSO</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
+using the manual pages.<BR>
+Time: 02:11:23 GMT, April 20, 2020
+</BODY>
+</HTML>

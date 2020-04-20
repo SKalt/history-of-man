@@ -1,0 +1,251 @@
+<!--
+Copyright (c) 2003 by Michael Kerrisk (mtk16@ext.canterbury.ac.nz)
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of DL_ITERATE_PHDR</TITLE>
+</HEAD><BODY>
+<H1>DL_ITERATE_PHDR</H1>
+Section: C Library Functions (3)<BR>Updated: Linux 2.4.21<BR><A HREF="#index">Index</A>
+<A HREF="../index.html">Return to Main Contents</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>NAME</H2>
+
+dl_iterate_phdr - walk through list of shared objects
+<A NAME="lbAC">&nbsp;</A>
+<H2>SYNOPSIS</H2>
+
+<PRE>
+#define _GNU_SOURCE
+<B>#include &lt;<A HREF="file:///usr/include/link.h">link.h</A>&gt;</B>
+
+<B>int dl_iterate_phdr(</B>
+          <B>int (*</B>callback<B>) (struct dl_phdr_info *</B>info<B>,</B>
+                           <B>size_t</B> size<B>, void *</B>data<B>),</B>
+          <B>void *</B>data<B>);</B>
+</PRE>
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>DESCRIPTION</H2>
+
+The
+<B>dl_iterate_phdr</B>
+
+function allows an application to inquire at run-time to find
+out which shared objects it has loaded.
+<P>
+The
+<B>dl_iterate_phdr</B>
+
+function walks through the list of an
+application's shared objects and calls the function
+<I>callback</I>
+
+once for each object,
+until either all shared objects have been processed or
+<I>callback</I>
+
+returns a non-zero value.
+<P>
+Each call to
+<I>callback</I>
+
+receives three arguments:
+<I>info</I>,
+
+which is a pointer to a structure containing information
+about the shared object;
+<I>size</I>,
+
+which is the size of the structure pointed to by
+<I>info</I>;
+
+and
+<I>data</I>,
+
+which is a copy of whatever value was passed by the calling
+program as the second argument (also named
+<I>data</I>)
+
+in the call to
+<B>dl_iterate_phdr.</B>
+
+<P>
+The
+<I>info</I>
+
+argument is a structure of the following type:
+<P>
+<PRE>
+  struct dl_phdr_info {
+    ElfW(Addr)        dlpi_addr;  /* Base address of object */
+    const char       *dlpi_name;  /* (Null-terminated) name of
+                                     object
+    const ElfW(Phdr) *dlpi_phdr;  /* Pointer to array of
+                                     ELF program headers
+                                     for this object */
+    ElfW(Half)        dlpi_phnum; /* # of items in 'dlpi_phdr' */
+  };
+</PRE>
+
+<P>
+(The
+<I>ElfW()</I>
+
+macro definition turns its argument into the name of an ELF data
+type suitable for the hardware architecture.
+For example, on a 32-bit platform,
+ElfW(Addr) yields the data type name Elf32_Addr.
+Further information on these types can be found in the
+<I>&lt;<A HREF="file:///usr/include/elf.h">elf.h</A>&gt;</I> and <I>&lt;<A HREF="file:///usr/include/link.h">link.h</A>&gt;</I>
+
+header files.)
+<P>
+The
+<I>dlpi_addr</I>
+
+field indicates the base address of the shared object
+(i.e., the difference between the virtual memory address of
+the shared object and the offset of that object in the file
+from which it was loaded).
+The
+<I>dlpi_name</I>
+
+field is a null-terminated string giving the pathname
+from which the shared object was loaded.
+<P>
+To understand the meaning of the
+<I>dlpi_phdr</I>
+
+and
+<I>dlpi_phnum</I>
+
+fields, we need to be aware that an ELF shared object consists
+of a number of segments, each of which has a corresponding
+program header describing the segment.
+The
+<I>dlpi_phdr</I>
+
+field is a pointer to an array of the program headers for this
+shared object.
+The
+<I>dlpi_phnum</I>
+
+field indicates the size of this array.
+<P>
+These program headers are structures of the following form:
+<PRE>
+
+  typedef struct
+  {
+    Elf32_Word  p_type;    /* Segment type */
+    Elf32_Off   p_offset;  /* Segment file offset */
+    Elf32_Addr  p_vaddr;   /* Segment virtual address */
+    Elf32_Addr  p_paddr;   /* Segment physical address */
+    Elf32_Word  p_filesz;  /* Segment size in file */
+    Elf32_Word  p_memsz;   /* Segment size in memory */
+    Elf32_Word  p_flags;   /* Segment flags */
+    Elf32_Word  p_align;   /* Segment alignment */
+  } Elf32_Phdr;
+</PRE>
+
+<P>
+Note that we can calculate the location of a particular program header,
+<I>x</I>,
+
+in virtual memory memory using the formula:
+<P>
+<PRE>
+  addr == info-&gt;dlpi_addr + info-&gt;dlpi_phdr[x].p_vaddr;
+</PRE>
+
+<A NAME="lbAE">&nbsp;</A>
+<H2>EXAMPLE PROGRAM</H2>
+
+The following program displays a list of pathnames of the 
+shared objects it has loaded.
+For each shared object, the program lists the virtual addresses 
+at which the object's ELF segments are loaded.
+<P>
+<PRE>
+#define _GNU_SOURCE
+#include &lt;<A HREF="file:///usr/include/link.h">link.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/stdlib.h">stdlib.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;
+
+static int
+callback(struct dl_phdr_info *info, size_t size, void *data)
+{
+    int j;
+
+    printf(&quot;name=%s (%d segments)\n&quot;, info-&gt;dlpi_name,
+        info-&gt;dlpi_phnum);
+
+    for (j = 0; j &lt; info-&gt;dlpi_phnum; j++)
+         printf(&quot;\t\t header %2d: address=%10p\n&quot;, j,
+             (void *) (info-&gt;dlpi_addr + info-&gt;dlpi_phdr[j].p_vaddr));
+    return 0;
+}
+
+int
+main(int argc, char *argv[])
+{
+    dl_iterate_phdr(callback, NULL);
+
+    exit(EXIT_SUCCESS);
+}
+</PRE>
+
+<A NAME="lbAF">&nbsp;</A>
+<H2>RETURN VALUE</H2>
+
+The
+<B>dl_iterate_phdr</B>
+
+function returns whatever value was returned by the last call to
+<I>callback</I>.
+
+<A NAME="lbAG">&nbsp;</A>
+<H2>CONFORMING TO</H2>
+
+The
+<B>dl_iterate_phdr</B>
+
+function is Linux specific and should be avoided in portable applications.
+<A NAME="lbAH">&nbsp;</A>
+<H2>SEE ALSO</H2>
+
+<B><A HREF="../man1/ldd.1.html">ldd</A></B>(1),
+
+<B><A HREF="../man1/objdump.1.html">objdump</A></B>(1),
+
+<B><A HREF="../man1/readelf.1.html">readelf</A></B>(1),
+
+<B><A HREF="../man3/dlopen.3.html">dlopen</A></B>(3),
+
+<B><A HREF="../man8/ld.so.8.html">ld.so</A></B>(8),
+
+and the
+<I>Executable and Linking Format Specification</I>
+
+available at various locations online.
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">NAME</A><DD>
+<DT><A HREF="#lbAC">SYNOPSIS</A><DD>
+<DT><A HREF="#lbAD">DESCRIPTION</A><DD>
+<DT><A HREF="#lbAE">EXAMPLE PROGRAM</A><DD>
+<DT><A HREF="#lbAF">RETURN VALUE</A><DD>
+<DT><A HREF="#lbAG">CONFORMING TO</A><DD>
+<DT><A HREF="#lbAH">SEE ALSO</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
+using the manual pages.<BR>
+Time: 02:10:24 GMT, April 20, 2020
+</BODY>
+</HTML>

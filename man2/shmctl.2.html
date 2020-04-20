@@ -1,0 +1,275 @@
+<!--
+Copyright (c) 1993 Luigi P. Bai (lpb@softint.com) July 28, 1993
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of SHMCTL</TITLE>
+</HEAD><BODY>
+<H1>SHMCTL</H1>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2004-06-17<BR><A HREF="#index">Index</A>
+<A HREF="../index.html">Return to Main Contents</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>NAME</H2>
+
+shmctl - shared memory control
+<A NAME="lbAC">&nbsp;</A>
+<H2>SYNOPSIS</H2>
+
+
+<B>#include &lt;<A HREF="file:///usr/include/sys/ipc.h">sys/ipc.h</A>&gt;</B>
+
+<P>
+<B>#include &lt;<A HREF="file:///usr/include/sys/shm.h">sys/shm.h</A>&gt;</B>
+
+<P>
+<B>int shmctl(int </B><I>shmid</I><B>, int </B><I>cmd</I><B>, struct shmid_ds *</B><I>buf</I><B>);</B>
+
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>DESCRIPTION</H2>
+
+<B>shmctl()</B>
+allows the user to receive information on a shared memory segment,
+set the owner, group, and permissions of a shared memory segment,
+or destroy a segment. The information about the segment identified by
+<I>shmid</I> is returned in a <I>shmid_ds</I>
+structure:
+<P>
+
+
+<PRE>
+struct shmid_ds {
+    struct ipc_perm shm_perm;  /* operation perms */
+    int shm_segsz;             /* size of segment (bytes) */
+    time_t shm_atime;          /* last attach time */
+    time_t shm_dtime;          /* last detach time */
+    time_t shm_ctime;          /* last change time */
+    unsigned short shm_cpid;   /* pid of creator */
+    unsigned short shm_lpid;   /* pid of last operator */
+    short shm_nattch;          /* no. of current attaches */
+    ...
+};
+</PRE>
+
+
+<P>
+
+The highlighted fields in the member <I>shm_perm</I> can be set:
+<P>
+
+
+<PRE>
+struct ipc_perm {
+    key_t  key;
+    <B>ushort uid</B>;   /* <B>owner</B> euid and egid */
+    <B>ushort gid</B>;
+    ushort cuid;  /* creator euid and egid */
+    ushort cgid;
+    <B>ushort mode</B>;  /* lower 9 bits of access modes */
+    ushort seq;   /* sequence number */
+};
+</PRE>
+
+
+<P>
+
+The following <I>cmds</I> are available:
+<BR>
+
+<DL COMPACT>
+<DT><B>IPC_STAT</B>
+
+<DD>
+is used to copy the information about the shared memory segment into
+the buffer <I>buf</I>. The user must have <B>read</B> access to the
+shared memory segment.
+<DT><B>IPC_SET</B>
+
+<DD>
+is used to apply the changes the user has made to the <I>uid</I>, <I>gid</I>,
+or <I>mode</I> members of the <I>shm_perms</I> field.  Only the lowest 9 bits
+of <I>mode</I> are used.  The
+<I>shm_ctime</I>
+
+member is also updated.  The user must be the owner or creator, or be
+privileged.
+<DT><B>IPC_RMID</B>
+
+<DD>
+is used to mark the segment as destroyed. It will actually be destroyed
+after the last detach.  (I.e., when the
+<I>shm_nattch</I>
+
+member of the associated structure
+<I>shmid_ds</I>
+
+is zero.)  The user must be the owner or creator, or be privileged.
+</DL>
+<P>
+
+The user <I>must</I> ensure that a segment is eventually destroyed; otherwise
+its pages that were faulted in will remain in memory or swap.
+<A NAME="lbAE">&nbsp;</A>
+<H3>Linux additions</H3>
+
+A privileged user can prevent or allow swapping of a shared
+memory segment with the following <I>cmds</I>:
+<BR>
+
+<DL COMPACT>
+<DT><B>SHM_LOCK</B>
+
+<DD>
+prevents swapping of a shared memory segment. The user must fault in
+any pages that are required to be present after locking is enabled.
+<DT><B>SHM_UNLOCK</B>
+
+<DD>
+allows the shared memory segment to be swapped out.
+</DL>
+<P>
+
+The
+<B>IPC_INFO</B>,
+
+<B>SHM_STAT</B>
+
+and
+<B>SHM_INFO</B>
+
+control calls are used by the
+<B><A HREF="../man8/ipcs.8.html">ipcs</A></B>(8)
+
+program to provide information on allocated resources.
+<A NAME="lbAF">&nbsp;</A>
+<H2>RETURN VALUE</H2>
+
+On success, zero is returned.
+On error, -1 is returned, and
+<I>errno</I>
+
+is set appropriately.
+<A NAME="lbAG">&nbsp;</A>
+<H2>ERRORS</H2>
+
+<DL COMPACT>
+<DT><B>EACCES</B>
+
+<DD>
+<B>IPC_STAT</B> or <B>SHM_STAT</B> is requested and
+<I>shm_perm.modes</I> does not allow read access for
+<I>shmid</I>,
+
+and the calling process does not have the
+<B>CAP_IPC_OWNER</B>
+
+capability.
+<DT><B>EFAULT</B>
+
+<DD>
+The argument
+<I>cmd</I>
+
+has value
+<B>IPC_SET</B>
+
+or
+<B>IPC_STAT</B>
+
+but the address pointed to by
+<I>buf</I>
+
+isn't accessible.
+<DT><B>EIDRM</B>
+
+<DD>
+<I>shmid</I> points to a removed identifier.
+<DT><B>EINVAL</B>
+
+<DD>
+<I>shmid</I> is not a valid identifier, or <I>cmd</I>
+is not a valid command.
+<DT><B>EOVERFLOW</B>
+
+<DD>
+<B>IPC_STAT</B> is attempted, and the gid or uid value
+is too large to be stored in the structure pointed to by
+<I>buf</I>.
+
+<DT><B>EPERM</B>
+
+<DD>
+<B>IPC_SET</B> or <B>IPC_RMID</B> is attempted, and the
+effective user ID of the calling process is not that of the creator
+(found in
+<I>shm_perm.cuid</I>),
+
+or the owner
+(found in
+<I>shm_perm.uid</I>),
+
+and the process was not privileged (Linux: did not have the
+<B>CAP_SYS_ADMIN</B>
+
+capability).
+<P>
+Or,
+<B>SHM_LOCK</B>
+
+or
+<B>SHM_UNLOCK</B>
+
+was specified, but the process was not privileged
+(Linux: did not have the
+<B>CAP_IPC_LOCK</B>
+
+capability).
+</DL>
+<A NAME="lbAH">&nbsp;</A>
+<H2>NOTE</H2>
+
+Various fields in a <I>struct shmid_ds</I> were shorts under Linux 2.2
+and have become longs under Linux 2.4. To take advantage of this,
+a recompilation under glibc-2.1.91 or later should suffice.
+(The kernel distinguishes old and new calls by an IPC_64 flag in
+<I>cmd</I>.)
+
+<A NAME="lbAI">&nbsp;</A>
+<H2>CONFORMING TO</H2>
+
+SVr4, SVID.  SVr4 documents additional error conditions EINVAL,
+ENOENT, ENOSPC, ENOMEM, EEXIST.  Neither SVr4 nor SVID documents
+an EIDRM error condition.
+<A NAME="lbAJ">&nbsp;</A>
+<H2>SEE ALSO</H2>
+
+<B><A HREF="../man2/shmget.2.html">shmget</A></B>(2),
+
+<B><A HREF="../man2/shmop.2.html">shmop</A></B>(2),
+
+<B><A HREF="../man7/capabilities.7.html">capabilities</A></B>(7)
+
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">NAME</A><DD>
+<DT><A HREF="#lbAC">SYNOPSIS</A><DD>
+<DT><A HREF="#lbAD">DESCRIPTION</A><DD>
+<DL>
+<DT><A HREF="#lbAE">Linux additions</A><DD>
+</DL>
+<DT><A HREF="#lbAF">RETURN VALUE</A><DD>
+<DT><A HREF="#lbAG">ERRORS</A><DD>
+<DT><A HREF="#lbAH">NOTE</A><DD>
+<DT><A HREF="#lbAI">CONFORMING TO</A><DD>
+<DT><A HREF="#lbAJ">SEE ALSO</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
+using the manual pages.<BR>
+Time: 02:10:06 GMT, April 20, 2020
+</BODY>
+</HTML>

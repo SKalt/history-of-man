@@ -1,0 +1,191 @@
+<!--
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of CRYPT</TITLE>
+</HEAD><BODY>
+<H1>CRYPT</H1>
+Section: Library functions (3)<BR>Updated: 2001-12-23<BR><A HREF="#index">Index</A>
+<A HREF="../index.html">Return to Main Contents</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>NAME</H2>
+
+crypt - password and data encryption
+<A NAME="lbAC">&nbsp;</A>
+<H2>SYNOPSIS</H2>
+
+<B>#define _XOPEN_SOURCE</B>
+
+<BR>
+
+<B>#include &lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;</B>
+
+<P>
+<B>char *crypt(const char *</B><I>key</I><B>, const char *</B><I>salt</I><B>);</B>
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>DESCRIPTION</H2>
+
+<B>crypt</B>
+
+is the password encryption function.  It is based on the Data Encryption
+Standard algorithm with variations intended (among other things) to
+discourage use of hardware implementations of a key search.
+<P>
+
+<I>key</I>
+
+is a user's typed password.
+<P>
+
+<I>salt</I>
+
+is a two-character string chosen from the set
+[<B>a</B>-<B>zA</B>-<B>Z0</B>-<B>9./</B>].  This string is used to
+perturb the algorithm in one of 4096 different ways.
+<P>
+
+By taking the lowest 7 bits of each of the first eight characters of the
+<I>key</I>,
+
+a 56-bit key is obtained.  This 56-bit key is used to encrypt repeatedly a
+constant string (usually a string consisting of all zeros).  The returned
+value points to the encrypted password, a series of 13 printable ASCII
+characters (the first two characters represent the salt itself).  The
+return value points to static data whose content is overwritten by each
+call.
+<P>
+
+Warning: The key space consists of
+
+2**56
+equal 7.2e16 possible values.  Exhaustive searches of this key space are
+possible using massively parallel computers.  Software, such as
+<B><A HREF="../man1/crack.1.html">crack</A></B>(1),
+
+is available which will search the portion of this key space that is
+generally used by humans for passwords.  Hence, password selection should,
+at minimum, avoid common words and names.  The use of a
+<B><A HREF="../man1/passwd.1.html">passwd</A></B>(1)
+
+program that checks for crackable passwords during the selection process is
+recommended.
+<P>
+
+The DES algorithm itself has a few quirks which make the use of the
+<B><A HREF="../man3/crypt.3.html">crypt</A></B>(3)
+
+interface a very poor choice for anything other than password
+authentication.  If you are planning on using the
+<B><A HREF="../man3/crypt.3.html">crypt</A></B>(3)
+
+interface for a cryptography project, don't do it: get a good book on
+encryption and one of the widely available DES libraries.
+<A NAME="lbAE">&nbsp;</A>
+<H2>RETURN VALUE</H2>
+
+A pointer to the encrypted password is returned.
+On error, NULL is returned.
+<A NAME="lbAF">&nbsp;</A>
+<H2>ERRORS</H2>
+
+<DL COMPACT>
+<DT><B>ENOSYS</B>
+
+<DD>
+The 
+<B>crypt</B>
+
+function was not implemented, probably because of U.S.A. export restrictions.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</DL>
+<A NAME="lbAG">&nbsp;</A>
+<H2>GNU EXTENSION</H2>
+
+The glibc2 version of this function has the following additional features.
+If
+<I>salt</I>
+
+is a character string starting with the three characters &quot;$1$&quot;
+followed by at most eight characters, and optionally terminated by &quot;$&quot;,
+then instead of using the DES machine, the glibc crypt function
+uses an MD5-based algorithm, and outputs up to 34 bytes,
+namely &quot;$1$&lt;string&gt;$&quot;, where &quot;&lt;string&gt;&quot; stands for the up to 8
+characters following &quot;$1$&quot; in the salt, followed by 22 bytes chosen
+from the set [<B>a</B>-<B>zA</B>-<B>Z0</B>-<B>9./</B>].
+The entire key is significant here (instead of only the first
+8 bytes).
+<P>
+
+Programs using this function must be linked with -lcrypt.
+<A NAME="lbAH">&nbsp;</A>
+<H2>CONFORMING TO</H2>
+
+SVID, X/OPEN, BSD 4.3, POSIX 1003.1-2001
+<A NAME="lbAI">&nbsp;</A>
+<H2>SEE ALSO</H2>
+
+<B><A HREF="../man1/login.1.html">login</A></B>(1),
+
+<B><A HREF="../man1/passwd.1.html">passwd</A></B>(1),
+
+<B><A HREF="../man3/encrypt.3.html">encrypt</A></B>(3),
+
+<B><A HREF="../man3/getpass.3.html">getpass</A></B>(3),
+
+<B><A HREF="../man5/passwd.5.html">passwd</A></B>(5)
+
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">NAME</A><DD>
+<DT><A HREF="#lbAC">SYNOPSIS</A><DD>
+<DT><A HREF="#lbAD">DESCRIPTION</A><DD>
+<DT><A HREF="#lbAE">RETURN VALUE</A><DD>
+<DT><A HREF="#lbAF">ERRORS</A><DD>
+<DT><A HREF="#lbAG">GNU EXTENSION</A><DD>
+<DT><A HREF="#lbAH">CONFORMING TO</A><DD>
+<DT><A HREF="#lbAI">SEE ALSO</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
+using the manual pages.<BR>
+Time: 02:10:22 GMT, April 20, 2020
+</BODY>
+</HTML>

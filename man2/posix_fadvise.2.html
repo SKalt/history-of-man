@@ -1,0 +1,146 @@
+<!--
+Copyright 2003 Abhijit Menon-Sen &lt;ams@wiw.org&gt;
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of POSIX_FADVISE</TITLE>
+</HEAD><BODY>
+<H1>POSIX_FADVISE</H1>
+Section: Linux Programmer's Manual (2)<BR>Updated: 14 Feb 2003<BR><A HREF="#index">Index</A>
+<A HREF="../index.html">Return to Main Contents</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>NAME</H2>
+
+posix_fadvise - predeclare an access pattern for file data
+<A NAME="lbAC">&nbsp;</A>
+<H2>SYNOPSIS</H2>
+
+<PRE>
+<B>#include &lt;<A HREF="file:///usr/include/fcntl.h">fcntl.h</A>&gt;</B>
+
+<B>int posix_fadvise(int </B><I>fd</I><B>, off_t </B><I>offset</I><B>, off_t </B><I>len</I><B>, int </B><I>advice</I><B>);</B>
+</PRE>
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>DESCRIPTION</H2>
+
+Programs can use <B>posix_fadvise</B> to announce an intention to access
+file data in a specific pattern in the future, thus allowing the kernel
+to perform appropriate optimisations.
+<P>
+The <I>advice</I> applies to a (not necessarily existent) region starting
+at <I>offset</I> and extending for <I>len</I> bytes (or until the end of
+the file if <I>len</I> is 0) within the file referred to by <I>fd</I>. The
+advice is not binding; it merely constitutes an expectation on behalf of
+the application.
+<P>
+Permissible values for <I>advice</I> include:
+<DL COMPACT>
+<DT><B>POSIX_FADV_NORMAL</B>
+
+<DD>
+Indicates that the application has no advice to give about its access
+pattern for the specified data. If no advice is given for an open file,
+this is the default assumption.
+<DT><B>POSIX_FADV_SEQUENTIAL</B>
+
+<DD>
+The application expects to access the specified data sequentially (with
+lower offsets read before higher ones).
+<DT><B>POSIX_FADV_RANDOM</B>
+
+<DD>
+The specified data will be accessed in random order.
+<DT><B>POSIX_FADV_NOREUSE</B>
+
+<DD>
+The specified data will be accessed only once.
+<DT><B>POSIX_FADV_WILLNEED</B>
+
+<DD>
+The specified data will be accessed in the near future.
+<DT><B>POSIX_FADV_DONTNEED</B>
+
+<DD>
+The specified data will not be accessed in the near future.
+</DL>
+<A NAME="lbAE">&nbsp;</A>
+<H2>RETURN VALUE</H2>
+
+On success, zero is returned. On error, -1 is returned, and <I>errno</I>
+is set appropriately.
+<A NAME="lbAF">&nbsp;</A>
+<H2>ERRORS</H2>
+
+<DL COMPACT>
+<DT><B>EBADF</B>
+
+<DD>
+The <I>fd</I> argument was not a valid file descriptor.
+<DT><B>EINVAL</B>
+
+<DD>
+An invalid value was specified for <I>advice</I>.
+<DT><B>ESPIPE</B>
+
+<DD>
+The specified file descriptor refers to a pipe or FIFO. (Linux actually
+returns EINVAL in this case.)
+</DL>
+<A NAME="lbAG">&nbsp;</A>
+<H2>NOTES</H2>
+
+Under Linux, <B>POSIX_FADV_NORMAL</B> sets the readahead window to the
+default size for the backing device; <B>POSIX_FADV_SEQUENTIAL</B> doubles
+this size, and <B>POSIX_FADV_RANDOM</B> disables file readahead entirely.
+These changes affect the the entire file, not just the specified region
+(but other open file handles to the same file are unaffected).
+<P>
+<B>POSIX_FADV_WILLNEED</B> and <B>POSIX_FADV_NOREUSE</B> both initiate a
+non-blocking read of the specified region into the page cache. The amount
+of data read may be decreased by the kernel depending on VM load. (A few
+megabytes will usually be fully satisfied, and more is rarely useful.)
+<P>
+<B>POSIX_FADV_DONTNEED</B> attempts to free cached pages associated with
+the specified region. This is useful, for example, while streaming large
+files. A program may periodically request the kernel to free cached data
+that has already been used, so that more useful cached pages are not
+discarded instead.
+<P>
+Pages that have not yet been written out will be unaffected, so if the
+application wishes to guarantee that pages will be released, it should
+call <B>fsync</B> or <B>fdatasync</B> first.
+<A NAME="lbAH">&nbsp;</A>
+<H2>CONFORMING TO</H2>
+
+SUSv3 (Advanced Realtime Option), POSIX 1003.1-2003.
+Note that the type of the
+<I>len</I>
+
+parameter was changed from size_t to off_t in POSIX 1003.1-2003 TC5.
+<A NAME="lbAI">&nbsp;</A>
+<H2>SEE ALSO</H2>
+
+<B><A HREF="../man2/posix_fallocate.2.html">posix_fallocate</A></B>(2), <B><A HREF="../man2/posix_madvise.2.html">posix_madvise</A></B>(2).
+
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">NAME</A><DD>
+<DT><A HREF="#lbAC">SYNOPSIS</A><DD>
+<DT><A HREF="#lbAD">DESCRIPTION</A><DD>
+<DT><A HREF="#lbAE">RETURN VALUE</A><DD>
+<DT><A HREF="#lbAF">ERRORS</A><DD>
+<DT><A HREF="#lbAG">NOTES</A><DD>
+<DT><A HREF="#lbAH">CONFORMING TO</A><DD>
+<DT><A HREF="#lbAI">SEE ALSO</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
+using the manual pages.<BR>
+Time: 02:10:02 GMT, April 20, 2020
+</BODY>
+</HTML>

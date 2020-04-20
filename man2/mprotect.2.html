@@ -1,0 +1,205 @@
+<!--
+Copyright (C) 1995 Michael Shields &lt;shields@tembel.org&gt;.
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of MPROTECT</TITLE>
+</HEAD><BODY>
+<H1>MPROTECT</H1>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2003-08-24<BR><A HREF="#index">Index</A>
+<A HREF="../index.html">Return to Main Contents</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>NAME</H2>
+
+mprotect - control allowable accesses to a region of memory
+<A NAME="lbAC">&nbsp;</A>
+<H2>SYNOPSIS</H2>
+
+<PRE>
+<B>#include &lt;<A HREF="file:///usr/include/sys/mman.h">sys/mman.h</A>&gt;</B>
+
+<B>int mprotect(const void *</B><I>addr</I><B>, size_t </B><I>len</I><B>, int </B><I>prot</I><B>);
+</B></PRE>
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>DESCRIPTION</H2>
+
+The function
+<B>mprotect</B>
+
+specifies the desired protection for the memory page(s) containing
+part or all of the interval [<I>addr</I>,<I>addr</I>+<I>len</I>-1].
+If an access is disallowed by the protection given it, the program receives a
+<B>SIGSEGV</B>.
+
+<P>
+
+<I>prot</I>
+
+is a bitwise-or of the following values:
+<DL COMPACT>
+<DT><B>PROT_NONE</B>
+
+<DD>
+The memory cannot be accessed at all.
+<DT><B>PROT_READ</B>
+
+<DD>
+The memory can be read.
+<DT><B>PROT_WRITE</B>
+
+<DD>
+The memory can be written to.
+<DT><B>PROT_EXEC</B>
+
+<DD>
+The memory can contain executing code.
+</DL>
+<P>
+
+The new protection replaces any existing protection.  For example, if the
+memory had previously been marked <B>PROT_READ</B>, and <B>mprotect</B>
+is then called with <I>prot</I> <B>PROT_WRITE</B>, it will no longer
+be readable.
+<A NAME="lbAE">&nbsp;</A>
+<H2>RETURN VALUE</H2>
+
+On success,
+<B>mprotect</B>
+
+returns zero.  On error, -1 is returned, and
+<I>errno</I>
+
+is set appropriately.
+<A NAME="lbAF">&nbsp;</A>
+<H2>ERRORS</H2>
+
+<DL COMPACT>
+<DT><B>EACCES</B>
+
+<DD>
+The memory cannot be given the specified access.  This can happen,
+for example, if you
+<B><A HREF="../man2/mmap.2.html">mmap</A></B>(2)
+
+a file to which you have read-only access, then ask
+<B>mprotect</B>
+
+to mark it
+<B>PROT_WRITE</B>.
+
+<DT><B>EFAULT</B>
+
+<DD>
+The memory cannot be accessed.
+<DT><B>EINVAL</B>
+
+<DD>
+<I>addr</I> is not a valid pointer, or not a multiple of PAGESIZE.
+<DT><B>ENOMEM</B>
+
+<DD>
+Internal kernel structures could not be allocated.
+</DL>
+<A NAME="lbAG">&nbsp;</A>
+<H2>EXAMPLE</H2>
+
+<PRE>
+#include &lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/stdlib.h">stdlib.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/errno.h">errno.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/sys/mman.h">sys/mman.h</A>&gt;
+
+#include &lt;<A HREF="file:///usr/include/limits.h">limits.h</A>&gt;    /* for PAGESIZE */
+#ifndef PAGESIZE
+#define PAGESIZE 4096
+#endif
+
+int
+main(void)
+{
+    char *p;
+    char c;
+
+    /* Allocate a buffer; it will have the default
+       protection of PROT_READ|PROT_WRITE. */
+    p = malloc(1024+PAGESIZE-1);
+    if (!p) {
+        perror(&quot;Couldn't malloc(1024)&quot;);
+        exit(errno);
+    }
+
+    /* Align to a multiple of PAGESIZE, assumed to be a power of two */
+    p = (char *)(((int) p + PAGESIZE-1) &amp; ~(PAGESIZE-1));
+
+    c = p[666];         /* Read; ok */
+    p[666] = 42;        /* Write; ok */
+
+    /* Mark the buffer read-only. */
+    if (mprotect(p, 1024, PROT_READ)) {
+        perror(&quot;Couldn't mprotect&quot;);
+        exit(errno);
+    }
+
+    c = p[666];         /* Read; ok */
+    p[666] = 42;        /* Write; program dies on SIGSEGV */
+
+    exit(0);
+}
+</PRE>
+
+<A NAME="lbAH">&nbsp;</A>
+<H2>CONFORMING TO</H2>
+
+SVr4, POSIX.1b (formerly POSIX.4).  SVr4 defines an additional error
+code EAGAIN. The SVr4 error conditions don't map neatly onto Linux's.
+POSIX says that
+<B>mprotect</B>
+
+can be used only on regions of memory obtained from
+<B><A HREF="../man2/mmap.2.html">mmap</A></B>(2).
+
+<A NAME="lbAI">&nbsp;</A>
+<H2>NOTES</H2>
+
+On Linux it is always legal to call
+<B>mprotect</B>
+
+on any address in a process' address space (except for the
+kernel vsyscall area). In particular it can be used
+to change existing code mappings to be writable.
+<P>
+Whether
+<B>PROT_EXEC</B>
+
+has any effect different from
+<B>PROT_READ</B>
+
+is architecture and kernel version dependent.
+<A NAME="lbAJ">&nbsp;</A>
+<H2>SEE ALSO</H2>
+
+<B><A HREF="../man2/mmap.2.html">mmap</A></B>(2)
+
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">NAME</A><DD>
+<DT><A HREF="#lbAC">SYNOPSIS</A><DD>
+<DT><A HREF="#lbAD">DESCRIPTION</A><DD>
+<DT><A HREF="#lbAE">RETURN VALUE</A><DD>
+<DT><A HREF="#lbAF">ERRORS</A><DD>
+<DT><A HREF="#lbAG">EXAMPLE</A><DD>
+<DT><A HREF="#lbAH">CONFORMING TO</A><DD>
+<DT><A HREF="#lbAI">NOTES</A><DD>
+<DT><A HREF="#lbAJ">SEE ALSO</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
+using the manual pages.<BR>
+Time: 02:10:00 GMT, April 20, 2020
+</BODY>
+</HTML>

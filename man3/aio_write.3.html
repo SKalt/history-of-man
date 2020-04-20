@@ -1,0 +1,178 @@
+<!--
+Copyright (c) 2003 Andries Brouwer (aeb@cwi.nl)
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of AIO_WRITE</TITLE>
+</HEAD><BODY>
+<H1>AIO_WRITE</H1>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2003-11-14<BR><A HREF="#index">Index</A>
+<A HREF="../index.html">Return to Main Contents</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>NAME</H2>
+
+aio_write - asynchronous write
+<A NAME="lbAC">&nbsp;</A>
+<H2>SYNOPSIS</H2>
+
+<P>
+<B>#include &lt;<A HREF="file:///usr/include/aio.h">aio.h</A>&gt;</B>
+
+<P>
+<B>int aio_write(struct aiocb *</B><I>aiocbp</I><B>);</B>
+
+<P>
+<A NAME="lbAD">&nbsp;</A>
+<H2>DESCRIPTION</H2>
+
+The
+<B>aio_write</B>
+
+function requests an asynchronous &quot;n = write(fd, buf, count)&quot;
+with fd, buf, count given by
+<I>aiocbp-&gt;aio_fildes</I>,
+
+<I>aiocbp-&gt;aio_buf</I>,
+
+<I>aiocbp-&gt;aio_nbytes</I>,
+
+respectively. The return status n can be retrieved upon completion using
+<B><A HREF="../man3/aio_return.3.html">aio_return</A></B>(3).
+
+<P>
+
+If O_APPEND is not set, the data is written starting at the
+absolute file offset
+<I>aiocbp-&gt;aio_offset</I>,
+
+regardless of the current file position.
+If O_APPEND is set, the data is written at the end of the file.
+After this request, the value of the current file position is unspecified.
+<P>
+
+The &quot;asynchronous&quot; means that this call returns as soon as the
+request has been enqueued; the write may or may not have completed
+when the call returns. One tests for completion using
+<B><A HREF="../man3/aio_error.3.html">aio_error</A></B>(3).
+
+<P>
+
+If _POSIX_PRIORITIZED_IO is defined, and this file supports it,
+then the asynchronous operation is submitted at a priority equal
+to that of the calling process minus
+<I>aiocbp-&gt;aio_reqprio</I>.
+
+<P>
+
+The field
+<I>aiocbp-&gt;aio_lio_opcode</I>
+
+is ignored.
+<P>
+
+No data is written to a regular file beyond its maximum offset.
+<A NAME="lbAE">&nbsp;</A>
+<H2>RETURN VALUE</H2>
+
+On success, 0 is returned. On error the request is not enqueued, -1
+is returned, and
+<I>errno</I>
+
+is set appropriately. If an error is first detected later, it will
+be reported via
+<B><A HREF="../man3/aio_return.3.html">aio_return</A></B>(3)
+
+(returns status -1) and
+<B><A HREF="../man3/aio_error.3.html">aio_error</A></B>(3)
+
+(error status whatever one would have gotten in
+<I>errno</I>,
+
+such as EBADF).
+<A NAME="lbAF">&nbsp;</A>
+<H2>ERRORS</H2>
+
+<DL COMPACT>
+<DT><B>EAGAIN</B>
+
+<DD>
+Out of resources.
+<DT><B>EBADF</B>
+
+<DD>
+<I>aio_fildes</I>
+
+is not a valid file descriptor open for writing.
+<DT><B>EFBIG</B>
+
+<DD>
+The file is a regular file, we want to write at least one byte,
+but the starting position is at or beyond the maximum offset for this file.
+<DT><B>EINVAL</B>
+
+<DD>
+One or more of
+<I>aio_offset</I>,
+
+<I>aio_reqprio</I>,
+
+<I>aio_nbytes</I>
+
+are invalid.
+<DT><B>ENOSYS</B>
+
+<DD>
+This function is not supported.
+<P>
+</DL>
+<A NAME="lbAG">&nbsp;</A>
+<H2>NOTES</H2>
+
+It is a good idea to zero out the control block before use.
+This control block must not be changed while the write operation
+is in progress.
+The buffer area being written out
+
+must not be accessed during the operation or undefined results may
+occur. The memory areas involved must remain valid.
+<P>
+<A NAME="lbAH">&nbsp;</A>
+<H2>CONFORMING TO</H2>
+
+POSIX 1003.1-2003
+<A NAME="lbAI">&nbsp;</A>
+<H2>SEE ALSO</H2>
+
+<B><A HREF="../man3/aio_cancel.3.html">aio_cancel</A></B>(3),
+
+<B><A HREF="../man3/aio_error.3.html">aio_error</A></B>(3),
+
+<B><A HREF="../man3/aio_fsync.3.html">aio_fsync</A></B>(3),
+
+<B><A HREF="../man3/aio_read.3.html">aio_read</A></B>(3),
+
+<B><A HREF="../man3/aio_return.3.html">aio_return</A></B>(3),
+
+<B><A HREF="../man3/aio_suspend.3.html">aio_suspend</A></B>(3)
+
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">NAME</A><DD>
+<DT><A HREF="#lbAC">SYNOPSIS</A><DD>
+<DT><A HREF="#lbAD">DESCRIPTION</A><DD>
+<DT><A HREF="#lbAE">RETURN VALUE</A><DD>
+<DT><A HREF="#lbAF">ERRORS</A><DD>
+<DT><A HREF="#lbAG">NOTES</A><DD>
+<DT><A HREF="#lbAH">CONFORMING TO</A><DD>
+<DT><A HREF="#lbAI">SEE ALSO</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
+using the manual pages.<BR>
+Time: 02:10:13 GMT, April 20, 2020
+</BODY>
+</HTML>

@@ -1,0 +1,202 @@
+<!--
+Copyright (C) 2003, Michael Kerrisk (mtk16@ext.canterbury.ac.nz)
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of REMAP_FILE_PAGES</TITLE>
+</HEAD><BODY>
+<H1>REMAP_FILE_PAGES</H1>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2004-10-28<BR><A HREF="#index">Index</A>
+<A HREF="../index.html">Return to Main Contents</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>NAME</H2>
+
+remap_file_pages - create a non-linear file mapping
+<A NAME="lbAC">&nbsp;</A>
+<H2>SYNOPSIS</H2>
+
+<B>#include &lt;<A HREF="file:///usr/include/sys/mman.h">sys/mman.h</A>&gt;</B>
+
+<P>
+<B>int remap_file_pages(void *</B><I>start</I><B>, </B>
+
+<B>size_t </B><I>size</I><B>, int </B><I>prot</I><B>, </B>
+
+<B>ssize_t </B><I>pgoff</I><B>, int </B><I>flags</I><B>);</B>
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>DESCRIPTION</H2>
+
+The
+<B>remap_file_pages()</B>
+
+system call is used to create a non-linear mapping, that is, a mapping
+in which the pages of the file are mapped into a non-sequential order
+in memory.
+The advantage of using
+<B>remap_file_pages()</B>
+
+over using repeated calls to
+<B><A HREF="../man2/mmap.2.html">mmap</A></B>(2)
+
+is that the former approach does not require the kernel to create
+additional VMA (Virtual Memory Area) data structures.
+<P>
+To create a non-linear mapping we perform the following steps:
+<DL COMPACT>
+<DT><B>1.</B><DD>
+Use
+<B>mmap()</B>
+
+to create a mapping (which is initially linear).
+This mapping must be created with the
+MAP_SHARED flag.
+<DT><B>2.</B><DD>
+Use one or more calls to
+<B>remap_file_pages()</B>
+
+to rearrange the correspondence between the pages of the mapping
+and the pages of the file.
+It is possible to map the same page of a file
+into multiple locations within the mapped region.
+</DL>
+<P>
+
+The
+<I>pgoff</I>
+
+and
+<I>size</I>
+
+arguments specify the region of the file that is to be relocated
+within the mapping:
+<I>pgoff</I>
+
+is a file offset in units of the system page size;
+<I>size</I>
+
+is the length of the region in bytes.
+<P>
+The
+<I>start</I>
+
+argument serves two purposes.
+First, it identifies the mapping whose pages we want to rearrange.
+Thus,
+<I>start</I>
+
+must be an address that falls within
+a region previously mapped by a call to
+<B>mmap()</B>.
+
+Second,
+<I>start</I>
+
+specifies the address at which the file pages
+identified by
+<I>pgoff</I>
+
+and
+<I>size</I>
+
+will be placed.
+<P>
+The
+<I>prot</I>
+
+argument must be specified as 0.
+<P>
+The
+<I>flags</I>
+
+argument has the same meaning as for
+<B>mmap()</B>,
+
+but all flags other than MAP_NONBLOCK are ignored.
+<A NAME="lbAE">&nbsp;</A>
+<H2>RETURN VALUE</H2>
+
+On success,
+<B>remap_file_pages()</B>
+
+returns 0.
+On error, -1 is returned, and
+<I>errno</I>
+
+is set appropriately.
+<A NAME="lbAF">&nbsp;</A>
+<H2>NOTES</H2>
+
+The
+<B>remap_file_pages()</B>
+
+system call appeared in Linux 2.5.46.
+<A NAME="lbAG">&nbsp;</A>
+<H2>ERRORS</H2>
+
+<DL COMPACT>
+<DT><B>EINVAL</B>
+
+<DD>
+<I>start</I>
+
+does not refer to a valid mapping
+created with the MAP_SHARED flag.
+<DT><B>EINVAL</B>
+
+<DD>
+<I>start</I>,
+
+<I>size</I>,
+
+<I>prot</I>,
+
+or
+<I>pgoff</I>
+
+is invalid.
+
+</DL>
+<A NAME="lbAH">&nbsp;</A>
+<H2>CONFORMING TO</H2>
+
+The
+<B>remap_file_pages()</B>
+
+system call is Linux specific.
+<A NAME="lbAI">&nbsp;</A>
+<H2>SEE ALSO</H2>
+
+<B><A HREF="../man2/getpagesize.2.html">getpagesize</A></B>(2),
+
+<B><A HREF="../man2/mmap.2.html">mmap</A></B>(2),
+
+<B><A HREF="../man2/mmap2.2.html">mmap2</A></B>(2),
+
+<B><A HREF="../man2/mprotect.2.html">mprotect</A></B>(2),
+
+<B><A HREF="../man2/mremap.2.html">mremap</A></B>(2),
+
+<B><A HREF="../man2/msync.2.html">msync</A></B>(2)
+
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">NAME</A><DD>
+<DT><A HREF="#lbAC">SYNOPSIS</A><DD>
+<DT><A HREF="#lbAD">DESCRIPTION</A><DD>
+<DT><A HREF="#lbAE">RETURN VALUE</A><DD>
+<DT><A HREF="#lbAF">NOTES</A><DD>
+<DT><A HREF="#lbAG">ERRORS</A><DD>
+<DT><A HREF="#lbAH">CONFORMING TO</A><DD>
+<DT><A HREF="#lbAI">SEE ALSO</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
+using the manual pages.<BR>
+Time: 02:10:03 GMT, April 20, 2020
+</BODY>
+</HTML>

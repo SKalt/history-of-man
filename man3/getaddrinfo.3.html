@@ -1,0 +1,432 @@
+<!--
+Copyright 2000 Sam Varshavchik &lt;mrsam@courier-mta.com&gt;
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of getaddrinfo</TITLE>
+</HEAD><BODY>
+<H1>getaddrinfo</H1>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2000-12-18<BR><A HREF="#index">Index</A>
+<A HREF="../index.html">Return to Main Contents</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>NAME</H2>
+
+getaddrinfo, freeaddrinfo, gai_strerror - network address and service translation
+<A NAME="lbAC">&nbsp;</A>
+<H2>SYNOPSIS</H2>
+
+<PRE>
+<B>#include &lt;<A HREF="file:///usr/include/sys/types.h">sys/types.h</A>&gt;</B>
+<B>#include &lt;<A HREF="file:///usr/include/sys/socket.h">sys/socket.h</A>&gt;</B>
+<B>#include &lt;<A HREF="file:///usr/include/netdb.h">netdb.h</A>&gt;</B>
+
+<B>int getaddrinfo(const char *</B><I>node</I><B>, const char *</B><I>service</I><B>,</B>
+<B>                const struct addrinfo *</B><I>hints</I><B>,</B>
+<B>                struct addrinfo **</B><I>res</I><B>);</B>
+
+<B>void freeaddrinfo(struct addrinfo *</B><I>res</I><B>);</B>
+
+<B>const char *gai_strerror(int </B><I>errcode</I><B>);</B>
+</PRE>
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>DESCRIPTION</H2>
+
+The
+<B><A HREF="../man3/getaddrinfo.3.html">getaddrinfo</A></B>(3)
+
+function combines the functionality provided by the
+<B><A HREF="../man3/getipnodebyname.3.html">getipnodebyname</A></B>(3),
+
+<B><A HREF="../man3/getipnodebyaddr.3.html">getipnodebyaddr</A></B>(3),
+
+<B><A HREF="../man3/getservbyname.3.html">getservbyname</A></B>(3),
+
+and
+<B><A HREF="../man3/getservbyport.3.html">getservbyport</A></B>(3)
+
+functions into a single interface.
+The thread-safe
+<B><A HREF="../man3/getaddrinfo.3.html">getaddrinfo</A></B>(3)
+
+function creates one or more socket address structures that can be used by the
+<B><A HREF="../man2/bind.2.html">bind</A></B>(2)
+
+and
+<B><A HREF="../man2/connect.2.html">connect</A></B>(2)
+
+system calls to create a client or a server socket.
+<P>
+
+The
+<B><A HREF="../man3/getaddrinfo.3.html">getaddrinfo</A></B>(3)
+
+function is not limited to creating IPv4 socket address structures;
+IPv6 socket address structures can be created if IPv6 support is available.
+These socket address structures can be used directly by
+<B><A HREF="../man2/bind.2.html">bind</A></B>(2)
+
+or
+<B><A HREF="../man2/connect.2.html">connect</A></B>(2),
+
+to prepare a client or a server socket.
+<P>
+
+The
+<B>addrinfo</B>
+
+structure used by this function contains the following members:
+<P>
+<PRE>
+<B>struct addrinfo {</B>
+<B>    int     </B><I>ai_flags</I><B>;</B>
+<B>    int     </B><I>ai_family</I><B>;</B>
+<B>    int     </B><I>ai_socktype</I><B>;</B>
+<B>    int     </B><I>ai_protocol</I><B>;</B>
+<B>    size_t  </B><I>ai_addrlen</I><B>;</B>
+<B>    struct sockaddr *</B><I>ai_addr</I><B>;</B>
+<B>    char   *</B><I>ai_canonname</I><B>;</B>
+<B>    struct addrinfo *</B><I>ai_next</I><B>;</B>
+<B>};</B>
+</PRE>
+
+<P>
+
+<B><A HREF="../man3/getaddrinfo.3.html">getaddrinfo</A></B>(3)
+
+sets
+<I>res</I>
+
+to point to a dynamically-allocated link list of
+<B>addrinfo</B>
+
+structures, linked by the
+<I>ai_next</I>
+
+member.
+There are several reasons why
+the link list may have more than one
+<B>addrinfo</B>
+
+structure, including: if the network host is
+multi-homed; or if the same service
+is available from multiple socket protocols (one
+<B>SOCK_STREAM</B>
+
+address and another 
+<B>SOCK_DGRAM</B>
+
+address, for example).
+<P>
+
+The members
+<I>ai_family</I>,
+
+<I>ai_socktype</I>,
+
+and
+<I>ai_protocol</I>
+
+have the same meaning as the corresponding parameters in the
+<B><A HREF="../man2/socket.2.html">socket</A></B>(2)
+
+system call.
+The
+<B><A HREF="../man3/getaddrinfo.3.html">getaddrinfo</A></B>(3)
+
+function returns socket addresses in either IPv4 or IPv6
+address family,
+(<I>ai_family</I>
+
+will be set to either
+<B>PF_INET</B>
+
+or
+<B>PF_INET6</B>).
+
+<P>
+
+The
+<I>hints</I>
+
+parameter specifies
+the preferred socket type, or protocol.
+A NULL
+<I>hints</I>
+
+specifies that any network address or protocol is acceptable.
+If this parameter is not
+<B>NULL</B>
+
+it points to an
+<B>addrinfo</B>
+
+structure
+whose
+<I>ai_family</I>,
+
+<I>ai_socktype</I>,
+
+and
+<I>ai_protocol</I>
+
+members specify the preferred socket type.
+<B>PF_UNSPEC</B>
+
+in
+<I>ai_family</I>
+
+specifies any protocol family (either IPv4 or IPv6, for example).
+0 in
+<I>ai_socktype</I>
+
+or
+<I>ai_protocol</I>
+
+specifies that any socket type or protocol is acceptable as well.
+The
+<I>ai_flags</I>
+
+member
+specifies additional options, defined below.
+Multiple flags are specified by logically OR-ing them together.
+All the other members in the
+<I>hints</I>
+
+parameter must contain either 0, or a null pointer.
+<P>
+
+The
+<I>node</I>
+
+or
+<I>service</I>
+
+parameter, but not both, may be NULL.
+<I>node</I>
+
+specifies either a numerical network address
+(dotted-decimal format for IPv4, hexadecimal format for IPv6)
+or a network hostname, whose network addresses are looked up and resolved.
+If the
+<I>ai_flags</I>
+
+member in the
+<I>hints</I>
+
+parameter contains the
+<B>AI_NUMERICHOST</B>
+
+flag then the
+<I>node</I>
+
+parameter must be a numerical network address.
+The
+<B>AI_NUMERICHOST</B>
+
+flag suppresses any potentially lengthy network host address lookups.
+<P>
+
+The
+<B><A HREF="../man3/getaddrinfo.3.html">getaddrinfo</A></B>(3)
+
+function creates a link list of
+<B>addrinfo</B>
+
+structures, one for each network address subject to any restrictions
+imposed by the
+<I>hints</I>
+
+parameter.
+<I>ai_canonname</I>
+
+is set to point to the official name of the host, if
+<I>ai_flags</I>
+
+in
+<I>hints</I>
+
+includes the
+<B>AI_CANONNAME</B>
+
+flag.
+<I>ai_family</I>,
+
+<I>ai_socktype</I>,
+
+and
+<I>ai_protocol</I>
+
+specify the socket creation parameters.
+A pointer to the socket address is placed in the
+<I>ai_addr</I>
+
+member, and the length of the socket address, in bytes,
+is placed in the
+<I>ai_addrlen</I>
+
+member.
+<P>
+
+If
+<I>node</I>
+
+is NULL,
+the
+network address in each socket structure is initialized according to the
+<B>AI_PASSIVE</B>
+
+flag, which is set in the
+<I>ai_flags</I>
+
+member of the
+<I>hints</I>
+
+parameter.
+The network address in each socket structure will be left unspecified
+if
+<B>AI_PASSIVE</B>
+
+flag is set.
+This is used by server applications, which intend to accept
+client connections on any network address.
+The network address will be set to the loopback interface address
+if the
+<B>AI_PASSIVE</B>
+
+flag is not set.
+This is used by client applications, which intend to connect
+to a server running on the same network host.
+<P>
+
+<I>service</I>
+
+sets the port number in the network address of each socket structure.
+If
+<I>service</I>
+
+is NULL the port number will be left uninitialized.
+<P>
+
+The
+<B><A HREF="../man3/freeaddrinfo.3.html">freeaddrinfo</A></B>(3)
+
+function frees the memory that was allocated
+for the dynamically allocated link list
+<I>res</I>.
+
+<A NAME="lbAE">&nbsp;</A>
+<H2>RETURN VALUE</H2>
+
+<B><A HREF="../man3/getaddrinfo.3.html">getaddrinfo</A></B>(3)
+
+returns 0 if it succeeds, or one of the following non-zero error codes:
+<DL COMPACT>
+<DT><B>EAI_FAMILY</B>
+
+<DD>
+The requested address family is not supported at all.
+<DT><B>EAI_SOCKTYPE</B>
+
+<DD>
+The requested socket type is not supported at all.
+<DT><B>EAI_BADFLAGS</B>
+
+<DD>
+<I>ai_flags</I>
+
+contains invalid flags.
+<DT><B>EAI_NONAME</B>
+
+<DD>
+The
+<I>node</I>
+
+or
+<I>service</I>
+
+is not known.
+This error is also returned if both
+<I>node</I>
+
+and
+<I>service</I>
+
+are NULL.
+<DT><B>EAI_SERVICE</B>
+
+<DD>
+The requested service is not available for the requested socket type.
+It may be available through another socket type.
+<DT><B>EAI_ADDRFAMILY</B>
+
+<DD>
+The specified network host does not have any network addresses in the
+requested address family.
+<DT><B>EAI_NODATA</B>
+
+<DD>
+The specified network host exists, but does not have any
+network addresses defined.
+<DT><B>EAI_MEMORY</B>
+
+<DD>
+Out of memory.
+<DT><B>EAI_FAIL</B>
+
+<DD>
+The name server returned a permanent failure indication.
+<DT><B>EAI_AGAIN</B>
+
+<DD>
+The name server returned a temporary failure indication.
+Try again later.
+<DT><B>EAI_SYSTEM</B>
+
+<DD>
+Other system error, check
+<I>errno</I>
+
+for details.
+</DL>
+<P>
+
+The
+<B><A HREF="../man3/gai_strerror.3.html">gai_strerror</A></B>(3)
+
+function translates these error codes to a human readable string,
+suitable for error reporting.
+<A NAME="lbAF">&nbsp;</A>
+<H2>CONFORMING TO</H2>
+
+POSIX 1003.1-2003.
+The
+<B>getaddrinfo()</B>
+
+function is documented in RFC 2553.
+<A NAME="lbAG">&nbsp;</A>
+<H2>SEE ALSO</H2>
+
+<B><A HREF="../man3/getipnodebyaddr.3.html">getipnodebyaddr</A></B>(3),
+
+<B><A HREF="../man3/getipnodebyname.3.html">getipnodebyname</A></B>(3)
+
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">NAME</A><DD>
+<DT><A HREF="#lbAC">SYNOPSIS</A><DD>
+<DT><A HREF="#lbAD">DESCRIPTION</A><DD>
+<DT><A HREF="#lbAE">RETURN VALUE</A><DD>
+<DT><A HREF="#lbAF">CONFORMING TO</A><DD>
+<DT><A HREF="#lbAG">SEE ALSO</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
+using the manual pages.<BR>
+Time: 02:10:36 GMT, April 20, 2020
+</BODY>
+</HTML>

@@ -1,0 +1,191 @@
+<!--
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of READ</TITLE>
+</HEAD><BODY>
+<H1>READ</H1>
+Section: Linux Programmer's Manual (2)<BR>Updated: 1997-07-12<BR><A HREF="#index">Index</A>
+<A HREF="../index.html">Return to Main Contents</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>NAME</H2>
+
+read - read from a file descriptor
+<A NAME="lbAC">&nbsp;</A>
+<H2>SYNOPSIS</H2>
+
+<PRE>
+<B>#include &lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;</B>
+
+<B>ssize_t read(int </B><I>fd</I><B>, void *</B><I>buf</I><B>, size_t </B><I>count</I><B>);</B>
+</PRE>
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>DESCRIPTION</H2>
+
+<B>read()</B>
+
+attempts to read up to
+<I>count</I>
+
+bytes from file descriptor
+<I>fd</I>
+
+into the buffer starting at
+<I>buf</I>.
+
+<P>
+
+If
+<I>count</I>
+
+is zero, <B>read()</B> returns zero and has no other results.
+If
+<I>count</I>
+
+is greater than SSIZE_MAX, the result is unspecified.
+<P>
+
+<A NAME="lbAE">&nbsp;</A>
+<H2>RETURN VALUE</H2>
+
+On success, the number of bytes read is returned (zero indicates end of
+file), and the file position is advanced by this number.
+It is not an error if this number is smaller than the number of bytes
+requested; this may happen for example because fewer bytes are actually
+available right now (maybe because we were close to end-of-file, or
+because we are reading from a pipe, or from a terminal), or because
+<B>read()</B> was interrupted by a signal.
+On error, -1 is returned, and
+<I>errno</I>
+
+is set appropriately. In this case it is left unspecified whether
+the file position (if any) changes.
+<A NAME="lbAF">&nbsp;</A>
+<H2>ERRORS</H2>
+
+<DL COMPACT>
+<DT><B>EAGAIN</B>
+
+<DD>
+Non-blocking I/O has been selected using
+<B>O_NONBLOCK</B>
+
+and no data was immediately available for reading.
+<DT><B>EBADF</B>
+
+<DD>
+<I>fd</I>
+
+is not a valid file descriptor or is not open for reading.
+<DT><B>EFAULT</B>
+
+<DD>
+<I>buf</I>
+
+is outside your accessible address space.
+<DT><B>EINTR</B>
+
+<DD>
+The call was interrupted by a signal before any data was read.
+<DT><B>EINVAL</B>
+
+<DD>
+<I>fd</I>
+
+is attached to an object which is unsuitable for reading.
+<DT><B>EIO</B>
+
+<DD>
+I/O error. This will happen for example when the process is in a
+background process group, tries to read from its controlling tty,
+and either it is ignoring or blocking SIGTTIN or its process group
+is orphaned.  It may also occur when there is a low-level I/O error
+while reading from a disk or tape.
+<DT><B>EISDIR</B>
+
+<DD>
+<I>fd</I>
+
+refers to a directory.
+</DL>
+<P>
+
+Other errors may occur, depending on the object connected to
+<I>fd</I>.
+
+POSIX allows a
+<B>read</B>
+
+that is interrupted after reading some data
+to return -1 (with
+<I>errno</I>
+
+set to EINTR) or to return the number of bytes already read.
+<A NAME="lbAG">&nbsp;</A>
+<H2>CONFORMING TO</H2>
+
+SVr4, SVID, AT&amp;T, POSIX, X/OPEN, BSD 4.3
+<A NAME="lbAH">&nbsp;</A>
+<H2>RESTRICTIONS</H2>
+
+On NFS file systems, reading small amounts of data will only update the
+time stamp the first time, subsequent calls may not do so.  This is caused
+by client side attribute caching, because most if not all NFS clients
+leave atime updates to the server and client side reads satisfied from the
+client's cache will not cause atime updates on the server as there are no
+server side reads.  UNIX semantics can be obtained by disabling client
+side attribute caching, but in most situations this will substantially
+increase server load and decrease performance.
+<P>
+
+Many filesystems and disks were considered to be fast enough that the 
+implementation of 
+<B>O_NONBLOCK</B>
+
+was deemed unneccesary. So, O_NONBLOCK may not be available on files
+and/or disks.
+<A NAME="lbAI">&nbsp;</A>
+<H2>SEE ALSO</H2>
+
+<B><A HREF="../man2/close.2.html">close</A></B>(2),
+
+<B><A HREF="../man2/fcntl.2.html">fcntl</A></B>(2),
+
+<B><A HREF="../man2/ioctl.2.html">ioctl</A></B>(2),
+
+<B><A HREF="../man2/lseek.2.html">lseek</A></B>(2),
+
+<B><A HREF="../man2/readdir.2.html">readdir</A></B>(2),
+
+<B><A HREF="../man2/readlink.2.html">readlink</A></B>(2),
+
+<B><A HREF="../man2/select.2.html">select</A></B>(2),
+
+<B><A HREF="../man2/write.2.html">write</A></B>(2),
+
+<B><A HREF="../man3/fread.3.html">fread</A></B>(3),
+
+<B><A HREF="../man3/readv.3.html">readv</A></B>(3)
+
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">NAME</A><DD>
+<DT><A HREF="#lbAC">SYNOPSIS</A><DD>
+<DT><A HREF="#lbAD">DESCRIPTION</A><DD>
+<DT><A HREF="#lbAE">RETURN VALUE</A><DD>
+<DT><A HREF="#lbAF">ERRORS</A><DD>
+<DT><A HREF="#lbAG">CONFORMING TO</A><DD>
+<DT><A HREF="#lbAH">RESTRICTIONS</A><DD>
+<DT><A HREF="#lbAI">SEE ALSO</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
+using the manual pages.<BR>
+Time: 02:10:03 GMT, April 20, 2020
+</BODY>
+</HTML>

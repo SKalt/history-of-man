@@ -1,0 +1,129 @@
+<!--
+Copyright (C) 1995, Thomas K. Dyas &lt;tdyas@eden.rutgers.edu&gt;
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of SETFSGID</TITLE>
+</HEAD><BODY>
+<H1>SETFSGID</H1>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2004-05-27<BR><A HREF="#index">Index</A>
+<A HREF="../index.html">Return to Main Contents</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>NAME</H2>
+
+setfsgid - set group identity used for file system checks
+<A NAME="lbAC">&nbsp;</A>
+<H2>SYNOPSIS</H2>
+
+<B>#include &lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;</B>
+
+/* glibc uses &lt;<A HREF="file:///usr/include/sys/fsuid.h">sys/fsuid.h</A>&gt; */
+<P>
+<B>int setfsgid(uid_t </B><I>fsgid</I><B>);</B>
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>DESCRIPTION</H2>
+
+The system call
+<B>setfsgid</B>
+
+sets the group ID that the Linux kernel uses to check for all accesses
+to the file system. Normally, the value of
+<I>fsgid</I>
+
+will shadow the value of the effective group ID. In fact, whenever the
+effective group ID is changed,
+<I>fsgid</I>
+
+will also be changed to the new value of the effective group ID.
+<P>
+Explicit calls to
+<B>setfsuid</B>
+
+and
+<B>setfsgid</B>
+
+are usually only used by programs such as the Linux NFS server that
+need to change what user and group ID is used for file access without a
+corresponding change in the real and effective user and group IDs.
+A change in the normal user IDs for a program such as the NFS server
+is a security hole that can expose it to unwanted signals. (But see below.)
+<P>
+<B>setfsgid</B>
+
+will only succeed if the caller is the superuser or if
+<I>fsgid</I>
+
+matches either the real group ID, effective group ID,
+saved set-group-ID, or the current value of
+<I>fsgid</I>.
+
+<A NAME="lbAE">&nbsp;</A>
+<H2>RETURN VALUE</H2>
+
+On success, the previous value of
+<I>fsgid</I>
+
+is returned.  On error, the current value of
+<I>fsgid</I>
+
+is returned.
+<A NAME="lbAF">&nbsp;</A>
+<H2>CONFORMING TO</H2>
+
+<B>setfsgid</B>
+
+is Linux specific and should not be used in programs intended to be portable.
+It is present since Linux 1.1.44 and in libc since libc 4.7.6.
+<A NAME="lbAG">&nbsp;</A>
+<H2>BUGS</H2>
+
+No error messages of any kind are returned to the caller. At the very
+least,
+<B>EPERM</B>
+
+should be returned when the call fails (because the caller lacks the
+<B>CAP_SETGID</B>
+
+capability).
+<A NAME="lbAH">&nbsp;</A>
+<H2>NOTES</H2>
+
+When glibc determines that the argument is not a valid group ID,
+it will return -1 and set <I>errno</I> to EINVAL without attempting
+the system call.
+<P>
+
+Note that at the time this system call was introduced, a process
+could send a signal to a process with the same effective user ID.
+Today signal permission handling is slightly different.
+<A NAME="lbAI">&nbsp;</A>
+<H2>SEE ALSO</H2>
+
+<B><A HREF="../man2/kill.2.html">kill</A></B>(2),
+
+<B><A HREF="../man2/setfsuid.2.html">setfsuid</A></B>(2),
+
+<B><A HREF="../man7/capabilities.7.html">capabilities</A></B>(7)
+
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">NAME</A><DD>
+<DT><A HREF="#lbAC">SYNOPSIS</A><DD>
+<DT><A HREF="#lbAD">DESCRIPTION</A><DD>
+<DT><A HREF="#lbAE">RETURN VALUE</A><DD>
+<DT><A HREF="#lbAF">CONFORMING TO</A><DD>
+<DT><A HREF="#lbAG">BUGS</A><DD>
+<DT><A HREF="#lbAH">NOTES</A><DD>
+<DT><A HREF="#lbAI">SEE ALSO</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
+using the manual pages.<BR>
+Time: 02:10:05 GMT, April 20, 2020
+</BODY>
+</HTML>

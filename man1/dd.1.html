@@ -1,0 +1,350 @@
+<!--
+Copyright Andries Brouwer, Ragnar Hojland Espinosa and A. Wik, 1998.
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of DD</TITLE>
+</HEAD><BODY>
+<H1>DD</H1>
+Section: User Commands  (1)<BR>Updated: 1998-11<BR><A HREF="#index">Index</A>
+<A HREF="../index.html">Return to Main Contents</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>NAME</H2>
+
+dd - convert and copy a file
+<A NAME="lbAC">&nbsp;</A>
+<H2>SYNOPSIS</H2>
+
+<B>dd</B>
+
+<B>[--help] [--version]</B>
+
+<B>[if=</B><I>file</I><B>]</B>
+
+<B>[of=</B><I>file</I><B>]</B>
+
+<B>[ibs=</B><I>bytes</I><B>]</B>
+
+<B>[obs=</B><I>bytes</I><B>]</B>
+
+<B>[bs=</B><I>bytes</I><B>]</B>
+
+<B>[cbs=</B><I>bytes</I><B>]</B>
+
+<B>[skip=</B><I>blocks</I><B>]</B>
+
+<B>[seek=</B><I>blocks</I><B>]</B>
+
+<B>[count=</B><I>blocks</I><B>]</B>
+
+<B>[conv={ascii, ebcdic, ibm, block, unblock, lcase, ucase, swab, noerror, notrunc, sync}]</B>
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>DESCRIPTION</H2>
+
+<B>dd</B>
+
+copies a file (from standard input to standard output, by
+default) using specific input and output blocksizes,
+while optionally performing conversions on it.
+<P>
+
+It reads the input one block at a time, using the specified input
+block size (the default is 512 bytes).
+If the
+<B>bs=</B><I>bytes</I>
+
+option was given, and no conversion other than
+<B>sync</B>, <B>noerror</B>, or <B>notrunc</B>
+
+was specified, it writes the amount of data read (which could be smaller
+than what was requested) in a separate output block. This output block
+has precisely the same length as was read unless the
+<B>sync</B>
+
+conversion was specified, in which case the data is padded with NULs
+(or spaces, see below).
+<P>
+
+Otherwise, the input, read one block at a time, is processed
+and the resulting output is collected and written in blocks
+of the specified output block size. The final output block
+may be shorter.
+<P>
+
+The numeric-valued options below (bytes and blocks) can be followed
+by a multiplier: `k'=1024, `b'=512, `w'=2, `c'=1
+(`w' and `c' are GNU extensions; `w' should never be used -
+it means 2 in System V and 4 in 4.2BSD).
+Two or more of such numeric expressions can be multiplied
+by putting `x' in between.
+The GNU fileutils-4.0 version also allows the following multiplicative suffixes
+in the specification of blocksizes (in bs=, cbs=, ibs=, obs=):
+M=1048576, G=1073741824, and so on for T, P, E, Z, Y.
+A `D' suffix makes them decimal:
+kD=1000, MD=1000000, GD=1000000000, etc.
+(Note that for ls, df, du the size of M etc. is determined by environment
+variables, but for dd it is fixed.)
+<A NAME="lbAE">&nbsp;</A>
+<H2>OPTIONS</H2>
+
+<DL COMPACT>
+<DT><B>if=</B><I>file</I>
+
+<DD>
+Read from
+<I>file</I>
+
+instead of standard input.
+<DT><B>of=</B><I>file</I>
+
+<DD>
+Write to
+<I>file</I>
+
+instead of standard output.  Unless
+<B>conv=notrunc</B>
+
+is given,
+<B>dd</B>
+
+truncates
+<I>file</I>
+
+to zero bytes (or the size specified with
+<B>seek=</B>).
+
+<DT><B>ibs=</B><I>bytes</I>
+
+<DD>
+Read
+<I>bytes</I>
+
+bytes at a time. The default is 512.
+<DT><B>obs=</B><I>bytes</I>
+
+<DD>
+Write
+<I>bytes</I>
+
+bytes at a time. The default is 512.
+<DT><B>bs=</B><I>bytes</I>
+
+<DD>
+Both read and write
+<I>bytes</I>
+
+bytes at a time.  This overrides
+<B>ibs</B>
+
+and
+<B>obs</B>.
+
+(And setting
+<B>bs</B>
+
+is not equivalent with setting both
+<B>ibs</B>
+
+and
+<B>obs</B>
+
+to this same value, at least when no conversion other than
+<B>sync</B>,
+
+<B>noerror</B>
+
+and
+<B>notrunc</B>
+
+is specified, since it stipulates that each input block
+shall be copied to the output as a single block
+without aggregating short blocks.)
+<DT><B>cbs=</B><I>bytes</I>
+
+<DD>
+Specify the conversion block size for
+<B>block</B>
+
+and
+<B>unblock</B>.
+
+<DT><B>skip=</B><I>blocks</I>
+
+<DD>
+Skip
+<I>blocks</I>
+
+<B>ibs</B>-byte
+
+blocks in the input file before copying.
+<DT><B>seek=</B><I>blocks</I>
+
+<DD>
+Skip
+<I>blocks</I>
+
+<B>obs</B>-byte
+
+blocks in the output file before copying.
+<DT><B>count=</B><I>blocks</I>
+
+<DD>
+Copy
+<I>blocks</I>
+
+<B>ibs</B>-byte
+
+blocks from the input file, instead of everything
+until the end of the file.
+<DT><B>conv=</B><I>CONVERSION</I><B>[,</B><I>CONVERSION</I><B>]...</B>
+
+<DD>
+Convert the file as specified by the
+<I>CONVERSION</I>
+
+argument(s).  (No spaces around any comma(s).)
+<DL COMPACT><DT><DD>
+<P>
+
+Conversions:
+<P>
+
+<DL COMPACT>
+<DT><B>ascii</B>
+
+<DD>
+Convert EBCDIC to ASCII.
+<DT><B>ebcdic</B>
+
+<DD>
+Convert ASCII to EBCDIC.
+<DT><B>ibm</B>
+
+<DD>
+Convert ASCII to alternate EBCDIC.
+<DT><B>block</B>
+
+<DD>
+For each line in the input, output
+<B>cbs</B>
+
+bytes, replacing the input newline with a space and padding
+with spaces as necessary.
+<DT><B>unblock</B>
+
+<DD>
+Replace trailing spaces in each
+<B>cbs</B>-sized
+
+input block with a newline.
+<DT><B>lcase</B>
+
+<DD>
+Change uppercase letters to lowercase.
+<DT><B>ucase</B>
+
+<DD>
+Change lowercase letters to uppercase.
+<DT><B>swab</B>
+
+<DD>
+Swap every pair of input bytes.
+If an odd number of bytes are read the last byte
+is simply copied (since there is nothing to swap it with).
+[POSIX 1003.2b, PASC interpretations 1003.2 #3 and #4]
+<DT><B>noerror</B>
+
+<DD>
+Continue after read errors.
+<DT><B>notrunc</B>
+
+<DD>
+Do not truncate the output file.
+<DT><B>sync</B>
+
+<DD>
+Pad every input block to size of
+<B>ibs</B>
+
+with trailing zero bytes.
+</DL>
+</DL>
+
+</DL>
+<A NAME="lbAF">&nbsp;</A>
+<H2>GNU STANDARD OPTIONS</H2>
+
+<DL COMPACT>
+<DT><B>--help</B>
+
+<DD>
+Print a usage message on standard output and exit successfully.
+<DT><B>--version</B>
+
+<DD>
+Print version information on standard output, then exit successfully.
+<DT><B>--</B>
+
+<DD>
+Terminate option list.
+</DL>
+<A NAME="lbAG">&nbsp;</A>
+<H2>ENVIRONMENT</H2>
+
+The variables LANG, LC_ALL, LC_CTYPE and LC_MESSAGES have the
+usual meaning.
+<A NAME="lbAH">&nbsp;</A>
+<H2>CONFORMING TO</H2>
+
+POSIX 1003.2
+<A NAME="lbAI">&nbsp;</A>
+<H2>EXAMPLE</H2>
+
+Often a tape drive will not accept arbitrarily sized blocks, and
+<B>dd</B>
+
+would get an I/O error for the last fragment of data that does not
+fill an entire block. Use `dd if=myfile of=/dev/mytape conv=sync'
+to get everything on tape. Of course, reading it back will now
+produce a slightly larger file, with nulls added at the end.
+<A NAME="lbAJ">&nbsp;</A>
+<H2>BUGS</H2>
+
+Commands like `dd if=myfile of=/dev/fd0 bs=1k seek=172' fail
+on some systems because
+<B>dd</B>
+
+tries to truncate the output file, but truncation of a block device
+is not possible. In such cases, add the `conv=notrunc' option.
+<A NAME="lbAK">&nbsp;</A>
+<H2>NOTES</H2>
+
+This page describes
+<B>dd</B>
+
+as found in the fileutils-4.0 package;
+other versions may differ slightly.
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">NAME</A><DD>
+<DT><A HREF="#lbAC">SYNOPSIS</A><DD>
+<DT><A HREF="#lbAD">DESCRIPTION</A><DD>
+<DT><A HREF="#lbAE">OPTIONS</A><DD>
+<DT><A HREF="#lbAF">GNU STANDARD OPTIONS</A><DD>
+<DT><A HREF="#lbAG">ENVIRONMENT</A><DD>
+<DT><A HREF="#lbAH">CONFORMING TO</A><DD>
+<DT><A HREF="#lbAI">EXAMPLE</A><DD>
+<DT><A HREF="#lbAJ">BUGS</A><DD>
+<DT><A HREF="#lbAK">NOTES</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
+using the manual pages.<BR>
+Time: 02:09:51 GMT, April 20, 2020
+</BODY>
+</HTML>

@@ -1,0 +1,277 @@
+<!--
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of EPOLL_CTL</TITLE>
+</HEAD><BODY>
+<H1>EPOLL_CTL</H1>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2002-10-23<BR><A HREF="#index">Index</A>
+<A HREF="../index.html">Return to Main Contents</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>NAME</H2>
+
+epoll_ctl - control interface for an epoll descriptor
+<A NAME="lbAC">&nbsp;</A>
+<H2>SYNOPSIS</H2>
+
+<B>#include &lt;<A HREF="file:///usr/include/sys/epoll.h">sys/epoll.h</A>&gt;</B>
+
+<P>
+<B>int epoll_ctl(int </B>epfd<B>, int </B>op<B>, int </B>fd<B>, struct epoll_event *</B>event<B>)</B>
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>DESCRIPTION</H2>
+
+Control an
+<B>epoll</B>
+
+descriptor,
+<I>epfd</I>,
+
+by requesting the operation
+<I>op</I>
+
+be performed on the target file descriptor,
+<I>fd</I>.
+
+The
+<I>event</I>
+
+describes the object linked to the file descriptor
+<I>fd</I>.
+
+The
+<B>struct epoll_event</B>
+
+is defined as :
+<P>
+<PRE>
+
+        typedef union epoll_data {
+                void *ptr;
+                int fd;
+                __uint32_t u32;
+                __uint64_t u64;
+        } epoll_data_t;
+
+        struct epoll_event {
+                __uint32_t events;      /* Epoll events */
+                epoll_data_t data;      /* User data variable */
+        };
+
+</PRE>
+
+<P>
+The
+<I>events</I>
+
+member is a bit set composed using the following available event
+types :
+<DL COMPACT>
+<DT><B>EPOLLIN</B>
+
+<DD>
+The associated file is available for
+<B><A HREF="../man2/read.2.html">read</A></B>(2)
+
+operations.
+<DT><B>EPOLLOUT</B>
+
+<DD>
+The associated file is available for
+<B><A HREF="../man2/write.2.html">write</A></B>(2)
+
+operations.
+<DT><B>EPOLLPRI</B>
+
+<DD>
+There is urgent data available for
+<B><A HREF="../man2/read.2.html">read</A></B>(2)
+
+operations.
+<DT><B>EPOLLERR</B>
+
+<DD>
+Error condition happened on the associated file descriptor.
+<DT><B>EPOLLHUP</B>
+
+<DD>
+Hang up happened on the associated file descriptor.
+<DT><B>EPOLLET</B>
+
+<DD>
+Sets the Edge Triggered behaviour for the associated file descriptor.
+The default behaviour for
+<B>epoll</B>
+
+is Level Triggered. See
+<B><A HREF="../man4/epoll.4.html">epoll</A></B>(4)
+
+for more detailed informations about Edge and Level Triggered event
+distribution architectures.
+<DT><B>EPOLLONESHOT</B>
+
+<DD>
+Sets the One-Shot behaviour for the associated file descriptor. It means
+that after an event is pulled out with
+<B><A HREF="../man2/epoll_wait.2.html">epoll_wait</A></B>(2)
+
+the associated file descriptor is internally disabled and no other events
+will be reported by the
+<B>epoll</B>
+
+interface. The user must call
+<B><A HREF="../man2/epoll_ctl.2.html">epoll_ctl</A></B>(2)
+
+with
+<B>EPOLL_CTL_MOD</B>
+
+to re-enable the file descriptor with a new event mask.
+</DL>
+<P>
+
+<P>
+The
+<B>epoll</B>
+
+interface supports all file descriptors that support
+<B><A HREF="../man2/poll.2.html">poll</A></B>(2).
+
+Valid values for the
+<I>op</I>
+
+parameter are :
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT><B>EPOLL_CTL_ADD</B>
+
+<DD>
+Add the target file descriptor
+<I>fd</I>
+
+to the
+<B>epoll</B>
+
+descriptor
+<I>epfd</I>
+
+and associate the event
+<I>event</I>
+
+with the internal file linked to
+<I>fd</I>.
+
+<DT><B>EPOLL_CTL_MOD</B>
+
+<DD>
+Change the event
+<I>event</I>
+
+associated to the target file descriptor
+<I>fd</I>.
+
+<DT><B>EPOLL_CTL_DEL</B>
+
+<DD>
+Remove the target file descriptor
+<I>fd</I>
+
+from the
+<B>epoll</B>
+
+file descriptor,
+<I>epfd</I>.
+
+</DL>
+</DL>
+
+<A NAME="lbAE">&nbsp;</A>
+<H2>RETURN VALUE</H2>
+
+When successful, 
+<B><A HREF="../man2/epoll_ctl.2.html">epoll_ctl</A></B>(2)
+
+returns zero. When an error occurs, 
+<B><A HREF="../man2/epoll_ctl.2.html">epoll_ctl</A></B>(2)
+
+returns -1 and
+<I>errno</I>
+
+is set appropriately.
+<A NAME="lbAF">&nbsp;</A>
+<H2>ERRORS</H2>
+
+<DL COMPACT>
+<DT><B>EBADF</B>
+
+<DD>
+The
+<I>epfd</I>
+
+file descriptor is not a valid file descriptor.
+<DT><B>EINVAL</B>
+
+<DD>
+The supplied file descriptor,
+<I>epfd</I>,
+
+is not an
+<B>epoll</B>
+
+file descriptor, or the requested operation
+<I>op</I>
+
+is not supported by this interface.
+<DT><B>ENOMEM</B>
+
+<DD>
+There was insufficient memory to handle the requested
+<I>op</I>
+
+control operation.
+<DT><B>EPERM</B>
+
+<DD>
+The target file
+<I>fd</I>
+
+is not supported by
+<B>epoll</B>.
+
+</DL>
+<A NAME="lbAG">&nbsp;</A>
+<H2>CONFORMING TO</H2>
+
+<B><A HREF="../man2/epoll_ctl.2.html">epoll_ctl</A></B>(2)
+
+is a new API introduced in Linux kernel 2.5.44.
+The interface should be finalized by Linux kernel 2.5.66.
+<A NAME="lbAH">&nbsp;</A>
+<H2>SEE ALSO</H2>
+
+<B><A HREF="../man2/epoll_create.2.html">epoll_create</A></B>(2),
+
+<B><A HREF="../man2/epoll_wait.2.html">epoll_wait</A></B>(2),
+
+<B><A HREF="../man4/epoll.4.html">epoll</A></B>(4)
+
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">NAME</A><DD>
+<DT><A HREF="#lbAC">SYNOPSIS</A><DD>
+<DT><A HREF="#lbAD">DESCRIPTION</A><DD>
+<DT><A HREF="#lbAE">RETURN VALUE</A><DD>
+<DT><A HREF="#lbAF">ERRORS</A><DD>
+<DT><A HREF="#lbAG">CONFORMING TO</A><DD>
+<DT><A HREF="#lbAH">SEE ALSO</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
+using the manual pages.<BR>
+Time: 02:09:54 GMT, April 20, 2020
+</BODY>
+</HTML>

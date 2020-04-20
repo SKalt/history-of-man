@@ -1,0 +1,214 @@
+<!--
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of ENVZ_ADD</TITLE>
+</HEAD><BODY>
+<H1>ENVZ_ADD</H1>
+Section: C Library Functions (3)<BR><A HREF="#index">Index</A>
+<A HREF="../index.html">Return to Main Contents</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>NAME</H2>
+
+envz_add, envz_entry, envz_get, envz_merge,
+envz_remove, envz_strip - environment string support
+<A NAME="lbAC">&nbsp;</A>
+<H2>SYNOPSIS</H2>
+
+<PRE>
+
+<B>#include &lt;<A HREF="file:///usr/include/envz.h">envz.h</A>&gt;</B>
+
+<B>error_t</B>
+<B>envz_add(char **</B><I>envz</I><B>, size_t *</B><I>envz_len</I><B>,</B>
+<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>const char *</B><I>name</I><B>, const char *</B><I>value</I><B>);</B>
+
+<B>char *</B>
+<B>envz_entry(const char *</B><I>envz</I><B>, size_t *</B><I>envz_len</I><B>, const char *</B><I>name</I><B>);</B>
+
+<B>char *</B>
+<B>envz_get(const char *</B><I>envz</I><B>, size_t *</B><I>envz_len</I><B>, const char *</B><I>name</I><B>);</B>
+
+<B>error_t</B>
+<B>envz_merge(char **</B><I>envz</I><B>, size_t *</B><I>envz_len</I><B>,</B>
+<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>const char *</B><I>envz2</I><B>, size_t </B><I>envz2_len</I><B>, int </B><I>override</I><B>);</B>
+
+<B>void</B>
+<B>envz_remove(char **</B><I>envz</I><B>, size_t *</B><I>envz_len</I><B>, const char *</B><I>name</I><B>);</B>
+
+<B>void</B>
+<B>envz_strip(char **</B><I>envz</I><B>, size_t *</B><I>envz_len</I><B>);</B>
+
+</PRE><A NAME="lbAD">&nbsp;</A>
+<H2>DESCRIPTION</H2>
+
+These functions are glibc-specific.
+<P>
+
+An argz vector is a pointer to a character buffer together with a length,
+see
+<B><A HREF="../man3/argz_add.3.html">argz_add</A></B>(3).
+
+An envz vector is a special argz vector, namely one where the strings
+have the form &quot;name=value&quot;. Everything after the first '=' is considered
+to be the value. If there is no '=', the value is taken to be NULL.
+(While the value in case of a trailing '=' is the empty string &quot;&quot;.)
+<P>
+
+These functions are for handling envz vectors.
+<P>
+
+<B>envz_add()</B>
+
+adds the string
+ name = value 
+
+(in case
+<I>value</I>
+
+is non-NULL) or
+ name 
+
+(in case
+<I>value</I>
+
+is NULL) to the envz vector
+(*<I>envz</I>,*<I>envz_len</I>)
+
+and updates
+*<I>envz</I>
+
+and
+*<I>envz_len</I>.
+
+If an entry with the same
+<I>name</I>
+
+existed, it is removed.
+<P>
+
+<B>envz_entry()</B>
+
+looks for
+<I>name</I>
+
+in the envz vector
+(<I>envz</I>,<I>envz_len</I>)
+
+and returns the entry if found, or NULL if not.
+<P>
+
+<B>envz_get()</B>
+
+looks for
+<I>name</I>
+
+in the envz vector
+(<I>envz</I>,<I>envz_len</I>)
+
+and returns the value if found, or NULL if not.
+(Note that the value can also be NULL, namely when there is
+an entry for
+<I>name</I>
+
+without '=' sign.)
+<P>
+
+<B>envz_merge()</B>
+
+adds each entry in
+<I>envz2</I>
+
+to
+*<I>envz</I>,
+
+as if with
+<B>envz_add()</B>.
+
+If
+<I>override</I>
+
+is true, then values in
+<I>envz2</I>
+
+will supersede those with the same name in
+*<I>envz</I>,
+
+otherwise not.
+<P>
+
+<B>envz_remove()</B>
+
+removes the entry for
+<I>name</I>
+
+from
+(*<I>envz</I>,*<I>envz_len</I>)
+
+if there was one.
+<P>
+
+<B>envz_strip</B>
+
+removes all entries with value NULL.
+<A NAME="lbAE">&nbsp;</A>
+<H2>RETURN VALUE</H2>
+
+All envz functions that do memory allocation have a return type of
+<I>error_t</I>, and return <B>0</B> for success, and <B>ENOMEM</B>
+if an allocation error occurs.
+<A NAME="lbAF">&nbsp;</A>
+<H2>EXAMPLE</H2>
+
+<P>
+<PRE>
+#include &lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/envz.h">envz.h</A>&gt;
+int
+main(int argc, char *argv[], char *envp[]) {
+        int i, e_len = 0;
+        char *str;
+
+        for (i=0; envp[i] != NULL; i++)
+                e_len += strlen(envp[i]) + 1;
+
+        str = envz_entry(*envp, e_len, &quot;HOME&quot;);
+        printf(&quot;%s\n&quot;, str);
+        str = envz_get(*envp, e_len, &quot;HOME&quot;);
+        printf(&quot;%s\n&quot;, str);
+        return 0;
+}
+</PRE>
+
+<A NAME="lbAG">&nbsp;</A>
+<H2>NOTES</H2>
+
+These functions are a GNU extension. Handle with care.
+<A NAME="lbAH">&nbsp;</A>
+<H2>SEE ALSO</H2>
+
+<B><A HREF="../man3/argz.3.html">argz</A></B>(3)
+
+
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">NAME</A><DD>
+<DT><A HREF="#lbAC">SYNOPSIS</A><DD>
+<DT><A HREF="#lbAD">DESCRIPTION</A><DD>
+<DT><A HREF="#lbAE">RETURN VALUE</A><DD>
+<DT><A HREF="#lbAF">EXAMPLE</A><DD>
+<DT><A HREF="#lbAG">NOTES</A><DD>
+<DT><A HREF="#lbAH">SEE ALSO</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
+using the manual pages.<BR>
+Time: 02:10:26 GMT, April 20, 2020
+</BODY>
+</HTML>

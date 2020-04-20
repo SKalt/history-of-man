@@ -1,0 +1,685 @@
+<!--
+Copyright (c) 1992 Drew Eckhardt &lt;drew@cs.colorado.edu&gt;, March 28, 1992
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of CLONE</TITLE>
+</HEAD><BODY>
+<H1>CLONE</H1>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2004-09-10<BR><A HREF="#index">Index</A>
+<A HREF="../index.html">Return to Main Contents</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>NAME</H2>
+
+clone - create a child process
+<A NAME="lbAC">&nbsp;</A>
+<H2>SYNOPSIS</H2>
+
+<B>#include &lt;<A HREF="file:///usr/include/sched.h">sched.h</A>&gt;</B>
+
+<P>
+<B>int clone(int (*</B><I>fn</I><B>)(void *), void *</B><I>child_stack</I><B>, int </B><I>flags</I><B>, void *</B><I>arg</I><B>);</B>
+
+<P>
+<B>_syscall2(int, </B><I>clone</I><B>, int, </B><I>flags</I><B>, void *, </B><I>child_stack</I><B>)</B>
+
+<P>
+<B>_syscall5(int, </B><I>clone</I><B>, int, </B><I>flags</I><B>, void *, </B><I>child_stack</I><B>,</B>
+
+<BR>
+
+<B>     int *, </B><I>parent_tidptr</I><B>, struct user_desc *, </B><I>newtls</I><B>,</B>
+
+<BR>
+
+<B>     int *, </B><I>child_tidptr</I><B>)</B>
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>DESCRIPTION</H2>
+
+<B>clone </B>
+
+creates a new process, just like
+<B><A HREF="../man2/fork.2.html">fork</A></B>(2).
+
+<B>clone</B>
+
+is a library function layered on top
+of the underlying 
+<B>clone</B>
+
+system call, hereinafter referred to as
+<B>sys_clone</B>.
+
+A description of
+<B>sys_clone</B>
+
+is given towards the end of this page.
+<P>
+Unlike
+<B><A HREF="../man2/fork.2.html">fork</A></B>(2),
+
+these calls 
+allow the child process to share parts of its execution context with
+the calling process, such as the memory space, the table of file
+descriptors, and the table of signal handlers.  (Note that on this manual 
+page, &quot;calling process&quot; normally corresponds to &quot;parent process&quot;.  But see
+the description of 
+<B>CLONE_PARENT </B>
+
+below.)
+<P>
+The main use of
+<B>clone</B>
+
+is to implement threads: multiple threads of control in a program that
+run concurrently in a shared memory space.
+<P>
+When the child process is created with
+<B>clone</B>,
+
+it executes the function
+application
+<I>fn</I>(<I>arg</I>).
+
+(This differs from
+<B><A HREF="../man2/fork.2.html">fork</A></B>(2),
+
+where execution continues in the child from the point
+of the 
+<B><A HREF="../man2/fork.2.html">fork</A></B>(2)
+
+call.)
+The
+<I>fn</I>
+
+argument is a pointer to a function that is called by the child
+process at the beginning of its execution.
+The
+<I>arg</I>
+
+argument is passed to the
+<I>fn</I>
+
+function.
+<P>
+When the 
+<I>fn</I>(<I>arg</I>)
+
+function application returns, the child process terminates.  The
+integer returned by
+<I>fn</I>
+
+is the exit code for the child process.  The child process may also
+terminate explicitly by calling
+<B><A HREF="../man2/exit.2.html">exit</A></B>(2)
+
+or after receiving a fatal signal.
+<P>
+The
+<I>child_stack</I>
+
+argument specifies the location of the stack used by the child
+process.  Since the child and calling process may share memory,
+it is not possible for the child process to execute in the
+same stack as the calling process.  The calling process must therefore
+set up memory space for the child stack and pass a pointer to this
+space to
+<B>clone</B>.
+
+Stacks grow downwards on all processors that run Linux
+(except the HP PA processors), so
+<I>child_stack</I>
+
+usually points to the topmost address of the memory space set up for
+the child stack.
+<P>
+The low byte of
+<I>flags</I>
+
+contains the number of the signal sent to the parent when the child
+dies.  If this signal is specified as anything other than
+<B>SIGCHLD</B>,
+
+then the parent process must specify the
+<B>__WALL </B>
+
+or 
+<B>__WCLONE</B>
+
+options when waiting for the child with 
+<B><A HREF="../man2/wait.2.html">wait</A></B>(2).
+
+If no signal is specified, then the parent process is not signaled
+when the child terminates.
+<P>
+<I>flags</I>
+
+may also be bitwise-or'ed with one or several of the following
+constants, in order to specify what is shared between the calling process
+and the child process:
+<P>
+<DL COMPACT>
+<DT><B>CLONE_PARENT</B> (since Linux 2.3.12)
+
+<DD>
+If
+<B>CLONE_PARENT</B>
+
+is set, then the parent of the new child (as returned by
+<B><A HREF="../man2/getppid.2.html">getppid</A></B>(2))
+
+will be the same as that of the calling process.
+<P>
+If
+<B>CLONE_PARENT</B>
+
+is not set, then (as with
+<B><A HREF="../man2/fork.2.html">fork</A></B>(2))
+
+the child's parent is the calling process.
+<P>
+Note that it is the parent process, as returned by 
+<B><A HREF="../man2/getppid.2.html">getppid</A></B>(2),
+
+which is signaled when the child terminates, so that
+if 
+<B>CLONE_PARENT</B>
+
+is set, then the parent of the calling process, rather than the 
+calling process itself, will be signaled.
+<P>
+<DT><B>CLONE_FS</B>
+
+<DD>
+If
+<B>CLONE_FS</B>
+
+is set, the caller and the child processes share the same file system
+information.  This includes the root of the file system, the current
+working directory, and the umask.  Any call to
+<B><A HREF="../man2/chroot.2.html">chroot</A></B>(2),
+
+<B><A HREF="../man2/chdir.2.html">chdir</A></B>(2),
+
+or
+<B><A HREF="../man2/umask.2.html">umask</A></B>(2)
+
+performed by the calling process or the child process also takes effect in the
+other process.
+<P>
+If 
+<B>CLONE_FS</B>
+
+is not set, the child process works on a copy of the file system
+information of the calling process at the time of the
+<B>clone</B>
+
+call.
+Calls to
+<B><A HREF="../man2/chroot.2.html">chroot</A></B>(2),
+
+<B><A HREF="../man2/chdir.2.html">chdir</A></B>(2),
+
+<B><A HREF="../man2/umask.2.html">umask</A></B>(2)
+
+performed later by one of the processes do not affect the other process.
+<P>
+<DT><B>CLONE_FILES</B>
+
+<DD>
+If
+<B>CLONE_FILES</B>
+
+is set, the calling process and the child processes share the same file
+descriptor table.  File descriptors always refer to the same files in
+the calling process and in the child process.  Any file descriptor created by
+the calling process or by the child process is also valid in the other
+process.  Similarly, if one of the processes closes a file descriptor,
+or changes its associated flags, the other process is also affected.
+<P>
+If
+<B>CLONE_FILES</B>
+
+is not set, the child process inherits a copy of all file descriptors
+opened in the calling process at the time of
+<B>clone</B>.
+
+Operations on file descriptors performed later by either the calling process or
+the child process do not affect the other process.
+<P>
+<DT><B>CLONE_NEWNS</B> (since Linux 2.4.19)
+
+<DD>
+Start the child in a new namespace.
+<P>
+Every process lives in a namespace. The
+<I>namespace</I>
+
+of a process is the data (the set of mounts) describing the file hierarchy
+as seen by that process. After a
+<B><A HREF="../man2/fork.2.html">fork</A></B>(2)
+
+or
+<B><A HREF="../man2/clone.2.html">clone</A></B>(2)
+
+where the
+<B>CLONE_NEWNS</B>
+
+flag is not set, the child lives in the same namespace as the parent.
+The system calls
+<B><A HREF="../man2/mount.2.html">mount</A></B>(2)
+
+and
+<B><A HREF="../man2/umount.2.html">umount</A></B>(2)
+
+change the namespace of the calling process, and hence affect
+all processes that live in the same namespace, but do not affect
+processes in a different namespace.
+<P>
+After a
+<B><A HREF="../man2/clone.2.html">clone</A></B>(2)
+
+where the
+<B>CLONE_NEWNS</B>
+
+flag is set, the cloned child is started in a new namespace,
+initialized with a copy of the namespace of the parent.
+<P>
+Only a privileged process (one having the CAP_SYS_ADMIN capability)
+may specify the
+<B>CLONE_NEWNS</B>
+
+flag.
+It is not permitted to specify both
+<B>CLONE_NEWNS</B>
+
+and
+<B>CLONE_FS</B>
+
+in the same
+<B>clone</B>
+
+call.
+<P>
+<DT><B>CLONE_SIGHAND</B>
+
+<DD>
+If
+<B>CLONE_SIGHAND</B>
+
+is set, the calling process and the child processes share the same table of
+signal handlers.  If the calling process or child process calls
+<B><A HREF="../man2/sigaction.2.html">sigaction</A></B>(2)
+
+to change the behavior associated with a signal, the behavior is 
+changed in the other process as well.  However, the calling process and child
+processes still have distinct signal masks and sets of pending
+signals.  So, one of them may block or unblock some signals using
+<B><A HREF="../man2/sigprocmask.2.html">sigprocmask</A></B>(2)
+
+without affecting the other process.
+<P>
+If
+<B>CLONE_SIGHAND</B>
+
+is not set, the child process inherits a copy of the signal handlers
+of the calling process at the time
+<B>clone</B>
+
+is called.  Calls to
+<B><A HREF="../man2/sigaction.2.html">sigaction</A></B>(2)
+
+performed later by one of the processes have no effect on the other
+process.
+<P>
+<DT><B>CLONE_PTRACE</B>
+
+<DD>
+If 
+<B>CLONE_PTRACE</B>
+
+is specified, and the calling process is being traced, then trace the child also (see
+<B><A HREF="../man2/ptrace.2.html">ptrace</A></B>(2)).
+
+<P>
+<DT><B>CLONE_VFORK</B>
+
+<DD>
+If
+<B>CLONE_VFORK</B>
+
+is set, the execution of the calling process is suspended
+until the child releases its virtual memory
+resources via a call to
+<B><A HREF="../man2/execve.2.html">execve</A></B>(2)
+
+or
+<B><A HREF="../man2/_exit.2.html">_exit</A></B>(2)
+
+(as with 
+<B><A HREF="../man2/vfork.2.html">vfork</A></B>(2)).
+
+<P>
+If 
+<B>CLONE_VFORK</B>
+
+is not set then both the calling process and the child are schedulable
+after the call, and an application should not rely on execution occurring
+in any particular order.
+<P>
+<DT><B>CLONE_VM</B>
+
+<DD>
+If
+<B>CLONE_VM</B>
+
+is set, the calling process and the child processes run in the same memory
+space.  In particular, memory writes performed by the calling process
+or by the child process are also visible in the other process.
+Moreover, any memory mapping or unmapping performed with
+<B><A HREF="../man2/mmap.2.html">mmap</A></B>(2)
+
+or
+<B><A HREF="../man2/munmap.2.html">munmap</A></B>(2)
+
+by the child or calling process also affects the other process.
+<P>
+If
+<B>CLONE_VM</B>
+
+is not set, the child process runs in a separate copy of the memory
+space of the calling process at the time of
+<B>clone</B>.
+
+Memory writes or file mappings/unmappings performed by one of the
+processes do not affect the other, as with
+<B><A HREF="../man2/fork.2.html">fork</A></B>(2).
+
+<P>
+<DT><B>CLONE_PID</B> (obsolete)
+
+<DD>
+If
+<B>CLONE_PID</B>
+
+is set, the child process is created with the same process ID as 
+the calling process. This is good for hacking the system, but otherwise
+of not much use. Since 2.3.21 this flag can be
+specified only by the system boot process (PID 0).
+It disappeared in Linux 2.5.16.
+<P>
+<DT><B>CLONE_THREAD</B> (since Linux 2.4.0-test8)
+
+<DD>
+If
+<B>CLONE_THREAD</B>
+
+is set, the child is placed in the same thread group as the calling process.
+
+
+
+<P>
+If
+<B>CLONE_THREAD</B>
+
+is not set, then the child is placed in its own (new) 
+thread group, whose ID is the same as the process ID.
+<P>
+(Thread groups are feature added in Linux 2.4 to support the
+POSIX threads notion of a set of threads sharing a single PID.  In Linux
+since 2.4, calls to 
+<B><A HREF="../man2/getpid.2.html">getpid</A></B>(2)
+
+return the thread group ID of the caller.)
+<P>
+<DT><B>CLONE_SETTLS</B> (since Linux 2.5.32)
+
+<DD>
+The
+<I>newtls</I>
+
+parameter is the new TLS (Thread Local Storage) descriptor.
+(See
+<B><A HREF="../man2/set_thread_area.2.html">set_thread_area</A></B>(2).)
+
+<P>
+<DT><B>CLONE_PARENT_SETTID</B> (since Linux 2.5.49)
+
+<DD>
+Store child thread ID at location
+<I>parent_tidptr</I>
+
+in parent and child memory.
+(In Linux 2.5.32-2.5.48 there was a flag CLONE_SETTID that did this.)
+<P>
+<DT><B>CLONE_CHILD_SETTID</B> (since Linux 2.5.49)
+
+<DD>
+Store child thread ID at location
+<I>child_tidptr</I>
+
+in child memory.
+<P>
+<DT><B>CLONE_CHILD_CLEARTID</B> (since Linux 2.5.49)
+
+<DD>
+Erase child thread ID at location
+<I>child_tidptr</I>
+
+in child memory when the child exits, and do a wakeup on the futex
+at that address.
+The address involved may be changed by the
+<B><A HREF="../man2/set_tid_address.2.html">set_tid_address</A></B>(2)
+
+system call. This is used by threading libraries.
+<P>
+<P>
+</DL>
+<A NAME="lbAE">&nbsp;</A>
+<H3>sys_clone</H3>
+
+The
+<B>sys_clone</B>
+
+system call corresponds more closely to
+<B><A HREF="../man2/fork.2.html">fork</A></B>(2)
+
+in that execution in the child continues from the point of the
+call.  Thus,
+<B>sys_clone</B>
+
+only requires the
+<I>flags</I>
+
+and 
+<I>child_stack</I>
+
+arguments, which have the same meaning as for 
+<B>clone</B>.
+
+(Note that the order of these arguments differs from
+<B>clone</B>.)
+
+<P>
+Another difference for 
+<B>sys_clone</B>
+
+is that the
+<I>child_stack</I>
+
+argument may be zero, in which case copy-on-write semantics ensure that the 
+child gets separate copies of stack pages when either process modifies
+the stack.  In this case, for correct operation, the 
+<B>CLONE_VM</B>
+
+option should not be specified.
+<P>
+Since Linux 2.5.49 the system call has five parameters.
+The two new parameters are
+<I>parent_tidptr</I>
+
+which points to the location (in parent and child memory) where
+the parent thread ID will be written in case CLONE_PARENT_SETTID
+was specified, and
+<I>child_tidptr</I>
+
+which points to the location (in child memory) where the child thread ID
+will be written in case CLONE_CHILD_SETTID was specified.
+<P>
+<A NAME="lbAF">&nbsp;</A>
+<H2>RETURN VALUE</H2>
+
+
+
+On success, the thread ID of the child process is returned
+in the caller's thread of execution.  On failure, a -1 will be returned
+in the caller's context, no child process will be created, and
+<I>errno</I>
+
+will be set appropriately.
+<P>
+<A NAME="lbAG">&nbsp;</A>
+<H2>ERRORS</H2>
+
+<DL COMPACT>
+<DT><B>EAGAIN</B>
+
+<DD>
+Too many processes are already running.
+<DT><B>EINVAL</B>
+
+<DD>
+<B>CLONE_SIGHAND</B>
+
+was specified, but
+<B>CLONE_VM</B>
+
+was not. (Since Linux 2.6.0-test6.)
+<DT><B>EINVAL</B>
+
+<DD>
+<B>CLONE_THREAD</B>
+
+was specified, but
+<B>CLONE_SIGHAND</B>
+
+was not. (Since Linux 2.5.35.)
+<DT><B>EINVAL</B>
+
+<DD>
+Precisely one of
+<B>CLONE_DETACHED</B>
+
+and
+<B>CLONE_THREAD</B>
+
+was specified. (Since Linux 2.6.0-test6.)
+<DT><B>EINVAL</B>
+
+<DD>
+Both
+<B>CLONE_FS</B>
+
+and
+<B>CLONE_NEWNS</B>
+
+were specified in
+<I>flags</I>.
+
+<DT><B>EINVAL</B>
+
+<DD>
+Returned by 
+<B>clone </B>
+
+when a zero value is specified for 
+<I>child_stack</I>.
+
+<DT><B>ENOMEM</B>
+
+<DD>
+Cannot allocate sufficient memory to allocate a task structure for the
+child, or to copy those parts of the caller's context that need to be
+copied.
+<DT><B>EPERM</B>
+
+<DD>
+<B>CLONE_NEWNS</B>
+
+was specified by a non-root process (process without CAP_SYS_ADMIN).
+<DT><B>EPERM</B>
+
+<DD>
+<B>CLONE_PID</B>
+
+was specified by a process other than process 0.
+<P>
+</DL>
+<A NAME="lbAH">&nbsp;</A>
+<H2>AVAILABILITY</H2>
+
+There is no entry for
+<B>clone</B>
+
+in libc5.  glibc2 provides
+<B>clone</B>
+
+as described in this manual page.
+<P>
+<A NAME="lbAI">&nbsp;</A>
+<H2>NOTES</H2>
+
+For kernel versions 2.4.7-2.4.18 the CLONE_THREAD flag implied the
+CLONE_PARENT flag.
+<P>
+<A NAME="lbAJ">&nbsp;</A>
+<H2>CONFORMING TO</H2>
+
+The
+<B>clone</B>
+
+and
+<B>sys_clone</B>
+
+calls are Linux-specific and should not be used in programs
+intended to be portable.
+<P>
+<A NAME="lbAK">&nbsp;</A>
+<H2>SEE ALSO</H2>
+
+<B><A HREF="../man2/fork.2.html">fork</A></B>(2),
+
+<B><A HREF="../man2/getpid.2.html">getpid</A></B>(2),
+
+<B><A HREF="../man2/gettid.2.html">gettid</A></B>(2),
+
+<B><A HREF="../man2/wait.2.html">wait</A></B>(2),
+
+<B><A HREF="../man7/capabilities.7.html">capabilities</A></B>(7)
+
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">NAME</A><DD>
+<DT><A HREF="#lbAC">SYNOPSIS</A><DD>
+<DT><A HREF="#lbAD">DESCRIPTION</A><DD>
+<DL>
+<DT><A HREF="#lbAE">sys_clone</A><DD>
+</DL>
+<DT><A HREF="#lbAF">RETURN VALUE</A><DD>
+<DT><A HREF="#lbAG">ERRORS</A><DD>
+<DT><A HREF="#lbAH">AVAILABILITY</A><DD>
+<DT><A HREF="#lbAI">NOTES</A><DD>
+<DT><A HREF="#lbAJ">CONFORMING TO</A><DD>
+<DT><A HREF="#lbAK">SEE ALSO</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
+using the manual pages.<BR>
+Time: 02:09:54 GMT, April 20, 2020
+</BODY>
+</HTML>

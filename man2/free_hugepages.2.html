@@ -1,0 +1,186 @@
+<!--
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of ALLOC_HUGEPAGES</TITLE>
+</HEAD><BODY>
+<H1>ALLOC_HUGEPAGES</H1>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2003-02-02<BR><A HREF="#index">Index</A>
+<A HREF="../index.html">Return to Main Contents</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>NAME</H2>
+
+alloc_hugepages, free_hugepages - allocate or free huge pages
+<A NAME="lbAC">&nbsp;</A>
+<H2>SYNOPSIS</H2>
+
+<B>void *alloc_hugepages(int </B><I>key</I><B>, void *</B><I>addr</I><B>, size_t </B><I>len</I><B>, int </B><I>prot</I><B>, int </B><I>flag</I><B>);</B>
+
+
+
+<P>
+<B>int free_hugepages(void *</B><I>addr</I><B>);</B>
+
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>DESCRIPTION</H2>
+
+The system calls
+<B>alloc_hugepages</B>
+
+and
+<B>free_hugepages</B>
+
+were introduced in Linux 2.5.36 and removed again in 2.5.54.
+They existed only on i386 and ia64 (when built with CONFIG_HUGETLB_PAGE).
+In Linux 2.4.20 the syscall numbers exist, but the calls return ENOSYS.
+<P>
+
+On i386 the memory management hardware knows about ordinary pages (4 KiB)
+and huge pages (2 or 4 MiB). Similarly ia64 knows about huge pages of
+several sizes. These system calls serve to map huge pages into the
+process' memory or to free them again.
+Huge pages are locked into memory, and are not swapped.
+<P>
+
+The
+<I>key</I>
+
+parameter is an identifier. When zero the pages are private, and
+not inherited by children.
+When positive the pages are shared with other applications using the same
+<I>key</I>,
+
+and inherited by child processes.
+<P>
+
+The
+<I>addr</I>
+
+parameter of
+<B>free_hugepages()</B>
+
+tells which page is being freed - it was the return value of a
+call to
+<B>alloc_hugepages()</B>.
+
+(The memory is first actually freed when all users have released it.)
+The
+<I>addr</I>
+
+parameter of
+<B>alloc_hugepages()</B>
+
+is a hint, that the kernel may or may not follow.
+Addresses must be properly aligned.
+<P>
+
+The
+<I>len</I>
+
+parameter is the length of the required segment. It must be
+a multiple of the huge page size.
+<P>
+
+The
+<I>prot</I>
+
+parameter specifies the memory protection of the segment.
+It is one of PROT_READ, PROT_WRITE, PROT_EXEC.
+<P>
+
+The
+<I>flag</I>
+
+parameter is ignored, unless
+<I>key</I>
+
+is positive. In that case, if
+<I>flag</I>
+
+is IPC_CREAT, then a new huge page segment is created when none
+with the given key existed. If this flag is not set, then ENOENT
+is returned when no segment with the given key exists.
+
+<A NAME="lbAE">&nbsp;</A>
+<H2>RETURN VALUE</H2>
+
+On success,
+<B>alloc_hugepages</B>
+
+returns the allocated virtual address, and
+<B>free_hugepages</B>
+
+returns zero. On error, -1 is returned, and
+<I>errno</I>
+
+is set appropriately.
+<A NAME="lbAF">&nbsp;</A>
+<H2>ERRORS</H2>
+
+<DL COMPACT>
+<DT><B>ENOSYS</B>
+
+<DD>
+The system call is not supported on this kernel.
+</DL>
+<A NAME="lbAG">&nbsp;</A>
+<H2>CONFORMING TO</H2>
+
+These calls existed only in Linux 2.5.36 - 2.5.54.
+These calls are specific to Linux on Intel processors, and should not be
+used in programs intended to be portable. Indeed, the system call numbers
+are marked for reuse, so programs using these may do something random
+on a future kernel.
+<A NAME="lbAH">&nbsp;</A>
+<H2>FILES</H2>
+
+<I>/proc/sys/vm/nr_hugepages</I>
+
+Number of configured hugetlb pages.
+This can be read and written.
+<P>
+
+<I>/proc/meminfo</I>
+
+Gives info on the number of configured hugetlb pages and on their size
+in the three variables HugePages_Total, HugePages_Free, Hugepagesize.
+<A NAME="lbAI">&nbsp;</A>
+<H2>NOTES</H2>
+
+The system calls are gone. Now the hugetlbfs filesystem can be used instead.
+Memory backed by huge pages (if the CPU supports them) is obtained by
+mmap'ing files in this virtual filesystem.
+<P>
+
+The maximal number of huge pages can be specified using the
+<B>hugepages=</B>
+
+boot parameter.
+<P>
+
+
+
+
+
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">NAME</A><DD>
+<DT><A HREF="#lbAC">SYNOPSIS</A><DD>
+<DT><A HREF="#lbAD">DESCRIPTION</A><DD>
+<DT><A HREF="#lbAE">RETURN VALUE</A><DD>
+<DT><A HREF="#lbAF">ERRORS</A><DD>
+<DT><A HREF="#lbAG">CONFORMING TO</A><DD>
+<DT><A HREF="#lbAH">FILES</A><DD>
+<DT><A HREF="#lbAI">NOTES</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
+using the manual pages.<BR>
+Time: 02:09:55 GMT, April 20, 2020
+</BODY>
+</HTML>

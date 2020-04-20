@@ -1,0 +1,118 @@
+<!--
+Copyright (c) Bruno Haible &lt;haible@clisp.cons.org&gt;
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of WCSNRTOMBS</TITLE>
+</HEAD><BODY>
+<H1>WCSNRTOMBS</H1>
+Section: Linux Programmer's Manual (3)<BR>Updated: 1999-07-25<BR><A HREF="#index">Index</A>
+<A HREF="../index.html">Return to Main Contents</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>NAME</H2>
+
+wcsnrtombs - convert a wide character string to a multibyte string
+<A NAME="lbAC">&nbsp;</A>
+<H2>SYNOPSIS</H2>
+
+<PRE>
+<B>#include &lt;<A HREF="file:///usr/include/wchar.h">wchar.h</A>&gt;</B>
+
+<B>size_t wcsnrtombs(char *</B><I>dest</I><B>, const wchar_t **</B><I>src</I><B>, size_t </B><I>nwc</I><B>,</B>
+<B>                   size_t </B><I>len</I><B>, mbstate_t *</B><I>ps</I><B>);</B>
+</PRE>
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>DESCRIPTION</H2>
+
+The <B>wcsnrtombs</B> function is like the <B>wcsrtombs</B> function, except that
+the number of wide characters to be converted, starting at <I>*src</I>, is
+limited to <I>nwc</I>.
+<P>
+
+If <I>dest</I> is not a NULL pointer, the <B>wcsnrtombs</B> function converts
+at most <I>nwc</I> wide characters from
+the wide-character string <I>*src</I> to a multibyte string starting at
+<I>dest</I>. At most <I>len</I> bytes are written to <I>dest</I>. The shift state
+<I>*ps</I> is updated. The conversion is effectively performed by repeatedly
+calling wcrtomb(<I>dest</I>,<I>*src</I>,<I>ps</I>), as long as this call succeeds,
+and then incrementing <I>dest</I> by the number of bytes written and <I>*src</I>
+by one. The conversion can stop for three reasons:
+<P>
+
+1. A wide character has been encountered that can not be represented as a
+multibyte sequence (according to the current locale). In this case <I>*src</I>
+is left pointing to the invalid wide character, (size_t)(-1) is returned,
+and <B>errno</B> is set to <B>EILSEQ</B>.
+<P>
+
+2. <I>nwc</I> wide characters have been converted without encountering a L'\0',
+or the length limit forces a stop. In this case <I>*src</I> is left pointing
+to the next wide character to be converted, and the number of bytes written
+to <I>dest</I> is returned.
+<P>
+
+3. The wide-character string has been completely converted, including the
+terminating L'\0' (which has the side effect of bringing back <I>*ps</I>
+to the initial state). In this case <I>*src</I> is set to NULL, and the number
+of bytes written to <I>dest</I>, excluding the terminating '\0' byte, is
+returned.
+<P>
+
+If <I>dest</I> is NULL, <I>len</I> is ignored, and the conversion proceeds as
+above, except that the converted bytes are not written out to memory, and that
+no destination length limit exists.
+<P>
+
+In both of the above cases, if <I>ps</I> is a NULL pointer, a static anonymous
+state only known to the wcsnrtombs function is used instead.
+<P>
+
+The programmer must ensure that there is room for at least <I>len</I> bytes
+at <I>dest</I>.
+<A NAME="lbAE">&nbsp;</A>
+<H2>RETURN VALUE</H2>
+
+The <B>wcsnrtombs</B> function returns the number of bytes that make up the
+converted part of multibyte sequence, not including the terminating null byte.
+If a wide character was encountered which could not be converted, (size_t)(-1)
+is returned, and <B>errno</B> set to <B>EILSEQ</B>.
+<A NAME="lbAF">&nbsp;</A>
+<H2>CONFORMING TO</H2>
+
+This function is a GNU extension.
+<A NAME="lbAG">&nbsp;</A>
+<H2>SEE ALSO</H2>
+
+<B><A HREF="../man3/iconv.3.html">iconv</A></B>(3),
+
+<B><A HREF="../man3/wcsrtombs.3.html">wcsrtombs</A></B>(3)
+
+<A NAME="lbAH">&nbsp;</A>
+<H2>NOTES</H2>
+
+The behaviour of <B>wcsnrtombs</B> depends on the LC_CTYPE category of the
+current locale.
+<P>
+
+Passing NULL as <I>ps</I> is not multi-thread safe.
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">NAME</A><DD>
+<DT><A HREF="#lbAC">SYNOPSIS</A><DD>
+<DT><A HREF="#lbAD">DESCRIPTION</A><DD>
+<DT><A HREF="#lbAE">RETURN VALUE</A><DD>
+<DT><A HREF="#lbAF">CONFORMING TO</A><DD>
+<DT><A HREF="#lbAG">SEE ALSO</A><DD>
+<DT><A HREF="#lbAH">NOTES</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
+using the manual pages.<BR>
+Time: 02:11:15 GMT, April 20, 2020
+</BODY>
+</HTML>

@@ -1,0 +1,635 @@
+<!--
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of SK98LIN</TITLE>
+</HEAD><BODY>
+<H1>SK98LIN</H1>
+Section: Devices and Network Interfaces (4)<BR>Updated: 2003/12/17 10:03:18<BR><A HREF="#index">Index</A>
+<A HREF="../index.html">Return to Main Contents</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>NAME</H2>
+
+sk98lin - Marvell/SysKonnect Gigabit Ethernet driver v6.21
+<A NAME="lbAC">&nbsp;</A>
+<H2>SYNOPSIS</H2>
+
+<B>insmod sk98lin.o</B>
+
+[<B>Speed_A=</B><I>i,j,...</I>]
+
+[<B>Speed_B=</B><I>i,j,...</I>]
+
+[<B>AutoNeg_A=</B><I>i,j,...</I>]
+
+[<B>AutoNeg_B=</B><I>i,j,...</I>]
+
+[<B>DupCap_A=</B><I>i,j,...</I>]
+
+[<B>DupCap_B=</B><I>i,j,...</I>]
+
+[<B>FlowCtrl_A=</B><I>i,j,...</I>]
+
+[<B>FlowCtrl_B=</B><I>i,j,...</I>]
+
+[<B>Role_A=</B><I>i,j,...</I>]
+
+[<B>Role_B=</B><I>i,j,...</I>]
+
+[<B>ConType=</B><I>i,j,...</I>]
+
+[<B>Moderation=</B><I>i,j,...</I>]
+
+[<B>IntsPerSec=</B><I>i,j,...</I>]
+
+[<B>PrefPort=</B><I>i,j,...</I>]
+
+[<B>RlmtMode=</B><I>i,j,...</I>]
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>DESCRIPTION</H2>
+
+<B>sk98lin</B>
+
+is the Gigabit Ethernet driver for Marvell and SysKonnect network adapter cards.
+It supports SysKonnect SK-98xx/SK-95xx compliant Gigabit Ethernet Adapter and any Yukon compliant chipset.
+<P>
+When loading the driver using insmod, parameters for the network adapter cards might be stated as a sequence of comma separated commands. If for instance two network adapters are installed and AutoNegotiation on Port A of the first adapter should be ON, but on the Port A of the second adapter switched OFF, one must enter:
+<P>
+<BR>&nbsp;&nbsp;&nbsp;insmod&nbsp;sk98lin.o&nbsp;AutoNeg_A=On,Off
+<P>
+After 
+<B>sk98lin </B>
+
+is bound to one or more adapter cards and the 
+<I>/proc</I>
+
+filesystem is mounted on your system, a dedicated statistics file will be created in folder 
+<I>/proc/net/sk98lin</I>
+
+for all ports of the installed network adapter cards. Those files are named 
+<I>eth[x]</I>
+
+whereas 
+<I>x</I>
+
+is the number of the interface that has been assigned to a dedicated port by the system.
+<P>
+If loading is finished, any desired IP address can be assigned to the respective 
+<I>eth[x]</I>
+
+interface using the 
+<B><A HREF="../man8/ifconfig.8.html">ifconfig</A></B>(8)
+
+command. This causes the adapter to connect to the Ethernet and to display a status message on the console saying &quot;ethx: network connection up using port y&quot; followed by the configured or detected connection parameters.
+<P>
+The 
+<B>sk98lin </B>
+
+also supports large frames (also called jumbo frames). Using jumbo frames can improve throughput tremendously when transferring large amounts of data. To enable large frames, the MTU (maximum transfer unit) size for an interface is to be set to a high value. The default MTU size is 1500 and can be changed up to 9000 (bytes). Setting the MTU size can be done when assigning the IP address to the interface or later by using the
+<B><A HREF="../man8/ifconfig.8.html">ifconfig</A></B>(8)
+
+command with the mtu parameter. If for instance eth0 needs an IP address and a large frame MTU size, the following two commands might be used:
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;ifconfig&nbsp;eth0&nbsp;10.1.1.1
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;ifconfig&nbsp;eth0&nbsp;mtu&nbsp;9000
+<P>
+Those two commands might even be combined into one:
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;ifconfig&nbsp;eth0&nbsp;10.1.1.1&nbsp;mtu&nbsp;9000
+<P>
+Note that large frames can only be used if your network infrastructure allows to do so. This means, that any switch being used in your Ethernet must also support large frames. Quite some switches support large frames, but need to be configured to do so. Most of the times, their default setting is to support only standard frames with an MTU size of 1500 (bytes). In addition to the switches inside the network, all network adapters that are to be used must also be enabled regarding jumbo frames. If an adapter is not set to receive large frames it will simply drop them. 
+<P>
+Switching back to the standard Ethernet frame size can be done by using the
+<B><A HREF="../man8/ifconfig.8.html">ifconfig</A></B>(8)
+
+command again:
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;ifconfig&nbsp;eth0&nbsp;mtu&nbsp;1500
+<P>
+The Marvell/SysKonnect Gigabit Ethernet driver for Linux is able to support VLAN and Link Aggregation according to IEEE standards 802.1, 802.1q, and 802.3ad. Those features are only available after installation of open source modules which can be found on the Internet:
+<P>
+<I>VLAN</I>: <A HREF="http://www.candelatech.com/~greear/vlan.html">http://www.candelatech.com/~greear/vlan.html</A>
+<BR>
+
+<I>Link</I>
+
+<I>Aggregation</I>: <A HREF="http://www.st.rim.or.jp/~yumo">http://www.st.rim.or.jp/~yumo</A>
+<P>
+<BR>
+
+Note that Marvell/SysKonnect does not offer any support for these open source modules and does not take the responsibility for any kind of failures or problems arising when using these modules.
+<A NAME="lbAE">&nbsp;</A>
+<H2>PARAMETERS</H2>
+
+<DL COMPACT>
+<DT><B>Speed_A=</B><I>i,j,...</I>
+
+<DD>
+This parameter is used to set the speed capabilities of port A of an adapter card. It is only valid for Yukon copper adapters. Possible values are:
+<I>10</I>
+
+,
+<I>100</I>
+
+,
+<I>1000</I>
+
+or
+<I>Auto</I>
+
+whereas 
+<I>Auto</I>
+
+is the default. Usually, the speed is negotiated between the two ports during link establishment. If this fails, a port can be forced to a specific setting with this parameter.
+<DT><B>Speed_B=</B><I>i,j,...</I>
+
+<DD>
+This parameter is used to set the speed capabilities of port B of an adapter card. It is only valid for Yukon copper adapters. Possible values are:
+<I>10</I>
+
+,
+<I>100</I>
+
+,
+<I>1000</I>
+
+or
+<I>Auto</I>
+
+whereas 
+<I>Auto</I>
+
+is the default. Usually, the speed is negotiated between the two ports during link establishment. If this fails, a port can be forced to a specific setting with this parameter.
+<DT><B>AutoNeg_A=</B><I>i,j,...</I>
+
+<DD>
+Enables or disables the use of autonegotiation of port A of an adapter card. Possible values are:
+<I>On</I>
+
+,
+<I>Off</I>
+
+or
+<I>Sense</I>
+
+whereas
+<I>On</I>
+
+is the default. The 
+<I>Sense</I>
+
+mode automatically detects whether the link partner supports auto-negotiation or not.
+<DT><B>AutoNeg_B=</B><I>i,j,...</I>
+
+<DD>
+Enables or disables the use of autonegotiation of port B of an adapter card. Possible values are:
+<I>On</I>
+
+,
+<I>Off</I>
+
+or
+<I>Sense</I>
+
+whereas
+<I>On</I>
+
+is the default. The 
+<I>Sense</I>
+
+mode automatically detects whether the link partner supports auto-negotiation or not.
+<DT><B>DupCap_A=</B><I>i,j,...</I>
+
+<DD>
+This parameter indicates the duplex mode to be used for port A of an adapter card. Possible values are:
+<I>Half</I>
+
+,
+<I>Full</I>
+
+or
+<I>Both</I>
+
+whereas
+<I>Both</I>
+
+is the default. This parameter is only relevant if AutoNeg_A of port A is not set to 
+<I>Sense.</I>
+
+If AutoNeg_A is set to 
+<I>On</I>
+
+, all three values of DupCap_A (
+<I>Half</I>
+
+, 
+<I>Full</I>
+
+or 
+<I>Both</I>
+
+) might be stated. If AutoNeg_A is set to 
+<I>Off</I>
+
+, only DupCap_A values  
+<I>Full</I>
+
+and 
+<I>Half</I>
+
+are allowed. This DupCap_A parameter is useful if your link partner does not support all possible duplex combinations.
+<DT><B>DupCap_B=</B><I>i,j,...</I>
+
+<DD>
+This parameter indicates the duplex mode to be used for port B of an adapter card. Possible values are:
+<I>Half</I>
+
+,
+<I>Full</I>
+
+or
+<I>Both</I>
+
+whereas
+<I>Both</I>
+
+is the default. This parameter is only relevant if AutoNeg_B of port B is not set to
+<I>Sense.</I>
+
+If AutoNeg_B is set to
+<I>On</I>
+
+, all three values of DupCap_B (
+<I>Half</I>
+
+,
+<I>Full</I>
+
+or
+<I>Both</I>
+
+) might be stated. If AutoNeg_B is set to
+<I>Off</I>
+
+, only DupCap_B values
+<I>Full</I>
+
+and
+<I>Half</I>
+
+are allowed. This DupCap_B parameter is useful if your link partner does not support all possible duplex combinations.
+<DT><B>FlowCtrl_A=</B><I>i,j,...</I>
+
+<DD>
+This parameter can be used to set the flow control capabilities the port reports during auto-negotiation. Possible values are:
+<I>Sym</I>
+
+,
+<I>SymOrRem</I>
+
+,
+<I>LocSend</I>
+
+or
+<I>None</I>
+
+whereas
+<I>SymOrRem</I>
+
+is the default.  The different modes have the following meaning: 
+<P>
+<BR>
+
+<I>Sym</I>
+
+= Symmetric 
+<BR>&nbsp;both&nbsp;link&nbsp;partners&nbsp;are&nbsp;allowed&nbsp;to&nbsp;send&nbsp;PAUSE&nbsp;frames
+<BR>
+
+<I>SymOrRem</I>
+
+= SymmetricOrRemote 
+<BR>&nbsp;both&nbsp;or&nbsp;only&nbsp;remote&nbsp;partner&nbsp;are&nbsp;allowed&nbsp;to&nbsp;send&nbsp;PAUSE&nbsp;frames
+<BR>
+
+<I>LocSend</I>
+
+= LocalSend
+<BR>&nbsp;only&nbsp;local&nbsp;link&nbsp;partner&nbsp;is&nbsp;allowed&nbsp;to&nbsp;send&nbsp;PAUSE&nbsp;frames
+<BR>
+
+<I>None</I>
+
+= None
+<BR>&nbsp;no&nbsp;link&nbsp;partner&nbsp;is&nbsp;allowed&nbsp;to&nbsp;send&nbsp;PAUSE&nbsp;frames
+<P>
+Note that this parameter is ignored if AutoNeg_A is set to
+<I>Off</I>.
+
+<DT><B>FlowCtrl_B=</B><I>i,j,...</I>
+
+<DD>
+This parameter can be used to set the flow control capabilities the port reports during auto-negotiation. Possible values are:
+<I>Sym</I>
+
+,
+<I>SymOrRem</I>
+
+,
+<I>LocSend</I>
+
+or
+<I>None</I>
+
+whereas
+<I>SymOrRem</I>
+
+is the default.  The different modes have the following meaning:
+<P>
+<I>Sym</I>
+
+= Symmetric
+<BR>&nbsp;both&nbsp;link&nbsp;partners&nbsp;are&nbsp;allowed&nbsp;to&nbsp;send&nbsp;PAUSE&nbsp;frames
+<BR>
+
+<I>SymOrRem</I>
+
+= SymmetricOrRemote
+<BR>&nbsp;both&nbsp;or&nbsp;only&nbsp;remote&nbsp;partner&nbsp;are&nbsp;allowed&nbsp;to&nbsp;send&nbsp;PAUSE&nbsp;frames
+<BR>
+
+<I>LocSend</I>
+
+= LocalSend
+<BR>&nbsp;only&nbsp;local&nbsp;link&nbsp;partner&nbsp;is&nbsp;allowed&nbsp;to&nbsp;send&nbsp;PAUSE&nbsp;frames
+<BR>
+
+<I>None</I>
+
+= None
+<BR>&nbsp;no&nbsp;link&nbsp;partner&nbsp;is&nbsp;allowed&nbsp;to&nbsp;send&nbsp;PAUSE&nbsp;frames
+<BR>
+
+<P>
+Note that this parameter is ignored if AutoNeg_B is set to
+<I>Off</I>.
+
+<DT><B>Role_A=</B><I>i,j,...</I>
+
+<DD>
+This parameter is only valid for 1000Base-T adapter cards. For two 1000Base-T ports to communicate, one must take the role of the master (providing timing information), while the other must be the slave. Possible values are:
+<I>Auto</I>
+
+,
+<I>Master</I>
+
+or
+<I>Slave</I>
+
+whereas
+<I>Auto</I>
+
+is the default. Usually, the role of a port is negotiated between two ports during link establishment, but if that fails the port A of an adapter card can be forced to a specific setting with this parameter. 
+<DT><B>Role_B=</B><I>i,j,...</I>
+
+<DD>
+This parameter is only valid for 1000Base-T adapter cards. For two 1000Base-T ports to communicate, one must take the role of the master (providing timing information), while the other must be the slave. Possible values are:
+<I>Auto</I>
+
+,
+<I>Master</I>
+
+or
+<I>Slave</I>
+
+whereas
+<I>Auto</I>
+
+is the default. Usually, the role of a port is negotiated between two ports during link establishment, but if that fails the port B of an adapter card can be forced to a specific setting with this parameter. 
+<DT><B>ConType=</B><I>i,j,...</I>
+
+<DD>
+This parameter is a combination of all five per-port parameters within one single parameter. This simplifies the configuration of both ports of an adapter card. The different values of this variable reflect the most meaningful combinations of port parameters. Possible values and their corresponding combination of per-port parameters:
+<P>
+<BR>
+
+
+ConType | DupCap   AutoNeg   FlowCtrl   Role   Speed
+--------+-------------------------------------------
+<BR>
+
+<I>Auto</I><BR>&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;Both&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;On&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;SymOrRem&nbsp;&nbsp;&nbsp;Auto&nbsp;&nbsp;&nbsp;Auto
+<BR>
+
+<I>100FD</I><BR>&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;Full&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Off&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;None&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Auto&nbsp;&nbsp;&nbsp;100
+<BR>
+
+<I>100HD</I><BR>&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;Half&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Off&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;None&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Auto&nbsp;&nbsp;&nbsp;100
+<BR>
+
+<I>10FD</I><BR>&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;Full&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Off&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;None&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Auto&nbsp;&nbsp;&nbsp;10
+<BR>
+
+<I>10HD</I><BR>&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;Half&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Off&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;None&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Auto&nbsp;&nbsp;&nbsp;10
+<P>
+
+Stating any other port parameter together with this 
+<I>ConType</I>
+
+parameter will result in a merged configuration of those settings. This is due to
+the fact, that the per-port parameters (e.g. 
+<I>Speed_A</I>
+
+) have a higher priority than the combined variable 
+<I>ConType</I>
+
+<DT><B>Moderation=</B><I>i,j,...</I>
+
+<DD>
+Interrupt moderation is employed to limit the maximum number of interrupts the driver has to serve. That is, one or more interrupts (which indicate any transmit or receive packet to be processed) are queued until the driver processes them. When queued interrupts are to be served, is determined by the 
+<I>IntsPerSec</I>
+
+parameter, which is explained later below. Possible moderation modes are:
+<I>None</I>
+
+,
+<I>Static</I>
+
+or
+<I>Dynamic</I>
+
+whereas
+<I>None</I>
+
+is the default. The different modes have the following meaning:
+<P>
+<I>None</I>
+
+No interrupt moderation is applied on the adapter card. Therefore, each transmit or receive interrupt is served immediately as soon as it appears on the interrupt line of the adapter card.
+<P>
+<BR>
+
+<I>Static</I>
+
+Interrupt moderation is applied on the adapter card. All transmit and receive interrupts are queued until a complete moderation interval ends. If such a moderation interval ends, all queued interrupts are processed in one big bunch without any delay. The term 
+<I>Static</I>
+
+reflects the fact, that interrupt moderation is always enabled, regardless how much network load is currently passing via a particular interface. In addition, the duration of the moderation interval has a fixed length that never changes while the driver is operational.
+<P>
+<BR>
+
+<I>Dynamic</I>
+
+Interrupt moderation might be applied on the adapter card, depending on the load of the system. If the driver detects that the system load is too high, the driver tries to shield the system against too much network load by enabling interrupt moderation. If - at a later time - the CPU utilization decreases again (or if the network load is negligible) the interrupt moderation will automatically be disabled.
+<P>
+Interrupt moderation should be used when the driver has to handle one or more interfaces with a high network load, which - as a consequence - leads also to a high CPU utilization. When moderation is applied in such high network load situations, CPU load might be reduced by 20-30% on slow computers.
+<P>
+Note that the drawback of using interrupt moderation is an increase of the round-trip-time (RTT), due to the queuing and serving of interrupts at dedicated
+moderation times.
+<DT><B>IntsPerSec=</B><I>i,j,...</I>
+
+<DD>
+This parameter determines the length of any interrupt moderation interval.
+Assuming that static interrupt moderation is to be used, an 
+<I>IntsPerSec</I>
+
+parameter value of 2000 will lead to an interrupt moderation interval of
+500 microseconds. Possible values for this parameter are in the range of 30...40000 (interrupts per second). The default value is 2000.
+<P>
+This parameter is only used, if either static or dynamic interrupt moderation
+is enabled on a network adapter card. This parameter is ignored if no moderation is
+applied.
+<P>
+Note that the duration of the moderation interval is to be chosen with care.
+At first glance, selecting a very long duration (e.g. only 100 interrupts per
+second) seems to be meaningful, but the increase of packet-processing delay
+is tremendous. On the other hand, selecting a very short moderation time might
+compensate the use of any moderation being applied.
+<DT><B>PrefPort=</B><I>i,j,...</I>
+
+<DD>
+This parameter is used to force the preferred port to A or B (on dual-port network adapters). The preferred port is the one that is used if both ports A and B are detected as fully functional.  Possible values are:
+<I>A</I>
+
+or
+<I>B</I>
+
+whereas
+<I>A</I>
+
+is the default.
+<DT><B>RlmtMode=</B><I>i,j,...</I>
+
+<DD>
+RLMT monitors the status of the port. If the link of the active port fails, RLMT switches immediately to the standby link. The virtual link is maintained as long as at least one 'physical' link is up.  This parameters states how RLMT should monitor both ports. Possible values are:
+<I>CheckLinkState</I>
+
+,
+<I>CheckLocalPort</I>
+
+,
+<I>CheckSeg</I>
+
+or
+<I>DualNet</I>
+
+whereas
+<I>CheckLinkState</I>
+
+is the default. The different modes have the following meaning:
+<P>
+<I>CheckLinkState</I>
+
+Check link state only: RLMT uses the link state reported by the adapter hardware for each individual port to determine whether a port can be used for all network traffic or not.
+<P>
+<BR>
+
+<I>CheckLocalPort</I>
+
+In this mode, RLMT monitors the network path between the two ports of an adapter by regularly exchanging packets between them. This mode requires a network configuration in which the two ports are able to &quot;see&quot; each other (i.e. there must not be any router between the ports).
+<P>
+<BR>
+
+<I>CheckSeg</I>
+
+Check local port and segmentation: This mode supports the same functions as the CheckLocalPort mode and additionally checks network segmentation between the ports. Therefore, this mode is only to be used if Gigabit Ethernet switches are installed on the network that have been configured to use the Spanning Tree protocol.  
+<P>
+<BR>
+
+<I>DualNet</I>
+
+In this mode, ports A and B are used as separate devices. If you have a dual port adapter, port A will be configured as 
+<I>eth[x]</I>and<I>port</I>B<I>as</I>
+
+<I>eth[x+1]</I>
+
+
+<P>
+Note that RLMT modes 
+<I>CheckLocalPort</I>
+
+and 
+<I>CheckLinkState</I>
+
+are designed to operate in configurations where a network path between the ports on one adapter exists. Moreover, they are not designed to work where adapters are connected back-to-back.
+</DL>
+<A NAME="lbAF">&nbsp;</A>
+<H2>FILES</H2>
+
+<DL COMPACT>
+<DT><B>/proc/net/sk98lin/eth[x]</B>
+
+<DD>
+<BR>
+
+The statistics file of a particular interface of an adapter card. It contains generic information about the adapter card plus a detailed summary of all transmit and receive counters.
+<DT><B>/usr/src/linux/Documentation/network/sk98lin.txt</B>
+
+<DD>
+<BR>
+
+This is the 
+<I>README</I>
+
+file of the 
+<I>sk98lin</I>
+
+driver. It contains a detailed installation HOWTO and describes all parameters of the driver. It denotes also common problems and provides the solution to them.
+</DL>
+<A NAME="lbAG">&nbsp;</A>
+<H2>BUGS</H2>
+
+Report any bugs to <A HREF="mailto:linux@syskonnect.de">linux@syskonnect.de</A>
+<A NAME="lbAH">&nbsp;</A>
+<H2>AUTHORS</H2>
+
+Ralph Roesler - <A HREF="mailto:rroesler@syskonnect.de">rroesler@syskonnect.de</A>
+<BR>
+
+Mirko Lindner - <A HREF="mailto:mlindner@syskonnect.de">mlindner@syskonnect.de</A>
+<A NAME="lbAI">&nbsp;</A>
+<H2>SEE ALSO</H2>
+
+<A HREF="../man8/modprobe.8.html">modprobe</A>(8), <A HREF="../man8/insmod.8.html">insmod</A>(8), <A HREF="../man8/ifconfig.8.html">ifconfig</A>(8).
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">NAME</A><DD>
+<DT><A HREF="#lbAC">SYNOPSIS</A><DD>
+<DT><A HREF="#lbAD">DESCRIPTION</A><DD>
+<DT><A HREF="#lbAE">PARAMETERS</A><DD>
+<DT><A HREF="#lbAF">FILES</A><DD>
+<DT><A HREF="#lbAG">BUGS</A><DD>
+<DT><A HREF="#lbAH">AUTHORS</A><DD>
+<DT><A HREF="#lbAI">SEE ALSO</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
+using the manual pages.<BR>
+Time: 02:11:21 GMT, April 20, 2020
+</BODY>
+</HTML>

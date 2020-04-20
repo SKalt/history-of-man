@@ -1,0 +1,207 @@
+<!--
+Copyright 2000 Nicolás Lichtmaier &lt;nick@debian.org&gt;
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of ENCRYPT</TITLE>
+</HEAD><BODY>
+<H1>ENCRYPT</H1>
+Section: Cryptographic Functions (3)<BR>Updated: 2003-04-04<BR><A HREF="#index">Index</A>
+<A HREF="../index.html">Return to Main Contents</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>NAME</H2>
+
+encrypt, setkey, encrypt_r, setkey_r - encrypt 64-bit messages
+<A NAME="lbAC">&nbsp;</A>
+<H2>SYNOPSIS</H2>
+
+<B>#define _XOPEN_SOURCE</B>
+
+<BR>
+
+<B>#include &lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;</B>
+
+<P>
+<B>void encrypt(char </B><I>block</I><B>[64], int </B><I>edflag</I><B>);</B>
+
+<P>
+<B>#define _XOPEN_SOURCE</B>
+
+<BR>
+
+<B>#include &lt;<A HREF="file:///usr/include/stdlib.h">stdlib.h</A>&gt;</B>
+
+<P>
+<B>void setkey(const char *</B><I>key</I><B>);</B>
+
+<P>
+<B>#define _GNU_SOURCE</B>
+
+<BR>
+
+<B>#include &lt;<A HREF="file:///usr/include/crypt.h">crypt.h</A>&gt;</B>
+
+<P>
+<B>void setkey_r (const char *</B><I>key</I><B>, struct crypt_data *</B><I>data</I><B>);</B>
+
+<BR>
+
+<B>void encrypt_r (char *</B><I>block</I><B>, int </B><I>edflag</I><B>, struct crypt_data *</B><I>data</I><B>);</B>
+
+<P>
+Each of these requires linking with
+<B>-lcrypt</B>.
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>DESCRIPTION</H2>
+
+These functions encrypt and decrypt 64-bit messages. The
+<B>setkey()</B>
+
+function sets the key used by
+<B>encrypt()</B>.
+
+The
+<I>key</I>
+
+parameter used here is an array of 64 bytes, each of which has
+numerical value 1 or 0. The bytes key[n] where n=8*i-1 are ignored,
+so that the effective key length is 56 bits.
+<P>
+
+The encrypt() function modifies the passed buffer, encoding if
+<I>edflag</I>
+
+is 0, and decoding if 1 is being passed. Like the key parameter also
+<I>block</I>
+
+is a bit vector representation of the actual value that is encoded.
+The result is returned in that same vector.
+<P>
+
+These two functions are not reentrant, that is, the key data is
+kept in static storage. The functions 
+<B>setkey_r() </B>
+
+and
+<B>encrypt_r() </B>
+
+are the reentrant versions. They use the following 
+structure to hold the key data:
+<DL COMPACT><DT><DD>
+<PRE>
+struct crypt_data {
+      char keysched[16 * 8];
+      char sb0[32768];
+      char sb1[32768];
+      char sb2[32768];
+      char sb3[32768];
+      char crypt_3_buf[14];
+      char current_salt[2];
+      long int current_saltbits;
+      int  direction, initialized;
+};
+</PRE>
+
+</DL>
+
+Before calling
+<B>setkey_r()</B>
+
+set
+<I>data-&gt;initialized</I>
+
+to zero.
+<A NAME="lbAE">&nbsp;</A>
+<H2>RETURN VALUE</H2>
+
+These functions do not return any value.
+<A NAME="lbAF">&nbsp;</A>
+<H2>ERRORS</H2>
+
+Set
+<I>errno</I>
+
+to zero before calling the above functions.
+On success, it is unchanged.
+<DL COMPACT>
+<DT><B>ENOSYS</B>
+
+<DD>
+The function is not provided.
+(For example because of former USA export restrictions.)
+</DL>
+<A NAME="lbAG">&nbsp;</A>
+<H2>EXAMPLE</H2>
+
+You need to link with libcrypt to compile this example with glibc2.2.
+To do useful work the key[] and txt[] array must be filled with a
+useful bit pattern. Note that the &lt;<A HREF="file:///usr/include/crypt.h">crypt.h</A>&gt; header unconditionally
+gives the prototypes for setkey() and encrypt().
+<P>
+<PRE>
+#include &lt;<A HREF="file:///usr/include/crypt.h">crypt.h</A>&gt;
+
+main() {
+  char key[64];      /* bit pattern for key */
+  char txt[64];      /* bit pattern for messages */
+  setkey(key);
+  encrypt(txt, 0);   /* encode */
+  encrypt(txt, 1);   /* decode */
+}
+</PRE>
+
+<A NAME="lbAH">&nbsp;</A>
+<H2>NOTE</H2>
+
+In glibc2.2 these functions use the DES algorithm.
+<A NAME="lbAI">&nbsp;</A>
+<H2>CONFORMING TO</H2>
+
+The functions
+<B>encrypt()</B>
+
+and
+<B>setkey()</B>
+
+conform to SVID, SUSv2, and POSIX 1003.1-2001.
+The functions
+<B>encrypt_r()</B>
+
+and
+<B>setkey_r()</B>
+
+are GNU extensions.
+<A NAME="lbAJ">&nbsp;</A>
+<H2>SEE ALSO</H2>
+
+<B><A HREF="../man3/cbc_crypt.3.html">cbc_crypt</A></B>(3),
+
+<B><A HREF="../man3/crypt.3.html">crypt</A></B>(3),
+
+<B><A HREF="../man3/ecb_crypt.3.html">ecb_crypt</A></B>(3),
+
+<B><A HREF="../man3/fcrypt.3.html">fcrypt</A></B>(3)
+
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">NAME</A><DD>
+<DT><A HREF="#lbAC">SYNOPSIS</A><DD>
+<DT><A HREF="#lbAD">DESCRIPTION</A><DD>
+<DT><A HREF="#lbAE">RETURN VALUE</A><DD>
+<DT><A HREF="#lbAF">ERRORS</A><DD>
+<DT><A HREF="#lbAG">EXAMPLE</A><DD>
+<DT><A HREF="#lbAH">NOTE</A><DD>
+<DT><A HREF="#lbAI">CONFORMING TO</A><DD>
+<DT><A HREF="#lbAJ">SEE ALSO</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
+using the manual pages.<BR>
+Time: 02:10:25 GMT, April 20, 2020
+</BODY>
+</HTML>

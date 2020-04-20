@@ -1,0 +1,278 @@
+<!--
+Copyright (c) 1992 Drew Eckhardt (drew@cs.colorado.edu), March 28, 1992
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of EXECVE</TITLE>
+</HEAD><BODY>
+<H1>EXECVE</H1>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2004-06-23<BR><A HREF="#index">Index</A>
+<A HREF="../index.html">Return to Main Contents</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>NAME</H2>
+
+execve - execute program
+<A NAME="lbAC">&nbsp;</A>
+<H2>SYNOPSIS</H2>
+
+<B>#include &lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;</B>
+
+<P>
+<B>int execve(const char *</B><I>filename</I><B>, char *const </B><I>argv</I>
+
+<B>[], char *const </B><I>envp</I><B>[]);</B>
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>DESCRIPTION</H2>
+
+<B>execve()</B> executes the program pointed to by <I>filename</I>.
+<I>filename</I> must be either a binary executable, or a script
+starting with a line of the form &quot;<B>#! </B><I>interpreter </I>[arg]&quot;.
+In the latter case, the interpreter must be a valid pathname for an
+executable which is not itself a script, which will be invoked as
+<B>interpreter</B> [arg] <I>filename</I>.
+<P>
+<I>argv</I> is an array of argument strings passed to the new program.
+<I>envp</I> is an array of strings, conventionally of the form
+<B>key=value</B>, which are passed as environment to the new
+program.  Both <I>argv</I> and <I>envp</I> must be terminated by a null
+pointer.  The argument vector and environment can be accessed by the
+called program's main function, when it is defined as <B>int main(int
+argc, char *argv[], char *envp[])</B>.
+<P>
+<B>execve()</B> does not return on success, and the text, data, bss, and
+stack of the calling process are overwritten by that of the program
+loaded.  The program invoked inherits the calling process's PID, and any
+open file descriptors that are not set to close on exec.  Signals pending
+on the calling process are cleared.  Any signals set to be caught by
+the calling process are reset to their default behaviour.
+The SIGCHLD signal (when set to SIG_IGN) may or may not be reset to SIG_DFL.
+<P>
+If the current program is being ptraced, a <B>SIGTRAP</B> is sent to it
+after a successful <B>execve()</B>.
+<P>
+If the set-uid bit is set on the program file pointed to by
+<I>filename</I> the effective user ID of the calling process is changed
+to that of the owner of the program file.  Similarly, when the set-gid
+bit of the program file is set the effective group ID of the calling
+process is set to the group of the program file.
+<P>
+If the executable is an a.out dynamically-linked binary executable containing
+shared-library stubs, the Linux dynamic linker
+<B><A HREF="../man8/ld.so.8.html">ld.so</A></B>(8)
+
+is called at the start of execution to bring needed shared libraries into core
+and link the executable with them.
+<P>
+If the executable is a dynamically-linked ELF executable, the
+interpreter named in the PT_INTERP segment is used to load the needed
+shared libraries.  This interpreter is typically
+<I>/lib/ld-linux.so.1</I> for binaries linked with the Linux libc
+version 5, or <I>/lib/ld-linux.so.2</I> for binaries linked with the
+GNU libc version 2.
+<A NAME="lbAE">&nbsp;</A>
+<H2>RETURN VALUE</H2>
+
+On success, <B>execve()</B> does not return, on error -1 is returned, and
+<I>errno</I>
+
+is set appropriately.
+<A NAME="lbAF">&nbsp;</A>
+<H2>ERRORS</H2>
+
+<DL COMPACT>
+<DT><B>E2BIG</B>
+
+<DD>
+The argument list is too big.
+<DT><B>EACCES</B>
+
+<DD>
+Search permission is denied on a component of the path prefix of
+<I>filename</I>
+
+or the name of a script interpreter.
+(See also
+<B><A HREF="../man2/path_resolution.2.html">path_resolution</A></B>(2).)
+
+<DT><B>EACCES</B>
+
+<DD>
+The file or a script interpreter is not a regular file.
+<DT><B>EACCES</B>
+
+<DD>
+Execute permission is denied for the file or a script or ELF interpreter.
+<DT><B>EACCES</B>
+
+<DD>
+The file system is mounted
+<I>noexec</I>.
+
+<DT><B>EFAULT</B>
+
+<DD>
+<I>filename</I>
+
+points outside your accessible address space.
+<DT><B>EINVAL</B>
+
+<DD>
+An ELF executable had more than one PT_INTERP segment (i.e., tried to
+name more than one interpreter).
+<DT><B>EIO</B>
+
+<DD>
+An I/O error occurred.
+<DT><B>EISDIR</B>
+
+<DD>
+An ELF interpreter was a directory.
+<DT><B>ELIBBAD</B>
+
+<DD>
+An ELF interpreter was not in a recognised format.
+<DT><B>ELOOP</B>
+
+<DD>
+Too many symbolic links were encountered in resolving
+<I>filename</I>
+
+or the name of a script or ELF interpreter.
+<DT><B>EMFILE</B>
+
+<DD>
+The process has the maximum number of files open.
+<DT><B>ENAMETOOLONG</B>
+
+<DD>
+<I>filename</I>
+
+is too long.
+<DT><B>ENFILE</B>
+
+<DD>
+The system limit on the total number of open files has been reached.
+<DT><B>ENOENT</B>
+
+<DD>
+The file 
+<I>filename</I>
+
+or a script or ELF interpreter does not exist, or a shared library
+needed for file or interpreter cannot be found.
+<DT><B>ENOEXEC</B>
+
+<DD>
+An executable is not in a recognised format, is for the wrong
+architecture, or has some other format error that means it cannot be
+executed.
+<DT><B>ENOMEM</B>
+
+<DD>
+Insufficient kernel memory was available.
+<DT><B>ENOTDIR</B>
+
+<DD>
+A component of the path prefix of
+<I>filename</I>
+
+or a script or ELF interpreter is not a directory.
+<DT><B>EPERM</B>
+
+<DD>
+The file system is mounted
+<I>nosuid</I>,
+
+the user is not the superuser, and the file has an SUID or SGID bit set.
+<DT><B>EPERM</B>
+
+<DD>
+The process is being traced, the user is not the superuser and the
+file has an SUID or SGID bit set.
+<DT><B>ETXTBSY</B>
+
+<DD>
+Executable was open for writing by one or more processes.
+</DL>
+<A NAME="lbAG">&nbsp;</A>
+<H2>CONFORMING TO</H2>
+
+SVr4, SVID, X/OPEN, BSD 4.3.  POSIX does not document the #!  behavior
+but is otherwise compatible.  SVr4 documents additional error
+conditions EAGAIN, EINTR, ELIBACC, ENOLINK, EMULTIHOP; POSIX does not
+document ETXTBSY, EPERM, EFAULT, ELOOP, EIO, ENFILE, EMFILE, EINVAL,
+EISDIR or ELIBBAD error conditions.
+<A NAME="lbAH">&nbsp;</A>
+<H2>NOTES</H2>
+
+SUID and SGID processes can not be <B>ptrace()</B>d.
+<P>
+Linux ignores the SUID and SGID bits on scripts.
+<P>
+The result of mounting a filesystem
+<I>nosuid</I>
+
+vary between Linux kernel versions:
+some will refuse execution of SUID/SGID executables when this would
+give the user powers she did not have already (and return EPERM),
+some will just ignore the SUID/SGID bits and exec successfully.
+<P>
+A maximum line length of 127 characters is allowed for the first line in
+a #! executable shell script. 
+
+
+
+
+
+
+
+<P>
+<A NAME="lbAI">&nbsp;</A>
+<H2>HISTORICAL</H2>
+
+With Unix V6 the argument list of an exec call was ended by 0,
+while the argument list of
+<I>main</I>
+
+was ended by -1. Thus, this
+argument list was not directly usable in a further exec call.
+Since Unix V7 both are NULL.
+<P>
+<A NAME="lbAJ">&nbsp;</A>
+<H2>SEE ALSO</H2>
+
+<B><A HREF="../man2/chmod.2.html">chmod</A></B>(2),
+
+<B><A HREF="../man2/fork.2.html">fork</A></B>(2),
+
+<B><A HREF="../man2/path_resolution.2.html">path_resolution</A></B>(2),
+
+<B><A HREF="../man3/execl.3.html">execl</A></B>(3),
+
+<B><A HREF="../man5/environ.5.html">environ</A></B>(5),
+
+<B><A HREF="../man8/ld.so.8.html">ld.so</A></B>(8)
+
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">NAME</A><DD>
+<DT><A HREF="#lbAC">SYNOPSIS</A><DD>
+<DT><A HREF="#lbAD">DESCRIPTION</A><DD>
+<DT><A HREF="#lbAE">RETURN VALUE</A><DD>
+<DT><A HREF="#lbAF">ERRORS</A><DD>
+<DT><A HREF="#lbAG">CONFORMING TO</A><DD>
+<DT><A HREF="#lbAH">NOTES</A><DD>
+<DT><A HREF="#lbAI">HISTORICAL</A><DD>
+<DT><A HREF="#lbAJ">SEE ALSO</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
+using the manual pages.<BR>
+Time: 02:09:54 GMT, April 20, 2020
+</BODY>
+</HTML>

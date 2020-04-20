@@ -1,0 +1,395 @@
+<!--
+Copyright (c) 1993 Luigi P. Bai (lpb@softint.com) July 28, 1993
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of SHMGET</TITLE>
+</HEAD><BODY>
+<H1>SHMGET</H1>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2004-06-17<BR><A HREF="#index">Index</A>
+<A HREF="../index.html">Return to Main Contents</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>NAME</H2>
+
+shmget - allocates a shared memory segment
+<A NAME="lbAC">&nbsp;</A>
+<H2>SYNOPSIS</H2>
+
+
+<B>#include &lt;<A HREF="file:///usr/include/sys/ipc.h">sys/ipc.h</A>&gt;</B>
+
+<P>
+<B>#include &lt;<A HREF="file:///usr/include/sys/shm.h">sys/shm.h</A>&gt;</B>
+
+<P>
+<B>int shmget(key_t </B><I>key</I><B>, int </B><I>size</I><B>, int </B><I>shmflg</I><B>);</B>
+
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>DESCRIPTION</H2>
+
+<B>shmget()</B>
+
+returns the identifier of the shared memory segment
+associated with the value of the argument
+<I>key</I>.
+
+A new shared memory segment, with size equal to the value of
+<I>size</I>
+
+rounded up to a multiple of
+<B>PAGE_SIZE</B>,
+
+is created if
+<I>key</I>
+
+has the value
+<B>IPC_PRIVATE</B>
+
+or
+<I>key</I>
+
+isn't
+<B>IPC_PRIVATE</B>,
+
+no shared memory segment corresponding to
+<I>key</I>
+
+exists, and
+<B>IPC_CREAT</B>
+
+is asserted in
+<I>shmflg</I>
+
+(i.e.
+<I>shmflg</I><B>&amp;IPC_CREAT</B>
+
+isn't zero).
+<P>
+
+The value
+<I>shmflg</I>
+
+is composed of:
+<DL COMPACT>
+<DT><B>IPC_CREAT</B>
+
+<DD>
+to create a new segment. If this flag is not used, then 
+<B>shmget()</B>
+
+will find the segment associated with <I>key</I> and check to see if 
+the user has permission to access the segment.
+<DT><B>IPC_EXCL</B>
+
+<DD>
+used with <B>IPC_CREAT</B> to ensure failure if the segment already exists. 
+<DT><B>mode_flags (lowest 9 bits)</B>
+
+<DD>
+specifying the permissions granted to the owner, group, and world.
+Presently, the execute permissions are not used by the system.
+
+</DL>
+<P>
+
+If a new segment is created, the access permissions from
+<I>shmflg</I>
+
+are copied into the 
+<I>shm_perm</I>
+
+member of the 
+<I>shmid_ds</I>
+
+structure that defines the segment.
+The <I>shmid_ds</I> structure has the following form:
+<P>
+
+
+<PRE>
+struct shmid_ds {
+    struct ipc_perm shm_perm;    /* operation perms */
+    int             shm_segsz;   /* size of segment (bytes) */
+    time_t          shm_atime;   /* last attach time */
+    time_t          shm_dtime;   /* last detach time */
+    time_t          shm_ctime;   /* last change time */
+    unsigned short  shm_cpid;    /* pid of creator */
+    unsigned short  shm_lpid;    /* pid of last operator */
+    short           shm_nattch;  /* no. of current attaches */
+};
+</PRE>
+
+
+<P>
+
+
+<PRE>
+struct ipc_perm {
+    key_t  key;
+    ushort uid;   /* owner euid and egid */
+    ushort gid;
+    ushort cuid;  /* creator euid and egid */
+    ushort cgid;
+    ushort mode;  /* lower 9 bits of <I>shmflg</I> */
+    ushort seq;   /* sequence number */
+};
+</PRE>
+
+<P>
+
+When creating a new shared memory segment,
+the system call initializes the <I>shmid_ds</I> data structure
+<B>shmid_ds</B>
+
+as follows:
+<DL COMPACT>
+<DT><DD>
+<B>shm_perm.cuid</B>
+
+and
+<B>shm_perm.uid</B>
+
+are set to the effective user-ID of the calling process.
+<DT><DD>
+<B>shm_perm.cgid</B>
+
+and
+<B>shm_perm.gid</B>
+
+are set to the effective group-ID of the calling process.
+<DT><DD>
+The lowest order 9 bits of
+<B>shm_perm.mode</B>
+
+are set to the lowest order 9 bit of
+<I>shmflg</I>.
+
+<DT><DD>
+<B>shm_segsz</B>
+
+is set to the value of
+<I>size</I>.
+
+<DT><DD>
+<B>shm_lpid</B>,
+
+<B>shm_nattch</B>,
+
+<B>shm_atime</B>
+
+and
+<B>shm_dtime</B>
+
+are set to
+<B>0</B>.
+
+<DT><DD>
+<B>shm_ctime</B>
+
+is set to the current time.
+</DL>
+<P>
+
+If the shared memory segment already exists, the access permissions are
+verified, and a check is made to see if it is marked for destruction.
+<P>
+
+<A NAME="lbAE">&nbsp;</A>
+<H2>SYSTEM CALLS</H2>
+
+<DL COMPACT>
+<DT><B>fork()</B>
+
+<DD>
+After a
+<B>fork()</B>
+
+the child inherits the attached shared memory segments.
+<DT><B>exec()</B>
+
+<DD>
+After an
+<B>exec()</B>
+
+all attached shared memory segments are detached (not destroyed).
+<DT><B>exit()</B>
+
+<DD>
+Upon
+<B>exit()</B>
+
+all attached shared memory segments are detached (not destroyed).
+</DL>
+<P>
+
+<A NAME="lbAF">&nbsp;</A>
+<H2>RETURN VALUE</H2>
+
+A valid segment identifier,
+<I>shmid</I>,
+
+is returned on success, -1 on error.
+<A NAME="lbAG">&nbsp;</A>
+<H2>ERRORS</H2>
+
+On failure,
+<B>errno</B>
+
+is set to one of the following:
+<DL COMPACT>
+<DT><B>EACCES</B>
+
+<DD>
+The user does not have permission to access the 
+shared memory segment, and does not have the
+<B>CAP_IPC_OWNER</B>
+
+capability.
+<DT><B>EEXIST</B>
+
+<DD>
+<B>IPC_CREAT | IPC_EXCL</B>
+
+was specified and the segment exists.
+<DT>
+<DD>
+
+<B>EINVAL</B>
+
+A new segment was to be created and <I>size</I> &lt; <B>SHMMIN</B>
+or <I>size</I> &gt; <B>SHMMAX</B>, or no new segment was to be created,
+a segment with given key existed, but <I>size</I> is greater than the size
+of that segment.
+<DT><B>ENFILE</B>
+
+<DD>
+
+The system limit on the total number of open files has been reached.
+<DT><B>ENOENT</B>
+
+<DD>
+No segment exists for the given <I>key</I>, and
+<B>IPC_CREAT</B>
+
+was not specified.
+<DT><B>ENOMEM</B>
+
+<DD>
+No memory could be allocated for segment overhead.
+<DT><B>ENOSPC</B>
+
+<DD>
+All possible shared memory id's have been taken
+(<B>SHMMNI</B>),
+
+or allocating a segment of the requested
+<I>size</I>
+
+would cause the system to exceed the system-wide limit on shared memory
+(<B>SHMALL</B>).
+
+</DL>
+<A NAME="lbAH">&nbsp;</A>
+<H2>NOTES</H2>
+
+<B>IPC_PRIVATE</B>
+
+isn't a flag field but a
+<B>key_t</B>
+
+type.
+If this special value is used for
+<I>key</I>,
+
+the system call ignores everything but the lowest order 9 bits of
+<I>shmflg</I>
+
+and creates a new shared memory segment (on success).
+<P>
+
+The followings are limits on shared memory segment resources affecting a
+<B>shmget</B>
+
+call:
+<DL COMPACT>
+<DT><B>SHMALL</B>
+
+<DD>
+System wide maximum of shared memory pages: policy dependent.
+<DT><B>SHMMAX</B>
+
+<DD>
+Maximum size in bytes for a shared memory segment: implementation
+dependent (currently 4M).
+<DT><B>SHMMIN</B>
+
+<DD>
+Minimum size in bytes for a shared memory segment: implementation
+dependent (currently 1 byte, though
+<B>PAGE_SIZE</B>
+
+is the effective minimum size).
+<DT><B>SHMMNI</B>
+
+<DD>
+System wide maximum number of shared memory segments: implementation
+dependent (currently 4096, was 128 before Linux 2.3.99).
+</DL>
+<P>
+
+The implementation has no specific limits for the per process maximum
+number of shared memory segments
+(<B>SHMSEG</B>).
+
+<A NAME="lbAI">&nbsp;</A>
+<H2>BUGS</H2>
+
+The name choice IPC_PRIVATE was perhaps unfortunate, IPC_NEW
+would more clearly show its function.
+<A NAME="lbAJ">&nbsp;</A>
+<H2>CONFORMING TO</H2>
+
+SVr4, SVID.  SVr4 documents an additional error condition EEXIST.
+Until version 2.3.30 Linux would return EIDRM for a
+<B>shmget</B>
+
+on a shared memory segment scheduled for deletion.
+<A NAME="lbAK">&nbsp;</A>
+<H2>SEE ALSO</H2>
+
+<B><A HREF="../man2/shmat.2.html">shmat</A></B>(2),
+
+<B><A HREF="../man2/shmctl.2.html">shmctl</A></B>(2),
+
+<B><A HREF="../man2/shmdt.2.html">shmdt</A></B>(2),
+
+<B><A HREF="../man3/ftok.3.html">ftok</A></B>(3),
+
+<B><A HREF="../man5/ipc.5.html">ipc</A></B>(5),
+
+<B><A HREF="../man7/capabilities.7.html">capabilities</A></B>(7)
+
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">NAME</A><DD>
+<DT><A HREF="#lbAC">SYNOPSIS</A><DD>
+<DT><A HREF="#lbAD">DESCRIPTION</A><DD>
+<DT><A HREF="#lbAE">SYSTEM CALLS</A><DD>
+<DT><A HREF="#lbAF">RETURN VALUE</A><DD>
+<DT><A HREF="#lbAG">ERRORS</A><DD>
+<DT><A HREF="#lbAH">NOTES</A><DD>
+<DT><A HREF="#lbAI">BUGS</A><DD>
+<DT><A HREF="#lbAJ">CONFORMING TO</A><DD>
+<DT><A HREF="#lbAK">SEE ALSO</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
+using the manual pages.<BR>
+Time: 02:10:06 GMT, April 20, 2020
+</BODY>
+</HTML>

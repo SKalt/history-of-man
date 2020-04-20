@@ -1,0 +1,253 @@
+<!--
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of GETPWNAM</TITLE>
+</HEAD><BODY>
+<H1>GETPWNAM</H1>
+Section: Linux Programmer's Manual (3)<BR>Updated: 1996-05-27<BR><A HREF="#index">Index</A>
+<A HREF="../index.html">Return to Main Contents</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>NAME</H2>
+
+getpwnam, getpwnam_r, getpwuid, getpwuid_r - get password file entry
+<A NAME="lbAC">&nbsp;</A>
+<H2>SYNOPSIS</H2>
+
+<PRE>
+<B>#include &lt;<A HREF="file:///usr/include/sys/types.h">sys/types.h</A>&gt;</B>
+<B>#include &lt;<A HREF="file:///usr/include/pwd.h">pwd.h</A>&gt;</B>
+
+<B>struct passwd *getpwnam(const char *</B><I>name</I><B>);</B>
+
+<B>struct passwd *getpwuid(uid_t </B><I>uid</I><B>);</B>
+
+<B>int getpwnam_r(const char *</B><I>name</I><B>, struct passwd *</B><I>pwbuf</I><B>,</B>
+<BR>
+<B>        char *</B><I>buf</I><B>, size_t </B><I>buflen</I><B>, struct passwd **</B><I>pwbufp</I><B>);</B>
+
+<B>int getpwuid_r(uid_t </B><I>uid</I><B>, struct passwd *</B><I>pwbuf</I><B>,</B>
+<BR>
+<B>        char *</B><I>buf</I><B>, size_t </B><I>buflen</I><B>, struct passwd **</B><I>pwbufp</I><B>);</B>
+</PRE>
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>DESCRIPTION</H2>
+
+The
+<B>getpwnam()</B>
+
+function returns a pointer to a structure containing
+the broken out fields of a line from
+<I>/etc/passwd</I>
+
+for the entry that matches the user name
+<I>name</I>.
+
+<P>
+
+The
+<B>getpwuid()</B>
+
+function returns a pointer to a structure containing
+the broken out fields of a line from
+<I>/etc/passwd</I>
+
+for the entry that matches the user uid
+<I>uid</I>.
+
+<P>
+
+The
+<B>getpwnam_r()</B>
+
+and
+<B>getpwuid_r()</B>
+
+functions find the same information, but store the retrieved passwd structure
+in the space pointed to by
+<I>pwbuf</I>.
+
+This passwd structure contains pointers to strings, and these strings
+are stored in the buffer
+<I>buf</I>
+
+of size
+<I>buflen</I>.
+
+A pointer to the result (in case of success) or NULL (in case no entry
+was found or an error occurred) is stored in
+*<I>pwbufp</I>.
+
+<P>
+
+The <I>passwd</I> structure is defined in <I>&lt;<A HREF="file:///usr/include/pwd.h">pwd.h</A>&gt;</I> as follows:
+<P>
+<DL COMPACT><DT><DD>
+<PRE>
+struct passwd {
+      char    *pw_name;      /* user name */
+      char    *pw_passwd;    /* user password */
+      uid_t   pw_uid;        /* user id */
+      gid_t   pw_gid;        /* group id */
+      char    *pw_gecos;     /* real name */
+      char    *pw_dir;       /* home directory */
+      char    *pw_shell;     /* shell program */
+};
+</PRE>
+
+</DL>
+
+<P>
+
+The maximum needed size for
+<I>buf</I>
+
+can be found using
+<B><A HREF="../man3/sysconf.3.html">sysconf</A></B>(3)
+
+with the _SC_GETPW_R_SIZE_MAX parameter.
+<A NAME="lbAE">&nbsp;</A>
+<H2>RETURN VALUE</H2>
+
+The <B>getpwnam()</B> and <B>getpwuid()</B> functions return a pointer to
+the passwd structure, or NULL if the matching entry is not found or
+an error occurs. If an error occurs,
+<I>errno</I>
+
+is set appropriately. If one wants to check
+<I>errno</I>
+
+after the call, it should be set to zero before the call.
+<P>
+
+The return value may point to static area, and may be overwritten
+by subsequent calls to
+<B>getpwent()</B>,
+
+<B>getpwnam()</B>,
+
+or
+<B>getpwuid()</B>.
+
+<P>
+
+The  <B>getpwnam_r()</B> and <B>getpwuid_r()</B> functions return
+zero on success. In case of error, an error value is returned.
+<A NAME="lbAF">&nbsp;</A>
+<H2>ERRORS</H2>
+
+<DL COMPACT>
+<DT><B>0</B> or <B>ENOENT</B> or <B>ESRCH</B> or <B>EBADF</B> or <B>EPERM</B> or ... 
+
+<DD>
+The given
+<I>name</I>
+
+or
+<I>uid</I>
+
+was not found.
+<DT><B>EINTR</B>
+
+<DD>
+A signal was caught.
+<DT><B>EIO</B>
+
+<DD>
+I/O error.
+<DT><B>EMFILE</B>
+
+<DD>
+The maximum number (OPEN_MAX) of files was open already in the calling process.
+<DT><B>ENFILE</B>
+
+<DD>
+The maximum number of files was open already in the system.
+<DT><B>ENOMEM</B>
+
+<DD>
+Insufficient memory to allocate passwd structure.
+
+<DT><B>ERANGE</B>
+
+<DD>
+Insufficient buffer space supplied.
+</DL>
+<A NAME="lbAG">&nbsp;</A>
+<H2>FILES</H2>
+
+<DL COMPACT>
+<DT><I>/etc/passwd</I>
+
+<DD>
+password database file
+
+</DL>
+<A NAME="lbAH">&nbsp;</A>
+<H2>CONFORMING TO</H2>
+
+SVID 3, BSD 4.3, POSIX 1003.1-2003
+<A NAME="lbAI">&nbsp;</A>
+<H2>NOTES</H2>
+
+The formulation given above under &quot;RETURN VALUE&quot; is from POSIX 1003.1-2001.
+It does not call &quot;not found&quot; an error, hence does not specify what value
+<I>errno</I>
+
+might have in this situation. But that makes it impossible to recognize
+errors. One might argue that according to POSIX
+<I>errno</I>
+
+should be left unchanged if an entry is not found. Experiments on various
+Unix-like systems shows that lots of different values occur in this
+situation: 0, ENOENT, EBADF, ESRCH, EWOULDBLOCK, EPERM and probably others.
+
+
+
+
+
+
+
+<A NAME="lbAJ">&nbsp;</A>
+<H2>SEE ALSO</H2>
+
+<B><A HREF="../man3/endpwent.3.html">endpwent</A></B>(3),
+
+<B><A HREF="../man3/fgetpwent.3.html">fgetpwent</A></B>(3),
+
+<B><A HREF="../man3/getgrnam.3.html">getgrnam</A></B>(3),
+
+<B><A HREF="../man3/getpw.3.html">getpw</A></B>(3),
+
+<B><A HREF="../man3/getpwent.3.html">getpwent</A></B>(3),
+
+<B><A HREF="../man3/putpwent.3.html">putpwent</A></B>(3),
+
+<B><A HREF="../man3/setpwent.3.html">setpwent</A></B>(3),
+
+<B><A HREF="../man5/passwd.5.html">passwd</A></B>(5)
+
+
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">NAME</A><DD>
+<DT><A HREF="#lbAC">SYNOPSIS</A><DD>
+<DT><A HREF="#lbAD">DESCRIPTION</A><DD>
+<DT><A HREF="#lbAE">RETURN VALUE</A><DD>
+<DT><A HREF="#lbAF">ERRORS</A><DD>
+<DT><A HREF="#lbAG">FILES</A><DD>
+<DT><A HREF="#lbAH">CONFORMING TO</A><DD>
+<DT><A HREF="#lbAI">NOTES</A><DD>
+<DT><A HREF="#lbAJ">SEE ALSO</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
+using the manual pages.<BR>
+Time: 02:10:39 GMT, April 20, 2020
+</BODY>
+</HTML>

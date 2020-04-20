@@ -1,0 +1,253 @@
+<!--
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of GETCWD</TITLE>
+</HEAD><BODY>
+<H1>GETCWD</H1>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2002-04-22<BR><A HREF="#index">Index</A>
+<A HREF="../index.html">Return to Main Contents</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>NAME</H2>
+
+getcwd, get_current_dir_name, getwd - Get current working directory
+<A NAME="lbAC">&nbsp;</A>
+<H2>SYNOPSIS</H2>
+
+<PRE>
+<B>#include &lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;</B>
+
+<B>char *getcwd(char *</B><I>buf</I><B>, size_t </B><I>size</I><B>);</B>
+<B>char *get_current_dir_name(void);</B>
+<B>char *getwd(char *</B><I>buf</I><B>);</B>
+</PRE>
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>DESCRIPTION</H2>
+
+The
+<B>getcwd</B>()
+
+function copies an absolute pathname of the current working directory
+to the array pointed to by
+<I>buf</I>,
+
+which is of length
+<I>size</I>.
+
+<P>
+
+If the current absolute path name would require a buffer longer than
+<I>size</I>
+
+elements,
+<B>NULL</B>
+
+is returned, and
+<I>errno</I>
+
+is set to
+<B>ERANGE</B>;
+
+an application should check for this error, and allocate a larger
+buffer if necessary.
+<P>
+
+If
+<I>buf</I>
+
+is NULL, the behaviour of
+<B>getcwd</B>()
+
+is undefined.
+<P>
+
+As an extension to the POSIX.1 standard, Linux (libc4, libc5, glibc)
+<B>getcwd()</B>
+
+allocates the buffer dynamically using
+<B>malloc()</B>
+
+if
+<I>buf</I>
+
+is
+<B>NULL</B>
+
+on call.  In this case, the allocated buffer has the length
+<I>size</I>
+
+unless
+<I>size</I>
+
+is zero, when
+<I>buf</I>
+
+is allocated as big as necessary.  It is possible (and, indeed,
+advisable) to
+<B>free()</B>
+
+the buffers if they have been obtained this way.
+<P>
+<B>get_current_dir_name</B>,
+
+which is only prototyped if
+<B>_GNU_SOURCE</B>
+
+is defined, will
+<B><A HREF="../man3/malloc.3.html">malloc</A></B>(3)
+
+an array big enough to hold the current directory name.  If the environment
+variable
+<B>PWD</B>
+
+is set, and its value is correct, then that value will be returned.
+<P>
+<B>getwd</B>,
+
+which is only prototyped if
+<B>_BSD_SOURCE</B>
+
+or
+<B>_XOPEN_SOURCE_EXTENDED</B>
+
+is defined, will not
+<B><A HREF="../man3/malloc.3.html">malloc</A></B>(3)
+
+any memory. The
+<I>buf</I>
+
+argument should be a pointer to an array at least
+<B>PATH_MAX</B>
+
+bytes long.
+<B>getwd</B>
+
+does only return the first
+<B>PATH_MAX</B>
+
+bytes of the actual pathname.
+Note that
+<B>PATH_MAX</B>
+
+need not be a compile-time constant; it may depend on the filesystem
+and may even be unlimited. For portability and security reasons, use of
+<B>getwd</B>
+
+is deprecated.
+<A NAME="lbAE">&nbsp;</A>
+<H2>RETURN VALUE</H2>
+
+<B>NULL</B>
+
+on failure with
+<I>errno</I>
+
+set accordingly, and
+<I>buf</I>
+
+on success. The contents of the array pointed to by
+<I>buf</I>
+
+is undefined on error.
+<A NAME="lbAF">&nbsp;</A>
+<H2>ERRORS</H2>
+
+<DL COMPACT>
+<DT><B>EACCES</B>
+
+<DD>
+Permission to read or search a component of the file name was denied. 
+<DT><B>EFAULT</B>
+
+<DD>
+<I>buf</I>
+
+points to a bad address.
+<DT><B>EINVAL</B>
+
+<DD>
+The 
+<I>size</I>
+
+argument is zero and
+<I>buf</I>
+
+is not a null pointer.
+<DT><B>ENOENT</B>
+
+<DD>
+The current working directory has been unlinked.
+<DT><B>ERANGE</B>
+
+<DD>
+The
+<I>size</I>
+
+argument is less than the length of the working directory name.
+You need to allocate a bigger array and try again.
+</DL>
+<A NAME="lbAG">&nbsp;</A>
+<H2>NOTES</H2>
+
+Under Linux, the function
+<B>getcwd</B>()
+
+is a system call (since 2.1.92).
+On older systems it would query
+<I>/proc/self/cwd</I>.
+
+If both system call and proc file system are missing, a
+generic implementation is called. Only in that case can
+these calls fail under Linux with
+<B>EACCES</B>.
+
+<P>
+
+These functions are often used to save the location of the current working
+directory for the purpose of returning to it later. Opening the current
+directory (&quot;.&quot;) and calling
+<B><A HREF="../man2/fchdir.2.html">fchdir</A></B>(2)
+
+to return is usually a faster and more reliable alternative when sufficiently
+many file descriptors are available, especially on platforms other than Linux.
+<A NAME="lbAH">&nbsp;</A>
+<H2>CONFORMING TO</H2>
+
+POSIX.1
+<A NAME="lbAI">&nbsp;</A>
+<H2>SEE ALSO</H2>
+
+<B><A HREF="../man2/chdir.2.html">chdir</A></B>(2),
+
+<B><A HREF="../man2/fchdir.2.html">fchdir</A></B>(2),
+
+<B><A HREF="../man2/open.2.html">open</A></B>(2),
+
+<B><A HREF="../man2/unlink.2.html">unlink</A></B>(2),
+
+<B><A HREF="../man3/free.3.html">free</A></B>(3),
+
+<B><A HREF="../man3/malloc.3.html">malloc</A></B>(3)
+
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">NAME</A><DD>
+<DT><A HREF="#lbAC">SYNOPSIS</A><DD>
+<DT><A HREF="#lbAD">DESCRIPTION</A><DD>
+<DT><A HREF="#lbAE">RETURN VALUE</A><DD>
+<DT><A HREF="#lbAF">ERRORS</A><DD>
+<DT><A HREF="#lbAG">NOTES</A><DD>
+<DT><A HREF="#lbAH">CONFORMING TO</A><DD>
+<DT><A HREF="#lbAI">SEE ALSO</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
+using the manual pages.<BR>
+Time: 02:10:36 GMT, April 20, 2020
+</BODY>
+</HTML>

@@ -1,0 +1,175 @@
+<!--
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of LOGIN</TITLE>
+</HEAD><BODY>
+<H1>LOGIN</H1>
+Section: Linux System Administration (3)<BR>Updated: 2004-05-06<BR><A HREF="#index">Index</A>
+<A HREF="../index.html">Return to Main Contents</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>NAME</H2>
+
+login, logout - write utmp and wtmp entries
+<A NAME="lbAC">&nbsp;</A>
+<H2>SYNOPSIS</H2>
+
+<B>#include &lt;<A HREF="file:///usr/include/utmp.h">utmp.h</A>&gt;</B>
+
+<P>
+<B>void login(const struct utmp *</B><I>ut</I><B>);</B>
+
+<BR>
+
+<B>int logout(const char *</B><I>ut_line</I><B>);</B>
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>DESCRIPTION</H2>
+
+The utmp file records who is currently using the system.
+The wtmp file records all logins and logouts. See
+<B><A HREF="../man5/utmp.5.html">utmp</A></B>(5).
+
+<P>
+
+The function
+<B>login</B>()
+
+takes the supplied struct utmp
+<I>ut</I>,
+
+and writes it to both utmp and wtmp file.
+<P>
+
+The function
+<B>logout</B>()
+
+clears the entry in the utmp file again.
+<A NAME="lbAE">&nbsp;</A>
+<H2>GNU DETAILS</H2>
+
+More precisely,
+<B>login</B>()
+
+takes the argument
+<I>ut</I>
+
+struct, fills the field
+<I>ut-&gt;ut_type</I>
+
+(if there is such a field) with the value
+<B>USER_PROCESS</B>,
+
+and fills the field
+<I>ut-&gt;ut_pid</I>
+
+(if there is such a field) with the process ID of the calling process.
+Then it tries to fill the field
+<I>ut-&gt;ut_line</I>.
+
+It takes the first of stdin, stdout, stderr that is a tty, and
+stores the corresponding pathname minus a possible leading /dev/
+into this field, and then writes the struct to the utmp file.
+On the other hand, if no tty name was found, this field is filled with &quot;???&quot;
+and the struct is not written to the utmp file.
+After this, the struct is written to the wtmp file.
+<P>
+
+The
+<B>logout</B>()
+
+function searches the utmp file for an entry matching the
+<I>ut_line</I>
+
+argument. If a record is found, it is updated by zeroing out the
+<I>ut_name</I>
+
+and
+<I>ut_host</I>
+
+fields, updating the
+<I>ut_tv</I>
+
+timestamp field and setting
+<I>ut_type</I>
+
+(if there is such a field) to
+<B>DEAD_PROCESS</B>.
+
+<A NAME="lbAF">&nbsp;</A>
+<H2>RETURN VALUES</H2>
+
+The
+<B>logout</B>()
+
+function returns 1 if the entry was successfully written to the
+database, or 0 if an error occurred.
+<A NAME="lbAG">&nbsp;</A>
+<H2>NOTE</H2>
+
+These functions are included in libutil, hence you'll need to add
+<B>-lutil</B>
+
+to your compiler commandline.
+<P>
+Note that the
+member
+<B>ut_user</B>
+
+of struct utmp is called
+<B>ut_name</B>
+
+in BSD.  Therefore,
+<B>ut_name</B>
+
+is defined as an alias for
+<B>ut_user</B>
+
+in
+<I>utmp.h</I>.
+
+<A NAME="lbAH">&nbsp;</A>
+<H2>FILES</H2>
+
+<DL COMPACT>
+<DT><I>/var/run/utmp</I>
+
+<DD>
+user accounting database, configured through _PATH_UTMP in
+<I>&lt;<A HREF="file:///usr/include/paths.h">paths.h</A>&gt;</I>
+
+<DT><I>/var/log/wtmp</I>
+
+<DD>
+user accounting log file, configured through _PATH_WTMP in
+<I>&lt;<A HREF="file:///usr/include/paths.h">paths.h</A>&gt;</I>
+
+</DL>
+<A NAME="lbAI">&nbsp;</A>
+<H2>SEE ALSO</H2>
+
+<B><A HREF="../man3/getutent.3.html">getutent</A></B>(3),
+
+<B><A HREF="../man5/utmp.5.html">utmp</A></B>(5)
+
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">NAME</A><DD>
+<DT><A HREF="#lbAC">SYNOPSIS</A><DD>
+<DT><A HREF="#lbAD">DESCRIPTION</A><DD>
+<DT><A HREF="#lbAE">GNU DETAILS</A><DD>
+<DT><A HREF="#lbAF">RETURN VALUES</A><DD>
+<DT><A HREF="#lbAG">NOTE</A><DD>
+<DT><A HREF="#lbAH">FILES</A><DD>
+<DT><A HREF="#lbAI">SEE ALSO</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
+using the manual pages.<BR>
+Time: 02:10:49 GMT, April 20, 2020
+</BODY>
+</HTML>

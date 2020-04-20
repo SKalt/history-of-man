@@ -1,0 +1,220 @@
+<!--
+Copyright (c) 1992 Drew Eckhardt (drew@cs.colorado.edu), March 28, 1992
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of UTIME</TITLE>
+</HEAD><BODY>
+<H1>UTIME</H1>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2004-10-10<BR><A HREF="#index">Index</A>
+<A HREF="../index.html">Return to Main Contents</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>NAME</H2>
+
+utime, utimes - change access and/or modification times of an inode
+<A NAME="lbAC">&nbsp;</A>
+<H2>SYNOPSIS</H2>
+
+<PRE>
+<B>#include &lt;<A HREF="file:///usr/include/sys/types.h">sys/types.h</A>&gt;</B>
+<BR>
+<B>#include &lt;<A HREF="file:///usr/include/utime.h">utime.h</A>&gt;</B>
+
+<B>int utime(const char *</B><I>filename</I><B>, const struct utimbuf *</B><I>buf</I><B>);</B>
+
+<B>#include &lt;<A HREF="file:///usr/include/sys/time.h">sys/time.h</A>&gt;</B>
+
+<B>int utimes(const char *</B><I>filename</I><B>, const struct timeval </B><I>tv</I><B>[2]);</B>
+</PRE>
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>DESCRIPTION</H2>
+
+<B>utime</B>
+
+changes the access and modification times of the inode specified by
+<I>filename</I>
+
+to the
+<I>actime</I> and <I>modtime</I>
+
+fields of 
+<I>buf</I>
+
+respectively.
+<P>
+If
+<I>buf</I>
+
+is NULL, then the access and modification times of the file are set
+to the current time.
+<P>
+Changing time stamps is permitted when: either
+the process has appropriate privileges (Linux: has the
+<B>CAP_FOWNER</B>
+
+capability), or the effective user ID equals the user ID
+of the file, or
+<I>buf</I>
+
+must is NULL and the process has write permission to the file.
+<P>
+The
+<I>utimbuf</I>
+
+structure is:
+<P>
+<DL COMPACT><DT><DD>
+<PRE>
+struct utimbuf {
+        time_t actime;  /* access time */
+        time_t modtime; /* modification time */
+};
+</PRE>
+
+</DL>
+
+<P>
+The function
+<B>utime</B>
+
+allows specification of time stamps with a resolution of 1 second.
+The function
+<B>utimes</B>
+
+is similar, but allows a resolution of 1 microsecond.
+Here
+<I>tv</I>[0]
+
+refers to access time, and
+<I>tv</I>[1]
+
+to modification time.
+<P>
+The
+<I>timeval</I>
+
+structure is:
+<P>
+<DL COMPACT><DT><DD>
+<PRE>
+struct timeval {
+        long    tv_sec;         /* seconds */
+        long    tv_usec;        /* microseconds */
+};
+</PRE>
+
+</DL>
+
+<A NAME="lbAE">&nbsp;</A>
+<H2>RETURN VALUE</H2>
+
+On success, zero is returned.  On error, -1 is returned, and
+<I>errno</I>
+
+is set appropriately.
+<A NAME="lbAF">&nbsp;</A>
+<H2>ERRORS</H2>
+
+<DL COMPACT>
+<DT><B>EACCES</B>
+
+<DD>
+Search permission is denied for one of the directories in
+the path prefix of
+<I>path</I>
+
+(see also
+<B><A HREF="../man2/path_resolution.2.html">path_resolution</A></B>(2)),
+
+or
+<I>buf</I>
+
+is NULL and the process does not have permission to change the time stamps
+(see above).
+<DT><B>ENOENT</B>
+
+<DD>
+<I>filename</I>
+
+does not exist.
+<DT><B>EPERM</B>
+
+<DD>
+<I>buf</I>
+
+is not NULL and the process does not have permission to change the time stamps.
+<DT><B>EROFS</B>
+
+<DD>
+<I>path</I>
+
+resides on a read-only file system.
+</DL>
+<A NAME="lbAG">&nbsp;</A>
+<H2>NOTES</H2>
+
+Linux does not allow changing the time stamps on an immutable file,
+or setting the time stamps to something other than the current time
+on an append-only file.
+<P>
+In libc4 and libc5,
+<B>utimes</B>
+
+is just a wrapper for
+<B>utime</B>
+
+and hence does not allow a subsecond resolution.
+<P>
+POSIX calls
+<B>utimes</B>
+
+legacy.
+<A NAME="lbAH">&nbsp;</A>
+<H2>BUGS</H2>
+
+Linux is not careful to distinguish between the EACCES and EPERM error returns.
+On the other hand, POSIX 1003.1-2003 is buggy in its error description for
+<B>utimes</B>.
+
+<A NAME="lbAI">&nbsp;</A>
+<H2>CONFORMING TO</H2>
+
+<B>utime</B>:
+
+SVr4, SVID, POSIX.  SVr4 documents additional error conditions EFAULT,
+EINTR, ELOOP, EMULTIHOP, ENAMETOOLONG, ENOLINK, ENOLINK, ENOTDIR.
+<BR>
+
+<B>utimes</B>:
+
+BSD 4.3
+<A NAME="lbAJ">&nbsp;</A>
+<H2>SEE ALSO</H2>
+
+<B><A HREF="../man1/chattr.1.html">chattr</A></B>(1),
+
+<B><A HREF="../man2/stat.2.html">stat</A></B>(2)
+
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">NAME</A><DD>
+<DT><A HREF="#lbAC">SYNOPSIS</A><DD>
+<DT><A HREF="#lbAD">DESCRIPTION</A><DD>
+<DT><A HREF="#lbAE">RETURN VALUE</A><DD>
+<DT><A HREF="#lbAF">ERRORS</A><DD>
+<DT><A HREF="#lbAG">NOTES</A><DD>
+<DT><A HREF="#lbAH">BUGS</A><DD>
+<DT><A HREF="#lbAI">CONFORMING TO</A><DD>
+<DT><A HREF="#lbAJ">SEE ALSO</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
+using the manual pages.<BR>
+Time: 02:10:10 GMT, April 20, 2020
+</BODY>
+</HTML>

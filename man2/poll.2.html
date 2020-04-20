@@ -1,0 +1,204 @@
+<!--
+Copyright (C) 1997 Andries Brouwer (aeb@cwi.nl)
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of POLL</TITLE>
+</HEAD><BODY>
+<H1>POLL</H1>
+Section: Linux Programmer's Manual (2)<BR>Updated: 1997-12-07<BR><A HREF="#index">Index</A>
+<A HREF="../index.html">Return to Main Contents</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>NAME</H2>
+
+poll - wait for some event on a file descriptor
+<A NAME="lbAC">&nbsp;</A>
+<H2>SYNOPSIS</H2>
+
+<B>#include &lt;<A HREF="file:///usr/include/sys/poll.h">sys/poll.h</A>&gt;</B>
+
+<P>
+<B>int poll(struct pollfd *</B><I>ufds</I><B>, unsigned int </B><I>nfds</I><B>, int </B><I>timeout</I><B>);</B>
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>DESCRIPTION</H2>
+
+<B>poll</B>
+
+is a variation on the theme of 
+<B>select</B>.
+
+It specifies an array of
+<I>nfds</I>
+
+structures of type
+<BR>
+
+<PRE>
+        struct pollfd {
+                int fd;           /* file descriptor */
+                short events;     /* requested events */
+                short revents;    /* returned events */
+        };
+</PRE>
+
+and a
+<I>timeout</I>
+
+in milliseconds. A negative value means infinite timeout.
+The field
+<I>fd</I>
+
+contains a file descriptor for an open file.
+The field
+<I>events</I>
+
+is an input parameter, a bitmask specifying the events the application
+is interested in.
+The field
+<I>revents</I>
+
+is an output parameter, filled by the kernel with the events that
+actually occurred, either of the type requested, or of one of the
+types
+<B>POLLERR</B>
+
+or
+<B>POLLHUP</B>
+
+or
+<B>POLLNVAL</B>.
+
+(These three bits are meaningless in the
+<I>events</I>
+
+field, and will be set in the
+<I>revents</I>
+
+field whenever the corresponding condition is true.)
+If none of the events requested (and no error) has occurred for any
+of the file descriptors, the kernel waits for
+<I>timeout</I>
+
+milliseconds for one of these events to occur.
+The following possible bits in these masks are defined in &lt;<A HREF="file:///usr/include/sys/poll.h">sys/poll.h</A>&gt;
+<BR>
+
+<PRE>
+    #define POLLIN      0x0001    /* There is data to read */
+    #define POLLPRI     0x0002    /* There is urgent data to read */
+    #define POLLOUT     0x0004    /* Writing now will not block */
+    #define POLLERR     0x0008    /* Error condition */
+    #define POLLHUP     0x0010    /* Hung up */
+    #define POLLNVAL    0x0020    /* Invalid request: fd not open */
+</PRE>
+
+When compiling XPG4.2 source one also has
+<BR>
+
+<PRE>
+#ifdef _XOPEN_SOURCE
+    #define POLLRDNORM  0x0040    /* Normal data may be read */
+    #define POLLRDBAND  0x0080    /* Priority data may be read */
+    #define POLLWRNORM  0x0100    /* Writing now will not block */
+    #define POLLWRBAND  0x0200    /* Priority data may be written */
+#endif
+</PRE>
+
+Finally, Linux knows about
+<BR>
+
+<PRE>
+#ifdef _GNU_SOURCE
+    #define POLLMSG     0x0400
+#endif
+</PRE>
+
+<A NAME="lbAE">&nbsp;</A>
+<H2>RETURN VALUE</H2>
+
+On success, a positive number is returned, where the number returned
+is the number of structures which have non-zero
+<I>revents</I>
+
+fields (in other words, those descriptors with events or errors reported).
+A value of 0 indicates that the call timed out and no file
+descriptors have been selected. On error, -1 is returned, and
+<I>errno</I>
+
+is set appropriately.
+<A NAME="lbAF">&nbsp;</A>
+<H2>ERRORS</H2>
+
+<DL COMPACT>
+<DT><B>EBADF</B>
+
+<DD>
+An invalid file descriptor was given in one of the sets.
+<DT><B>EFAULT</B>
+
+<DD>
+The array given as argument was not contained in the calling program's
+address space.
+<DT><B>EINTR</B>
+
+<DD>
+A signal occurred before any requested event.
+<DT><B>EINVAL</B>
+
+<DD>
+The
+<I>nfds</I>
+
+value exceeds the RLIMIT_NOFILE value.
+<DT><B>ENOMEM</B>
+
+<DD>
+There was no space to allocate file descriptor tables.
+</DL>
+<A NAME="lbAG">&nbsp;</A>
+<H2>BUGS</H2>
+
+See the BUGS section of
+<B><A HREF="../man2/select.2.html">select</A></B>(2).
+
+<A NAME="lbAH">&nbsp;</A>
+<H2>CONFORMING TO</H2>
+
+XPG4-UNIX.
+<A NAME="lbAI">&nbsp;</A>
+<H2>AVAILABILITY</H2>
+
+The poll() systemcall was introduced in Linux 2.1.23.
+The poll() library call was introduced in libc 5.4.28
+(and provides emulation using select if your kernel does not
+have a poll syscall).
+<A NAME="lbAJ">&nbsp;</A>
+<H2>SEE ALSO</H2>
+
+<B><A HREF="../man2/select.2.html">select</A></B>(2),
+
+<B><A HREF="../man2/select_tut.2.html">select_tut</A></B>(2)
+
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">NAME</A><DD>
+<DT><A HREF="#lbAC">SYNOPSIS</A><DD>
+<DT><A HREF="#lbAD">DESCRIPTION</A><DD>
+<DT><A HREF="#lbAE">RETURN VALUE</A><DD>
+<DT><A HREF="#lbAF">ERRORS</A><DD>
+<DT><A HREF="#lbAG">BUGS</A><DD>
+<DT><A HREF="#lbAH">CONFORMING TO</A><DD>
+<DT><A HREF="#lbAI">AVAILABILITY</A><DD>
+<DT><A HREF="#lbAJ">SEE ALSO</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
+using the manual pages.<BR>
+Time: 02:10:02 GMT, April 20, 2020
+</BODY>
+</HTML>

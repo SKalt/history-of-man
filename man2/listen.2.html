@@ -1,0 +1,174 @@
+<!--
+Copyright (c) 1983, 1991 The Regents of the University of California.
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of LISTEN</TITLE>
+</HEAD><BODY>
+<H1>LISTEN</H1>
+Section: Linux Programmer's Manual (2)<BR>Updated: 1993-07-23<BR><A HREF="#index">Index</A>
+<A HREF="../index.html">Return to Main Contents</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>NAME</H2>
+
+listen - listen for connections on a socket
+<A NAME="lbAC">&nbsp;</A>
+<H2>SYNOPSIS</H2>
+
+<B>#include &lt;<A HREF="file:///usr/include/sys/socket.h">sys/socket.h</A>&gt;</B>
+
+<P>
+<B>int listen(int </B><I>s</I><B>, int </B><I>backlog</I><B>);</B>
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>DESCRIPTION</H2>
+
+To accept connections, a socket is first created with
+<B><A HREF="../man2/socket.2.html">socket</A></B>(2),
+
+a willingness to accept incoming connections and a queue limit for incoming
+connections are specified with
+<B>listen</B>,
+
+and then the connections are
+accepted with
+<B><A HREF="../man2/accept.2.html">accept</A></B>(2).
+
+The
+<B>listen</B>
+
+call applies only to sockets of type
+<B>SOCK_STREAM</B>
+
+or
+<B>SOCK_SEQPACKET</B>.
+
+<P>
+
+The
+<I>backlog</I>
+
+parameter defines the maximum length the queue of pending connections may
+grow to.  If a connection request arrives with the queue full the client
+may receive an error with an indication of
+<B>ECONNREFUSED</B>
+
+or, if the underlying protocol supports retransmission, the request may be
+ignored so that retries succeed.
+<A NAME="lbAE">&nbsp;</A>
+<H2>NOTES</H2>
+
+The behaviour of the 
+<I>backlog </I>
+
+parameter on TCP sockets changed with Linux 2.2.
+Now it specifies the queue length for 
+<I>completely </I>
+
+established sockets waiting to be accepted, instead of the number of incomplete
+connection requests. The maximum length of the queue for incomplete sockets
+can be set using the 
+<B>tcp_max_syn_backlog</B>
+
+sysctl.
+When syncookies are enabled there is no logical maximum 
+length and this sysctl setting is ignored.
+See 
+<B><A HREF="../man7/tcp.7.html">tcp</A></B>(7)
+
+for more information.
+<P>
+<A NAME="lbAF">&nbsp;</A>
+<H2>RETURN VALUE</H2>
+
+On success, zero is returned.  On error, -1 is returned, and
+<I>errno</I>
+
+is set appropriately.
+<A NAME="lbAG">&nbsp;</A>
+<H2>ERRORS</H2>
+
+<DL COMPACT>
+<DT><B>EADDRINUSE</B>
+
+<DD>
+Another socket is already listening on the same port.
+<DT><B>EBADF</B>
+
+<DD>
+The argument
+<I>s</I>
+
+is not a valid descriptor.
+<DT><B>ENOTSOCK</B>
+
+<DD>
+The argument
+<I>s</I>
+
+is not a socket.
+<DT><B>EOPNOTSUPP</B>
+
+<DD>
+The socket is not of a type that supports the
+<B>listen </B>
+
+operation.
+</DL>
+<A NAME="lbAH">&nbsp;</A>
+<H2>CONFORMING TO</H2>
+
+Single Unix, 4.4BSD, POSIX 1003.1g draft. The
+<B>listen</B>
+
+function call first appeared in 4.2BSD. 
+<A NAME="lbAI">&nbsp;</A>
+<H2>BUGS</H2>
+
+If the socket is of type 
+<B>AF_INET</B>,
+
+and the
+<I>backlog</I>
+
+argument is greater
+than the constant 
+<B>SOMAXCONN </B>
+
+(128 in Linux 2.0 &amp; 2.2), it is silently truncated
+to 
+<B>SOMAXCONN</B>.
+
+Don't rely on this value in portable applications since BSD
+(and some BSD-derived systems) limit the backlog to 5.
+<A NAME="lbAJ">&nbsp;</A>
+<H2>SEE ALSO</H2>
+
+<B><A HREF="../man2/accept.2.html">accept</A></B>(2),
+
+<B><A HREF="../man2/connect.2.html">connect</A></B>(2),
+
+<B><A HREF="../man2/socket.2.html">socket</A></B>(2)
+
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">NAME</A><DD>
+<DT><A HREF="#lbAC">SYNOPSIS</A><DD>
+<DT><A HREF="#lbAD">DESCRIPTION</A><DD>
+<DT><A HREF="#lbAE">NOTES</A><DD>
+<DT><A HREF="#lbAF">RETURN VALUE</A><DD>
+<DT><A HREF="#lbAG">ERRORS</A><DD>
+<DT><A HREF="#lbAH">CONFORMING TO</A><DD>
+<DT><A HREF="#lbAI">BUGS</A><DD>
+<DT><A HREF="#lbAJ">SEE ALSO</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
+using the manual pages.<BR>
+Time: 02:09:59 GMT, April 20, 2020
+</BODY>
+</HTML>

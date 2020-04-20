@@ -1,0 +1,272 @@
+<!--
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of LOCALE</TITLE>
+</HEAD><BODY>
+<H1>LOCALE</H1>
+Section: Linux Programmer's Manual (7)<BR>Updated: 1993-04-24<BR><A HREF="#index">Index</A>
+<A HREF="../index.html">Return to Main Contents</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>NAME</H2>
+
+locale - Description of multi-language support
+<A NAME="lbAC">&nbsp;</A>
+<H2>SYNOPSIS</H2>
+
+<PRE>
+<B>#include &lt;<A HREF="file:///usr/include/locale.h">locale.h</A>&gt;</B>
+</PRE>
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>DESCRIPTION</H2>
+
+A locale is a set of language and cultural rules.  These cover aspects
+such as language for messages, different character sets, lexigraphic
+conventions, etc.  A program needs to be able to determine its locale
+and act accordingly to be portable to different cultures.
+<P>
+
+The header
+<B>&lt;<A HREF="file:///usr/include/locale.h">locale.h</A>&gt;</B>
+
+declares data types, functions and macros which are useful in this
+task.
+<P>
+
+The functions it declares are
+<B>setlocale()</B>
+
+to set the current locale, and
+<B>localeconv()</B>
+
+to get information about number formatting.
+<P>
+
+There are different categories for local information a program might
+need; they are declared as macros.  Using them as the first argument
+to the
+<B>setlocale()</B>
+
+function, it is possible to set one of these to the desired locale:
+<DL COMPACT>
+<DT><B>LC_COLLATE</B>
+
+<DD>
+This is used to change the behaviour of the functions
+<B>strcoll()</B>
+
+and
+<B>strxfrm()</B>,
+
+which are used to compare strings in the local alphabet.  For example,
+the German sharp s is sorted as &quot;ss&quot;.
+<DT><B>LC_CTYPE</B>
+
+<DD>
+This changes the behaviour of the character handling and
+classification functions, such as
+<B>isupper()</B>
+
+and
+<B>toupper()</B>,
+
+and the multi-byte character functions such as
+<B>mblen()</B>
+
+or
+<B>wctomb()</B>.
+
+<DT><B>LC_MONETARY</B>
+
+<DD>
+changes the information returned by
+<B>localeconv()</B>
+
+which describes the way numbers are usually printed, with details such
+as decimal point versus decimal comma.  This information is internally
+used by the function
+<B>strfmon()</B>.
+
+<DT><B>LC_MESSAGES</B>
+
+<DD>
+changes the language messages are displayed in and how an affirmative or
+negative answer looks like.  The GNU C-library contains the
+<B>gettext()</B>,
+
+<B>ngettext()</B>,
+
+and
+<B>rpmatch()</B>
+
+functions to ease the use of these information.  The GNU gettext family of
+functions also obey the environment variable
+<B>LANGUAGE</B>.
+
+<DT><B>LC_NUMERIC</B>
+
+<DD>
+changes the information used by the
+<B>printf()</B>
+
+and
+<B>scanf()</B>
+
+family of functions, when they are advised to use the
+locale-settings.  This information can also be read with the 
+<B>localeconv()</B>
+
+function.
+<DT><B>LC_TIME</B>
+
+<DD>
+changes the behaviour of the
+<B>strftime()</B>
+
+function to display the current time in a locally acceptable form; for
+example, most of Europe uses a 24-hour clock vs. the US' 12-hour
+clock.
+<DT><B>LC_ALL</B>
+
+<DD>
+All of the above.
+</DL>
+<P>
+
+If the second argument to
+<B>setlocale()</B>
+
+is empty string,
+<B>&quot;&quot;</B>,
+
+for the default locale, it is determined using the following steps:
+<DL COMPACT>
+<DT>1.<DD>
+If there is a non-null environment variable
+<B>LC_ALL</B>,
+
+the value of
+<B>LC_ALL</B>
+
+is used.
+<DT>2.<DD>
+If an environment variable with the same name as one of the categories
+above exists and is non-null, its value is used for that category.
+<DT>3.<DD>
+If there is a non-null environment variable
+<B>LANG</B>,
+
+the value of
+<B>LANG</B>
+
+is used.
+</DL>
+<P>
+
+Values about local numeric formatting is made available in a
+<B>struct lconv</B>
+
+returned by the
+<B>localeconv()</B>
+
+function, which has the following declaration:
+<PRE>
+struct lconv
+{
+  /* Numeric (non-monetary) information.  */
+
+  char *decimal_point;          /* Decimal point character.  */
+  char *thousands_sep;          /* Thousands separator.  */
+  /* Each element is the number of digits in each group;
+     elements with higher indices are farther left.
+     An element with value CHAR_MAX means that no further grouping is done.
+     An element with value 0 means that the previous element is used
+     for all groups farther left.  */
+  char *grouping;
+
+  /* Monetary information.  */
+
+  /* First three chars are a currency symbol from ISO 4217.
+     Fourth char is the separator.  Fifth char is '&nbsp;'.  */
+  char *int_curr_symbol;
+  char *currency_symbol;        /* Local currency symbol.  */
+  char *mon_decimal_point;      /* Decimal point character.  */
+  char *mon_thousands_sep;      /* Thousands separator.  */
+  char *mon_grouping;           /* Like `grouping' element (above).  */
+  char *positive_sign;          /* Sign for positive values.  */
+  char *negative_sign;          /* Sign for negative values.  */
+  char int_frac_digits;         /* Int'l fractional digits.  */
+  char frac_digits;             /* Local fractional digits.  */
+  /* 1 if currency_symbol precedes a positive value, 0 if succeeds.  */
+  char p_cs_precedes;
+  /* 1 if a space separates currency_symbol from a positive value.  */
+  char p_sep_by_space;
+  /* 1 if currency_symbol precedes a negative value, 0 if succeeds.  */
+  char n_cs_precedes;
+  /* 1 if a space separates currency_symbol from a negative value.  */
+  char n_sep_by_space;
+  /* Positive and negative sign positions:
+     0 Parentheses surround the quantity and currency_symbol.
+     1 The sign string precedes the quantity and currency_symbol.
+     2 The sign string succeeds the quantity and currency_symbol.
+     3 The sign string immediately precedes the currency_symbol.
+     4 The sign string immediately succeeds the currency_symbol.  */
+  char p_sign_posn;
+  char n_sign_posn;
+};
+</PRE>
+
+<A NAME="lbAE">&nbsp;</A>
+<H2>CONFORMS TO</H2>
+
+<PRE>
+POSIX.1
+</PRE>
+
+The GNU gettext functions are specified in LI18NUX2000.
+<A NAME="lbAF">&nbsp;</A>
+<H2>SEE ALSO</H2>
+
+<B><A HREF="../man1/locale.1.html">locale</A></B>(1),
+
+<B><A HREF="../man1/localedef.1.html">localedef</A></B>(1),
+
+<B><A HREF="../man3/gettext.3.html">gettext</A></B>(3),
+
+<B><A HREF="../man3/localeconv.3.html">localeconv</A></B>(3),
+
+<B><A HREF="../man3/ngettext.3.html">ngettext</A></B>(3),
+
+<B><A HREF="../man3/nl_langinfo.3.html">nl_langinfo</A></B>(3),
+
+<B><A HREF="../man3/rpmatch.3.html">rpmatch</A></B>(3),
+
+<B><A HREF="../man3/setlocale.3.html">setlocale</A></B>(3),
+
+<B><A HREF="../man3/strcoll.3.html">strcoll</A></B>(3),
+
+<B><A HREF="../man3/strfmon.3.html">strfmon</A></B>(3),
+
+<B><A HREF="../man3/strftime.3.html">strftime</A></B>(3),
+
+<B><A HREF="../man3/strxfrm.3.html">strxfrm</A></B>(3)
+
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">NAME</A><DD>
+<DT><A HREF="#lbAC">SYNOPSIS</A><DD>
+<DT><A HREF="#lbAD">DESCRIPTION</A><DD>
+<DT><A HREF="#lbAE">CONFORMS TO</A><DD>
+<DT><A HREF="#lbAF">SEE ALSO</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
+using the manual pages.<BR>
+Time: 02:11:26 GMT, April 20, 2020
+</BODY>
+</HTML>

@@ -1,0 +1,198 @@
+<!--
+Copyright (c) 1980, 1991 Regents of the University of California.
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of LSEEK</TITLE>
+</HEAD><BODY>
+<H1>LSEEK</H1>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2001-09-24<BR><A HREF="#index">Index</A>
+<A HREF="../index.html">Return to Main Contents</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>NAME</H2>
+
+lseek - reposition read/write file offset
+<A NAME="lbAC">&nbsp;</A>
+<H2>SYNOPSIS</H2>
+
+<B>#include &lt;<A HREF="file:///usr/include/sys/types.h">sys/types.h</A>&gt;</B>
+
+<BR>
+
+<B>#include &lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;</B>
+
+<P>
+<B>off_t lseek(int </B><I>fildes</I><B>, off_t </B><I>offset</I><B>, int </B><I>whence</I><B>);</B>
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>DESCRIPTION</H2>
+
+The
+<B>lseek</B>
+
+function repositions the offset of the file descriptor
+<I>fildes</I>
+
+to the argument
+<I>offset</I>
+
+according to the directive
+<I>whence</I>
+
+as follows:
+<DL COMPACT>
+<DT><B>SEEK_SET</B>
+
+<DD>
+The offset is set to
+<I>offset</I>
+
+bytes.
+<DT><B>SEEK_CUR</B>
+
+<DD>
+The offset is set to its current location plus
+<I>offset</I>
+
+bytes.
+<DT><B>SEEK_END</B>
+
+<DD>
+The offset is set to the size of the file plus
+<I>offset</I>
+
+bytes.
+</DL>
+<P>
+
+The
+<B>lseek</B>
+
+function allows the file offset to be set beyond the end of the existing
+end-of-file of the file (but this does not change the size of the file).
+If data is later written at this point, subsequent reads of the data
+in the gap return bytes of zeros (until data is actually written into
+the gap).
+<A NAME="lbAE">&nbsp;</A>
+<H2>RETURN VALUE</H2>
+
+Upon successful completion,
+<B>lseek</B>
+
+returns the resulting offset location as measured in bytes from the
+beginning of the file.  Otherwise, a value of (off_t)-1 is returned and
+<I>errno</I>
+
+is set to indicate the error.
+<A NAME="lbAF">&nbsp;</A>
+<H2>ERRORS</H2>
+
+<DL COMPACT>
+<DT><B>EBADF</B>
+
+<DD>
+<I>fildes</I>
+
+is not an open file descriptor.
+<DT><B>EINVAL</B>
+
+<DD>
+<I>whence</I>
+
+is not one of SEEK_SET, SEEK_CUR, SEEK_END,
+or the resulting file offset would be negative.
+
+
+<DT><B>EOVERFLOW</B>
+
+<DD>
+The resulting file offset cannot be represented in an off_t.
+<DT><B>ESPIPE</B>
+
+<DD>
+<I>fildes</I>
+
+is associated with a pipe, socket, or FIFO.
+</DL>
+<A NAME="lbAG">&nbsp;</A>
+<H2>CONFORMING TO</H2>
+
+SVr4, POSIX, BSD 4.3
+<A NAME="lbAH">&nbsp;</A>
+<H2>RESTRICTIONS</H2>
+
+Some devices are incapable of seeking and POSIX does not specify which
+devices must support it.
+<P>
+Linux specific restrictions: using <B>lseek</B> on a tty device returns
+<B>ESPIPE</B>.
+
+
+<A NAME="lbAI">&nbsp;</A>
+<H2>NOTES</H2>
+
+This document's use of
+<I>whence</I>
+
+is incorrect English, but maintained for historical reasons.
+<P>
+When converting old code, substitute values for <I>whence</I> with the
+following macros:
+<P>
+
+<TABLE>
+<TR VALIGN=top><TD ALIGN=center>old</TD><TD ALIGN=center>new<BR></TD></TR>
+<TR VALIGN=top><TD>0</TD><TD>SEEK_SET<BR></TD></TR>
+<TR VALIGN=top><TD>1</TD><TD>SEEK_CUR<BR></TD></TR>
+<TR VALIGN=top><TD>2</TD><TD>SEEK_END<BR></TD></TR>
+<TR VALIGN=top><TD>L_SET</TD><TD>SEEK_SET<BR></TD></TR>
+<TR VALIGN=top><TD>L_INCR</TD><TD>SEEK_CUR<BR></TD></TR>
+<TR VALIGN=top><TD>L_XTND</TD><TD>SEEK_END<BR></TD></TR>
+</TABLE>
+
+<P>
+
+SVR1-3 returns <B>long</B> instead of <B>off_t</B>, BSD returns <B>int</B>.
+<P>
+
+Note that file descriptors created by
+<B><A HREF="../man2/dup.2.html">dup</A></B>(2)
+
+or
+<B><A HREF="../man2/fork.2.html">fork</A></B>(2)
+
+share the current file position pointer, so seeking on such files may be
+subject to race conditions.
+<A NAME="lbAJ">&nbsp;</A>
+<H2>SEE ALSO</H2>
+
+<B><A HREF="../man2/dup.2.html">dup</A></B>(2),
+
+<B><A HREF="../man2/fork.2.html">fork</A></B>(2),
+
+<B><A HREF="../man2/open.2.html">open</A></B>(2),
+
+<B><A HREF="../man3/fseek.3.html">fseek</A></B>(3)
+
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">NAME</A><DD>
+<DT><A HREF="#lbAC">SYNOPSIS</A><DD>
+<DT><A HREF="#lbAD">DESCRIPTION</A><DD>
+<DT><A HREF="#lbAE">RETURN VALUE</A><DD>
+<DT><A HREF="#lbAF">ERRORS</A><DD>
+<DT><A HREF="#lbAG">CONFORMING TO</A><DD>
+<DT><A HREF="#lbAH">RESTRICTIONS</A><DD>
+<DT><A HREF="#lbAI">NOTES</A><DD>
+<DT><A HREF="#lbAJ">SEE ALSO</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
+using the manual pages.<BR>
+Time: 02:09:59 GMT, April 20, 2020
+</BODY>
+</HTML>

@@ -1,0 +1,486 @@
+<!--
+Copyright 1993 Mitchum DSouza &lt;m.dsouza@mrc-apu.cam.ac.uk&gt;
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of STRPTIME</TITLE>
+</HEAD><BODY>
+<H1>STRPTIME</H1>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2001-11-12<BR><A HREF="#index">Index</A>
+<A HREF="../index.html">Return to Main Contents</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>NAME</H2>
+
+strptime - convert a string representation of time to a time tm structure
+<A NAME="lbAC">&nbsp;</A>
+<H2>SYNOPSIS</H2>
+
+<B>#define _XOPEN_SOURCE</B> /* glibc2 needs this */
+
+<BR>
+
+<B>#include &lt;<A HREF="file:///usr/include/time.h">time.h</A>&gt;</B>
+
+<P>
+<B>char *strptime(const char *</B><I>s</I><B>, const char *</B><I>format</I><B>,</B>
+
+<B>struct tm *</B><I>tm</I><B>);</B>
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>DESCRIPTION</H2>
+
+The
+<B>strptime()</B>
+
+function is the converse function to
+<B>strftime()</B>
+
+and converts the character string pointed to by
+<I>s</I>
+
+to values which are stored in the
+<B>tm</B>
+
+structure pointed to by
+<I>tm</I>,
+
+using the format specified by
+<I>format</I>.
+
+Here
+<I>format</I>
+
+is a character string that consists of field descriptors and text characters,
+reminiscent of
+<B><A HREF="../man3/scanf.3.html">scanf</A></B>(3).
+
+Each field descriptor consists of a
+<B>%</B>
+
+character followed by another character that specifies the replacement
+for the field descriptor.
+All other characters in the 
+<I>format </I>
+
+string must have a matching character in the input string,
+except for whitespace, which matches zero or more
+whitespace characters in the input string.
+There should be whitespace or other alphanumeric characters
+between any two field descriptors.
+<P>
+
+The <B>strptime()</B> function processes the input string from left
+to right.  Each of the three possible input elements (whitespace,
+literal, or format) are handled one after the other.  If the input
+cannot be matched to the format string the function stops.  The
+remainder of the format and input strings are not processed.
+<P>
+
+The supported input field descriptors are listed below.
+In case a text string (such as a weekday or month name)
+is to be matched, the comparison is case insensitive.
+In case a number is to be matched, leading zeros are
+permitted but not required.
+<DL COMPACT>
+<DT><B>%%</B>
+
+<DD>
+The
+<B>%</B>
+
+character.
+<DT><B>%a</B> or <B>%A</B>
+
+<DD>
+The weekday name according to the current locale,
+in abbreviated form or the full name.
+<DT><B>%b</B> or <B>%B</B> or <B>%h</B>
+
+<DD>
+The month name according to the current locale,
+in abbreviated form or the full name.
+<DT><B>%c</B>
+
+<DD>
+The date and time representation for the current locale.
+<DT><B>%C</B>
+
+<DD>
+The century number (0-99).
+<DT><B>%d</B> or <B>%e</B>
+
+<DD>
+The day of month (1-31).
+<DT><B>%D</B>
+
+<DD>
+Equivalent to %m/%d/%y. (This is the American style date, very confusing
+to non-Americans, especially since %d/%m/%y is widely used in Europe.
+The ISO 8601 standard format is %Y-%m-%d.)
+<DT><B>%H</B>
+
+<DD>
+The hour (0-23).
+<DT><B>%I</B>
+
+<DD>
+The hour on a 12-hour clock (1-12).
+<DT><B>%j</B>
+
+<DD>
+The day number in the year (1-366).
+<DT><B>%m</B>
+
+<DD>
+The month number (1-12).
+<DT><B>%M</B>
+
+<DD>
+The minute (0-59).
+<DT><B>%n</B>
+
+<DD>
+Arbitrary whitespace.
+<DT><B>%p</B>
+
+<DD>
+The locale's equivalent of AM or PM. (Note: there may be none.)
+<DT><B>%r</B>
+
+<DD>
+The 12-hour clock time (using the locale's AM or PM).
+In the POSIX locale equivalent to %I:%M:%S %p.
+If <I>t_fmt_ampm</I> is empty in the LC_TIME part of the current locale
+then the behaviour is undefined.
+<DT><B>%R</B>
+
+<DD>
+Equivalent to %H:%M.
+<DT><B>%S</B>
+
+<DD>
+The second (0-60; 60 may occur for leap seconds; earlier also 61 was allowed).
+<DT><B>%t</B>
+
+<DD>
+Arbitrary whitespace.
+<DT><B>%T</B>
+
+<DD>
+Equivalent to %H:%M:%S.
+<DT><B>%U</B>
+
+<DD>
+The week number with Sunday the first day of the week (0-53).
+The first Sunday of January is the first day of week 1.
+<DT><B>%w</B>
+
+<DD>
+The weekday number (0-6) with Sunday = 0.
+<DT><B>%W</B>
+
+<DD>
+The week number with Monday the first day of the week (0-53).
+The first Monday of January is the first day of week 1.
+<DT><B>%x</B>
+
+<DD>
+The date, using the locale's date format.
+<DT><B>%X</B>
+
+<DD>
+The time, using the locale's time format.
+<DT><B>%y</B>
+
+<DD>
+The year within century (0-99).
+When a century is not otherwise specified, values in the range 69-99 refer
+to years in the twentieth century (1969-1999); values in the
+range 00-68 refer to years in the twenty-first century (2000-2068).
+<DT><B>%Y</B>
+
+<DD>
+The year, including century (for example, 1991).
+</DL>
+<P>
+
+Some field descriptors can be modified by the E or O modifier characters
+to indicate that an alternative format or specification should be used. If the
+alternative format or specification does not exist in the current locale, the
+unmodified field descriptor is used.
+<P>
+
+The E modifier specifies that the input string may contain
+alternative locale-dependent versions of the date and time representation:
+<DL COMPACT>
+<DT><B>%Ec</B>
+
+<DD>
+The locale's alternative date and time representation.
+<DT><B>%EC</B>
+
+<DD>
+The name of the base year (period) in the locale's alternative representation.
+<DT><B>%Ex</B>
+
+<DD>
+The locale's alternative date representation.
+<DT><B>%EX</B>
+
+<DD>
+The locale's alternative time representation.
+<DT><B>%Ey</B>
+
+<DD>
+The offset from %EC (year only) in the locale's alternative representation.
+<DT><B>%EY</B>
+
+<DD>
+The full alternative year representation.
+</DL>
+<P>
+
+The O modifier specifies that the numerical input may be in an
+alternative locale-dependent format:
+<DL COMPACT>
+<DT><B>%Od</B> or <B>%Oe</B>
+
+<DD>
+The day of the month using the locale's alternative numeric symbols;
+leading zeros are permitted but not required.
+<DT><B>%OH</B>
+
+<DD>
+The hour (24-hour clock) using the locale's alternative numeric symbols.
+<DT><B>%OI</B>
+
+<DD>
+The hour (12-hour clock) using the locale's alternative numeric symbols.
+<DT><B>%Om</B>
+
+<DD>
+The month using the locale's alternative numeric symbols.
+<DT><B>%OM</B>
+
+<DD>
+The minutes using the locale's alternative numeric symbols.
+<DT><B>%OS</B>
+
+<DD>
+The seconds using the locale's alternative numeric symbols.
+<DT><B>%OU</B>
+
+<DD>
+The week number of the year (Sunday as the first day of the week)
+using the locale's alternative numeric symbols.
+<DT><B>%Ow</B>
+
+<DD>
+The number of the weekday (Sunday=0) using the locale's alternative
+numeric symbols.
+<DT><B>%OW</B>
+
+<DD>
+The week number of the year (Monday as the first day of the week)
+using the locale's alternative numeric symbols.
+<DT><B>%Oy</B>
+
+<DD>
+The year (offset from %C) using the locale's alternative numeric symbols. 
+</DL>
+<P>
+
+The broken-down time structure <I>tm</I> is defined in <I>&lt;<A HREF="file:///usr/include/time.h">time.h</A>&gt;</I>
+as follows:
+<P>
+<DL COMPACT><DT><DD>
+<PRE>
+
+struct tm {
+        int     tm_sec;         /* seconds */
+        int     tm_min;         /* minutes */
+        int     tm_hour;        /* hours */
+        int     tm_mday;        /* day of the month */
+        int     tm_mon;         /* month */
+        int     tm_year;        /* year */
+        int     tm_wday;        /* day of the week */
+        int     tm_yday;        /* day in the year */
+        int     tm_isdst;       /* daylight saving time */
+};
+
+</PRE>
+
+</DL>
+
+<A NAME="lbAE">&nbsp;</A>
+<H2>RETURN VALUE</H2>
+
+The return value of the function is a pointer to the first character
+not processed in this function call.  In case the input string
+contains more characters than required by the format string the return
+value points right after the last consumed input character.  In case
+the whole input string is consumed the return value points to the NUL
+byte at the end of the string.  If <B>strptime()</B> fails to match all
+of the format string and therefore an error occurred the function
+returns <B>NULL</B>.
+<A NAME="lbAF">&nbsp;</A>
+<H2>CONFORMING TO</H2>
+
+XPG4, SUSv2, POSIX 1003.1-2001.
+<A NAME="lbAG">&nbsp;</A>
+<H2>EXAMPLE</H2>
+
+The following example demonstrates the use of <B>strptime()</B>
+and <B>strftime()</B>.
+<P>
+<PRE>
+
+#include &lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/time.h">time.h</A>&gt;
+
+int main() {
+        struct tm tm;
+        char buf[255];
+
+        strptime(&quot;2001-11-12 18:31:01&quot;, &quot;%Y-%m-%d %H:%M:%S&quot;, &amp;tm);
+        strftime(buf, sizeof(buf), &quot;%d %b %Y %H:%M&quot;, &amp;tm);
+        puts(buf);
+        return 0;
+}
+
+</PRE>
+
+<A NAME="lbAH">&nbsp;</A>
+<H2>GNU EXTENSIONS</H2>
+
+For reasons of symmetry, glibc tries to support for
+<B>strptime</B>
+
+the same format characters as for
+<B>strftime.</B>
+
+(In most cases the corresponding fields are parsed, but no field in <I>tm</I>
+is changed.)
+This leads to
+<DL COMPACT>
+<DT><B>%F</B>
+
+<DD>
+Equivalent to <B>%Y-%m-%d</B>, the ISO 8601 date format.
+<DT><B>%g</B>
+
+<DD>
+The year corresponding to the ISO week number, but without the century
+(0-99).
+<DT><B>%G</B>
+
+<DD>
+The year corresponding to the ISO week number. (For example, 1991.)
+<DT><B>%u</B>
+
+<DD>
+The day of the week as a decimal number (1-7, where Monday = 1).
+<DT><B>%V</B>
+
+<DD>
+The ISO 8601:1988 week number as a decimal number (1-53).
+If the week (starting on Monday) containing 1 January has four or more days
+in the new year, then it is considered week 1. Otherwise, it is the last week
+of the previous year, and the next week is week 1.
+<DT><B>%z</B>
+
+<DD>
+An RFC-822/ISO 8601 standard time zone specification.
+<DT><B>%Z</B>
+
+<DD>
+The timezone name.
+</DL>
+<P>
+
+Similarly, because of GNU extensions to <I>strftime</I>,
+%k is accepted as a synonym for %H, and %l should be accepted
+as a synonym for %I, and %P is accepted as a synonym for %p.
+Finally
+<DL COMPACT>
+<DT><B>%s</B>
+
+<DD>
+The number of seconds since the epoch, i.e., since 1970-01-01 00:00:00 UTC.
+Leap seconds are not counted unless leap second support is available.
+</DL>
+<P>
+
+The GNU libc implementation does not require whitespace between
+two field descriptors.
+<A NAME="lbAI">&nbsp;</A>
+<H2>NOTES</H2>
+
+<P>
+
+In principle, this function does not initialize <B>tm</B> but
+only stores the values specified.
+This means that <B>tm</B> should be initialized before the call.
+Details differ a bit between different Unix systems.
+The GNU libc implementation does not touch those fields which are not
+explicitly specified, except that it recomputes the
+<I>tm_wday</I>
+
+and
+<I>tm_yday</I>
+
+field if any of the year, month, or day elements changed.
+<P>
+
+This function is available since libc 4.6.8.
+Linux libc4 and libc5 includes define the prototype unconditionally;
+glibc2 includes provide a prototype only when _XOPEN_SOURCE or _GNU_SOURCE
+are defined.
+<P>
+
+Before libc 5.4.13 whitespace (and the 'n' and 't' specifications)
+was not handled, no 'E' and 'O' locale modifier characters were accepted,
+and the 'C' specification was a synonym for the 'c' specification.
+<P>
+
+The 'y' (year in century) specification is taken to specify a year
+in the 20th century by libc4 and libc5. It is taken to be a year
+in the range 1950-2049 by glibc 2.0. It is taken to be a year in
+1969-2068 since glibc 2.1.
+
+
+<A NAME="lbAJ">&nbsp;</A>
+<H2>SEE ALSO</H2>
+
+<B><A HREF="../man2/time.2.html">time</A></B>(2),
+
+<B><A HREF="../man3/getdate.3.html">getdate</A></B>(3),
+
+<B><A HREF="../man3/scanf.3.html">scanf</A></B>(3),
+
+<B><A HREF="../man3/setlocale.3.html">setlocale</A></B>(3),
+
+<B><A HREF="../man3/strftime.3.html">strftime</A></B>(3)
+
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">NAME</A><DD>
+<DT><A HREF="#lbAC">SYNOPSIS</A><DD>
+<DT><A HREF="#lbAD">DESCRIPTION</A><DD>
+<DT><A HREF="#lbAE">RETURN VALUE</A><DD>
+<DT><A HREF="#lbAF">CONFORMING TO</A><DD>
+<DT><A HREF="#lbAG">EXAMPLE</A><DD>
+<DT><A HREF="#lbAH">GNU EXTENSIONS</A><DD>
+<DT><A HREF="#lbAI">NOTES</A><DD>
+<DT><A HREF="#lbAJ">SEE ALSO</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
+using the manual pages.<BR>
+Time: 02:11:06 GMT, April 20, 2020
+</BODY>
+</HTML>

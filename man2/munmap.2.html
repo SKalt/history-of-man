@@ -1,0 +1,479 @@
+<!--
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of MMAP</TITLE>
+</HEAD><BODY>
+<H1>MMAP</H1>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2004-09-11<BR><A HREF="#index">Index</A>
+<A HREF="../index.html">Return to Main Contents</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>NAME</H2>
+
+mmap, munmap - map or unmap files or devices into memory
+<A NAME="lbAC">&nbsp;</A>
+<H2>SYNOPSIS</H2>
+
+<B>#include &lt;<A HREF="file:///usr/include/sys/mman.h">sys/mman.h</A>&gt;</B>
+
+<P>
+<B>void * mmap(void *</B><I>start</I><B>, size_t </B><I>length</I><B>, int </B><I>prot</I>
+
+<B>, int </B><I>flags</I><B>, int </B><I>fd</I><B>, off_t </B><I>offset</I><B>);</B>
+
+<P>
+<B>int munmap(void *</B><I>start</I><B>, size_t </B><I>length</I><B>);</B>
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>DESCRIPTION</H2>
+
+The
+<B>mmap</B>
+
+function asks to map
+<I>length</I>
+
+bytes starting at offset
+<I>offset</I>
+
+from the file (or other object) specified by the file descriptor
+<I>fd</I>
+
+into memory, preferably at address
+<I>start</I>.
+
+This latter address is a hint only, and is usually specified as 0.
+The actual place where the object is mapped is returned by
+<B>mmap</B>,
+
+and is never 0.
+<P>
+
+The
+<I>prot</I>
+
+argument describes the desired memory protection (and must not
+conflict with the open mode of the file). It is either
+<B>PROT_NONE</B>
+
+or is the bitwise OR of one or more of the other PROT_* flags.
+<DL COMPACT>
+<DT><B>PROT_EXEC</B>
+
+<DD>
+Pages may be executed.
+<DT><B>PROT_READ</B>
+
+<DD>
+Pages may be read.
+<DT><B>PROT_WRITE</B>
+
+<DD>
+Pages may be written.
+<DT><B>PROT_NONE</B>
+
+<DD>
+Pages may not be accessed.
+</DL>
+<P>
+
+The
+<I>flags</I>
+
+parameter specifies the type of the mapped object, mapping options and
+whether modifications made to the mapped copy of the page are private to
+the process or are to be shared with other references.  It has bits
+<DL COMPACT>
+<DT><B>MAP_FIXED</B>
+
+<DD>
+Do not select a different address than the one specified.
+If the specified address cannot be used,
+<B>mmap</B>
+
+will fail.  If MAP_FIXED is specified,
+<I>start</I>
+
+must be a multiple of the pagesize.  Use of this option is discouraged.
+<DT><B>MAP_SHARED</B>
+
+<DD>
+Share this mapping with all other processes that map this object.
+Storing to the region is equivalent to writing to the file.
+The file may not actually be updated until
+<B><A HREF="../man2/msync.2.html">msync</A></B>(2)
+
+or
+<B><A HREF="../man2/munmap.2.html">munmap</A></B>(2)
+
+are called.
+<DT><B>MAP_PRIVATE</B>
+
+<DD>
+Create a private copy-on-write mapping.
+Stores to the region do not affect the original file.
+It is unspecified whether changes made to the file after the
+<B>mmap</B>
+
+call are visible in the mapped region.
+</DL>
+<P>
+
+You must specify exactly one of MAP_SHARED and MAP_PRIVATE.
+<P>
+
+The above three flags are described in POSIX.1b (formerly POSIX.4) and SUSv2.
+Linux also knows about the following non-standard flags:
+<DL COMPACT>
+<DT><B>MAP_DENYWRITE</B>
+
+<DD>
+This flag is ignored.
+
+(Long ago, it signalled that attempts to write to the underlying file
+should fail with ETXTBUSY. But this was a source of denial-of-service attacks.)
+<DT><B>MAP_EXECUTABLE</B>
+
+<DD>
+This flag is ignored.
+
+
+
+
+
+<DT><B>MAP_NORESERVE</B>
+
+<DD>
+(Used together with MAP_PRIVATE.) Do not reserve swap space pages for
+this mapping. When swap space is reserved, one has the guarantee
+that it is possible to modify this private copy-on-write region.
+When it is not reserved one might get SIGSEGV upon a write
+when no memory is available.
+<DT><B>MAP_LOCKED</B> (since Linux 2.5.37)
+
+<DD>
+Lock the pages of the mapped region into memory in the manner of
+<B>mlock()</B>.
+
+This flag is ignored in older kernels.
+
+<DT><B>MAP_GROWSDOWN</B>
+
+<DD>
+Used for stacks. Indicates to the kernel VM system that the mapping
+should extend downwards in memory.
+<DT><B>MAP_ANONYMOUS</B>
+
+<DD>
+The mapping is not backed by any file; the
+<I>fd</I>
+
+and
+<I>offset</I>
+
+arguments are ignored.  This flag in conjunction with MAP_SHARED
+is implemented since Linux 2.4.
+<DT><B>MAP_ANON</B>
+
+<DD>
+Alias for MAP_ANONYMOUS. Deprecated.
+<DT><B>MAP_FILE</B>
+
+<DD>
+Compatibility flag. Ignored.
+<DT><B>MAP_32BIT</B>
+
+<DD>
+Put the mapping into the first 2GB of the process address space.
+Ignored when
+<I>MAP_FIXED</I>
+
+is set. This flag is currently only supported on x86-64 for 64bit programs.
+<DT><B>MAP_POPULATE</B> (since Linux 2.5.46)
+
+<DD>
+Populate (prefault) pagetables.
+<DT><B>MAP_NONBLOCK</B> (since Linux 2.5.46)
+
+<DD>
+Do not block on IO.
+</DL>
+<P>
+
+Some systems document the additional flags MAP_AUTOGROW, MAP_AUTORESRV,
+MAP_COPY, and MAP_LOCAL.
+<P>
+
+<I>fd</I>
+
+should be a valid file descriptor, unless MAP_ANONYMOUS is set,
+in which case the argument is ignored.
+<P>
+
+<I>offset</I>
+
+should be a multiple of the page size as returned by
+<B><A HREF="../man2/getpagesize.2.html">getpagesize</A></B>(2).
+
+<P>
+
+Memory mapped by
+<B>mmap</B>
+
+is preserved across
+<B><A HREF="../man2/fork.2.html">fork</A></B>(2),
+
+with the same attributes.
+<P>
+
+A file is mapped in multiples of the page size. For a file that is not
+a multiple of the page size, the remaining memory is zeroed when mapped,
+and writes to that region are not written out to the file. The effect of
+changing the size of the underlying file of a mapping on the pages that
+correspond to added or removed regions of the file is unspecified.
+<P>
+The
+<B>munmap</B>
+
+system call deletes the mappings for the specified address range, and
+causes further references to addresses within the range to generate
+invalid memory references.  The region is also automatically unmapped
+when the process is terminated.  On the other hand, closing the file
+descriptor does not unmap the region.
+<P>
+
+The address
+<I>start</I>
+
+must be a multiple of the page size. All pages containing a part
+of the indicated range are unmapped, and subsequent references
+to these pages will generate SIGSEGV. It is not an error if the
+indicated range does not contain any mapped pages.
+<P>
+For file-backed mappings, the
+<B>st_atime</B>
+
+field for the mapped file may be updated at any time between the
+<B>mmap()</B>
+
+and the corresponding unmapping; the first reference to a mapped
+page will update the field if it has not been already.
+<P>
+
+The
+<B>st_ctime</B>
+
+and
+<B>st_mtime</B>
+
+field for a file mapped with PROT_WRITE and MAP_SHARED will be updated after
+a write to the mapped region, and before a subsequent
+<I>msync()</I>
+
+with the MS_SYNC or MS_ASYNC flag, if one occurs.
+<A NAME="lbAE">&nbsp;</A>
+<H2>RETURN VALUE</H2>
+
+On success,
+<B>mmap</B>
+
+returns a pointer to the mapped area.
+On error, the value
+<B>MAP_FAILED</B>
+
+(that is, (void *) -1) is returned, and
+<I>errno</I>
+
+is set appropriately.
+On success,
+<B>munmap</B>
+
+returns 0, on failure -1, and
+<I>errno</I>
+
+is set (probably to EINVAL).
+<A NAME="lbAF">&nbsp;</A>
+<H2>NOTES</H2>
+
+It is architecture dependent whether
+<I>PROT_READ</I>
+
+includes
+<I>PROT_EXEC</I>
+
+or not. Portable programs should always set
+<I>PROT_EXEC</I>
+
+if they intend to execute code in the new mapping.
+<A NAME="lbAG">&nbsp;</A>
+<H2>ERRORS</H2>
+
+<DL COMPACT>
+<DT><B>EACCES</B>
+
+<DD>
+A file descriptor refers to a non-regular file.
+Or MAP_PRIVATE was requested, but
+<I>fd</I>
+
+is not open for reading.
+Or MAP_SHARED was requested and PROT_WRITE is set, but
+<I>fd</I>
+
+is not open in read/write (O_RDWR) mode.
+Or PROT_WRITE is set, but the file is append-only.
+<DT><B>EAGAIN</B>
+
+<DD>
+The file has been locked, or too much memory has been locked.
+<DT><B>EBADF</B>
+
+<DD>
+<I>fd</I>
+
+is not a valid file descriptor (and MAP_ANONYMOUS was not set).
+<DT><B>EINVAL</B>
+
+<DD>
+We don't like
+<I>start</I>
+
+or
+<I>length</I>
+
+or
+<I>offset</I>.
+
+(E.g., they are too large, or not aligned on a PAGESIZE boundary.)
+
+<DT><B>ENFILE</B>
+
+<DD>
+
+
+The system limit on the total number of open files has been reached.
+
+
+
+<DT><B>ENODEV</B>
+
+<DD>
+The underlying filesystem of the specified file does not support
+memory mapping.
+<DT><B>ENOMEM</B>
+
+<DD>
+No memory is available, or the process's maximum number of mappings would
+have been exceeded.
+<DT><B>EPERM</B>
+
+<DD>
+The
+<I>prot</I>
+
+argument asks for
+<B>PROT_EXEC</B>
+
+but the mapped area belongs to a file on a filesystem that
+was mounted no-exec.
+
+<DT><B>ETXTBSY</B>
+
+<DD>
+MAP_DENYWRITE was set but the object specified by
+<I>fd</I>
+
+is open for writing.
+</DL>
+<P>
+
+Use of a mapped region can result in these signals:
+<DL COMPACT>
+<DT><B>SIGSEGV</B>
+
+<DD>
+Attempted write into a region specified to mmap as read-only.
+<DT><B>SIGBUS</B>
+
+<DD>
+Attempted access to a portion of the buffer that does not correspond
+to the file (for example, beyond the end of the file, including the
+case where another process has truncated the file).
+</DL>
+<A NAME="lbAH">&nbsp;</A>
+<H2>AVAILABILITY</H2>
+
+On POSIX systems on which
+<B>mmap</B>,
+
+<B>msync</B>
+
+and
+<B>munmap</B>
+
+are available,
+<B>_POSIX_MAPPED_FILES</B>
+
+is defined in &lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt; to a value greater than 0. (See also
+<B><A HREF="../man3/sysconf.3.html">sysconf</A></B>(3).)
+
+
+
+
+<A NAME="lbAI">&nbsp;</A>
+<H2>CONFORMING TO</H2>
+
+SVr4, POSIX.1b (formerly POSIX.4), 4.4BSD, SUSv2.
+SVr4 documents additional error codes ENXIO and ENODEV.
+SUSv2 documents additional error codes EMFILE and EOVERFLOW.
+<A NAME="lbAJ">&nbsp;</A>
+<H2>BUGS</H2>
+
+On Linux there are no guarantees like those suggested above
+under MAP_NORESERVE. By default, any process can be killed
+at any moment when the system runs out of memory.
+<A NAME="lbAK">&nbsp;</A>
+<H2>SEE ALSO</H2>
+
+<B><A HREF="../man2/getpagesize.2.html">getpagesize</A></B>(2),
+
+<B><A HREF="../man2/mlock.2.html">mlock</A></B>(2),
+
+<B><A HREF="../man2/mmap2.2.html">mmap2</A></B>(2),
+
+<B><A HREF="../man2/mremap.2.html">mremap</A></B>(2),
+
+<B><A HREF="../man2/msync.2.html">msync</A></B>(2),
+
+<B><A HREF="../man2/shm_open.2.html">shm_open</A></B>(2)
+
+<BR>
+
+B.O. Gallmeister, POSIX.4, O'Reilly, pp. 128-129 and 389-391.
+
+
+
+
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">NAME</A><DD>
+<DT><A HREF="#lbAC">SYNOPSIS</A><DD>
+<DT><A HREF="#lbAD">DESCRIPTION</A><DD>
+<DT><A HREF="#lbAE">RETURN VALUE</A><DD>
+<DT><A HREF="#lbAF">NOTES</A><DD>
+<DT><A HREF="#lbAG">ERRORS</A><DD>
+<DT><A HREF="#lbAH">AVAILABILITY</A><DD>
+<DT><A HREF="#lbAI">CONFORMING TO</A><DD>
+<DT><A HREF="#lbAJ">BUGS</A><DD>
+<DT><A HREF="#lbAK">SEE ALSO</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
+using the manual pages.<BR>
+Time: 02:10:00 GMT, April 20, 2020
+</BODY>
+</HTML>

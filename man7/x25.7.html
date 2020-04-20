@@ -1,0 +1,184 @@
+<!--
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of X25</TITLE>
+</HEAD><BODY>
+<H1>X25</H1>
+Section: Linux Programmer's Manual (4)<BR>Updated: 1998-12-01<BR><A HREF="#index">Index</A>
+<A HREF="../index.html">Return to Main Contents</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>NAME</H2>
+
+x25, PF_X25 - ITU-T X.25 / ISO-8208 protocol interface. 
+<P>
+<A NAME="lbAC">&nbsp;</A>
+<H2>SYNOPSIS</H2>
+
+<B>#include &lt;<A HREF="file:///usr/include/sys/socket.h">sys/socket.h</A>&gt;</B>
+
+<BR>
+
+<B>#include &lt;<A HREF="file:///usr/include/linux/x25.h">linux/x25.h</A>&gt;</B>
+
+<P>
+<B>x25_socket = socket(PF_X25, SOCK_SEQPACKET, 0); </B>
+
+<P>
+<A NAME="lbAD">&nbsp;</A>
+<H2>DESCRIPTION</H2>
+
+X25 sockets provide an interface to the X.25 packet layer protocol.
+This allows applications to
+communicate over a public X.25 data network as standardised by
+International Telecommunication Union's recommendation X.25
+(X.25 DTE-DCE mode). X25 sockets can also be used for communication
+without an intermediate X.25 network (X.25 DTE-DTE mode) as described
+in ISO-8208.
+<P>
+
+Message boundaries are preserved - a 
+<B><A HREF="../man2/read.2.html">read</A></B>(2)
+
+from a socket will
+retrieve the same chunk of data as output with the corresponding
+<B><A HREF="../man2/write.2.html">write</A></B>(2)
+
+to the peer socket. When necessary, the kernel takes care
+of segmenting and re-assembling long messages by means of
+the X.25 M-bit. There is no hard-coded upper limit for the
+message size. However, re-assembling of a long message might fail if
+there is a temporary lack of system resources or when other constraints
+(such as socket memory or buffer size limits) become effective. If that
+occurs, the X.25 connection will be reset.
+<A NAME="lbAE">&nbsp;</A>
+<H2>SOCKET ADDRESSES</H2>
+
+The 
+<B>AF_X25 </B>
+
+socket address family uses the
+<B>struct sockaddr_x25</B>
+
+for representing network addresses as defined in ITU-T
+recommendation X.121.
+<P>
+
+<DL COMPACT><DT><DD>
+<PRE>
+
+struct sockaddr_x25 {
+    sa_family_t   sx25_family;  /* must be AF_X25 */
+    x25_address   sx25_addr;    /* X.121 Address */
+};
+
+</PRE>
+
+</DL>
+
+<P>
+
+<I>sx25_addr</I>
+
+contains a char array
+<I>x25_addr[] </I>
+
+to be interpreted as a null-terminated string.
+<I>sx25_addr.x25_addr[]</I>
+
+consists of up to 15 (not counting the terminating 0) ASCII
+characters forming the X.121 address.
+Only the decimal digit characters from `0' to `9' are allowed.
+<A NAME="lbAF">&nbsp;</A>
+<H2>SOCKET OPTIONS</H2>
+
+The following X.25 specific socket options can be set by using
+<B><A HREF="../man2/setsockopt.2.html">setsockopt</A></B>(2)
+
+and read with 
+<B><A HREF="../man2/getsockopt.2.html">getsockopt</A></B>(2)
+
+with the level parameter set to 
+<B>SOL_X25</B>.
+
+<DL COMPACT>
+<DT><B>X25_QBITINCL</B>
+
+<DD>
+Controls whether the X.25 Q-bit (Qualified Data Bit) is accessible by the
+user. It expects an integer argument. If set to 0 (default),
+the Q-bit is never set for outgoing packets and the Q-bit of incoming
+packets is ignored. If set to 1, an additional first byte is prepended
+to each message read from or written to the socket. For data read from
+the socket, a 0 first byte indicates that the Q-bits of the corresponding
+incoming data packets were not set. A first byte with value 1 indicates
+that the Q-bit of the corresponding incoming data packets was set.
+If the first byte of the data written to the socket is 1 the Q-bit of the
+corresponding outgoing data packets will be set. If the first byte is 0
+the Q-bit will not be set.
+</DL>
+<A NAME="lbAG">&nbsp;</A>
+<H2>BUGS</H2>
+
+Plenty, as the X.25 PLP implementation is 
+<B>CONFIG_EXPERIMENTAL</B>.
+
+<P>
+
+This man page is incomplete.
+<P>
+
+There is no dedicated application programmer's header file yet;
+you need to include the kernel header file 
+<B>&lt;<A HREF="file:///usr/include/linux/x25.h">linux/x25.h</A>&gt;</B>.
+
+<B>CONFIG_EXPERIMENTAL </B>
+
+might also imply that future versions of the
+interface are not binary compatible. 
+<P>
+
+X.25 N-Reset events are not propagated to the user process yet. Thus,
+if a reset occurred, data might be lost without notice. 
+<A NAME="lbAH">&nbsp;</A>
+<H2>SEE ALSO</H2>
+
+<B><A HREF="../man2/socket.2.html">socket</A></B>(2),
+
+<B><A HREF="../man7/socket.7.html">socket</A></B>(7)
+
+<P>
+
+Jonathan Simon Naylor: 
+"The Re-Analysis and Re-Implementation of X.25."
+The URL is
+<DL COMPACT><DT><DD>
+<I><A HREF="ftp://ftp.pspt.fi/pub/ham/linux/ax25/x25doc.tgz">ftp://ftp.pspt.fi/pub/ham/linux/ax25/x25doc.tgz</A></I>
+
+</DL>
+
+<A NAME="lbAI">&nbsp;</A>
+<H2>VERSIONS</H2>
+
+The PF_X25 protocol family is a new feature of Linux 2.2.
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">NAME</A><DD>
+<DT><A HREF="#lbAC">SYNOPSIS</A><DD>
+<DT><A HREF="#lbAD">DESCRIPTION</A><DD>
+<DT><A HREF="#lbAE">SOCKET ADDRESSES</A><DD>
+<DT><A HREF="#lbAF">SOCKET OPTIONS</A><DD>
+<DT><A HREF="#lbAG">BUGS</A><DD>
+<DT><A HREF="#lbAH">SEE ALSO</A><DD>
+<DT><A HREF="#lbAI">VERSIONS</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
+using the manual pages.<BR>
+Time: 02:11:28 GMT, April 20, 2020
+</BODY>
+</HTML>

@@ -1,0 +1,353 @@
+<!--
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of WAIT</TITLE>
+</HEAD><BODY>
+<H1>WAIT</H1>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2000-07-24<BR><A HREF="#index">Index</A>
+<A HREF="../index.html">Return to Main Contents</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>NAME</H2>
+
+wait, waitpid - wait for process termination
+<A NAME="lbAC">&nbsp;</A>
+<H2>SYNOPSIS</H2>
+
+<B>#include &lt;<A HREF="file:///usr/include/sys/types.h">sys/types.h</A>&gt;</B>
+
+<BR>
+
+<B>#include &lt;<A HREF="file:///usr/include/sys/wait.h">sys/wait.h</A>&gt;</B>
+
+<P>
+<B>pid_t wait(int *</B><I>status</I><B>);</B>
+
+<BR>
+
+<B>pid_t waitpid(pid_t </B><I>pid</I><B>, int *</B><I>status</I><B>, int </B><I>options</I><B>);</B>
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>DESCRIPTION</H2>
+
+The
+<B>wait</B>
+
+function suspends execution of the current process until a child has
+exited, or until a signal is delivered whose action is to terminate
+the current process or to call a signal handling function.  If a child
+has already exited by the time of the call (a so-called &quot;zombie&quot;
+process), the function returns immediately.  Any system resources used
+by the child are freed.
+<P>
+The
+<B>waitpid</B>
+
+function suspends execution of the current process until a
+child as specified by the
+<I>pid</I>
+
+argument has exited, or until a signal is delivered whose action is to
+terminate the current process or to call a signal handling function.
+If a child as requested by
+<I>pid</I>
+
+has already exited by the time of the call (a so-called &quot;zombie&quot;
+process), the function returns immediately.  Any system resources used
+by the child are freed.
+<P>
+The value of
+<I>pid</I>
+
+can be one of:
+<DL COMPACT>
+<DT>&lt; -1<DD>
+which means to wait for any child process whose process group ID is
+equal to the absolute value of
+<I>pid</I>.
+
+<DT>-1<DD>
+which means to wait for any child process; this is the same
+behaviour which
+<B>wait</B>
+
+exhibits.
+<DT>0<DD>
+which means to wait for any child process whose process group ID is
+equal to that of the calling process.
+<DT>&gt; 0<DD>
+which means to wait for the child whose process ID is equal to the
+value of
+<I>pid</I>.
+
+</DL>
+<P>
+
+The value of
+<I>options</I>
+
+is an OR of zero or more of the following constants:
+<DL COMPACT>
+<DT><B>WNOHANG</B>
+
+<DD>
+which means to return immediately if no child has exited.
+<DT><B>WUNTRACED</B>
+
+<DD>
+which means to also return for children which are stopped
+(but not traced), and whose status has not been reported.
+Status for traced children which are stopped is provided
+also without this option.
+</DL>
+<P>
+
+(For Linux-only options, see below.)
+<P>
+
+If
+<I>status</I>
+
+is not
+<B>NULL</B>,
+
+<B>wait</B>
+
+or
+<B>waitpid</B>
+
+store status information in the location pointed to by
+<I>status</I>.
+
+<P>
+This status can be evaluated with the following macros (these macros take
+the stat buffer (an <B>int</B>) as an argument --- not a pointer to the
+buffer!):
+<DL COMPACT>
+<DT><B>WIFEXITED(</B><I>status</I><B>)</B>
+
+<DD>
+returns true if the child terminated normally, that is,
+by calling exit() or _exit(), or by returning from main().
+<DT><B>WEXITSTATUS(</B><I>status</I><B>)</B>
+
+<DD>
+evaluates to the least significant eight bits of the return code of
+the child which terminated, which may have been set as the argument to
+a call to exit() or _exit() or as the argument for a return statement
+in the main program.  This macro can only be evaluated if
+<B>WIFEXITED</B>
+
+returned true.
+<DT><B>WIFSIGNALED(</B><I>status</I><B>)</B>
+
+<DD>
+returns true if the child process terminated because of a signal
+which was not caught.
+<DT><B>WTERMSIG(</B><I>status</I><B>)</B>
+
+<DD>
+returns the number of the signal that caused the child process to
+terminate. This macro can only be evaluated if
+<B>WIFSIGNALED</B>
+
+returned non-zero.
+<DT><B>WIFSTOPPED(</B><I>status</I><B>)</B>
+
+<DD>
+returns true if the child process which caused the return is currently
+stopped; this is only possible if the call was done using
+<B>WUNTRACED</B>
+
+or when the child is being traced (see
+<B><A HREF="../man2/ptrace.2.html">ptrace</A></B>(2)).
+
+<DT><B>WSTOPSIG(</B><I>status</I><B>)</B>
+
+<DD>
+returns the number of the signal which caused the child to stop.  This
+macro can only be evaluated if
+<B>WIFSTOPPED</B>
+
+returned non-zero.
+</DL>
+<P>
+
+Some versions of Unix (e.g. Linux, Solaris, but not AIX, SunOS)
+also define a macro
+<B>WCOREDUMP(</B><I>status</I><B>)</B>
+
+to test whether the child process dumped core. Only use this
+enclosed in #ifdef WCOREDUMP ... #endif.
+<A NAME="lbAE">&nbsp;</A>
+<H2>RETURN VALUE</H2>
+
+The process ID of the child which exited, or zero if
+<B>WNOHANG</B>
+
+was used and no child was available, or -1 on error (in which case
+<I>errno</I>
+
+is set to an appropriate value).
+<A NAME="lbAF">&nbsp;</A>
+<H2>ERRORS</H2>
+
+<DL COMPACT>
+<DT><B>ECHILD</B> (for <B>wait</B>)
+
+<DD>
+The calling process does not have any unwaited-for children.
+<DT><B>ECHILD</B> (for <B>waitpid</B>)
+
+<DD>
+The process specified in
+<I>pid</I>
+
+does not exist or is not a child of the calling process.
+(This can happen for one's own child if the action for SIGCHLD
+is set to SIG_IGN. See also the LINUX NOTES section about threads.)
+<DT><B>EINTR</B>
+
+<DD>
+<B>WNOHANG</B>
+
+was not set and an unblocked signal or a
+<B>SIGCHLD</B>
+
+was caught.
+<DT><B>EINVAL</B>
+
+<DD>
+The
+<I>options</I>
+
+argument was invalid.
+</DL>
+<A NAME="lbAG">&nbsp;</A>
+<H2>NOTES</H2>
+
+The Single Unix Specification describes a flag SA_NOCLDWAIT (not supported
+under Linux) such that if either this flag is set, or the action for
+SIGCHLD is set to SIG_IGN
+then children that exit do not become zombies and a call to
+<B>wait</B>()
+
+or
+<B>waitpid</B>()
+
+will block until all children have exited, and then fail with
+<I>errno</I>
+
+set to ECHILD.
+<P>
+
+The original POSIX standard left the behaviour of setting SIGCHLD to
+SIG_IGN unspecified.
+Later standards, including SUSv2 and POSIX 1003.1-2001 specify the
+behaviour just described as an XSI-compliance option.
+Linux does not conform to the second of the two points just described:
+if a
+<B>wait</B>() or <B>waitpid</B>()
+
+call is made while SIGCHLD is being ignored,
+the call behaves just as though SIGCHLD were not being igored, that is,
+the call blocks until the next child terminates and then returns the
+PID and status of that child.
+<A NAME="lbAH">&nbsp;</A>
+<H2>LINUX NOTES</H2>
+
+In the Linux kernel, a kernel-scheduled thread is not a distinct
+construct from a process. Instead, a thread is simply a process
+that is created using the Linux-unique
+<B><A HREF="../man2/clone.2.html">clone</A></B>(2)
+
+system call; other routines such as the portable
+<B><A HREF="../man3/pthread_create.3.html">pthread_create</A></B>(3)
+
+call are implemented using
+<B><A HREF="../man2/clone.2.html">clone</A></B>(2).
+
+Before Linux 2.4, a thread was just a special case of a process,
+and as a consequence one thread could not wait on the children
+of another thread, even when the latter belongs to the same thread group.
+However, POSIX prescribes such functionality, and since Linux 2.4
+a thread can, and by default will, wait on children of other threads
+in the same thread group.
+<P>
+
+The following Linux-specific
+<I>options</I>
+
+are for use with children created using
+<B><A HREF="../man2/clone.2.html">clone</A></B>(2).
+
+<DL COMPACT>
+<DT><B>__WCLONE</B>
+
+<DD>
+
+Wait for &quot;clone&quot; children only.  If omitted then wait
+for &quot;non-clone&quot; children only.  (A &quot;clone&quot; child is one
+which delivers no signal, or a signal other than
+<B>SIGCHLD</B>
+
+to its parent upon termination.)
+This option is ignored if
+<B>__WALL</B>
+
+is also specified.
+<DT><B>__WALL</B>
+
+<DD>
+
+(Since Linux 2.4) Wait for all children, regardless of
+type (&quot;clone&quot; or &quot;non-clone&quot;).
+<DT><B>__WNOTHREAD</B>
+
+<DD>
+
+(Since Linux 2.4) Do not wait for children of other threads in
+the same thread group. This was the default before Linux 2.4.
+</DL>
+<A NAME="lbAI">&nbsp;</A>
+<H2>CONFORMING TO</H2>
+
+SVr4, POSIX.1
+<A NAME="lbAJ">&nbsp;</A>
+<H2>SEE ALSO</H2>
+
+<B><A HREF="../man2/clone.2.html">clone</A></B>(2),
+
+<B><A HREF="../man2/ptrace.2.html">ptrace</A></B>(2),
+
+<B><A HREF="../man2/signal.2.html">signal</A></B>(2),
+
+<B><A HREF="../man2/wait4.2.html">wait4</A></B>(2),
+
+<B><A HREF="../man3/pthread_create.3.html">pthread_create</A></B>(3),
+
+<B><A HREF="../man7/signal.7.html">signal</A></B>(7)
+
+
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">NAME</A><DD>
+<DT><A HREF="#lbAC">SYNOPSIS</A><DD>
+<DT><A HREF="#lbAD">DESCRIPTION</A><DD>
+<DT><A HREF="#lbAE">RETURN VALUE</A><DD>
+<DT><A HREF="#lbAF">ERRORS</A><DD>
+<DT><A HREF="#lbAG">NOTES</A><DD>
+<DT><A HREF="#lbAH">LINUX NOTES</A><DD>
+<DT><A HREF="#lbAI">CONFORMING TO</A><DD>
+<DT><A HREF="#lbAJ">SEE ALSO</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
+using the manual pages.<BR>
+Time: 02:10:10 GMT, April 20, 2020
+</BODY>
+</HTML>

@@ -1,0 +1,195 @@
+<!--
+Copyright 1993 Rickard E. Faith (faith@cs.unc.edu)
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of GETGROUPS</TITLE>
+</HEAD><BODY>
+<H1>GETGROUPS</H1>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2004-05-27<BR><A HREF="#index">Index</A>
+<A HREF="../index.html">Return to Main Contents</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>NAME</H2>
+
+getgroups, setgroups - get/set list of supplementary group IDs
+<A NAME="lbAC">&nbsp;</A>
+<H2>SYNOPSIS</H2>
+
+<B>#include &lt;<A HREF="file:///usr/include/sys/types.h">sys/types.h</A>&gt;</B>
+
+<BR>
+
+<B>#include &lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;</B>
+
+<P>
+<B>int getgroups(int </B><I>size</I><B>, gid_t </B><I>list</I><B>[]);</B>
+
+<P>
+<B>#include &lt;<A HREF="file:///usr/include/grp.h">grp.h</A>&gt;</B>
+
+<P>
+<B>int setgroups(size_t </B><I>size</I><B>, const gid_t *</B><I>list</I><B>);</B>
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>DESCRIPTION</H2>
+
+<DL COMPACT>
+<DT><B>getgroups</B>
+
+<DD>
+Up to
+<I>size</I>
+
+supplementary group IDs (of the calling process) are returned in
+<I>list</I>.
+
+It is unspecified whether the effective group ID of the calling process
+is included in the returned list. (Thus, an application should also call
+<B><A HREF="../man2/getegid.2.html">getegid</A></B>(2)
+
+and add or remove the resulting value.)
+If
+<I>size</I>
+
+is zero,
+<I>list</I>
+
+is not modified, but the total number of supplementary group IDs for the
+process is returned.
+<DT><B>setgroups</B>
+
+<DD>
+Sets the supplementary group IDs for the process.
+Appropriate privileges (Linux: the
+<B>CAP_SETGID</B>
+
+capability) are required.
+</DL>
+<A NAME="lbAE">&nbsp;</A>
+<H2>RETURN VALUE</H2>
+
+<DL COMPACT>
+<DT><B>getgroups</B>
+
+<DD>
+On success, the number of supplementary group IDs is returned.
+On error, -1 is returned, and
+<I>errno</I>
+
+is set appropriately.
+<DT><B>setgroups</B>
+
+<DD>
+On success, zero is returned.  On error, -1 is returned, and
+<I>errno</I>
+
+is set appropriately.
+</DL>
+<A NAME="lbAF">&nbsp;</A>
+<H2>ERRORS</H2>
+
+<DL COMPACT>
+<DT><B>EFAULT</B>
+
+<DD>
+<I>list</I>
+
+has an invalid address.
+<DT><B>EINVAL</B>
+
+<DD>
+For
+<B>setgroups</B>,
+
+<I>size</I>
+
+is greater than
+<B>NGROUPS</B>
+
+(32 for Linux 2.0.32).
+For
+<B>getgroups</B>,
+
+<I>size</I>
+
+is less than the number of supplementary group IDs, but is not zero.
+<DT><B>EPERM</B>
+
+<DD>
+The calling process has insufficient privilege to call 
+<B>setgroups</B>.
+
+</DL>
+<A NAME="lbAG">&nbsp;</A>
+<H2>NOTES</H2>
+
+A process can have up to at least NGROUPS_MAX supplementary group IDs
+in addition to the effective group ID. The set of supplementary group IDs
+is inherited from the parent process and may be changed using
+<B>setgroups</B>.
+
+The maximum number of supplementary group IDs can be found using
+<B><A HREF="../man3/sysconf.3.html">sysconf</A></B>(3):
+
+<PRE>
+    long ngroups_max;
+    ngroups_max = sysconf(_SC_NGROUPS_MAX);
+</PRE>
+
+The maximal return value of
+<B>getgroups</B>
+
+cannot be larger than one more than the value obtained this way.
+<P>
+
+The prototype for
+<B>setgroups</B>
+
+is only available if
+<B>_BSD_SOURCE</B>
+
+is defined (either explicitly, or implicitly, by not defining
+_POSIX_SOURCE or compiling with the -ansi flag).
+<A NAME="lbAH">&nbsp;</A>
+<H2>CONFORMING TO</H2>
+
+SVr4, SVID (issue 4 only; these calls were not present in SVr3),
+X/OPEN, 4.3BSD.  The
+<B>getgroups</B>
+
+function is in POSIX.1.  Since
+<B>setgroups</B>
+
+requires privilege, it is not covered by POSIX.1.
+<A NAME="lbAI">&nbsp;</A>
+<H2>SEE ALSO</H2>
+
+<B><A HREF="../man2/getgid.2.html">getgid</A></B>(2),
+
+<B><A HREF="../man2/setgid.2.html">setgid</A></B>(2),
+
+<B><A HREF="../man3/initgroups.3.html">initgroups</A></B>(3),
+
+<B><A HREF="../man7/capabilities.7.html">capabilities</A></B>(7)
+
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">NAME</A><DD>
+<DT><A HREF="#lbAC">SYNOPSIS</A><DD>
+<DT><A HREF="#lbAD">DESCRIPTION</A><DD>
+<DT><A HREF="#lbAE">RETURN VALUE</A><DD>
+<DT><A HREF="#lbAF">ERRORS</A><DD>
+<DT><A HREF="#lbAG">NOTES</A><DD>
+<DT><A HREF="#lbAH">CONFORMING TO</A><DD>
+<DT><A HREF="#lbAI">SEE ALSO</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
+using the manual pages.<BR>
+Time: 02:09:56 GMT, April 20, 2020
+</BODY>
+</HTML>

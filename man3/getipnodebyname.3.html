@@ -1,0 +1,379 @@
+<!--
+Copyright 2000 Sam Varshavchik &lt;mrsam@courier-mta.com&gt;
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of getipnodebyname</TITLE>
+</HEAD><BODY>
+<H1>getipnodebyname</H1>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2002-04-03<BR><A HREF="#index">Index</A>
+<A HREF="../index.html">Return to Main Contents</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>NAME</H2>
+
+getipnodebyname, getipnodebyaddr, freehostent - get network host names and addresses
+<A NAME="lbAC">&nbsp;</A>
+<H2>SYNOPSIS</H2>
+
+<PRE>
+<B>#include &lt;<A HREF="file:///usr/include/sys/types.h">sys/types.h</A>&gt;</B>
+<B>#include &lt;<A HREF="file:///usr/include/sys/socket.h">sys/socket.h</A>&gt;</B>
+<B>#include &lt;<A HREF="file:///usr/include/netdb.h">netdb.h</A>&gt;</B>
+
+<B>struct hostent *getipnodebyname(const char *</B><I>name</I><B>,</B>
+<B>                         int </B><I>af</I><B>, int </B><I>flags</I><B>,</B>
+<B>                         int *</B><I>error_num</I><B>);</B>
+
+<B>struct hostent *getipnodebyaddr(const void *</B><I>addr</I><B>,</B>
+<B>                         size_t </B><I>len</I><B>, int </B><I>af</I><B>,</B>
+<B>                         int *</B><I>error_num</I><B>);</B>
+
+<B>void freehostent(struct hostent *</B><I>ip</I><B>);</B>
+</PRE>
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>DESCRIPTION</H2>
+
+These functions are deprecated. Use
+<B><A HREF="../man3/getaddrinfo.3.html">getaddrinfo</A></B>(3)
+
+and
+<B><A HREF="../man3/getnameinfo.3.html">getnameinfo</A></B>(3)
+
+instead.
+<P>
+
+The
+<B><A HREF="../man3/getipnodebyname.3.html">getipnodebyname</A></B>(3)
+
+and
+<B><A HREF="../man3/getipnodebyaddr.3.html">getipnodebyaddr</A></B>(3)
+
+functions return the names and addresses of a network host.
+These functions return a pointer to the
+following structure:
+<P>
+<PRE>
+<B>struct  hostent {</B>
+<B>        char    *</B><I>h_name</I><B>;</B>
+<B>        char    **</B><I>h_aliases</I><B>;</B>
+<B>        int     </B><I>h_addrtype</I><B>;</B>
+<B>        int     </B><I>h_length</I><B>;</B>
+<B>        char    **</B><I>h_addr_list</I><B>;</B>
+<B>};</B>
+</PRE>
+
+<P>
+
+These functions replace the
+<B><A HREF="../man3/gethostbyname.3.html">gethostbyname</A></B>(3)
+
+and
+<B><A HREF="../man3/gethostbyaddr.3.html">gethostbyaddr</A></B>(3)
+
+functions, which could only access the IPv4 network address family.
+The
+<B><A HREF="../man3/getipnodebyname.3.html">getipnodebyname</A></B>(3)
+
+and
+<B><A HREF="../man3/getipnodebyaddr.3.html">getipnodebyaddr</A></B>(3)
+
+functions can access multiple network address families.
+<P>
+
+Unlike the
+<B>gethostby</B>
+
+functions,
+these
+functions return pointers to dynamically allocated memory.
+The
+<B><A HREF="../man3/freehostent.3.html">freehostent</A></B>(3)
+
+function is used to release the dynamically allocated memory
+after the caller no longer needs the
+<B>hostent</B>
+
+structure.
+<A NAME="lbAE">&nbsp;</A>
+<H3>getipnodebyname parameters</H3>
+
+The
+<B><A HREF="../man3/getipnodebyname.3.html">getipnodebyname</A></B>(3)
+
+function
+looks up network addresses for the host
+specified by the
+<I>name</I>
+
+parameter.
+The
+<I>af</I>
+
+parameter specifies one of the following values:
+<DL COMPACT>
+<DT><B>AF_INET</B>
+
+<DD>
+The
+<I>name</I>
+
+parameter points to a dotted-quad IPv4 address or a name
+of an IPv4 network host.
+<DT><B>AF_INET6</B>
+
+<DD>
+The
+<I>name</I>
+
+parameter points to a hexadecimal IPv6 address or a name
+of an IPv6 network host.
+</DL>
+<P>
+
+The
+<I>flags</I>
+
+parameter specifies additional options.
+More than one option can be specified by logically OR-ing
+them together.
+<I>flags</I>
+
+should be set to 0
+if no options are desired.
+<DL COMPACT>
+<DT><B>AI_V4MAPPED</B>
+
+<DD>
+This flag is used with
+<B>AF_INET6</B>
+
+to request a query for IPv4 addresses instead of
+IPv6 addresses; the IPv4 addresses will
+be mapped to IPv6 addresses.
+<DT><B>AI_ALL</B>
+
+<DD>
+This flag is used with
+<B>AI_V4MAPPED</B>
+
+to request a query for both IPv4 and IPv6 addresses.
+Any IPv4 address found will be mapped to an IPv6 address.
+<DT><B>AI_ADDRCONFIG</B>
+
+<DD>
+This flag is used with
+<B>AF_INET6</B>
+
+to
+further request that queries for IPv6 addresses should not be made unless
+the system has at least one IPv6 address assigned to a network interface,
+and that queries for IPv4 addresses should not be made unless the
+system has at least one IPv4 address assigned to a network interface.
+This flag may be used by itself or with the
+<B>AI_V4MAPPED</B>
+
+flag.
+<DT><B>AI_DEFAULT</B>
+
+<DD>
+This flag is equivalent to 
+<B>(AI_ADDRCONFIG | AI_V4MAPPED)</B>.
+
+</DL>
+<A NAME="lbAF">&nbsp;</A>
+<H3>getipnodebyaddr parameters</H3>
+
+The
+<B><A HREF="../man3/getipnodebyaddr.3.html">getipnodebyaddr</A></B>(3)
+
+function
+looks up the name of the host whose
+network address is
+specified by the
+<I>addr</I>
+
+parameter.
+The
+<I>af</I>
+
+parameter specifies one of the following values:
+<DL COMPACT>
+<DT><B>AF_INET</B>
+
+<DD>
+The
+<I>addr</I>
+
+parameter points to a
+<B>struct in_addr</B>
+
+and
+<I>len</I>
+
+must be set to
+<B>sizeof(struct in_addr)</B>.
+
+<DT><B>AF_INET6</B>
+
+<DD>
+The
+<I>addr</I>
+
+parameter points to a
+<B>struct in6_addr</B>
+
+and
+<I>len</I>
+
+must be set to
+<B>sizeof(struct in6_addr)</B>.
+
+</DL>
+<A NAME="lbAG">&nbsp;</A>
+<H2>RETURN VALUE</H2>
+
+A null pointer is returned if an error occurred, and
+<I>error_num</I>
+
+will contain an error code from the following list:
+<DL COMPACT>
+<DT><B>HOST_NOT_FOUND</B>
+
+<DD>
+The host name or network address was not found.
+<DT><B>NO_ADDRESS</B>
+
+<DD>
+The domain name server recognized the network address or name,
+but no answer was returned.
+This can happen if the network host has only IPv4 addresses and
+a request has been made for IPv6 information only, or vice versa.
+<DT><B>NO_RECOVERY</B>
+
+<DD>
+The domain name server returned a permanent failure response.
+<DT><B>TRY_AGAIN</B>
+
+<DD>
+The domain name server returned a temporary failure response.
+You might have better luck next time.
+</DL>
+<P>
+
+A successful query returns a pointer to a
+<B>hostent</B>
+
+structure that contains the following fields:
+<DL COMPACT>
+<DT><B>h_name</B>
+
+<DD>
+This is the official name of this network host.
+<DT><B>h_aliases</B>
+
+<DD>
+This is an array of pointers to unofficial aliases for the same host.
+The array is terminated by a null pointer.
+<DT><B>h_addrtype</B>
+
+<DD>
+This is a copy of the
+<I>af</I>
+
+parameter to
+<B><A HREF="../man3/getipnodebyname.3.html">getipnodebyname</A></B>(3)
+
+or
+<B><A HREF="../man3/getipnodebyaddr.3.html">getipnodebyaddr</A></B>(3).
+
+<I>h_addrtype</I>
+
+will always be
+<B>AF_INET</B>
+
+if the
+<I>af</I>
+
+parameter was
+<B>AF_INET</B>.
+
+<I>h_addrtype</I>
+
+will always be
+<B>AF_INET6</B>
+
+if the
+<I>af</I>
+
+parameter was
+<B>AF_INET6</B>.
+
+<DT><B>h_length</B>
+
+<DD>
+This field will be set to
+<B>sizeof(struct in_addr)</B>
+
+if
+<I>h_addrtype</I>
+
+is AF_INET, and to
+<B>sizeof(struct in6_addr)</B>
+
+if
+<I>h_addrtype</I>
+
+is AF_INET6.
+<DT><B>h_addr_list</B>
+
+<DD>
+This is an array of one or more pointers to network address structures for the
+network host.
+The array is terminated by a null pointer.
+</DL>
+<A NAME="lbAH">&nbsp;</A>
+<H2>NOTES</H2>
+
+These functions have been present in glibc 2.1.91-95, but were
+removed again. Several Unix-like systems support them, but all
+call them deprecated.
+<A NAME="lbAI">&nbsp;</A>
+<H2>CONFORMING TO</H2>
+
+RFC 2553.
+<A NAME="lbAJ">&nbsp;</A>
+<H2>SEE ALSO</H2>
+
+<B><A HREF="../man3/getaddrinfo.3.html">getaddrinfo</A></B>(3),
+
+<B><A HREF="../man3/getnameinfo.3.html">getnameinfo</A></B>(3),
+
+<B><A HREF="../man3/inet_ntop.3.html">inet_ntop</A></B>(3),
+
+<B><A HREF="../man3/inet_pton.3.html">inet_pton</A></B>(3)
+
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">NAME</A><DD>
+<DT><A HREF="#lbAC">SYNOPSIS</A><DD>
+<DT><A HREF="#lbAD">DESCRIPTION</A><DD>
+<DL>
+<DT><A HREF="#lbAE">getipnodebyname parameters</A><DD>
+<DT><A HREF="#lbAF">getipnodebyaddr parameters</A><DD>
+</DL>
+<DT><A HREF="#lbAG">RETURN VALUE</A><DD>
+<DT><A HREF="#lbAH">NOTES</A><DD>
+<DT><A HREF="#lbAI">CONFORMING TO</A><DD>
+<DT><A HREF="#lbAJ">SEE ALSO</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
+using the manual pages.<BR>
+Time: 02:10:38 GMT, April 20, 2020
+</BODY>
+</HTML>

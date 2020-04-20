@@ -1,0 +1,262 @@
+<!--
+Copyright (c) 1999 Andries Brouwer (aeb@cwi.nl), 1 Nov 1999
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of VFORK</TITLE>
+</HEAD><BODY>
+<H1>VFORK</H1>
+Section: Linux Programmer's Manual (2)<BR>Updated: 1999-11-01<BR><A HREF="#index">Index</A>
+<A HREF="../index.html">Return to Main Contents</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>NAME</H2>
+
+vfork - create a child process and block parent
+<A NAME="lbAC">&nbsp;</A>
+<H2>SYNOPSIS</H2>
+
+<B>#include &lt;<A HREF="file:///usr/include/sys/types.h">sys/types.h</A>&gt;</B>
+
+<BR>
+
+<B>#include &lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;</B>
+
+<P>
+<B>pid_t vfork(void);</B>
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>STANDARD DESCRIPTION</H2>
+
+(From XPG4 / SUSv2 / POSIX draft.)
+The
+<I>vfork</I>()
+
+function has the same effect as
+<I>fork</I>(),
+
+except that the behaviour is undefined if the process created by
+<I>vfork</I>()
+
+either modifies any data other than a variable of type pid_t used
+to store the return value from
+<I>vfork</I>(),
+
+or returns from the function in which
+<I>vfork</I>()
+
+was called, or calls any other function before successfully calling
+<I>_exit</I>()
+
+or one of the
+<I>exec</I>
+
+family of functions.
+<A NAME="lbAE">&nbsp;</A>
+<H2>ERRORS</H2>
+
+<DL COMPACT>
+<DT><B>EAGAIN</B>
+
+<DD>
+Too many processes - try again.
+<DT><B>ENOMEM</B>
+
+<DD>
+There is insufficient swap space for the new process.
+</DL>
+<A NAME="lbAF">&nbsp;</A>
+<H2>LINUX DESCRIPTION</H2>
+
+<B>vfork</B>,
+
+just like
+<B><A HREF="../man2/fork.2.html">fork</A></B>(2),
+
+creates a child process of the calling process.
+For details and return value and errors, see
+<B><A HREF="../man2/fork.2.html">fork</A></B>(2).
+
+<P>
+
+<B>vfork()</B>
+
+is a special case of
+<B><A HREF="../man2/clone.2.html">clone</A></B>(2).
+
+It is used to create new processes without copying the page tables of
+the parent process.  It may be useful in performance sensitive applications
+where a child will be created which then immediately issues an
+<I>execve()</I>.
+
+<P>
+
+<B>vfork()</B>
+
+differs from fork in that the parent is suspended until the child makes
+a call to
+<B><A HREF="../man2/execve.2.html">execve</A></B>(2)
+
+or
+<B><A HREF="../man2/_exit.2.html">_exit</A></B>(2).
+
+The child shares all memory with its parent, including the stack, until
+<I>execve()</I>
+
+is issued by the child.  The child must not return from the
+current function or call
+<I>exit()</I>,
+
+but may call
+<I>_exit()</I>.
+
+<P>
+
+Signal handlers are inherited, but not shared.  Signals to the parent
+arrive after the child releases the parent.
+<A NAME="lbAG">&nbsp;</A>
+<H2>HISTORIC DESCRIPTION</H2>
+
+Under Linux,
+<I>fork</I>()
+
+is implemented using copy-on-write pages, so the only penalty incurred by
+<I>fork</I>()
+
+is the time and memory required to duplicate the parent's page tables,
+and to create a unique task structure for the child.
+However, in the bad old days a
+<I>fork()</I>
+
+would require making a complete copy of the caller's data space,
+often needlessly, since usually immediately afterwards an
+<I>exec</I>()
+
+is done. Thus, for greater efficiency, BSD introduced the
+<B>vfork</B>
+
+system call, that did not fully copy the address space of
+the parent process, but borrowed the parent's memory and thread
+of control until a call to
+<I>execve</I>()
+
+or an exit occurred. The parent process was suspended while the
+child was using its resources.
+The use of vfork was tricky - for example, not modifying data
+in the parent process depended on knowing which variables are
+held in a register.
+<A NAME="lbAH">&nbsp;</A>
+<H2>BUGS</H2>
+
+It is rather unfortunate that Linux revived this spectre from the past.
+The BSD manpage states:
+&quot;This system call will be eliminated when proper system sharing mechanisms
+are implemented. Users should not depend on the memory sharing semantics of
+<I>vfork</I>
+
+as it will, in that case, be made synonymous to
+<I>fork</I>.&quot;
+<P>
+Formally speaking, the standard description given above does not allow
+one to use
+<I>vfork</I>()
+
+since a following
+<I>exec</I>
+
+might fail, and then what happens is undefined.
+<P>
+Details of the signal handling are obscure and differ between systems.
+The BSD manpage states:
+&quot;To avoid a possible deadlock situation, processes that are children
+in the middle of a
+<I>vfork</I>
+
+are never sent SIGTTOU or SIGTTIN signals; rather, output or
+<I>ioctl</I>s
+
+are allowed and input attempts result in an end-of-file indication.&quot;
+<P>
+Currently (Linux 2.3.25),
+<B><A HREF="../man1/strace.1.html">strace</A></B>(1)
+
+cannot follow
+<I>vfork()</I>
+
+and requires a kernel patch.
+<A NAME="lbAI">&nbsp;</A>
+<H2>HISTORY</H2>
+
+The
+<I>vfork</I>()
+
+system call appeared in 3.0BSD.
+
+
+In BSD 4.4 it was made synonymous to
+<I>fork</I>(),
+
+but NetBSD introduced it again,
+cf. <A HREF="http://www.netbsd.org/Documentation/kernel/vfork.html">http://www.netbsd.org/Documentation/kernel/vfork.html</A> .
+In Linux, it has been equivalent to
+<I>fork</I>()
+
+until 2.2.0-pre6 or so. Since 2.2.0-pre9 (on i386, somewhat later on
+other architectures) it is an independent system call. Support was
+added in glibc 2.0.112.
+<A NAME="lbAJ">&nbsp;</A>
+<H2>CONFORMING TO</H2>
+
+The
+<B>vfork</B>
+
+call may be a bit similar to calls with the same name in other
+operating systems. The requirements put on
+<B>vfork</B>
+
+by the standards are weaker than those put on
+<B>fork</B>,
+
+so an implementation where the two are synonymous
+is compliant. In particular, the programmer cannot
+rely on the parent remaining blocked until a call of
+<I>execve()</I>
+
+or
+<I>_exit()</I>
+
+and cannot rely on any specific behaviour w.r.t. shared memory.
+
+<A NAME="lbAK">&nbsp;</A>
+<H2>SEE ALSO</H2>
+
+<B><A HREF="../man2/clone.2.html">clone</A></B>(2),
+
+<B><A HREF="../man2/execve.2.html">execve</A></B>(2),
+
+<B><A HREF="../man2/fork.2.html">fork</A></B>(2),
+
+<B><A HREF="../man2/wait.2.html">wait</A></B>(2)
+
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">NAME</A><DD>
+<DT><A HREF="#lbAC">SYNOPSIS</A><DD>
+<DT><A HREF="#lbAD">STANDARD DESCRIPTION</A><DD>
+<DT><A HREF="#lbAE">ERRORS</A><DD>
+<DT><A HREF="#lbAF">LINUX DESCRIPTION</A><DD>
+<DT><A HREF="#lbAG">HISTORIC DESCRIPTION</A><DD>
+<DT><A HREF="#lbAH">BUGS</A><DD>
+<DT><A HREF="#lbAI">HISTORY</A><DD>
+<DT><A HREF="#lbAJ">CONFORMING TO</A><DD>
+<DT><A HREF="#lbAK">SEE ALSO</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
+using the manual pages.<BR>
+Time: 02:10:10 GMT, April 20, 2020
+</BODY>
+</HTML>

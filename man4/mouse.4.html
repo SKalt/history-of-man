@@ -1,0 +1,186 @@
+<!--
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of MOUSE</TITLE>
+</HEAD><BODY>
+<H1>MOUSE</H1>
+Section: Linux Programmer's Manual (4)<BR>Updated: 1996-02-10<BR><A HREF="#index">Index</A>
+<A HREF="../index.html">Return to Main Contents</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>NAME</H2>
+
+mouse - serial mouse interface
+<A NAME="lbAC">&nbsp;</A>
+<H2>CONFIG</H2>
+
+Serial mice are connected to a serial RS232/V24 dialout line, see
+<B><A HREF="../man4/ttys.4.html">ttys</A></B>(4)
+
+for a description.
+<A NAME="lbAD">&nbsp;</A>
+<H2>DESCRIPTION</H2>
+
+<A NAME="lbAE">&nbsp;</A>
+<H3>Introduction</H3>
+
+The pinout of the usual 9 pin plug as used for serial mice is:
+<P>
+<CENTER><TABLE>
+<TR VALIGN=top><TD ALIGN=right>pin</TD><TD ALIGN=center>name</TD><TD>used for<BR></TD></TR>
+<TR VALIGN=top><TD ALIGN=right>2</TD><TD ALIGN=center>RX</TD><TD>Data<BR></TD></TR>
+<TR VALIGN=top><TD ALIGN=right>3</TD><TD ALIGN=center>TX</TD><TD>-12 V, Imax = 10 mA<BR></TD></TR>
+<TR VALIGN=top><TD ALIGN=right>4</TD><TD ALIGN=center>DTR</TD><TD>+12 V, Imax = 10 mA<BR></TD></TR>
+<TR VALIGN=top><TD ALIGN=right>7</TD><TD ALIGN=center>RTS</TD><TD>+12 V, Imax = 10 mA<BR></TD></TR>
+<TR VALIGN=top><TD ALIGN=right>5</TD><TD ALIGN=center>GND</TD><TD>Ground<BR></TD></TR>
+</TABLE></CENTER>
+
+<P>
+This is the specification, in fact 9 V suffices with most mice.
+<P>
+
+The mouse driver can recognize a mouse by dropping RTS to low and raising
+it again.  About 14 ms later the mouse will send 0x4D ('M') on the data line.
+After a further 63 ms, a Microsoft-compatible 3-button mouse will send
+0x33 ('3').
+<P>
+
+The relative mouse movement is sent as <I>dx</I> (positive means right)
+and <I>dy</I> (positive means down).  Various mice can operate at different
+speeds.  To select speeds, cycle through the
+speeds 9600, 4800, 2400 and 1200 bit/s, each time writing the two characters
+from the table below and waiting 0.1 seconds.  The following table shows
+available speeds and the strings that select them:
+<P>
+<CENTER><TABLE>
+<TR VALIGN=top><TD>bit/s</TD><TD>string<BR></TD></TR>
+<TR VALIGN=top><TD>9600</TD><TD>*q<BR></TD></TR>
+<TR VALIGN=top><TD>4800</TD><TD>*p<BR></TD></TR>
+<TR VALIGN=top><TD>2400</TD><TD>*o<BR></TD></TR>
+<TR VALIGN=top><TD>1200</TD><TD>*n<BR></TD></TR>
+</TABLE></CENTER>
+
+<P>
+The first byte of a data packet can be used to synchronisation purposes.
+<A NAME="lbAF">&nbsp;</A>
+<H3>Microsoft protocol</H3>
+
+The <B>Microsoft</B> protocol uses 1 start bit, 7 data bits, no parity
+and one stop bit at the speed of 1200 bits/sec.  Data is sent to RxD in
+3-byte packets.  The <I>dx</I> and <I>dy</I> movements are sent as
+two's-complement, <I>lb</I> (<I>rb</I>) are set when the left (right)
+button is pressed:
+<P>
+<CENTER><TABLE>
+<TR VALIGN=top><TD ALIGN=right>byte</TD><TD ALIGN=center>d6</TD><TD ALIGN=center>d5</TD><TD ALIGN=center>d4</TD><TD ALIGN=center>d3</TD><TD ALIGN=center>d2</TD><TD ALIGN=center>d1</TD><TD ALIGN=center>d0<BR></TD></TR>
+<TR VALIGN=top><TD ALIGN=right>1</TD><TD ALIGN=center>1</TD><TD ALIGN=center>lb</TD><TD ALIGN=center>rb</TD><TD ALIGN=center>dy7</TD><TD ALIGN=center>dy6</TD><TD ALIGN=center>dx7</TD><TD ALIGN=center>dx6<BR></TD></TR>
+<TR VALIGN=top><TD ALIGN=right>2</TD><TD ALIGN=center>0</TD><TD ALIGN=center>dx5</TD><TD ALIGN=center>dx4</TD><TD ALIGN=center>dx3</TD><TD ALIGN=center>dx2</TD><TD ALIGN=center>dx1</TD><TD ALIGN=center>dx0<BR></TD></TR>
+<TR VALIGN=top><TD ALIGN=right>3</TD><TD ALIGN=center>0</TD><TD ALIGN=center>dy5</TD><TD ALIGN=center>dy4</TD><TD ALIGN=center>dy3</TD><TD ALIGN=center>dy2</TD><TD ALIGN=center>dy1</TD><TD ALIGN=center>dy0<BR></TD></TR>
+</TABLE></CENTER>
+
+<A NAME="lbAG">&nbsp;</A>
+<H3>3-button Microsoft protocol</H3>
+
+Original Microsoft mice only have two buttons.  However, there are some
+three button mice which also use the Microsoft protocol.  Pressing or
+releasing the middle button is reported by sending a packet with zero
+movement and no buttons pressed.
+(Thus, unlike for the other two buttons, the status of the middle
+button is not reported in each packet.)
+<A NAME="lbAH">&nbsp;</A>
+<H3>Logitech protocol</H3>
+
+Logitech serial 3-button mice use a different extension of the
+Microsoft protocol: when the middle button is up, the above 3-byte
+packet is sent. When the middle button is down a 4-byte packet is
+sent, where the 4th byte has value 0x20 (or at least has the 0x20
+bit set). In particular, a press of the middle button is reported
+as 0,0,0,0x20 when no other buttons are down.
+<A NAME="lbAI">&nbsp;</A>
+<H3>Mousesystems protocol</H3>
+
+The <B>Mousesystems</B> protocol uses 1 start bit, 8 data bits, no parity
+and two stop bits at the speed of 1200 bits/sec.  Data is sent to RxD in
+5-byte packets.  <I>dx</I> is sent as the sum of the two two's-complement
+values, <I>dy</I> is send as negated sum of the two two's-complement
+values.  <I>lb</I> (<I>mb</I>, <I>rb</I>) are cleared when the left (middle,
+right) button is pressed:
+<P>
+<CENTER><TABLE>
+<TR VALIGN=top><TD ALIGN=right>byte</TD><TD ALIGN=center>d7</TD><TD ALIGN=center>d6</TD><TD ALIGN=center>d5</TD><TD ALIGN=center>d4</TD><TD ALIGN=center>d3</TD><TD ALIGN=center>d2</TD><TD ALIGN=center>d1</TD><TD ALIGN=center>d0<BR></TD></TR>
+<TR VALIGN=top><TD ALIGN=right>1</TD><TD ALIGN=center>1</TD><TD ALIGN=center>0</TD><TD ALIGN=center>0</TD><TD ALIGN=center>0</TD><TD ALIGN=center>0</TD><TD ALIGN=center>lb</TD><TD ALIGN=center>mb</TD><TD ALIGN=center>rb<BR></TD></TR>
+<TR VALIGN=top><TD ALIGN=right>2</TD><TD ALIGN=center>0</TD><TD ALIGN=center>dxa6</TD><TD ALIGN=center>dxa5</TD><TD ALIGN=center>dxa4</TD><TD ALIGN=center>dxa3</TD><TD ALIGN=center>dxa2</TD><TD ALIGN=center>dxa1</TD><TD ALIGN=center>dxa0<BR></TD></TR>
+<TR VALIGN=top><TD ALIGN=right>3</TD><TD ALIGN=center>0</TD><TD ALIGN=center>dya6</TD><TD ALIGN=center>dya5</TD><TD ALIGN=center>dya4</TD><TD ALIGN=center>dya3</TD><TD ALIGN=center>dya2</TD><TD ALIGN=center>dya1</TD><TD ALIGN=center>dya0<BR></TD></TR>
+<TR VALIGN=top><TD ALIGN=right>4</TD><TD ALIGN=center>0</TD><TD ALIGN=center>dxb6</TD><TD ALIGN=center>dxb5</TD><TD ALIGN=center>dxb4</TD><TD ALIGN=center>dxb3</TD><TD ALIGN=center>dxb2</TD><TD ALIGN=center>dxb1</TD><TD ALIGN=center>dxb0<BR></TD></TR>
+<TR VALIGN=top><TD ALIGN=right>5</TD><TD ALIGN=center>0</TD><TD ALIGN=center>dyb6</TD><TD ALIGN=center>dyb5</TD><TD ALIGN=center>dyb4</TD><TD ALIGN=center>dyb3</TD><TD ALIGN=center>dyb2</TD><TD ALIGN=center>dyb1</TD><TD ALIGN=center>dyb0<BR></TD></TR>
+</TABLE></CENTER>
+
+<P>
+Bytes 4 and 5 describe the change that occurred since bytes 2 and 3
+were transmitted.
+<A NAME="lbAJ">&nbsp;</A>
+<H3>Sun protocol</H3>
+
+The <B>Sun</B> protocol is the 3-byte version of the above 5-byte
+Mousesystems protocol: the last two bytes are not sent.
+<A NAME="lbAK">&nbsp;</A>
+<H3>MM protocol</H3>
+
+The <B>MM</B> protocol uses 1 start bit, 8 data bits, odd parity and one
+stop bit at the speed of 1200 bits/sec.  Data is sent to RxD in 3-byte
+packets.  <I>dx</I> and <I>dy</I> are sent as single signed values, the
+sign bit indicating a negative value.  <I>lb</I> (<I>mb</I>, <I>rb</I>) are
+set when the left (middle, right) button is pressed:
+<P>
+<CENTER><TABLE>
+<TR VALIGN=top><TD ALIGN=right>byte</TD><TD ALIGN=center>d7</TD><TD ALIGN=center>d6</TD><TD ALIGN=center>d5</TD><TD ALIGN=center>d4</TD><TD ALIGN=center>d3</TD><TD ALIGN=center>d2</TD><TD ALIGN=center>d1</TD><TD ALIGN=center>d0<BR></TD></TR>
+<TR VALIGN=top><TD ALIGN=right>1</TD><TD ALIGN=center>1</TD><TD ALIGN=center>0</TD><TD ALIGN=center>0</TD><TD ALIGN=center>dxs</TD><TD ALIGN=center>dys</TD><TD ALIGN=center>lb</TD><TD ALIGN=center>mb</TD><TD ALIGN=center>rb<BR></TD></TR>
+<TR VALIGN=top><TD ALIGN=right>2</TD><TD ALIGN=center>0</TD><TD ALIGN=center>dx6</TD><TD ALIGN=center>dx5</TD><TD ALIGN=center>dx4</TD><TD ALIGN=center>dx3</TD><TD ALIGN=center>dx2</TD><TD ALIGN=center>dx1</TD><TD ALIGN=center>dx0<BR></TD></TR>
+<TR VALIGN=top><TD ALIGN=right>3</TD><TD ALIGN=center>0</TD><TD ALIGN=center>dy6</TD><TD ALIGN=center>dy5</TD><TD ALIGN=center>dy4</TD><TD ALIGN=center>dy3</TD><TD ALIGN=center>dy2</TD><TD ALIGN=center>dy1</TD><TD ALIGN=center>dy0<BR></TD></TR>
+</TABLE></CENTER>
+
+<P>
+<A NAME="lbAL">&nbsp;</A>
+<H2>FILES</H2>
+
+<DL COMPACT>
+<DT><I>/dev/mouse</I>
+
+<DD>
+A commonly used symlink pointing to a mouse device.
+<P>
+</DL>
+<A NAME="lbAM">&nbsp;</A>
+<H2>SEE ALSO</H2>
+
+<B><A HREF="../man4/ttys.4.html">ttys</A></B>(4),
+
+<B><A HREF="../man8/gpm.8.html">gpm</A></B>(8)
+
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">NAME</A><DD>
+<DT><A HREF="#lbAC">CONFIG</A><DD>
+<DT><A HREF="#lbAD">DESCRIPTION</A><DD>
+<DL>
+<DT><A HREF="#lbAE">Introduction</A><DD>
+<DT><A HREF="#lbAF">Microsoft protocol</A><DD>
+<DT><A HREF="#lbAG">3-button Microsoft protocol</A><DD>
+<DT><A HREF="#lbAH">Logitech protocol</A><DD>
+<DT><A HREF="#lbAI">Mousesystems protocol</A><DD>
+<DT><A HREF="#lbAJ">Sun protocol</A><DD>
+<DT><A HREF="#lbAK">MM protocol</A><DD>
+</DL>
+<DT><A HREF="#lbAL">FILES</A><DD>
+<DT><A HREF="#lbAM">SEE ALSO</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
+using the manual pages.<BR>
+Time: 02:11:21 GMT, April 20, 2020
+</BODY>
+</HTML>

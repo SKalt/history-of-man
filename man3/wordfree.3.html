@@ -1,0 +1,294 @@
+<!--
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of WORDEXP</TITLE>
+</HEAD><BODY>
+<H1>WORDEXP</H1>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2003-11-11<BR><A HREF="#index">Index</A>
+<A HREF="../index.html">Return to Main Contents</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>NAME</H2>
+
+wordexp, wordfree - perform word expansion like a posix-shell
+<A NAME="lbAC">&nbsp;</A>
+<H2>SYNOPSIS</H2>
+
+<P>
+<B>#include &lt;<A HREF="file:///usr/include/wordexp.h">wordexp.h</A>&gt;</B>
+
+<P>
+<B>int wordexp(const char *</B><I>s</I><B>, wordexp_t *</B><I>p</I><B>, int </B><I>flags</I><B>);</B>
+
+<P>
+<B>void wordfree(wordexp_t *</B><I>p</I><B>);</B>
+
+<P>
+<A NAME="lbAD">&nbsp;</A>
+<H2>DESCRIPTION</H2>
+
+The function
+<B>wordexp() </B>
+
+performs a shell-like expansion of the string
+<I>s</I>
+
+and returns the result in the structure pointed to by
+<I>p</I>.
+
+The data type
+<B>wordexp_t</B>
+
+is a structure that at least has the fields
+<I>we_wordc</I>,
+
+<I>we_wordv</I>,
+
+and
+<I>we_offs</I>.
+
+The field
+<I>we_wordc</I>
+
+is a
+<B>size_t</B>
+
+that gives the number of words in the expansion of
+<I>s</I>.
+
+The field
+<I>we_wordv</I>
+
+is a
+<B>char **</B>
+
+that points to the array of words found.
+The field
+<I>we_offs</I>
+
+of type
+<B>size_t</B>
+
+is sometimes (depending on
+<I>flags</I>,
+
+see below) used to indicate the number of initial elements in the
+<I>we_wordv</I>
+
+array that should be filled with NULLs.
+<P>
+
+The function 
+<B>wordfree() </B>
+
+frees the allocated memory again. More precisely, it does not free
+its argument, but it frees the array
+<I>we_wordv</I>
+
+and the strings that points to.
+<P>
+<A NAME="lbAE">&nbsp;</A>
+<H2>EXAMPLE</H2>
+
+First a small example. The output is approximately that of &quot;ls [a-c]*.c&quot;.
+<P>
+
+<PRE>
+#include &lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/wordexp.h">wordexp.h</A>&gt;
+
+int main(int argc, char **argv) {
+        wordexp_t p;
+        char **w;
+        int i;
+
+        wordexp(&quot;[a-c]*.c&quot;, &amp;p, 0);
+        w = p.we_wordv;
+        for (i=0; i&lt;p.we_wordc; i++)
+                printf(&quot;%s\n&quot;, w[i]);
+        wordfree(&amp;p);
+        return 0;
+}
+</PRE>
+
+<A NAME="lbAF">&nbsp;</A>
+<H2>DETAILS</H2>
+
+<A NAME="lbAG">&nbsp;</A>
+<H3>The string argument</H3>
+
+Since the expansion is the same as the expansion by the shell (see
+<B><A HREF="../man1/sh.1.html">sh</A></B>(1))
+
+of the parameters to a command, the string
+<I>s</I>
+
+must not contain characters that would be illegal in shell command
+parameters. In particular, there must not be any non-escaped
+newline or |, &amp;, ;, &lt;, &gt;, (, ), {, } characters
+outside a command substitution or parameter substitution context.
+<P>
+
+If the argument
+<I>s</I>
+
+contains a word that starts with an unquoted comment character #,
+then it is unspecified whether that word and all following words
+are ignored, or the # is treated as a non-comment character.
+<P>
+<A NAME="lbAH">&nbsp;</A>
+<H3>The expansion</H3>
+
+The expansion done consists of the following stages:
+tilde expansion (replacing ~user by user's home directory),
+variable substitution (replacing $FOO by the value of the environment
+variable FOO), command substitution (replacing $(command) or `command`
+by the output of command), arithmetic expansion, field splitting,
+wildcard expansion, quote removal.
+<P>
+
+The result of expansion of special parameters
+($@, $*, $#, $?, $-, $$, $!, $0) is unspecified.
+<P>
+
+Field splitting is done using the environment variable $IFS.
+If it is not set, the field separators are space, tab and newline.
+<P>
+<A NAME="lbAI">&nbsp;</A>
+<H3>The output array</H3>
+
+The array
+<I>we_wordv</I>
+
+contains the words found, followed by a NULL.
+<P>
+<A NAME="lbAJ">&nbsp;</A>
+<H3>The flags argument</H3>
+
+The
+<I>flag</I>
+
+argument is a bitwise inclusive OR of the following values:
+<DL COMPACT>
+<DT><B>WRDE_APPEND</B>
+
+<DD>
+Append the words found to the array resulting from a previous call.
+<DT><B>WRDE_DOOFFS</B>
+
+<DD>
+Insert
+<I>we_offs</I>
+
+initial NULLs in the array
+<I>we_wordv</I>.
+
+(These are not counted in the returned
+<I>we_wordc</I>.)
+
+<DT><B>WRDE_NOCMD</B>
+
+<DD>
+Don't do command substitution.
+<DT><B>WRDE_REUSE</B>
+
+<DD>
+The parameter
+<I>p</I>
+
+resulted from a previous call to
+<B>wordexp()</B>,
+
+and
+<B>wordfree()</B>
+
+was not called. Reuse the allocated storage.
+<DT><B>WRDE_SHOWERR</B>
+
+<DD>
+Normally during command substitution
+<I>stderr</I>
+
+is redirected to
+<I>/dev/null</I>.
+
+This flag specifies that
+<I>stderr</I>
+
+is not to be redirected.
+<DT><B>WRDE_UNDEF</B>
+
+<DD>
+Consider it an error if an undefined shell variable is expanded.
+</DL>
+<A NAME="lbAK">&nbsp;</A>
+<H2>RETURN VALUE</H2>
+
+In case of success 0 is returned. In case of error
+one of the following five values is returned.
+<DL COMPACT>
+<DT><B>WRDE_BADCHAR </B>
+
+<DD>
+Illegal occurrence of newline or one of |, &amp;, ;, &lt;, &gt;, (, ), {, }.
+<DT><B>WRDE_BADVAL</B>
+
+<DD>
+An undefined shell variable was referenced, and the WRDE_UNDEF flag
+told us to consider this an error.
+<DT><B>WRDE_CMDSUB</B>
+
+<DD>
+Command substitution occurred, and the WRDE_NOCMD flag
+told us to consider this an error.
+<DT><B>WRDE_NOSPACE</B>
+
+<DD>
+Out of memory.
+<DT><B>WRDE_SYNTAX</B>
+
+<DD>
+Shell syntax error, such as unbalanced parentheses or
+unmatched quotes.
+<P>
+</DL>
+<A NAME="lbAL">&nbsp;</A>
+<H2>CONFORMING TO</H2>
+
+XPG4, POSIX 1003.1-2003
+<BR>&nbsp;
+<A NAME="lbAM">&nbsp;</A>
+<H2>SEE ALSO</H2>
+
+<B><A HREF="../man3/fnmatch.3.html">fnmatch</A></B>(3),
+
+<B><A HREF="../man3/glob.3.html">glob</A></B>(3)
+
+
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">NAME</A><DD>
+<DT><A HREF="#lbAC">SYNOPSIS</A><DD>
+<DT><A HREF="#lbAD">DESCRIPTION</A><DD>
+<DT><A HREF="#lbAE">EXAMPLE</A><DD>
+<DT><A HREF="#lbAF">DETAILS</A><DD>
+<DL>
+<DT><A HREF="#lbAG">The string argument</A><DD>
+<DT><A HREF="#lbAH">The expansion</A><DD>
+<DT><A HREF="#lbAI">The output array</A><DD>
+<DT><A HREF="#lbAJ">The flags argument</A><DD>
+</DL>
+<DT><A HREF="#lbAK">RETURN VALUE</A><DD>
+<DT><A HREF="#lbAL">CONFORMING TO</A><DD>
+<DT><A HREF="#lbAM">SEE ALSO</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
+using the manual pages.<BR>
+Time: 02:11:16 GMT, April 20, 2020
+</BODY>
+</HTML>

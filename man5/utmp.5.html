@@ -1,0 +1,312 @@
+<!--
+Copyright (c) 1993 Michael Haardt (michael@cantor.informatik.rwth-aachen.de), Fri Apr  2 11:32:09 MET DST 1993
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of UTMP</TITLE>
+</HEAD><BODY>
+<H1>UTMP</H1>
+Section: Linux Programmer's Manual (5)<BR>Updated: 2004-10-31<BR><A HREF="#index">Index</A>
+<A HREF="../index.html">Return to Main Contents</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>NAME</H2>
+
+utmp, wtmp - login records
+<A NAME="lbAC">&nbsp;</A>
+<H2>SYNOPSIS</H2>
+
+#include &lt;<A HREF="file:///usr/include/utmp.h">utmp.h</A>&gt;
+<A NAME="lbAD">&nbsp;</A>
+<H2>DESCRIPTION</H2>
+
+The
+<I>utmp</I>
+
+file allows one to discover information about who is currently using the
+system.  There may be more users currently using the system, because not
+all programs use utmp logging.
+<P>
+
+<B>Warning:</B>
+
+<I>utmp</I>
+
+must not be writable, because many system programs (foolishly)
+depend on its integrity.  You risk faked system logfiles and
+modifications of system files if you leave
+<I>utmp</I>
+
+writable to any user.
+<P>
+
+The file is a sequence of entries with the following structure declared
+in the include file (note that this is only one of several definitions
+around; details depend on the version of libc):
+
+<PRE>
+
+
+#define UT_UNKNOWN            0
+#define RUN_LVL               1
+#define BOOT_TIME             2
+#define NEW_TIME              3
+#define OLD_TIME              4
+#define INIT_PROCESS          5
+#define LOGIN_PROCESS         6
+#define USER_PROCESS          7
+#define DEAD_PROCESS          8
+#define ACCOUNTING            9
+
+#define UT_LINESIZE           12
+#define UT_NAMESIZE           32
+#define UT_HOSTSIZE           256
+
+struct exit_status {
+  short int e_termination;    /* process termination status.  */
+  short int e_exit;           /* process exit status.  */
+};
+
+struct utmp {
+  short ut_type;              /* type of login */
+  pid_t ut_pid;               /* pid of login process */
+  char ut_line[UT_LINESIZE];  /* device name of tty - &quot;/dev/&quot; */
+  char ut_id[4];              /* init id or abbrev. ttyname */
+  char ut_user[UT_NAMESIZE];  /* user name */
+  char ut_host[UT_HOSTSIZE];  /* hostname for remote login */
+  struct exit_status ut_exit; /* The exit status of a process
+                                 marked as DEAD_PROCESS. */
+  long ut_session;            /* session ID, used for windowing*/
+  struct timeval ut_tv;       /* time entry was made.  */
+  int32_t ut_addr_v6[4];      /* IP address of remote host.  */
+  char __unused[20];          /* Reserved for future use.  */
+};
+
+/* Backwards compatibility hacks.  */
+#define ut_name ut_user
+#ifndef _NO_UT_TIME
+#define ut_time ut_tv.tv_sec
+#endif
+#define ut_xtime ut_tv.tv_sec
+#define ut_addr ut_addr_v6[0]
+
+</PRE>
+
+
+This structure gives the name of the special file associated with the
+user's terminal, the user's login name, and the time of login in the form
+of
+<B><A HREF="../man2/time.2.html">time</A></B>(2).
+
+String fields are terminated by <B>'\0'</B> if they are shorter than the size
+of the field.
+<P>
+
+The first entries ever created result from
+<B><A HREF="../man8/init.8.html">init</A></B>(8)
+
+processing
+<B><A HREF="../man5/inittab.5.html">inittab</A></B>(5).
+
+Before an entry is processed, though,
+<B><A HREF="../man8/init.8.html">init</A></B>(8)
+
+cleans up utmp by setting <I>ut_type</I> to <B>DEAD_PROCESS</B>, clearing
+<I>ut_user</I>, <I>ut_host</I>, and <I>ut_time</I> with null bytes for each
+record which <I>ut_type</I> is not <B>DEAD_PROCESS</B> or <B>RUN_LVL</B>
+and where no process with PID <I>ut_pid</I> exists.  If no empty record
+with the needed <I>ut_id</I> can be found, init creates a new one.  It
+sets <I>ut_id</I> from the inittab, <I>ut_pid</I> and <I>ut_time</I> to the
+current values, and <I>ut_type</I> to <B>INIT_PROCESS</B>.
+<P>
+
+<B><A HREF="../man8/getty.8.html">getty</A></B>(8)
+
+locates the entry by the pid, changes <I>ut_type</I> to
+<B>LOGIN_PROCESS</B>, changes <I>ut_time</I>, sets <I>ut_line</I>, and waits
+for connection to be established.
+<B><A HREF="../man8/login.8.html">login</A></B>(8),
+
+after a user has been
+authenticated, changes <I>ut_type</I> to <B>USER_PROCESS</B>, changes
+<I>ut_time</I>, and sets <I>ut_host</I> and <I>ut_addr</I>.  Depending on
+<B><A HREF="../man8/getty.8.html">getty</A></B>(8)
+
+and
+<B><A HREF="../man8/login.8.html">login</A></B>(8),
+
+records may be located by
+<I>ut_line</I> instead of the preferable <I>ut_pid</I>.
+<P>
+
+When
+<B><A HREF="../man8/init.8.html">init</A></B>(8)
+
+finds that a process has exited, it locates its utmp
+entry by <I>ut_pid</I>, sets <I>ut_type</I> to <B>DEAD_PROCESS</B>, and
+clears <I>ut_user</I>, <I>ut_host</I> and <I>ut_time</I> with null bytes.
+<P>
+
+<B><A HREF="../man1/xterm.1.html">xterm</A></B>(1)
+
+and other terminal emulators directly create a
+<B>USER_PROCESS</B> record and generate the <I>ut_id</I> by using the last
+two letters of <I>/dev/ttyp</I><I>%c</I> or by using <I>p</I><I>%d</I> for
+<I>/dev/pts/</I><I>%d</I>.  If they find a <B>DEAD_PROCESS</B> for this id,
+they recycle it, otherwise they create a new entry.  If they can, they
+will mark it as <B>DEAD_PROCESS</B> on exiting and it is advised that
+they null <I>ut_line</I>, <I>ut_time</I>, <I>ut_user</I>, and <I>ut_host</I>
+as well.
+<P>
+
+<I><A HREF="../man8/xdm.8.html">xdm</A></I>(8) should not create a utmp record, because there is no
+assigned terminal.  Letting it create one will result in errors, such
+as 'finger: cannot stat /dev/machine.dom'.  It should create wtmp entries,
+though, just like
+<B><A HREF="../man8/ftpd.8.html">ftpd</A></B>(8)
+
+does.
+<P>
+
+<B><A HREF="../man8/telnetd.8.html">telnetd</A></B>(8)
+
+sets up a <B>LOGIN_PROCESS</B> entry and leaves the rest to
+<B><A HREF="../man8/login.8.html">login</A></B>(8)
+
+as usual.  After the telnet session ends,
+<B><A HREF="../man8/telnetd.8.html">telnetd</A></B>(8)
+
+cleans up utmp in the described way.
+<P>
+
+The <I>wtmp</I> file records all logins and logouts.  Its format is
+exactly like <I>utmp</I> except that a null user name indicates a logout
+on the associated terminal.  Furthermore, the terminal name <B>~</B>
+with user name <B>shutdown</B> or <B>reboot</B> indicates a system
+shutdown or reboot and the pair of terminal names <B>|</B>/<B>}</B>
+logs the old/new system time when
+<B><A HREF="../man1/date.1.html">date</A></B>(1)
+
+changes it.  <I>wtmp</I> is maintained by
+<B><A HREF="../man1/login.1.html">login</A></B>(1),
+
+<B><A HREF="../man1/init.1.html">init</A></B>(1),
+
+and some versions of
+<B><A HREF="../man1/getty.1.html">getty</A></B>(1).
+
+Neither of these programs creates the file, so if it is
+removed, record-keeping is turned off.
+<A NAME="lbAE">&nbsp;</A>
+<H2>FILES</H2>
+
+/var/run/utmp
+<BR>
+
+/var/log/wtmp
+<A NAME="lbAF">&nbsp;</A>
+<H2>CONFORMING TO</H2>
+
+Linux utmp entries conform neither to v7/BSD nor to SYSV; they are a
+mix of the two.  v7/BSD has fewer fields; most importantly it lacks
+<I>ut_type</I>, which causes native v7/BSD-like programs to display (for
+example) dead or login entries.  Further, there is no configuration file
+which allocates slots to sessions.  BSD does so because it lacks
+<I>ut_id</I> fields.  In Linux (as in SYSV), the <I>ut_id</I> field of a
+record will never change once it has been set, which reserves that slot
+without needing a configuration file.  Clearing <I>ut_id</I> may result
+in race conditions leading to corrupted utmp entries and and potential
+security holes.  Clearing the above mentioned fields by filling them
+with null bytes is not required by SYSV semantics, but it allows to run
+many programs which assume BSD semantics and which do not modify utmp.
+Linux uses the BSD conventions for line contents, as documented above.
+<P>
+
+SYSV only uses the type field to mark them and logs informative messages
+such as e.g. <B>&quot;new time&quot;</B> in the line field. <B>UT_UNKNOWN</B> seems
+to be a Linux invention.
+SYSV has no <I>ut_host</I> or <I>ut_addr_v6</I> fields.
+<P>
+
+Unlike various other
+systems, where utmp logging can be disabled by removing the file, utmp
+must always exist on Linux.  If you want to disable <I><A HREF="../man1/who.1.html">who</A></I>(1) then
+do not make utmp world readable.
+<P>
+
+Note that the utmp struct from libc5 has changed in libc6. Because of this,
+binaries using the old libc5 struct will corrupt
+<I>/var/run/utmp</I> and/or <I>/var/log/wtmp</I>.
+
+Debian systems include a patched libc5 which uses the new utmp format.
+The problem still exists with wtmp since it's accessed directly in
+libc5.
+<A NAME="lbAG">&nbsp;</A>
+<H2>RESTRICTIONS</H2>
+
+The file format is machine dependent, so it is recommended that it be
+processed only on the machine architecture where it was created.
+<P>
+
+Note that on platforms which can run both 32-bit and 64-bit applications
+(x86-64, ppc64, s390x, etc.), the sizes of the fields of a struct utmp
+must be the same in 32-bit mode as in 64-bit mode.
+This is achieved by changing the type of
+<I>ut_session</I>
+
+to int32_t, and that of
+<I>ut_tv</I>
+
+to a struct with two int32_t fields
+<I>tv_sec</I>
+
+and
+<I>tv_usec</I>.
+
+(Thus, in order to fill it, first get the time into a real struct timeval,
+then copy the two fields to
+<I>ut_tv</I>.)
+
+<A NAME="lbAH">&nbsp;</A>
+<H2>BUGS</H2>
+
+This manpage is based on the libc5 one, things may work differently now.
+<A NAME="lbAI">&nbsp;</A>
+<H2>SEE ALSO</H2>
+
+<B><A HREF="../man1/ac.1.html">ac</A></B>(1),
+
+<B><A HREF="../man1/date.1.html">date</A></B>(1),
+
+<B><A HREF="../man1/last.1.html">last</A></B>(1),
+
+<B><A HREF="../man1/login.1.html">login</A></B>(1),
+
+<B><A HREF="../man1/who.1.html">who</A></B>(1),
+
+<B><A HREF="../man3/getutent.3.html">getutent</A></B>(3),
+
+<B><A HREF="../man3/updwtmp.3.html">updwtmp</A></B>(3),
+
+<B><A HREF="../man8/init.8.html">init</A></B>(8)
+
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">NAME</A><DD>
+<DT><A HREF="#lbAC">SYNOPSIS</A><DD>
+<DT><A HREF="#lbAD">DESCRIPTION</A><DD>
+<DT><A HREF="#lbAE">FILES</A><DD>
+<DT><A HREF="#lbAF">CONFORMING TO</A><DD>
+<DT><A HREF="#lbAG">RESTRICTIONS</A><DD>
+<DT><A HREF="#lbAH">BUGS</A><DD>
+<DT><A HREF="#lbAI">SEE ALSO</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
+using the manual pages.<BR>
+Time: 02:11:24 GMT, April 20, 2020
+</BODY>
+</HTML>

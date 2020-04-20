@@ -1,0 +1,432 @@
+<!--
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of MOUNT</TITLE>
+</HEAD><BODY>
+<H1>MOUNT</H1>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2004-06-17<BR><A HREF="#index">Index</A>
+<A HREF="../index.html">Return to Main Contents</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>NAME</H2>
+
+mount, umount - mount and unmount filesystems
+<A NAME="lbAC">&nbsp;</A>
+<H2>SYNOPSIS</H2>
+
+<B>#include &lt;<A HREF="file:///usr/include/sys/mount.h">sys/mount.h</A>&gt;</B>
+
+<P>
+<B>int mount(const char *</B><I>source</I><B>, const char *</B><I>target</I><B>,</B>
+
+<B>const char *</B><I>filesystemtype</I><B>, unsigned long </B><I>mountflags</I><B>,</B>
+
+<B>const void *</B><I>data</I><B>);</B>
+
+<P>
+<B>int umount(const char *</B><I>target</I><B>);</B>
+
+<P>
+<B>int umount2(const char *</B><I>target</I><B>, int </B><I>flags</I><B>);</B>
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>DESCRIPTION</H2>
+
+<B>mount</B>
+
+attaches the filesystem specified by
+<I>source</I>
+
+(which is often a device name, but can also be a directory name
+or a dummy) to the directory specified by
+<I>target</I>.
+
+<P>
+<B>umount</B> and <B>umount2</B>
+
+remove the attachment of the (topmost) filesystem mounted on
+<I>target</I>.
+
+<P>
+Appropriate privilege (Linux: the
+<B>CAP_SYS_ADMIN</B>
+
+capability) is required to mount and unmount filesystems.
+<P>
+Since Linux 2.4 a single filesystem can be visible at
+multiple mount points, and multiple mounts can be stacked
+on the same mount point.
+
+<P>
+Values for the
+<I>filesystemtype</I>
+
+argument supported by the kernel are listed in
+<I>/proc/filesystems</I>
+
+(like &quot;minix&quot;, &quot;ext2&quot;, &quot;msdos&quot;, &quot;proc&quot;, &quot;nfs&quot;, &quot;iso9660&quot; etc.).
+Further types may become available when the appropriate modules
+are loaded.
+<P>
+The
+<I>mountflags</I>
+
+argument may have the magic number 0xC0ED (<B>MS_MGC_VAL</B>)
+in the top 16 bits (this was required in kernel versions prior to 2.4, but
+is no longer required and ignored if specified),
+and various mount flags (as defined in &lt;<A HREF="file:///usr/include/linux/fs.h">linux/fs.h</A>&gt; for libc4 and libc5
+and in &lt;<A HREF="file:///usr/include/sys/mount.h">sys/mount.h</A>&gt; for glibc2) in the low order 16 bits:
+<DL COMPACT>
+<DT><B>MS_BIND</B>
+
+<DD>
+(Linux 2.4 onwards)
+
+Perform a bind mount, making a file or a directory subtree visible at
+another point within a file system.
+Bind mounts may cross file system boundaries and span
+<B><A HREF="../man2/chroot.2.html">chroot</A></B>(2)
+
+jails.
+The
+<I>filesystemtype</I>, <I>mountflags</I>, and <I>data</I>
+
+arguments are ignored.
+
+<DT><B>MS_DIRSYNC</B>
+
+<DD>
+(Since Linux 2.5.19.)
+Make directory changes on this file system synchronous.
+(This property can be obtained for individual directories
+or subtrees using
+<B><A HREF="../man8/chattr.8.html">chattr</A></B>(8).)
+
+<DT><B>MS_MANDLOCK</B>
+
+<DD>
+Permit mandatory locking on files in this file system.
+(Mandatory locking must still be enabled on a per-file basis,
+as described in
+<B><A HREF="../man2/fcntl.2.html">fcntl</A></B>(2).)
+
+
+<DT><B>MS_MOVE</B>
+
+<DD>
+Move a subtree.
+<I>source</I>
+
+specifies an existing mount point and
+<I>target</I>
+
+specifies the new location.
+The move is atomic: at no point is the subtree unmounted.
+The
+<I>filesystemtype</I>, <I>mountflags</I>, and <I>data</I>
+
+arguments are ignored.
+<DT><B>MS_NOATIME</B>
+
+<DD>
+Do not update access times for (all types of) files on this file system.
+<DT><B>MS_NODEV</B>
+
+<DD>
+Do not allow access to devices (special files) on this file system.
+<DT><B>MS_NODIRATIME</B>
+
+<DD>
+Do not update access times for directories on this file system.
+<DT><B>MS_NOEXEC</B>
+
+<DD>
+Do not allow programs to be executed from this file system.
+
+
+
+<DT><B>MS_NOSUID</B>
+
+<DD>
+Do not honour set-UID and set-GID bits when executing
+programs from this file system.
+
+
+<DT><B>MS_RDONLY</B>
+
+<DD>
+Mount file system read-only.
+<DT><B>MS_REMOUNT</B>
+
+<DD>
+Remount an existing mount.  This is allows you to change the
+<I>mountflags</I>
+
+and
+<I>data</I>
+
+of an existing mount without having to unmount and remount the file system.
+<I>source</I>
+
+and
+<I>target</I>
+
+should be the same values specified in the initial
+<B>mount</B>()
+
+call;
+<I>filesystemtype</I>
+
+is ignored.
+<DT><B>MS_SYNCHRONOUS</B>
+
+<DD>
+Make writes on this file system synchronous (as though
+the
+<B>O_SYNC </B>
+
+flag to
+<B><A HREF="../man2/open.2.html">open</A></B>(2)
+
+was specified for all file opens to this file system).
+</DL>
+<P>
+
+From Linux 2.4 onwards, the
+<B>MS_NODEV</B>, <B>MS_NOEXEC</B>, and <B>MS_NOSUID</B>
+
+flags are settable on a per-mount point basis.
+<P>
+
+The
+<I>data</I>
+
+argument is interpreted by the different file systems.
+Typically it is a string of comma-separated options
+understood by this file system.
+See
+<B><A HREF="../man8/mount.8.html">mount</A></B>(8)
+
+for details of the options available for each filesystem type.
+<P>
+
+
+
+
+Linux 2.1.116 added the
+<B>umount2</B>()
+
+system call, which, like
+<B>umount</B>(),
+
+unmounts a target, but allows additional
+<I>flags</I>
+
+controlling the behaviour of the operation:
+<DL COMPACT>
+<DT><B>MNT_FORCE</B>
+
+<DD>
+Force unmount even if busy.
+(Since 2.1.116. Only for NFS mounts.)
+<DT><B>MNT_DETACH</B>
+
+<DD>
+Perform a lazy unmount: make the mount point unavailable for
+new accesses, and actually perform the unmount when the mount point
+ceases to be busy. (Since 2.4.11.)
+</DL>
+<A NAME="lbAE">&nbsp;</A>
+<H2>RETURN VALUE</H2>
+
+On success, zero is returned.  On error, -1 is returned, and
+<I>errno</I>
+
+is set appropriately.
+<A NAME="lbAF">&nbsp;</A>
+<H2>ERRORS</H2>
+
+The error values given below result from filesystem type independent
+errors. Each filesystem type may have its own special errors and its
+own special behavior.  See the kernel source code for details.
+<P>
+<DL COMPACT>
+<DT><B>EACCES</B>
+
+<DD>
+A component of a path was not searchable. (See also
+<B><A HREF="../man2/path_resolution.2.html">path_resolution</A></B>(2).)
+
+<BR>
+
+Or, mounting a read-only filesystem was attempted without giving the
+MS_RDONLY flag.
+<BR>
+
+Or, the block device
+<I>source</I>
+
+is located on a filesystem mounted with the MS_NODEV option.
+
+
+<DT><B>EBUSY</B>
+
+<DD>
+<I>source</I>
+
+is already mounted. Or, it cannot be remounted read-only,
+because it still holds files open for writing.
+Or, it cannot be mounted on
+<I>target</I>
+
+because
+<I>target</I>
+
+is still busy (it is the working directory of some task,
+the mount point of another device, has open files, etc.).
+Or, it could not be unmounted because it is busy.
+<DT><B>EFAULT</B>
+
+<DD>
+One of the pointer arguments points outside the user address space.
+<DT><B>EINVAL</B>
+
+<DD>
+<I>source</I>
+
+had an invalid superblock.
+Or, a remount was attempted, while
+<I>source</I>
+
+was not already mounted on
+<I>target</I>.
+
+Or, a move was attempted, while
+<I>source</I>
+
+was not a mount point, or was '/'.
+Or, an umount was attempted, while
+<I>target</I>
+
+was not a mount point.
+<DT><B>ELOOP</B>
+
+<DD>
+Too many link encountered during pathname resolution.
+Or, a move was attempted, while
+<I>target</I>
+
+is a descendant of
+<I>source</I>.
+
+<DT><B>EMFILE</B>
+
+<DD>
+(In case no block device is required:)
+Table of dummy devices is full.
+<DT><B>ENAMETOOLONG</B>
+
+<DD>
+A pathname was longer than MAXPATHLEN.
+<DT><B>ENODEV</B>
+
+<DD>
+<I>Filesystemtype</I>
+
+not configured in the kernel.
+<DT><B>ENOENT</B>
+
+<DD>
+A pathname was empty or had a nonexistent component.
+<DT><B>ENOMEM</B>
+
+<DD>
+The kernel could not allocate a free page to copy filenames or data into.
+<DT><B>ENOTBLK</B>
+
+<DD>
+<I>source</I>
+
+is not a block device (and a device was required).
+<DT><B>ENOTDIR</B>
+
+<DD>
+The second argument, or a prefix of the first argument, is not
+a directory.
+<DT><B>ENXIO</B>
+
+<DD>
+The major number of the block device
+<I>source</I>
+
+is out of range.
+<DT><B>EPERM</B>
+
+<DD>
+The caller does not have the required privileges.
+</DL>
+<A NAME="lbAG">&nbsp;</A>
+<H2>CONFORMING TO</H2>
+
+These functions are Linux-specific and should not be used in
+programs intended to be portable.
+<A NAME="lbAH">&nbsp;</A>
+<H2>HISTORY</H2>
+
+The original
+<B>umount</B>
+
+function was called as <I>umount(device)</I> and would return ENOTBLK
+when called with something other than a block device.
+In Linux 0.98p4 a call <I>umount(dir)</I> was added, in order to
+support anonymous devices.
+In Linux 2.3.99-pre7 the call <I>umount(device)</I> was removed,
+leaving only <I>umount(dir)</I> (since now devices can be mounted
+in more than one place, so specifying the device does not suffice).
+<P>
+
+The original MS_SYNC flag was renamed MS_SYNCHRONOUS in 1.1.69
+when a different MS_SYNC was added to &lt;<A HREF="file:///usr/include/mman.h">mman.h</A>&gt;.
+<P>
+
+Before Linux 2.4 an attempt to execute a set-UID or set-GID program
+on a filesystem mounted with
+<B>MS_NOSUID</B>
+
+would fail with
+<B>EPERM</B>.
+
+Since Linux 2.4 the set-UID and set-GID bits are just silently ignored
+in this case.
+
+<A NAME="lbAI">&nbsp;</A>
+<H2>SEE ALSO</H2>
+
+<B><A HREF="../man2/path_resolution.2.html">path_resolution</A></B>(2),
+
+<B><A HREF="../man8/mount.8.html">mount</A></B>(8),
+
+<B><A HREF="../man8/umount.8.html">umount</A></B>(8)
+
+
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">NAME</A><DD>
+<DT><A HREF="#lbAC">SYNOPSIS</A><DD>
+<DT><A HREF="#lbAD">DESCRIPTION</A><DD>
+<DT><A HREF="#lbAE">RETURN VALUE</A><DD>
+<DT><A HREF="#lbAF">ERRORS</A><DD>
+<DT><A HREF="#lbAG">CONFORMING TO</A><DD>
+<DT><A HREF="#lbAH">HISTORY</A><DD>
+<DT><A HREF="#lbAI">SEE ALSO</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
+using the manual pages.<BR>
+Time: 02:10:09 GMT, April 20, 2020
+</BODY>
+</HTML>

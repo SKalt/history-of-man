@@ -1,0 +1,421 @@
+<!--
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of SYSCONF</TITLE>
+</HEAD><BODY>
+<H1>SYSCONF</H1>
+Section: Linux Programmer's Manual (3)<BR>Updated: 1993-04-18<BR><A HREF="#index">Index</A>
+<A HREF="../index.html">Return to Main Contents</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>NAME</H2>
+
+sysconf - Get configuration information at runtime
+<A NAME="lbAC">&nbsp;</A>
+<H2>SYNOPSIS</H2>
+
+<PRE>
+<B>#include &lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;</B>
+
+<B>long sysconf(int </B><I>name</I><B>);</B>
+</PRE>
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>DESCRIPTION</H2>
+
+POSIX allows an application to test at compile- or run-time
+whether certain options are supported, or what the value is
+of certain configurable constants or limits.
+<P>
+
+At compile time this is done by including
+<I>&lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;</I>
+
+and/or
+<I>&lt;<A HREF="file:///usr/include/limits.h">limits.h</A>&gt;</I>
+
+and testing the value of certain macros.
+<P>
+
+At run time, one can ask for numerical values using the present function
+<B>sysconf</B>().
+
+On can ask for numerical values that may depend
+on the filesystem a file is in using the calls
+<B><A HREF="../man3/fpathconf.3.html">fpathconf</A></B>(3)
+
+and
+<B><A HREF="../man3/pathconf.3.html">pathconf</A></B>(3).
+
+One can ask for string values using
+<B><A HREF="../man3/confstr.3.html">confstr</A></B>(3).
+
+<P>
+
+The values obtained from these functions are system configuration constants.
+They do not change during the lifetime of a process.
+
+
+<P>
+
+For options, typically, there is a constant
+<B>_POSIX_FOO</B>
+
+that may be defined in
+<I>&lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;</I>.
+
+If it is undefined, one should ask at run-time.
+If it is defined to -1, then the option is not supported.
+If it is defined to 0, then relevant functions and headers exist,
+but one has to ask at runtime what degree of support is available.
+If it is defined to a value other than -1 or 0, then the option is
+supported. Usually the value (such as 200112L) indicates the year and month
+of the POSIX revision describing the option. Glibc uses the value 1
+to indicate support as long as the POSIX revision has not been published yet.
+
+
+The
+<B>sysconf()</B>
+
+argument will be
+<B>_SC_FOO</B>.
+
+For a list of options, see
+<B><A HREF="../man7/posixoptions.7.html">posixoptions</A></B>(7).
+
+<P>
+
+For variables or limits, typically, there is a constant
+<B>_FOO</B>,
+
+maybe defined in
+<I>&lt;<A HREF="file:///usr/include/limits.h">limits.h</A>&gt;</I>,
+
+or
+<B>_POSIX_FOO</B>,
+
+maybe defined in
+<I>&lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;</I>.
+
+The constant will not be defined if the limit is unspecified.
+If the constant is defined, it gives a guaranteed value, and
+more might actually be supported.
+If an application wants to take advantage of values which may change
+between systems, a call to
+<B>sysconf()</B>
+
+can be made.
+The 
+<B>sysconf()</B>
+
+argument will be
+<B>_SC_FOO</B>.
+
+<A NAME="lbAE">&nbsp;</A>
+<H2>POSIX.1 VARIABLES</H2>
+
+We give the name of the variable, the name of the
+<B>sysconf()</B>
+
+parameter used to inquire about its value,
+and a short description.
+<P>
+
+First, the POSIX.1 compatible values.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<DL COMPACT>
+<DT><B>ARG_MAX</B> - <B>_SC_ARG_MAX</B>
+
+<DD>
+The maximum length of the arguments to the
+<B>exec()</B>
+
+family of functions.
+Must not be less than _POSIX_ARG_MAX (4096).
+<DT><B>CHILD_MAX</B> - <B>_SC_CHILD_MAX</B>
+
+<DD>
+The max number of simultaneous processes per user id.
+Must not be less than _POSIX_CHILD_MAX (25).
+<DT><B>HOST_NAME_MAX</B> - <B>_SC_HOST_NAME_MAX</B>
+
+<DD>
+Max length of a hostname, not including the final NUL, as returned by
+<B><A HREF="../man2/gethostname.2.html">gethostname</A></B>(2).
+
+Must not be less than _POSIX_HOST_NAME_MAX (255).
+<DT><B>LOGIN_NAME_MAX</B> - <B>_SC_LOGIN_NAME_MAX</B>
+
+<DD>
+Maximum length of a login name, including the final NUL.
+Must not be less than _POSIX_LOGIN_NAME_MAX (9).
+<DT><B></B>clock ticks - <B>_SC_CLK_TCK</B>
+
+<DD>
+The number of clock ticks per second.
+The corresponding variable is obsolete. It was of course called
+<B>CLK_TCK</B>.
+
+(Note: the macro
+<B>CLOCKS_PER_SEC</B>
+
+does not give information: it must equal 1000000.)
+<DT><B>OPEN_MAX</B> - <B>_SC_OPEN_MAX</B>
+
+<DD>
+The maximum number of files that a process can have open at any time.
+Must not be less than _POSIX_OPEN_MAX (20).
+<DT><B>PAGESIZE</B> - <B>_SC_PAGESIZE</B>
+
+<DD>
+Size of a page in bytes. Must not be less than 1.
+(Some systems use PAGE_SIZE instead.)
+<DT><B>RE_DUP_MAX</B> - <B>_SC_RE_DUP_MAX</B>
+
+<DD>
+The number of repeated occurrences of a BRE permitted by
+<B><A HREF="../man3/regexec.3.html">regexec</A></B>(3)
+
+and
+<B><A HREF="../man3/regcomp.3.html">regcomp</A></B>(3).
+
+Must not be less than _POSIX2_RE_DUP_MAX (255).
+<DT><B>STREAM_MAX</B> - <B>_SC_STREAM_MAX</B>
+
+<DD>
+The maximum number of streams that a process can have open at any
+time. If defined, it has the same value as the standard C macro
+<B>FOPEN_MAX</B>.
+
+Must not be less than _POSIX_STREAM_MAX (8).
+<DT><B>SYMLOOP_MAX</B>
+
+<DD>
+The maximum number of symbolic links seen in a pathname before resolution
+returns ELOOP. Must not be less than _POSIX_SYMLOOP_MAX (8).
+<DT><B>TTY_NAME_MAX</B> - <B>_SC_TTY_NAME_MAX</B>
+
+<DD>
+The maximum length of terminal device name, including final NUL.
+Must not be less than _POSIX_TTY_NAME_MAX (9).
+<DT><B>TZNAME_MAX</B> - <B>_SC_TZNAME_MAX</B>
+
+<DD>
+The maximum number of bytes in a timezone name.
+Must not be less than _POSIX_TZNAME_MAX (6).
+<DT><B>_POSIX_VERSION</B> - <B>_SC_VERSION</B>
+
+<DD>
+indicates the year and month the POSIX.1 standard was approved in the
+format
+<B>YYYYMML</B>;<B>the</B>
+
+value
+<B>199009L</B>
+
+indicates the Sept. 1990 revision.
+</DL>
+<A NAME="lbAF">&nbsp;</A>
+<H2>POSIX.2 VARIABLES</H2>
+
+Next, the POSIX.2 values, giving limits for utilities.
+<DL COMPACT>
+<DT><B>BC_BASE_MAX</B> - <B>_SC_BC_BASE_MAX</B>
+
+<DD>
+indicates the maximum
+<I>obase</I>
+
+value accepted by the
+<B><A HREF="../man1/bc.1.html">bc</A></B>(1)
+
+utility.
+<DT><B>BC_DIM_MAX</B> - <B>_SC_BC_DIM_MAX</B>
+
+<DD>
+indicates the maximum value of elements permitted in an array by
+<B><A HREF="../man1/bc.1.html">bc</A></B>(1).
+
+<DT><B>BC_SCALE_MAX</B> - <B>_SC_BC_SCALE_MAX</B>
+
+<DD>
+indicates the maximum
+<I>scale</I>
+
+value allowed by
+<B><A HREF="../man1/bc.1.html">bc</A></B>(1).
+
+<DT><B>BC_STRING_MAX</B> - <B>_SC_BC_STRING_MAX</B>
+
+<DD>
+indicates the maximum length of a string accepted by
+<B><A HREF="../man1/bc.1.html">bc</A></B>(1).
+
+<DT><B>COLL_WEIGHTS_MAX</B> - <B>_SC_COLL_WEIGHTS_MAX</B>
+
+<DD>
+indicates the maximum numbers of weights that can be assigned to an
+entry of the
+<B>LC_COLLATE order</B>
+
+keyword in the locale definition file,
+<DT><B>EXPR_NEST_MAX</B> - <B>_SC_EXPR_NEST_MAX</B>
+
+<DD>
+is the maximum number of expressions which can be nested within
+parentheses by
+<B><A HREF="../man1/expr.1.html">expr</A></B>(1).
+
+<DT><B>LINE_MAX</B> - <B>_SC_LINE_MAX</B>
+
+<DD>
+The maximum length of a utility's input line length, either from
+standard input or from a file. This includes length for a trailing
+newline.
+<DT><B>RE_DUP_MAX</B> - <B>_SC_RE_DUP_MAX</B>
+
+<DD>
+The maximum number of repeated occurrences of a regular expression when
+the interval notation
+<B>\{m,n\}</B>
+
+is used.
+<DT><B>POSIX2_VERSION</B> - <B>_SC_2_VERSION</B>
+
+<DD>
+indicates the version of the POSIX.2 standard in the format of
+YYYYMML.
+<DT><B>POSIX2_C_DEV</B> - <B>_SC_2_DEV</B>
+
+<DD>
+indicates whether the POSIX.2 C language development facilities are
+supported.
+<DT><B>POSIX2_FORT_RUN</B> - <B>_SC_2_FORT_DEV</B>
+
+<DD>
+indicates whether the POSIX.2 FORTRAN development utilities are
+supported.
+<DT><B>POSIX2_FORT_RUN</B> - <B>_SC_2_FORT_RUN</B>
+
+<DD>
+indicates whether the POSIX.2 FORTRAN runtime utilities are supported.
+<DT><B>_POSIX2_LOCALEDEF</B> - <B>_SC_2_LOCALEDEF</B>
+
+<DD>
+indicates whether the POSIX.2 creation of locates via
+<B><A HREF="../man1/localedef.1.html">localedef</A></B>(1)
+
+is supported.
+<DT><B>POSIX2_SW_DEV</B> - <B>_SC_2_SW_DEV</B>
+
+<DD>
+indicates whether the POSIX.2 software development utilities option is
+supported.
+</DL>
+<P>
+
+These values also exist, but may not be standard.
+<DL COMPACT>
+<DT><B></B> - <B>_SC_PHYS_PAGES</B>
+
+<DD>
+The number of pages of physical memory.  Note that it is possible
+for the product of this value and the value of
+<B>_SC_PAGE_SIZE</B>
+
+to overflow.
+<DT><B></B> - <B>_SC_AVPHYS_PAGES</B>
+
+<DD>
+The number of currently available pages of physical memory.
+</DL>
+<A NAME="lbAG">&nbsp;</A>
+<H2>RETURN VALUE</H2>
+
+If
+<I>name</I>
+
+is invalid, -1 is returned, and
+<I>errno</I>
+
+is set to
+<B>EINVAL</B>.
+
+Otherwise, the value returned is the value of the system resource and
+<I>errno</I>
+
+is not changed.
+In the case of options, a positive value is returned if a queried option
+is available, and -1 if it is not.
+In the case of limits, -1 means that there is no definite limit.
+<A NAME="lbAH">&nbsp;</A>
+<H2>CONFORMING TO</H2>
+
+POSIX.1.
+<A NAME="lbAI">&nbsp;</A>
+<H2>BUGS</H2>
+
+It is difficult to use
+<B>ARG_MAX</B>
+
+because it is not specified how much of the argument space for
+<B>exec()</B>
+
+is consumed by the user's environment variables.
+<P>
+
+Some returned values may be huge; they are not suitable for allocating
+memory.
+<A NAME="lbAJ">&nbsp;</A>
+<H2>SEE ALSO</H2>
+
+<B><A HREF="../man1/bc.1.html">bc</A></B>(1),
+
+<B><A HREF="../man1/expr.1.html">expr</A></B>(1),
+
+<B><A HREF="../man1/locale.1.html">locale</A></B>(1),
+
+<B><A HREF="../man3/fpathconf.3.html">fpathconf</A></B>(3),
+
+<B><A HREF="../man3/pathconf.3.html">pathconf</A></B>(3),
+
+<B><A HREF="../man7/posixoptions.7.html">posixoptions</A></B>(7)
+
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">NAME</A><DD>
+<DT><A HREF="#lbAC">SYNOPSIS</A><DD>
+<DT><A HREF="#lbAD">DESCRIPTION</A><DD>
+<DT><A HREF="#lbAE">POSIX.1 VARIABLES</A><DD>
+<DT><A HREF="#lbAF">POSIX.2 VARIABLES</A><DD>
+<DT><A HREF="#lbAG">RETURN VALUE</A><DD>
+<DT><A HREF="#lbAH">CONFORMING TO</A><DD>
+<DT><A HREF="#lbAI">BUGS</A><DD>
+<DT><A HREF="#lbAJ">SEE ALSO</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
+using the manual pages.<BR>
+Time: 02:11:09 GMT, April 20, 2020
+</BODY>
+</HTML>

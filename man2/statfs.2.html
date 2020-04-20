@@ -1,0 +1,332 @@
+<!--
+Copyright (C) 2003 Andries Brouwer (aeb@cwi.nl)
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of STATFS</TITLE>
+</HEAD><BODY>
+<H1>STATFS</H1>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2004-06-23<BR><A HREF="#index">Index</A>
+<A HREF="../index.html">Return to Main Contents</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>NAME</H2>
+
+statfs, fstatfs - get file system statistics
+<A NAME="lbAC">&nbsp;</A>
+<H2>SYNOPSIS</H2>
+
+<B>#include &lt;<A HREF="file:///usr/include/sys/vfs.h">sys/vfs.h</A>&gt;    </B>/* or &lt;<A HREF="file:///usr/include/sys/statfs.h">sys/statfs.h</A>&gt; */
+
+<P>
+<B>int statfs(const char *</B><I>path</I><B>, struct statfs *</B><I>buf</I><B>);</B>
+
+<BR>
+
+<B>int fstatfs(int </B><I>fd</I><B>, struct statfs *</B><I>buf</I><B>);</B>
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>DESCRIPTION</H2>
+
+The function
+<B>statfs</B>
+
+returns information about a mounted file system.
+<I>path</I>
+
+is the path name of any file within the mounted filesystem.
+<I>buf</I>
+
+is a pointer to a
+<I>statfs</I>
+
+structure defined approximately as follows:
+<P>
+<DL COMPACT><DT><DD>
+<PRE>
+struct statfs {
+   long    f_type;     /* type of filesystem (see below) */
+   long    f_bsize;    /* optimal transfer block size */
+   long    f_blocks;   /* total data blocks in file system */
+   long    f_bfree;    /* free blocks in fs */
+   long    f_bavail;   /* free blocks avail to non-superuser */
+   long    f_files;    /* total file nodes in file system */
+   long    f_ffree;    /* free file nodes in fs */
+   fsid_t  f_fsid;     /* file system id */
+   long    f_namelen;  /* maximum length of filenames */
+};
+
+File system types:
+
+   ADFS_SUPER_MAGIC      0xadf5
+   AFFS_SUPER_MAGIC      0xADFF
+   BEFS_SUPER_MAGIC      0x42465331
+   BFS_MAGIC             0x1BADFACE
+   CIFS_MAGIC_NUMBER     0xFF534D42
+   CODA_SUPER_MAGIC      0x73757245
+   COH_SUPER_MAGIC       0x012FF7B7
+   CRAMFS_MAGIC          0x28cd3d45
+   DEVFS_SUPER_MAGIC     0x1373
+   EFS_SUPER_MAGIC       0x00414A53
+   EXT_SUPER_MAGIC       0x137D
+   EXT2_OLD_SUPER_MAGIC  0xEF51
+   EXT2_SUPER_MAGIC      0xEF53
+   EXT3_SUPER_MAGIC      0xEF53
+   HFS_SUPER_MAGIC       0x4244
+   HPFS_SUPER_MAGIC      0xF995E849
+   HUGETLBFS_MAGIC       0x958458f6
+   ISOFS_SUPER_MAGIC     0x9660
+   JFFS2_SUPER_MAGIC     0x72b6
+   JFS_SUPER_MAGIC       0x3153464a
+   MINIX_SUPER_MAGIC     0x137F /* orig. minix */
+   MINIX_SUPER_MAGIC2    0x138F /* 30 char minix */
+   MINIX2_SUPER_MAGIC    0x2468 /* minix V2 */
+   MINIX2_SUPER_MAGIC2   0x2478 /* minix V2, 30 char names */
+   MSDOS_SUPER_MAGIC     0x4d44
+   NCP_SUPER_MAGIC       0x564c
+   NFS_SUPER_MAGIC       0x6969
+   NTFS_SB_MAGIC         0x5346544e
+   OPENPROM_SUPER_MAGIC  0x9fa1
+   PROC_SUPER_MAGIC      0x9fa0
+   QNX4_SUPER_MAGIC      0x002f
+   REISERFS_SUPER_MAGIC  0x52654973
+   ROMFS_MAGIC           0x7275
+   SMB_SUPER_MAGIC       0x517B
+   SYSV2_SUPER_MAGIC     0x012FF7B6
+   SYSV4_SUPER_MAGIC     0x012FF7B5
+   TMPFS_MAGIC           0x01021994
+   UDF_SUPER_MAGIC       0x15013346
+   UFS_MAGIC             0x00011954
+   USBDEVICE_SUPER_MAGIC 0x9fa2
+   VXFS_SUPER_MAGIC      0xa501FCF5
+   XENIX_SUPER_MAGIC     0x012FF7B4
+   XFS_SUPER_MAGIC       0x58465342
+   _XIAFS_SUPER_MAGIC    0x012FD16D
+</PRE>
+
+</DL>
+
+<P>
+
+Nobody knows what
+<I>f_fsid</I>
+
+is supposed to contain (but see below).
+<P>
+
+Fields that are undefined for a particular file system are set to 0.
+<B>fstatfs</B>
+
+returns the same information about an open file referenced by descriptor
+<I>fd</I>.
+
+<A NAME="lbAE">&nbsp;</A>
+<H2>RETURN VALUE</H2>
+
+On success, zero is returned.  On error, -1 is returned, and
+<I>errno</I>
+
+is set appropriately.
+<A NAME="lbAF">&nbsp;</A>
+<H2>ERRORS</H2>
+
+<DL COMPACT>
+<DT><B>EACCES</B>
+
+<DD>
+(statfs)
+Search permission is denied for a component of the path prefix of
+<I>path</I>.
+
+(See also
+<B><A HREF="../man2/path_resolution.2.html">path_resolution</A></B>(2).)
+
+<DT><B>EBADF</B>
+
+<DD>
+(fstatfs)
+<I>fd</I>
+
+is not a valid open file descriptor.
+<DT><B>EFAULT</B>
+
+<DD>
+<I>buf</I>
+
+or
+<I>path</I>
+
+points to an invalid address.
+<DT><B>EINTR</B>
+
+<DD>
+This call was interrupted by a signal.
+<DT><B>EIO</B>
+
+<DD>
+An I/O error occurred while reading from the file system.
+<DT><B>ELOOP</B>
+
+<DD>
+(statfs)
+Too many symbolic links were encountered in translating
+<I>path</I>.
+
+<DT><B>ENAMETOOLONG</B>
+
+<DD>
+(statfs)
+<I>path</I>
+
+is too long.
+<DT><B>ENOENT</B>
+
+<DD>
+(statfs)
+The file referred to by
+<I>path</I>
+
+does not exist.
+<DT><B>ENOMEM</B>
+
+<DD>
+Insufficient kernel memory was available.
+<DT><B>ENOSYS</B>
+
+<DD>
+The file system does not support this call.
+<DT><B>ENOTDIR</B>
+
+<DD>
+(statfs)
+A component of the path prefix of
+<I>path</I>
+
+is not a directory.
+<DT><B>EOVERFLOW</B>
+
+<DD>
+Some values were too large to be represented in the returned struct.
+</DL>
+<P>
+
+<A NAME="lbAG">&nbsp;</A>
+<H2>CONFORMING TO</H2>
+
+The Linux
+<B>statfs</B>
+
+was inspired by the 4.4BSD one
+(but they do not use the same structure).
+<A NAME="lbAH">&nbsp;</A>
+<H2>NOTES ON f_fsid</H2>
+
+Solaris, Irix and POSIX have a system call
+<B><A HREF="../man2/statvfs.2.html">statvfs</A></B>(2)
+
+that returns a
+<B>struct statvfs</B>
+
+(defined in
+<I>&lt;<A HREF="file:///usr/include/sys/statvfs.h">sys/statvfs.h</A>&gt;</I>)
+
+containing an
+<B>unsigned long</B>
+
+<I>f_fsid</I>.
+
+Linux, SunOS, HPUX, 4.4BSD have a system call
+<I>statfs</I>
+
+that returns a
+<B>struct statfs</B>
+
+(defined in
+<I>&lt;<A HREF="file:///usr/include/sys/vfs.h">sys/vfs.h</A>&gt;</I>)
+
+containing a
+<B>fsid_t</B>
+
+<I>f_fsid</I>,
+
+where
+<I>fsid_t</I>
+
+is defined as
+<B>struct { int val[2]; }</B>.
+
+The same holds for FreeBSD, except that it uses the include file
+<I>&lt;<A HREF="file:///usr/include/sys/mount.h">sys/mount.h</A>&gt;</I>.
+
+<P>
+The general idea is that
+<I>f_fsid</I>
+
+contains some random stuff such that the pair
+(<I>f_fsid</I>,<I>ino</I>)
+
+uniquely determines a file.
+Some OSes use (a variation on) the device number, or the device number
+combined with the filesystem type.
+Several OSes restrict giving out the
+<I>f_fsid</I>
+
+field to the superuser only (and zero it for nonprivileged users),
+because this field is used in the filehandle of the filesystem
+when NFS-exported, and giving it out is a security concern.
+<P>
+
+Under some OSes the
+<I>fsid</I>
+
+can be used as second parameter to the
+<I>sysfs()</I>
+
+system call.
+<A NAME="lbAI">&nbsp;</A>
+<H2>NOTES</H2>
+
+The kernel has system calls statfs, fstatfs, statfs64, fstatfs64
+to support this library call.
+<P>
+Some systems only have &lt;<A HREF="file:///usr/include/sys/vfs.h">sys/vfs.h</A>&gt;, other systems also have
+&lt;<A HREF="file:///usr/include/sys/statfs.h">sys/statfs.h</A>&gt;, where the former includes the latter. So it seems
+including the former is the best choice.
+<P>
+LSB has deprecated the library calls
+<I>[f]statfs()</I>
+
+and tells us to use
+<I>[f]statvfs()</I>
+
+instead.
+<A NAME="lbAJ">&nbsp;</A>
+<H2>SEE ALSO</H2>
+
+<B><A HREF="../man2/path_resolution.2.html">path_resolution</A></B>(2),
+
+<B><A HREF="../man2/stat.2.html">stat</A></B>(2),
+
+<B><A HREF="../man2/statvfs.2.html">statvfs</A></B>(2)
+
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">NAME</A><DD>
+<DT><A HREF="#lbAC">SYNOPSIS</A><DD>
+<DT><A HREF="#lbAD">DESCRIPTION</A><DD>
+<DT><A HREF="#lbAE">RETURN VALUE</A><DD>
+<DT><A HREF="#lbAF">ERRORS</A><DD>
+<DT><A HREF="#lbAG">CONFORMING TO</A><DD>
+<DT><A HREF="#lbAH">NOTES ON f_fsid</A><DD>
+<DT><A HREF="#lbAI">NOTES</A><DD>
+<DT><A HREF="#lbAJ">SEE ALSO</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
+using the manual pages.<BR>
+Time: 02:10:08 GMT, April 20, 2020
+</BODY>
+</HTML>

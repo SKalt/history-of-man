@@ -1,0 +1,200 @@
+<!--
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of SETXATTR</TITLE>
+</HEAD><BODY>
+<H1>SETXATTR</H1>
+Section: Linux Programmer's Manual (2)<BR>Updated: Extended Attributes<BR><A HREF="#index">Index</A>
+<A HREF="../index.html">Return to Main Contents</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>NAME</H2>
+
+setxattr, lsetxattr, fsetxattr - set an extended attribute value
+<A NAME="lbAC">&nbsp;</A>
+<H2>SYNOPSIS</H2>
+
+
+<PRE>
+<B>#include &lt;<A HREF="file:///usr/include/sys/types.h">sys/types.h</A>&gt;</B>
+<B>#include &lt;<A HREF="file:///usr/include/attr/xattr.h">attr/xattr.h</A>&gt;</B>
+
+<B>int setxattr (const char&nbsp;*</B><I>path</I><B>, const char&nbsp;*</B><I>name</I><B>,</B>
+<B>			 const void&nbsp;*</B><I>value</I><B>, size_t </B><I>size</I><B>, int </B><I>flags</I><B>);</B>
+<B>int lsetxattr (const char&nbsp;*</B><I>path</I><B>, const char&nbsp;*</B><I>name</I><B>,</B>
+<B>			 const void&nbsp;*</B><I>value</I><B>, size_t </B><I>size</I><B>, int </B><I>flags</I><B>);</B>
+<B>int fsetxattr (int </B><I>filedes</I><B>, const char&nbsp;*</B><I>name</I><B>,</B>
+<B>			 const void&nbsp;*</B><I>value</I><B>, size_t </B><I>size</I><B>, int </B><I>flags</I><B>);</B>
+</PRE>
+
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>DESCRIPTION</H2>
+
+Extended attributes are
+<I>name</I>:<I>value</I>
+
+pairs associated with inodes (files, directories, symlinks, etc).
+They are extensions to the normal attributes which are associated
+with all inodes in the system (i.e. the
+<B><A HREF="../man2/stat.2.html">stat</A></B>(2)
+
+data).
+A complete overview of extended attributes concepts can be found in
+<B><A HREF="../man5/attr.5.html">attr</A></B>(5).
+
+<P>
+
+<B>setxattr</B>
+
+sets the
+<I>value</I>
+
+of the extended attribute identified by
+<I>name</I>
+
+and associated with the given
+<I>path</I>
+
+in the filesystem.
+The
+<I>size</I>
+
+of the
+<I>value</I>
+
+must be specified.
+<P>
+
+<B>lsetxattr</B>
+
+is identical to 
+<B>setxattr</B>,
+
+except in the case of a symbolic link, where the extended attribute is
+set on the link itself, not the file that it refers to.
+<P>
+
+<B>fsetxattr</B>
+
+is identical to
+<B>setxattr</B>,
+
+only the extended attribute is set on the open file pointed to by
+<I>filedes</I>
+
+(as returned by
+<B><A HREF="../man2/open.2.html">open</A></B>(2))
+
+in place of
+<I>path</I>.
+
+<P>
+
+An extended attribute name is a simple NULL-terminated string.
+The
+<I>name</I>
+
+includes a namespace prefix - there may be several, disjoint
+namespaces associated with an individual inode.
+The
+<I>value</I>
+
+of an extended attribute is a chunk of arbitrary textual or
+binary data of specified length.
+<P>
+
+The
+<I>flags</I>
+
+parameter can be used to refine the semantics of the operation.
+XATTR_CREATE specifies a pure create, which fails if the named
+attribute exists already.
+XATTR_REPLACE specifies a pure replace operation, which fails if the
+named attribute does not already exist.
+By default (no flags), the extended attribute will be created if
+need be, or will simply replace the value if the attribute exists.
+<A NAME="lbAE">&nbsp;</A>
+<H2>RETURN VALUE</H2>
+
+On success, zero is returned.
+On failure, -1 is returned and
+<I>errno</I>
+
+is set appropriately.
+<P>
+
+If XATTR_CREATE is specified, and the attribute exists already,
+<I>errno</I>
+
+is set to EEXIST.
+If XATTR_REPLACE is specified, and the attribute does not exist,
+<I>errno</I>
+
+is set to ENOATTR.
+<P>
+
+If there is insufficient space remaining to store the extended attribute,
+<I>errno</I>
+
+is set to either ENOSPC, or EDQUOT if quota enforcement was the cause.
+<P>
+
+If extended attributes are not supported by the filesystem, or are disabled,
+<I>errno</I>
+
+is set to ENOTSUP.
+<P>
+
+The errors documented for the
+<B><A HREF="../man2/stat.2.html">stat</A></B>(2)
+
+system call are also applicable here.
+<A NAME="lbAF">&nbsp;</A>
+<H2>AUTHORS</H2>
+
+Andreas Gruenbacher,
+&lt;<I><A HREF="mailto:a.gruenbacher@computer.org">a.gruenbacher@computer.org</A></I>&gt;
+
+and the SGI XFS development team,
+&lt;<I><A HREF="mailto:linux-xfs@oss.sgi.com">linux-xfs@oss.sgi.com</A></I>&gt;.
+
+Please send any bug reports or comments to these addresses.
+<A NAME="lbAG">&nbsp;</A>
+<H2>SEE ALSO</H2>
+
+<B><A HREF="../man1/getfattr.1.html">getfattr</A></B>(1),
+
+<B><A HREF="../man1/setfattr.1.html">setfattr</A></B>(1),
+
+<B><A HREF="../man2/getxattr.2.html">getxattr</A></B>(2),
+
+<B><A HREF="../man2/listxattr.2.html">listxattr</A></B>(2),
+
+<B><A HREF="../man2/open.2.html">open</A></B>(2),
+
+<B><A HREF="../man2/removexattr.2.html">removexattr</A></B>(2),
+
+<B><A HREF="../man2/stat.2.html">stat</A></B>(2),
+
+<B><A HREF="../man5/attr.5.html">attr</A></B>(5)
+
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">NAME</A><DD>
+<DT><A HREF="#lbAC">SYNOPSIS</A><DD>
+<DT><A HREF="#lbAD">DESCRIPTION</A><DD>
+<DT><A HREF="#lbAE">RETURN VALUE</A><DD>
+<DT><A HREF="#lbAF">AUTHORS</A><DD>
+<DT><A HREF="#lbAG">SEE ALSO</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
+using the manual pages.<BR>
+Time: 02:10:06 GMT, April 20, 2020
+</BODY>
+</HTML>

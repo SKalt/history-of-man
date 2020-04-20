@@ -1,0 +1,182 @@
+<!--
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of SYSTEM</TITLE>
+</HEAD><BODY>
+<H1>SYSTEM</H1>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2001-09-23<BR><A HREF="#index">Index</A>
+<A HREF="../index.html">Return to Main Contents</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>NAME</H2>
+
+system - execute a shell command
+<A NAME="lbAC">&nbsp;</A>
+<H2>SYNOPSIS</H2>
+
+<PRE>
+<B>#include &lt;<A HREF="file:///usr/include/stdlib.h">stdlib.h</A>&gt;</B>
+
+<B>int system(const char *</B><I>string</I><B>);</B>
+</PRE>
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>DESCRIPTION</H2>
+
+<B>system()</B>
+
+executes a command specified in
+<I>string</I>
+
+by calling
+<B>/bin/sh -c</B>
+
+<I>string</I>,
+
+and returns after the command has been completed.
+During execution of the command,
+<B>SIGCHLD</B>
+
+will be blocked, and
+<B>SIGINT</B>
+
+and
+<B>SIGQUIT</B>
+
+will be ignored.
+<A NAME="lbAE">&nbsp;</A>
+<H2>RETURN VALUE</H2>
+
+The value returned is -1 on error (e.g. fork failed),
+and the return status of the command otherwise.
+This latter return status is in the format
+specified in
+<B><A HREF="../man2/wait.2.html">wait</A></B>(2).
+
+Thus, the exit code of the command will be
+<I>WEXITSTATUS(status)</I>.
+
+In case
+<B>/bin/sh</B>
+
+could not be executed, the exit status will be that of
+a command that does
+<I>exit(127)</I>.
+
+<P>
+
+If the value of
+<I>string</I>
+
+is 
+<B>NULL</B>,
+
+<B>system()</B>
+
+returns nonzero if the shell is available, and zero if not.
+<P>
+
+<B>system()</B>
+
+does not affect the wait status of any other children.
+<A NAME="lbAF">&nbsp;</A>
+<H2>CONFORMING TO</H2>
+
+ANSI C, POSIX.2, BSD 4.3
+<A NAME="lbAG">&nbsp;</A>
+<H2>NOTES</H2>
+
+<P>
+
+As mentioned,
+<B>system()</B>
+
+ignores SIGINT and SIGQUIT.  This may make programs that call it
+from a loop uninterruptable, unless they take care themselves
+to check the exit status of the child. E.g.
+<BR>
+
+<PRE>
+
+    while(something) {
+        int ret = system(&quot;foo&quot;);
+
+        if (WIFSIGNALED(ret) &amp;&amp;
+            (WTERMSIG(ret) == SIGINT || WTERMSIG(ret) == SIGQUIT))
+                break;
+    }
+</PRE>
+
+<P>
+
+Do not use
+<B>system()</B>
+
+from a program with suid or sgid privileges, because strange values for
+some environment variables might be used to subvert system integrity.
+Use the
+<B><A HREF="../man3/exec.3.html">exec</A></B>(3)
+
+family of functions instead, but not
+<B><A HREF="../man3/execlp.3.html">execlp</A></B>(3)
+
+or
+<B><A HREF="../man3/execvp.3.html">execvp</A></B>(3).
+
+<B>system()</B>
+
+will not, in fact, work properly from programs with suid or sgid
+privileges on systems on which
+<B>/bin/sh</B>
+
+is bash version 2, since bash 2 drops privileges on startup.
+(Debian uses a modified bash which does not do this when invoked as
+<B>sh</B>.)
+
+<P>
+
+The check for the availability of
+<B>/bin/sh</B>
+
+is not actually performed; it is always assumed to be available.  ISO
+C specifies the check, but POSIX.2 specifies that the return shall
+always be non-zero, since a system without the shell is not
+conforming, and it is this that is implemented.
+<P>
+
+It is possible for the shell command to return 127, so that code is not
+a sure indication that the
+<B>execve()</B>
+
+call failed.
+<A NAME="lbAH">&nbsp;</A>
+<H2>SEE ALSO</H2>
+
+<B><A HREF="../man1/sh.1.html">sh</A></B>(1),
+
+<B><A HREF="../man2/signal.2.html">signal</A></B>(2),
+
+<B><A HREF="../man2/wait.2.html">wait</A></B>(2),
+
+<B><A HREF="../man3/exec.3.html">exec</A></B>(3)
+
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">NAME</A><DD>
+<DT><A HREF="#lbAC">SYNOPSIS</A><DD>
+<DT><A HREF="#lbAD">DESCRIPTION</A><DD>
+<DT><A HREF="#lbAE">RETURN VALUE</A><DD>
+<DT><A HREF="#lbAF">CONFORMING TO</A><DD>
+<DT><A HREF="#lbAG">NOTES</A><DD>
+<DT><A HREF="#lbAH">SEE ALSO</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
+using the manual pages.<BR>
+Time: 02:11:09 GMT, April 20, 2020
+</BODY>
+</HTML>

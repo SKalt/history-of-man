@@ -1,0 +1,608 @@
+<!--
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of SIGACTION</TITLE>
+</HEAD><BODY>
+<H1>SIGACTION</H1>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2001-12-29<BR><A HREF="#index">Index</A>
+<A HREF="../index.html">Return to Main Contents</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>NAME</H2>
+
+sigaction, sigprocmask, sigpending, sigsuspend - POSIX signal handling functions
+<A NAME="lbAC">&nbsp;</A>
+<H2>SYNOPSIS</H2>
+
+<B>#include &lt;<A HREF="file:///usr/include/signal.h">signal.h</A>&gt;</B>
+
+<P>
+<B>int sigaction(int </B><I>signum</I><B>, const struct sigaction *</B><I>act</I><B>,</B>
+
+<B>struct sigaction *</B><I>oldact</I><B>);</B>
+
+<P>
+<B>int sigprocmask(int </B><I>how</I><B>, const sigset_t *</B><I>set</I><B>,</B>
+
+<B>sigset_t *</B><I>oldset</I><B>);</B>
+
+<P>
+<B>int sigpending(sigset_t *</B><I>set</I><B>);</B>
+
+<P>
+<B>int sigsuspend(const sigset_t *</B><I>mask</I><B>);</B>
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>DESCRIPTION</H2>
+
+The
+<B>sigaction</B>
+
+system call is used to change the action taken by a process on
+receipt of a specific signal.
+<P>
+
+<I>signum</I>
+
+specifies the signal and can be any valid signal except
+<B>SIGKILL</B>
+
+and
+<B>SIGSTOP</B>.
+
+<P>
+
+If
+<I>act</I>
+
+is non-null, the new action for signal
+<I>signum</I>
+
+is installed from
+<I>act</I>.
+
+If
+<I>oldact</I>
+
+is non-null, the previous action is saved in
+<I>oldact</I>.
+
+<P>
+
+The
+<B>sigaction</B>
+
+structure is defined as something like
+<P>
+<DL COMPACT><DT><DD>
+<PRE>
+struct sigaction {
+    void (*sa_handler)(int);
+    void (*sa_sigaction)(int, siginfo_t *, void *);
+    sigset_t sa_mask;
+    int sa_flags;
+    void (*sa_restorer)(void);
+}
+</PRE>
+
+</DL>
+
+<P>
+
+On some architectures a union is involved - do not assign to both
+<I>sa_handler</I>
+
+and
+<I>sa_sigaction</I>.
+
+<P>
+
+The
+<I>sa_restorer</I>
+
+element is obsolete and should not be used.
+POSIX does not specify a
+<I>sa_restorer</I>
+
+element.
+<P>
+
+<I>sa_handler</I>
+
+specifies the action to be associated with
+<I>signum</I>
+
+and may be
+<B>SIG_DFL</B>
+
+for the default action, 
+<B>SIG_IGN</B>
+
+to ignore this signal, or a pointer to a signal handling function.
+This function receives the signal number as its only argument.
+<P>
+
+<I>sa_sigaction</I>
+
+also specifies the action to be associated with
+<I>signum</I>.
+
+This function receives the signal number as its first argument, a
+pointer to a
+<I>siginfo_t</I>
+
+as its second argument and a pointer to a
+<I>ucontext_t</I>
+
+(cast to void *) as its third argument.
+<P>
+
+<I>sa_mask</I>
+
+gives a mask of signals which should be blocked during execution of
+the signal handler.  In addition, the signal which triggered the handler
+will be blocked, unless the
+<B>SA_NODEFER</B>
+
+or
+<B>SA_NOMASK</B>
+
+flags are used.
+<P>
+
+<I>sa_flags</I>
+
+specifies a set of flags which modify the behaviour of the signal handling
+process. It is formed by the bitwise OR of zero or more of the following:
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT><B>SA_NOCLDSTOP</B>
+
+<DD>
+If
+<I>signum</I>
+
+is
+<B>SIGCHLD</B>, 
+
+do not receive notification when child processes stop (i.e., when child
+processes receive one of
+<B>SIGSTOP</B>, <B>SIGTSTP</B>, <B>SIGTTIN</B>
+
+or
+<B>SIGTTOU</B>).
+
+<DT><B>SA_ONESHOT</B> or <B>SA_RESETHAND</B>
+
+<DD>
+Restore the signal action to the default state once the signal handler
+has been called.
+<DT><B>SA_ONSTACK</B>
+
+<DD>
+Call the signal handler on an alternate signal stack provided by 
+<B><A HREF="../man2/sigaltstack.2.html">sigaltstack</A></B>(2).
+
+If an alternate stack is not available, the default stack will be used.
+<DT><B>SA_RESTART</B>
+
+<DD>
+Provide behaviour compatible with BSD signal semantics by making certain
+system calls restartable across signals.
+<DT><B>SA_NOMASK</B> or <B>SA_NODEFER</B>
+
+<DD>
+Do not prevent the signal from being received from within its own signal
+handler.
+<DT><B>SA_SIGINFO</B>
+
+<DD>
+The signal handler takes 3 arguments, not one.  In this case,
+<I>sa_sigaction</I>
+
+should be set instead of
+<I>sa_handler</I>.
+
+(The sa_sigaction field was added in Linux 2.1.86.)
+</DL>
+</DL>
+
+<P>
+
+The
+<I>siginfo_t</I>
+
+parameter to
+<I>sa_sigaction</I>
+
+is a struct with the following elements
+<P>
+<DL COMPACT><DT><DD>
+<PRE>
+
+siginfo_t {
+    int      si_signo;  /* Signal number */
+    int      si_errno;  /* An errno value */
+    int      si_code;   /* Signal code */
+    pid_t    si_pid;    /* Sending process ID */
+    uid_t    si_uid;    /* Real user ID of sending process */
+    int      si_status; /* Exit value or signal */
+    clock_t  si_utime;  /* User time consumed */
+    clock_t  si_stime;  /* System time consumed */
+    sigval_t si_value;  /* Signal value */
+    int      si_int;    /* POSIX.1b signal */
+    void *   si_ptr;    /* POSIX.1b signal */
+    void *   si_addr;   /* Memory location which caused fault */
+    int      si_band;   /* Band event */
+    int      si_fd;     /* File descriptor */
+}
+</PRE>
+
+</DL>
+
+<P>
+<I>si_signo</I>, <I>si_errno</I> and <I>si_code</I>
+
+are defined for all signals.
+The rest of the struct may be a union, so that one should only
+read the fields that are meaningful for the given signal.
+<B><A HREF="../man2/kill.2.html">kill</A></B>(2),
+
+POSIX.1b signals and SIGCHLD fill in
+<I>si_pid</I> and <I>si_uid</I>.
+
+
+SIGCHLD also fills in
+<I>si_status</I>, <I>si_utime</I> and <I>si_stime</I>.
+
+<I>si_int</I> and <I>si_ptr</I>
+
+are specified by the sender of the POSIX.1b signal.
+
+
+
+SIGILL, SIGFPE, SIGSEGV and SIGBUS fill in
+<I>si_addr</I>
+
+with the address of the fault.
+SIGPOLL fills in
+<I>si_band</I> and <I>si_fd</I>.
+
+<P>
+<I>si_code</I>
+
+indicates why this signal was sent.  It is a value, not a bitmask.  The
+values which are possible for any signal are listed in this table:
+<TABLE BORDER>
+<TR VALIGN=top><TD ALIGN=center COLSPAN=2><I>si_code</I><BR></TD></TR>
+<TR VALIGN=top><TD>Value</TD><TD>Signal origin<BR></TD></TR>
+<TR VALIGN=top><TD>SI_USER</TD><TD>kill, sigsend or raise<BR></TD></TR>
+<TR VALIGN=top><TD>SI_KERNEL</TD><TD>The kernel<BR></TD></TR>
+<TR VALIGN=top><TD>SI_QUEUE</TD><TD>sigqueue<BR></TD></TR>
+<TR VALIGN=top><TD>SI_TIMER</TD><TD>timer expired<BR></TD></TR>
+<TR VALIGN=top><TD>SI_MESGQ</TD><TD>mesq state changed<BR></TD></TR>
+<TR VALIGN=top><TD>SI_ASYNCIO</TD><TD>AIO completed<BR></TD></TR>
+<TR VALIGN=top><TD>SI_SIGIO</TD><TD>queued SIGIO<BR></TD></TR>
+</TABLE>
+
+<P>
+<TABLE BORDER>
+<TR VALIGN=top><TD ALIGN=center COLSPAN=2>SIGILL<BR></TD></TR>
+<TR VALIGN=top><TD>ILL_ILLOPC</TD><TD>illegal opcode<BR></TD></TR>
+<TR VALIGN=top><TD>ILL_ILLOPN</TD><TD>illegal operand<BR></TD></TR>
+<TR VALIGN=top><TD>ILL_ILLADR</TD><TD>illegal addressing mode<BR></TD></TR>
+<TR VALIGN=top><TD>ILL_ILLTRP</TD><TD>illegal trap<BR></TD></TR>
+<TR VALIGN=top><TD>ILL_PRVOPC</TD><TD>privileged opcode<BR></TD></TR>
+<TR VALIGN=top><TD>ILL_PRVREG</TD><TD>privileged register<BR></TD></TR>
+<TR VALIGN=top><TD>ILL_COPROC</TD><TD>coprocessor error<BR></TD></TR>
+<TR VALIGN=top><TD>ILL_BADSTK</TD><TD>internal stack error<BR></TD></TR>
+</TABLE>
+
+<P>
+<TABLE BORDER>
+<TR VALIGN=top><TD ALIGN=center COLSPAN=2>SIGFPE<BR></TD></TR>
+<TR VALIGN=top><TD>FPE_INTDIV</TD><TD>integer divide by zero<BR></TD></TR>
+<TR VALIGN=top><TD>FPE_INTOVF</TD><TD>integer overflow<BR></TD></TR>
+<TR VALIGN=top><TD>FPE_FLTDIV</TD><TD>floating point divide by zero<BR></TD></TR>
+<TR VALIGN=top><TD>FPE_FLTOVF</TD><TD>floating point overflow<BR></TD></TR>
+<TR VALIGN=top><TD>FPE_FLTUND</TD><TD>floating point underflow<BR></TD></TR>
+<TR VALIGN=top><TD>FPE_FLTRES</TD><TD>floating point inexact result<BR></TD></TR>
+<TR VALIGN=top><TD>FPE_FLTINV</TD><TD>floating point invalid operation<BR></TD></TR>
+<TR VALIGN=top><TD>FPE_FLTSUB</TD><TD>subscript out of range<BR></TD></TR>
+</TABLE>
+
+<P>
+<TABLE BORDER>
+<TR VALIGN=top><TD ALIGN=center COLSPAN=2>SIGSEGV<BR></TD></TR>
+<TR VALIGN=top><TD>SEGV_MAPERR</TD><TD>address not mapped to object<BR></TD></TR>
+<TR VALIGN=top><TD>SEGV_ACCERR</TD><TD>invalid permissions for mapped object<BR></TD></TR>
+</TABLE>
+
+<P>
+<TABLE BORDER>
+<TR VALIGN=top><TD ALIGN=center COLSPAN=2>SIGBUS<BR></TD></TR>
+<TR VALIGN=top><TD>BUS_ADRALN</TD><TD>invalid address alignment<BR></TD></TR>
+<TR VALIGN=top><TD>BUS_ADRERR</TD><TD>non-existent physical address<BR></TD></TR>
+<TR VALIGN=top><TD>BUS_OBJERR</TD><TD>object specific hardware error<BR></TD></TR>
+</TABLE>
+
+<P>
+<TABLE BORDER>
+<TR VALIGN=top><TD ALIGN=center COLSPAN=2>SIGTRAP<BR></TD></TR>
+<TR VALIGN=top><TD>TRAP_BRKPT</TD><TD>process breakpoint<BR></TD></TR>
+<TR VALIGN=top><TD>TRAP_TRACE</TD><TD>process trace trap<BR></TD></TR>
+</TABLE>
+
+<P>
+<TABLE BORDER>
+<TR VALIGN=top><TD ALIGN=center COLSPAN=2>SIGCHLD<BR></TD></TR>
+<TR VALIGN=top><TD>CLD_EXITED</TD><TD>child has exited<BR></TD></TR>
+<TR VALIGN=top><TD>CLD_KILLED</TD><TD>child was killed<BR></TD></TR>
+<TR VALIGN=top><TD>CLD_DUMPED</TD><TD>child terminated abnormally<BR></TD></TR>
+<TR VALIGN=top><TD>CLD_TRAPPED</TD><TD>traced child has trapped<BR></TD></TR>
+<TR VALIGN=top><TD>CLD_STOPPED</TD><TD>child has stopped<BR></TD></TR>
+<TR VALIGN=top><TD>CLD_CONTINUED</TD><TD>stopped child has continued<BR></TD></TR>
+</TABLE>
+
+<P>
+<TABLE BORDER>
+<TR VALIGN=top><TD ALIGN=center COLSPAN=2>SIGPOLL<BR></TD></TR>
+<TR VALIGN=top><TD>POLL_IN</TD><TD>data input available<BR></TD></TR>
+<TR VALIGN=top><TD>POLL_OUT</TD><TD>output buffers available<BR></TD></TR>
+<TR VALIGN=top><TD>POLL_MSG</TD><TD>input message available<BR></TD></TR>
+<TR VALIGN=top><TD>POLL_ERR</TD><TD>i/o error<BR></TD></TR>
+<TR VALIGN=top><TD>POLL_PRI</TD><TD>high priority input available<BR></TD></TR>
+<TR VALIGN=top><TD>POLL_HUP</TD><TD>device disconnected<BR></TD></TR>
+</TABLE>
+
+<P>
+<P>
+
+The
+<B>sigprocmask</B>
+
+call is used to change the list of currently blocked signals. The 
+behaviour of the call is dependent on the value of
+<I>how</I>,
+
+as follows.
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT><B>SIG_BLOCK</B>
+
+<DD>
+The set of blocked signals is the union of the current set and the
+<I>set</I>
+
+argument.
+<DT><B>SIG_UNBLOCK</B>
+
+<DD>
+The signals in
+<I>set</I>
+
+are removed from the current set of blocked signals.  It is legal to
+attempt to unblock a signal which is not blocked.
+<DT><B>SIG_SETMASK</B>
+
+<DD>
+The set of blocked signals is set to the argument
+<I>set</I>.
+
+</DL>
+</DL>
+
+<P>
+
+If
+<I>oldset</I>
+
+is non-null, the previous value of the signal mask is stored in
+<I>oldset</I>.
+
+<P>
+
+The
+<B>sigpending</B>
+
+call allows the examination of pending signals (ones which have been
+raised while blocked).  The signal mask of pending signals is stored
+in
+<I>set</I>.
+
+<P>
+
+The
+<B>sigsuspend</B>
+
+call temporarily replaces the signal mask for the process with that
+given by 
+<I>mask</I>
+
+and then suspends the process until a signal is received.
+<P>
+<A NAME="lbAE">&nbsp;</A>
+<H2>RETURN VALUE</H2>
+
+The functions
+<B>sigaction</B>,
+
+<B>sigprocmask</B>,
+
+and
+<B>sigpending</B>
+
+return 0 on success and -1 on error.
+The function
+<B>sigsuspend</B>
+
+always returns -1, normally with the error
+<B>EINTR</B>.
+
+<P>
+<A NAME="lbAF">&nbsp;</A>
+<H2>ERRORS</H2>
+
+<DL COMPACT>
+<DT><B>EFAULT</B>
+
+<DD>
+<I>act</I>, <I>oldact</I>, <I>set</I>, <I>oldset</I>
+
+or 
+<I>mask</I>
+
+point to memory which is not a valid part of the process address space.
+<DT><B>EINTR</B>
+
+<DD>
+System call was interrupted.
+<DT><B>EINVAL</B>
+
+<DD>
+An invalid signal was specified.  This will also be generated if an attempt
+is made to change the action for
+<B>SIGKILL</B> or <B>SIGSTOP</B>, 
+
+which cannot be caught.
+</DL>
+<A NAME="lbAG">&nbsp;</A>
+<H2>NOTES</H2>
+
+It is not possible to block 
+<B>SIGKILL</B> or <B>SIGSTOP</B>
+
+with the sigprocmask call.  Attempts to do so will be silently ignored.
+<P>
+
+According to POSIX, the behaviour of a process is undefined after it
+ignores a SIGFPE, SIGILL, or SIGSEGV signal that was not generated
+by the <I>kill()</I> or the <I>raise()</I> functions.
+Integer division by zero has undefined result.
+On some architectures it will generate a SIGFPE signal.
+(Also dividing the most negative integer by -1 may generate SIGFPE.)
+Ignoring this signal might lead to an endless loop.
+<P>
+
+POSIX (B.3.3.1.3) disallows setting the action for SIGCHLD to SIG_IGN.
+The BSD and SYSV behaviours differ, causing BSD software
+that sets the action for SIGCHLD to SIG_IGN to fail on Linux.
+<P>
+
+The POSIX spec only defines
+<B>SA_NOCLDSTOP</B>.
+
+Use of other
+<I>sa_flags</I>
+
+is non-portable.
+<P>
+
+The
+<B>SA_RESETHAND</B>
+
+flag is compatible with the SVr4 flag of the same name.
+<P>
+
+The
+<B>SA_NODEFER</B>
+
+flag is compatible with the SVr4 flag of the same name under kernels
+1.3.9 and newer.  On older kernels the Linux implementation 
+allowed the receipt of any signal, not just the one we are installing
+(effectively overriding any
+<I>sa_mask</I>
+
+settings).
+<P>
+
+The
+<B>SA_RESETHAND</B> and <B>SA_NODEFER</B>
+
+names for SVr4 compatibility are present only in library versions 3.0.9
+and greater.
+<P>
+
+The
+<B>SA_SIGINFO</B>
+
+flag is specified by POSIX.1b.  Support for it was added in Linux 2.2.
+<P>
+
+<B>sigaction</B>
+
+can be called with a null second argument to query the current signal
+handler. It can also be used to check whether a given signal is valid for
+the current machine by calling it with null second and third arguments.
+<P>
+
+See
+<B><A HREF="../man3/sigsetops.3.html">sigsetops</A></B>(3)
+
+for details on manipulating signal sets.
+<A NAME="lbAH">&nbsp;</A>
+<H2>CONFORMING TO</H2>
+
+POSIX, SVr4.  SVr4 does not document the EINTR condition.
+<P>
+<A NAME="lbAI">&nbsp;</A>
+<H2>UNDOCUMENTED</H2>
+
+Before the introduction of
+<B>SA_SIGINFO</B>
+
+it was also possible to get some additional information,
+namely by using a sa_handler with second argument of type
+<I>struct sigcontext.</I>
+
+See the relevant kernel sources for details.
+This use is obsolete now.
+<P>
+<A NAME="lbAJ">&nbsp;</A>
+<H2>SEE ALSO</H2>
+
+<B><A HREF="../man1/kill.1.html">kill</A></B>(1),
+
+<B><A HREF="../man2/kill.2.html">kill</A></B>(2),
+
+<B><A HREF="../man2/killpg.2.html">killpg</A></B>(2),
+
+<B><A HREF="../man2/pause.2.html">pause</A></B>(2),
+
+<B><A HREF="../man2/sigaltstack.2.html">sigaltstack</A></B>(2),
+
+<B><A HREF="../man2/signal.2.html">signal</A></B>(2),
+
+<B><A HREF="../man2/sigvec.2.html">sigvec</A></B>(2),
+
+<B><A HREF="../man3/raise.3.html">raise</A></B>(3),
+
+<B><A HREF="../man3/siginterrupt.3.html">siginterrupt</A></B>(3),
+
+<B><A HREF="../man3/sigsetops.3.html">sigsetops</A></B>(3),
+
+<B><A HREF="../man7/signal.7.html">signal</A></B>(7)
+
+
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">NAME</A><DD>
+<DT><A HREF="#lbAC">SYNOPSIS</A><DD>
+<DT><A HREF="#lbAD">DESCRIPTION</A><DD>
+<DT><A HREF="#lbAE">RETURN VALUE</A><DD>
+<DT><A HREF="#lbAF">ERRORS</A><DD>
+<DT><A HREF="#lbAG">NOTES</A><DD>
+<DT><A HREF="#lbAH">CONFORMING TO</A><DD>
+<DT><A HREF="#lbAI">UNDOCUMENTED</A><DD>
+<DT><A HREF="#lbAJ">SEE ALSO</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
+using the manual pages.<BR>
+Time: 02:10:07 GMT, April 20, 2020
+</BODY>
+</HTML>

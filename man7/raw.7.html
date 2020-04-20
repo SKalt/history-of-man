@@ -1,0 +1,383 @@
+<!--
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of RAW</TITLE>
+</HEAD><BODY>
+<H1>RAW</H1>
+Section: Linux Programmer's Manual (7)<BR>Updated: 1998-10-02<BR><A HREF="#index">Index</A>
+<A HREF="../index.html">Return to Main Contents</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>NAME</H2>
+
+raw, SOCK_RAW - Linux IPv4 raw sockets
+<A NAME="lbAC">&nbsp;</A>
+<H2>SYNOPSIS</H2>
+
+<B>#include &lt;<A HREF="file:///usr/include/sys/socket.h">sys/socket.h</A>&gt;</B>
+
+<BR>
+
+<B>#include &lt;<A HREF="file:///usr/include/netinet/in.h">netinet/in.h</A>&gt;</B>
+
+<BR>
+
+<B>raw_socket = socket(PF_INET, SOCK_RAW, int </B><I>protocol</I><B>);</B>
+
+<P>
+<A NAME="lbAD">&nbsp;</A>
+<H2>DESCRIPTION</H2>
+
+Raw sockets allow new IPv4 protocols to be implemented in user space.
+A raw socket receives or sends the raw datagram not including link level headers.
+<P>
+The IPv4 layer generates an IP header when sending a packet unless the
+<B>IP_HDRINCL</B>
+
+socket option is enabled on the socket.
+When it is enabled, the packet must contain an IP header.
+For receiving the IP header is always included in the packet.
+<P>
+Only processes with an effective user id of 0 or the 
+<B>CAP_NET_RAW </B>
+
+capability are allowed to open raw sockets.
+<P>
+All packets or errors matching the
+<I>protocol</I>
+
+number specified
+for the raw socket are passed to this socket.  For a list of the
+allowed protocols see RFC1700 assigned numbers and
+<B><A HREF="../man3/getprotobyname.3.html">getprotobyname</A></B>(3).
+
+<P>
+A protocol of
+<B>IPPROTO_RAW</B>
+
+implies enabled
+<B>IP_HDRINCL </B>
+
+and is able to send any IP protocol that is specified in the passed header.
+Receiving of all IP protocols via
+<B>IPPROTO_RAW</B>
+
+is not possible using raw sockets.
+<P>
+<TABLE BORDER>
+<TR VALIGN=top><TD ALIGN=center COLSPAN=2>IP Header fields modified on sending by IP_HDRINCL<BR></TD></TR>
+<TR VALIGN=top><TD>IP Checksum</TD><TD>Always filled in.<BR></TD></TR>
+<TR VALIGN=top><TD>Source Address</TD><TD>Filled in when zero.<BR></TD></TR>
+<TR VALIGN=top><TD>Packet Id</TD><TD>Filled in when zero.<BR></TD></TR>
+<TR VALIGN=top><TD>Total Length</TD><TD>Always filled in.<BR></TD></TR>
+</TABLE>
+
+<P>
+
+<P>
+If 
+<B>IP_HDRINCL</B>
+
+is specified and the IP header has a non-zero destination address then
+the destination address of the socket is used to route the packet. When 
+<B>MSG_DONTROUTE</B>
+
+is specified the destination address should refer to a local interface,
+otherwise a routing table lookup is done anyways but gatewayed routes
+are ignored.
+<P>
+If
+<B>IP_HDRINCL</B>
+
+isn't set then IP header options can be set on raw sockets with
+<B><A HREF="../man2/setsockopt.2.html">setsockopt</A></B>(2);
+
+see
+<B><A HREF="../man7/ip.7.html">ip</A></B>(7)
+
+for more information.
+<P>
+In Linux 2.2 all IP header fields and options can be set using
+IP socket options. This means raw sockets are usually only needed for new
+protocols or protocols with no user interface (like ICMP).
+<P>
+When a packet is received, it is passed to any raw sockets which have
+been bound to its protocol before it is passed to other protocol handlers
+(e.g. kernel protocol modules).  
+<P>
+<A NAME="lbAE">&nbsp;</A>
+<H2>ADDRESS FORMAT</H2>
+
+<P>
+Raw sockets use the standard 
+<B>sockaddr_in </B>
+
+address structure defined in 
+<B><A HREF="../man7/ip.7.html">ip</A></B>(7).
+
+The 
+The 
+<B>sin_port</B>
+
+field could be used to specify the IP protocol number, 
+but it is ignored for sending in Linux 2.2 and should be always
+set to 0 (see BUGS)
+For incoming packets 
+<B>sin_port </B>
+
+is set to the protocol of the packet. 
+See the
+<B>&lt;<A HREF="file:///usr/include/netinet/in.h">netinet/in.h</A>&gt;</B>
+
+include file for valid IP protocols. 
+<P>
+<A NAME="lbAF">&nbsp;</A>
+<H2>SOCKET OPTIONS</H2>
+
+Raw socket options can be set with
+<B><A HREF="../man2/setsockopt.2.html">setsockopt</A></B>(2)
+
+and read with
+<B><A HREF="../man2/getsockopt.2.html">getsockopt</A></B>(2)
+
+by passing the 
+<I>SOL_RAW </I>
+
+family flag. 
+<P>
+<DL COMPACT>
+<DT><B>ICMP_FILTER</B>
+
+<DD>
+Enable a special filter for raw sockets bound to the 
+<B>IPPROTO_ICMP </B>
+
+protocol.  The value has a bit set for each ICMP message type which
+should be filtered out. The default is to filter no ICMP messages. 
+<P>
+</DL>
+<P>
+
+In addition all 
+<B><A HREF="../man7/ip.7.html">ip</A></B>(7)
+
+<B>SOL_IP </B>
+
+socket options valid for datagram sockets are supported.
+<P>
+<A NAME="lbAG">&nbsp;</A>
+<H2>NOTES</H2>
+
+Raw sockets fragment a packet when its total length exceeds the interface MTU
+(but see BUGS).
+A more network friendly and faster alternative is to implement path MTU 
+discovery as described in the
+<B>IP_MTU_DISCOVER </B>
+
+section of
+<B><A HREF="../man7/ip.7.html">ip</A></B>(7).
+
+<P>
+A raw socket can be bound to a specific local address using the 
+<B><A HREF="../man2/bind.2.html">bind</A></B>(2)
+
+call. If it isn't bound all packets with the specified IP protocol are received.
+In addition a RAW socket can be bound to a specific network device using
+<B>SO_BINDTODEVICE;</B>
+
+see 
+<B><A HREF="../man7/socket.7.html">socket</A></B>(7).
+
+<P>
+An
+<B>IPPROTO_RAW</B>
+
+socket is send only.
+If you really want to receive all IP packets use a
+<B><A HREF="../man7/packet.7.html">packet</A></B>(7)
+
+socket with the
+<B>ETH_P_IP</B>
+
+protocol. Note that packet sockets don't reassemble IP fragments, unlike raw sockets.
+<P>
+If you want to receive all ICMP packets for a datagram socket it is often better 
+to use
+<B>IP_RECVERR</B>
+
+on that particular socket; see
+<B><A HREF="../man7/ip.7.html">ip</A></B>(7).
+
+<P>
+Raw sockets may tap all IP protocols in Linux, even
+protocols like ICMP or TCP which have a protocol module in the kernel. In
+this case the packets are passed to both the kernel module and the raw
+socket(s). This should not be relied upon in portable programs, many other BSD 
+socket implementation have limitations here.
+<P>
+Linux never changes headers passed from the user (except for filling in some
+zeroed fields as described for
+<B>IP_HDRINCL</B>).
+
+This differs from many other implementations of raw sockets.
+<P>
+RAW sockets are generally rather unportable and should be avoided in programs
+intended to be portable.
+<P>
+Sending on raw sockets should take the IP protocol from 
+<B>sin_port;</B>
+
+this ability was lost in Linux 2.2. Work around is to use
+<B>IP_HDRINCL.</B>
+
+<P>
+<A NAME="lbAH">&nbsp;</A>
+<H2>ERROR HANDLING</H2>
+
+Errors originating from the network are only passed to the user when the
+socket is connected or the 
+<B>IP_RECVERR</B>
+
+flag is enabled. For connected sockets only 
+<B>EMSGSIZE   </B>
+
+and 
+<B>EPROTO </B>
+
+are passed for compatibility. With
+<B>IP_RECVERR</B>
+
+all network errors are saved in the error queue. 
+<A NAME="lbAI">&nbsp;</A>
+<H2>ERRORS</H2>
+
+<DL COMPACT>
+<DT><B>EMSGSIZE </B>
+
+<DD>
+Packet too big. Either Path MTU Discovery is enabled (the
+<B>IP_MTU_DISCOVER</B>
+
+socket flag) or the packet size exceeds the maximum allowed IPv4 packet size
+of 64KB.  
+<DT><B>EACCES</B>
+
+<DD>
+User tried to send to a broadcast address without having the broadcast flag
+set on the socket.
+<DT><B>EPROTO</B>
+
+<DD>
+An ICMP error has arrived reporting a parameter problem.
+<DT><B>EFAULT</B>
+
+<DD>
+An invalid memory address was supplied.
+<DT><B>EOPNOTSUPP</B>
+
+<DD>
+Invalid flag has been passed to a socket call (like 
+<B>MSG_OOB</B>).
+
+<DT><B>EINVAL</B>
+
+<DD>
+Invalid argument.
+<DT><B>EPERM</B>
+
+<DD>
+The user doesn't have permission to open raw sockets. Only processes
+with a effective user id of 0 or the 
+<B>CAP_NET_RAW </B>
+
+attribute may do that.
+<P>
+</DL>
+<A NAME="lbAJ">&nbsp;</A>
+<H2>VERSIONS</H2>
+
+<B>IP_RECVERR </B>
+
+and 
+<B>ICMP_FILTER </B>
+
+are new in Linux 2.2. They are Linux extensions
+and should not be used in portable programs.
+<P>
+Linux 2.0 enabled some bug-to-bug compatibility with BSD in the raw socket code
+when the SO_BSDCOMPAT flag was set - that has been removed in 2.2.
+<P>
+<A NAME="lbAK">&nbsp;</A>
+<H2>BUGS</H2>
+
+Transparent proxy extensions are not described.
+<P>
+When the 
+<B>IP_HDRINCL</B>
+
+option is set datagrams will not be fragmented and are limited to the interface
+MTU.  This is a limitation in Linux 2.2.
+<P>
+Setting the IP protocol for sending in
+<B>sin_port</B>
+
+got lost in Linux 2.2. The protocol that socket was bound to or that
+was specified in the initial 
+<B><A HREF="../man2/socket.2.html">socket</A></B>(2)
+
+call is always used.
+<P>
+<A NAME="lbAL">&nbsp;</A>
+<H2>AUTHORS</H2>
+
+This man page was written by Andi Kleen. 
+<P>
+<A NAME="lbAM">&nbsp;</A>
+<H2>SEE ALSO</H2>
+
+<B><A HREF="../man2/recvmsg.2.html">recvmsg</A></B>(2),
+
+<B><A HREF="../man2/sendmsg.2.html">sendmsg</A></B>(2),
+
+<B><A HREF="../man7/capabilities.7.html">capabilities</A></B>(7),
+
+<B><A HREF="../man7/ip.7.html">ip</A></B>(7),
+
+<B><A HREF="../man7/socket.7.html">socket</A></B>(7)
+
+<P>
+<B>RFC1191 </B>
+
+for path MTU discovery.
+<P>
+<B>RFC791 </B>
+
+and the
+<B>&lt;<A HREF="file:///usr/include/linux/ip.h">linux/ip.h</A>&gt;</B>
+
+include file for the IP protocol.
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">NAME</A><DD>
+<DT><A HREF="#lbAC">SYNOPSIS</A><DD>
+<DT><A HREF="#lbAD">DESCRIPTION</A><DD>
+<DT><A HREF="#lbAE">ADDRESS FORMAT</A><DD>
+<DT><A HREF="#lbAF">SOCKET OPTIONS</A><DD>
+<DT><A HREF="#lbAG">NOTES</A><DD>
+<DT><A HREF="#lbAH">ERROR HANDLING</A><DD>
+<DT><A HREF="#lbAI">ERRORS</A><DD>
+<DT><A HREF="#lbAJ">VERSIONS</A><DD>
+<DT><A HREF="#lbAK">BUGS</A><DD>
+<DT><A HREF="#lbAL">AUTHORS</A><DD>
+<DT><A HREF="#lbAM">SEE ALSO</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
+using the manual pages.<BR>
+Time: 02:11:27 GMT, April 20, 2020
+</BODY>
+</HTML>

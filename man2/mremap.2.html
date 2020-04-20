@@ -1,0 +1,164 @@
+<!--
+Copyright (c) 1996 Tom Bjorkholm &lt;tomb@mydata.se&gt;
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of MREMAP</TITLE>
+</HEAD><BODY>
+<H1>MREMAP</H1>
+Section: Linux Programmer's Manual (2)<BR>Updated: 1996-04-12<BR><A HREF="#index">Index</A>
+<A HREF="../index.html">Return to Main Contents</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>NAME</H2>
+
+mremap - re-map a virtual memory address 
+<A NAME="lbAC">&nbsp;</A>
+<H2>SYNOPSIS</H2>
+
+<B>#include &lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;</B>
+
+<BR>
+
+<B>#include &lt;<A HREF="file:///usr/include/sys/mman.h">sys/mman.h</A>&gt;</B>
+
+<P>
+<B>void * mremap(void *</B><I>old_address</I><B>, size_t </B><I>old_size</I>
+
+<B>, size_t </B><I>new_size</I><B>, unsigned long </B><I>flags</I><B>);</B>
+
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>DESCRIPTION</H2>
+
+<B>mremap</B> expands (or shrinks) an existing memory mapping, potentially 
+moving it at the same time (controlled by the <I>flags</I> argument and 
+the available virtual address space).
+<P>
+<I>old_address</I> is the old address of the virtual memory block that you
+want to expand (or shrink).  Note that <I>old_address</I> has to be page 
+aligned. <I>old_size</I> is the old size of the 
+virtual memory block.  <I>new_size</I> is the requested size of the
+virtual memory block after the resize. 
+<P>
+The <I>flags</I> argument is a bitmap of flags.
+<P>
+In Linux the memory is divided into pages.  A user process has (one or)
+several linear virtual memory segments.  Each virtual memory segment has one
+or more mappings to real memory pages (in the page table).  Each virtual
+memory segment has its own protection (access rights), which may cause
+a segmentation violation if the memory is accessed incorrectly (e.g.,
+writing to a read-only segment).  Accessing virtual memory outside of the
+segments will also cause a segmentation violation.
+<P>
+<B>mremap</B> uses the Linux page table scheme.  <B>mremap</B> changes the 
+mapping between virtual addresses and memory pages.  This can be used to
+implement a very efficient <B>realloc</B>.
+<P>
+<A NAME="lbAE">&nbsp;</A>
+<H2>FLAGS</H2>
+
+<DL COMPACT>
+<DT><B>MREMAP_MAYMOVE</B>
+
+<DD>
+indicates if the operation should fail, or change the virtual address 
+if the resize cannot be done at the current virtual address.
+<P>
+</DL>
+<A NAME="lbAF">&nbsp;</A>
+<H2>RETURN VALUE</H2>
+
+On success <B>mremap</B> returns a pointer to the new virtual memory area.
+On error, the value
+<B>MAP_FAILED</B>
+
+(that is, (void *) -1) is returned, and <I>errno</I> is set appropriately.
+<P>
+<A NAME="lbAG">&nbsp;</A>
+<H2>ERRORS</H2>
+
+<DL COMPACT>
+<DT><B>EAGAIN</B>
+
+<DD>
+The memory segment is locked and cannot be re-mapped.
+<DT><B>EFAULT</B>
+
+<DD>
+&quot;Segmentation fault.&quot; Some address in the range
+<I>old_address</I> to <I>old_address</I>+<I>old_size</I> is an invalid
+virtual memory address for this process.
+You can also get EFAULT even if there exist mappings that cover the
+whole address space requested, but those mappings are of different types.
+<DT><B>EINVAL</B>
+
+<DD>
+An invalid argument was given. Most likely <I>old_address</I> was not 
+page aligned.
+<DT><B>ENOMEM</B>
+
+<DD>
+The memory area cannot be expanded at the current virtual address, and the
+<B>MREMAP_MAYMOVE</B>
+
+flag is not set in <I>flags</I>. 
+Or, there is not enough (virtual) memory available.
+</DL>
+<A NAME="lbAH">&nbsp;</A>
+<H2>NOTES</H2>
+
+With current glibc includes, in order to get the definition of
+<B>MREMAP_MAYMOVE</B>,
+
+you need to define _GNU_SOURCE before including &lt;<A HREF="file:///usr/include/sys/mman.h">sys/mman.h</A>&gt;.
+<A NAME="lbAI">&nbsp;</A>
+<H2>CONFORMING TO</H2>
+
+This call is Linux-specific, and should not be used in programs
+intended to be portable.  4.2BSD had a (never actually implemented)
+<B><A HREF="../man2/mremap.2.html">mremap</A></B>(2)
+
+call with completely different semantics.
+<A NAME="lbAJ">&nbsp;</A>
+<H2>SEE ALSO</H2>
+
+<B><A HREF="../man2/brk.2.html">brk</A></B>(2),
+
+<B><A HREF="../man2/getpagesize.2.html">getpagesize</A></B>(2),
+
+<B><A HREF="../man2/mmap.2.html">mmap</A></B>(2),
+
+<B><A HREF="../man2/sbrk.2.html">sbrk</A></B>(2),
+
+<B><A HREF="../man3/malloc.3.html">malloc</A></B>(3),
+
+<B><A HREF="../man3/realloc.3.html">realloc</A></B>(3)
+
+<P>
+
+Your favorite OS text book for more information on paged memory.
+(<I>Modern Operating Systems</I> by Andrew S. Tannenbaum, 
+<I>Inside Linux</I> by Randolf Bentson,
+<I>The Design of the UNIX Operating System</I> by Maurice J. Bach.)
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">NAME</A><DD>
+<DT><A HREF="#lbAC">SYNOPSIS</A><DD>
+<DT><A HREF="#lbAD">DESCRIPTION</A><DD>
+<DT><A HREF="#lbAE">FLAGS</A><DD>
+<DT><A HREF="#lbAF">RETURN VALUE</A><DD>
+<DT><A HREF="#lbAG">ERRORS</A><DD>
+<DT><A HREF="#lbAH">NOTES</A><DD>
+<DT><A HREF="#lbAI">CONFORMING TO</A><DD>
+<DT><A HREF="#lbAJ">SEE ALSO</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
+using the manual pages.<BR>
+Time: 02:10:00 GMT, April 20, 2020
+</BODY>
+</HTML>

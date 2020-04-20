@@ -1,0 +1,309 @@
+<!--
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of FUTEX</TITLE>
+</HEAD><BODY>
+<H1>FUTEX</H1>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2004-10-07<BR><A HREF="#index">Index</A>
+<A HREF="../index.html">Return to Main Contents</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>NAME</H2>
+
+futex - Fast Userspace Locking system call
+<A NAME="lbAC">&nbsp;</A>
+<H2>SYNOPSIS</H2>
+
+<P>
+<B>#include &lt;<A HREF="file:///usr/include/linux/futex.h">linux/futex.h</A>&gt;</B>
+
+<P>
+<B>#include &lt;<A HREF="file:///usr/include/sys/time.h">sys/time.h</A>&gt;</B>
+
+<P>
+<B>int futex (int *</B><I>uaddr</I><B>, int </B><I>op</I><B>, int </B><I>val</I><B>,</B>
+
+<B>const struct timespec *</B><I>timeout</I><B>,</B>
+
+<B>int *</B><I>uaddr2</I><B>, int </B><I>val3</I><B>);</B>
+
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>DESCRIPTION</H2>
+
+<P>
+
+The
+<B>futex</B>
+
+system call provides a method for
+a program to wait for a value at a given address to change, and a
+method to wake up anyone waiting on a particular address (while the
+addresses for the same memory in separate processes may not be
+equal, the kernel maps them internally so the same memory mapped in
+different locations will correspond for
+<B>futex</B>
+
+calls).  It is typically used to
+implement the contended case of a lock in shared memory, as
+described in
+<B><A HREF="../man4/futex.4.html">futex</A></B>(4).
+
+<P>
+
+When a 
+<B><A HREF="../man4/futex.4.html">futex</A></B>(4)
+
+operation did not finish uncontended in userspace, a call needs to be made
+to the kernel to arbitrate. Arbitration can either mean putting the calling
+process to sleep or, conversely, waking a waiting process.
+<P>
+
+Callers of this function are expected to adhere to the semantics as set out in
+<B><A HREF="../man4/futex.4.html">futex</A></B>(4).
+
+As these
+semantics involve writing non-portable assembly instructions, this in turn
+probably means that most users will in fact be library authors and not
+general application developers.
+<P>
+
+The
+<I>uaddr</I>
+
+argument needs to point to an aligned integer which stores the counter.
+The operation to execute is passed via the
+<I>op</I>
+
+parameter, along with a value
+<I>val</I>.
+
+<P>
+
+Five operations are currently defined:
+<DL COMPACT>
+<DT><B>FUTEX_WAIT</B>
+
+<DD>
+This operation atomically verifies that the futex address
+<I>uaddr</I>
+
+still contains the value
+<I>val</I>,
+
+and sleeps awaiting FUTEX_WAKE on this futex address. If the
+<I>timeout</I>
+
+argument is non-NULL, its contents describe the maximum
+duration of the wait, which is infinite otherwise. The arguments
+<I>uaddr2</I>
+
+and
+<I>val3</I>
+
+are ignored.
+<P>
+For
+<B><A HREF="../man4/futex.4.html">futex</A></B>(4),
+
+this call is executed if decrementing the count gave a negative value
+(indicating contention), and will sleep until another process releases
+the futex and executes the FUTEX_WAKE operation. 
+<DT><B>FUTEX_WAKE</B>
+
+<DD>
+This operation wakes at most <I>val</I>
+processes waiting on this futex address (ie. inside FUTEX_WAIT).
+The arguments
+<I>timeout</I>,
+
+<I>uaddr2</I>
+
+and
+<I>val3</I>
+
+are ignored.
+<P>
+For
+<B><A HREF="../man4/futex.4.html">futex</A></B>(4),
+
+this is executed if incrementing
+the count showed that there were waiters, once the futex value has been set
+to 1 (indicating that it is available).
+<DT><B>FUTEX_FD</B>
+
+<DD>
+To support asynchronous wakeups, this operation associates a file descriptor
+with a futex.
+
+If another process executes a FUTEX_WAKE, the process will receive the signal
+number that was passed in
+<I>val</I>.
+
+The calling process must close the returned file descriptor after use.
+The arguments
+<I>timeout</I>,
+
+<I>uaddr2</I>
+
+and
+<I>val3</I>
+
+are ignored.
+<P>
+To prevent race conditions, the caller should test if the futex has been upped
+after FUTEX_FD returns.
+<DT><B>FUTEX_REQUEUE</B> (since Linux 2.5.70)
+
+<DD>
+This operation was introduced in order to avoid a &quot;thundering herd&quot; effect
+when FUTEX_WAKE is used and all processes woken up need to acquire another
+futex. This call wakes up
+<I>val</I>
+
+processes, and requeues all other waiters on the futex at address
+<I>uaddr2</I>.
+
+The arguments
+<I>timeout</I>
+
+and
+<I>val3</I>
+
+are ignored.
+<DT><B>FUTEX_CMP_REQUEUE</B> (since Linux 2.6.7)
+
+<DD>
+There was a race in the intended use of FUTEX_REQUEUE, so
+FUTEX_CMP_REQUEUE was introduced. This is similar to FUTEX_REQUEUE,
+but first checks whether the location
+<I>uaddr</I>
+
+still contains the value
+<I>val3</I>.
+
+If not, an error EAGAIN is returned.
+The argument
+<I>timeout</I>
+
+is ignored.
+</DL>
+<A NAME="lbAE">&nbsp;</A>
+<H2>RETURN VALUE</H2>
+
+<P>
+
+Depending on which operation was executed, the returned value can have
+differing meanings.
+<DL COMPACT>
+<DT><B>FUTEX_WAIT</B>
+
+<DD>
+Returns 0 if the process was woken by a FUTEX_WAKE call. In case of timeout,
+ETIMEDOUT is returned. If the futex was not equal to the expected value,
+the operation returns EWOULDBLOCK. Signals (or other spurious wakeups)
+cause FUTEX_WAIT to return EINTR.
+<DT><B>FUTEX_WAKE</B>
+
+<DD>
+Returns the number of processes woken up.
+<DT><B>FUTEX_FD</B>
+
+<DD>
+Returns the new file descriptor associated with the futex.
+<DT><B>FUTEX_REQUEUE</B>
+
+<DD>
+Returns the number of processes woken up.
+<DT><B>FUTEX_CMP_REQUEUE</B>
+
+<DD>
+Returns the number of processes woken up.
+</DL>
+<A NAME="lbAF">&nbsp;</A>
+<H2>ERRORS</H2>
+
+<DL COMPACT>
+<DT><B>EACCES</B>
+
+<DD>
+No read access to futex memory.
+<DT><B>EAGAIN</B>
+
+<DD>
+FUTEX_CMP_REQUEUE found an unexpected futex value.
+(This probably indicates a race;
+use the safe FUTEX_WAKE now.)
+<DT><B>EFAULT</B>
+
+<DD>
+Error in getting
+<I>timeout</I>
+
+information from userspace.
+<DT><B>EINVAL</B>
+
+<DD>
+An operation was not defined or error in page alignment.
+<DT><B>ENFILE</B>
+
+<DD>
+The system limit on the total number of open files has been reached.
+</DL>
+<A NAME="lbAG">&nbsp;</A>
+<H2>NOTES</H2>
+
+<P>
+
+To reiterate, bare futexes are not intended as an easy to use abstraction
+for end-users. Implementors are expected to be assembly literate and to have
+read the sources of the futex userspace library referenced below.
+
+
+
+
+
+
+
+<A NAME="lbAH">&nbsp;</A>
+<H2>VERSIONS</H2>
+
+<P>
+
+Initial futex support was merged in Linux 2.5.7 but with different semantics
+from what was described above. A 4-parameter system call with the semantics
+given here was introduced in Linux 2.5.40. In Linux 2.5.70 one parameter
+was added. In Linux 2.6.7 a sixth parameter was added - messy, especially
+on the s390 architecture.
+<A NAME="lbAI">&nbsp;</A>
+<H2>SEE ALSO</H2>
+
+<P>
+
+<B><A HREF="../man4/futex.4.html">futex</A></B>(4),
+
+`Fuss, Futexes and Furwocks: Fast Userlevel Locking in Linux'
+(proceedings of the Ottawa Linux Symposium 2002), 
+futex example library, futex-*.tar.bz2
+&lt;URL:<A HREF="ftp://ftp.nl.kernel.org:/pub/linux/kernel/people/rusty/">ftp://ftp.nl.kernel.org:/pub/linux/kernel/people/rusty/</A>&gt;.
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">NAME</A><DD>
+<DT><A HREF="#lbAC">SYNOPSIS</A><DD>
+<DT><A HREF="#lbAD">DESCRIPTION</A><DD>
+<DT><A HREF="#lbAE">RETURN VALUE</A><DD>
+<DT><A HREF="#lbAF">ERRORS</A><DD>
+<DT><A HREF="#lbAG">NOTES</A><DD>
+<DT><A HREF="#lbAH">VERSIONS</A><DD>
+<DT><A HREF="#lbAI">SEE ALSO</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
+using the manual pages.<BR>
+Time: 02:09:55 GMT, April 20, 2020
+</BODY>
+</HTML>

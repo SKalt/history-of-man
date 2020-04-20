@@ -1,0 +1,272 @@
+<!--
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of MKNOD</TITLE>
+</HEAD><BODY>
+<H1>MKNOD</H1>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2004-06-23<BR><A HREF="#index">Index</A>
+<A HREF="../index.html">Return to Main Contents</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>NAME</H2>
+
+mknod - create a special or ordinary file
+<A NAME="lbAC">&nbsp;</A>
+<H2>SYNOPSIS</H2>
+
+<PRE>
+<B>#include &lt;<A HREF="file:///usr/include/sys/types.h">sys/types.h</A>&gt;</B>
+<B>#include &lt;<A HREF="file:///usr/include/sys/stat.h">sys/stat.h</A>&gt;</B>
+<B>#include &lt;<A HREF="file:///usr/include/fcntl.h">fcntl.h</A>&gt;</B>
+<B>#include &lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;</B>
+
+<B>int mknod(const char *</B><I>pathname</I><B>, mode_t </B><I>mode</I><B>, dev_t </B><I>dev</I><B>);</B>
+</PRE>
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>DESCRIPTION</H2>
+
+The system call
+<B>mknod</B>
+
+creates a filesystem node (file, device special file or
+named pipe) named
+<I>pathname</I>,
+
+with attributes specified by
+<I>mode</I>
+
+and
+<I>dev</I>.
+
+<P>
+The
+<I>mode</I>
+
+argument specifies both the permissions to use and the type of node
+to be created.
+It should be a combination (using bitwise OR) of one of the file types
+listed below and the permissions for the new node.
+<P>
+The permissions are modified by the process's
+<B>umask</B>
+
+in the usual way: the permissions of the created node are
+<B>(mode &amp; ~umask)</B>.
+
+<P>
+The file type must be one of
+<B>S_IFREG</B>,
+
+<B>S_IFCHR</B>,
+
+<B>S_IFBLK</B>,
+
+<B>S_IFIFO</B>
+
+or
+<B>S_IFSOCK</B>
+
+
+to specify a normal file (which will be created empty), character
+special file, block special file, FIFO (named pipe), or Unix domain socket,
+respectively.
+(Zero file type is equivalent to type S_IFREG.)
+<P>
+If the file type is
+<B>S_IFCHR</B> or <B>S_IFBLK</B>
+
+then
+<I>dev</I>
+
+specifies the major and minor numbers of the newly created device
+special file; otherwise it is ignored.
+<P>
+If
+<I>pathname</I>
+
+already exists, or is a symbolic link, this call fails with an EEXIST error.
+<P>
+The newly created node will be owned by the effective user ID of the
+process.  If the directory containing the node has the set group ID
+bit set, or if the filesystem is mounted with BSD group semantics, the
+new node will inherit the group ownership from its parent directory;
+otherwise it will be owned by the effective group ID of the process.
+<A NAME="lbAE">&nbsp;</A>
+<H2>RETURN VALUE</H2>
+
+<B>mknod</B>
+
+returns zero on success, or -1 if an error occurred (in which case,
+<I>errno</I>
+
+is set appropriately).
+<A NAME="lbAF">&nbsp;</A>
+<H2>ERRORS</H2>
+
+<DL COMPACT>
+<DT><B>EACCES</B>
+
+<DD>
+The parent directory does not allow write permission to the process,
+or one of the directories in the path prefix of
+<I>pathname</I>
+
+did not allow search permission.
+(See also
+<B><A HREF="../man2/path_resolution.2.html">path_resolution</A></B>(2).)
+
+<DT><B>EEXIST</B>
+
+<DD>
+<I>pathname</I>
+
+already exists.
+<DT><B>EFAULT</B>
+
+<DD>
+<I>pathname</I> points outside your accessible address space.
+
+<DT><B>EINVAL</B>
+
+<DD>
+<I>mode</I>
+
+requested creation of something other than a normal file, device
+special file, FIFO or socket.
+<DT><B>ELOOP</B>
+
+<DD>
+Too many symbolic links were encountered in resolving
+<I>pathname</I>.
+
+<DT><B>ENAMETOOLONG</B>
+
+<DD>
+<I>pathname</I> was too long.
+
+<DT><B>ENOENT</B>
+
+<DD>
+A directory component in
+<I>pathname</I>
+
+does not exist or is a dangling symbolic link.
+<DT><B>ENOMEM</B>
+
+<DD>
+Insufficient kernel memory was available.
+<DT><B>ENOSPC</B>
+
+<DD>
+The device containing
+<I>pathname</I>
+
+has no room for the new node.
+<DT><B>ENOTDIR</B>
+
+<DD>
+A component used as a directory in
+<I>pathname</I>
+
+is not, in fact, a directory.
+<DT><B>EPERM</B>
+
+<DD>
+<I>mode</I>
+
+requested creation of something other than a regular file,
+FIFO (named pipe), or Unix domain socket, and the caller
+is not privileged (Linux: does not have the
+<B>CAP_MKNOD</B>
+
+capability); also returned if the filesystem containing
+<I>pathname</I>
+
+does not support the type of node requested.
+<DT><B>EROFS</B>
+
+<DD>
+<I>pathname</I>
+
+refers to a file on a read-only filesystem.
+</DL>
+<A NAME="lbAG">&nbsp;</A>
+<H2>CONFORMING TO</H2>
+
+SVr4 (but the call requires privilege and is thus not in POSIX),
+4.4BSD.  The Linux version differs from the SVr4 version in that it
+does not require root permission to create pipes, also in that no
+EMULTIHOP, ENOLINK, or EINTR error is documented.
+<A NAME="lbAH">&nbsp;</A>
+<H2>NOTES</H2>
+
+POSIX 1003.1-2001 says: &quot;The only portable use of
+<B>mknod</B>()
+
+is to create a FIFO-special file. If
+<I>mode</I>
+
+is not S_IFIFO or
+<I>dev</I>
+
+is not 0, the behavior of
+<B>mknod</B>()
+
+is unspecified.&quot;
+<P>
+Under Linux, this call cannot be used to create directories.
+One should make directories with
+<B>mkdir</B>,
+
+and FIFOs with
+<B>mkfifo</B>.
+
+
+<P>
+There are many infelicities in the protocol underlying NFS.  Some
+of these affect
+<B>mknod</B>.
+
+<A NAME="lbAI">&nbsp;</A>
+<H2>SEE ALSO</H2>
+
+<B><A HREF="../man2/fcntl.2.html">fcntl</A></B>(2),
+
+<B><A HREF="../man2/mkdir.2.html">mkdir</A></B>(2),
+
+<B><A HREF="../man2/mount.2.html">mount</A></B>(2),
+
+<B><A HREF="../man2/path_resolution.2.html">path_resolution</A></B>(2),
+
+<B><A HREF="../man2/socket.2.html">socket</A></B>(2),
+
+<B><A HREF="../man2/stat.2.html">stat</A></B>(2),
+
+<B><A HREF="../man2/umask.2.html">umask</A></B>(2),
+
+<B><A HREF="../man2/unlink.2.html">unlink</A></B>(2),
+
+<B><A HREF="../man3/mkfifo.3.html">mkfifo</A></B>(3)
+
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">NAME</A><DD>
+<DT><A HREF="#lbAC">SYNOPSIS</A><DD>
+<DT><A HREF="#lbAD">DESCRIPTION</A><DD>
+<DT><A HREF="#lbAE">RETURN VALUE</A><DD>
+<DT><A HREF="#lbAF">ERRORS</A><DD>
+<DT><A HREF="#lbAG">CONFORMING TO</A><DD>
+<DT><A HREF="#lbAH">NOTES</A><DD>
+<DT><A HREF="#lbAI">SEE ALSO</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
+using the manual pages.<BR>
+Time: 02:09:59 GMT, April 20, 2020
+</BODY>
+</HTML>

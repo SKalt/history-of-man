@@ -1,0 +1,125 @@
+<!--
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of MAKECONTEXT</TITLE>
+</HEAD><BODY>
+<H1>MAKECONTEXT</H1>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2001-11-15<BR><A HREF="#index">Index</A>
+<A HREF="../index.html">Return to Main Contents</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>NAME</H2>
+
+makecontext, swapcontext - manipulate user context
+<A NAME="lbAC">&nbsp;</A>
+<H2>SYNOPSIS</H2>
+
+<B>#include &lt;<A HREF="file:///usr/include/ucontext.h">ucontext.h</A>&gt;</B>
+
+<P>
+<B>void makecontext(ucontext_t *</B><I>ucp</I><B>, void *</B><I>func</I><B>(),</B>
+
+<B>int </B><I>argc</I><B>, ...);</B>
+
+<BR>
+
+<B>int swapcontext (ucontext_t *</B><I>oucp</I><B>, ucontext_t *</B><I>ucp</I><B>);</B>
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>DESCRIPTION</H2>
+
+In a SysV-like environment, one has the type <B>ucontext_t</B> defined in
+<I>&lt;<A HREF="file:///usr/include/ucontext.h">ucontext.h</A>&gt;</I>
+
+and the four functions
+<B>getcontext()</B>, <B>setcontext()</B>, <B>makecontext()</B>
+and <B>swapcontext()</B> that allow user-level context switching
+between multiple threads of control within a process.
+<P>
+
+For the type and the first two functions, see
+<B><A HREF="../man2/getcontext.2.html">getcontext</A></B>(2).
+
+<P>
+
+The <B>makecontext()</B> function modifies the context pointed to
+by <I>ucp</I> (which was obtained from a call to <B>getcontext()</B>).
+Before calling <B>makecontext()</B>, one should allocate a new stack
+for this context, assigning to <I>ucp-&gt;uc_stack</I>, and define a
+successor context, assigning to <I>ucp-&gt;uc_link</I>.
+When this context is later activated (using <B>setcontext()</B> or
+<B>swapcontext()</B>) then first the function <I>func</I> is called,
+with the arguments specified following <I>argc</I> (where <I>argc</I>
+must contain the number of these arguments), and when this function
+returns, the successor context is activated. When the successor context
+pointer is NULL, the thread exits.
+<P>
+
+The <B>swapcontext()</B> function saves the current context in
+the structure pointed to by <I>oucp</I>, and then activates the
+context pointed to by <I>ucp</I>.
+<A NAME="lbAE">&nbsp;</A>
+<H2>RETURN VALUE</H2>
+
+When successful, <B>makecontext()</B> returns 0 and <B>swapcontext()</B>
+does not return. (But we may return later, in case <I>oucp</I> is
+activated, in which case it looks like <B>swapcontext()</B> returns 0.)
+On error, both return -1 and set <I>errno</I> appropriately.
+<A NAME="lbAF">&nbsp;</A>
+<H2>ERRORS</H2>
+
+<DL COMPACT>
+<DT><B>ENOMEM</B>
+
+<DD>
+Insufficient stack space left.
+</DL>
+<A NAME="lbAG">&nbsp;</A>
+<H2>NOTES</H2>
+
+The interpretation of <I>ucp-&gt;uc_stack</I> is just as in
+<B><A HREF="../man2/sigaltstack.2.html">sigaltstack</A></B>(2),
+
+namely, this struct contains start and length of a memory area
+to be used as stack, regardless of the direction of growth of
+the stack. So, it is not necessary for the user program to
+worry about this direction.
+<A NAME="lbAH">&nbsp;</A>
+<H2>CONFORMING TO</H2>
+
+SUSv2, POSIX 1003.1-2001.
+<A NAME="lbAI">&nbsp;</A>
+<H2>SEE ALSO</H2>
+
+<B><A HREF="../man2/getcontext.2.html">getcontext</A></B>(2),
+
+<B><A HREF="../man2/sigaction.2.html">sigaction</A></B>(2),
+
+<B><A HREF="../man2/sigaltstack.2.html">sigaltstack</A></B>(2),
+
+<B><A HREF="../man2/sigprocmask.2.html">sigprocmask</A></B>(2),
+
+<B><A HREF="../man3/sigsetjmp.3.html">sigsetjmp</A></B>(3)
+
+
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">NAME</A><DD>
+<DT><A HREF="#lbAC">SYNOPSIS</A><DD>
+<DT><A HREF="#lbAD">DESCRIPTION</A><DD>
+<DT><A HREF="#lbAE">RETURN VALUE</A><DD>
+<DT><A HREF="#lbAF">ERRORS</A><DD>
+<DT><A HREF="#lbAG">NOTES</A><DD>
+<DT><A HREF="#lbAH">CONFORMING TO</A><DD>
+<DT><A HREF="#lbAI">SEE ALSO</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
+using the manual pages.<BR>
+Time: 02:11:09 GMT, April 20, 2020
+</BODY>
+</HTML>

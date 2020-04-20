@@ -1,0 +1,273 @@
+<!--
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of MALLOC</TITLE>
+</HEAD><BODY>
+<H1>MALLOC</H1>
+Section: Linux Programmer's Manual (3)<BR>Updated: 1993-04-04<BR><A HREF="#index">Index</A>
+<A HREF="../index.html">Return to Main Contents</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>NAME</H2>
+
+calloc, malloc, free, realloc - Allocate and free dynamic memory
+<A NAME="lbAC">&nbsp;</A>
+<H2>SYNOPSIS</H2>
+
+<PRE>
+<B>#include &lt;<A HREF="file:///usr/include/stdlib.h">stdlib.h</A>&gt;</B>
+
+<B>void *calloc(size_t </B><I>nmemb</I><B>, size_t </B><I>size</I><B>);</B>
+<B>void *malloc(size_t </B><I>size</I><B>);</B>
+<B>void free(void </B><I>*ptr</I><B>);</B>
+<B>void *realloc(void </B><I>*ptr</I><B>, size_t </B><I>size</I><B>);</B>
+</PRE>
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>DESCRIPTION</H2>
+
+<B>calloc()</B>
+
+allocates memory for an array of 
+<I>nmemb</I>
+
+elements of 
+<I>size</I>
+
+bytes each and returns a pointer to the allocated memory. 
+The memory is set to zero.
+<P>
+
+<B>malloc()</B>
+
+allocates
+<I>size</I>
+
+bytes and returns a pointer to the allocated memory. 
+The memory is not cleared.
+<P>
+
+<B>free()</B>
+
+frees the memory space pointed to by
+<I>ptr</I>,
+
+which must have been returned by a previous call to
+<B>malloc()</B>,
+
+<B>calloc()</B>
+
+or
+<B>realloc()</B>.
+
+Otherwise, or if
+<B>free(</B><I>ptr</I><B>)</B>
+
+has already been called before, undefined behaviour occurs.
+If
+<I>ptr</I>
+
+is
+<B>NULL</B>,
+
+no operation is performed.
+<P>
+
+<B>realloc()</B>
+
+changes the size of the memory block pointed to by
+<I>ptr</I>
+
+to
+<I>size</I>
+
+bytes.
+The contents will be unchanged to the minimum of the old and new sizes;
+newly allocated memory will be uninitialized.
+If
+<I>ptr</I>
+
+is
+<B>NULL</B>,
+
+the call is equivalent to
+<B>malloc(size)</B>;
+
+if size is equal to zero,
+the call is equivalent to
+<B>free(</B><I>ptr</I><B>)</B><I>.</I>
+
+Unless
+<I>ptr</I>
+
+is
+<B>NULL</B>,
+
+it must have been returned by an earlier call to
+<B>malloc()</B>,
+
+<B>calloc()</B>
+
+or
+<B>realloc()</B>.
+
+If the area pointed to was moved, a
+<B>free(</B><I>ptr</I><B>)</B>
+
+is done.
+<A NAME="lbAE">&nbsp;</A>
+<H2>RETURN VALUE</H2>
+
+For
+<B>calloc()</B> and <B>malloc()</B>,
+
+the value returned is a pointer to the allocated memory, which is suitably
+aligned for any kind of variable, or
+<B>NULL</B>
+
+if the request fails.
+<P>
+
+<B>free()</B>
+
+returns no value.
+<P>
+
+<B>realloc()</B>
+
+returns a pointer to the newly allocated memory, which is suitably
+aligned for any kind of variable and may be different from
+<I>ptr</I>,
+
+or
+<B>NULL</B>
+
+if the request fails. If
+<I>size</I>
+
+was equal to 0, either NULL or a pointer suitable to be passed to
+<I>free</I>()
+
+is returned.  If
+<B>realloc()</B>
+
+fails the original block is left untouched - it is not freed or moved.
+<A NAME="lbAF">&nbsp;</A>
+<H2>CONFORMING TO</H2>
+
+ANSI-C
+<A NAME="lbAG">&nbsp;</A>
+<H2>SEE ALSO</H2>
+
+<B><A HREF="../man2/brk.2.html">brk</A></B>(2),
+
+<B><A HREF="../man3/posix_memalign.3.html">posix_memalign</A></B>(3)
+
+<A NAME="lbAH">&nbsp;</A>
+<H2>NOTES</H2>
+
+The Unix98 standard requires
+<B>malloc()</B>,
+
+<B>calloc()</B>,
+
+and
+<B>realloc</B>()
+
+to set
+<I>errno</I>
+
+to ENOMEM upon failure. Glibc assumes that this is done
+(and the glibc versions of these routines do this); if you
+use a private malloc implementation that does not set
+<I>errno</I>,
+
+then certain library routines may fail without having
+a reason in
+<I>errno</I>.
+
+<P>
+
+Crashes in
+<B>malloc()</B>,
+
+<B>free()</B>
+
+or
+<B>realloc()</B>
+
+are almost always related to heap corruption, such as overflowing
+an allocated chunk or freeing the same pointer twice.
+<P>
+
+Recent versions of Linux libc (later than 5.4.23) and GNU libc (2.x)
+include a malloc implementation which is tunable via environment
+variables.  When
+<B>MALLOC_CHECK_</B>
+
+is set, a special (less efficient) implementation is used which
+is designed to be tolerant against simple errors, such as double
+calls of
+<B>free()</B>
+
+with the same argument, or overruns of a single byte (off-by-one
+bugs).  Not all such errors can be protected against, however, and
+memory leaks can result.
+If
+<B>MALLOC_CHECK_</B>
+
+is set to 0, any detected heap corruption is silently ignored;
+if set to 1, a diagnostic is printed on stderr;
+if set to 2,
+<B>abort()</B>
+
+is called immediately.  This can be useful because otherwise
+a crash may happen much later, and the true cause for the problem
+is then very hard to track down.
+<A NAME="lbAI">&nbsp;</A>
+<H2>BUGS</H2>
+
+By default, Linux follows an optimistic memory allocation strategy.
+This means that when
+<B>malloc()</B>
+
+returns non-NULL there is no guarantee that the memory really
+is available. This is a really bad bug.
+In case it turns out that the system is out of memory,
+one or more processes will be killed by the infamous OOM killer.
+In case Linux is employed under circumstances where it would be
+less desirable to suddenly lose some randomly picked processes,
+and moreover the kernel version is sufficiently recent,
+one can switch off this overcommitting behavior using a command like
+<DL COMPACT><DT><DD>
+# echo 2 &gt; /proc/sys/vm/overcommit_memory
+</DL>
+
+See also the kernel Documentation directory, files
+<I>vm/overcommit-accounting</I>
+
+and
+<I>sysctl/vm.txt</I>.
+
+
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">NAME</A><DD>
+<DT><A HREF="#lbAC">SYNOPSIS</A><DD>
+<DT><A HREF="#lbAD">DESCRIPTION</A><DD>
+<DT><A HREF="#lbAE">RETURN VALUE</A><DD>
+<DT><A HREF="#lbAF">CONFORMING TO</A><DD>
+<DT><A HREF="#lbAG">SEE ALSO</A><DD>
+<DT><A HREF="#lbAH">NOTES</A><DD>
+<DT><A HREF="#lbAI">BUGS</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
+using the manual pages.<BR>
+Time: 02:10:57 GMT, April 20, 2020
+</BODY>
+</HTML>

@@ -1,0 +1,177 @@
+<!--
+Copyright (C) 2001 Andries Brouwer &lt;aeb@cwi.nl&gt;.
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of UNAME</TITLE>
+</HEAD><BODY>
+<H1>UNAME</H1>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2001-12-15<BR><A HREF="#index">Index</A>
+<A HREF="../index.html">Return to Main Contents</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>NAME</H2>
+
+uname - get name and information about current kernel
+<A NAME="lbAC">&nbsp;</A>
+<H2>SYNOPSIS</H2>
+
+<B>#include &lt;<A HREF="file:///usr/include/sys/utsname.h">sys/utsname.h</A>&gt;</B>
+
+<P>
+<B>int uname(struct utsname *</B><I>buf</I><B>);</B>
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>DESCRIPTION</H2>
+
+<B>uname</B>
+
+returns system information in the structure pointed to by
+<I>buf</I>.
+
+The 
+<I>utsname </I>
+
+struct is defined in
+<I>&lt;<A HREF="file:///usr/include/sys/utsname.h">sys/utsname.h</A>&gt;</I>:
+
+<DL COMPACT><DT><DD>
+<PRE>
+struct utsname {
+char sysname[];
+char nodename[];
+char release[];
+char version[];
+char machine[];
+#ifdef _GNU_SOURCE
+char domainname[];
+#endif
+};
+</PRE>
+
+</DL>
+
+The length of the arrays in a
+<I>struct utsname</I>
+
+is unspecified; the fields are NUL-terminated.
+<A NAME="lbAE">&nbsp;</A>
+<H2>RETURN VALUE</H2>
+
+On success, zero is returned.  On error, -1 is returned, and
+<I>errno</I>
+
+is set appropriately.
+<A NAME="lbAF">&nbsp;</A>
+<H2>ERRORS</H2>
+
+<DL COMPACT>
+<DT><B>EFAULT</B>
+
+<DD>
+<I>buf</I>
+
+is not valid.
+</DL>
+<A NAME="lbAG">&nbsp;</A>
+<H2>CONFORMING TO</H2>
+
+SVr4, SVID, POSIX, X/OPEN.
+There is no
+<B>uname</B>
+
+call in BSD 4.3.
+<P>
+
+The
+<I>domainname</I>
+
+member (the NIS or YP domain name) is a GNU extension.
+<A NAME="lbAH">&nbsp;</A>
+<H2>NOTES</H2>
+
+This is a system call, and the operating system presumably knows
+its name, release and version. It also knows what hardware it runs on.
+So, four of the fields of the struct are meaningful.
+On the other hand, the field <I>nodename</I> is meaningless:
+it gives the name of the present machine in some undefined
+network, but typically machines are in more than one network
+and have several names. Moreover, the kernel has no way of knowing
+about such things, so it has to be told what to answer here.
+The same holds for the additional <I>domainname</I> field.
+<P>
+
+To this end Linux uses the system calls
+<B><A HREF="../man2/sethostname.2.html">sethostname</A></B>(2)
+
+and
+<B><A HREF="../man2/setdomainname.2.html">setdomainname</A></B>(2).
+
+Note that there is no standard that says that the hostname set by
+<B><A HREF="../man2/sethostname.2.html">sethostname</A></B>(2)
+
+is the same string as the <I>nodename</I> field of the struct returned by
+<B>uname</B>
+
+(indeed, some systems allow a 256-byte hostname and an 8-byte nodename),
+but this is true on Linux. The same holds for
+<B><A HREF="../man2/setdomainname.2.html">setdomainname</A></B>(2)
+
+and the <I>domainname</I> field.
+<P>
+
+The length of the fields in the struct varies. Some operating systems
+or libraries use a hardcoded 9 or 33 or 65 or 257. Other systems use
+SYS_NMLN or _SYS_NMLN or UTSLEN or _UTSNAME_LENGTH. Clearly, it is a bad
+idea to use any of these constants - just use sizeof(...).
+Often 257 is chosen in order to have room for an internet hostname.
+<P>
+
+There have been three Linux system calls <I>uname</I>(). The first one
+used length 9, the second one used 65, the third one also uses 65 but
+adds the <I>domainname</I> field.
+<P>
+
+Part of the utsname information is also accessible via
+<I>sysctl</I>
+
+and via
+<I>/proc/sys/kernel/</I>{<I>ostype</I>,
+
+<I>hostname</I>,
+
+<I>osrelease</I>,
+
+<I>version</I>,
+
+<I>domainname</I>}.
+
+<A NAME="lbAI">&nbsp;</A>
+<H2>SEE ALSO</H2>
+
+<B><A HREF="../man1/uname.1.html">uname</A></B>(1),
+
+<B><A HREF="../man2/getdomainname.2.html">getdomainname</A></B>(2),
+
+<B><A HREF="../man2/gethostname.2.html">gethostname</A></B>(2)
+
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">NAME</A><DD>
+<DT><A HREF="#lbAC">SYNOPSIS</A><DD>
+<DT><A HREF="#lbAD">DESCRIPTION</A><DD>
+<DT><A HREF="#lbAE">RETURN VALUE</A><DD>
+<DT><A HREF="#lbAF">ERRORS</A><DD>
+<DT><A HREF="#lbAG">CONFORMING TO</A><DD>
+<DT><A HREF="#lbAH">NOTES</A><DD>
+<DT><A HREF="#lbAI">SEE ALSO</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
+using the manual pages.<BR>
+Time: 02:10:09 GMT, April 20, 2020
+</BODY>
+</HTML>

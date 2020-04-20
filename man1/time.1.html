@@ -1,0 +1,430 @@
+<!--
+Copyright Andries Brouwer, 2000
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of TIME</TITLE>
+</HEAD><BODY>
+<H1>TIME</H1>
+Section:  (1)<BR>Updated: 2000-12-11<BR><A HREF="#index">Index</A>
+<A HREF="../index.html">Return to Main Contents</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>NAME</H2>
+
+time - time a simple command or give resource usage
+<A NAME="lbAC">&nbsp;</A>
+<H2>SYNOPSIS</H2>
+
+<B>time [</B><I>options</I><B>] </B><I>command</I><B> [</B><I>arguments...</I><B>] </B>
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>DESCRIPTION</H2>
+
+The
+<B>time</B>
+
+command runs the specified program
+<I>command</I>
+
+with the given arguments.
+When
+<I>command</I>
+
+finishes,
+<B>time</B>
+
+writes a message to standard output giving timing statistics
+about this program run.
+These statistics consist of (i) the elapsed real time
+between invocation and termination, (ii) the user CPU time
+(the sum of the
+<I>tms_utime</I>
+
+and
+<I>tms_cutime</I>
+
+values in a
+<I>struct tms</I>
+
+as returned by
+<B><A HREF="../man2/times.2.html">times</A></B>(2)),
+
+and (iii) the system CPU time (the sum of the
+<I>tms_stime</I>
+
+and
+<I>tms_cstime</I>
+
+values in a
+<I>struct tms</I>
+
+as returned by
+<B><A HREF="../man2/times.2.html">times</A></B>(2)).
+
+<A NAME="lbAE">&nbsp;</A>
+<H2>OPTION</H2>
+
+<DL COMPACT>
+<DT><B>-p</B>
+
+<DD>
+When in the POSIX locale, use the precise traditional format
+<BR>
+
+
+&quot;real %f\nuser %f\nsys %f\n&quot;
+
+<BR>
+
+(with numbers in seconds)
+where the number of decimals in the output for %f is unspecified
+but is sufficient to express the clock tick accuracy, and at least one.
+</DL>
+<A NAME="lbAF">&nbsp;</A>
+<H2>ENVIRONMENT</H2>
+
+The variables LANG, LC_ALL, LC_CTYPE, LC_MESSAGES, LC_NUMERIC,
+NLSPATH and PATH are used. The last one to search for
+<I>command</I>.
+
+The remaining ones for the text and formatting of the output.
+<A NAME="lbAG">&nbsp;</A>
+<H2>EXIT STATUS</H2>
+
+If
+<I>command</I>
+
+was invoked, the exit status is that of
+<I>command</I>.
+
+Otherwise it is 127 if
+<I>command</I>
+
+could not be found, 126 if it could be found but could not be invoked,
+and some other nonzero value (1-125) if something else went wrong.
+<A NAME="lbAH">&nbsp;</A>
+<H2>SEE ALSO</H2>
+
+<B><A HREF="../man2/times.2.html">times</A></B>(2)
+
+<P>
+<A NAME="lbAI">&nbsp;</A>
+<H2>GNU VERSION</H2>
+
+Below a description of the GNU 1.7 version of
+<B>time</B>.
+
+Disregarding the name of the utility, GNU makes it output lots of
+useful information, not only about time used, but also on other
+resources like memory, I/O and IPC calls (where available).
+The output is formatted using a format string that can be specified
+using the -f option or the TIME environment variable.
+<P>
+
+The default format string is
+<BR>
+
+
+%Uuser %Ssystem %Eelapsed %PCPU (%Xtext+%Ddata %Mmax)k
+<BR>
+
+%Iinputs+%Ooutputs (%Fmajor+%Rminor)pagefaults %Wswaps
+<BR>
+
+
+<P>
+
+When the -p option is given the (portable) output format
+<BR>
+
+
+real %e
+<BR>
+
+user %U
+<BR>
+
+sys %S
+<BR>
+
+
+is used.
+<A NAME="lbAJ">&nbsp;</A>
+<H3>The format string</H3>
+
+The format is interpreted in the usual printf-like way.
+Ordinary characters are directly copied, tab, newline
+and backslash are escaped using \t, \n and \\,
+a percent sign is represented by %%, and otherwise %
+indicates a conversion. The program
+<B>time</B>
+
+will always add a trailing newline itself.
+The conversions follow. All of those used by
+<B><A HREF="../man1/tcsh.1.html">tcsh</A></B>(1)
+
+are supported.
+<P>
+
+<B>Time</B>
+
+<DL COMPACT>
+<DT><B>%E</B>
+
+<DD>
+Elapsed real time (in [hours:]minutes:seconds).
+<DT><B>%e</B>
+
+<DD>
+(Not in tcsh.) Elapsed real time (in seconds).
+<DT><B>%S</B>
+
+<DD>
+Total number of CPU-seconds that the process spent in kernel mode.
+<DT><B>%U</B>
+
+<DD>
+Total number of CPU-seconds that the process spent in user mode.
+<DT><B>%P</B>
+
+<DD>
+Percentage of the CPU that this job got, computed as (%U + %S) / %E.
+</DL>
+<P>
+
+<B>Memory</B>
+
+<DL COMPACT>
+<DT><B>%M</B>
+
+<DD>
+Maximum resident set size of the process during its lifetime, in Kbytes.
+<DT><B>%t</B>
+
+<DD>
+(Not in tcsh.) Average resident set size of the process, in Kbytes.
+<DT><B>%K</B>
+
+<DD>
+Average total (data+stack+text) memory use of the process,
+in Kbytes.
+<DT><B>%D</B>
+
+<DD>
+Average size of the process's unshared data area, in Kbytes.
+<DT><B>%p</B>
+
+<DD>
+(Not in tcsh.) Average size of the process's unshared stack space, in Kbytes.
+<DT><B>%X</B>
+
+<DD>
+Average size of the process's shared text space, in Kbytes.
+<DT><B>%Z</B>
+
+<DD>
+(Not in tcsh.) System's page size, in bytes.
+This is a per-system constant, but varies between systems.
+<DT><B>%F</B>
+
+<DD>
+Number of major page faults that occurred while the process was running.
+These are faults where the page has to be read in from disk.
+<DT><B>%R</B>
+
+<DD>
+Number of minor, or recoverable, page faults.
+These are faults for pages that are not valid but which have
+not yet been claimed by other virtual pages.  Thus the data
+in the page is still valid but the system tables must be updated.
+<DT><B>%W</B>
+
+<DD>
+Number of times the process was swapped out of main memory.
+<DT><B>%c</B>
+
+<DD>
+Number of times the process was context-switched involuntarily
+(because the time slice expired).
+<DT><B>%w</B>
+
+<DD>
+Number of waits: times that the program was context-switched voluntarily,
+for instance while waiting for an I/O operation to complete.
+</DL>
+<P>
+
+<B>I/O</B>
+
+<DL COMPACT>
+<DT><B>%I</B>
+
+<DD>
+Number of file system inputs by the process.
+<DT><B>%O</B>
+
+<DD>
+Number of file system outputs by the process.
+<DT><B>%r</B>
+
+<DD>
+Number of socket messages received by the process.
+<DT><B>%s</B>
+
+<DD>
+Number of socket messages sent by the process.
+<DT><B>%k</B>
+
+<DD>
+Number of signals delivered to the process.
+<DT><B>%C</B>
+
+<DD>
+(Not in tcsh.) Name and command line arguments of the command being timed.
+<DT><B>%x</B>
+
+<DD>
+(Not in tcsh.) Exit status of the command.
+</DL>
+<A NAME="lbAK">&nbsp;</A>
+<H2>GNU OPTIONS</H2>
+
+<DL COMPACT>
+<DT><B>-f </B><I>FORMAT</I><B>, --format=</B><I>FORMAT</I>
+
+<DD>
+Specify output format, possibly overriding the format specified
+in the environment variable TIME.
+<DT><B>-p, --portability</B>
+
+<DD>
+Use the portable output format.
+<DT><B>-o </B><I>FILE</I><B>, --output=</B><I>FILE</I>
+
+<DD>
+Do not send the results to stderr, but overwrite the specified file.
+<DT><B>-a, --append</B>
+
+<DD>
+(Used together with -o.) Do not overwrite but append.
+<DT><B>-v, --verbose</B>
+
+<DD>
+Give very verbose output about all the program knows about.
+</DL>
+<A NAME="lbAL">&nbsp;</A>
+<H2>GNU STANDARD OPTIONS</H2>
+
+<DL COMPACT>
+<DT><B>--help</B>
+
+<DD>
+Print a usage message on standard output and exit successfully.
+<DT><B>-V, --version</B>
+
+<DD>
+Print version information on standard output, then exit successfully.
+<DT><B>--</B>
+
+<DD>
+Terminate option list.
+</DL>
+<A NAME="lbAM">&nbsp;</A>
+<H2>BUGS</H2>
+
+Not all resources are measured by all versions of Unix,
+so some of the values might be reported as zero.
+The present selection was mostly inspired by the data
+provided by 4.2 or 4.3BSD.
+<P>
+
+GNU time version 1.7 is not yet localized.
+Thus, it does not implement the POSIX requirements.
+<P>
+
+The environment variable TIME was badly chosen.
+It is not unusual for systems like autoconf or make
+to use environment variables with the name of a utility to override
+the utility to be used. Uses like MORE or TIME for options to programs
+(instead of program path names) tend to lead to difficulties.
+<P>
+
+It seems unfortunate that -o overwrites instead of appends.
+(That is, the -a option should be the default.)
+<P>
+
+Mail suggestions and bug reports for GNU
+<B>time</B>
+
+to
+<BR>
+
+<I><A HREF="mailto:bug-utils@prep.ai.mit.edu">bug-utils@prep.ai.mit.edu</A></I>
+
+<BR>
+
+Please include the version of
+<B>time ,</B>
+
+which you can get by running
+<BR>
+
+<I>time --version</I>
+
+<BR>
+
+and the operating system
+and C compiler you used.
+<A NAME="lbAN">&nbsp;</A>
+<H2>SEE ALSO</H2>
+
+<B><A HREF="../man1/tcsh.1.html">tcsh</A></B>(1),
+
+<B><A HREF="../man2/times.2.html">times</A></B>(2),
+
+<B><A HREF="../man2/wait3.2.html">wait3</A></B>(2)
+
+<A NAME="lbAO">&nbsp;</A>
+<H2>AUTHORS</H2>
+
+<DL COMPACT>
+<DT><DT>David Keppel<DD>
+<DD>
+Original version
+<DT>David MacKenzie<DD>
+POSIXization, autoconfiscation, GNU getoptization,
+documentation, other bug fixes and improvements.
+<DT>Arne Henrik Juul<DD>
+Helped with portability
+<DT>Francois Pinard<DD>
+Helped with portability
+<P>
+</DL>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">NAME</A><DD>
+<DT><A HREF="#lbAC">SYNOPSIS</A><DD>
+<DT><A HREF="#lbAD">DESCRIPTION</A><DD>
+<DT><A HREF="#lbAE">OPTION</A><DD>
+<DT><A HREF="#lbAF">ENVIRONMENT</A><DD>
+<DT><A HREF="#lbAG">EXIT STATUS</A><DD>
+<DT><A HREF="#lbAH">SEE ALSO</A><DD>
+<DT><A HREF="#lbAI">GNU VERSION</A><DD>
+<DL>
+<DT><A HREF="#lbAJ">The format string</A><DD>
+</DL>
+<DT><A HREF="#lbAK">GNU OPTIONS</A><DD>
+<DT><A HREF="#lbAL">GNU STANDARD OPTIONS</A><DD>
+<DT><A HREF="#lbAM">BUGS</A><DD>
+<DT><A HREF="#lbAN">SEE ALSO</A><DD>
+<DT><A HREF="#lbAO">AUTHORS</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
+using the manual pages.<BR>
+Time: 02:09:52 GMT, April 20, 2020
+</BODY>
+</HTML>

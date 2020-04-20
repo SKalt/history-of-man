@@ -1,0 +1,362 @@
+<!--
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of FENV</TITLE>
+</HEAD><BODY>
+<H1>FENV</H1>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2000-08-12<BR><A HREF="#index">Index</A>
+<A HREF="../index.html">Return to Main Contents</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>NAME</H2>
+
+feclearexcept, fegetexceptflag, feraiseexcept, fesetexceptflag,
+fetestexcept, fegetenv, fegetround, feholdexcept, fesetround,
+fesetenv, feupdateenv - C99 floating point rounding and exception handling
+<A NAME="lbAC">&nbsp;</A>
+<H2>SYNOPSIS</H2>
+
+<PRE>
+<B>#include &lt;<A HREF="file:///usr/include/fenv.h">fenv.h</A>&gt;</B>
+
+<B>int feclearexcept(int </B><I>excepts</I><B>);</B>
+<BR>
+<B>int fegetexceptflag(fexcept_t *</B><I>flagp</I><B>, int </B><I>excepts</I><B>);</B>
+<BR>
+<B>int feraiseexcept(int </B><I>excepts</I><B>);</B>
+<BR>
+<B>int fesetexceptflag(const fexcept_t *</B><I>flagp</I><B>, int </B><I>excepts</I><B>);</B>
+<BR>
+<B>int fetestexcept(int </B><I>excepts</I><B>);</B>
+
+<B>int fegetround(void);</B>
+<BR>
+<B>int fesetround(int </B><I>rounding_mode</I><B>);</B>
+
+<B>int fegetenv(fenv_t *</B><I>envp</I><B>);</B>
+<BR>
+<B>int feholdexcept(fenv_t *</B><I>envp</I><B>);</B>
+<BR>
+<B>int fesetenv(const fenv_t *</B><I>envp</I><B>);</B>
+<BR>
+<B>int feupdateenv(const fenv_t *</B><I>envp</I><B>);</B>
+</PRE>
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>DESCRIPTION</H2>
+
+These eleven functions were defined in C99, and describe the handling
+of floating point rounding and exceptions (overflow, zero-divide etc.).
+<A NAME="lbAE">&nbsp;</A>
+<H3>Exceptions</H3>
+
+The DivideByZero exception occurs when an operation on finite numbers
+produces infinity as exact answer.
+<P>
+
+The Overflow exception occurs when a result has to be represented as a
+floating point number, but has (much) larger absolute value than the
+largest (finite) floating point number that is representable.
+<P>
+
+The Underflow exception occurs when a result has to be represented as a
+floating point number, but has smaller absolute value than the smallest
+positive normalized floating point number (and would lose much accuracy
+when represented as a denormalized number).
+<P>
+
+The Inexact exception occurs when the rounded result of an operation
+is not equal to the infinite precision result.
+It may occur whenever Overflow or Underflow occurs.
+<P>
+
+The Invalid exception occurs when there is no well-defined result
+for an operation, as for 0/0 or infinity - infinity or sqrt(-1).
+<A NAME="lbAF">&nbsp;</A>
+<H3>Exception handling</H3>
+
+Exceptions are represented in two ways: as a single bit
+(exception present/absent), and these bits correspond in some
+implementation-defined way with bit positions in an integer,
+and also as an opaque structure that may contain more information
+about the exception (perhaps the code address where it occurred).
+<P>
+
+Each of the macros
+<B>FE_DIVBYZERO</B>,
+
+<B>FE_INEXACT</B>,
+
+<B>FE_INVALID</B>,
+
+<B>FE_OVERFLOW</B>,
+
+<B>FE_UNDERFLOW</B>
+
+is defined when the implementation supports handling
+of the corresponding exception, and if so then
+defines the corresponding bit(s), so that one can call
+exception handling functions e.g. using the integer argument
+<B>FE_OVERFLOW</B>|<B>FE_UNDERFLOW</B>.
+
+Other exceptions may be supported. The macro
+<B>FE_ALL_EXCEPT</B>
+
+is the bitwise OR of all bits corresponding to supported exceptions.
+<P>
+
+The
+<B>feclearexcept</B>
+
+function clears the supported exceptions represented by the bits
+in its argument.
+<P>
+
+The
+<B>fegetexceptflag</B>
+
+function stores a representation of the state of the exception flags
+represented by the argument
+<I>excepts</I>
+
+in the opaque object
+*<I>flagp</I>.
+
+<P>
+
+The
+<B>feraiseexcept</B>
+
+function raises the supported exceptions represented by the bits in
+<I>excepts</I>.
+
+<P>
+
+The
+<B>fesetexceptflag</B>
+
+function sets the complete status for the exceptions represented by
+<I>excepts</I>
+
+to the value
+*<I>flagp</I>.
+
+This value must have been obtained by an earlier call of
+<B>fegetexceptflag</B>
+
+with a last argument that contained all bits in
+<I>excepts</I>.
+
+<P>
+
+The
+<B>fetestexcept</B>
+
+function returns a word in which the bits are set that were
+set in the argument
+<I>excepts</I>
+
+and for which the corresponding exception is currently set.
+<A NAME="lbAG">&nbsp;</A>
+<H3>Rounding</H3>
+
+Each of the macros
+<B>FE_DOWNWARD</B>,
+
+<B>FE_TONEAREST</B>,
+
+<B>FE_TOWARDZERO</B>,
+
+<B>FE_UPWARD</B>
+
+is defined when the implementation supports getting and setting
+the corresponding rounding direction.
+<P>
+
+The
+<B>fegetround</B>
+
+function returns the macro corresponding to the current
+rounding mode.
+<P>
+
+The
+<B>fesetround</B>
+
+function sets the rounding mode as specified by its argument
+and returns zero when it was successful.
+<A NAME="lbAH">&nbsp;</A>
+<H3>Floating point environment</H3>
+
+The entire floating point environment, including
+control modes and status flags, can be handled
+as one opaque object, of type
+<I>fenv_t</I>.
+
+The default environment is denoted by
+<B>FE_DFL_ENV</B>
+
+(of type
+<I>const fenv_t *</I>).
+
+This is the environment setup at program start and it is defined by
+ISO C to have round to nearest, all exceptions cleared and a non-stop
+(continue on exceptions) mode.
+<P>
+
+The
+<B>fegetenv</B>
+
+function saves the current floating point environment in the object
+*<I>envp</I>.
+
+<P>
+
+The
+<B>feholdexcept</B>
+
+function does the same, then clears all exception flags,
+and sets a non-stop (continue on exceptions) mode,
+if available. It returns zero when successful.
+<P>
+
+The
+<B>fesetenv</B>
+
+function restores the floating point environment from
+the object
+*<I>envp</I>.
+
+This object must be known to be valid, e.g., the result of a call to
+<B>fegetenv</B>
+
+or
+<B>feholdexcept</B>
+
+or equal to
+<B>FE_DFL_ENV</B>.
+
+This call does not raise exceptions.
+<P>
+
+The
+<B>feupdateenv</B>
+
+function installs the floating-point environment represented by
+the object
+*<I>envp</I>,
+
+except that currently raised exceptions are not cleared.
+After calling this function, the raised exceptions will be a bitwise OR
+of those previously set with those in
+*<I>envp</I>.
+
+As before, the object
+*<I>envp</I>
+
+must be known to be valid.
+<P>
+<A NAME="lbAI">&nbsp;</A>
+<H2>RETURN VALUE</H2>
+
+These functions return zero on success and non-zero if an error occurred.
+
+
+
+<P>
+<A NAME="lbAJ">&nbsp;</A>
+<H2>GNU DETAILS</H2>
+
+If possible, the GNU C Library defines a macro
+<B>FE_NOMASK_ENV</B>
+
+which represents an environment where every exception raised causes a
+trap to occur.  You can test for this macro using
+<B>#ifdef</B>.
+
+It is only defined if
+<B>_GNU_SOURCE</B>
+
+is defined.
+The C99 standard does not define a way to set individual bits in the
+floating point mask, e.g. to trap on specific flags.
+glibc 2.2 supports the functions
+<I>feenableexcept</I>
+
+and
+<I>fedisableexcept</I>
+
+to set individual floating point traps, and
+<I>fegetexcept</I>
+
+to query the state.
+<P>
+<PRE>
+<B>#define _GNU_SOURCE</B>
+<BR>
+<B>#include &lt;<A HREF="file:///usr/include/fenv.h">fenv.h</A>&gt;</B>
+
+<B>int feenableexcept (int </B><I>excepts</I><B>);</B>
+<BR>
+<B>int fedisableexcept (int </B><I>excepts</I><B>);</B>
+<BR>
+<B>int fegetexcept (void);</B>
+<BR>
+</PRE>
+
+<P>
+
+The
+<B>feenableexcept</B>
+
+and
+<B>fedisableexcept</B>
+
+functions enable (disable) traps for each of the exceptions represented by
+<I>excepts</I>
+
+and return the previous set of enabled exceptions when successful,
+and -1 otherwise.
+The
+<B>fegetexcept</B>
+
+function returns the set of all currently enabled exceptions.
+<P>
+<A NAME="lbAK">&nbsp;</A>
+<H2>NOTES</H2>
+
+Link with
+<B>-lm</B>.
+
+<P>
+<A NAME="lbAL">&nbsp;</A>
+<H2>CONFORMING TO</H2>
+
+IEC 60559 (IEC 559:1989), ANSI/IEEE 854, ISO C99 (ISO/IEC 9899:1999).
+
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">NAME</A><DD>
+<DT><A HREF="#lbAC">SYNOPSIS</A><DD>
+<DT><A HREF="#lbAD">DESCRIPTION</A><DD>
+<DL>
+<DT><A HREF="#lbAE">Exceptions</A><DD>
+<DT><A HREF="#lbAF">Exception handling</A><DD>
+<DT><A HREF="#lbAG">Rounding</A><DD>
+<DT><A HREF="#lbAH">Floating point environment</A><DD>
+</DL>
+<DT><A HREF="#lbAI">RETURN VALUE</A><DD>
+<DT><A HREF="#lbAJ">GNU DETAILS</A><DD>
+<DT><A HREF="#lbAK">NOTES</A><DD>
+<DT><A HREF="#lbAL">CONFORMING TO</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
+using the manual pages.<BR>
+Time: 02:10:30 GMT, April 20, 2020
+</BODY>
+</HTML>

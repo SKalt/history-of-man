@@ -1,0 +1,527 @@
+<!--
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of EPOLL</TITLE>
+</HEAD><BODY>
+<H1>EPOLL</H1>
+Section: Linux Programmer's Manual (4)<BR>Updated: 2002-10-23<BR><A HREF="#index">Index</A>
+<A HREF="../index.html">Return to Main Contents</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>NAME</H2>
+
+epoll - I/O event notification facility
+<A NAME="lbAC">&nbsp;</A>
+<H2>SYNOPSIS</H2>
+
+<B>#include &lt;<A HREF="file:///usr/include/sys/epoll.h">sys/epoll.h</A>&gt;</B>
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>DESCRIPTION</H2>
+
+<B>epoll</B>
+
+is a variant of 
+<B><A HREF="../man2/poll.2.html">poll</A></B>(2)
+
+that can be used either as Edge or Level Triggered interface and scales
+well to large numbers of watched fds. Three system calls are provided to
+set up and control an
+<B>epoll</B>
+
+set: 
+<B><A HREF="../man2/epoll_create.2.html">epoll_create</A></B>(2),
+
+<B><A HREF="../man2/epoll_ctl.2.html">epoll_ctl</A></B>(2),
+
+<B><A HREF="../man2/epoll_wait.2.html">epoll_wait</A></B>(2).
+
+<P>
+An
+<B>epoll</B>
+
+set is connected to a file descriptor created by
+<B><A HREF="../man2/epoll_create.2.html">epoll_create</A></B>(2).
+
+Interest for certain file descriptors is then registered via 
+<B><A HREF="../man2/epoll_ctl.2.html">epoll_ctl</A></B>(2).
+
+Finally, the actual wait is started by 
+<B><A HREF="../man2/epoll_wait.2.html">epoll_wait</A></B>(2).
+
+<P>
+<A NAME="lbAE">&nbsp;</A>
+<H2>NOTES</H2>
+
+The
+<B>epoll</B>
+
+event distribution interface is able to behave both as Edge Triggered
+( ET ) and Level Triggered ( LT ). The difference between ET and LT
+event distribution mechanism can be described as follows. Suppose that
+this scenario happens :
+<DL COMPACT>
+<DT><B>1</B>
+
+<DD>
+The file descriptor that represents the read side of a pipe (
+<B>RFD</B>
+
+) is added inside the
+<B>epoll</B>
+
+device.
+<DT><B>2</B>
+
+<DD>
+Pipe writer writes 2Kb of data on the write side of the pipe.
+<DT><B>3</B>
+
+<DD>
+A call to
+<B><A HREF="../man2/epoll_wait.2.html">epoll_wait</A></B>(2)
+
+is done that will return
+<B>RFD</B>
+
+as ready file descriptor.
+<DT><B>4</B>
+
+<DD>
+The pipe reader reads 1Kb of data from
+<B>RFD</B>.
+
+<DT><B>5</B>
+
+<DD>
+A call to
+<B><A HREF="../man2/epoll_wait.2.html">epoll_wait</A></B>(2)
+
+is done.
+</DL>
+<P>
+
+<P>
+If the
+<B>RFD</B>
+
+file descriptor has been added to the
+<B>epoll</B>
+
+interface using the
+<B>EPOLLET</B>
+
+flag, the call to
+<B><A HREF="../man2/epoll_wait.2.html">epoll_wait</A></B>(2)
+
+done in step
+<B>5</B>
+
+will probably hang because of the available data still present in the file
+input buffers and the remote peer might be expecting a response based on the
+data it already sent. The reason for this is that Edge Triggered event
+distribution delivers events only when events happens on the monitored file.
+So, in step
+<B>5</B>
+
+the caller might end up waiting for some data that is already present inside
+the input buffer. In the above example, an event on
+<B>RFD</B>
+
+will be generated because of the write done in
+<B>2</B>
+
+, and the event is consumed in
+<B>3</B>.
+
+Since the read operation done in
+<B>4</B>
+
+does not consume the whole buffer data, the call to
+<B><A HREF="../man2/epoll_wait.2.html">epoll_wait</A></B>(2)
+
+done in step
+<B>5</B>
+
+might lock indefinitely. The
+<B>epoll</B>
+
+interface, when used with the
+<B>EPOLLET</B>
+
+flag ( Edge Triggered )
+should use non-blocking file descriptors to avoid having a blocking
+read or write starve the task that is handling multiple file descriptors.
+The suggested way to use
+<B>epoll</B>
+
+as an Edge Triggered (
+<B>EPOLLET</B>
+
+) interface is below, and possible pitfalls to avoid follow.
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT><B>i</B>
+
+<DD>
+with non-blocking file descriptors
+<DT><B>ii</B>
+
+<DD>
+by going to wait for an event only after
+<B><A HREF="../man2/read.2.html">read</A></B>(2)
+
+or 
+<B><A HREF="../man2/write.2.html">write</A></B>(2)
+
+return EAGAIN
+</DL>
+</DL>
+
+<P>
+
+On the contrary, when used as a Level Triggered interface,
+<B>epoll</B>
+
+is by all means a faster
+<B><A HREF="../man2/poll.2.html">poll</A></B>(2),
+
+and can be used wherever the latter is used since it shares the
+same semantics. Since even with the Edge Triggered
+<B>epoll</B>
+
+multiple events can be generated up on receival of multiple chunks of data,
+the caller has the option to specify the
+<B>EPOLLONESHOT</B>
+
+flag, to tell
+<B>epoll</B>
+
+to disable the associated file descriptor after the receival of an event with
+<B><A HREF="../man2/epoll_wait.2.html">epoll_wait</A></B>(2).
+
+When the
+<B>EPOLLONESHOT</B>
+
+flag is specified, it is caller responsibility to rearm the file descriptor using
+<B><A HREF="../man2/epoll_ctl.2.html">epoll_ctl</A></B>(2)
+
+with
+<B>EPOLL_CTL_MOD</B>.
+
+<P>
+<A NAME="lbAF">&nbsp;</A>
+<H2>EXAMPLE FOR SUGGESTED USAGE</H2>
+
+<P>
+While the usage of
+<B>epoll</B>
+
+when employed like a Level Triggered interface does have the same
+semantics of
+<B><A HREF="../man2/poll.2.html">poll</A></B>(2),
+
+an Edge Triggered usage requires more clarifiction to avoid stalls
+in the application event loop. In this example, listener is a
+non-blocking socket on which
+<B><A HREF="../man2/listen.2.html">listen</A></B>(2)
+
+has been called. The function do_use_fd() uses the new ready
+file descriptor until EAGAIN is returned by either
+<B><A HREF="../man2/read.2.html">read</A></B>(2)
+
+or
+<B><A HREF="../man2/write.2.html">write</A></B>(2).
+
+An event driven state machine application should, after having received
+EAGAIN, record its current state so that at the next call to do_use_fd()
+it will continue to
+<B><A HREF="../man2/read.2.html">read</A></B>(2)
+
+or
+<B><A HREF="../man2/write.2.html">write</A></B>(2)
+
+from where it stopped before.  
+<P>
+<PRE>
+struct epoll_event ev, *events;
+
+for(;;) {
+    nfds = epoll_wait(kdpfd, events, maxevents, -1);
+
+    for(n = 0; n &lt; nfds; ++n) {
+        if(events[n].data.fd == listener) {
+            client = accept(listener, (struct sockaddr *) &amp;local,
+                            &amp;addrlen);
+            if(client &lt; 0){
+                perror(&quot;accept&quot;);
+                continue;
+            }
+            setnonblocking(client);
+            ev.events = EPOLLIN | EPOLLET;
+            ev.data.fd = client;
+            if (epoll_ctl(kdpfd, EPOLL_CTL_ADD, client, &amp;ev) &lt; 0) {
+                fprintf(stderr, &quot;epoll set insertion error: fd=%d,
+                        client);
+                return -1;
+            }
+        }
+        else
+            do_use_fd(events[n].data.fd);
+    }
+}
+</PRE>
+
+<P>
+When used as an Edge triggered interface, for performance reasons, it is
+possible to add the file descriptor inside the epoll interface (
+<B>EPOLL_CTL_ADD</B>
+
+) once by specifying (
+<B>EPOLLIN</B>|<B>EPOLLOUT</B>
+
+). This allows you to avoid
+continuously switching between
+<B>EPOLLIN</B>
+
+and
+<B>EPOLLOUT</B>
+
+calling
+<B><A HREF="../man2/epoll_ctl.2.html">epoll_ctl</A></B>(2)
+
+with
+<B>EPOLL_CTL_MOD</B>.
+
+<P>
+<A NAME="lbAG">&nbsp;</A>
+<H2>QUESTIONS AND ANSWERS (from linux-kernel)</H2>
+
+<P>
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT><B>Q1 </B>
+
+<DD>
+What happens if you add the same fd to an epoll_set twice?
+<DT><B>A1 </B>
+
+<DD>
+You will probably get EEXIST. However, it is possible that two
+threads may add the same fd twice. This is a harmless condition.
+<DT><B>Q2 </B>
+
+<DD>
+Can two
+<B>epoll</B>
+
+sets wait for the same fd? If so, are events reported
+to both
+<B>epoll</B>
+
+sets fds?
+<DT><B>A2</B>
+
+<DD>
+Yes. However, it is not recommended. Yes it would be reported to both.
+<DT><B>Q3</B>
+
+<DD>
+Is the
+<B>epoll</B>
+
+fd itself poll/epoll/selectable?
+<DT><B>A3</B>
+
+<DD>
+Yes.
+<DT><B>Q4 </B>
+
+<DD>
+What happens if the
+<B>epoll</B>
+
+fd is put into its own fd set?
+<DT><B>A4</B>
+
+<DD>
+It will fail. However, you can add an
+<B>epoll</B>
+
+fd inside another epoll fd set. 
+<DT><B>Q5</B>
+
+<DD>
+Can I send the
+<B>epoll</B>
+
+fd over a unix-socket to another process?
+<DT><B>A5</B>
+
+<DD>
+No.
+<DT><B>Q6</B>
+
+<DD>
+Will the close of an fd cause it to be removed from all
+<B>epoll</B>
+
+sets automatically?
+<DT><B>A6</B>
+
+<DD>
+Yes.
+<DT><B>Q7 </B>
+
+<DD>
+If more than one event comes in between
+<B><A HREF="../man2/epoll_wait.2.html">epoll_wait</A></B>(2)
+
+calls, are they combined or reported separately?
+<DT><B>A7</B>
+
+<DD>
+They will be combined.
+<DT><B>Q8</B>
+
+<DD>
+Does an operation on an fd affect the already collected but not yet reported
+events?
+<DT><B>A8</B>
+
+<DD>
+You can do two operations on an existing fd. Remove would be meaningless for
+this case. Modify will re-read available I/O.
+<DT><B>Q9</B>
+
+<DD>
+Do I need to continuously read/write an fd until EAGAIN when using the
+<B>EPOLLET</B>
+
+flag ( Edge Triggered behaviour ) ?
+<DT><B>A9</B>
+
+<DD>
+No you don't. Receiving an event from
+<B><A HREF="../man2/epoll_wait.2.html">epoll_wait</A></B>(2)
+
+should suggest to you that such file descriptor is ready for the requested I/O
+operation. You have simply to consider it ready until you will receive the
+next EAGAIN. When and how you will use such file descriptor is entirely up
+to you. Also, the condition that the read/write I/O space is exhausted can
+be detected by checking the amount of data read/write from/to the target
+file descriptor. For example, if you call
+<B><A HREF="../man2/read.2.html">read</A></B>(2)
+
+by asking to read a certain amount of data and
+<B><A HREF="../man2/read.2.html">read</A></B>(2)
+
+returns a lower number of bytes, you can be sure to have exhausted the read
+I/O space for such file descriptor. Same is valid when writing using the
+<B><A HREF="../man2/write.2.html">write</A></B>(2)
+
+function.
+</DL>
+</DL>
+
+<P>
+<A NAME="lbAH">&nbsp;</A>
+<H2>POSSIBLE PITFALLS AND WAYS TO AVOID THEM</H2>
+
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT><B>o Starvation ( Edge Triggered )</B>
+
+<DD>
+</DL>
+<P>
+
+If there is a large amount of I/O space, it is possible that by trying to drain
+it the other files will not get processed causing starvation. This
+is not specific to
+<B>epoll</B>.
+
+<P>
+
+<P>
+
+The solution is to maintain a ready list and mark the file descriptor as ready
+in its associated data structure, thereby allowing the application to
+remember which files need to be processed but still round robin amongst
+all the ready files. This also supports ignoring subsequent events you
+receive for fd's that are already ready.
+<P>
+
+<P>
+<DL COMPACT>
+<DT><B>o If using an event cache...  </B>
+
+<DD>
+</DL>
+<P>
+
+If you use an event cache or store all the fd's returned from
+<B><A HREF="../man2/epoll_wait.2.html">epoll_wait</A></B>(2),
+
+then make sure to provide a way to mark its closure dynamically (ie- caused by 
+a previous event's processing). Suppose you receive 100 events from 
+<B><A HREF="../man2/epoll_wait.2.html">epoll_wait</A></B>(2),
+
+and in eventi #47 a condition causes event #13 to be closed. 
+If you remove the structure and close() the fd for event #13, then your 
+event cache might still say there are events waiting for that fd causing 
+confusion.
+<P>
+
+<P>
+
+One solution for this is to call, during the processing of event 47,
+<B>epoll_ctl</B>(<B>EPOLL_CTL_DEL</B>)
+
+to delete fd 13 and close(), then mark its associated
+data structure as removed and link it to a cleanup list. If you find another
+event for fd 13 in your batch processing, you will discover the fd had been
+previously removed and there will be no confusion.
+<P>
+
+<P>
+</DL>
+
+<A NAME="lbAI">&nbsp;</A>
+<H2>CONFORMING TO</H2>
+
+<B><A HREF="../man4/epoll.4.html">epoll</A></B>(4)
+
+is a new API introduced in Linux kernel 2.5.44.
+Its interface should be finalized in Linux kernel 2.5.66.
+<A NAME="lbAJ">&nbsp;</A>
+<H2>SEE ALSO</H2>
+
+<B><A HREF="../man2/epoll_create.2.html">epoll_create</A></B>(2),
+
+<B><A HREF="../man2/epoll_ctl.2.html">epoll_ctl</A></B>(2),
+
+<B><A HREF="../man2/epoll_wait.2.html">epoll_wait</A></B>(2)
+
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">NAME</A><DD>
+<DT><A HREF="#lbAC">SYNOPSIS</A><DD>
+<DT><A HREF="#lbAD">DESCRIPTION</A><DD>
+<DT><A HREF="#lbAE">NOTES</A><DD>
+<DT><A HREF="#lbAF">EXAMPLE FOR SUGGESTED USAGE</A><DD>
+<DT><A HREF="#lbAG">QUESTIONS AND ANSWERS (from linux-kernel)</A><DD>
+<DT><A HREF="#lbAH">POSSIBLE PITFALLS AND WAYS TO AVOID THEM</A><DD>
+<DT><A HREF="#lbAI">CONFORMING TO</A><DD>
+<DT><A HREF="#lbAJ">SEE ALSO</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
+using the manual pages.<BR>
+Time: 02:11:20 GMT, April 20, 2020
+</BODY>
+</HTML>

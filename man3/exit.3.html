@@ -1,0 +1,132 @@
+<!--
+Copyright (C) 2001 Andries Brouwer &lt;aeb@cwi.nl&gt;.
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of EXIT</TITLE>
+</HEAD><BODY>
+<H1>EXIT</H1>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2001-11-17<BR><A HREF="#index">Index</A>
+<A HREF="../index.html">Return to Main Contents</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>NAME</H2>
+
+exit - cause normal program termination
+<A NAME="lbAC">&nbsp;</A>
+<H2>SYNOPSIS</H2>
+
+<PRE>
+<B>#include &lt;<A HREF="file:///usr/include/stdlib.h">stdlib.h</A>&gt;</B>
+
+<B>void exit(int </B><I>status</I><B>);</B>
+</PRE>
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>DESCRIPTION</H2>
+
+The <B>exit()</B> function causes normal program termination and the
+the value of <I>status &amp; 0377</I> is returned to the parent
+(see
+<B><A HREF="../man2/wait.2.html">wait</A></B>(2)).
+
+All functions registered with <B>atexit()</B> and <B>on_exit()</B>
+are called in the reverse order of their registration,
+and all open streams are flushed and closed.
+Files created by <I>tmpfile()</I> are removed.
+<P>
+
+The C standard specifies two defines <I>EXIT_SUCCESS</I> and <I>EXIT_FAILURE</I>
+that may be passed to <B>exit()</B> to indicate successful or unsuccessful
+termination, respectively.
+<A NAME="lbAE">&nbsp;</A>
+<H2>RETURN VALUE</H2>
+
+The <B>exit()</B> function does not return.
+<A NAME="lbAF">&nbsp;</A>
+<H2>CONFORMING TO</H2>
+
+SVID 3, POSIX, BSD 4.3, ISO 9899 (``ANSI C'')
+<A NAME="lbAG">&nbsp;</A>
+<H2>NOTES</H2>
+
+During the exit processing, it is possible to register additional
+functions with <B>atexit()</B> and <B>on_exit()</B>.
+Always the last-registered function is removed from the chain
+of registered functions, and invoked.
+It is undefined what happens if during this processing
+either <B>exit()</B> or <B>longjmp()</B> is called.
+<P>
+
+The use of EXIT_SUCCESS and EXIT_FAILURE is slightly more portable
+(to non-Unix environments) than that of 0 and some nonzero value
+like 1 or -1. In particular, VMS uses a different convention.
+<P>
+
+BSD has attempted to standardize exit codes - see the file
+<I>&lt;<A HREF="file:///usr/include/sysexits.h">sysexits.h</A>&gt;</I>.
+
+<P>
+
+After <B>exit()</B>, the exit status must be transmitted to the
+parent process. There are three cases. If the parent has set
+SA_NOCLDWAIT, or has set the SIGCHLD handler to SIG_IGN, the
+status is discarded. If the parent was waiting on the child
+it is notified of the exit status. In both cases the exiting
+process dies immediately. If the parent has not indicated that
+it is not interested in the exit status, but is not waiting,
+the exiting process turns into a &quot;zombie&quot; process
+(which is nothing but a container for the single byte representing
+the exit status) so that the parent can learn the exit status when
+it later calls one of the <I>wait()</I> functions.
+<P>
+
+If the implementation supports the SIGCHLD signal, this signal
+is sent to the parent. If the parent has set SA_NOCLDWAIT,
+it is undefined whether a SIGCHLD signal is sent.
+<P>
+
+If the process is a session leader and its controlling terminal
+the controlling terminal of the session, then each process in
+the foreground process group of this controlling terminal
+is sent a SIGHUP signal, and the terminal is disassociated
+from this session, allowing it to be acquired by a new controlling
+process.
+<P>
+
+If the exit of the process causes a process group to become orphaned,
+and if any member of the newly-orphaned process group is stopped,
+then a SIGHUP signal followed by a SIGCONT signal will be
+sent to each process in this process group.
+<A NAME="lbAH">&nbsp;</A>
+<H2>SEE ALSO</H2>
+
+<B><A HREF="../man2/_exit.2.html">_exit</A></B>(2),
+
+<B><A HREF="../man2/wait.2.html">wait</A></B>(2),
+
+<B><A HREF="../man3/atexit.3.html">atexit</A></B>(3),
+
+<B><A HREF="../man3/on_exit.3.html">on_exit</A></B>(3),
+
+<B><A HREF="../man3/tmpfile.3.html">tmpfile</A></B>(3)
+
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">NAME</A><DD>
+<DT><A HREF="#lbAC">SYNOPSIS</A><DD>
+<DT><A HREF="#lbAD">DESCRIPTION</A><DD>
+<DT><A HREF="#lbAE">RETURN VALUE</A><DD>
+<DT><A HREF="#lbAF">CONFORMING TO</A><DD>
+<DT><A HREF="#lbAG">NOTES</A><DD>
+<DT><A HREF="#lbAH">SEE ALSO</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
+using the manual pages.<BR>
+Time: 02:10:28 GMT, April 20, 2020
+</BODY>
+</HTML>

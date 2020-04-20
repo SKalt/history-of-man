@@ -1,0 +1,252 @@
+<!--
+Copyright 7/93 by Darren Senn &lt;sinster@scintilla.santa-clara.ca.us&gt;
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of GETITIMER</TITLE>
+</HEAD><BODY>
+<H1>GETITIMER</H1>
+Section: Linux Programmer's Manual (2)<BR>Updated: 1993-08-05<BR><A HREF="#index">Index</A>
+<A HREF="../index.html">Return to Main Contents</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>NAME</H2>
+
+getitimer, setitimer - get or set value of an interval timer
+<A NAME="lbAC">&nbsp;</A>
+<H2>SYNOPSIS</H2>
+
+
+<DL COMPACT>
+<DT>
+<B>#include &lt;<A HREF="file:///usr/include/sys/time.h">sys/time.h</A>&gt;</B>
+
+<P>
+<DT>
+<B>int getitimer(int</B>
+
+<I>which</I><B>,</B>
+
+<B>struct itimerval</B>
+
+<B>*</B><I>value</I><B>);</B>
+
+<DT>
+<B>int setitimer(int</B>
+
+<I>which</I><B>,</B>
+
+<B>const struct itimerval</B>
+
+<B>*</B><I>value</I><B>,</B>
+
+<B>struct itimerval</B>
+
+<B>*</B><I>ovalue</I><B>);</B>
+
+
+</DL>
+<A NAME="lbAD">&nbsp;</A>
+<H2>DESCRIPTION</H2>
+
+<DD>The system provides each process with three interval timers, each decrementing
+in a distinct time domain.  When any timer expires, a signal is sent to the
+process, and the timer (potentially) restarts.
+<DL COMPACT>
+<DT><B>ITIMER_REAL</B>
+
+<DD>
+decrements in real time, and delivers
+<B>SIGALRM</B>
+
+upon expiration.
+<DT><B>ITIMER_VIRTUAL</B>
+
+<DD>
+decrements only when the process is executing, and delivers
+<B>SIGVTALRM</B>
+
+upon expiration.
+<DT><B>ITIMER_PROF</B>
+
+<DD>
+decrements both when the process executes and when the system is executing
+on behalf of the process.  Coupled with
+<B>ITIMER_VIRTUAL</B>,
+
+this timer is usually used to profile the time spent by the application in user
+and kernel space.
+<B>SIGPROF</B>
+
+is delivered upon expiration.
+</DL>
+<P>
+
+Timer values are defined by the following structures:
+
+<DL COMPACT><DT><DD>
+<PRE>
+struct itimerval {
+    struct timeval it_interval; /* next value */
+    struct timeval it_value;    /* current value */
+};
+struct timeval {
+    long tv_sec;                /* seconds */
+    long tv_usec;               /* microseconds */
+};
+</PRE>
+
+</DL>
+
+
+<P>
+
+The function
+<B>getitimer</B>
+
+fills the structure indicated by
+<I>value</I>
+
+with the current setting for the timer indicated by
+<I>which</I>
+
+(one of
+<B>ITIMER_REAL</B>,
+
+<B>ITIMER_VIRTUAL</B>,
+
+or
+<B>ITIMER_PROF</B>).
+
+The element
+<B>it_value</B>
+
+is set to the amount of time remaining on the timer, or zero if the timer
+is disabled.  Similarly,
+<B>it_interval</B>
+
+is set to the reset value.
+The function
+<B>setitimer</B>
+
+sets the indicated timer to the value in
+<I>value</I>.
+
+If
+<I>ovalue</I>
+
+is nonzero, the old value of the timer is stored there.
+<P>
+
+Timers decrement from
+<I>it_value</I>
+
+to zero, generate a signal, and reset to
+<I>it_interval</I>.
+
+A timer which is set to zero
+(<I>it_value</I>
+
+is zero or the timer expires and
+<I>it_interval</I>
+
+is zero) stops.
+<P>
+
+Both
+<I>tv_sec</I>
+
+and
+<I>tv_usec</I>
+
+are significant in determining the duration of a timer.
+<P>
+
+Timers will never expire before the requested time,
+instead expiring some short, constant time afterwards, dependent
+on the system timer resolution (currently 10ms).  Upon expiration, a
+signal will be generated and the timer reset.  If the timer expires
+while the process is active (always true for
+<B>ITIMER_VIRT</B>)
+
+the signal will be delivered immediately when generated.  Otherwise the
+delivery will be offset by a small time dependent on the system loading.
+<P>
+
+<A NAME="lbAE">&nbsp;</A>
+<H2>RETURN VALUE</H2>
+
+On success, zero is returned.  On error, -1 is returned, and
+<I>errno</I>
+
+is set appropriately.
+<A NAME="lbAF">&nbsp;</A>
+<H2>ERRORS</H2>
+
+<DL COMPACT>
+<DT><B>EFAULT</B>
+
+<DD>
+<I>value</I>
+
+or
+<I>ovalue</I>
+
+are not valid pointers.
+<DT><B>EINVAL</B>
+
+<DD>
+<I>which</I>
+
+is not one of
+<B>ITIMER_REAL</B>,
+
+<B>ITIMER_VIRT</B>,
+
+or
+<B>ITIMER_PROF</B>.
+
+</DL>
+<A NAME="lbAG">&nbsp;</A>
+<H2>CONFORMING TO</H2>
+
+SVr4, 4.4BSD (This call first appeared in 4.2BSD).
+<A NAME="lbAH">&nbsp;</A>
+<H2>SEE ALSO</H2>
+
+<B><A HREF="../man2/gettimeofday.2.html">gettimeofday</A></B>(2),
+
+<B><A HREF="../man2/sigaction.2.html">sigaction</A></B>(2),
+
+<B><A HREF="../man2/signal.2.html">signal</A></B>(2)
+
+<A NAME="lbAI">&nbsp;</A>
+<H2>BUGS</H2>
+
+Under Linux, the generation and delivery of a signal are distinct, and
+there each signal is permitted only one outstanding event.  It's therefore
+conceivable that under pathologically heavy loading,
+<B>ITIMER_REAL</B>
+
+will expire before the signal from a previous expiration has been delivered.
+The second signal in such an event will be lost.
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">NAME</A><DD>
+<DT><A HREF="#lbAC">SYNOPSIS</A><DD>
+<DT><A HREF="#lbAD">DESCRIPTION</A><DD>
+<DT><A HREF="#lbAE">RETURN VALUE</A><DD>
+<DT><A HREF="#lbAF">ERRORS</A><DD>
+<DT><A HREF="#lbAG">CONFORMING TO</A><DD>
+<DT><A HREF="#lbAH">SEE ALSO</A><DD>
+<DT><A HREF="#lbAI">BUGS</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
+using the manual pages.<BR>
+Time: 02:09:56 GMT, April 20, 2020
+</BODY>
+</HTML>

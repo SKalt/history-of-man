@@ -1,0 +1,189 @@
+<!--
+Copyright 1995  James R. Van Zandt &lt;jrv@vanzandt.mv.com&gt;
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of GETLOGIN</TITLE>
+</HEAD><BODY>
+<H1>GETLOGIN</H1>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2003-08-24<BR><A HREF="#index">Index</A>
+<A HREF="../index.html">Return to Main Contents</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>NAME</H2>
+
+getlogin, getlogin_r, cuserid - get user name
+<A NAME="lbAC">&nbsp;</A>
+<H2>SYNOPSIS</H2>
+
+<B>#include &lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;</B>
+
+<P>
+<B>char *getlogin(void);</B>
+
+<BR>
+
+<B>int getlogin_r(char *</B><I>buf</I><B>, size_t </B><I>bufsize</I><B>);</B>
+
+<P>
+<B>#include &lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;</B>
+
+<P>
+<B>char *cuserid(char *</B><I>string</I><B>);</B>
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>DESCRIPTION</H2>
+
+<B>getlogin</B> returns a pointer to a string containing the name of
+the user logged in on the controlling terminal of the process, or a
+null pointer if this information cannot be determined.  The string is
+statically allocated and might be overwritten on subsequent calls to
+this function or to <B>cuserid</B>.
+<P>
+
+<B>getlogin_r</B> returns this same user name in the array
+<I>buf</I>
+
+of size
+<I>bufsize</I>.
+
+<P>
+
+<B>cuserid</B> returns a pointer to a string containing a user name
+associated with the effective user ID of the process.  If <I>string</I>
+is not a null pointer, it should be an array that can hold at least
+<B>L_cuserid</B> characters; the string is returned in this array.
+Otherwise, a pointer to a string in a static area is returned. This
+string is statically allocated and might be overwritten on subsequent
+calls to this function or to <B>getlogin</B>.
+<P>
+
+The macro <B>L_cuserid</B> is an integer constant that indicates how
+long an array you might need to store a user name.  <B>L_cuserid</B> is
+declared in <B>stdio.h</B>.
+<P>
+
+These functions let your program identify positively the user who is
+running (<B>cuserid</B>) or the user who logged in this session
+(<B>getlogin</B>).  (These can differ when setuid programs are
+involved.)
+<P>
+
+For most purposes, it is more useful to use the environment variable
+<B>LOGNAME</B> to find out who the user is.  This is more flexible
+precisely because the user can set <B>LOGNAME</B> arbitrarily.
+<A NAME="lbAE">&nbsp;</A>
+<H2>RETURN VALUE</H2>
+
+<B>getlogin</B> returns a pointer to the user name when successful,
+and NULL on failure.
+<B>getlogin_r</B> returns 0 when successful, and nonzero on failure.
+<A NAME="lbAF">&nbsp;</A>
+<H2>ERRORS</H2>
+
+POSIX specifies
+<DL COMPACT>
+<DT><B>EMFILE</B>
+
+<DD>
+The calling process already has the maximum allowed number of open files.
+<DT><B>ENFILE</B>
+
+<DD>
+The system already has the maximum allowed number of open files.
+<DT><B>ENXIO</B>
+
+<DD>
+The calling process has no controlling tty.
+<DT><B>ERANGE</B>
+
+<DD>
+(getlogin_r)
+The length of the user name, including final NUL, is larger than
+<I>bufsize</I>.
+
+</DL>
+<P>
+
+Linux/glibc also has
+<DL COMPACT>
+<DT><B>ENOENT</B>
+
+<DD>
+There was no corresponding entry in the utmp-file.
+<DT><B>ENOMEM</B>
+
+<DD>
+Insufficient memory to allocate passwd structure.
+</DL>
+<A NAME="lbAG">&nbsp;</A>
+<H2>FILES</H2>
+
+<PRE>
+<I>/etc/passwd</I>     password database file
+<BR>
+<I>/var/run/utmp</I>   (traditionally <I>/etc/utmp</I>;
+                        some libc versions used <I>/var/adm/utmp</I>)
+</PRE>
+
+<A NAME="lbAH">&nbsp;</A>
+<H2>CONFORMING TO</H2>
+
+POSIX.1.  System V has a <B>cuserid</B> function which uses the real
+user ID rather than the effective user ID. The <B>cuserid</B> function
+was included in the 1988 version of POSIX, but removed from the 1990 version.
+<P>
+
+OpenBSD has <B>getlogin</B> and <B>setlogin</B>, and a username
+associated with a session, even if it has no controlling tty.
+<A NAME="lbAI">&nbsp;</A>
+<H2>BUGS</H2>
+
+Unfortunately, it is often rather easy to fool getlogin().
+Sometimes it does not work at all, because some program messed up
+the utmp file. Often, it gives only the first 8 characters of
+the login name. The user currently logged in on the controlling tty
+of our program need not be the user who started it.
+Avoid getlogin() for security-related purposes.
+<P>
+
+Note that glibc does not follow the POSIX spec and uses stdin
+instead of
+<I>/dev/tty</I>.
+
+A bug. (Other recent systems, like SunOS 5.8 and HPUX 11.11 and FreeBSD 4.8
+all return the login name also when stdin is redirected.)
+<P>
+
+Nobody knows precisely what cuserid() does - avoid it in portable programs -
+avoid it altogether - use getpwuid(geteuid()) instead, if that is
+what you meant.
+DO NOT USE cuserid().
+<A NAME="lbAJ">&nbsp;</A>
+<H2>SEE ALSO</H2>
+
+<B><A HREF="../man2/geteuid.2.html">geteuid</A></B>(2),
+
+<B><A HREF="../man2/getuid.2.html">getuid</A></B>(2)
+
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">NAME</A><DD>
+<DT><A HREF="#lbAC">SYNOPSIS</A><DD>
+<DT><A HREF="#lbAD">DESCRIPTION</A><DD>
+<DT><A HREF="#lbAE">RETURN VALUE</A><DD>
+<DT><A HREF="#lbAF">ERRORS</A><DD>
+<DT><A HREF="#lbAG">FILES</A><DD>
+<DT><A HREF="#lbAH">CONFORMING TO</A><DD>
+<DT><A HREF="#lbAI">BUGS</A><DD>
+<DT><A HREF="#lbAJ">SEE ALSO</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
+using the manual pages.<BR>
+Time: 02:10:38 GMT, April 20, 2020
+</BODY>
+</HTML>

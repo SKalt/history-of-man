@@ -1,0 +1,253 @@
+<!--
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of WAVELAN</TITLE>
+</HEAD><BODY>
+<H1>WAVELAN</H1>
+Section: Devices and Network Interfaces (4)<BR>Updated: 1996-10-22<BR><A HREF="#index">Index</A>
+<A HREF="../index.html">Return to Main Contents</A><HR>
+
+
+
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>NAME</H2>
+
+wavelan - AT&amp;T GIS WaveLAN ISA device driver
+
+
+
+<A NAME="lbAC">&nbsp;</A>
+<H2>SYNOPSIS</H2>
+
+<B>insmod wavelan_cs.o [io=</B><I>B,B..</I><B>] [ irq=</B><I>I,I..</I><B>] [name=</B><I>N,N..</I><B>]</B>
+
+
+
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>DESCRIPTION</H2>
+
+<I>wavelan</I>
+
+is the low-level device driver for the NCR / AT&amp;T / Lucent
+<B>WaveLAN ISA</B>
+
+and Digital (DEC)
+<B>RoamAbout DS</B>
+
+wireless ethernet adapter. This driver is available as a module or
+might be compiled in the kernel. This driver supports multiple cards
+in both forms (up to 4) and allocates the next available ethernet
+device (eth0..eth#) for each card found, unless a device name is
+explicitly specified (see below). This device name will be reported
+in the kernel log file with the MAC address, NWID and frequency used
+by the card.
+
+
+
+<A NAME="lbAE">&nbsp;</A>
+<H2>PARAMETERS</H2>
+
+This section apply to the module form (parameters passed on the
+<B><A HREF="../man8/insmod.8.html">insmod</A></B>(8)
+
+command line). If the driver is included in the kernel, use the
+<I>ether=IRQ,IO,NAME</I>
+
+syntax on the kernel command line.
+<DL COMPACT>
+<DT><B>io</B>
+
+<DD>
+Specify the list of base address where to search for wavelan cards
+(setting by dip switch on the card). If you don't specify any io
+address, the driver will scan 0x390 and 0x3E0 addresses, which might
+conflict with other hardware...
+<DT><B>irq</B>
+
+<DD>
+Set the list of irq that each wavelan card should use (the value is
+saved in permanent storage for future use).
+<DT><B>name</B>
+
+<DD>
+Set the list of name to be used for each wavelan cards device (name
+used by
+<B><A HREF="../man8/ifconfig.8.html">ifconfig</A></B>(8)).
+
+
+
+
+</DL>
+<A NAME="lbAF">&nbsp;</A>
+<H2>WIRELESS EXTENSIONS</H2>
+
+Use
+<B><A HREF="../man8/iwconfig.8.html">iwconfig</A></B>(8)
+
+to manipulate wireless extensions.
+
+<A NAME="lbAG">&nbsp;</A>
+<H3>NWID (or domain)</H3>
+
+Set the network ID 
+[<I>0</I>
+
+to
+<I>FFFF</I>]
+
+or disable it
+[<I>off</I>].
+
+As the NWID is stored in the card Permanent Storage Area, it will be
+reuse at any further invocation of the driver.
+
+<A NAME="lbAH">&nbsp;</A>
+<H3>Frequency &amp; channels</H3>
+
+For the 2.4GHz 2.00 Hardware, you are able to set the frequency by
+specifying one of the 10 defined channels
+(<I>2.412,</I>
+
+<I>2.422, 2.425, 2.4305, 2.432, 2.442, 2.452, 2.460, 2.462</I>
+
+or
+<I>2.484</I>)
+
+or directly by its value. The frequency is changed immediately and
+permanentely. Frequency availability depend on the regulations...
+
+<A NAME="lbAI">&nbsp;</A>
+<H3>Statistics spy</H3>
+
+Set a list of MAC addresses in the driver (up to 8) and get the last
+quality of link for each of those (see
+<B><A HREF="../man8/iwspy.8.html">iwspy</A></B>(8)).
+
+
+<A NAME="lbAJ">&nbsp;</A>
+<H3>/proc/net/wireless</H3>
+
+<I>status</I>
+
+is the status reported by the modem.
+<I>Link quality</I>
+
+reports the quality of the modulation on the air (direct sequence
+spread spectrum) [max = 16].
+<I>Level</I>
+
+and
+<I>Noise</I>
+
+refer to the signal level and noise level [max = 64].
+The
+<I>crypt discarded packet</I>
+
+and
+<I>misc discarded packet</I>
+
+counters are not implemented.
+
+
+
+<A NAME="lbAK">&nbsp;</A>
+<H2>PRIVATE IOCTL</H2>
+
+You may use
+<B><A HREF="../man8/iwpriv.8.html">iwpriv</A></B>(8)
+
+to manipulate private ioctls.
+
+<A NAME="lbAL">&nbsp;</A>
+<H3>Quality and Level threshold</H3>
+
+Enable you the define the quality and level threshold used by the
+modem (packet below that level are discarded).
+
+<A NAME="lbAM">&nbsp;</A>
+<H3>Histogram</H3>
+
+This functionality allow to set a number of signal level intervals and
+to count the number of packets received in each of those defined
+intervals. This distribution might be used to calculate the mean value
+and standard deviation of the signal level.
+
+
+
+<A NAME="lbAN">&nbsp;</A>
+<H2>SPECIFIC NOTES</H2>
+
+This driver will fail to detect some
+<B>non NCR/ATT&amp;T/Lucent</B>
+
+Wavelan cards. If it's your case, you must look in the source code on
+how to add your card to the detection routine.
+<P>
+
+Some of the mentioned features are optional. You may enable to disable
+them by changing flags in the driver header and recompile.
+
+
+
+<A NAME="lbAO">&nbsp;</A>
+<H2>AUTHOR</H2>
+
+Bruce Janson - <A HREF="mailto:bruce@cs.usyd.edu.au">bruce@cs.usyd.edu.au</A>
+<BR>
+
+Jean Tourrilhes - <A HREF="mailto:jt@hplb.hpl.hp.com">jt@hplb.hpl.hp.com</A>
+<BR>
+
+(+ others - see source code for details)
+
+
+
+<A NAME="lbAP">&nbsp;</A>
+<H2>SEE ALSO</H2>
+
+<B><A HREF="../man4/wavelan_cs.4.html">wavelan_cs</A></B>(4),
+
+<B><A HREF="../man8/ifconfig.8.html">ifconfig</A></B>(8),
+
+<B><A HREF="../man8/insmod.8.html">insmod</A></B>(8),
+
+<B><A HREF="../man8/iwconfig.8.html">iwconfig</A></B>(8),
+
+<B><A HREF="../man8/iwspy.8.html">iwspy</A></B>(8),
+
+<B><A HREF="../man8/iwpriv.8.html">iwpriv</A></B>(8)
+
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">NAME</A><DD>
+<DT><A HREF="#lbAC">SYNOPSIS</A><DD>
+<DT><A HREF="#lbAD">DESCRIPTION</A><DD>
+<DT><A HREF="#lbAE">PARAMETERS</A><DD>
+<DT><A HREF="#lbAF">WIRELESS EXTENSIONS</A><DD>
+<DL>
+<DT><A HREF="#lbAG">NWID (or domain)</A><DD>
+<DT><A HREF="#lbAH">Frequency &amp; channels</A><DD>
+<DT><A HREF="#lbAI">Statistics spy</A><DD>
+<DT><A HREF="#lbAJ">/proc/net/wireless</A><DD>
+</DL>
+<DT><A HREF="#lbAK">PRIVATE IOCTL</A><DD>
+<DL>
+<DT><A HREF="#lbAL">Quality and Level threshold</A><DD>
+<DT><A HREF="#lbAM">Histogram</A><DD>
+</DL>
+<DT><A HREF="#lbAN">SPECIFIC NOTES</A><DD>
+<DT><A HREF="#lbAO">AUTHOR</A><DD>
+<DT><A HREF="#lbAP">SEE ALSO</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
+using the manual pages.<BR>
+Time: 02:11:22 GMT, April 20, 2020
+</BODY>
+</HTML>

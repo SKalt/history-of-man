@@ -1,0 +1,139 @@
+<!--
+Copyright (c) Michael Haardt (michael@cantor.informatik.rwth-aachen.de), Sun Jan 15 19:16:33 1995
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of LP</TITLE>
+</HEAD><BODY>
+<H1>LP</H1>
+Section: Linux Programmer's Manual (4)<BR>Updated: 1995-01-15<BR><A HREF="#index">Index</A>
+<A HREF="../index.html">Return to Main Contents</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>NAME</H2>
+
+lp - line printer devices
+<A NAME="lbAC">&nbsp;</A>
+<H2>SYNOPSIS</H2>
+
+<B>#include &lt;<A HREF="file:///usr/include/linux/lp.h">linux/lp.h</A>&gt;</B>
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>CONFIGURATION</H2>
+
+<B>lp</B>[0-2] are character devices for the parallel line printers;
+they have major number 6 and minor number 0-2.  The minor numbers
+correspond to the printer port base addresses 0x03bc, 0x0378 and 0x0278.
+Usually they have mode 220 and are owned by root and group lp.  You can
+use printer ports either with polling or with interrupts.  Interrupts
+are recommended when high traffic is expected, e.g. for laser
+printers.  For usual dot matrix printers polling will usually be
+enough.  The default is polling.
+<A NAME="lbAE">&nbsp;</A>
+<H2>DESCRIPTION</H2>
+
+The following
+<B><A HREF="../man2/ioctl.2.html">ioctl</A></B>(2)
+
+calls are supported:
+<DL COMPACT>
+<DT><B>int ioctl(int </B><I>fd</I><B>, LPTIME, int </B><I>arg</I><B>)</B><DD>
+Sets the amount of time that the driver sleeps before rechecking the printer
+when the printer's buffer appears to be filled to <I>arg</I>.  If you
+have a fast printer, decrease this number; if you have a slow printer
+then increase it.  This is in hundredths of a second, the default 2
+being 0.02 seconds.  It only influences the polling driver.
+<DT><B>int ioctl(int </B><I>fd</I><B>, LPCHAR, int </B><I>arg</I><B>)</B><DD>
+Sets the maximum number of busy-wait iterations which the polling driver does
+while waiting for the printer to get ready for receiving a character to
+<I>arg</I>.  If printing is too slow, increase this number; if the
+system gets too slow, decrease this number.  The default is 1000.
+It only influences the polling driver.
+<DT><B>int ioctl(int </B><I>fd</I><B>, LPABORT, int </B><I>arg</I><B>)</B><DD>
+If <I>arg</I> is 0, the printer driver will retry on errors, otherwise
+it will abort.  The default is 0.
+<DT><B>int ioctl(int </B><I>fd</I><B>, LPABORTOPEN, int </B><I>arg</I><B>)</B><DD>
+If <I>arg</I> is 0,
+<B><A HREF="../man2/open.2.html">open</A></B>(2)
+
+will be aborted on error, otherwise error will be ignored.  The default is
+to ignore it.
+<DT><B>int ioctl(int </B><I>fd</I><B>, LPCAREFUL, int </B><I>arg</I><B>)</B><DD>
+If <I>arg</I> is 0, then the out-of-paper, offline and error signals are
+required to be false on all writes, otherwise they are ignored.  The
+default is to ignore them.
+<DT><B>int ioctl(int </B><I>fd</I><B>, LPWAIT, int </B><I>arg</I><B>)</B><DD>
+Sets the number of busy waiting iterations to wait before strobing the
+printer to accept a just-written character, and the number of iterations to
+wait before turning the strobe off again,
+to <I>arg</I>.  The specification says this time should be 0.5
+microseconds, but experience has shown the delay caused by the code is
+already enough.  For that reason, the default value is 0.  This is
+used for both the polling and the interrupt driver.
+<DT><B>int ioctl(int </B><I>fd</I><B>, LPSETIRQ, int </B><I>arg</I><B>)</B><DD>
+This ioctl() requires superuser privileges.  It takes an int containing the
+new IRQ as argument.  As a side effect, the printer will be reset.  When
+<I>arg</I> is 0, the polling driver will be used, which is also default.
+<DT><B>int ioctl(int </B><I>fd</I><B>, LPGETIRQ, int *</B><I>arg</I><B>)</B><DD>
+Stores the currently used IRQ in <I>arg</I>.
+<DT><B>int ioctl(int </B><I>fd</I><B>, LPGETSTATUS, int *</B><I>arg</I><B>)</B><DD>
+Stores the value of the status port in <I>arg</I>.  The bits have the following
+meaning:
+<P>
+<TABLE>
+<TR VALIGN=top><TD>LP_PBUSY</TD><TD>inverted busy input, active high<BR></TD></TR>
+<TR VALIGN=top><TD>LP_PACK</TD><TD>unchanged acknowledge input, active low<BR></TD></TR>
+<TR VALIGN=top><TD>LP_POUTPA</TD><TD>unchanged out-of-paper input, active high<BR></TD></TR>
+<TR VALIGN=top><TD>LP_PSELECD</TD><TD>unchanged selected input, active high<BR></TD></TR>
+<TR VALIGN=top><TD>LP_PERRORP</TD><TD>unchanged error input, active low<BR></TD></TR>
+</TABLE>
+
+<P>
+Refer to your printer manual for the meaning of the signals.
+Note that undocumented bits may also be set, depending on your printer.
+<DT><B>int ioctl(int </B><I>fd</I><B>, LPRESET)</B><DD>
+Resets the printer.  No argument is used.
+</DL>
+<A NAME="lbAF">&nbsp;</A>
+<H2>FILES</H2>
+
+/dev/lp*
+<A NAME="lbAG">&nbsp;</A>
+<H2>AUTHORS</H2>
+
+The printer driver was originally written by Jim Weigand and Linus
+Torvalds.  It was further improved by Michael K. Johnson.  The
+interrupt code was written by Nigel Gamble.  Alan Cox modularised it.
+LPCAREFUL, LPABORT, LPGETSTATUS were added by Chris Metcalf.
+<A NAME="lbAH">&nbsp;</A>
+<H2>SEE ALSO</H2>
+
+<B><A HREF="../man1/chmod.1.html">chmod</A></B>(1),
+
+<B><A HREF="../man1/chown.1.html">chown</A></B>(1),
+
+<B><A HREF="../man1/mknod.1.html">mknod</A></B>(1),
+
+<B><A HREF="../man8/lpcntl.8.html">lpcntl</A></B>(8),
+
+<B><A HREF="../man8/tunelp.8.html">tunelp</A></B>(8)
+
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">NAME</A><DD>
+<DT><A HREF="#lbAC">SYNOPSIS</A><DD>
+<DT><A HREF="#lbAD">CONFIGURATION</A><DD>
+<DT><A HREF="#lbAE">DESCRIPTION</A><DD>
+<DT><A HREF="#lbAF">FILES</A><DD>
+<DT><A HREF="#lbAG">AUTHORS</A><DD>
+<DT><A HREF="#lbAH">SEE ALSO</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
+using the manual pages.<BR>
+Time: 02:11:20 GMT, April 20, 2020
+</BODY>
+</HTML>

@@ -1,0 +1,552 @@
+<!--
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of ZIC</TITLE>
+</HEAD><BODY>
+<H1>ZIC</H1>
+Section: Maintenance Commands (8)<BR><A HREF="#index">Index</A>
+<A HREF="../index.html">Return to Main Contents</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>NAME</H2>
+
+zic - time zone compiler
+<A NAME="lbAC">&nbsp;</A>
+<H2>SYNOPSIS</H2>
+
+<B>zic</B>
+
+[
+<B>-v</B>
+
+] [
+<B>-d</B>
+
+<I>directory</I>
+
+] [
+<B>-l</B>
+
+<I>localtime</I>
+
+] [
+<B>-p</B>
+
+<I>posixrules</I>
+
+] [
+<B>-L</B>
+
+<I>leapsecondfilename</I>
+
+] [
+<B>-s</B>
+
+] [
+<B>-y</B>
+
+<I>command</I>
+
+] [
+<I>filename</I>
+
+... ]
+<A NAME="lbAD">&nbsp;</A>
+<H2>DESCRIPTION</H2>
+
+
+
+
+
+<I>Zic</I>
+
+reads text from the file(s) named on the command line
+and creates the time conversion information files specified in this input.
+If a
+<I>filename</I>
+
+is
+<B>-</B>,
+
+the standard input is read.
+<P>
+
+These options are available:
+<DL COMPACT>
+<DT><B>-d </B><I>directory</I>
+
+<DD>
+Create time conversion information files in the named directory rather than
+in the standard directory named below.
+<DT><B>-l </B><I>timezone</I>
+
+<DD>
+Use the given time zone as local time.
+<I>Zic</I>
+
+will act as if the input contained a link line of the form
+<P>
+<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+Link<TT>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT><I>timezone</I><TT>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT><TT>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT>localtime<BR>
+<DT><B>-p </B><I>timezone</I>
+
+<DD>
+Use the given time zone's rules when handling POSIX-format
+time zone environment variables.
+<I>Zic</I>
+
+will act as if the input contained a link line of the form
+<P>
+<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+Link<TT>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT><I>timezone</I><TT>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT><TT>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT>posixrules<BR>
+<DT><B>-L </B><I>leapsecondfilename</I>
+
+<DD>
+Read leap second information from the file with the given name.
+If this option is not used,
+no leap second information appears in output files.
+<DT><B>-v</B>
+
+<DD>
+Complain if a year that appears in a data file is outside the range
+of years representable by
+<I><A HREF="../man2/time.2.html">time</A></I>(2)
+
+values.
+<DT><B>-s</B>
+
+<DD>
+Limit time values stored in output files to values that are the same
+whether they're taken to be signed or unsigned.
+You can use this option to generate SVVS-compatible files.
+<DT><B>-y </B><I>command</I>
+
+<DD>
+Use the given
+<I>command</I>
+
+rather than
+<B>yearistype</B>
+
+when checking year types (see below).
+</DL>
+<P>
+
+Input lines are made up of fields.
+Fields are separated from one another by any number of white space characters.
+Leading and trailing white space on input lines is ignored.
+An unquoted sharp character (#) in the input introduces a comment which extends
+to the end of the line the sharp character appears on.
+White space characters and sharp characters may be enclosed in double quotes
+(&quot;) if they're to be used as part of a field.
+Any line that is blank (after comment stripping) is ignored.
+Non-blank lines are expected to be of one of three types:
+rule lines, zone lines, and link lines.
+<P>
+
+A rule line has the form
+<PRE>
+<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+
+Rule  NAME  FROM  TO    TYPE  IN   ON       AT    SAVE  LETTER/S
+
+For example:
+<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+Rule  US    1967  1973  -     Apr  lastSun  2:00  1:00  D
+
+</PRE>
+
+The fields that make up a rule line are:
+<DL COMPACT>
+<DT><B>NAME</B>
+
+<DD>
+Gives the (arbitrary) name of the set of rules this rule is part of.
+<DT><B>FROM</B>
+
+<DD>
+Gives the first year in which the rule applies.
+Any integer year can be supplied; the Gregorian calendar is assumed.
+The word
+<B>minimum</B>
+
+(or an abbreviation) means the minimum year representable as an integer.
+The word
+<B>maximum</B>
+
+(or an abbreviation) means the maximum year representable as an integer.
+Rules can describe times that are not representable as time values,
+with the unrepresentable times ignored; this allows rules to be portable
+among hosts with differing time value types.
+<DT><B>TO</B>
+
+<DD>
+Gives the final year in which the rule applies.
+In addition to
+<B>minimum</B>
+
+and
+<B>maximum</B>
+
+(as above),
+the word
+<B>only</B>
+
+(or an abbreviation)
+may be used to repeat the value of the
+<B>FROM</B>
+
+field.
+<DT><B>TYPE</B>
+
+<DD>
+Gives the type of year in which the rule applies.
+If
+<B>TYPE</B>
+
+is
+<B>-</B>
+
+then the rule applies in all years between
+<B>FROM</B>
+
+and
+<B>TO</B>
+
+inclusive.
+If
+<B>TYPE</B>
+
+is something else, then
+<I>zic</I>
+
+executes the command
+<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+<B>yearistype</B> <I>year</I> <I>type</I>
+<BR>
+
+to check the type of a year:
+an exit status of zero is taken to mean that the year is of the given type;
+an exit status of one is taken to mean that the year is not of the given type.
+<DT><B>IN</B>
+
+<DD>
+Names the month in which the rule takes effect.
+Month names may be abbreviated.
+<DT><B>ON</B>
+
+<DD>
+Gives the day on which the rule takes effect.
+Recognized forms include:
+<PRE>
+
+
+5        the fifth of the month
+lastSun  the last Sunday in the month
+lastMon  the last Monday in the month
+Sun&gt;=8   first Sunday on or after the eighth
+Sun&lt;=25  last Sunday on or before the 25th
+</PRE>
+
+
+<P>
+Names of days of the week may be abbreviated or spelled out in full.
+Note that there must be no spaces within the
+<B>ON</B>
+
+field.
+<DT><B>AT</B>
+
+<DD>
+Gives the time of day at which the rule takes effect.
+Recognized forms include:
+<PRE>
+
+
+2        time in hours
+2:00     time in hours and minutes
+15:00    24-hour format time (for times after noon)
+1:28:14  time in hours, minutes, and seconds
+-        equivalent to 0
+</PRE>
+
+
+<P>
+where hour 0 is midnight at the start of the day,
+and hour 24 is midnight at the end of the day.
+Any of these forms may be followed by the letter
+<B>w</B>
+
+if the given time is local
+
+time,
+<B>s</B>
+
+if the given time is local
+
+time, or
+<B>u</B>
+
+(or
+<B>g</B>
+
+or
+<B>z</B>)
+
+if the given time is universal time;
+in the absence of an indicator,
+wall clock time is assumed.
+<DT><B>SAVE</B>
+
+<DD>
+Gives the amount of time to be added to local standard time when the rule is in
+effect.
+This field has the same format as the
+<B>AT</B>
+
+field
+(although, of course, the
+<B>w</B>
+
+and
+<B>s</B>
+
+suffixes are not used).
+<DT><B>LETTER/S</B>
+
+<DD>
+Gives the
+
+(for example, the
+
+or
+
+in
+
+or
+
+of time zone abbreviations to be used when this rule is in effect.
+If this field is
+<B>-</B>,
+
+the variable part is null.
+</DL>
+<P>
+
+A zone line has the form
+<P>
+<PRE>
+<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+Zone  NAME                GMTOFF  RULES/SAVE  FORMAT  [UNTIL]
+
+For example:
+
+<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Zone                 Australia/Adelaide  9:30    AusCST1971 Oct 31 2:00
+
+</PRE>
+
+The fields that make up a zone line are:
+<DL COMPACT>
+<DT><B>NAME</B>
+
+<DD>
+The name of the time zone.
+This is the name used in creating the time conversion information file for the
+zone.
+<DT><B>GMTOFF</B>
+
+<DD>
+The amount of time to add to UTC to get standard time in this zone.
+This field has the same format as the
+<B>AT</B>
+
+and
+<B>SAVE</B>
+
+fields of rule lines;
+begin the field with a minus sign if time must be subtracted from UTC.
+<DT><B>RULES/SAVE</B>
+
+<DD>
+The name of the rule(s) that apply in the time zone or,
+alternately, an amount of time to add to local standard time.
+If this field is
+<B>-</B>
+
+then standard time always applies in the time zone.
+<DT><B>FORMAT</B>
+
+<DD>
+The format for time zone abbreviations in this time zone.
+The pair of characters
+<B>%s</B>
+
+is used to show where the
+
+of the time zone abbreviation goes.
+Alternately,
+a slash (/)
+separates standard and daylight abbreviations.
+<DT><B>UNTIL</B>
+
+<DD>
+The time at which the UTC offset or the rule(s) change for a location.
+It is specified as a year, a month, a day, and a time of day.
+If this is specified,
+the time zone information is generated from the given UTC offset
+and rule change until the time specified.
+The month, day, and time of day have the same format as the IN, ON, and AT
+columns of a rule; trailing columns can be omitted, and default to the
+earliest possible value for the missing columns.
+<DT><DD>
+The next line must be a
+
+line; this has the same form as a zone line except that the
+string
+
+and the name are omitted, as the continuation line will
+place information starting at the time specified as the
+<B>UNTIL</B>
+
+field in the previous line in the file used by the previous line.
+Continuation lines may contain an
+<B>UNTIL</B>
+
+field, just as zone lines do, indicating that the next line is a further
+continuation.
+</DL>
+<P>
+
+A link line has the form
+<P>
+<PRE>
+<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+Link  LINK-FROM        LINK-TO
+
+For example:
+
+<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Link              Europe/IstanbulAsia/Istanbul
+
+</PRE>
+
+The
+<B>LINK-FROM</B>
+
+field should appear as the
+<B>NAME</B>
+
+field in some zone line;
+the
+<B>LINK-TO</B>
+
+field is used as an alternate name for that zone.
+<P>
+
+Except for continuation lines,
+lines may appear in any order in the input.
+<P>
+
+Lines in the file that describes leap seconds have the following form:
+<PRE>
+<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+
+Leap  YEAR  MONTH  DAY  HH:MM:SS  CORR  R/S
+
+For example:
+<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+Leap  1974  Dec    31   23:59:60  +     S
+
+</PRE>
+
+The
+<B>YEAR</B>,
+
+<B>MONTH</B>,
+
+<B>DAY</B>,
+
+and
+<B>HH:MM:SS</B>
+
+fields tell when the leap second happened.
+The
+<B>CORR</B>
+
+field
+should be
+
+if a second was added
+or
+
+if a second was skipped.
+
+
+
+
+
+
+
+
+
+
+
+The
+<B>R/S</B>
+
+field
+should be (an abbreviation of)
+
+if the leap second time given by the other fields should be interpreted as UTC
+or
+(an abbreviation of)
+
+if the leap second time given by the other fields should be interpreted as
+local wall clock time.
+<A NAME="lbAE">&nbsp;</A>
+<H2>NOTE</H2>
+
+For areas with more than two types of local time,
+you may need to use local standard time in the
+<B>AT</B>
+
+field of the earliest transition time's rule to ensure that
+the earliest transition time recorded in the compiled file is correct.
+<A NAME="lbAF">&nbsp;</A>
+<H2>FILE</H2>
+
+/usr/local/etc/zoneinfo<TT>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT>standard directory used for created files<BR>
+<A NAME="lbAG">&nbsp;</A>
+<H2>SEE ALSO</H2>
+
+<A HREF="../man3/newctime.3.html">newctime</A>(3), <A HREF="../man5/tzfile.5.html">tzfile</A>(5), <A HREF="../man8/zdump.8.html">zdump</A>(8)
+
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">NAME</A><DD>
+<DT><A HREF="#lbAC">SYNOPSIS</A><DD>
+<DT><A HREF="#lbAD">DESCRIPTION</A><DD>
+<DT><A HREF="#lbAE">NOTE</A><DD>
+<DT><A HREF="#lbAF">FILE</A><DD>
+<DT><A HREF="#lbAG">SEE ALSO</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
+using the manual pages.<BR>
+Time: 02:11:28 GMT, April 20, 2020
+</BODY>
+</HTML>

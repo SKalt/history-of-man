@@ -1,0 +1,197 @@
+<!--
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of GETLINE</TITLE>
+</HEAD><BODY>
+<H1>GETLINE</H1>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2001-10-07<BR><A HREF="#index">Index</A>
+<A HREF="../index.html">Return to Main Contents</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>NAME</H2>
+
+getline, getdelim - delimited string input
+<A NAME="lbAC">&nbsp;</A>
+<H2>SYNOPSIS</H2>
+
+<PRE>
+<B>#define _GNU_SOURCE</B>
+<B>#include &lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;</B>
+
+<B>ssize_t getline(char **</B><I>lineptr</I><B>, size_t *</B><I>n</I><B>, FILE *</B><I>stream</I><B>);</B>
+<B>ssize_t getdelim(char **</B><I>lineptr</I><B>, size_t *</B><I>n</I><B>, int </B><I>delim</I><B>, FILE *</B><I>stream</I><B>);</B>
+</PRE><A NAME="lbAD">&nbsp;</A>
+<H2>DESCRIPTION</H2>
+
+<B>getline()</B>
+
+reads an entire line, storing the address of the buffer containing
+the text into
+<I>*lineptr.</I>
+
+The buffer is null-terminated and includes the newline character, if a
+newline delimiter was found.
+<P>
+
+
+If
+<I>*lineptr</I>
+
+is
+<B>NULL,</B>
+
+the
+<B>getline()</B>
+
+routine will allocate a buffer for containing the line, which must be freed
+by the user program.
+Alternatively, before calling
+<B>getline(),</B>
+
+<I>*lineptr</I>
+
+can contain a pointer to a
+<B>malloc()-allocated</B>
+
+buffer
+<I>*n</I>
+
+bytes in size. If the buffer is not large enough to hold the line read in,
+<B>getline()</B>
+
+resizes the buffer to fit with
+<B>realloc(),</B>
+
+updating
+<I>*lineptr</I>
+
+and
+<I>*n</I>
+
+as necessary. In either case, on a successful call,
+<I>*lineptr</I>
+
+and
+<I>*n</I>
+
+will be updated to reflect the buffer address and size respectively.
+<P>
+<B>getdelim()</B>
+
+works like
+<B>getline(),</B>
+
+except a line delimiter other than newline can be specified as the
+<I>delimiter</I>
+
+argument. As with
+<B>getline(),</B>
+
+a delimiter character is not added if one was not present
+in the input before end of file was reached.
+<P>
+<A NAME="lbAE">&nbsp;</A>
+<H2>RETURN VALUE</H2>
+
+On success,
+<B>getline()</B>
+
+and
+<B>getdelim()</B>
+
+return the number of characters read, including the delimiter character,
+but not including the terminating null character. This value can be used
+to handle embedded null characters in the line read.
+<P>
+Both functions return -1  on failure to read a line (including end of file
+condition).
+<P>
+<A NAME="lbAF">&nbsp;</A>
+<H2>ERRORS</H2>
+
+<DL COMPACT>
+<DT><B>EINVAL</B>
+
+<DD>
+Bad parameters
+(<I>n</I>
+
+or
+<I>lineptr</I>
+
+is NULL, or
+<I>stream</I>
+
+is not valid).
+<P>
+</DL>
+<A NAME="lbAG">&nbsp;</A>
+<H2>EXAMPLE</H2>
+
+<PRE>
+#define _GNU_SOURCE
+#include &lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/stdlib.h">stdlib.h</A>&gt;
+
+int main(void)
+{
+        FILE * fp;
+        char * line = NULL;
+        size_t len = 0;
+        ssize_t read;
+        fp = fopen(&quot;/etc/motd&quot;, &quot;r&quot;);
+        if (fp == NULL)
+                exit(EXIT_FAILURE);
+        while ((read = getline(&amp;line, &amp;len, fp)) != -1) {
+                printf(&quot;Retrieved line of length %zu :\n&quot;, read);
+                printf(&quot;%s&quot;, line);
+        }
+        if (line)
+                free(line);
+        return EXIT_SUCCESS;
+}
+</PRE>
+
+<A NAME="lbAH">&nbsp;</A>
+<H2>CONFORMING TO</H2>
+
+Both getline() and getdelim() are GNU extensions.
+They are available since libc 4.6.27.
+<P>
+<A NAME="lbAI">&nbsp;</A>
+<H2>SEE ALSO</H2>
+
+<B><A HREF="../man2/read.2.html">read</A></B>(2),
+
+<B><A HREF="../man3/fgets.3.html">fgets</A></B>(3),
+
+<B><A HREF="../man3/fopen.3.html">fopen</A></B>(3),
+
+<B><A HREF="../man3/fread.3.html">fread</A></B>(3),
+
+<B><A HREF="../man3/gets.3.html">gets</A></B>(3),
+
+<B><A HREF="../man3/scanf.3.html">scanf</A></B>(3)
+
+
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">NAME</A><DD>
+<DT><A HREF="#lbAC">SYNOPSIS</A><DD>
+<DT><A HREF="#lbAD">DESCRIPTION</A><DD>
+<DT><A HREF="#lbAE">RETURN VALUE</A><DD>
+<DT><A HREF="#lbAF">ERRORS</A><DD>
+<DT><A HREF="#lbAG">EXAMPLE</A><DD>
+<DT><A HREF="#lbAH">CONFORMING TO</A><DD>
+<DT><A HREF="#lbAI">SEE ALSO</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
+using the manual pages.<BR>
+Time: 02:10:36 GMT, April 20, 2020
+</BODY>
+</HTML>

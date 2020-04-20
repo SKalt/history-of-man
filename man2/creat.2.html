@@ -1,0 +1,609 @@
+<!--
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of OPEN</TITLE>
+</HEAD><BODY>
+<H1>OPEN</H1>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2004-06-23<BR><A HREF="#index">Index</A>
+<A HREF="../index.html">Return to Main Contents</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>NAME</H2>
+
+open, creat - open and possibly create a file or device
+<A NAME="lbAC">&nbsp;</A>
+<H2>SYNOPSIS</H2>
+
+<PRE>
+<B>#include &lt;<A HREF="file:///usr/include/sys/types.h">sys/types.h</A>&gt;</B>
+<B>#include &lt;<A HREF="file:///usr/include/sys/stat.h">sys/stat.h</A>&gt;</B>
+<B>#include &lt;<A HREF="file:///usr/include/fcntl.h">fcntl.h</A>&gt;</B>
+
+<B>int open(const char *</B><I>pathname</I><B>, int </B><I>flags</I><B>);</B>
+<B>int open(const char *</B><I>pathname</I><B>, int </B><I>flags</I><B>, mode_t </B><I>mode</I><B>);</B>
+<B>int creat(const char *</B><I>pathname</I><B>, mode_t </B><I>mode</I><B>);</B>
+</PRE>
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>DESCRIPTION</H2>
+
+The
+<B>open()</B>
+
+system call is used to convert a pathname into a file descriptor
+(a small, non-negative integer for use in subsequent I/O as with
+<B>read</B>, <B>write</B>, etc.).
+
+When the call is successful, the file descriptor returned will be
+the lowest file descriptor not currently open for the process.
+This call creates a new open file, not shared with any other process.
+(But shared open files may arise via the
+<B><A HREF="../man2/fork.2.html">fork</A></B>(2)
+
+system call.)
+The new file descriptor is set to remain open across exec functions
+(see
+<B><A HREF="../man2/fcntl.2.html">fcntl</A></B>(2)).
+
+The file offset is set to the beginning of the file. 
+<P>
+The parameter
+<I>flags</I>
+
+is one of
+<B>O_RDONLY</B>, <B>O_WRONLY</B> or <B>O_RDWR</B>
+
+which request opening the file read-only, write-only or read/write,
+respectively,
+bitwise-<I>or</I>'d
+
+with zero or more of the following:
+<DL COMPACT>
+<DT><B>O_CREAT</B>
+
+<DD>
+If the file does not exist it will be created.
+The owner (user ID) of the file is set to the effective user ID
+of the process. The group ownership (group ID) is set either to
+the effective group ID of the process or to the group ID of the
+parent directory (depending on filesystem type and mount options,
+and the mode of the parent directory, see, e.g., the mount options
+<I>bsdgroups</I>
+
+and
+<I>sysvgroups</I>
+
+of the ext2 filesystem, as described in
+<B><A HREF="../man8/mount.8.html">mount</A></B>(8)).
+
+<DT><B>O_EXCL</B>
+
+<DD>
+When used with
+<B>O_CREAT</B>,
+
+if the file already exists it is an error and the
+<B>open</B>
+
+will fail. In this context, a symbolic link exists, regardless
+of where its points to.
+<B>O_EXCL</B>
+
+is broken on NFS file systems, programs which rely on it for performing
+locking tasks will contain a race condition.  The solution for performing
+atomic file locking using a lockfile is to create a unique file on the same
+fs (e.g., incorporating hostname and pid), use
+<B><A HREF="../man2/link.2.html">link</A></B>(2)
+
+to make a link to the lockfile. If <B>link()</B> returns 0, the lock is
+successful.  Otherwise, use
+<B><A HREF="../man2/stat.2.html">stat</A></B>(2)
+
+on the unique file to check if its link count has increased to 2,
+in which case the lock is also successful.
+<DT><B>O_NOCTTY</B>
+
+<DD>
+If
+<I>pathname</I>
+
+refers to a terminal device --- see
+<B><A HREF="../man4/tty.4.html">tty</A></B>(4)
+
+--- it will not become the process's controlling terminal even if the
+process does not have one.
+<DT><B>O_TRUNC</B>
+
+<DD>
+If the file already exists and is a regular file and the open mode allows
+writing (i.e., is O_RDWR or O_WRONLY) it will be truncated to length 0.
+If the file is a FIFO or terminal device file, the O_TRUNC
+flag is ignored. Otherwise the effect of O_TRUNC is unspecified.
+<DT><B>O_APPEND</B>
+
+<DD>
+The file is opened in append mode. Before each
+<B>write</B>,
+
+the file pointer is positioned at the end of the file,
+as if with
+<B>lseek</B>.
+
+<B>O_APPEND</B>
+
+may lead to corrupted files on NFS file systems if more than one process
+appends data to a file at once.  This is because NFS does not support
+appending to a file, so the client kernel has to simulate it, which
+can't be done without a race condition.
+<DT><B>O_NONBLOCK</B> or <B>O_NDELAY</B>
+
+<DD>
+When possible, the file is opened in non-blocking mode. Neither the
+<B>open</B>
+
+nor any subsequent operations on the file descriptor which is
+returned will cause the calling process to wait.
+For the handling of FIFOs (named pipes), see also
+<B><A HREF="../man4/fifo.4.html">fifo</A></B>(4).
+
+This mode need not have any effect on files other than FIFOs.
+<DT><B>O_SYNC</B>
+
+<DD>
+The file is opened for synchronous I/O. Any
+<B>write</B>s
+
+on the resulting file descriptor will block the calling process until
+the data has been physically written to the underlying hardware.
+<I>See RESTRICTIONS below, though.</I>
+
+<DT><B>O_NOFOLLOW</B>
+
+<DD>
+If <I>pathname</I> is a symbolic link, then the open fails.  This is a
+FreeBSD extension, which was added to Linux in version 2.1.126.
+Symbolic links in earlier components of the pathname will still be
+followed.  The headers from glibc 2.0.100 and later include a
+definition of this flag; <I>kernels before 2.1.126 will ignore it if
+used</I>.
+<DT><B>O_DIRECTORY</B>
+
+<DD>
+If <I>pathname</I> is not a directory, cause the open to fail.  This
+flag is Linux-specific, and was added in kernel version 2.1.126, to
+avoid denial-of-service problems if <B><A HREF="../man3/opendir.3.html">opendir</A></B>(3) is called on a
+FIFO or tape device, but should not be used outside of the
+implementation of <B>opendir</B>.
+<DT><B>O_DIRECT</B>
+
+<DD>
+Try to minimize cache effects of the I/O to and from this file.
+In general this will degrade performance, but it is useful in
+special situations, such as when applications do their own caching.
+File I/O is done directly to/from user space buffers.
+The I/O is synchronous, i.e., at the completion of the
+<B><A HREF="../man2/read.2.html">read</A></B>(2)
+
+or
+<B><A HREF="../man2/write.2.html">write</A></B>(2)
+
+system call, data is guaranteed to have been transferred.
+Under Linux 2.4 transfer sizes, and the alignment of user buffer
+and file offset must all be multiples of the logical block size
+of the file system. Under Linux 2.6 alignment to 512-byte boundaries
+suffices.
+
+
+<BR>
+
+A semantically similar interface for block devices is described in
+<B><A HREF="../man8/raw.8.html">raw</A></B>(8).
+
+<DT><B>O_ASYNC</B>
+
+<DD>
+Generate a signal (SIGIO by default, but this can be changed via
+<B><A HREF="../man2/fcntl.2.html">fcntl</A></B>(2))
+
+when input or output becomes possible on this file descriptor.
+This feature is only available for terminals, pseudo-terminals, and
+sockets. See
+<B><A HREF="../man2/fcntl.2.html">fcntl</A></B>(2)
+
+for further details.
+<DT><B>O_LARGEFILE</B>
+
+<DD>
+(LFS)
+Allow files whose sizes cannot be represented in an
+<B>off_t</B>
+
+(but can be represented in an
+<B>off64_t</B>)
+
+to be opened.
+</DL>
+<P>
+
+Some of these optional flags can be altered using
+<B>fcntl</B>
+
+after the file has been opened.
+<P>
+The argument
+<I>mode</I>
+
+specifies the permissions to use in case a new file is created. It is
+modified by the process's
+<B>umask</B>
+
+in the usual way: the permissions of the created file are
+<B>(mode &amp; ~umask)</B>.
+
+Note that this mode only applies to future accesses of the
+newly created file; the
+<B>open</B>
+
+call that creates a read-only file may well return a read/write
+file descriptor.
+<P>
+
+The following symbolic constants are provided for
+<I>mode</I>:
+
+<DL COMPACT>
+<DT><B>S_IRWXU</B>
+
+<DD>
+00700 user (file owner) has read, write and execute permission
+<DT><B>S_IRUSR (S_IREAD)</B>
+
+<DD>
+00400 user has read permission
+<DT><B>S_IWUSR (S_IWRITE)</B>
+
+<DD>
+00200 user has write permission
+<DT><B>S_IXUSR (S_IEXEC)</B>
+
+<DD>
+00100 user has execute permission
+<DT><B>S_IRWXG</B>
+
+<DD>
+00070 group has read, write and execute permission
+<DT><B>S_IRGRP</B>
+
+<DD>
+00040 group has read permission
+<DT><B>S_IWGRP</B>
+
+<DD>
+00020 group has write permission
+<DT><B>S_IXGRP</B>
+
+<DD>
+00010 group has execute permission
+<DT><B>S_IRWXO</B>
+
+<DD>
+00007 others have read, write and execute permission
+<DT><B>S_IROTH</B>
+
+<DD>
+00004 others have read permission
+<DT><B>S_IWOTH</B>
+
+<DD>
+00002 others have write permisson
+<DT><B>S_IXOTH</B>
+
+<DD>
+00001 others have execute permission
+</DL>
+<P>
+
+<I>mode</I>
+
+must be specified when
+<B>O_CREAT</B>
+
+is in the
+<I>flags</I>,
+
+and is ignored otherwise.
+<P>
+<B>creat</B>
+
+is equivalent to
+<B>open</B>
+
+with
+<I>flags</I>
+
+equal to
+<B>O_CREAT|O_WRONLY|O_TRUNC</B>.
+
+<A NAME="lbAE">&nbsp;</A>
+<H2>RETURN VALUE</H2>
+
+<B>open</B> and <B>creat</B>
+
+return the new file descriptor, or -1 if an error occurred (in which case,
+<I>errno</I>
+
+is set appropriately).
+Note that
+<B>open</B>
+
+can open device special files, but
+<B>creat</B>
+
+cannot create them - use
+<B><A HREF="../man2/mknod.2.html">mknod</A></B>(2)
+
+instead.
+<P>
+
+On NFS file systems with UID mapping enabled, <B>open</B> may return a file
+descriptor but e.g. <B><A HREF="../man2/read.2.html">read</A></B>(2) requests are denied with <B>EACCES</B>.
+This is because the client performs <B>open</B> by checking the permissions,
+but UID mapping is performed by the server upon read and write requests.
+<P>
+If the file is newly created, its atime, ctime, mtime fields are set
+to the current time, and so are the ctime and mtime fields of the
+parent directory.
+Otherwise, if the file is modified because of the O_TRUNC flag,
+its ctime and mtime fields are set to the current time.
+<P>
+<A NAME="lbAF">&nbsp;</A>
+<H2>ERRORS</H2>
+
+<DL COMPACT>
+<DT><B>EACCES</B>
+
+<DD>
+The requested access to the file is not allowed, or search permission
+is denied for one of the directories in the path prefix of
+<I>pathname</I>,
+
+or the file did not exist yet and write access to the parent directory
+is not allowed.
+(See also
+<B><A HREF="../man2/path_resolution.2.html">path_resolution</A></B>(2).)
+
+<DT><B>EEXIST</B>
+
+<DD>
+<I>pathname</I>
+
+already exists and
+<B>O_CREAT</B> and <B>O_EXCL</B>
+
+were used.
+<DT><B>EFAULT</B>
+
+<DD>
+<I>pathname</I> points outside your accessible address space.
+
+<DT><B>EISDIR</B>
+
+<DD>
+<I>pathname</I>
+
+refers to a directory and the access requested involved writing
+(that is,
+<B>O_WRONLY</B>
+
+or
+<B>O_RDWR</B>
+
+is set).
+<DT><B>ELOOP</B>
+
+<DD>
+Too many symbolic links were encountered in resolving
+<I>pathname</I>,
+
+or <B>O_NOFOLLOW</B> was specified but
+<I>pathname</I>
+
+was a symbolic link.
+<DT><B>EMFILE</B>
+
+<DD>
+The process already has the maximum number of files open.
+<DT><B>ENAMETOOLONG</B>
+
+<DD>
+<I>pathname</I> was too long.
+
+<DT><B>ENFILE</B>
+
+<DD>
+The system limit on the total number of open files has been reached.
+<DT><B>ENODEV</B>
+
+<DD>
+<I>pathname</I>
+
+refers to a device special file and no corresponding device exists.
+(This is a Linux kernel bug - in this situation ENXIO must be returned.)
+<DT><B>ENOENT</B>
+
+<DD>
+O_CREAT is not set and the named file does not exist.
+Or, a directory component in
+<I>pathname</I>
+
+does not exist or is a dangling symbolic link.
+<DT><B>ENOMEM</B>
+
+<DD>
+Insufficient kernel memory was available.
+<DT><B>ENOSPC</B>
+
+<DD>
+<I>pathname</I>
+
+was to be created but the device containing
+<I>pathname</I>
+
+has no room for the new file.
+<DT><B>ENOTDIR</B>
+
+<DD>
+A component used as a directory in
+<I>pathname</I>
+
+is not, in fact, a directory, or <B>O_DIRECTORY</B> was specified and
+<I>pathname</I>
+
+was not a directory.
+<DT><B>ENXIO</B>
+
+<DD>
+O_NONBLOCK | O_WRONLY is set, the named file is a FIFO and
+no process has the file open for reading.
+Or, the file is a device special file and no corresponding device exists.
+<DT><B>EOVERFLOW</B>
+
+<DD>
+<I>pathname</I>
+
+refers to a regular file, too large to be opened - see O_LARGEFILE above.
+<DT><B>EROFS</B>
+
+<DD>
+<I>pathname</I>
+
+refers to a file on a read-only filesystem and write access was
+requested.
+<DT><B>ETXTBSY</B>
+
+<DD>
+<I>pathname</I>
+
+refers to an executable image which is currently being executed and
+write access was requested.
+</DL>
+<A NAME="lbAG">&nbsp;</A>
+<H2>NOTE</H2>
+
+Under Linux, the O_NONBLOCK flag indicates that one wants to open
+but does not necessarily have the intention to read or write.
+This is typically used to open devices in order to get a file descriptor
+for use with
+<B><A HREF="../man2/ioctl.2.html">ioctl</A></B>(2).
+
+<A NAME="lbAH">&nbsp;</A>
+<H2>CONFORMING TO</H2>
+
+SVr4, SVID, POSIX, X/OPEN, BSD 4.3.
+The
+<B>O_NOFOLLOW</B>
+
+and
+<B>O_DIRECTORY</B>
+
+flags are Linux-specific.
+One may have to define the
+<B>_GNU_SOURCE</B>
+
+macro to get their definitions.
+<P>
+
+The (undefined) effect of
+<B>O_RDONLY | O_TRUNC</B>
+
+various among implementations. On many systems the file is actually
+truncated.
+
+
+
+
+
+
+<P>
+
+The
+<B>O_DIRECT</B>
+
+flag was introduced in SGI IRIX, where it has alignment restrictions
+similar to those of Linux 2.4.  IRIX has also a <A HREF="../man2/fcntl.2.html">fcntl</A>(2) call to
+query appropriate alignments, and sizes.   FreeBSD 4.x introduced
+a flag of same name, but without alignment restrictions.
+Support was added under Linux in kernel version 2.4.10.
+Older Linux kernels simply ignore this flag.
+<A NAME="lbAI">&nbsp;</A>
+<H2>BUGS</H2>
+
+&quot;The thing that has always disturbed me about O_DIRECT is that the whole
+interface is just stupid, and was probably designed by a deranged monkey
+on some serious mind-controlling substances.&quot; -- Linus
+<A NAME="lbAJ">&nbsp;</A>
+<H2>RESTRICTIONS</H2>
+
+There are many infelicities in the protocol underlying NFS, affecting
+amongst others
+<B>O_SYNC</B> and <B>O_NDELAY</B>.
+
+<P>
+POSIX provides for three different variants of synchronised I/O,
+corresponding to the flags <B>O_SYNC</B>, <B>O_DSYNC</B> and
+<B>O_RSYNC</B>.  Currently (2.1.130) these are all synonymous under Linux.
+<A NAME="lbAK">&nbsp;</A>
+<H2>SEE ALSO</H2>
+
+<B><A HREF="../man2/close.2.html">close</A></B>(2),
+
+<B><A HREF="../man2/fcntl.2.html">fcntl</A></B>(2),
+
+<B><A HREF="../man2/link.2.html">link</A></B>(2),
+
+<B><A HREF="../man2/mknod.2.html">mknod</A></B>(2),
+
+<B><A HREF="../man2/mount.2.html">mount</A></B>(2),
+
+<B><A HREF="../man2/path_resolution.2.html">path_resolution</A></B>(2),
+
+<B><A HREF="../man2/read.2.html">read</A></B>(2),
+
+<B><A HREF="../man2/socket.2.html">socket</A></B>(2),
+
+<B><A HREF="../man2/stat.2.html">stat</A></B>(2),
+
+<B><A HREF="../man2/umask.2.html">umask</A></B>(2),
+
+<B><A HREF="../man2/unlink.2.html">unlink</A></B>(2),
+
+<B><A HREF="../man2/write.2.html">write</A></B>(2),
+
+<B><A HREF="../man3/fopen.3.html">fopen</A></B>(3),
+
+<B><A HREF="../man4/fifo.4.html">fifo</A></B>(4)
+
+
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">NAME</A><DD>
+<DT><A HREF="#lbAC">SYNOPSIS</A><DD>
+<DT><A HREF="#lbAD">DESCRIPTION</A><DD>
+<DT><A HREF="#lbAE">RETURN VALUE</A><DD>
+<DT><A HREF="#lbAF">ERRORS</A><DD>
+<DT><A HREF="#lbAG">NOTE</A><DD>
+<DT><A HREF="#lbAH">CONFORMING TO</A><DD>
+<DT><A HREF="#lbAI">BUGS</A><DD>
+<DT><A HREF="#lbAJ">RESTRICTIONS</A><DD>
+<DT><A HREF="#lbAK">SEE ALSO</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
+using the manual pages.<BR>
+Time: 02:09:54 GMT, April 20, 2020
+</BODY>
+</HTML>

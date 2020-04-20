@@ -1,0 +1,123 @@
+<!--
+Copyright (c) 2000 lars brinkhoff &lt;lars@nocrew.org&gt;
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of DSP56K</TITLE>
+</HEAD><BODY>
+<H1>DSP56K</H1>
+Section: Linux Programmer's Manual (4)<BR>Updated: 2000-03-01<BR><A HREF="#index">Index</A>
+<A HREF="../index.html">Return to Main Contents</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>NAME</H2>
+
+dsp56k - DSP56001 interface device
+<A NAME="lbAC">&nbsp;</A>
+<H2>SYNOPSIS</H2>
+
+<PRE>
+#include &lt;<A HREF="file:///usr/include/asm/dsp56k.h">asm/dsp56k.h</A>&gt;
+
+<B>ssize_t read(int </B><I>fd</I><B>, void *</B><I>data</I><B>, size_t </B><I>length</I><B>);</B>
+<B>ssize_t write(int </B><I>fd</I><B>, void *</B><I>data</I><B>, size_t </B><I>length</I><B>);</B>
+<B>int ioctl(int </B><I>fd</I><B>, </B><FONT SIZE="-1"><B>DSP56K_UPLOAD</B></FONT><B>, struct dsp56k_upload *</B><I>program</I><B>);</B>
+<B>int ioctl(int </B><I>fd</I><B>, </B><FONT SIZE="-1"><B>DSP56K_SET_TX_WSIZE</B></FONT><B>, int </B><I>wsize</I><B>);</B>
+<B>int ioctl(int </B><I>fd</I><B>, </B><FONT SIZE="-1"><B>DSP56K_SET_RX_WSIZE</B></FONT><B>, int </B><I>wsize</I><B>);</B>
+<B>int ioctl(int </B><I>fd</I><B>, </B><FONT SIZE="-1"><B>DSP56K_HOST_FLAGS</B></FONT><B>, struct dsp56k_host_flags *</B><I>flags</I><B>);</B>
+<B>int ioctl(int </B><I>fd</I><B>, </B><FONT SIZE="-1"><B>DSP56K_HOST_CMD</B></FONT><B>, int </B><I>cmd</I><B>);</B>
+</PRE>
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>CONFIGURATION</H2>
+
+The dsp56k device is a character device with major number 55 and minor
+number 0.
+<A NAME="lbAE">&nbsp;</A>
+<H2>DESCRIPTION</H2>
+
+The Motorola DSP56001 is a fully programmable 24-bit digital signal
+processor found in Atari Falcon030-compatible computers.  The
+<B>dsp56k</B> special file is used to control the DSP56001, and
+to send and receive data using the bi-directional handshaked host
+port.
+<P>
+
+To send a data stream to the signal processor, use write() to the
+device, and read() to receive processed data.  The data can be sent or
+received in 8, 16, 24, or 32-bit quantities on the host side, but will
+always be seen as 24-bit quantities in the DSP56001.
+<P>
+
+The following
+<I><A HREF="../man2/ioctl.2.html">ioctl</A></I>(2)
+
+calls are used to control the
+<B>dsp56k</B> device:
+<DL COMPACT>
+<DT><B>DSP56K_UPLOAD</B><DD>
+resets the DSP56001 and uploads a program.  The third ioctl() argument
+must be a pointer to a <B>struct dsp56k_binary</B> with members
+<B>bin</B> pointing to a DSP56001 binary program, and <B>len</B> set to
+the length of the program, counted in 24-bit words.
+<DT><B>DSP56K_SET_TX_WSIZE</B><DD>
+sets the transmit word size.  Allowed values are in the range 1 to 4,
+and is the number of bytes that will be sent at a time to the
+DSP56001.  These data quantities will either be padded with zero
+bytes, or truncated to fit the native 24-bit data format of the
+DSP56001.
+<DT><B>DSP56K_SET_RX_WSIZE</B><DD>
+sets the receive word size.  Allowed values are in the range 1 to 4,
+and is the number of bytes that will be received at a time from the
+DSP56001.  These data quantities will either truncated, or padded with
+a zero byte to fit the native 24-bit data format of the DSP56001.
+<DT><B>DSP56K_HOST_FLAGS</B><DD>
+read and write the host flags.  The host flags are four
+general-purpose bits that can be read by both the hosting computer and
+the DSP56001.  Bits 0 and 1 can be written by the host, and bits 2 and
+3 can be written by the DSP56001.
+<P>
+To access the host flags, the third ioctl() argument must be a pointer
+to a <B>struct dsp56k_host_flags</B>.  If bit 0 or 1 is set in the
+<B>dir</B> member, the corresponding bit in <B>out</B> will be written
+to the host flags.  The state of all host flags will be returned in
+the lower four bits of the <B>status</B> member.
+<DT><B>DSP56K_HOST_CMD</B><DD>
+sends a host command.  Allowed values are in the range 0 to 31, and is a
+user-defined command handled by the program running in the DSP56001.
+</DL>
+<A NAME="lbAF">&nbsp;</A>
+<H2>FILES</H2>
+
+/dev/dsp56k
+<A NAME="lbAG">&nbsp;</A>
+<H2>AUTHORS</H2>
+
+Fredrik Noring &lt;<A HREF="mailto:noring@nocrew.org">noring@nocrew.org</A>&gt;, lars brinkhoff &lt;<A HREF="mailto:lars@nocrew.org">lars@nocrew.org</A>&gt;,
+Tomas Berndtsson &lt;<A HREF="mailto:tomas@nocrew.org">tomas@nocrew.org</A>&gt;.
+<A NAME="lbAH">&nbsp;</A>
+<H2>SEE ALSO</H2>
+
+linux/include/asm-m68k/dsp56k.h,
+linux/drivers/char/dsp56k.c,
+<A HREF="http://dsp56k.nocrew.org/,">http://dsp56k.nocrew.org/,</A>
+DSP56000/DSP56001 Digital Signal Processor User's Manual
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">NAME</A><DD>
+<DT><A HREF="#lbAC">SYNOPSIS</A><DD>
+<DT><A HREF="#lbAD">CONFIGURATION</A><DD>
+<DT><A HREF="#lbAE">DESCRIPTION</A><DD>
+<DT><A HREF="#lbAF">FILES</A><DD>
+<DT><A HREF="#lbAG">AUTHORS</A><DD>
+<DT><A HREF="#lbAH">SEE ALSO</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
+using the manual pages.<BR>
+Time: 02:11:20 GMT, April 20, 2020
+</BODY>
+</HTML>

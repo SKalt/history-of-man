@@ -1,0 +1,209 @@
+<!--
+Copyright (c) 1992 Drew Eckhardt (drew@cs.colorado.edu), March 28, 1992
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of TIMES</TITLE>
+</HEAD><BODY>
+<H1>TIMES</H1>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2002-06-14<BR><A HREF="#index">Index</A>
+<A HREF="../index.html">Return to Main Contents</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>NAME</H2>
+
+times - get process times
+<A NAME="lbAC">&nbsp;</A>
+<H2>SYNOPSIS</H2>
+
+<B>#include &lt;<A HREF="file:///usr/include/sys/times.h">sys/times.h</A>&gt;</B>
+
+<P>
+<B>clock_t times(struct tms *</B><I>buf</I><B>);</B>
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>DESCRIPTION</H2>
+
+The
+<B>times</B>()
+
+function stores the current process times in the
+<B>struct tms</B>
+
+that
+<I>buf</I>
+
+points to.
+The
+<I>struct tms</I>
+
+is as defined in
+<I>&lt;<A HREF="file:///usr/include/sys/times.h">sys/times.h</A>&gt;</I>:
+
+<P>
+<PRE>
+struct tms {
+<DL COMPACT><DT><DD>clock_t tms_utime;  /* user time */
+clock_t tms_stime;  /* system time */
+clock_t tms_cutime; /* user time of children */
+clock_t tms_cstime; /* system time of children */
+</DL>
+};
+</PRE>
+
+<P>
+
+The
+<I>tms_utime</I>
+
+field contains the CPU time spent executing instructions
+of the calling process.
+The
+<I>tms_stime</I>
+
+field contains the CPU time spent in the system while
+executing tasks on behalf of the calling process.
+The
+<I>tms_cutime</I>
+
+field contains the sum of the
+<I>tms_utime</I>
+
+and
+<I>tms_cutime</I>
+
+values for all waited-for terminated children.
+The
+<I>tms_cstime</I>
+
+field contains the sum of the
+<I>tms_stime</I>
+
+and
+<I>tms_cstime</I>
+
+values for all waited-for terminated children.
+<P>
+
+Times for terminated children (and their descendants)
+is added in at the moment
+<B><A HREF="../man2/wait.2.html">wait</A></B>(2)
+
+or
+<B><A HREF="../man2/waitpid.2.html">waitpid</A></B>(2)
+
+returns their process ID. In particular, times of grandchildren
+that the children did not wait for are never seen.
+<P>
+
+All times reported are in clock ticks.
+<A NAME="lbAE">&nbsp;</A>
+<H2>RETURN VALUE</H2>
+
+The function
+<B>times</B>
+
+returns the number of clock ticks that have elapsed since
+an arbitrary point in the past. For Linux this point is
+the moment the system was booted.
+This return value may overflow the possible range of type clock_t.
+On error, (clock_t) -1 is returned, and
+<I>errno</I>
+
+is set appropriately.
+<A NAME="lbAF">&nbsp;</A>
+<H2>NOTES</H2>
+
+The number of clock ticks per second can be obtained using
+<DL COMPACT><DT><DD>
+sysconf(_SC_CLK_TCK);
+</DL>
+
+In POSIX-1996 the symbol CLK_TCK (defined in
+<I>&lt;<A HREF="file:///usr/include/time.h">time.h</A>&gt;</I>)
+
+is mentioned as obsolescent. It is obsolete now.
+<P>
+
+On Linux, if the disposition of SIGCHLD is set to
+<B>SIG_IGN</B>
+
+then the times of terminated children
+are automatically included in the
+<I>tms_cstime</I>
+
+and
+<I>tms_cutime</I>
+
+fields, although POSIX 1003.1-2001 says that this should only happen
+if the calling process
+<B>wait</B>()s
+
+on its children.
+
+
+
+<P>
+
+Note that
+<B><A HREF="../man3/clock.3.html">clock</A></B>(3)
+
+returns values of type clock_t that are not measured in clock ticks
+but in CLOCKS_PER_SEC.
+<A NAME="lbAG">&nbsp;</A>
+<H2>CONFORMING TO</H2>
+
+SVr4, SVID, POSIX, X/OPEN, BSD 4.3
+<A NAME="lbAH">&nbsp;</A>
+<H2>HISTORICAL NOTES</H2>
+
+SVr1-3 returns
+<B>long</B>
+
+and the struct members are of type
+<B>time_t</B>
+
+although they store clock ticks, not seconds since the epoch.  V7 used
+<B>long</B>
+
+for the struct members, because it had no type
+<B>time_t</B>
+
+yet.
+<P>
+
+On older systems the number of clock ticks per second is given
+by the variable HZ.
+<A NAME="lbAI">&nbsp;</A>
+<H2>SEE ALSO</H2>
+
+<B><A HREF="../man1/time.1.html">time</A></B>(1),
+
+<B><A HREF="../man2/getrusage.2.html">getrusage</A></B>(2),
+
+<B><A HREF="../man2/wait.2.html">wait</A></B>(2),
+
+<B><A HREF="../man3/clock.3.html">clock</A></B>(3),
+
+<B><A HREF="../man3/sysconf.3.html">sysconf</A></B>(3)
+
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">NAME</A><DD>
+<DT><A HREF="#lbAC">SYNOPSIS</A><DD>
+<DT><A HREF="#lbAD">DESCRIPTION</A><DD>
+<DT><A HREF="#lbAE">RETURN VALUE</A><DD>
+<DT><A HREF="#lbAF">NOTES</A><DD>
+<DT><A HREF="#lbAG">CONFORMING TO</A><DD>
+<DT><A HREF="#lbAH">HISTORICAL NOTES</A><DD>
+<DT><A HREF="#lbAI">SEE ALSO</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
+using the manual pages.<BR>
+Time: 02:10:09 GMT, April 20, 2020
+</BODY>
+</HTML>

@@ -1,0 +1,260 @@
+<!--
+Copyright (c) 1990, 1993
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of RECNO</TITLE>
+</HEAD><BODY>
+<H1>RECNO</H1>
+Section: C Library Functions (3)<BR>Updated: 1994-08-18<BR><A HREF="#index">Index</A>
+<A HREF="../index.html">Return to Main Contents</A><HR>
+
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>NAME</H2>
+
+recno - record number database access method
+<A NAME="lbAC">&nbsp;</A>
+<H2>SYNOPSIS</H2>
+
+<PRE>
+<B>#include &lt;<A HREF="file:///usr/include/sys/types.h">sys/types.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/db.h">db.h</A>&gt;
+</B></PRE>
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>DESCRIPTION</H2>
+
+The routine
+<I>dbopen</I>
+
+is the library interface to database files.
+One of the supported file formats is record number files.
+The general description of the database access methods is in
+<I><A HREF="../man3/dbopen.3.html">dbopen</A></I>(3),
+
+this manual page describes only the recno specific information.
+<P>
+
+The record number data structure is either variable or fixed-length
+records stored in a flat-file format, accessed by the logical record
+number.
+The existence of record number five implies the existence of records
+one through four, and the deletion of record number one causes
+record number five to be renumbered to record number four, as well
+as the cursor, if positioned after record number one, to shift down
+one record.
+<P>
+
+The recno access method specific data structure provided to
+<I>dbopen</I>
+
+is defined in the &lt;<A HREF="file:///usr/include/db.h">db.h</A>&gt; include file as follows:
+<P>
+
+typedef struct {
+<DL COMPACT><DT><DD>
+u_long flags;
+<BR>
+
+u_int cachesize;
+<BR>
+
+u_int psize;
+<BR>
+
+int lorder;
+<BR>
+
+size_t reclen;
+<BR>
+
+u_char bval;
+<BR>
+
+char *bfname;
+</DL>
+
+} RECNOINFO;
+<P>
+
+The elements of this structure are defined as follows:
+<DL COMPACT>
+<DT>flags<DD>
+The flag value is specified by
+<I>or</I>'ing
+
+any of the following values:
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT>R_FIXEDLEN<DD>
+The records are fixed-length, not byte delimited.
+The structure element
+<I>reclen</I>
+
+specifies the length of the record, and the structure element
+<I>bval</I>
+
+is used as the pad character.
+Any records, inserted into the database, that are less than
+<I>reclen</I>
+
+bytes long are automatically padded.
+<DT>R_NOKEY<DD>
+In the interface specified by
+<I>dbopen</I>,
+
+the sequential record retrieval fills in both the caller's key and
+data structures.
+If the R_NOKEY flag is specified, the
+<I>cursor</I>
+
+routines are not required to fill in the key structure.
+This permits applications to retrieve records at the end of files without
+reading all of the intervening records.
+<DT>R_SNAPSHOT<DD>
+This flag requires that a snapshot of the file be taken when
+<I>dbopen</I>
+
+is called, instead of permitting any unmodified records to be read from
+the original file.
+</DL>
+</DL>
+
+<DT>cachesize<DD>
+A suggested maximum size, in bytes, of the memory cache.
+This value is
+<B>only</B>
+
+advisory, and the access method will allocate more memory rather than fail.
+If
+<I>cachesize</I>
+
+is  0 (no size is specified) a default cache is used.
+<DT>psize<DD>
+The recno access method stores the in-memory copies of its records
+in a btree.
+This value is the size (in bytes) of the pages used for nodes in that tree.
+If
+<I>psize</I>
+
+is 0 (no page size is specified) a page size is chosen based on the
+underlying file system I/O block size.
+See
+<I><A HREF="../man3/btree.3.html">btree</A></I>(3)
+
+for more information.
+<DT>lorder<DD>
+The byte order for integers in the stored database metadata.
+The number should represent the order as an integer; for example,
+big endian order would be the number 4,321.
+If
+<I>lorder</I>
+
+is 0 (no order is specified) the current host order is used.
+<DT>reclen<DD>
+The length of a fixed-length record.
+<DT>bval<DD>
+The delimiting byte to be used to mark the end of a record for
+variable-length records, and the pad character for fixed-length
+records.
+If no value is specified, newlines (``\n'') are used to mark the end
+of variable-length records and fixed-length records are padded with
+spaces.
+<DT>bfname<DD>
+The recno access method stores the in-memory copies of its records
+in a btree.
+If bfname is non-NULL, it specifies the name of the btree file,
+as if specified as the file name for a dbopen of a btree file.
+</DL>
+<P>
+
+The data part of the key/data pair used by the recno access method
+is the same as other access methods.
+The key is different.
+The
+<I>data</I>
+
+field of the key should be a pointer to a memory location of type
+<I>recno_t</I>,
+
+as defined in the &lt;<A HREF="file:///usr/include/db.h">db.h</A>&gt; include file.
+This type is normally the largest unsigned integral type available to
+the implementation.
+The
+<I>size</I>
+
+field of the key should be the size of that type.
+<P>
+
+Because there can be no meta-data associated with the underlying
+recno access method files, any changes made to the default values
+(e.g. fixed record length or byte separator value) must be explicitly
+specified each time the file is opened.
+<P>
+
+In the interface specified by
+<I>dbopen</I>,
+
+using the
+<I>put</I>
+
+interface to create a new record will cause the creation of multiple,
+empty records if the record number is more than one greater than the
+largest record currently in the database.
+<A NAME="lbAE">&nbsp;</A>
+<H2>ERRORS</H2>
+
+The
+<I>recno</I>
+
+access method routines may fail and set
+<I>errno</I>
+
+for any of the errors specified for the library routine
+<I><A HREF="../man3/dbopen.3.html">dbopen</A></I>(3)
+
+or the following:
+<DL COMPACT>
+<DT>[EINVAL]<DD>
+An attempt was made to add a record to a fixed-length database that
+was too large to fit.
+</DL>
+<A NAME="lbAF">&nbsp;</A>
+<H2>SEE ALSO</H2>
+
+<I><A HREF="../man3/btree.3.html">btree</A></I>(3)
+
+<I><A HREF="../man3/dbopen.3.html">dbopen</A></I>(3),
+
+<I><A HREF="../man3/hash.3.html">hash</A></I>(3),
+
+<I><A HREF="../man3/mpool.3.html">mpool</A></I>(3),
+
+<P>
+<I>Document Processing in a Relational Database System</I>,
+
+Michael Stonebraker, Heidi Stettner, Joseph Kalash, Antonin Guttman,
+Nadene Lynn, Memorandum No. UCB/ERL M82/32, May 1982.
+<A NAME="lbAG">&nbsp;</A>
+<H2>BUGS</H2>
+
+Only big and little endian byte order is supported.
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">NAME</A><DD>
+<DT><A HREF="#lbAC">SYNOPSIS</A><DD>
+<DT><A HREF="#lbAD">DESCRIPTION</A><DD>
+<DT><A HREF="#lbAE">ERRORS</A><DD>
+<DT><A HREF="#lbAF">SEE ALSO</A><DD>
+<DT><A HREF="#lbAG">BUGS</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
+using the manual pages.<BR>
+Time: 02:10:57 GMT, April 20, 2020
+</BODY>
+</HTML>

@@ -1,0 +1,205 @@
+<!--
+Copyright 1993 David Metcalfe (david@prism.demon.co.uk)
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of RAND</TITLE>
+</HEAD><BODY>
+<H1>RAND</H1>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2003-11-15<BR><A HREF="#index">Index</A>
+<A HREF="../index.html">Return to Main Contents</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>NAME</H2>
+
+rand, rand_r, srand - pseudo-random number generator
+<A NAME="lbAC">&nbsp;</A>
+<H2>SYNOPSIS</H2>
+
+<PRE>
+<B>#include &lt;<A HREF="file:///usr/include/stdlib.h">stdlib.h</A>&gt;</B>
+
+<B>int rand(void);</B>
+
+<B>int rand_r(unsigned int *</B><I>seedp</I><B>);</B>
+
+<B>void srand(unsigned int </B><I>seed</I><B>);</B>
+</PRE>
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>DESCRIPTION</H2>
+
+The <B>rand()</B> function returns a pseudo-random integer between 0
+and <B>RAND_MAX</B>.
+<P>
+
+The <B>srand()</B> function sets its argument as the seed for a new
+sequence of pseudo-random integers to be returned by <B>rand()</B>.
+These sequences are repeatable by calling <B>srand()</B> with the same
+seed value.
+<P>
+
+If no seed value is provided, the <B>rand()</B> function is automatically 
+seeded with a value of 1.
+<P>
+
+The function
+<B>rand()</B>
+
+is not reentrant or thread-safe, since it
+uses hidden state that is modified on each call. This might just be
+the seed value to be used by the next call, or it might be something
+more elaborate. In order to get reproducible behaviour in a threaded
+application, this state must be made explicit. The function
+<B>rand_r()</B>
+
+is supplied with a pointer to an unsigned int, to be used as state.
+This is a very small amount of state, so this function will be a weak
+pseudo-random generator. Try
+<B><A HREF="../man3/drand48_r.3.html">drand48_r</A></B>(3)
+
+instead.
+<A NAME="lbAE">&nbsp;</A>
+<H2>RETURN VALUE</H2>
+
+The <B>rand()</B> and <B>rand_r()</B> functions return a value
+between 0 and RAND_MAX.
+The <B>srand()</B> function returns no value.
+<A NAME="lbAF">&nbsp;</A>
+<H2>EXAMPLE</H2>
+
+POSIX 1003.1-2003 gives the following example of an implementation of
+<B>rand()</B>
+
+and
+<B>srand()</B>,
+
+possibly useful when one needs the same sequence on two different machines.
+<P>
+<PRE>
+    static unsigned long next = 1;
+
+    /* RAND_MAX assumed to be 32767 */
+    int myrand(void) {
+        next = next * 1103515245 + 12345;
+        return((unsigned)(next/65536) % 32768);
+    }
+
+    void mysrand(unsigned seed) {
+        next = seed;
+    }
+</PRE>
+
+<A NAME="lbAG">&nbsp;</A>
+<H2>NOTES</H2>
+
+The versions of <B>rand()</B> and <B>srand()</B> in the Linux C Library use
+the same random number generator as <B>random()</B> and <B>srandom()</B>, so
+the lower-order bits should be as random as the higher-order bits.
+However, on older
+<B>rand()</B>
+
+implementations, and on current implementations on different systems,
+the lower-order bits are much less random than the higher-order bits.
+Do not use this function in applications intended to be portable
+when good randomness is needed.
+<P>
+
+FreeBSD adds a function
+<P>
+
+<B>void sranddev(void);</B>
+
+
+<P>
+that initializes the seed for their bad random generator
+<B>rand()</B>
+
+with a value obtained from their good random generator
+<B>random()</B>.
+
+Strange.
+<P>
+
+In
+<I>Numerical Recipes in C: The Art of Scientific Computing</I>
+
+(William H. Press, Brian P. Flannery, Saul A. Teukolsky, William
+T. Vetterling; New York: Cambridge University Press, 1992 (2nd ed.,
+p. 277)), the following comments are made:
+<DL COMPACT><DT><DD>
+&quot;If you want to generate a random integer between 1 and 10, you should
+always do it by using high-order bits, as in
+<DL COMPACT><DT><DD>
+<P>
+j=1+(int) (10.0*rand()/(RAND_MAX+1.0));
+<P>
+</DL>
+
+and never by anything resembling
+<DL COMPACT><DT><DD>
+<P>
+j=1+(rand() % 10);
+<P>
+</DL>
+
+(which uses lower-order bits).&quot;
+</DL>
+
+<P>
+
+Random-number generation is a complex topic.  The
+<I>Numerical Recipes in C</I>
+
+book (see reference above)
+provides an excellent discussion of practical random-number generation
+issues in Chapter 7 (Random Numbers).
+<P>
+
+For a more theoretical discussion which also covers many practical issues
+in depth, please see Chapter 3 (Random Numbers) in Donald E. Knuth's
+<I>The Art of Computer Programming</I>,
+
+volume 2 (Seminumerical Algorithms), 2nd ed.; Reading, Massachusetts:
+Addison-Wesley Publishing Company, 1981.
+<A NAME="lbAH">&nbsp;</A>
+<H2>CONFORMING TO</H2>
+
+The functions
+<B>rand()</B>
+
+and
+<B>srand()</B>
+
+conform to SVID 3, BSD 4.3, ISO 9899, POSIX 1003.1-2003.
+The function
+<B>rand_r()</B>
+
+is from POSIX 1003.1-2003.
+<A NAME="lbAI">&nbsp;</A>
+<H2>SEE ALSO</H2>
+
+<B><A HREF="../man3/drand48.3.html">drand48</A></B>(3),
+
+<B><A HREF="../man3/random.3.html">random</A></B>(3)
+
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">NAME</A><DD>
+<DT><A HREF="#lbAC">SYNOPSIS</A><DD>
+<DT><A HREF="#lbAD">DESCRIPTION</A><DD>
+<DT><A HREF="#lbAE">RETURN VALUE</A><DD>
+<DT><A HREF="#lbAF">EXAMPLE</A><DD>
+<DT><A HREF="#lbAG">NOTES</A><DD>
+<DT><A HREF="#lbAH">CONFORMING TO</A><DD>
+<DT><A HREF="#lbAI">SEE ALSO</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
+using the manual pages.<BR>
+Time: 02:10:57 GMT, April 20, 2020
+</BODY>
+</HTML>

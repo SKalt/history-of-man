@@ -1,0 +1,234 @@
+<!--
+Copyright 1991 The Regents of the University of California.
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of POPEN</TITLE>
+</HEAD><BODY>
+<H1>POPEN</H1>
+Section: Linux Programmer's Manual (3)<BR>Updated: 1998-05-07<BR><A HREF="#index">Index</A>
+<A HREF="../index.html">Return to Main Contents</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>NAME</H2>
+
+popen, pclose - process I/O
+<A NAME="lbAC">&nbsp;</A>
+<H2>SYNOPSIS</H2>
+
+<B>#include &lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;</B>
+
+<P>
+<B>FILE *popen(const char *</B><I>command</I><B>, const char *</B><I>type</I><B>);</B>
+
+<P>
+<B>int pclose(FILE *</B><I>stream</I><B>);</B>
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>DESCRIPTION</H2>
+
+The
+<B>popen()</B>
+
+function opens a process by creating a pipe, forking, and invoking the
+shell.  Since a pipe is by definition unidirectional, the
+<I>type</I>
+
+argument may specify only reading or writing, not both; the resulting
+stream is correspondingly read-only or write-only.
+<P>
+
+The
+<I>command</I>
+
+argument is a pointer to a null-terminated string containing a shell
+command line.  This command is passed to
+<I>/bin/sh</I>
+
+using the
+<B>-c</B>
+
+flag; interpretation, if any, is performed by the shell.  The
+<I>type</I>
+
+argument is a pointer to a null-terminated string which must be either `r'
+for reading or `w' for writing.
+<P>
+
+The return value from
+<B>popen()</B>
+
+is a normal standard I/O stream in all respects save that it must be closed
+with
+<B>pclose()</B>
+
+rather than
+<B>fclose()</B>.
+
+Writing to such a stream writes to the standard input of the command; the
+command's standard output is the same as that of the process that called
+<B>popen()</B>,
+
+unless this is altered by the command itself.  Conversely, reading from a
+``popened'' stream reads the command's standard output, and the command's
+standard input is the same as that of the process that called
+<B>popen</B>.
+
+<P>
+
+Note that output
+<B>popen</B>
+
+streams are fully buffered by default.
+<P>
+
+The
+<B>pclose</B>
+
+function waits for the associated process to terminate and returns the exit
+status of the command as returned by
+<B>wait4</B>.
+
+<A NAME="lbAE">&nbsp;</A>
+<H2>RETURN VALUE</H2>
+
+The
+<B>popen</B>
+
+function returns
+<B>NULL</B>
+
+if the
+<B><A HREF="../man2/fork.2.html">fork</A></B>(2)
+
+or
+<B><A HREF="../man2/pipe.2.html">pipe</A></B>(2)
+
+calls fail, or if it cannot allocate memory.
+<P>
+
+The
+<B>pclose</B>
+
+function returns -1 if
+
+
+
+
+
+
+<B>wait4</B>
+
+returns an error, or some other error is detected.
+<A NAME="lbAF">&nbsp;</A>
+<H2>ERRORS</H2>
+
+The
+<B>popen</B>
+
+function does not set
+<I>errno</I>
+
+if memory allocation fails.  If the underlying
+<B>fork()</B> or <B>pipe()</B>
+
+fails,
+<I>errno</I>
+
+is set appropriately.  If the
+<I>type</I>
+
+argument is invalid, and this condition is detected,
+<I>errno</I>
+
+is set to
+<B>EINVAL</B>.
+
+<P>
+
+If
+<B>pclose()</B>
+
+cannot obtain the child status,
+<I>errno</I>
+
+is set to
+<B>ECHILD</B>.
+
+<A NAME="lbAG">&nbsp;</A>
+<H2>CONFORMING TO</H2>
+
+POSIX.2
+<A NAME="lbAH">&nbsp;</A>
+<H2>BUGS</H2>
+
+Since the standard input of a command opened for reading shares its seek
+offset with the process that called
+<B>popen()</B>,
+
+if the original process has done a buffered read, the command's input
+position may not be as expected.  Similarly, the output from a command
+opened for writing may become intermingled with that of the original
+process.  The latter can be avoided by calling
+<B><A HREF="../man3/fflush.3.html">fflush</A></B>(3)
+
+before
+<B>popen</B>.
+
+<P>
+
+Failure to execute the shell is indistinguishable from the shell's failure
+to execute command, or an immediate exit of the command.  The only hint is
+an exit status of 127.
+<A NAME="lbAI">&nbsp;</A>
+<H2>HISTORY</H2>
+
+A
+<B>popen()</B>
+
+and a
+<B>pclose()</B>
+
+function appeared in Version 7 AT&amp;T UNIX.
+<A NAME="lbAJ">&nbsp;</A>
+<H2>SEE ALSO</H2>
+
+<B><A HREF="../man1/sh.1.html">sh</A></B>(1),
+
+<B><A HREF="../man2/fork.2.html">fork</A></B>(2),
+
+<B><A HREF="../man2/pipe.2.html">pipe</A></B>(2),
+
+<B><A HREF="../man2/wait4.2.html">wait4</A></B>(2),
+
+<B><A HREF="../man3/fclose.3.html">fclose</A></B>(3),
+
+<B><A HREF="../man3/fflush.3.html">fflush</A></B>(3),
+
+<B><A HREF="../man3/fopen.3.html">fopen</A></B>(3),
+
+<B><A HREF="../man3/stdio.3.html">stdio</A></B>(3),
+
+<B><A HREF="../man3/system.3.html">system</A></B>(3)
+
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">NAME</A><DD>
+<DT><A HREF="#lbAC">SYNOPSIS</A><DD>
+<DT><A HREF="#lbAD">DESCRIPTION</A><DD>
+<DT><A HREF="#lbAE">RETURN VALUE</A><DD>
+<DT><A HREF="#lbAF">ERRORS</A><DD>
+<DT><A HREF="#lbAG">CONFORMING TO</A><DD>
+<DT><A HREF="#lbAH">BUGS</A><DD>
+<DT><A HREF="#lbAI">HISTORY</A><DD>
+<DT><A HREF="#lbAJ">SEE ALSO</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
+using the manual pages.<BR>
+Time: 02:10:55 GMT, April 20, 2020
+</BODY>
+</HTML>

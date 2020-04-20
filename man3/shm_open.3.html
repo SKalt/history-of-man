@@ -1,0 +1,374 @@
+<!--
+Copyright (C) 2002 Michael Kerrisk (mtk16@ext.canterbury.ac.nz)
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of SHM_OPEN</TITLE>
+</HEAD><BODY>
+<H1>SHM_OPEN</H1>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2002-02-22<BR><A HREF="#index">Index</A>
+<A HREF="../index.html">Return to Main Contents</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>NAME</H2>
+
+shm_open, shm_unlink - Create/open or unlink POSIX shared memory objects
+<A NAME="lbAC">&nbsp;</A>
+<H2>SYNOPSIS</H2>
+
+<B>#include &lt;<A HREF="file:///usr/include/sys/types.h">sys/types.h</A>&gt;</B>
+
+<BR>
+
+<B>#include &lt;<A HREF="file:///usr/include/sys/mman.h">sys/mman.h</A>&gt;</B>
+
+<P>
+<B>int shm_open(const char *</B><I>name</I><B>, int </B><I>oflag</I><B>, mode_t </B><I>mode</I><B>);</B>
+
+<P>
+<B>int shm_unlink(const char *</B><I>name</I><B>);</B>
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>DESCRIPTION</H2>
+
+<B>shm_open</B>
+
+creates and opens a new, or opens an existing, POSIX shared memory object.
+A POSIX shared memory object is in effect a handle which can
+be used by unrelated processes to 
+<B><A HREF="../man2/mmap.2.html">mmap</A></B>(2)
+
+the same region of shared memory.  
+The 
+<B>shm_unlink</B>
+
+function performs the converse operation, 
+removing an object previously created by
+<B>shm_open</B>.
+
+<P>
+
+The operation of
+<B>shm_open</B>
+
+is analogous to that of
+<B><A HREF="../man2/open.2.html">open</A></B>(2).
+
+<I>name</I>
+
+specifies the shared memory object to be created or opened.  
+For portable use, 
+<I>name</I>
+
+should have an initial slash (/) and contain no embedded slashes.
+
+
+
+<P>
+
+<I>oflag</I>
+
+is a bit mask created by ORing together exactly one of
+<B>O_RDONLY </B>
+
+or
+<B>O_RWDR</B>
+
+and any of the other flags listed here:
+<DL COMPACT>
+<DT><B>O_RDONLY</B>
+
+<DD>
+Open the object for read access.
+A shared memory object opened in this way can only be 
+<B><A HREF="../man2/mmap.2.html">mmap</A></B>(2)ed
+
+for read (<B>PROT_READ</B>) access.
+<DT><B>O_RDWR</B>
+
+<DD>
+Open the object for read-write access.
+<DT><B>O_CREAT</B>
+
+<DD>
+Create the shared memory object if it does not exist.  
+The user and group ownership of the object are set as for
+<B><A HREF="../man2/open.2.html">open</A></B>(2),
+
+and the object's
+permission bits are set according to the low-order 9 bits of 
+<I>mode</I>,
+
+except that those bits set in the process file mode
+creation mask (see
+<B><A HREF="../man2/umask.2.html">umask</A></B>(2))
+
+are cleared for the new object.
+(A set of macro constants which can be used to define
+<I>mode</I>
+
+is listed in 
+<B><A HREF="../man2/open.2.html">open</A></B>(2).)
+
+<P>
+A new shared memory object initially has zero length - the size of the
+object can be set using
+<B><A HREF="../man2/ftruncate.2.html">ftruncate</A></B>(2).
+
+(The newly-allocated bytes of a shared memory
+object are automatically initialised to 0.)
+<DT><B>O_EXCL</B>
+
+<DD>
+If 
+<B>O_CREAT</B>
+
+was also specified, and a share memory object with the given
+<I>name </I>
+
+already exists, return an error.
+The check for the existence of the object, and its creation if it 
+does not exist, are performed atomically.
+<DT><B>O_TRUNC</B>
+
+<DD>
+If the shared memory object already exists, truncate it to zero bytes.
+</DL>
+<P>
+
+On successful completion
+<B>shm_open</B>
+
+returns a new file descriptor referring to the shared memory object.
+This file descriptor is guaranteed to be the lowest-numbered file descriptor
+not previously opened within the process.  
+The
+<B>FD_CLOEXEC</B>
+
+flag (see 
+<B><A HREF="../man2/fcntl.2.html">fcntl</A></B>(2))
+
+is set for the file descriptor.
+<P>
+The file descriptor is normally used in subsequent calls 
+to 
+<B><A HREF="../man2/ftruncate.2.html">ftruncate</A></B>(2)
+
+(for a newly-created object) and
+<B><A HREF="../man2/mmap.2.html">mmap</A></B>(2).
+
+After a call to
+<B><A HREF="../man2/mmap.2.html">mmap</A></B>(2)
+
+the file descriptor may be closed without affecting the memory mapping.
+<P>
+The operation
+of 
+<B>shm_unlink</B>
+
+is analogous to
+<B><A HREF="../man2/unlink.2.html">unlink</A></B>(2):
+
+it removes a shared memory object name, and, once all processes
+have unmapped the object, de-allocates and 
+destroys the contents of the associated memory region.
+After a successful 
+<B>shm_unlink</B>,
+
+attempts to 
+<B>shm_open </B>
+
+an object with the same 
+<I>name</I>
+
+will fail (unless
+<B>O_CREAT</B>
+
+was specified, in which case a new, distinct object is created).
+<A NAME="lbAE">&nbsp;</A>
+<H2>RETURN VALUE</H2>
+
+On success,
+<B>shm_open</B>
+
+returns a non-negative file descriptor.  On failure,
+<B>shm_open</B>
+
+returns -1.
+<B>shm_unlink</B>
+
+returns 0 on success, or -1 on error.
+<A NAME="lbAF">&nbsp;</A>
+<H2>ERRORS</H2>
+
+On failure,
+<I>errno</I>
+
+is set to indicate the cause of the error.  Values which may appear in
+<I>errno</I>
+
+include the following:
+<DL COMPACT>
+<DT><B>EACCES</B>
+
+<DD>
+Permission to
+<B>shm_unlink</B>
+
+the shared memory object was denied.
+<DT><B>EACCES</B>
+
+<DD>
+Permission was denied to 
+<B>shm_open</B>
+
+<I>name</I>
+
+in the specified
+<I>mode,</I>
+
+or 
+<B>O_TRUNC</B>
+
+was specified and the caller does not have write permission on the object.
+<DT><B>EEXIST</B>
+
+<DD>
+Both
+<B>O_CREAT</B>
+
+and
+<B>O_EXCL </B>
+
+were specified to
+<B>shm_open</B>
+
+and the shared memory object specified by
+<I>name</I>
+
+already exists.
+<DT><B>EINVAL</B>
+
+<DD>
+The
+<I>name</I>
+
+argument to 
+<B>shm_open</B>
+
+was invalid.
+<DT><B>EMFILE</B>
+
+<DD>
+The process already has the maximum number of files open.
+<DT><B>ENAMETOOLONG</B>
+
+<DD>
+The length of 
+<I>name</I>
+
+exceeds 
+<B>PATH_MAX</B>.
+
+<DT><B>ENFILE</B>
+
+<DD>
+The limit on the total number of files open on the system has been
+reached.
+<DT><B>ENOENT</B>
+
+<DD>
+An attempt was made to
+<B>shm_open</B>
+
+a 
+<I>name </I>
+
+that did not exist, and
+<B>O_CREAT</B>
+
+was not specified.
+<DT><B>ENOENT</B>
+
+<DD>
+An attempt was to made to
+<B>shm_unlink</B>
+
+a 
+<I>name </I>
+
+that does not exist.
+</DL>
+<A NAME="lbAG">&nbsp;</A>
+<H2>NOTES</H2>
+
+These functions are provided in glibc 2.2 and later.  Programs using these 
+functions must specify the 
+<B>-lrt</B>
+
+flag to
+<B>cc</B>
+
+in order to link against the required (&quot;realtime&quot;) library.
+<P>
+
+POSIX leaves the behavior of the combination of 
+<B>O_RDONLY</B>
+
+and
+<B>O_TRUNC</B>
+
+unspecified.  On Linux, this will successfully truncate an existing 
+shared memory object - this may not be so on other Unices.
+<P>
+
+The POSIX shared memory object implementation on Linux 2.4 makes use
+of a dedicated file system, which is normally
+mounted under 
+<B>/dev/shm</B>.
+
+<A NAME="lbAH">&nbsp;</A>
+<H2>CONFORMING TO</H2>
+
+POSIX 1003.1 (2001).
+<A NAME="lbAI">&nbsp;</A>
+<H2>SEE ALSO</H2>
+
+<B><A HREF="../man2/close.2.html">close</A></B>(2),
+
+<B><A HREF="../man2/fchmod.2.html">fchmod</A></B>(2),
+
+<B><A HREF="../man2/fchown.2.html">fchown</A></B>(2),
+
+<B><A HREF="../man2/fcntl.2.html">fcntl</A></B>(2),
+
+<B><A HREF="../man2/fstat.2.html">fstat</A></B>(2),
+
+<B><A HREF="../man2/ftruncate.2.html">ftruncate</A></B>(2),
+
+<B><A HREF="../man2/mmap.2.html">mmap</A></B>(2),
+
+<B><A HREF="../man2/open.2.html">open</A></B>(2),
+
+<B><A HREF="../man2/umask.2.html">umask</A></B>(2)
+
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">NAME</A><DD>
+<DT><A HREF="#lbAC">SYNOPSIS</A><DD>
+<DT><A HREF="#lbAD">DESCRIPTION</A><DD>
+<DT><A HREF="#lbAE">RETURN VALUE</A><DD>
+<DT><A HREF="#lbAF">ERRORS</A><DD>
+<DT><A HREF="#lbAG">NOTES</A><DD>
+<DT><A HREF="#lbAH">CONFORMING TO</A><DD>
+<DT><A HREF="#lbAI">SEE ALSO</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
+using the manual pages.<BR>
+Time: 02:11:02 GMT, April 20, 2020
+</BODY>
+</HTML>

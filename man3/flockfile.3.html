@@ -1,0 +1,122 @@
+<!--
+Copyright (C) 2001 Andries Brouwer &lt;aeb@cwi.nl&gt;.
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of LOCKFILE</TITLE>
+</HEAD><BODY>
+<H1>LOCKFILE</H1>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2001-10-18<BR><A HREF="#index">Index</A>
+<A HREF="../index.html">Return to Main Contents</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>NAME</H2>
+
+flockfile, ftrylockfile, funlockfile - lock FILE for stdio
+<A NAME="lbAC">&nbsp;</A>
+<H2>SYNOPSIS</H2>
+
+<PRE>
+<B>#include &lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;</B>
+
+<B>void flockfile(FILE *</B><I>filehandle</I><B>);</B>
+<BR>
+<B>int ftrylockfile(FILE *</B><I>filehandle</I><B>);</B>
+<BR>
+<B>void funlockfile(FILE *</B><I>filehandle</I><B>);</B>
+</PRE>
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>DESCRIPTION</H2>
+
+The stdio functions are thread-safe. This is achieved by assigning
+to each FILE object a lockcount and (if the lockcount is nonzero)
+an owning thread.
+For each library call, these functions wait until the FILE object
+is no longer locked by a different thread, then lock it, do the
+requested I/O, and unlock the object again.
+<P>
+
+(Note: this locking has nothing to do with the file locking done
+by functions like
+<B><A HREF="../man2/flock.2.html">flock</A></B>(2)
+
+and
+<B><A HREF="../man3/lockf.3.html">lockf</A></B>(3).)
+
+<P>
+
+All this is invisible to the C-programmer, but there may be two
+reasons to wish for more detailed control. On the one hand, maybe
+a series of I/O actions by one thread belongs together, and should
+not be interrupted by the I/O of some other thread.
+On the other hand, maybe the locking overhead should be avoided
+for greater efficiency.
+<P>
+
+To this end, a thread can explicitly lock the FILE object,
+then do its series of I/O actions, then unlock. This prevents
+other threads from coming in between. If the reason for doing
+this was to achieve greater efficiency, one does the I/O with
+the non-locking versions of the stdio functions: with
+<I>getc_unlocked</I>() and <I>putc_unlocked</I>() instead of
+<I>getc</I>() and <I>putc</I>().
+<P>
+
+The <B>flockfile()</B> function waits for *<I>filehandle</I> to be
+no longer locked by a different thread, then makes the
+current thread owner of *<I>filehandle</I>, and increments
+the lockcount.
+<P>
+
+The <B>funlockfile()</B> function decrements the lock count.
+<P>
+
+The <B>ftrylockfile()</B> function is a non-blocking version
+of <B>flockfile()</B>. It does nothing in case some other thread
+owns *<I>filehandle</I>, and it obtains ownership and increments
+the lockcount otherwise.
+<A NAME="lbAE">&nbsp;</A>
+<H2>RETURN VALUE</H2>
+
+The <B>ftrylockfile()</B> function returns zero for success
+(the lock was obtained), and nonzero for failure.
+<A NAME="lbAF">&nbsp;</A>
+<H2>ERRORS</H2>
+
+None.
+<A NAME="lbAG">&nbsp;</A>
+<H2>AVAILABILITY</H2>
+
+These functions are available when _POSIX_THREAD_SAFE_FUNCTIONS
+is defined. They are in libc since libc 5.1.1 and in glibc
+since glibc 2.0.
+<A NAME="lbAH">&nbsp;</A>
+<H2>CONFORMING TO</H2>
+
+POSIX.1
+<A NAME="lbAI">&nbsp;</A>
+<H2>SEE ALSO</H2>
+
+<B><A HREF="../man3/unlocked_stdio.3.html">unlocked_stdio</A></B>(3)
+
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">NAME</A><DD>
+<DT><A HREF="#lbAC">SYNOPSIS</A><DD>
+<DT><A HREF="#lbAD">DESCRIPTION</A><DD>
+<DT><A HREF="#lbAE">RETURN VALUE</A><DD>
+<DT><A HREF="#lbAF">ERRORS</A><DD>
+<DT><A HREF="#lbAG">AVAILABILITY</A><DD>
+<DT><A HREF="#lbAH">CONFORMING TO</A><DD>
+<DT><A HREF="#lbAI">SEE ALSO</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
+using the manual pages.<BR>
+Time: 02:10:31 GMT, April 20, 2020
+</BODY>
+</HTML>

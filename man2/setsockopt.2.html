@@ -1,0 +1,245 @@
+<!--
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of GETSOCKOPT</TITLE>
+</HEAD><BODY>
+<H1>GETSOCKOPT</H1>
+Section: Linux Programmer's Manual (2)<BR>Updated: 1999-05-24<BR><A HREF="#index">Index</A>
+<A HREF="../index.html">Return to Main Contents</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>NAME</H2>
+
+getsockopt, setsockopt - get and set options on sockets
+<A NAME="lbAC">&nbsp;</A>
+<H2>SYNOPSIS</H2>
+
+<B>#include &lt;<A HREF="file:///usr/include/sys/types.h">sys/types.h</A>&gt;</B>
+
+<BR>
+
+<B>#include &lt;<A HREF="file:///usr/include/sys/socket.h">sys/socket.h</A>&gt;</B>
+
+<P>
+<B>int getsockopt(int </B><I>s</I><B>, int </B><I>level</I><B>, int </B><I>optname</I><B>,</B>
+
+<B>void *</B><I>optval</I><B>, socklen_t *</B><I>optlen</I><B>);</B>
+
+<P>
+<B>int setsockopt(int </B><I>s</I><B>, int </B><I>level</I><B>, int </B><I>optname</I><B>,</B>
+
+<B>const void *</B><I>optval</I><B>, socklen_t </B><I>optlen</I><B>);</B>
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>DESCRIPTION</H2>
+
+<B>Getsockopt</B>
+
+and
+<B>setsockopt</B>
+
+manipulate the
+<I>options</I>
+
+associated with a socket.  Options may exist at multiple
+protocol levels; they are always present at the uppermost
+<B>socket</B>
+
+level.
+<P>
+When manipulating socket options the level at which the
+option resides and the name of the option must be specified.
+To manipulate options at the socket level,
+<I>level</I>
+
+is specified as
+<B>SOL_SOCKET</B>.
+
+To manipulate options at any
+other level the protocol number of the appropriate protocol
+controlling the option is supplied.  For example,
+to indicate that an option is to be interpreted by the
+<B>TCP</B>
+
+protocol,
+<I>level</I>
+
+should be set to the protocol number of
+<B>TCP</B>;
+
+see
+<B><A HREF="../man3/getprotoent.3.html">getprotoent</A></B>(3).
+
+<P>
+The parameters
+<I>optval</I>
+
+and
+<I>optlen</I>
+
+are used to access option values for
+<B>setsockopt</B>.
+
+For
+<B>getsockopt</B>
+
+they identify a buffer in which the value for the
+requested option(s) are to be returned.  For
+<B>getsockopt</B>,
+
+<I>optlen</I>
+
+is a value-result parameter, initially containing the
+size of the buffer pointed to by
+<I>optval</I>,
+
+and modified on return to indicate the actual size of
+the value returned.  If no option value is
+to be supplied or returned,
+<I>optval</I>
+
+may be NULL.
+<P>
+<I>Optname</I>
+
+and any specified options are passed uninterpreted to the appropriate
+protocol module for interpretation.  The include file
+<I>&lt;<A HREF="file:///usr/include/sys/socket.h">sys/socket.h</A>&gt;</I>
+
+contains definitions for socket level options, described below.  Options at
+other protocol levels vary in format and name; consult the appropriate
+entries in section 4 of the manual.
+<P>
+Most socket-level options utilize an
+<I>int</I>
+
+parameter for
+<I>optval</I>.
+
+For
+<B>setsockopt</B>,
+
+the parameter should be non-zero to enable a boolean option, or zero if the
+option is to be disabled.
+<P>
+<P>
+
+For a description of the available socket options see
+<B><A HREF="../man7/socket.7.html">socket</A></B>(7)
+
+and the appropriate protocol man pages.
+<P>
+<A NAME="lbAE">&nbsp;</A>
+<H2>RETURN VALUE</H2>
+
+On success, zero is returned.  On error, -1 is returned, and
+<I>errno</I>
+
+is set appropriately.
+<A NAME="lbAF">&nbsp;</A>
+<H2>ERRORS</H2>
+
+<DL COMPACT>
+<DT><B>EBADF</B>
+
+<DD>
+The argument
+<I>s</I>
+
+is not a valid descriptor.
+<DT><B>EFAULT</B>
+
+<DD>
+The address pointed to by 
+<I>optval</I>
+
+is not in a valid part of the process address space.  For
+<B>getsockopt</B>,
+
+this error may also be returned if
+<I>optlen</I>
+
+is not in a valid part of the process address space.
+<DT><B>EINVAL</B>
+
+<DD>
+<I>optlen</I>
+
+invalid in setsockopt
+<DT><B>ENOPROTOOPT</B>
+
+<DD>
+The option is unknown at the level indicated.
+<DT><B>ENOTSOCK</B>
+
+<DD>
+The argument
+<I>s</I>
+
+is a file, not a socket.
+</DL>
+<A NAME="lbAG">&nbsp;</A>
+<H2>CONFORMING TO</H2>
+
+SVr4, 4.4BSD (these system calls first appeared in 4.2BSD).
+SVr4 documents additional ENOMEM and ENOSR error codes, but does
+not document the 
+<B>SO_SNDLOWAT</B>, <B>SO_RCVLOWAT</B>, <B>SO_SNDTIMEO</B>, <B>SO_RCVTIMEO</B>
+
+options
+<A NAME="lbAH">&nbsp;</A>
+<H2>NOTE</H2>
+
+The fifth argument of 
+<B>getsockopt</B> and <B>setsockopt</B>
+
+is in reality an int [*] (and this is what BSD 4.* and libc4 and libc5 have).
+Some POSIX confusion resulted in the present socklen_t, also used by glibc.
+See also
+<B><A HREF="../man2/accept.2.html">accept</A></B>(2).
+
+<A NAME="lbAI">&nbsp;</A>
+<H2>BUGS</H2>
+
+Several of the socket options should be handled at lower levels of the
+system.
+<A NAME="lbAJ">&nbsp;</A>
+<H2>SEE ALSO</H2>
+
+<B><A HREF="../man2/ioctl.2.html">ioctl</A></B>(2),
+
+<B><A HREF="../man2/socket.2.html">socket</A></B>(2),
+
+<B><A HREF="../man3/getprotoent.3.html">getprotoent</A></B>(3),
+
+<B><A HREF="../man5/protocols.5.html">protocols</A></B>(5),
+
+<B><A HREF="../man7/socket.7.html">socket</A></B>(7),
+
+<B><A HREF="../man7/tcp.7.html">tcp</A></B>(7),
+
+<B><A HREF="../man7/unix.7.html">unix</A></B>(7)
+
+
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">NAME</A><DD>
+<DT><A HREF="#lbAC">SYNOPSIS</A><DD>
+<DT><A HREF="#lbAD">DESCRIPTION</A><DD>
+<DT><A HREF="#lbAE">RETURN VALUE</A><DD>
+<DT><A HREF="#lbAF">ERRORS</A><DD>
+<DT><A HREF="#lbAG">CONFORMING TO</A><DD>
+<DT><A HREF="#lbAH">NOTE</A><DD>
+<DT><A HREF="#lbAI">BUGS</A><DD>
+<DT><A HREF="#lbAJ">SEE ALSO</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
+using the manual pages.<BR>
+Time: 02:10:06 GMT, April 20, 2020
+</BODY>
+</HTML>

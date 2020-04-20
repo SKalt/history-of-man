@@ -1,0 +1,290 @@
+<!--
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of WAIT4</TITLE>
+</HEAD><BODY>
+<H1>WAIT4</H1>
+Section: Linux Programmer's Manual (2)<BR>Updated: 1997-06-23<BR><A HREF="#index">Index</A>
+<A HREF="../index.html">Return to Main Contents</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>NAME</H2>
+
+wait3, wait4 - wait for process termination, BSD style
+<A NAME="lbAC">&nbsp;</A>
+<H2>SYNOPSIS</H2>
+
+<PRE>
+<B>#include &lt;<A HREF="file:///usr/include/sys/types.h">sys/types.h</A>&gt;</B>
+<B>#include &lt;<A HREF="file:///usr/include/sys/time.h">sys/time.h</A>&gt;</B>
+<B>#include &lt;<A HREF="file:///usr/include/sys/resource.h">sys/resource.h</A>&gt;</B>
+<B>#include &lt;<A HREF="file:///usr/include/sys/wait.h">sys/wait.h</A>&gt;</B>
+
+<B>pid_t wait3(int *</B><I>status</I><B>, int </B><I>options</I><B>,</B>
+<B>      struct rusage *</B><I>rusage</I><B>);</B>
+
+<B>pid_t wait4(pid_t </B><I>pid</I><B>, int *</B><I>status</I><B>, int </B><I>options</I><B>,</B>
+<B>      struct rusage *</B><I>rusage</I><B>);</B>
+</PRE>
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>DESCRIPTION</H2>
+
+The
+<B>wait3</B>
+
+function suspends execution of the current process until a child has
+exited, or until a signal is delivered whose action is to terminate
+the current process or to call a signal handling function.  If a child
+has already exited by the time of the call (a so-called &quot;zombie&quot;
+process), the function returns immediately.  Any system resources used
+by the child are freed.
+<P>
+The
+<B>wait4</B>
+
+function suspends execution of the current process until a
+child as specified by the
+<I>pid</I>
+
+argument has exited, or until a signal is delivered whose action is to
+terminate the current process or to call a signal handling function.
+If a child as requested by
+<I>pid</I>
+
+has already exited by the time of the call (a so-called &quot;zombie&quot;
+process), the function returns immediately.  Any system resources used
+by the child are freed.
+<P>
+The value of
+<I>pid</I>
+
+can be one of:
+<DL COMPACT>
+<DT>&lt; -1<DD>
+which means to wait for any child process whose process group ID is
+equal to the absolute value of
+<I>pid</I>.
+
+<DT>-1<DD>
+which means to wait for any child process; this is equivalent to
+calling
+<B>wait3</B>.
+
+<DT>0<DD>
+which means to wait for any child process whose process group ID is
+equal to that of the calling process.
+<DT>&gt; 0<DD>
+which means to wait for the child whose process ID is equal to the
+value of
+<I>pid</I>.
+
+</DL>
+<P>
+
+The value of
+<I>options</I>
+
+is a bitwise OR of zero or more of the following constants:
+<DL COMPACT>
+<DT><B>WNOHANG</B>
+
+<DD>
+which means to return immediately if no child is there to be waited
+for.
+<DT><B>WUNTRACED</B>
+
+<DD>
+which means to also return for children which are stopped, and whose
+status has not been reported.
+</DL>
+<P>
+
+If
+<I>status</I>
+
+is not
+<B>NULL</B>,
+
+<B>wait3</B>
+
+or
+<B>wait4</B>
+
+store status information in the location pointed to by
+<I>status</I>.
+
+<P>
+
+This status can be evaluated with the following macros (these macros take
+the stat buffer (an <B>int</B>) as an argument --- not a pointer to the
+buffer!):
+<DL COMPACT>
+<DT><B>WIFEXITED(</B><I>status</I><B>)</B>
+
+<DD>
+is non-zero if the child exited normally.
+<DT><B>WEXITSTATUS(</B><I>status</I><B>)</B>
+
+<DD>
+evaluates to the least significant eight bits of the return code of
+the child which terminated, which may have been set as the argument to
+a call to
+<B>exit()</B>
+
+or as the argument for a
+<B>return</B>
+
+statement in the main program.  This macro can only be evaluated if
+<B>WIFEXITED</B>
+
+returned non-zero.
+<DT><B>WIFSIGNALED(</B><I>status</I><B>)</B>
+
+<DD>
+returns true if the child process exited because of a signal which was
+not caught.
+<DT><B>WTERMSIG(</B><I>status</I><B>)</B>
+
+<DD>
+returns the number of the signal that caused the child process to
+terminate. This macro can only be evaluated if
+<B>WIFSIGNALED</B>
+
+returned non-zero.
+<DT><B>WIFSTOPPED(</B><I>status</I><B>)</B>
+
+<DD>
+returns true if the child process which caused the return is currently
+stopped; this is only possible if the call was done using
+<B>WUNTRACED</B>.
+
+<DT><B>WSTOPSIG(</B><I>status</I><B>)</B>
+
+<DD>
+returns the number of the signal which caused the child to stop.  This
+macro can only be evaluated if
+<B>WIFSTOPPED</B>
+
+returned non-zero.
+</DL>
+<P>
+
+If
+<I>rusage</I>
+
+is not
+<B>NULL</B>,
+
+the
+<B>struct rusage</B>
+
+as defined in
+<I>&lt;<A HREF="file:///usr/include/sys/resource.h">sys/resource.h</A>&gt;</I>
+
+it points to will be filled with accounting information.  See
+<B><A HREF="../man2/getrusage.2.html">getrusage</A></B>(2)
+
+for details.
+<A NAME="lbAE">&nbsp;</A>
+<H2>RETURN VALUE</H2>
+
+The process ID of the child which exited, -1 on error
+(in particular, when no unwaited-for child processes
+of the specified kind exist)
+or zero if
+<B>WNOHANG</B>
+
+was used and no child was available yet.
+In the latter two cases
+<I>errno</I>
+
+will be set appropriately.
+<A NAME="lbAF">&nbsp;</A>
+<H2>ERRORS</H2>
+
+<DL COMPACT>
+<DT><B>ECHILD</B>
+
+<DD>
+No unwaited-for child process as specified does exist.
+<DT><B>EINTR</B>
+
+<DD>
+if
+<B>WNOHANG</B>
+
+was not set and an unblocked signal or a
+<B>SIGCHLD</B>
+
+was caught.
+<DT><B>EINVAL</B>
+
+<DD>
+Invalid value for
+<I>options</I>
+
+given for wait4.
+</DL>
+<A NAME="lbAG">&nbsp;</A>
+<H2>NOTES</H2>
+
+Including
+<I>&lt;<A HREF="file:///usr/include/sys/time.h">sys/time.h</A>&gt;</I>
+
+is not required these days, but increases portability.
+(Indeed,
+<I>&lt;<A HREF="file:///usr/include/sys/resource.h">sys/resource.h</A>&gt;</I>
+
+defines the
+<I>rusage</I>
+
+structure with fields of type
+<I>struct timeval</I>
+
+defined in
+<I>&lt;<A HREF="file:///usr/include/sys/time.h">sys/time.h</A>&gt;</I>.)
+
+<P>
+
+The prototype for these functions is only available if
+<B>_BSD_SOURCE</B>
+
+is defined (either explicitly, or implicitly, by not defining
+_POSIX_SOURCE or compiling with the -ansi flag).
+<A NAME="lbAH">&nbsp;</A>
+<H2>CONFORMING TO</H2>
+
+SVr4, POSIX.1
+<A NAME="lbAI">&nbsp;</A>
+<H2>SEE ALSO</H2>
+
+<B><A HREF="../man2/getrusage.2.html">getrusage</A></B>(2),
+
+<B><A HREF="../man2/signal.2.html">signal</A></B>(2),
+
+<B><A HREF="../man2/wait.2.html">wait</A></B>(2),
+
+<B><A HREF="../man7/signal.7.html">signal</A></B>(7)
+
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">NAME</A><DD>
+<DT><A HREF="#lbAC">SYNOPSIS</A><DD>
+<DT><A HREF="#lbAD">DESCRIPTION</A><DD>
+<DT><A HREF="#lbAE">RETURN VALUE</A><DD>
+<DT><A HREF="#lbAF">ERRORS</A><DD>
+<DT><A HREF="#lbAG">NOTES</A><DD>
+<DT><A HREF="#lbAH">CONFORMING TO</A><DD>
+<DT><A HREF="#lbAI">SEE ALSO</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
+using the manual pages.<BR>
+Time: 02:10:10 GMT, April 20, 2020
+</BODY>
+</HTML>

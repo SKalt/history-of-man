@@ -1,0 +1,402 @@
+<!--
+Copyright (c) 1983, 1990, 1991 The Regents of the University of California.
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of ACCEPT</TITLE>
+</HEAD><BODY>
+<H1>ACCEPT</H1>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2004-06-17<BR><A HREF="#index">Index</A>
+<A HREF="../index.html">Return to Main Contents</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>NAME</H2>
+
+accept - accept a connection on a socket
+<A NAME="lbAC">&nbsp;</A>
+<H2>SYNOPSIS</H2>
+
+<B>#include &lt;<A HREF="file:///usr/include/sys/types.h">sys/types.h</A>&gt;</B>
+
+<BR>
+
+<B>#include &lt;<A HREF="file:///usr/include/sys/socket.h">sys/socket.h</A>&gt;</B>
+
+<P>
+<B>int accept(int </B><I>s</I><B>, struct sockaddr *</B><I>addr</I><B>, socklen_t *</B><I>addrlen</I><B>);</B>
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>DESCRIPTION</H2>
+
+<P>
+The
+<B>accept</B>
+
+function is used with connection-based socket types
+(<B>SOCK_STREAM</B>,
+
+<B>SOCK_SEQPACKET</B>
+
+and
+<B>SOCK_RDM</B>).
+
+It extracts the first connection request on the queue of pending
+connections, creates a new connected socket with mostly the same properties as
+<I>s</I>,
+
+and allocates a new file descriptor for the socket, which is returned.
+The newly created socket is no longer in the listening state.
+The original socket
+<I>s</I>
+
+is unaffected by this call. Note that any per file descriptor flags 
+(everything that can be set with the 
+<B>F_SETFL</B>
+
+fcntl, like non blocking or async state) are not inherited across
+an
+<I>accept</I>.
+
+<P>
+
+The argument
+<I>s</I>
+
+is a socket that has been created with
+<B><A HREF="../man2/socket.2.html">socket</A></B>(2),
+
+bound to a local address with
+<B><A HREF="../man2/bind.2.html">bind</A></B>(2),
+
+and is listening for connections after a
+<B><A HREF="../man2/listen.2.html">listen</A></B>(2).
+
+<P>
+The argument
+<I>addr</I>
+
+is a pointer to a sockaddr structure. This structure is filled in
+with the address of the connecting entity,
+as known to the communications layer.  The exact format of the
+address passed in the
+<I>addr</I>
+
+parameter is determined by the socket's family (see
+<B><A HREF="../man2/socket.2.html">socket</A></B>(2)
+
+and the respective protocol man pages).
+The
+<I>addrlen</I>
+
+argument is a value-result parameter: it should initially contain the
+size of the structure pointed to by
+<I>addr</I>;
+
+on return it will contain the actual length (in bytes) of the address
+returned. When 
+<I>addr</I>
+
+is NULL nothing is filled in.
+<P>
+
+If no pending
+connections are present on the queue, and the socket is not marked as
+non-blocking,
+<B>accept</B>
+
+blocks the caller until a connection is present.  If the socket is marked
+non-blocking and no pending connections are present on the queue,
+<B>accept</B>
+
+returns EAGAIN. 
+<P>
+
+In order to be notified of incoming connections on a socket, you can use
+<B><A HREF="../man2/select.2.html">select</A></B>(2)
+
+or
+<B><A HREF="../man2/poll.2.html">poll</A></B>(2).
+
+A readable event will be delivered when a new connection is attempted and you
+may then call
+<B>accept</B>
+
+to get a socket for that connection.  Alternatively, you can set the socket
+to deliver
+<B>SIGIO</B>
+
+when activity occurs on a socket; see
+<B><A HREF="../man7/socket.7.html">socket</A></B>(7)
+
+for details.
+<P>
+
+For certain protocols which require an explicit confirmation,
+such as
+DECNet,
+<B>accept</B>
+
+can be thought of as merely dequeuing the next connection request and not
+implying confirmation.  Confirmation can be implied by
+a normal read or write on the new file descriptor, and rejection can be
+implied by closing the new socket. Currently only 
+DECNet 
+has these semantics on Linux. 
+<A NAME="lbAE">&nbsp;</A>
+<H2>NOTES</H2>
+
+There may not always be a connection waiting after a
+<B>SIGIO</B>
+
+is delivered or
+<B><A HREF="../man2/select.2.html">select</A></B>(2)
+
+or
+<B><A HREF="../man2/poll.2.html">poll</A></B>(2)
+
+return a readability event because the connection might have been
+removed by an asynchronous network error or another thread before
+<B>accept</B>
+
+is called.
+If this happens then the call will block waiting for the next
+connection to arrive.
+To ensure that
+<B>accept</B>
+
+never blocks, the passed socket
+<I>s</I>
+
+needs to have the
+<B>O_NONBLOCK</B>
+
+flag set (see
+<B><A HREF="../man7/socket.7.html">socket</A></B>(7)).
+
+<A NAME="lbAF">&nbsp;</A>
+<H2>RETURN VALUE</H2>
+
+The call returns -1 on error.  If it succeeds, it returns a non-negative
+integer that is a descriptor for the accepted socket.
+<A NAME="lbAG">&nbsp;</A>
+<H2>ERROR HANDLING</H2>
+
+Linux 
+<B>accept </B>
+
+passes already-pending network errors on the new socket 
+as an error code from 
+<B>accept</B>.
+
+This behaviour differs from other BSD socket
+implementations. For reliable operation the application should detect
+the network errors defined for the protocol after 
+<B>accept </B>
+
+and treat
+them like 
+<B>EAGAIN</B>
+
+by retrying. In case of TCP/IP these are
+<B>ENETDOWN</B>,
+
+<B>EPROTO</B>,
+
+<B>ENOPROTOOPT</B>,
+
+<B>EHOSTDOWN</B>,
+
+<B>ENONET</B>,
+
+<B>EHOSTUNREACH</B>,
+
+<B>EOPNOTSUPP</B>,
+
+and
+<B>ENETUNREACH</B>.
+
+<A NAME="lbAH">&nbsp;</A>
+<H2>ERRORS</H2>
+
+<B>accept</B>
+
+shall fail if:
+<DL COMPACT>
+<DT><B>EAGAIN</B> or <B>EWOULDBLOCK</B>
+
+<DD>
+The socket is marked non-blocking and no connections are
+present to be accepted.
+<DT><B>EBADF</B>
+
+<DD>
+The descriptor is invalid.
+<DT><B>ECONNABORTED</B>
+
+<DD>
+A connection has been aborted.
+<DT><B>EINTR</B>
+
+<DD>
+The system call was interrupted by a signal that was caught
+before a valid connection arrived. 
+<DT><B>EINVAL</B>
+
+<DD>
+Socket is not listening for connections.
+<DT><B>EMFILE</B>
+
+<DD>
+The per-process limit of open file descriptors has been reached.
+<DT><B>ENFILE</B>
+
+<DD>
+The system limit on the total number of open files has been reached.
+<DT><B>ENOTSOCK</B>
+
+<DD>
+The descriptor references a file, not a socket.
+<DT><B>EOPNOTSUPP</B>
+
+<DD>
+The referenced socket is not of type
+<B>SOCK_STREAM</B>.
+
+</DL>
+<P>
+
+<B>accept</B>
+
+may fail if:
+<DL COMPACT>
+<DT><B>EFAULT</B>
+
+<DD>
+The
+<I>addr</I>
+
+parameter is not in a writable part of the user address space.
+<DT><B>ENOBUFS, ENOMEM</B>
+
+<DD>
+Not enough free memory.  
+This often means that the memory allocation is limited by the socket buffer
+limits, not by the system memory.
+<DT><B>EPROTO</B>
+
+<DD>
+Protocol error.
+</DL>
+<P>
+
+Linux
+<B>accept</B>
+
+may fail if:
+<DL COMPACT>
+<DT><B>EPERM</B>
+
+<DD>
+Firewall rules forbid connection.
+</DL>
+<P>
+
+In addition, network errors for the new socket and as defined
+for the protocol may be returned. Various Linux kernels can
+return other errors such as
+<B>ENOSR</B>,
+
+<B>ESOCKTNOSUPPORT</B>,
+
+<B>EPROTONOSUPPORT</B>,
+
+<B>ETIMEDOUT</B>.
+
+The value
+<B>ERESTARTSYS</B>
+
+may be seen during a trace.
+<A NAME="lbAI">&nbsp;</A>
+<H2>CONFORMING TO</H2>
+
+SVr4, 4.4BSD (the
+<B>accept</B>
+
+function first appeared in BSD 4.2).
+The BSD man page documents five possible error returns
+(EBADF, ENOTSOCK, EOPNOTSUPP, EWOULDBLOCK, EFAULT).
+SUSv3 documents errors EAGAIN, EBADF, ECONNABORTED, EINTR, EINVAL, EMFILE,
+ENFILE, ENOBUFS, ENOMEM, ENOTSOCK, EOPNOTSUPP, EPROTO, EWOULDBLOCK. In
+addition, SUSv2 documents EFAULT and ENOSR.
+<P>
+
+Linux accept does _not_ inherit socket flags like
+<B>O_NONBLOCK</B>.
+
+This behaviour differs from other BSD socket implementations.
+Portable programs should not rely on this behaviour and always set
+all required flags on the socket returned from accept.
+<A NAME="lbAJ">&nbsp;</A>
+<H2>NOTE</H2>
+
+The third argument of
+<B>accept</B>
+
+was originally declared as an `int *' (and is that under libc4 and libc5
+and on many other systems like BSD 4.*, SunOS 4, SGI); a POSIX 1003.1g draft
+standard wanted to change it into a `size_t *', and that is what it is
+for SunOS 5.
+Later POSIX drafts have `socklen_t *', and so do the Single Unix Specification
+and glibc2.
+Quoting Linus Torvalds:
+<P>
+
+&quot;_Any_ sane library _must_ have &quot;socklen_t&quot; be the same size
+as int.  Anything else breaks any BSD socket layer stuff.
+POSIX initially _did_ make it a size_t, and I (and hopefully others, but
+obviously not too many) complained to them very loudly indeed.  Making
+it a size_t is completely broken, exactly because size_t very seldom is
+the same size as &quot;int&quot; on 64-bit architectures, for example.  And it
+_has_ to be the same size as &quot;int&quot; because that's what the BSD socket
+interface is. 
+Anyway, the POSIX people eventually got a clue, and created &quot;socklen_t&quot;. 
+They shouldn't have touched it in the first place, but once they did
+they felt it had to have a named type for some unfathomable reason
+(probably somebody didn't like losing face over having done the original
+stupid thing, so they silently just renamed their blunder).&quot;
+<P>
+<A NAME="lbAK">&nbsp;</A>
+<H2>SEE ALSO</H2>
+
+<B><A HREF="../man2/bind.2.html">bind</A></B>(2),
+
+<B><A HREF="../man2/connect.2.html">connect</A></B>(2),
+
+<B><A HREF="../man2/listen.2.html">listen</A></B>(2),
+
+<B><A HREF="../man2/select.2.html">select</A></B>(2),
+
+<B><A HREF="../man2/socket.2.html">socket</A></B>(2)
+
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">NAME</A><DD>
+<DT><A HREF="#lbAC">SYNOPSIS</A><DD>
+<DT><A HREF="#lbAD">DESCRIPTION</A><DD>
+<DT><A HREF="#lbAE">NOTES</A><DD>
+<DT><A HREF="#lbAF">RETURN VALUE</A><DD>
+<DT><A HREF="#lbAG">ERROR HANDLING</A><DD>
+<DT><A HREF="#lbAH">ERRORS</A><DD>
+<DT><A HREF="#lbAI">CONFORMING TO</A><DD>
+<DT><A HREF="#lbAJ">NOTE</A><DD>
+<DT><A HREF="#lbAK">SEE ALSO</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
+using the manual pages.<BR>
+Time: 02:09:53 GMT, April 20, 2020
+</BODY>
+</HTML>

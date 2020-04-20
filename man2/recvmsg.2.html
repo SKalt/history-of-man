@@ -1,0 +1,565 @@
+<!--
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of RECV</TITLE>
+</HEAD><BODY>
+<H1>RECV</H1>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2002-12-31<BR><A HREF="#index">Index</A>
+<A HREF="../index.html">Return to Main Contents</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>NAME</H2>
+
+recv, recvfrom, recvmsg - receive a message from a socket
+<A NAME="lbAC">&nbsp;</A>
+<H2>SYNOPSIS</H2>
+
+
+
+<B>#include &lt;<A HREF="file:///usr/include/sys/types.h">sys/types.h</A>&gt;</B>
+
+<BR>
+
+<B>#include &lt;<A HREF="file:///usr/include/sys/socket.h">sys/socket.h</A>&gt;</B>
+
+<P>
+<B>ssize_t recv(int </B><I>s</I><B>, void *</B><I>buf</I><B>, size_t </B><I>len</I><B>, int </B><I>flags</I><B>);</B>
+
+<P>
+<B>ssize_t recvfrom(int </B><I>s</I><B>, void *</B><I>buf</I><B>, size_t </B><I>len</I><B>,</B>
+
+<B>int </B><I>flags</I><B>, struct sockaddr *</B><I>from</I><B>, socklen_t *</B><I>fromlen</I><B>);</B>
+
+<P>
+<B>ssize_t recvmsg(int </B><I>s</I><B>, struct msghdr *</B><I>msg</I><B>, int </B><I>flags</I><B>);</B>
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>DESCRIPTION</H2>
+
+The
+<B>recvfrom</B>
+
+and
+<B>recvmsg</B>
+
+calls are used to receive messages from a socket, and may be used
+to receive data on a socket whether or not it is connection-oriented.
+<P>
+
+If
+<I>from</I>
+
+is not NULL, and the underlying protocol provides the source address,
+this source address is filled in.
+
+
+
+
+
+
+
+
+The argument
+<I>fromlen</I>
+
+is a value-result parameter, initialized to the size of the buffer
+associated with
+<I>from</I>,
+
+and modified on return to indicate the actual size of the address stored
+there.
+<P>
+
+The 
+<B>recv</B>
+
+call is normally used only on a 
+<I>connected</I>
+
+socket (see
+<B><A HREF="../man2/connect.2.html">connect</A></B>(2))
+
+and is identical to
+<B>recvfrom</B>
+
+with a NULL
+<I>from</I>
+
+parameter. 
+<P>
+
+All three routines return the length of the message on successful
+completion.  If a message is too long to fit in the supplied buffer, excess
+bytes may be discarded depending on the type of socket the message is
+received from (see
+<B><A HREF="../man2/socket.2.html">socket</A></B>(2)).
+
+<P>
+
+If no messages are available at the socket, the receive calls wait for a
+message to arrive, unless the socket is nonblocking (see
+<B><A HREF="../man2/fcntl.2.html">fcntl</A></B>(2))
+
+in which case the value -1 is returned and the external variable
+<I>errno</I>
+
+set to
+<B>EAGAIN</B>.
+
+The receive calls normally return any data available, up to the requested
+amount, rather than waiting for receipt of the full amount requested.
+<P>
+
+The
+<B><A HREF="../man2/select.2.html">select</A></B>(2)
+
+or
+<B><A HREF="../man2/poll.2.html">poll</A></B>(2)
+
+call may be used to determine when more data arrives.
+<P>
+
+The
+<I>flags</I>
+
+argument to a recv call is formed by 
+<I>OR</I>'ing
+
+one or more of the following values:
+<DL COMPACT>
+<DT><B>MSG_OOB</B>
+
+<DD>
+This flag requests receipt of out-of-band data that would not be received
+in the normal data stream.  Some protocols place expedited data
+at the head of the normal data queue, and thus this flag cannot
+be used with such protocols.
+<DT><B>MSG_PEEK</B>
+
+<DD>
+This flag causes the receive operation to return data from the beginning of the
+receive queue without removing that data from the queue.  Thus, a
+subsequent receive call will return the same data.
+<DT><B>MSG_WAITALL</B>
+
+<DD>
+This flag requests that the operation block until the full request is
+satisfied.  However, the call may still return less data than requested if
+a signal is caught, an error or disconnect occurs, or the next data to be
+received is of a different type than that returned.
+<DT><B>MSG_TRUNC</B>
+
+<DD>
+Return the real length of the packet, even when it was longer than
+the passed buffer. Only valid for packet sockets.
+<DT><B>MSG_ERRQUEUE</B>
+
+<DD>
+This flag
+specifies that queued errors should be received from the socket error queue.
+The error is passed in
+an ancillary message with a type dependent on the protocol (for IPv4
+<B>IP_RECVERR</B>).
+
+The user should supply a buffer of sufficient size. See 
+<B><A HREF="../man3/cmsg.3.html">cmsg</A></B>(3)
+
+and
+<B><A HREF="../man7/ip.7.html">ip</A></B>(7)
+
+for more information.
+The payload of the original packet that caused the error
+is passed as normal data via
+<B>msg_iovec</B>.
+
+The original destination address of the datagram that caused the error
+is supplied via
+<B>msg_name</B>.
+
+<DT><DD>
+For local errors, no address is passed (this can be checked with the
+<I>cmsg_len</I>
+
+member of the
+<B>cmsghdr</B>).
+
+For error receives, the
+<B>MSG_ERRQUEUE</B>
+
+is set in the
+<B>msghdr</B>.
+
+After an error has been passed, the pending socket error
+is regenerated based on the next queued error and will be passed
+on the next socket operation.
+<P>
+The error is supplied in a 
+<B>sock_extended_err</B>
+
+structure:
+<DT><DD>
+<DL COMPACT><DT><DD>
+
+<PRE>
+
+#define SO_EE_ORIGIN_NONE       0
+#define SO_EE_ORIGIN_LOCAL      1
+#define SO_EE_ORIGIN_ICMP       2
+#define SO_EE_ORIGIN_ICMP6      3
+
+struct sock_extended_err
+{
+    u_int32_t       ee_errno;   /* error number */
+    u_int8_t        ee_origin;  /* where the error originated */ 
+    u_int8_t        ee_type;    /* type */
+    u_int8_t        ee_code;    /* code */
+    u_int8_t        ee_pad;
+    u_int32_t       ee_info;    /* additional information */
+    u_int32_t       ee_data;    /* other data */  
+    /* More data may follow */ 
+};
+
+struct sockaddr *SO_EE_OFFENDER(struct sock_extended_err *);
+
+</PRE>
+
+</DL>
+
+<DT><DD>
+<B>ee_errno </B>
+
+contains the errno number of the queued error. 
+<B>ee_origin</B>
+
+is the origin code of where the error originated. 
+The other fields are protocol specific. The macro
+<B>SOCK_EE_OFFENDER </B>
+
+returns a pointer to the address of the network object
+where the error originated from given a pointer to the ancillary message.
+If this address is not known, the
+<I>sa_family </I>
+
+member of the 
+<B>sockaddr </B>
+
+contains 
+<B>AF_UNSPEC</B>
+
+and the other fields of the 
+<B>sockaddr </B>
+
+are undefined. The payload of the packet
+that caused the error is passed as normal data. 
+<DT><DD>
+For local errors, no address is passed (this
+can be checked with the 
+<I>cmsg_len </I>
+
+member of the 
+<B>cmsghdr</B>).
+
+For error receives,
+the 
+<B>MSG_ERRQUEUE </B>
+
+is set in the 
+<B>msghdr</B>.
+
+After an error has been passed, the pending socket error
+is regenerated based on the next queued error and will be passed
+on the next socket operation.
+</DL>
+<P>
+
+The
+<B>recvmsg</B>
+
+call uses a 
+<I>msghdr</I>
+
+structure to minimize the number of directly supplied parameters.  This
+structure has the following form, as defined in
+<I>&lt;<A HREF="file:///usr/include/sys/socket.h">sys/socket.h</A>&gt;</I>:
+
+<DL COMPACT>
+<DT><DD>
+<DL COMPACT><DT><DD>
+<PRE>
+
+struct msghdr {
+    void         * msg_name;     /* optional address */
+    socklen_t    msg_namelen;    /* size of address */
+    struct iovec * msg_iov;      /* scatter/gather array */
+    size_t       msg_iovlen;     /* # elements in msg_iov */
+    void         * msg_control;  /* ancillary data, see below */
+    socklen_t    msg_controllen; /* ancillary data buffer len */
+    int          msg_flags;      /* flags on received message */
+};
+
+</PRE>
+
+</DL>
+
+</DL>
+<P>
+
+Here
+<I>msg_name</I>
+
+and
+<I>msg_namelen</I>
+
+specify the source address if the socket is unconnected;
+<I>msg_name</I>
+
+may be given as a null pointer if no names are desired or required.
+The fields
+<I>msg_iov</I>
+
+and
+<I>msg_iovlen</I>
+
+describe scatter-gather locations, as discussed in
+<B><A HREF="../man2/readv.2.html">readv</A></B>(2).
+
+The field
+<I>msg_control</I>,
+
+which has length
+<I>msg_controllen</I>,
+
+points to a buffer for other protocol control related messages or 
+miscellaneous ancillary data. When 
+<B>recvmsg </B>
+
+is called, 
+<I>msg_controllen</I>
+
+should contain the length of the available buffer in 
+<I>msg_control</I>;
+
+upon return from a successful call it will contain the length
+of the control message sequence.
+<P>
+
+The messages are of the form:
+<P>
+
+<DL COMPACT><DT><DD>
+<PRE>
+
+struct cmsghdr {
+    socklen_t   cmsg_len;   /* data byte count, including hdr */
+    int         cmsg_level; /* originating protocol */
+    int         cmsg_type;  /* protocol-specific type */
+/* followed by
+    u_char      cmsg_data[]; */
+};
+
+</PRE>
+
+</DL>
+
+<P>
+
+Ancillary data should only be accessed by the macros defined in 
+<B><A HREF="../man3/cmsg.3.html">cmsg</A></B>(3).
+
+<P>
+
+As an example, Linux uses this auxiliary data mechanism to pass extended
+errors, IP options or file descriptors over Unix sockets. 
+<P>
+
+The
+<I>msg_flags</I>
+
+field in the msghdr is set on return of
+<B>recvmsg</B>().
+
+It can contain several flags:
+<DL COMPACT>
+<DT><B>MSG_EOR</B>
+
+<DD>
+indicates end-of-record; the data returned completed a record (generally
+used with sockets of type
+<B>SOCK_SEQPACKET</B>).
+
+<DT><B>MSG_TRUNC</B>
+
+<DD>
+indicates that the trailing portion of a datagram was discarded because the
+datagram was larger than the buffer supplied.
+<DT><B>MSG_CTRUNC</B>
+
+<DD>
+indicates that some control data were discarded due to lack of space in the
+buffer for ancillary data.
+<DT><B>MSG_OOB</B>
+
+<DD>
+is returned to indicate that expedited or out-of-band data were received.
+<DT><B>MSG_ERRQUEUE</B>
+
+<DD>
+indicates that no data was received but an extended error from the socket
+error queue.
+<DT><B>MSG_DONTWAIT</B>
+
+<DD>
+Enables non-blocking operation; if the operation would block,
+<B>EAGAIN</B>
+
+is returned (this can also be enabled using the
+<B>O_NONBLOCK</B>
+
+with the
+<B>F_SETFL</B>
+
+<B><A HREF="../man2/fcntl.2.html">fcntl</A></B>(2)).
+
+</DL>
+<A NAME="lbAE">&nbsp;</A>
+<H2>RETURN VALUE</H2>
+
+These calls return the number of bytes received, or -1
+if an error occurred. The return value will be 0 when the
+peer has performed an orderly shutdown.
+<A NAME="lbAF">&nbsp;</A>
+<H2>ERRORS</H2>
+
+These are some standard errors generated by the socket layer. Additional errors
+may be generated and returned from the underlying protocol modules; see their
+manual pages.
+<DL COMPACT>
+<DT><B>EAGAIN</B>
+
+<DD>
+The socket is marked non-blocking and the receive operation
+would block, or a receive timeout had been set and the timeout expired
+before data was received.
+<DT><B>EBADF</B>
+
+<DD>
+The argument
+<I>s</I>
+
+is an invalid descriptor.
+<DT><B>ECONNREFUSED</B>
+
+<DD>
+A remote host refused to allow the network connection (typically
+because it is not running the requested service).
+<DT><B>EFAULT</B>
+
+<DD>
+The receive buffer pointer(s) point outside the process's
+address space.
+<DT><B>EINTR</B>
+
+<DD>
+The receive was interrupted by delivery of a signal before
+any data were available.
+<DT><B>EINVAL</B>
+
+<DD>
+Invalid argument passed. 
+<DT><B>ENOMEM</B>
+
+<DD>
+Could not allocate memory for recvmsg. 
+<DT><B>ENOTCONN</B>
+
+<DD>
+The socket is associated with a connection-oriented protocol
+and has not been connected (see
+<B><A HREF="../man2/connect.2.html">connect</A></B>(2)
+
+and
+<B><A HREF="../man2/accept.2.html">accept</A></B>(2)).
+
+<DT><B>ENOTSOCK</B>
+
+<DD>
+The argument
+<I>s</I>
+
+does not refer to a socket.
+</DL>
+<A NAME="lbAG">&nbsp;</A>
+<H2>CONFORMING TO</H2>
+
+4.4BSD (these function calls first appeared in 4.2BSD),
+POSIX 1003.1-2001.
+<P>
+
+POSIX only describes the
+<B>MSG_OOB</B>,
+
+<B>MSG_PEEK</B>,
+
+and
+<B>MSG_WAITALL</B>
+
+flags.
+<A NAME="lbAH">&nbsp;</A>
+<H2>NOTE</H2>
+
+The prototypes given above follow glibc2.
+The Single Unix Specification agrees, except that it has return values
+of type `ssize_t' (while BSD 4.* and libc4 and libc5 all have `int').
+The
+<I>flags</I>
+
+argument is `int' in BSD 4.*, but `unsigned int' in libc4 and libc5.
+The
+<I>len</I>
+
+argument is `int' in BSD 4.*, but `size_t' in libc4 and libc5.
+The
+<I>fromlen</I>
+
+argument is `int *' in BSD 4.*, libc4 and libc5.
+The present  `socklen_t *' was invented by POSIX.
+See also
+<B><A HREF="../man2/accept.2.html">accept</A></B>(2).
+
+<A NAME="lbAI">&nbsp;</A>
+<H2>SEE ALSO</H2>
+
+<B><A HREF="../man2/fcntl.2.html">fcntl</A></B>(2),
+
+<B><A HREF="../man2/getsockopt.2.html">getsockopt</A></B>(2),
+
+<B><A HREF="../man2/read.2.html">read</A></B>(2),
+
+<B><A HREF="../man2/select.2.html">select</A></B>(2),
+
+<B><A HREF="../man2/socket.2.html">socket</A></B>(2),
+
+<B><A HREF="../man3/cmsg.3.html">cmsg</A></B>(3)
+
+
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">NAME</A><DD>
+<DT><A HREF="#lbAC">SYNOPSIS</A><DD>
+<DT><A HREF="#lbAD">DESCRIPTION</A><DD>
+<DT><A HREF="#lbAE">RETURN VALUE</A><DD>
+<DT><A HREF="#lbAF">ERRORS</A><DD>
+<DT><A HREF="#lbAG">CONFORMING TO</A><DD>
+<DT><A HREF="#lbAH">NOTE</A><DD>
+<DT><A HREF="#lbAI">SEE ALSO</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
+using the manual pages.<BR>
+Time: 02:10:03 GMT, April 20, 2020
+</BODY>
+</HTML>

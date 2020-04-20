@@ -1,0 +1,241 @@
+<!--
+Copyright 1993 David Metcalfe (david@prism.demon.co.uk)
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of RESOLVER</TITLE>
+</HEAD><BODY>
+<H1>RESOLVER</H1>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2004-10-31<BR><A HREF="#index">Index</A>
+<A HREF="../index.html">Return to Main Contents</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>NAME</H2>
+
+res_init, res_query, res_search, res_querydomain, res_mkquery, res_send, 
+dn_comp, dn_expand - resolver routines
+<A NAME="lbAC">&nbsp;</A>
+<H2>SYNOPSIS</H2>
+
+<PRE>
+<B>#include &lt;<A HREF="file:///usr/include/netinet/in.h">netinet/in.h</A>&gt;</B>
+<B>#include &lt;<A HREF="file:///usr/include/arpa/nameser.h">arpa/nameser.h</A>&gt;</B>
+<B>#include &lt;<A HREF="file:///usr/include/resolv.h">resolv.h</A>&gt;</B>
+<B>extern struct state _res;</B>
+
+<B>int res_init(void);</B>
+
+<B>int res_query(const char *</B><I>dname</I><B>, int </B><I>class</I><B>, int </B><I>type</I><B>,</B>
+<DL COMPACT><DT><DD><B>unsigned char *</B><I>answer</I><B>, int </B><I>anslen</I><B>);</B>
+</DL>
+
+<B>int res_search(const char *</B><I>dname</I><B>, int </B><I>class</I><B>, int </B><I>type</I><B>,</B>
+<DL COMPACT><DT><DD><B>unsigned char *</B><I>answer</I><B>, int </B><I>anslen</I><B>);</B>
+</DL>
+
+<B>int res_querydomain(const char *</B><I>name</I><B>, const char *</B><I>domain</I><B>,</B>
+<DL COMPACT><DT><DD><B>int </B><I>class</I><B>, int </B><I>type</I><B>, unsigned char *</B><I>answer</I><B>,</B>
+<B>int </B><I>anslen</I><B>);</B>
+</DL>
+
+<B>int res_mkquery(int </B><I>op</I><B>, const char *</B><I>dname</I><B>, int </B><I>class</I><B>,</B>
+<DL COMPACT><DT><DD><B>int </B><I>type</I><B>, char *</B><I>data</I><B>, int </B><I>datalen</I><B>, struct rrec *</B><I>newrr</I><B>,</B>
+<B>char *</B><I>buf</I><B>, int </B><I>buflen</I><B>);</B>
+</DL>
+
+<B>int res_send(const char *</B><I>msg</I><B>, int </B><I>msglen</I><B>, char *</B><I>answer</I><B>,</B>
+<DL COMPACT><DT><DD><B>int </B><I>anslen</I><B>);</B>
+</DL>
+
+<B>int dn_comp(unsigned char *</B><I>exp_dn</I><B>, unsigned char *</B><I>comp_dn</I><B>,</B>
+<DL COMPACT><DT><DD><B>int </B><I>length</I><B>, unsigned char **</B><I>dnptrs</I><B>, unsigned char *</B><I>exp_dn</I><B>,</B>
+<B>unsigned char **</B><I>lastdnptr</I><B>);</B>
+</DL>
+
+<B>int dn_expand(unsigned char *</B><I>msg</I><B>, unsigned char *</B><I>eomorig</I><B>,</B>
+<DL COMPACT><DT><DD><B>unsigned char *</B><I>comp_dn</I><B>, unsigned char *</B><I>exp_dn</I><B>,</B>
+<B>int </B><I>length</I><B>);</B>
+</DL>
+</PRE>
+
+<P>
+Link with -lresolv.
+<A NAME="lbAD">&nbsp;</A>
+<H2>DESCRIPTION</H2>
+
+These functions make queries to and interpret the responses from Internet
+domain name servers.
+<P>
+
+The <B>res_init()</B> function reads the configuration files (see
+resolv+(8)) to get the default domain name, search order and name
+server address(es).  If no server is given, the local host is tried.
+If no domain is given, that associated with the local host is used.
+It can be overridden with the environment variable LOCALDOMAIN.
+<B>res_init()</B> is normally executed by the first call to one of the
+other functions.
+<P>
+
+The <B>res_query()</B> function queries the name server for the
+fully-qualified domain name <I>name</I> of specified <I>type</I> and
+<I>class</I>.  The reply is left in the buffer <I>answer</I> of length
+<I>anslen</I> supplied by the caller.
+<P>
+
+The <B>res_search()</B> function makes a query and waits for the response
+like <B>res_query()</B>, but in addition implements the default and search
+rules controlled by RES_DEFNAMES and RES_DNSRCH (see description of
+<I>_res</I> options below).
+<P>
+
+The <B>res_querydomain()</B> function makes a query using <B>res_query()</B>
+on the concatenation of <I>name</I> and <I>domain</I>.
+<P>
+
+The following functions are lower-level routines used by <B>res_query()</B>.
+<P>
+
+The <B>res_mkquery()</B> function constructs a query message in <I>buf</I>
+of length <I>buflen</I> for the domain name <I>dname</I>.  The query type
+<I>op</I> is usually QUERY, but can be any of the types defined in
+<I>&lt;<A HREF="file:///usr/include/arpa/nameser.h">arpa/nameser.h</A>&gt;</I>.  <I>newrr</I> is currently unused.
+<P>
+
+The <B>res_send()</B> function sends a pre-formatted query given in
+<I>msg</I> of length <I>msglen</I> and returns the answer in <I>answer</I>
+which is of length <I>anslen</I>.  It will call <B>res_init()</B>, if it 
+has not already been called.
+<P>
+
+The <B>dn_comp()</B> function compresses the domain name <I>exp_dn</I>
+and stores it in the buffer <I>comp_dn</I> of length <I>length</I>.
+The compression uses an array of pointers <I>dnptrs</I> to previously
+compressed names in the current message.  The first pointer points
+to the beginning of the message and the list ends with NULL.  The limit
+of the array is specified by <I>lastdnptr</I>.  if <I>dnptr</I> is NULL,
+domain names are not compressed.  If <I>lastdnptr</I> is NULL, the list
+of labels is not updated.
+<P>
+
+The dn_expand() function expands the compressed domain name
+<I>comp_dn</I> to a full domain name, which is placed in the buffer
+<I>exp_dn</I> of size <I>length</I>.  The compressed name is contained
+in a query or reply message, and <I>msg</I> points to the beginning of
+the message.
+<P>
+
+The resolver routines use global configuration and state information
+contained in the structure <I>_res</I>, which is defined in 
+<I>&lt;<A HREF="file:///usr/include/resolv.h">resolv.h</A>&gt;</I>.  The only field that is normally manipulated by the 
+user is <I>_res.options</I>.  This field can contain the bitwise ``or''
+of the following options:
+<P>
+<DL COMPACT>
+<DT><B>RES_INIT</B>
+
+<DD>
+True if <B>res_init()</B> has been called.
+<DT><B>RES_DEBUG</B>
+
+<DD>
+Print debugging messages.
+<DT><B>RES_AAONLY</B>
+
+<DD>
+Accept authoritative answers only.  <B>res_send()</B> continues until
+it fins an authoritative answer or returns an error.  [Not currently
+implemented].
+<DT><B>RES_USEVC</B>
+
+<DD>
+Use TCP connections for queries rather than UDP datagrams.
+<DT><B>RES_PRIMARY</B>
+
+<DD>
+Query primary domain name server only.
+<DT><B>RES_IGNTC</B>
+
+<DD>
+Ignore truncation errors.  Don't retry with TCP.  [Not currently
+implemented].
+<DT><B>RES_RECURSE</B>
+
+<DD>
+Set the recursion desired bit in queries.  Recursion is carried out
+by the domain name server, not by <B>res_send()</B>.  [Enabled by 
+default].
+<DT><B>RES_DEFNAMES</B>
+
+<DD>
+If set, <B>res_search()</B> will append the default domain name to
+single component names, ie. those that do not contain a dot.
+[Enabled by default].
+<DT><B>RES_STAYOPEN</B>
+
+<DD>
+Used with RES_USEVC to keep the TCP connection open between queries.
+<DT><B>RES_DNSRCH</B>
+
+<DD>
+If set, <B>res_search()</B> will search for host names in the current
+domain and in parent domains.  This option is used by
+<B><A HREF="../man3/gethostbyname.3.html">gethostbyname</A></B>(3).
+
+[Enabled by default].
+</DL>
+<A NAME="lbAE">&nbsp;</A>
+<H2>RETURN VALUE</H2>
+
+The <B>res_init()</B> function returns 0 on success, or -1 if an error
+occurs.
+<P>
+
+The <B>res_query()</B>, <B>res_search()</B>, <B>res_querydomain()</B>,
+<B>res_mkquery()</B> and <B>res_send()</B> functions return the length
+of the response, or -1 if an error occurs.
+<P>
+
+The <B>dn_comp()</B> and <B>dn_expand()</B> functions return the length
+of the compressed name, or -1 if an error occurs.
+<A NAME="lbAF">&nbsp;</A>
+<H2>FILES</H2>
+
+<PRE>
+/etc/resolv.conf          resolver configuration file
+/etc/host.conf            resolver configuration file
+</PRE>
+
+<A NAME="lbAG">&nbsp;</A>
+<H2>CONFORMING TO</H2>
+
+BSD 4.3
+<A NAME="lbAH">&nbsp;</A>
+<H2>SEE ALSO</H2>
+
+<B><A HREF="../man3/gethostbyname.3.html">gethostbyname</A></B>(3),
+
+<B><A HREF="../man7/hostname.7.html">hostname</A></B>(7),
+
+<B><A HREF="../man8/named.8.html">named</A></B>(8),
+
+<B>resolv+</B>(8)
+
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">NAME</A><DD>
+<DT><A HREF="#lbAC">SYNOPSIS</A><DD>
+<DT><A HREF="#lbAD">DESCRIPTION</A><DD>
+<DT><A HREF="#lbAE">RETURN VALUE</A><DD>
+<DT><A HREF="#lbAF">FILES</A><DD>
+<DT><A HREF="#lbAG">CONFORMING TO</A><DD>
+<DT><A HREF="#lbAH">SEE ALSO</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
+using the manual pages.<BR>
+Time: 02:10:59 GMT, April 20, 2020
+</BODY>
+</HTML>

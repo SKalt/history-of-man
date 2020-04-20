@@ -1,0 +1,237 @@
+<!--
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of OPENPTY</TITLE>
+</HEAD><BODY>
+<H1>OPENPTY</H1>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2003-07-18<BR><A HREF="#index">Index</A>
+<A HREF="../index.html">Return to Main Contents</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>NAME</H2>
+
+openpty, login_tty, forkpty - tty utility functions
+<A NAME="lbAC">&nbsp;</A>
+<H2>SYNOPSIS</H2>
+
+<B>#include &lt;<A HREF="file:///usr/include/pty.h">pty.h</A>&gt;</B>
+
+&nbsp;/* for openpty and forkpty */
+<BR>
+
+<B>#include &lt;<A HREF="file:///usr/include/utmp.h">utmp.h</A>&gt;</B>
+
+/* for login_tty */
+<P>
+<B>int openpty(int *</B><I>amaster</I><B>, int *</B><I>aslave</I><B>, char *</B><I>name</I><B>, struct termios *</B><I>termp</I><B>, struct winsize * </B><I>winp</I><B>);</B>
+
+<P>
+<B>int login_tty(int </B><I>fd</I><B>);</B>
+
+<P>
+<B>pid_t forkpty(int *</B><I>amaster</I><B>, char *</B><I>name</I><B>, struct termios *</B><I>termp</I><B>, struct winsize *</B><I>winp</I><B>);</B>
+
+<P>
+Link with -lutil.
+<A NAME="lbAD">&nbsp;</A>
+<H2>DESCRIPTION</H2>
+
+The
+<B>openpty()</B>
+
+function finds an available pseudo-tty and returns file descriptors
+for the master and slave in
+<I>amaster</I>
+
+and
+<I>aslave</I>.
+
+If
+<I>name</I>
+
+is not NULL, the filename of the slave is returned in
+<I>name</I>.
+
+If
+<I>termp</I>
+
+is not NULL, the terminal parameters of the slave will be set to the
+values in
+<I>termp</I>.
+
+If
+<I>winp</I>
+
+is not NULL, the window size of the slave will be set to the values in
+<I>winp</I>.
+
+<P>
+The
+<B>login_tty()</B>
+
+function prepares for a login on the tty
+<I>fd</I>
+
+(which may be a real tty device, or the slave of a pseudo-tty as
+returned by
+<B>openpty()</B>)
+
+by creating a new session, making
+<I>fd</I>
+
+the controlling terminal for the current process, setting
+<I>fd</I>
+
+to be the standard input, output, and error streams of the current
+process, and closing
+<I>fd</I>.
+
+<P>
+The
+<B>forkpty()</B>
+
+function combines
+<B>openpty()</B>,
+
+<B>fork()</B>,
+
+and
+<B>login_tty()</B>
+
+to create a new process operating in a pseudo-tty.  The file
+descriptor of the master side of the pseudo-tty is returned in
+<I>amaster</I>,
+
+and the filename of the slave in
+<I>name</I>
+
+if it is not NULL.  The
+<I>termp</I>
+
+and
+<I>winp</I>
+
+parameters, if not NULL,
+will determine the terminal attributes and window size of the slave
+side of the pseudo-tty.
+<A NAME="lbAE">&nbsp;</A>
+<H2>RETURN VALUES</H2>
+
+If a call to
+<B>openpty()</B>,
+
+<B>login_tty()</B>,
+
+or
+<B>forkpty()</B>
+
+is not successful, -1 is returned and
+<I>errno</I>
+
+is set to indicate the error.  Otherwise,
+<B>openpty()</B>,
+
+<B>login_tty()</B>,
+
+and the child process of
+<B>forkpty()</B>
+
+return 0, and the parent process of
+<B>forkpty()</B>
+
+returns the process ID of the child process.
+<A NAME="lbAF">&nbsp;</A>
+<H2>ERRORS</H2>
+
+<B>openpty()</B>
+
+will fail if:
+<DL COMPACT>
+<DT><B>ENOENT</B>
+
+<DD>
+There are no available ttys.
+</DL>
+<P>
+
+<B>login_pty()</B>
+
+will fail if
+<B>ioctl()</B>
+
+fails to set
+<I>fd</I>
+
+to the controlling terminal of the current process.
+<P>
+
+<B>forkpty()</B>
+
+will fail if either
+<B>openpty()</B>
+
+or
+<B>fork()</B>
+
+fails.
+<A NAME="lbAG">&nbsp;</A>
+<H2>NOTE</H2>
+
+These functions are included in libutil, hence you'll need to add
+<B>-lutil</B>
+
+to your compiler commandline.
+<A NAME="lbAH">&nbsp;</A>
+<H2>FILES</H2>
+
+<I>/dev/[pt]ty[pqrstuwxyzabcdePQRST][0123456789abcdef]</I>
+
+<A NAME="lbAI">&nbsp;</A>
+<H2>CONFORMING TO</H2>
+
+These are BSD functions, present in libc5 and glibc2.
+<A NAME="lbAJ">&nbsp;</A>
+<H2>BUGS</H2>
+
+Nobody knows how much space should be reserved for
+<I>name</I>.
+
+So, calling
+<B>openpty()</B>
+
+or
+<B>forkpty()</B>
+
+with non-NULL
+<I>name</I>
+
+may not be secure.
+<A NAME="lbAK">&nbsp;</A>
+<H2>SEE ALSO</H2>
+
+<B><A HREF="../man2/fork.2.html">fork</A></B>(2)
+
+
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">NAME</A><DD>
+<DT><A HREF="#lbAC">SYNOPSIS</A><DD>
+<DT><A HREF="#lbAD">DESCRIPTION</A><DD>
+<DT><A HREF="#lbAE">RETURN VALUES</A><DD>
+<DT><A HREF="#lbAF">ERRORS</A><DD>
+<DT><A HREF="#lbAG">NOTE</A><DD>
+<DT><A HREF="#lbAH">FILES</A><DD>
+<DT><A HREF="#lbAI">CONFORMING TO</A><DD>
+<DT><A HREF="#lbAJ">BUGS</A><DD>
+<DT><A HREF="#lbAK">SEE ALSO</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
+using the manual pages.<BR>
+Time: 02:10:50 GMT, April 20, 2020
+</BODY>
+</HTML>

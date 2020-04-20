@@ -1,0 +1,573 @@
+<!--
+Copyright Andries Brouwer, Ragnar Hojland Espinosa and A. Wik, 1998.
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of CP</TITLE>
+</HEAD><BODY>
+<H1>CP</H1>
+Section: User Commands  (1)<BR>Updated: 2003-11<BR><A HREF="#index">Index</A>
+<A HREF="../index.html">Return to Main Contents</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>NAME</H2>
+
+cp - copy files and directories
+<A NAME="lbAC">&nbsp;</A>
+<H2>SYNOPSIS</H2>
+
+<B>cp [</B><I>options</I><B>] </B><I>file path</I>
+
+<BR>
+
+<B>cp [</B><I>options</I><B>] </B><I>file... directory</I>
+
+<P>
+POSIX options:
+<B>[-fiprR] [--]</B>
+
+<P>
+Additional POSIX 1003.1-2003 options:
+<B>[-HLP]</B>
+
+<P>
+GNU file-utils 4.0 options (shortest form):
+<BR>
+
+<B>[-abdfilprsuvxPR]</B>
+
+<B>[-S </B><I>SUFFIX</I><B>]</B>
+
+<B>[-V {numbered,existing,simple}]</B>
+
+<B>[--backup=</B><I>CONTROL</I><B>]</B>
+
+<B>[--sparse=</B><I>WHEN</I><B>]</B>
+
+<B>[--help] [--version] [--]</B>
+
+<P>
+Additional GNU file-utils 4.1 options (shortest form):
+<BR>
+
+<B>[-HLP]</B>
+
+<B>[--copy-contents]</B>
+
+<B>[--no-preserve]</B>
+
+<B>[--reply=</B><I>HOW</I><B>]</B>
+
+<B>[--remove-destination]</B>
+
+<B>[--strip-trailing-slashes]</B>
+
+<B>[--target-directory=</B><I>DIR</I><B>]</B>
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>DESCRIPTION</H2>
+
+<B>cp</B>
+
+copies files (or, optionally, directories).
+You can either copy one file to a given destination,
+or copy arbitrarily many files to a destination directory.
+<P>
+
+If the last argument names an existing directory,
+<B>cp</B>
+
+copies each source
+<I>file</I>
+
+into that directory (retaining the same name).  Otherwise,
+if only two files are given, it copies the first onto the second.  It
+is an error if the last argument is not a directory and more than two
+non-option arguments are given.
+<P>
+
+(Thus, if /a is a directory, then `cp -r /a /b' will copy /a to /b/a
+and /a/x to /b/a/x in case a directory /b existed already, but it will
+copy /a to /b and /a/x to /b/x if there was no /b beforehand,
+while it will fail in case there was an ordinary file /b.)
+<P>
+
+The modes of the files and directories created will be the same
+as those of the original files, ANDed by 0777, and modified by
+the user's umask (unless the -p option was specified).
+(But during the recursive copy of directories, newly created
+directories will temporarily get their final mode ORed with
+S_IRWXU (0700), so as to allow the process to read, write
+and search the newly created directory.)
+<P>
+
+Nothing is done when copying a file to itself (except possibly
+producing an error message).
+When copying to a different existing file, it is opened
+using `open(path, O_WRONLY | O_TRUNC)'.
+When copying to a new file it is created
+using `open(path, O_WRONLY | O_CREAT, mode)'.
+If this fails, the file existed, and the -f option was given,
+<B>cp</B>
+
+tries to delete (unlink) the existing file, and if this succeeds
+proceeds as for a new file.
+<P>
+<A NAME="lbAE">&nbsp;</A>
+<H2>POSIX OPTIONS</H2>
+
+POSIX recognizes four options and a half:
+<DL COMPACT>
+<DT><B>-f</B>
+
+<DD>
+Remove existing destination files if required. (See above.)
+<DT><B>-i</B>
+
+<DD>
+Prompt whether to overwrite existing regular destination files.
+(Write a question on stderr, and read the answer from stdin.
+Only copy upon an affirmative answer.)
+<DT><B>-p</B>
+
+<DD>
+Preserve the original files' owner, group, permissions
+(including the setuid and setgid bits), time of last modification
+and time of last access.
+In case duplication of owner or group fails, the setuid and setgid
+bits are cleared.
+(Note that afterwards source and copy may well have different
+times of last access, since the copy operation is an access
+to the source file.)
+<DT><B>-R</B>
+
+<DD>
+Copy directories recursively, and do the right thing when
+objects other than ordinary files or directories are encountered.
+(Thus, the copy of a FIFO or special file is a FIFO or special file.)
+<DT><B>-r</B>
+
+<DD>
+Copy directories recursively, and do something unspecified
+with objects other than ordinary files or directories.
+(Thus, it is allowed, in fact encouraged, to have the -r option
+a synonym for -R. However, silly behaviour, like that of the
+GNU 4.0 version of
+<B>cp</B>
+
+is not forbidden.)
+<DT><B>--</B>
+
+<DD>
+Terminate option list.
+</DL>
+<A NAME="lbAF">&nbsp;</A>
+<H2>ADDITIONAL POSIX 2003 OPTIONS</H2>
+
+POSIX 1003.1-2003 adds three options that specify how to handle
+symbolic links. When doing a non-recursive copy, symbolic links
+are followed. When doing a recursive copy using the -r option,
+the results are implementation-defined. When doing a recursive
+copy using the -R option:
+<DL COMPACT>
+<DT><B>-H</B>
+
+<DD>
+Follow the symbolic links given in the parameter list.
+Do not follow symbolic links encountered during the recursive copy,
+but just copy them as symbolic link.
+<DT><B>-L</B>
+
+<DD>
+Follow all symbolic links, both those that occur in the parameter list
+and those encountered during the recursive copy.
+<DT><B>-P</B>
+
+<DD>
+Do not follow any symbolic links, neither those that occur
+in the parameter list nor those encountered during the recursive copy.
+Just copy them as symbolic link.
+</DL>
+<P>
+
+There is no default - one should specify the desired behaviour.
+<A NAME="lbAG">&nbsp;</A>
+<H2>GNU DETAILS</H2>
+
+<P>
+
+Generally, files are written just as they are read.  For exceptions,
+see the
+<B>--sparse</B>
+
+option below.
+<P>
+
+By default, `cp' does not copy directories (see 
+<B>-r</B>
+
+below).
+<P>
+
+<B>cp</B>
+
+generally refuses to copy a file onto itself, with the following
+exception: if
+<B>--force --backup</B>
+
+is specified with
+<I>source</I>
+
+and 
+<I>dest</I>
+
+identical, and referring to a regular file,
+<B>cp</B>
+
+will make a backup file, either regular or numbered, as specified in 
+the usual ways.  This is useful when you simply want to make a backup 
+of an existing file before changing it.
+<P>
+
+By default, symbolic links are not followed.
+<A NAME="lbAH">&nbsp;</A>
+<H2>GNU OPTIONS</H2>
+
+<DL COMPACT>
+<DT><B>-a, --archive</B>
+
+<DD>
+Preserve as much as possible of the structure and attributes of the
+original files in the copy (but do not preserve directory structure).
+Equivalent to 
+<B>-dpPR</B>.
+
+<DT><B>-b</B>
+
+<DD>
+See the discussion of backups below.
+<DT><B>--copy-contents</B> (since file-utils 4.1)
+
+<DD>
+Do the silly things file-utils 4.0 did,
+trying to copy the contents of device files and FIFOs during
+a recursive copy. Never use this option. With it, `cp' may well hang
+indefinitely reading a FIFO or /dev/tty, or fill the destination disk
+copying /dev/zero.
+<DT><B>-d</B>
+
+<DD>
+Copy symbolic links as symbolic links rather than copying the
+files that they point to, and preserve hard links between source
+files in the copies.
+<P>
+With file-utils 4.0 the long option --no-dereference was a
+synonym for -d, with file-utils 4.1 it is a synonym for -P,
+while -d is equivalent to --no-dereference --preserve=links.
+<DT><B>-f, --force</B>
+
+<DD>
+Remove existing destination files in case an open for writing fails,
+and never prompt before doing so.
+(Thus since file-utils 4.1. With file-utils 4.0 this option was
+equivalent to the new --remove-destination.)
+<DT><B>-H</B> (since file-utils 4.1)
+
+<DD>
+See POSIX description above.
+<DT><B>-i, --interactive</B>
+
+<DD>
+Prompt whether to overwrite existing regular destination files.
+<DT><B>-l, --link</B>
+
+<DD>
+Make hard links instead of copies of non-directories.
+<DT><B>-L, --dereference</B> (since file-utils 4.1)
+
+<DD>
+See POSIX description above.
+<DT><B>--no-preserve=</B><I>ATTRIBUTES</I> (since file-utils 4.1)
+
+<DD>
+Do not preserve the specified attributes.
+See the --preserve option below.
+<DT><B>-p, --preserve</B>
+
+<DD>
+Preserve the original files' owner, group, permissions, and timestamps.
+<DT><B>--preserve=</B><I>ATTRIBUTES</I> (since file-utils 4.1)
+
+<DD>
+Here ATTRIBUTES can be one of &quot;mode&quot; (permissions), &quot;ownership&quot; (owner
+and group), &quot;timestamps&quot;, &quot;links&quot;, &quot;all&quot; (all of the foregoing).
+<DT><B>-P, --no-dereference</B> (since file-utils 4.1)
+
+<DD>
+See POSIX description above.
+This replaces the file-utils 4.0 meaning of the -P option, that
+was a synonym for --parents. See also -d above.
+<DT><B>--parents</B> (in file-utils 4.0 also -P)
+
+<DD>
+Form the name of each destination file by appending to the target
+directory a slash and the specified name of the source file.  The
+last argument given to
+<B>cp</B>
+
+must be the name of an existing directory.  For example, the command:
+<BR>
+
+<PRE>
+    cp --parents a/b/c existing_dir
+<BR>
+</PRE>
+
+copies the file `a/b/c' to `existing_dir/a/b/c', creating any
+missing intermediate directories.
+<DT><B>-r</B>
+
+<DD>
+In file-utils 4.1: synonym of -R.
+In file-utils 4.0:
+Copy directories recursively, copying any non-directories and
+non-symbolic links (that is, FIFOs and special files) as if they
+were regular files. This silly behaviour is obtained in file-utils 4.1
+if the --copy-contents option is given.
+<DT><B>-R, --recursive</B>
+
+<DD>
+Copy directories recursively, preserving non-directories.
+<DT><B>--reply=</B><I>HOW</I> (since file-utils 4.1)
+
+<DD>
+Here HOW can be one of &quot;yes&quot;, &quot;no&quot;, &quot;query&quot;, specifying that
+to all questions the answer is yes, or is no, or must be obtained
+by querying the user, respectively.
+<DT><B>--remove-destination</B> (since file-utils 4.1)
+
+<DD>
+Remove each existing destination file before copying.
+With file-utils 4.0 this option was implied by -f.
+<DT><B>--sparse=</B><I>WHEN</I>
+
+<DD>
+A `sparse file' contains `holes' - sequences of zero bytes that
+do not occupy any physical disk blocks; the `read' system call
+reads these as zeroes.  This can both save considerable disk space
+and increase speed, since many binary files contain lots of
+consecutive zero bytes.  By default,
+<B>cp</B>
+
+detects holes in input source files via a crude heuristic
+and makes the corresponding output file sparse as well.
+<DL COMPACT><DT><DD>
+<P>
+
+The
+<I>WHEN</I>
+
+value can be one of the following:
+<DL COMPACT>
+<DT><B>auto</B>
+
+<DD>
+The default behavior: the output file is sparse if the input
+file is sparse.
+<DT><B>always</B>
+
+<DD>
+Always make the output file sparse.  This is useful when the
+input file resides on a filesystem that does not support
+sparse files, but the output file is on a filesystem that does.
+<DT><B>never</B>
+
+<DD>
+Never make the output file sparse.  If you find an application for
+this option, let us know.
+</DL>
+</DL>
+
+<DT><B>--strip-trailing-slashes</B> (since file-utils 4.1)
+
+<DD>
+Remove any trailing slashes from each source argument.
+(This can change the interpretation in case of a symbolic link
+to a directory.)
+<DT><B>-s, --symbolic-link</B>
+
+<DD>
+Make symbolic links instead of copies of non-directories.  All
+source file names must be absolute (starting with `/') unless the
+destination files are in the current directory.  This option merely
+results in an error message on systems that do not support
+symbolic links.
+<DT><B>-S</B>
+
+<DD>
+Backup suffix, see below.
+<DT><B>--target-directory=</B><I>DIR</I> (since file-utils 4.1)
+
+<DD>
+Specify the destination directory. Meant for use with
+<B><A HREF="../man1/xargs.1.html">xargs</A></B>(1),
+
+as in &quot;ls | xargs cp --target-directory=../d&quot;.
+<DT><B>-u, --update</B>
+
+<DD>
+Do not copy a nondirectory that has an existing destination with
+the same or newer modification time.
+<DT><B>-v, --verbose</B>
+
+<DD>
+Print the name of each file before copying it.
+<DT><B>-x, --one-file-system</B>
+
+<DD>
+Skip subdirectories that are on different filesystems from the one
+that the copy started on.
+</DL>
+<A NAME="lbAI">&nbsp;</A>
+<H2>GNU BACKUP OPTIONS</H2>
+
+The GNU versions of programs like
+<B>cp</B>,
+
+<B>mv</B>,
+
+<B>ln</B>,
+
+<B>install</B>
+
+and
+<B>patch </B>
+
+will make a backup of files about to be overwritten, changed or destroyed
+if that is desired. That backup files are desired is indicated by
+the -b option. How they should be named is specified by the -V option.
+In case the name of the backup file is given by the name of the file
+extended by a suffix, this suffix is specified by the -S option.
+<DL COMPACT>
+<DT><B>-b, --backup</B>
+
+<DD>
+Make backups of files that are about to be overwritten or removed.
+<DT><B>--backup=</B><I>CONTROL</I>
+
+<DD>
+(Since fileutils-4.1.)
+<DT><B>-S </B><I>SUFFIX</I><B>, --suffix=</B><I>SUFFIX</I>
+
+<DD>
+Append
+<I>SUFFIX</I>
+
+to each backup file made.
+If this option is not specified, the value of the
+<B>SIMPLE_BACKUP_SUFFIX</B>
+
+environment variable is used.  And if
+<B>SIMPLE_BACKUP_SUFFIX</B>
+
+is not set, the default is `~'.
+<DT><B>-V </B><I>METHOD</I><B>, --version-control=</B><I>METHOD</I>
+
+<DD>
+<DL COMPACT><DT><DD>
+Specify how backup files are named. The
+<I>METHOD</I>
+
+argument can be `numbered' (or `t'), `existing' (or `nil'), or `never' (or
+`simple').
+If this option is not specified, the value of the
+<B>VERSION_CONTROL</B>
+
+environment variable is used.  And if
+<B>VERSION_CONTROL</B>
+
+is not set, the default backup type is `existing'.
+<P>
+
+This option corresponds to the Emacs variable `version-control'.
+The valid
+<I>METHOD</I>s
+
+are (unique abbreviations are accepted):
+<DL COMPACT>
+<DT><B>t</B>, <B>numbered</B>
+
+<DD>
+Always make numbered backups.
+<DT><B>nil</B>, <B>existing</B>
+
+<DD>
+Make numbered backups of files that already have them, simple
+backups of the others.
+<DT><B>never</B>, <B>simple</B>
+
+<DD>
+Always make simple backups.
+</DL>
+</DL>
+
+</DL>
+<A NAME="lbAJ">&nbsp;</A>
+<H2>GNU STANDARD OPTIONS</H2>
+
+<DL COMPACT>
+<DT><B>--help</B>
+
+<DD>
+Print a usage message on standard output and exit successfully.
+<DT><B>--version</B>
+
+<DD>
+Print version information on standard output, then exit successfully.
+<DT><B>--</B>
+
+<DD>
+Terminate option list.
+</DL>
+<A NAME="lbAK">&nbsp;</A>
+<H2>ENVIRONMENT</H2>
+
+The variables LANG, LC_ALL, LC_COLLATE, LC_CTYPE and LC_MESSAGES have the
+usual meaning. For the GNU version, the variables SIMPLE_BACKUP_SUFFIX
+and VERSION_CONTROL control backup file naming, as described above.
+<A NAME="lbAL">&nbsp;</A>
+<H2>CONFORMING TO</H2>
+
+POSIX 1003.2
+<A NAME="lbAM">&nbsp;</A>
+<H2>NOTES</H2>
+
+This page describes
+<B>cp</B>
+
+as found in the fileutils-4.1 package;
+other versions may differ slightly.
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">NAME</A><DD>
+<DT><A HREF="#lbAC">SYNOPSIS</A><DD>
+<DT><A HREF="#lbAD">DESCRIPTION</A><DD>
+<DT><A HREF="#lbAE">POSIX OPTIONS</A><DD>
+<DT><A HREF="#lbAF">ADDITIONAL POSIX 2003 OPTIONS</A><DD>
+<DT><A HREF="#lbAG">GNU DETAILS</A><DD>
+<DT><A HREF="#lbAH">GNU OPTIONS</A><DD>
+<DT><A HREF="#lbAI">GNU BACKUP OPTIONS</A><DD>
+<DT><A HREF="#lbAJ">GNU STANDARD OPTIONS</A><DD>
+<DT><A HREF="#lbAK">ENVIRONMENT</A><DD>
+<DT><A HREF="#lbAL">CONFORMING TO</A><DD>
+<DT><A HREF="#lbAM">NOTES</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
+using the manual pages.<BR>
+Time: 02:09:51 GMT, April 20, 2020
+</BODY>
+</HTML>

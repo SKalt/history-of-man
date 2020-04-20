@@ -1,0 +1,300 @@
+<!--
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of GETTIMEOFDAY</TITLE>
+</HEAD><BODY>
+<H1>GETTIMEOFDAY</H1>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2004-05-27<BR><A HREF="#index">Index</A>
+<A HREF="../index.html">Return to Main Contents</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>NAME</H2>
+
+gettimeofday, settimeofday - get / set time
+<A NAME="lbAC">&nbsp;</A>
+<H2>SYNOPSIS</H2>
+
+<B>#include &lt;<A HREF="file:///usr/include/sys/time.h">sys/time.h</A>&gt;</B>
+
+<P>
+<B>int gettimeofday(struct timeval *</B><I>tv</I><B>, struct timezone *</B><I>tz</I><B>);</B>
+
+<BR>
+
+<B>int settimeofday(const struct timeval *</B><I>tv</I>
+
+<B>, const struct timezone *</B><I>tz</I><B>);</B>
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>DESCRIPTION</H2>
+
+The functions
+<B>gettimeofday</B>
+
+and
+<B>settimeofday</B>
+
+can get and set the time as well as a timezone.
+The    
+<I>tv</I>
+
+argument is a 
+<B>timeval </B>
+
+struct, as specified  in &lt;<A HREF="file:///usr/include/sys/time.h">sys/time.h</A>&gt;:
+<P>
+<PRE>
+struct timeval {
+time_t          tv_sec;         /* seconds */
+suseconds_t     tv_usec;        /* microseconds */
+};
+</PRE>
+
+<P>
+and gives the number of seconds and microseconds since the Epoch (see
+<B><A HREF="../man2/time.2.html">time</A></B>(2)).
+
+The 
+<I>tz</I>
+
+argument is a 
+<B>timezone </B>
+
+:
+<P>
+<PRE>
+struct timezone {
+int     tz_minuteswest; /* minutes W of Greenwich */
+int     tz_dsttime;     /* type of dst correction */
+};
+</PRE>
+
+<P>
+
+The use of the timezone struct is obsolete; the
+<I>tz_dsttime</I>
+
+field has never been used under Linux - it has not
+been and will not be supported by libc or glibc.
+Each and every occurrence of this field in the kernel source
+(other than the declaration) is a bug. Thus, the following
+is purely of historic interest.
+<P>
+The field
+<I>tz_dsttime</I>
+
+contains a symbolic constant (values are given below)
+that indicates in which part of the year Daylight Saving Time
+is in force. (Note: its value is constant throughout the year -
+it does not indicate that DST is in force, it just selects an
+algorithm.)
+The daylight saving time algorithms defined are as follows : 
+<P>
+
+
+
+<B> DST_NONE</B><TT>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT>/* not on dst */<BR>
+<BR>
+
+<B> DST_USA</B><TT>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT>/* USA style dst */<BR>
+<BR>
+
+<B> DST_AUST</B><TT>&nbsp;&nbsp;&nbsp;&nbsp;</TT>/* Australian style dst */<BR>
+<BR>
+
+<B> DST_WET</B><TT>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT>/* Western European dst */<BR>
+<BR>
+
+<B> DST_MET</B><TT>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT>/* Middle European dst */<BR>
+<BR>
+
+<B> DST_EET</B><TT>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT>/* Eastern European dst */<BR>
+<BR>
+
+<B> DST_CAN</B><TT>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT>/* Canada */<BR>
+<BR>
+
+<B> DST_GB</B><TT>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT>/* Great Britain and Eire */<BR>
+<BR>
+
+<B> DST_RUM</B><TT>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT>/* Rumania */<BR>
+<BR>
+
+<B> DST_TUR</B><TT>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT>/* Turkey */<BR>
+<BR>
+
+<B> DST_AUSTALT</B><TT>&nbsp;</TT>/* Australian style with shift in 1986 */<BR>
+<P>
+
+Of course it turned out that the period in which
+Daylight Saving Time is in force cannot be given
+by a simple algorithm, one per country; indeed,
+this period is determined by unpredictable political
+decisions. So this method of representing time zones
+has been abandoned. Under Linux, in a call to
+<B>settimeofday</B>
+
+the
+<I>tz_dsttime</I>
+
+field should be zero.
+<P>
+
+Under Linux there is some peculiar `warp clock' semantics associated
+to the
+<B>settimeofday</B>
+
+system call if on the very first call (after booting)
+that has a non-NULL
+<I>tz</I>
+
+argument, the
+<I>tv</I>
+
+argument is NULL and the
+<I>tz_minuteswest</I>
+
+field is nonzero. In such a case it is assumed that the CMOS clock
+is on local time, and that it has to be incremented by this amount
+to get UTC system time.
+No doubt it is a bad idea to use this feature.
+<P>
+
+The following macros are defined to operate on a struct timeval :
+<BR>
+
+<PRE>
+#define       timerisset(tvp)\
+<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;((tvp)-&gt;tv_sec || (tvp)-&gt;tv_usec)
+#define       timercmp(tvp, uvp, cmp)\
+((tvp)-&gt;tv_sec cmp (uvp)-&gt;tv_sec ||\
+(tvp)-&gt;tv_sec == (uvp)-&gt;tv_sec &amp;&amp;\
+(tvp)-&gt;tv_usec cmp (uvp)-&gt;tv_usec)
+#define       timerclear(tvp)\
+<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;((tvp)-&gt;tv_sec = (tvp)-&gt;tv_usec = 0)
+</PRE>
+
+<P>
+
+If either
+<I>tv</I>
+
+or 
+<I>tz</I>
+
+is null, the corresponding structure is not set or returned.
+<P>
+
+Only the super user may use
+<B>settimeofday</B>.
+
+<A NAME="lbAE">&nbsp;</A>
+<H2>RETURN VALUE</H2>
+
+<B>gettimeofday</B>
+
+and
+<B>settimeofday</B>
+
+return 0 for success, or -1 for failure (in which case
+<I>errno</I>
+
+is set appropriately).
+<A NAME="lbAF">&nbsp;</A>
+<H2>ERRORS</H2>
+
+<DL COMPACT>
+<DT><B>EFAULT</B>
+
+<DD>
+One of 
+<I>tv</I>
+
+or
+<I>tz</I>
+
+pointed outside the accessible address space.
+<DT><B>EINVAL</B>
+
+<DD>
+Timezone (or something else) is invalid.
+<DT><B>EPERM</B>
+
+<DD>
+The calling process has insufficient privilege to call 
+<B>settimeofday</B>;
+
+under Linux the
+<B>CAP_SYS_TIME</B>
+
+capability is required.
+</DL>
+<A NAME="lbAG">&nbsp;</A>
+<H2>NOTE</H2>
+
+The prototype for
+<B>settimeofday</B>
+
+and the defines for
+<B>timercmp</B>,
+
+<B>timerisset</B>,
+
+<B>timerclear</B>,
+
+<B>timeradd</B>,
+
+<B>timersub</B>
+
+are (since glibc2.2.2) only available if
+<B>_BSD_SOURCE</B>
+
+is defined (either explicitly, or implicitly, by not defining
+_POSIX_SOURCE or compiling with the -ansi flag).
+<P>
+
+Traditionally, the fields of struct timeval were longs.
+<A NAME="lbAH">&nbsp;</A>
+<H2>CONFORMING TO</H2>
+
+SVr4, BSD 4.3. POSIX 1003.1-2001 describes gettimeofday()
+but not settimeofday().
+<A NAME="lbAI">&nbsp;</A>
+<H2>SEE ALSO</H2>
+
+<B><A HREF="../man1/date.1.html">date</A></B>(1),
+
+<B><A HREF="../man2/adjtimex.2.html">adjtimex</A></B>(2),
+
+<B><A HREF="../man2/time.2.html">time</A></B>(2),
+
+<B><A HREF="../man3/ctime.3.html">ctime</A></B>(3),
+
+<B><A HREF="../man3/ftime.3.html">ftime</A></B>(3),
+
+<B><A HREF="../man7/capabilities.7.html">capabilities</A></B>(7)
+
+
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">NAME</A><DD>
+<DT><A HREF="#lbAC">SYNOPSIS</A><DD>
+<DT><A HREF="#lbAD">DESCRIPTION</A><DD>
+<DT><A HREF="#lbAE">RETURN VALUE</A><DD>
+<DT><A HREF="#lbAF">ERRORS</A><DD>
+<DT><A HREF="#lbAG">NOTE</A><DD>
+<DT><A HREF="#lbAH">CONFORMING TO</A><DD>
+<DT><A HREF="#lbAI">SEE ALSO</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
+using the manual pages.<BR>
+Time: 02:10:06 GMT, April 20, 2020
+</BODY>
+</HTML>

@@ -1,0 +1,235 @@
+<!--
+Copyright (c) 1993 Michael Haardt (michael@moria.de)
+Copyright (c) 1999 Andries Brouwer (aeb@cwi.nl)
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML><HEAD><TITLE>Man page of FTW</TITLE>
+</HEAD><BODY>
+<H1>FTW</H1>
+Section: Linux Programmer's Manual (3)<BR>Updated: 1999-06-25<BR><A HREF="#index">Index</A>
+<A HREF="../index.html">Return to Main Contents</A><HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>NAME</H2>
+
+ftw, nftw - file tree walk
+<A NAME="lbAC">&nbsp;</A>
+<H2>SYNOPSIS</H2>
+
+<B>#include &lt;<A HREF="file:///usr/include/ftw.h">ftw.h</A>&gt;</B>
+
+<P>
+<B>int ftw(const char *</B><I>dir</I><B>, int (*</B><I>fn</I><B>)(const</B>
+
+<B>char *</B><I>file</I><B>, const struct stat *</B><I>sb</I><B>, int </B><I>flag</I><B>),</B>
+
+<B>int </B><I>nopenfd</I><B>);</B>
+
+<P>
+<B>int nftw(const char *</B><I>dir</I><B>, int (*</B><I>fn</I><B>)(const</B>
+
+<B>char *</B><I>file</I><B>, const struct stat *</B><I>sb</I><B>, int </B><I>flag</I><B>,</B>
+
+<B>struct FTW *</B><I>s</I><B>),</B>
+
+<B>int </B><I>nopenfd</I><B>, int </B><I>flags</I><B>);</B>
+
+<A NAME="lbAD">&nbsp;</A>
+<H2>DESCRIPTION</H2>
+
+<B>ftw</B>() walks through the directory tree starting from the indicated
+directory <I>dir</I>.  For each found entry in the tree, it calls
+<I>fn</I>() with the full pathname of the entry, a pointer to the
+<B><A HREF="../man2/stat.2.html">stat</A></B>(2)
+
+structure for the entry and an int <I>flag</I>, which value will be one of
+the following:
+<DL COMPACT>
+<DT><B>FTW_F</B>
+
+<DD>
+Item is a normal file
+<DT><B>FTW_D</B>
+
+<DD>
+Item is a directory
+<DT><B>FTW_DNR</B>
+
+<DD>
+Item is a directory which can't be read
+<DT><B>FTW_SL</B>
+
+<DD>
+Item is a symbolic link
+<DT><B>FTW_NS</B>
+
+<DD>
+The stat failed on the item which is not a symbolic link
+</DL>
+<P>
+
+If the item is a symbolic link and stat failed, XPG4v2 states
+that it is undefined whether FTW_NS or FTW_SL is used.
+<P>
+
+<B>ftw</B>() recursively calls itself for traversing found directories,
+handling a directory before its files or subdirectories.
+To avoid using up all a program's file descriptors, <I>nopenfd</I>
+specifies the maximum number of simultaneous open directories.  When
+the search depth exceeds this, <B>ftw</B>() will become slower because
+directories have to be closed and reopened. <B>ftw</B>() uses at most
+one file descriptor for each level in the file hierarchy.
+<P>
+
+To stop the tree walk, <I>fn</I>() returns a non-zero value; this
+value will become the return value of <B>ftw</B>().  Otherwise,
+<B>ftw</B>() will continue until it has traversed the entire tree, in
+which case it will return zero, or until it hits an error other than EACCES
+(such as a
+<B><A HREF="../man3/malloc.3.html">malloc</A></B>(3)
+
+failure), in which case it will return -1.
+<P>
+
+Because <B>ftw()</B> uses dynamic data structures, the only safe way to
+exit out of a tree walk is to return a non-zero value.  To handle
+interrupts, for example, mark that the interrupt occurred and return a
+non-zero value---don't use
+<B><A HREF="../man3/longjmp.3.html">longjmp</A></B>(3)
+
+unless the program is going to terminate.
+<P>
+The function <B>nftw</B>() does precisely the same as <B>ftw</B>(),
+except that it has one additional argument <I>flags</I>
+(and calls the supplied function with one more argument).
+This <I>flags</I> argument is an OR of zero or more of the following flags:
+<DL COMPACT>
+<DT><B>FTW_CHDIR</B>
+
+<DD>
+If set, do a
+<I>chdir</I>()
+
+to each directory before handling its contents.
+<DT><B>FTW_DEPTH</B>
+
+<DD>
+If set, do a depth-first search, that is, call the function for
+the directory itself only after handling the contents of the directory
+and its subdirectories.
+<DT><B>FTW_MOUNT</B>
+
+<DD>
+If set, stay within the same file system.
+<DT><B>FTW_PHYS</B>
+
+<DD>
+If set, do not follow symbolic links.
+(This is what you want.)
+If not set, symbolic links are followed, but no file is reported twice.
+</DL>
+<P>
+
+If FTW_PHYS is not set, but FTW_DEPTH is set, then the function
+<I>fn</I>()
+
+is never called for a directory that would be a descendant of itself.
+<P>
+
+The function
+<I>fn</I>()
+
+is called with four arguments: the pathname of the reported entry,
+a pointer to a struct stat for this entry, an integer describing
+its type, and a pointer to a struct FTW. The type will be one
+of the following: FTW_F, FTW_D, FTW_DNR, FTW_SL, FTW_NS
+(with meaning as above; FTW_SL occurs only with FTW_PHYS set) or
+<DL COMPACT>
+<DT><B>FTW_DP</B>
+
+<DD>
+Item is a directory and all its descendants have been handled
+already. (This occurs only with FTW_DEPTH set.)
+<DT><B>FTW_SLN</B>
+
+<DD>
+Item is a symbolic link pointing to a nonexisting file.
+(This occurs only with FTW_PHYS unset.)
+</DL>
+<P>
+
+The struct FTW pointed to by the fourth argument to
+<I>fn</I>()
+
+has at least the fields
+<I>base</I>,
+
+the offset of the item's filename in the pathname
+given as first argument of
+<I>fn</I>(),
+
+and
+<I>level</I>,
+
+the depth of the item relative to the starting point
+(which has depth 0).
+<A NAME="lbAE">&nbsp;</A>
+<H2>NOTES</H2>
+
+The function
+<I>nftw</I>()
+
+and the use of FTW_SL with
+<I>ftw</I>()
+
+were introduced in XPG4v2.
+<P>
+
+On some systems
+<I>ftw</I>()
+
+will never use FTW_SL, on other systems FTW_SL occurs only
+for symbolic links that do not point to an existing file,
+and again on other systems
+<I>ftw</I>()
+
+will use FTW_SL for each symbolic link. For predictable control, use
+<I>nftw</I>().
+
+<P>
+
+Under Linux, libc4 and libc5 and glibc 2.0.6 will
+use FTW_F for all objects (files, symbolic links, fifos, etc)
+that can be stat'ed but are not a directory.
+The function
+<I>nftw</I>()
+
+is available since glibc 2.1.
+<A NAME="lbAF">&nbsp;</A>
+<H2>CONFORMING TO</H2>
+
+AES, SVID2, SVID3, XPG2, XPG3, XPG4, XPG4v2.
+<A NAME="lbAG">&nbsp;</A>
+<H2>SEE ALSO</H2>
+
+<B><A HREF="../man2/stat.2.html">stat</A></B>(2)
+
+<P>
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">NAME</A><DD>
+<DT><A HREF="#lbAC">SYNOPSIS</A><DD>
+<DT><A HREF="#lbAD">DESCRIPTION</A><DD>
+<DT><A HREF="#lbAE">NOTES</A><DD>
+<DT><A HREF="#lbAF">CONFORMING TO</A><DD>
+<DT><A HREF="#lbAG">SEE ALSO</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
+using the manual pages.<BR>
+Time: 02:10:35 GMT, April 20, 2020
+</BODY>
+</HTML>
