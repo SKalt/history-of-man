@@ -24,27 +24,38 @@ dup, dup2 - duplicate a file descriptor
 <A NAME="lbAD">&nbsp;</A>
 <H2>DESCRIPTION</H2>
 
-<B>dup</B> and <B>dup2</B>
+<B>dup</B>() and <B>dup2</B>()
 
 create a copy of the file descriptor
 <I>oldfd</I>.
 
 <P>
-After successful return of <B>dup</B> or <B>dup2</B>,
-the old and new descriptors may be used interchangeably. They share
-locks, file position pointers and flags; for example, if the file
-position is modified by using
-<B>lseek</B>
+After a successful return from <B>dup</B>() or <B>dup2</B>(),
+the old and new file descriptors may be used interchangeably.
+They refer to the same open file description (see
+<B><A HREF="../man2/open.2.html">open</A></B>(2))
 
-on one of the descriptors, the position is also changed for the other.
+and thus share file offset and file status flags;
+for example, if the file offset is modified by using
+<B><A HREF="../man2/lseek.2.html">lseek</A></B>(2)
+
+on one of the descriptors, the offset is also changed for the other.
 <P>
-The two descriptors do not share the close-on-exec flag, however.
+The two descriptors do not share file descriptor flags
+(the close-on-exec flag).
+The close-on-exec flag 
+(<B>FD_CLOEXEC</B>;
+
+see
+<B><A HREF="../man2/fcntl.2.html">fcntl</A></B>(2))
+
+for the duplicate descriptor is off.
 <P>
-<B>dup</B>
+<B>dup</B>()
 
 uses the lowest-numbered unused descriptor for the new descriptor.
 <P>
-<B>dup2</B>
+<B>dup2</B>()
 
 makes <I>newfd</I> be the copy of <I>oldfd</I>, closing <I>newfd</I>
 
@@ -52,7 +63,7 @@ first if necessary.
 <A NAME="lbAE">&nbsp;</A>
 <H2>RETURN VALUE</H2>
 
-<B>dup</B> and <B>dup2</B>
+<B>dup</B>() and <B>dup2</B>()
 
 return the new descriptor, or -1 if an error occurred (in which case,
 <I>errno</I>
@@ -75,14 +86,14 @@ is out of the allowed range for file descriptors.
 
 <DD>
 (Linux only) This may be returned by
-<B>dup2</B>
+<B>dup2</B>()
 
 during a race condition with open() and dup().
 <DT><B>EINTR</B>
 
 <DD>
 The
-<B>dup2</B>
+<B>dup2</B>()
 
 call was interrupted by a signal.
 <DT><B>EMFILE</B>
@@ -92,10 +103,10 @@ The process already has the maximum number of file
 descriptors open and tried to open a new one.
 </DL>
 <A NAME="lbAG">&nbsp;</A>
-<H2>WARNING</H2>
+<H2>WARNINGS</H2>
 
 The error returned by
-<B>dup2</B>
+<B>dup2</B>()
 
 is different from that returned by
 <B>fcntl(</B>..., <B>F_DUPFD</B>, ...<B>)</B>
@@ -104,7 +115,7 @@ when
 <I>newfd</I>
 
 is out of range. On some systems
-<B>dup2</B>
+<B>dup2</B>()
 
 also sometimes returns
 <B>EINVAL</B>
@@ -112,9 +123,7 @@ also sometimes returns
 like
 <B>F_DUPFD</B>.
 
-<A NAME="lbAH">&nbsp;</A>
-<H2>BUGS</H2>
-
+<P>
 If
 <I>newfd</I>
 
@@ -122,19 +131,19 @@ was open, any errors that would have been reported at
 <I>close</I>()
 
 time, are lost. A careful programmer will not use
-<B>dup2</B>
+<B>dup2</B>()
 
 without closing
 <I>newfd</I>
 
 first.
-<A NAME="lbAI">&nbsp;</A>
+<A NAME="lbAH">&nbsp;</A>
 <H2>CONFORMING TO</H2>
 
 SVr4, SVID, POSIX, X/OPEN, BSD 4.3. SVr4 documents additional
 EINTR and ENOLINK error conditions.  POSIX.1 adds EINTR.
 The EBUSY return is Linux-specific.
-<A NAME="lbAJ">&nbsp;</A>
+<A NAME="lbAI">&nbsp;</A>
 <H2>SEE ALSO</H2>
 
 <B><A HREF="../man2/close.2.html">close</A></B>(2),
@@ -153,15 +162,14 @@ The EBUSY return is Linux-specific.
 <DT><A HREF="#lbAD">DESCRIPTION</A><DD>
 <DT><A HREF="#lbAE">RETURN VALUE</A><DD>
 <DT><A HREF="#lbAF">ERRORS</A><DD>
-<DT><A HREF="#lbAG">WARNING</A><DD>
-<DT><A HREF="#lbAH">BUGS</A><DD>
-<DT><A HREF="#lbAI">CONFORMING TO</A><DD>
-<DT><A HREF="#lbAJ">SEE ALSO</A><DD>
+<DT><A HREF="#lbAG">WARNINGS</A><DD>
+<DT><A HREF="#lbAH">CONFORMING TO</A><DD>
+<DT><A HREF="#lbAI">SEE ALSO</A><DD>
 </DL>
 <HR>
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 02:09:54 GMT, April 20, 2020
+Time: 02:13:54 GMT, April 20, 2020
 </BODY>
 </HTML>

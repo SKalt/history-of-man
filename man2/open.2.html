@@ -4,7 +4,7 @@
 <HTML><HEAD><TITLE>Man page of OPEN</TITLE>
 </HEAD><BODY>
 <H1>OPEN</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2004-12-08<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2005-06-22<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -27,22 +27,23 @@ open, creat - open and possibly create a file or device
 <A NAME="lbAD">&nbsp;</A>
 <H2>DESCRIPTION</H2>
 
-The
+Given a
+<I>pathname</I>
+
+for a file,
 <B>open</B>()
 
-system call is used to convert a pathname into a file descriptor
-(a small, non-negative integer for use in subsequent I/O as with
-<B><A HREF="../man2/read.2.html">read</A></B>(2), <B><A HREF="../man2/write.2.html">write</A></B>(2), etc.).
+returns a file descriptor, a small, non-negative integer 
+for use in subsequent system calls
+(<B><A HREF="../man2/read.2.html">read</A></B>(2), <B><A HREF="../man2/write.2.html">write</A></B>(2), <B><A HREF="../man2/lseek.2.html">lseek</A></B>(2), <B><A HREF="../man2/fcntl.2.html">fcntl</A></B>(2), etc.).
 
-When the call is successful, the file descriptor returned will be
-the lowest file descriptor not currently open for the process.
-This call creates a new open file description,
-not shared with any other process.
-(But shared open file descriptions may arise via the
-<B><A HREF="../man2/fork.2.html">fork</A></B>(2)
+The file descriptor returned by a successful call will be
+the lowest-numbered file descriptor not currently open for the process.
+<P>
 
-system call.)
-The new file descriptor is set to remain open across exec functions
+The new file descriptor is set to remain open across an 
+<B><A HREF="../man2/execve.2.html">execve</A></B>(2)
+
 (i.e., the
 <B>FD_CLOEXEC</B>
 
@@ -54,17 +55,49 @@ The file offset is set to the beginning of the file (see
 <B><A HREF="../man2/lseek.2.html">lseek</A></B>(2)).
 
 <P>
+
+A call to
+<B>open</B>()
+
+creates a new
+<I>open file description</I>,
+
+an entry in the system-wide table of open files.
+This entry records the file offset and the file status flags
+(modifiable via the
+<B>fcntl</B>()
+
+<B>F_SETFL</B>
+
+operation).
+A file descriptor is a reference to one of these entries;
+this reference is unaffected if
+<I>pathname</I>
+
+is subsequently removed or modified to refer to a different file.
+The new open file description is initially not shared
+with any other process,
+but sharing may arise via
+<B><A HREF="../man2/fork.2.html">fork</A></B>(2).
+
+<P>
+
 The parameter
 <I>flags</I>
 
-is one of
-<B>O_RDONLY</B>, <B>O_WRONLY</B> or <B>O_RDWR</B>
+must include one of the following
+<I>access modes</I>:
 
-which request opening the file read-only, write-only or read/write,
-respectively,
+<B>O_RDONLY</B>, <B>O_WRONLY</B>, or <B>O_RDWR.</B>
+
+These request opening the file read-only, write-only, or read/write,
+respectively.
+In addition, zero or more of the following may be
 bitwise-<I>or</I>'d
 
-with zero or more of the following:
+in
+<I>flags</I>:
+
 <DL COMPACT>
 <DT><B>O_APPEND</B>
 
@@ -121,13 +154,13 @@ Try to minimize cache effects of the I/O to and from this file.
 In general this will degrade performance, but it is useful in
 special situations, such as when applications do their own caching.
 File I/O is done directly to/from user space buffers.
-The I/O is synchronous, i.e., at the completion of the
+The I/O is synchronous, i.e., at the completion of a
 <B><A HREF="../man2/read.2.html">read</A></B>(2)
 
 or
-<B><A HREF="../man2/write.2.html">write</A></B>(2)
+<B><A HREF="../man2/write.2.html">write</A></B>(2),
 
-system call, data is guaranteed to have been transferred.
+data is guaranteed to have been transferred.
 Under Linux 2.4 transfer sizes, and the alignment of user buffer
 and file offset must all be multiples of the logical block size
 of the file system. Under Linux 2.6 alignment to 512-byte boundaries
@@ -213,9 +246,10 @@ process does not have one.
 If <I>pathname</I> is a symbolic link, then the open fails.  This is a
 FreeBSD extension, which was added to Linux in version 2.1.126.
 Symbolic links in earlier components of the pathname will still be
-followed.  The headers from glibc 2.0.100 and later include a
-definition of this flag; <I>kernels before 2.1.126 will ignore it if
-used</I>.
+followed.
+
+
+
 <DT><B>O_NONBLOCK</B> or <B>O_NDELAY</B>
 
 <DD>
@@ -369,10 +403,10 @@ cannot create them - use
 instead.
 <P>
 
-On NFS file systems with UID mapping enabled, <B>open</B> may 
+On NFS file systems with UID mapping enabled, <B>open</B>() may 
 return a file descriptor but e.g. <B><A HREF="../man2/read.2.html">read</A></B>(2) requests are denied
 with <B>EACCES</B>.
-This is because the client performs <B>open</B> by checking the
+This is because the client performs <B>open</B>() by checking the
 permissions, but UID mapping is performed by the server upon
 read and write requests.
 <P>
@@ -600,6 +634,8 @@ corresponding to the flags <B>O_SYNC</B>, <B>O_DSYNC</B> and
 
 <B><A HREF="../man2/close.2.html">close</A></B>(2),
 
+<B><A HREF="../man2/dup.2.html">dup</A></B>(2),
+
 <B><A HREF="../man2/fcntl.2.html">fcntl</A></B>(2),
 
 <B><A HREF="../man2/link.2.html">link</A></B>(2),
@@ -609,6 +645,8 @@ corresponding to the flags <B>O_SYNC</B>, <B>O_DSYNC</B> and
 <B><A HREF="../man2/mknod.2.html">mknod</A></B>(2),
 
 <B><A HREF="../man2/mount.2.html">mount</A></B>(2),
+
+<B><A HREF="../man2/mmap.2.html">mmap</A></B>(2),
 
 <B><A HREF="../man2/path_resolution.2.html">path_resolution</A></B>(2),
 
@@ -648,6 +686,6 @@ corresponding to the flags <B>O_SYNC</B>, <B>O_DSYNC</B> and
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 02:13:32 GMT, April 20, 2020
+Time: 02:13:55 GMT, April 20, 2020
 </BODY>
 </HTML>

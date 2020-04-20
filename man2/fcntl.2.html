@@ -26,16 +26,18 @@ fcntl - manipulate file descriptor
 <A NAME="lbAD">&nbsp;</A>
 <H2>DESCRIPTION</H2>
 
-<B>fcntl</B>
+<B>fcntl</B>()
 
-performs one of various miscellaneous operations on
+performs one of the operations described below on the open file descriptor
 <I>fd</I>.
 
-The operation in question is determined by
+The operation is determined by
 <I>cmd</I>.
 
+<P>
+
 <A NAME="lbAE">&nbsp;</A>
-<H3>Handling close-on-exec</H3>
+<H3>Duplicating a file descriptor</H3>
 
 <DL COMPACT>
 <DT><B>F_DUPFD</B>
@@ -48,47 +50,55 @@ greater than or equal to
 and make it be a copy of
 <I>fd</I>.
 
-This is different form
+This is different from
 <B><A HREF="../man2/dup2.2.html">dup2</A></B>(2)
 
 which uses exactly the descriptor specified.
 <P>
-The old and new descriptors may be used interchangeably. They share locks,
-file position pointers and flags; for example, if the file position is
-modified by using
-<B>lseek</B>
-
-on one of the descriptors, the position is also changed for the other.
-<P>
-The two descriptors do not share the close-on-exec flag, however.
-The close-on-exec flag of the copy is off, meaning that it will
-not be closed on exec.
-<P>
 On success, the new descriptor is returned.
+<P>
+See
+<B><A HREF="../man2/dup.2.html">dup</A></B>(2)
+
+for further details.
+</DL>
+<P>
+
+<A NAME="lbAF">&nbsp;</A>
+<H3>File descriptor flags</H3>
+
+The following commands manipulate the flags associated with
+a file descriptor.  
+Currently, only one such flag is defined:
+<B>FD_CLOEXEC</B>,
+
+the close-on-exec flag.
+If the
+<B>FD_CLOEXEC</B>
+
+bit is 0, the file descriptor will remain open across an
+<B><A HREF="../man2/execve.2.html">execve</A></B>(2),
+
+otherwise it will be closed.
+<DL COMPACT>
 <DT><B>F_GETFD</B>
 
 <DD>
-Read the close-on-exec flag.  If the
-<B>FD_CLOEXEC</B>
-
-bit is 0, the file will remain open across
-<B>exec</B>,
-
-otherwise it will be closed.
+Read the file descriptor flags.
 <DT><B>F_SETFD</B>
 
 <DD>
-Set the close-on-exec flag to the value specified by the
-<B>FD_CLOEXEC</B>
-
-bit of
+Set the file descriptor flags to the value specified by
 <I>arg</I>.
 
 </DL>
-<A NAME="lbAF">&nbsp;</A>
-<H3>The file status flags</H3>
+<P>
 
-A file descriptor has certain associated flags, initialized by
+<A NAME="lbAG">&nbsp;</A>
+<H3>File status flags</H3>
+
+Each open file description has certain associated status flags,
+initialized by
 <B><A HREF="../man2/open.2.html">open</A></B>(2)
 
 
@@ -96,29 +106,38 @@ A file descriptor has certain associated flags, initialized by
 and possibly modified by
 <B><A HREF="../man2/fcntl.2.html">fcntl</A></B>(2).
 
-The flags are shared between copies (made with
-<B><A HREF="../man2/dup.2.html">dup</A></B>(2),
+Duplicated file descriptors 
+(made with
+<B>dup</B>(),
 
-<B><A HREF="../man2/fork.2.html">fork</A></B>(2),
+<B>fcntl</B>(F_DUPFD),
 
-etc.) of the same file descriptor.
+<B>fork</B>(),
+
+etc.) refer to the same open file description, and thus
+share the same file status flags.
 <P>
-The flags and their semantics are described in
+The file status flags and their semantics are described in
 <B><A HREF="../man2/open.2.html">open</A></B>(2).
 
 <DL COMPACT>
 <DT><B>F_GETFL</B>
 
 <DD>
-Read the file descriptor's flags.
+Read the file status flags.
 <DT><B>F_SETFL</B>
 
 <DD>
-Set the file status flags part of the descriptor's flags to the value
-specified by
+Set the file status flags to the value specified by
 <I>arg</I>.
 
-Remaining bits (access mode, file creation flags) in
+File access mode 
+(<B>O_RDONLY</B>, <B>O_WRONLY</B>, <B>O_RDWR</B>)
+
+and file creation flags
+(e.g.,<B>O_CREAT</B>, <B>O_EXCL</B>, <B>O_TRUNC</B>)
+
+in
 <I>arg</I>
 
 are ignored.
@@ -140,7 +159,7 @@ flags.
 </DL>
 <P>
 
-<A NAME="lbAG">&nbsp;</A>
+<A NAME="lbAH">&nbsp;</A>
 <H3>Advisory locking</H3>
 
 <B>F_GETLK</B>, <B>F_SETLK</B> and <B>F_SETLKW</B>
@@ -378,7 +397,7 @@ should be avoided; use
 instead.
 <P>
 
-<A NAME="lbAH">&nbsp;</A>
+<A NAME="lbAI">&nbsp;</A>
 <H3>Mandatory locking</H3>
 
 (Non-POSIX.)
@@ -398,7 +417,7 @@ cooperating processes. Mandatory locks are enforced for all
 processes.
 <P>
 
-<A NAME="lbAI">&nbsp;</A>
+<A NAME="lbAJ">&nbsp;</A>
 <H3>Managing signals</H3>
 
 <B>F_GETOWN</B>, <B>F_SETOWN</B>, <B>F_GETSIG</B> and <B>F_SETSIG</B>
@@ -443,7 +462,7 @@ call, or by using the
 <B>F_SETFL</B>
 
 command of
-<B>fcntl</B>),
+<B>fcntl</B>()),
 
 a SIGIO signal is sent whenever input or output becomes possible
 on that file descriptor.
@@ -492,7 +511,7 @@ If a non-zero value is given to
 
 in a multi-threaded process running with a threading library
 that supports thread groups (e.g., NPTL),
-then a positive value value given to 
+then a positive value given to 
 <B>F_SETOWN</B>
 
 has a different meaning:
@@ -638,7 +657,7 @@ structure to achieve similar things; these are also available
 in Linux as part of the GNU C Library (Glibc).
 <P>
 
-<A NAME="lbAJ">&nbsp;</A>
+<A NAME="lbAK">&nbsp;</A>
 <H3>Leases</H3>
 
 <B>F_SETLEASE</B>
@@ -802,8 +821,12 @@ structure as its second argument, and the
 field of this argument will hold the descriptor of the leased file
 that has been accessed by another process.
 (This is useful if the caller holds leases against multiple files).
-<A NAME="lbAK">&nbsp;</A>
+<P>
+
+<A NAME="lbAL">&nbsp;</A>
 <H3>File and directory change notification</H3>
+
+
 
 <DL COMPACT>
 <DT><B>F_NOTIFY</B>
@@ -889,7 +912,7 @@ Especially when using
 a POSIX.1b real time signal should be used for notification,
 so that multiple notifications can be queued.
 </DL>
-<A NAME="lbAL">&nbsp;</A>
+<A NAME="lbAM">&nbsp;</A>
 <H2>RETURN VALUE</H2>
 
 For a successful call, the return value depends on the operation:
@@ -901,7 +924,7 @@ The new descriptor.
 <DT><B>F_GETFD</B>
 
 <DD>
-Value of flag.
+Value of flags.
 <DT><B>F_GETFL</B>
 
 <DD>
@@ -924,7 +947,7 @@ On error, -1 is returned, and
 <I>errno</I>
 
 is set appropriately.
-<A NAME="lbAM">&nbsp;</A>
+<A NAME="lbAN">&nbsp;</A>
 <H2>ERRORS</H2>
 
 <DL COMPACT>
@@ -1007,11 +1030,11 @@ Attempted to clear the
 
 flag on a file that has the append-only attribute set.
 </DL>
-<A NAME="lbAN">&nbsp;</A>
+<A NAME="lbAO">&nbsp;</A>
 <H2>NOTES</H2>
 
 The errors returned by
-<B>dup2</B>
+<B>dup2</B>()
 
 are different from those returned by
 <B>F_DUPFD</B>.
@@ -1048,7 +1071,7 @@ Clearly,
 
 alone is not going to be very useful if the process holding the lock
 may live on a different machine.
-<A NAME="lbAO">&nbsp;</A>
+<A NAME="lbAP">&nbsp;</A>
 <H2>BUGS</H2>
 
 A limitation of the Linux system call conventions on some
@@ -1091,7 +1114,7 @@ even when the owner process (group) is one that the caller
 has permission to send signals to.
 Despite this error return, the file descriptor owner is set,
 and signals will be sent to the owner.
-<A NAME="lbAP">&nbsp;</A>
+<A NAME="lbAQ">&nbsp;</A>
 <H2>CONFORMING TO</H2>
 
 SVr4, SVID, POSIX, X/OPEN, BSD 4.3.  Only the operations F_DUPFD,
@@ -1110,7 +1133,7 @@ options and flags not documented here.
 <P>
 
 SVr4 documents additional EIO, ENOLINK and EOVERFLOW error conditions.
-<A NAME="lbAQ">&nbsp;</A>
+<A NAME="lbAR">&nbsp;</A>
 <H2>SEE ALSO</H2>
 
 <B><A HREF="../man2/dup2.2.html">dup2</A></B>(2),
@@ -1138,25 +1161,26 @@ See also locks.txt, mandatory.txt, and dnotify.txt in
 <DT><A HREF="#lbAC">SYNOPSIS</A><DD>
 <DT><A HREF="#lbAD">DESCRIPTION</A><DD>
 <DL>
-<DT><A HREF="#lbAE">Handling close-on-exec</A><DD>
-<DT><A HREF="#lbAF">The file status flags</A><DD>
-<DT><A HREF="#lbAG">Advisory locking</A><DD>
-<DT><A HREF="#lbAH">Mandatory locking</A><DD>
-<DT><A HREF="#lbAI">Managing signals</A><DD>
-<DT><A HREF="#lbAJ">Leases</A><DD>
-<DT><A HREF="#lbAK">File and directory change notification</A><DD>
+<DT><A HREF="#lbAE">Duplicating a file descriptor</A><DD>
+<DT><A HREF="#lbAF">File descriptor flags</A><DD>
+<DT><A HREF="#lbAG">File status flags</A><DD>
+<DT><A HREF="#lbAH">Advisory locking</A><DD>
+<DT><A HREF="#lbAI">Mandatory locking</A><DD>
+<DT><A HREF="#lbAJ">Managing signals</A><DD>
+<DT><A HREF="#lbAK">Leases</A><DD>
+<DT><A HREF="#lbAL">File and directory change notification</A><DD>
 </DL>
-<DT><A HREF="#lbAL">RETURN VALUE</A><DD>
-<DT><A HREF="#lbAM">ERRORS</A><DD>
-<DT><A HREF="#lbAN">NOTES</A><DD>
-<DT><A HREF="#lbAO">BUGS</A><DD>
-<DT><A HREF="#lbAP">CONFORMING TO</A><DD>
-<DT><A HREF="#lbAQ">SEE ALSO</A><DD>
+<DT><A HREF="#lbAM">RETURN VALUE</A><DD>
+<DT><A HREF="#lbAN">ERRORS</A><DD>
+<DT><A HREF="#lbAO">NOTES</A><DD>
+<DT><A HREF="#lbAP">BUGS</A><DD>
+<DT><A HREF="#lbAQ">CONFORMING TO</A><DD>
+<DT><A HREF="#lbAR">SEE ALSO</A><DD>
 </DL>
 <HR>
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 02:13:31 GMT, April 20, 2020
+Time: 02:13:54 GMT, April 20, 2020
 </BODY>
 </HTML>
