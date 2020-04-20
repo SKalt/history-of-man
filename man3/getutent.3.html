@@ -5,13 +5,14 @@ Copyright 1995 Mark D. Roth (roth@uiuc.edu)
 <HTML><HEAD><TITLE>Man page of GETUTENT</TITLE>
 </HEAD><BODY>
 <H1>GETUTENT</H1>
-Section: Linux Programmer's Manual (3)<BR>Updated: 1996-07-25<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2008-06-29<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
 <H2>NAME</H2>
 
-getutent, getutid, getutline, pututline, setutent, endutent, utmpname - access utmp file entries
+getutent, getutid, getutline, pututline, setutent, endutent,
+utmpname - access utmp file entries
 <A NAME="lbAC">&nbsp;</A>
 <H2>SYNOPSIS</H2>
 
@@ -39,11 +40,14 @@ getutent, getutid, getutline, pututline, setutent, endutent, utmpname - access u
 <B>void endutent(void);</B>
 
 <P>
-<B>void utmpname(const char *</B><I>file</I><B>);</B>
+<B>int utmpname(const char *</B><I>file</I><B>);</B>
 
 <A NAME="lbAD">&nbsp;</A>
 <H2>DESCRIPTION</H2>
 
+New applications should use the POSIX.1-specified &quot;utmpx&quot; versions of
+these functions; see CONFORMING TO.
+<P>
 <B>utmpname</B>()
 
 sets the name of the utmp-format file for the other utmp
@@ -75,6 +79,9 @@ code is done accessing the file with the other functions.
 reads a line from the current file position in the utmp file.
 It returns a pointer to a structure containing the fields of
 the line.
+The defintion of this structure is shown in
+<B><A HREF="../man5/utmp.5.html">utmp</A></B>(5).
+
 <P>
 
 <B>getutid</B>()
@@ -134,22 +141,58 @@ will append the new entry to the end of the file.
 
 <B>getutid</B>(),
 
+and
 <B>getutline</B>()
 
-and
-<B>pututline</B>()
-
-return a pointer to a <I>struct utmp</I> on success, and NULL on failure.
+return a pointer to a <I>struct utmp</I> on success,
+and NULL on failure (which includes the &quot;record not found&quot; case).
 This <I>struct utmp</I> is allocated in static storage, and may be
 overwritten by subsequent calls.
+<P>
+On success
+<B>pututline</B>()
+
+returns
+<I>ut</I>;
+
+on failure, it returns NULL.
+<P>
+<B>utmpname</B>()
+
+returns 0 if the new name was successfully stored, or -1 on failure.
 <A NAME="lbAF">&nbsp;</A>
+<H2>ERRORS</H2>
+
+<DL COMPACT>
+<DT><B>ENOMEM</B>
+
+<DD>
+Out of memory.
+<DT><B>ESRCH</B>
+
+<DD>
+Record not found.
+</DL>
+<P>
+
+<B>setutent</B>(),
+
+<B>pututent</B>(),
+
+and the
+<B>getut* ()</B>
+
+functions can also fail for the reasons described in
+<B><A HREF="../man2/open.2.html">open</A></B>(2).
+
+<A NAME="lbAG">&nbsp;</A>
 <H2>FILES</H2>
 
 /var/run/utmp<TT>&nbsp;&nbsp;</TT>database of currently logged-in users<BR>
 <BR>
 
 /var/log/wtmp<TT>&nbsp;&nbsp;</TT>database of past user logins<BR>
-<A NAME="lbAG">&nbsp;</A>
+<A NAME="lbAH">&nbsp;</A>
 <H2>CONFORMING TO</H2>
 
 XPG2, SVr4.
@@ -199,9 +242,24 @@ does not have any of these functions, but instead uses
 <B>void endutxent(void);</B>
 
 <P>
-The <I>utmpx</I> structure is a superset of the <I>utmp</I> structure,
-with additional fields, and larger versions of the existing fields.
-The corresponding files are often
+
+These functions are provided by glibc,
+and perform the same task as their equivalents without the &quot;x&quot;, but use
+<I>struct utmpx</I>,
+
+defined on Linux to be the same as
+<I>struct utmp</I>.
+
+For completeness, glibc also provides
+<B>utmpxname</B>(),
+
+although this function is not specified by POSIX.1.
+<P>
+
+On some other systems,
+the <I>utmpx</I> structure is a superset of the <I>utmp</I> structure,
+with additional fields, and larger versions of the existing fields,
+and parallel files are maintained, often
 <I>/var/*/utmpx</I>
 
 and
@@ -209,14 +267,14 @@ and
 
 <P>
 
-Linux glibc on the other hand does not use <I>utmpx</I> since its
-<I>utmp</I> structure is already large enough.
-The functions <I>getutxent</I>
-etc. are aliases for <I>getutent</I> etc.
-<A NAME="lbAH">&nbsp;</A>
+Linux glibc on the other hand does not use a parallel <I>utmpx</I> file
+since its <I>utmp</I> structure is already large enough.
+The functions <B>getutxent</B>()
+etc. are aliases for <B>getutent</B>() etc.
+<A NAME="lbAI">&nbsp;</A>
 <H2>NOTES</H2>
 
-<A NAME="lbAI">&nbsp;</A>
+<A NAME="lbAJ">&nbsp;</A>
 <H3>Glibc Notes</H3>
 
 The above functions are not thread-safe.
@@ -246,7 +304,9 @@ On success they return 0, and a pointer to the result is written in
 <I>*ubufp</I>.
 
 On error these functions return -1.
-<A NAME="lbAJ">&nbsp;</A>
+There are no utmpx equivalents of the above functions.
+(POSIX.1 does not sdpecify such functions.)
+<A NAME="lbAK">&nbsp;</A>
 <H2>EXAMPLE</H2>
 
 The following example adds and removes a utmp record, assuming it is run
@@ -302,8 +362,10 @@ main(int argc, char *argv[])
 }
 </PRE>
 
-<A NAME="lbAK">&nbsp;</A>
+<A NAME="lbAL">&nbsp;</A>
 <H2>SEE ALSO</H2>
+
+<B><A HREF="../man3/getutmp.3.html">getutmp</A></B>(3),
 
 <B><A HREF="../man5/utmp.5.html">utmp</A></B>(5),
 
@@ -318,19 +380,20 @@ main(int argc, char *argv[])
 <DT><A HREF="#lbAC">SYNOPSIS</A><DD>
 <DT><A HREF="#lbAD">DESCRIPTION</A><DD>
 <DT><A HREF="#lbAE">RETURN VALUE</A><DD>
-<DT><A HREF="#lbAF">FILES</A><DD>
-<DT><A HREF="#lbAG">CONFORMING TO</A><DD>
-<DT><A HREF="#lbAH">NOTES</A><DD>
+<DT><A HREF="#lbAF">ERRORS</A><DD>
+<DT><A HREF="#lbAG">FILES</A><DD>
+<DT><A HREF="#lbAH">CONFORMING TO</A><DD>
+<DT><A HREF="#lbAI">NOTES</A><DD>
 <DL>
-<DT><A HREF="#lbAI">Glibc Notes</A><DD>
+<DT><A HREF="#lbAJ">Glibc Notes</A><DD>
 </DL>
-<DT><A HREF="#lbAJ">EXAMPLE</A><DD>
-<DT><A HREF="#lbAK">SEE ALSO</A><DD>
+<DT><A HREF="#lbAK">EXAMPLE</A><DD>
+<DT><A HREF="#lbAL">SEE ALSO</A><DD>
 </DL>
 <HR>
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 02:53:38 GMT, April 20, 2020
+Time: 02:54:06 GMT, April 20, 2020
 </BODY>
 </HTML>

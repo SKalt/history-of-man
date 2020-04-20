@@ -1,17 +1,17 @@
 <!--
-Copyright 2002 Walter Harms (walter.harms@informatik.uni-oldenburg.de)
+Copyright (C) 2008, Linux Foundation, written by Michael Kerrisk
 -->
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
 <HTML><HEAD><TITLE>Man page of GETGROUPLIST</TITLE>
 </HEAD><BODY>
 <H1>GETGROUPLIST</H1>
-Section: Linux Programmer's Manual (3)<BR>Updated: 2007-07-26<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2008-04-15<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
 <H2>NAME</H2>
 
-getgrouplist - list of groups a user belongs to
+getgrouplist - get list of groups to which a user belongs
 <A NAME="lbAC">&nbsp;</A>
 <H2>SYNOPSIS</H2>
 
@@ -40,36 +40,73 @@ _BSD_SOURCE
 The
 <B>getgrouplist</B>()
 
-function scans the group database for all the groups
+function scans the group database (see
+<B><A HREF="../man5/group.5.html">group</A></B>(5))
+
+to obtain the list of groups that
 <I>user</I>
 
 belongs to.
 Up to
 <I>*ngroups</I>
 
-group IDs corresponding to these groups are stored in the array
-<I>groups</I>;
+of these groups are returned in the array
+<I>groups</I>.
 
-the return value from the function is the number of group IDs
-actually stored.
-The group
+<P>
+If it was not among the groups defined for
+<I>user</I>
+
+in the group database, then
 <I>group</I>
 
-is automatically included in the list of groups returned by
-<B>getgrouplist</B>().
+is included in the list of groups returned by
+<B>getgrouplist</B>();
+
+typically this argument is specified as the group from
+the password record for
+<I>user</I>.
+
+<P>
+The
+<I>ngroups</I>
+
+argument is a value-result argument:
+on return it always contains the number of groups found for
+<I>user</I>,
+
+including
+<I>group</I>;
+
+this value may be greater than the number of groups stored in
+<I>groups</I>.
 
 <A NAME="lbAE">&nbsp;</A>
 <H2>RETURN VALUE</H2>
 
-If
+If the number of groups of which
+<I>user</I>
+
+is a member is less than or equal to
+<I>*ngroups</I>,
+
+then the value
 <I>*ngroups</I>
 
-is smaller than the total number of groups found, then
+is returned.
+<P>
+If the user is a member of more than
+<I>*ngroups</I>
+
+groups, then
 <B>getgrouplist</B>()
 
 returns -1.
-In all cases the actual number of groups is stored in
-<I>*ngroups</I>.
+In this case the value returned in
+<I>*ngroups</I>
+
+can be used to resize the buffer passed to a further call
+<B>getgrouplist</B>().
 
 <A NAME="lbAF">&nbsp;</A>
 <H2>VERSIONS</H2>
@@ -82,38 +119,97 @@ This function is non-standard; it appears on most BSDs.
 <A NAME="lbAH">&nbsp;</A>
 <H2>BUGS</H2>
 
-The glibc 2.3.2 implementation of this function is broken:
-it overwrites memory when the actual number of groups is larger than
+In glibc versions before 2.3.3,
+the implementation of this function contains a buffer-overrun bug:
+it returns the complete list of groups for
+<I>user</I>
+
+in the array
+<I>groups</I>,
+
+even when the number of groups exceeds
 <I>*ngroups</I>.
 
 <A NAME="lbAI">&nbsp;</A>
 <H2>EXAMPLE</H2>
 
+<P>
+
+The program below displays the group list for the user named in its
+first command-line argument.
+The second command-line argument specifies the
+<I>ngroups</I>
+
+value to be supplied to
+
+The following shell session shows examples of the use of this program:
+
 <PRE>
-/* This crashes with glibc 2.3.2 */
+
+$ ./a.out cecilia 0
+getgrouplist() returned -1; ngroups = 3
+$ ./a.out cecilia 3
+ngroups = 3
+16 (dialout)
+33 (video)
+100 (users)
+</PRE>
+
+<P>
+
+<PRE>
 #include &lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/stdlib.h">stdlib.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/grp.h">grp.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/pwd.h">pwd.h</A>&gt;
 
 int
-main(void)
+main(int argc, char *argv[])
 {
-    int i, ng = 0;
-    char *user = &quot;who&quot;;       /* username here */
-    gid_t *groups = NULL;
-    struct passwd *pw = getpwnam(user);
+    int j, ngroups;
+    gid_t *groups;
+    struct passwd *pw;
+    struct group *gr;
 
-    if (pw == NULL)
-        exit(EXIT_SUCCESS);
-
-    if (getgrouplist(user, pw-&gt;pw_gid, NULL, &amp;ng) &lt; 0) {
-        groups = (gid_t *) malloc(ng * sizeof (gid_t));
-        getgrouplist(user, pw-&gt;pw_gid, groups, &amp;ng);
+    if (argc != 3) {
+        fprintf(stderr, &quot;Usage: %s &lt;user&gt; &lt;ngroups&gt;\n&quot;, argv[0]);
+        exit(EXIT_FAILURE);
     }
 
-    for (i = 0; i &lt; ng; i++)
-        printf(&quot;%d\n&quot;, groups[i]);
+    ngroups = atoi(argv[2]);
+
+    groups = malloc(ngroups * sizeof (gid_t));
+    if (groups == NULL) {
+        perror(&quot;malloc&quot;);
+        exit(EXIT_FAILURE);
+    }
+
+    /* Fetch passwd structure (contains first group ID for user) */
+
+    pw = getpwnam(argv[1]);
+    if (pw == NULL) {
+        perror(&quot;getpwnam&quot;);
+        exit(EXIT_SUCCESS);
+    }
+
+    /* Retrieve group list */
+
+    if (getgrouplist(argv[1], pw-&gt;pw_gid, groups, &amp;ngroups) == -1) {
+        fprintf(stderr, &quot;getgrouplist() returned -1; ngroups = %d\n&quot;,
+                ngroups);
+        exit(EXIT_FAILURE);
+    }
+
+    /* Display list of retrieved groups, along with group names */
+
+    fprintf(stderr, &quot;ngroups = %d\n&quot;, ngroups);
+    for (j = 0; j &lt; ngroups; j++) {
+        printf(&quot;%d&quot;, groups[j]);
+        gr = getgrgid(groups[j]);
+        if (gr != NULL)
+            printf(&quot; (%s)&quot;, gr-&gt;gr_name);
+        printf(&quot;\n&quot;);
+    }
 
     exit(EXIT_SUCCESS);
 }
@@ -124,7 +220,11 @@ main(void)
 
 <B><A HREF="../man2/getgroups.2.html">getgroups</A></B>(2),
 
-<B><A HREF="../man2/setgroups.2.html">setgroups</A></B>(2)
+<B><A HREF="../man2/setgroups.2.html">setgroups</A></B>(2),
+
+<B><A HREF="../man3/getgrent.3.html">getgrent</A></B>(3),
+
+<B><A HREF="../man5/group.5.html">group</A></B>(5)
 
 <P>
 
@@ -145,6 +245,6 @@ main(void)
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 02:53:37 GMT, April 20, 2020
+Time: 02:54:05 GMT, April 20, 2020
 </BODY>
 </HTML>

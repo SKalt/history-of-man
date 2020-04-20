@@ -5,7 +5,7 @@ Copyright (C) 1995, Thomas K. Dyas &lt;tdyas@eden.rutgers.edu&gt;
 <HTML><HEAD><TITLE>Man page of SIGRETURN</TITLE>
 </HEAD><BODY>
 <H1>SIGRETURN</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 1995-08-21<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2008-06-26<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -24,16 +24,24 @@ When the Linux kernel creates the stack frame for a signal handler, a
 call to
 <B>sigreturn</B>()
 
-is inserted into the stack frame so that the signal handler will
-call
+is inserted into the stack frame so that upon
+return from the signal handler,
 <B>sigreturn</B>()
 
-upon return.
-This inserted call to
+will be called.
+<P>
+This
 <B>sigreturn</B>()
 
-cleans up the stack so that the process can restart from where it was
-interrupted by the signal.
+call undoes everything that was
+done---changing the process's signal mask, switching stacks (see
+<B><A HREF="../man2/sigaltstack.2.html">sigaltstack</A></B>(2))---in 
+
+order to invoke the signal handler:
+it restores the process's signal mask, switches stacks,
+and restores the process's context (registers, processor flags),
+so that the process directly resumes execution
+at the point where it was interrupted by the signal.
 <A NAME="lbAE">&nbsp;</A>
 <H2>RETURN VALUE</H2>
 
@@ -76,6 +84,8 @@ argument varies depending on the architecture.
 
 <B><A HREF="../man2/signal.2.html">signal</A></B>(2),
 
+<B><A HREF="../man2/sigalstack.2.html">sigalstack</A></B>(2),
+
 <B><A HREF="../man7/signal.7.html">signal</A></B>(7)
 
 <P>
@@ -96,6 +106,6 @@ argument varies depending on the architecture.
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 02:53:33 GMT, April 20, 2020
+Time: 02:54:01 GMT, April 20, 2020
 </BODY>
 </HTML>

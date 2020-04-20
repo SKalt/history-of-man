@@ -5,7 +5,7 @@ Copyright (c) 1993 Michael Haardt (michael@cantor.informatik.rwth-aachen.de), Fr
 <HTML><HEAD><TITLE>Man page of UTMP</TITLE>
 </HEAD><BODY>
 <H1>UTMP</H1>
-Section: Linux Programmer's Manual (5)<BR>Updated: 2007-11-25<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (5)<BR>Updated: 2008-06-29<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -48,52 +48,64 @@ around; details depend on the version of libc):
 
 <PRE>
 
-#define UT_UNKNOWN      0
-#define RUN_LVL         1
-#define BOOT_TIME       2
-#define NEW_TIME        3
-#define OLD_TIME        4
-#define INIT_PROCESS    5
-#define LOGIN_PROCESS   6
-#define USER_PROCESS    7
-#define DEAD_PROCESS    8
-#define ACCOUNTING      9
+/* Values for ut_type field, below */
 
-#define UT_LINESIZE     12
-#define UT_NAMESIZE     32
+#define EMPTY         0 /* Record does not contain valid info
+                           (formerly known as UT_UNKNOWN on Linux) */
+#define RUN_LVL       1 /* Change in system run-level (see
+                           <B><A HREF="../man8/init.8.html">init</A></B>(8) */
+#define BOOT_TIME     2 /* Time of system booy (in <I>ut_tv</I>) */
+#define NEW_TIME      3 /* Time after system clock change
+                           (in <I>ut_tv</I>) */
+#define OLD_TIME      4 /* Time before system clock change
+                           (in <I>ut_tv</I>) */
+#define INIT_PROCESS  5 /* Process spawned by <B><A HREF="../man8/init.8.html">init</A></B>(8) */
+#define LOGIN_PROCESS 6 /* Session leader process for user login */
+#define USER_PROCESS  7 /* Normal process */
+#define DEAD_PROCESS  8 /* Terminated process */
+#define ACCOUNTING    9 /* Not implemented */
+
+#define UT_LINESIZE      32
+#define UT_NAMESIZE      32
 #define UT_HOSTSIZE     256
 
-struct exit_status {
-    short int e_termination;    /* process termination status */
-    short int e_exit;           /* process exit status */
+struct exit_status {              /* Type for ut_exit, below */
+    short int e_termination;      /* Process termination status */
+    short int e_exit;             /* Process exit status */
 };
 
 struct utmp {
-    short ut_type;              /* type of login */
-    pid_t ut_pid;               /* PID of login process */
-    char ut_line[UT_LINESIZE];  /* device name of tty - &quot;/dev/&quot; */
-    char ut_id[4];              /* init id or abbrev. ttyname */
-    char ut_user[UT_NAMESIZE];  /* user name */
-    char ut_host[UT_HOSTSIZE];  /* hostname for remote login */
-    struct exit_status ut_exit; /* The exit status of a process
-                                   marked as DEAD_PROCESS */
-
+    short   ut_type;              /* Type of record */
+    pid_t   ut_pid;               /* PID of login process */
+    char    ut_line[UT_LINESIZE]; /* Device name of tty - &quot;/dev/&quot; */
+    char    ut_id[4];             /* Terminal name suffix,
+                                     or <A HREF="../man5/inittab.5.html">inittab</A>(5) ID */
+    char    ut_user[UT_NAMESIZE]; /* Username */
+    char    ut_host[UT_HOSTSIZE]; /* Hostname for remote login, or
+                                     kernel version for run-level
+                                     messages */
+    struct  exit_status ut_exit;  /* Exit status of a process
+                                     marked as DEAD_PROCESS; not
+                                     used by Linux <A HREF="../man8/init.8.html">init</A>(8) */
     /* The ut_session and ut_tv fields must be the same size when
        compiled 32- and 64-bit.  This allows data files and shared
-       memory to be shared between 32- and 64-bit applications */
+       memory to be shared between 32- and 64-bit applications. */
 #if __WORDSIZE == 64 &amp;&amp; defined __WORDSIZE_COMPAT32
-    int32_t ut_session;         /* Session ID, used for windowing */
+    int32_t ut_session;            /* Session ID (<B><A HREF="../man2/getsid.2.html">getsid</A></B>(2)),
+                                      used for windowing */
     struct {
-        int32_t tv_sec;         /* Seconds */
-        int32_t tv_usec;        /* Microseconds */
-    } ut_tv;                    /* Time entry was made */
+        int32_t tv_sec;            /* Seconds */
+        int32_t tv_usec;           /* Microseconds */
+    } ut_tv;                       /* Time entry was made */
 #else
-     long int ut_session;       /* Session ID, used for windowing */
-     struct timeval ut_tv;      /* Time entry was made */
+     long   ut_session;            /* Session ID */
+     struct timeval ut_tv;         /* Time entry was made */
 #endif
 
-    int32_t ut_addr_v6[4];      /* IP address of remote host */
-    char __unused[20];          /* Reserved for future use */
+    int32_t ut_addr_v6[4];         /* Internet address of remote
+                                      host; IPv4 address uses
+                                      just ut_addr_v6[0] */
+    char __unused[20];             /* Reserved for future use */
 };
 
 /* Backwards compatibility hacks.  */
@@ -131,7 +143,10 @@ cleans up utmp by setting <I>ut_type</I> to <B>DEAD_PROCESS</B>, clearing
 record which <I>ut_type</I> is not <B>DEAD_PROCESS</B> or <B>RUN_LVL</B>
 and where no process with PID <I>ut_pid</I> exists.
 If no empty record
-with the needed <I>ut_id</I> can be found, init creates a new one.
+with the needed <I>ut_id</I> can be found,
+<B><A HREF="../man8/init.8.html">init</A></B>(8)
+
+creates a new one.
 It sets <I>ut_id</I> from the inittab, <I>ut_pid</I> and <I>ut_time</I> to the
 current values, and <I>ut_type</I> to <B>INIT_PROCESS</B>.
 <P>
@@ -173,9 +188,9 @@ clears <I>ut_user</I>, <I>ut_host</I> and <I>ut_time</I> with null bytes.
 <B><A HREF="../man1/xterm.1.html">xterm</A></B>(1)
 
 and other terminal emulators directly create a
-<B>USER_PROCESS</B> record and generate the <I>ut_id</I> by using the last
-two letters of <I>/dev/ttyp</I><I>%c</I> or by using <I>p</I><I>%d</I> for
-<I>/dev/pts/</I><I>%d</I>.
+<B>USER_PROCESS</B> record and generate the <I>ut_id</I> by using the
+string that suffix part of the terminal name (the characters
+following <I>/dev/[pt]ty</I>.
 If they find a <B>DEAD_PROCESS</B> for this ID,
 they recycle it, otherwise they create a new entry.
 If they can, they
@@ -197,11 +212,11 @@ cleans up utmp in the described way.
 <P>
 
 The <I>wtmp</I> file records all logins and logouts.
-Its format is exactly like <I>utmp</I> except that a null user name
+Its format is exactly like <I>utmp</I> except that a null username
 indicates a logout
 on the associated terminal.
 Furthermore, the terminal name <B>~</B>
-with user name <B>shutdown</B> or <B>reboot</B> indicates a system
+with username <B>shutdown</B> or <B>reboot</B> indicates a system
 shutdown or reboot and the pair of terminal names <B>|</B>/<B>}</B>
 logs the old/new system time when
 <B><A HREF="../man1/date.1.html">date</A></B>(1)
@@ -221,8 +236,101 @@ and some versions of
 or
 <B><A HREF="../man8/agetty.8.html">agetty</A></B>(8)).
 
-Neither of these programs creates the file, so if it is
+None of these programs creates the file, so if it is
 removed, record-keeping is turned off.
+<A NAME="lbAE">&nbsp;</A>
+<H2>FILES</H2>
+
+/var/run/utmp
+<BR>
+
+/var/log/wtmp
+<A NAME="lbAF">&nbsp;</A>
+<H2>CONFORMING TO</H2>
+
+<P>
+
+POSIX.1 does not specify a
+<I>utmp</I>
+
+structure, but rather one named
+<I>utmpx</I>,
+
+with specifications for the fields
+<I>ut_type</I>,
+
+<I>ut_pid</I>,
+
+<I>ut_line</I>,
+
+<I>ut_id</I>,
+
+<I>ut_user</I>,
+
+and
+<I>ut_tv</I>.
+
+POSIX.1 does not specify the lengths of the
+<I>ut_line</I>
+
+and
+<I>ut_user</I>
+
+fields.
+<P>
+Linux defines the
+<I>utmpx</I>
+
+structure to be the same as the
+<I>utmp</I>
+
+structure.
+<A NAME="lbAG">&nbsp;</A>
+<H3>Comparison with Historical Systems</H3>
+
+Linux utmp entries conform neither to v7/BSD nor to System V; they are a
+mix of the two.
+<P>
+v7/BSD has fewer fields; most importantly it lacks
+<I>ut_type</I>, which causes native v7/BSD-like programs to display (for
+example) dead or login entries.
+Further, there is no configuration file
+which allocates slots to sessions.
+BSD does so because it lacks <I>ut_id</I> fields.
+<P>
+In Linux (as in System V), the <I>ut_id</I> field of a
+record will never change once it has been set, which reserves that slot
+without needing a configuration file.
+Clearing <I>ut_id</I> may result
+in race conditions leading to corrupted utmp entries and potential
+security holes.
+Clearing the abovementioned fields by filling them
+with null bytes is not required by System V semantics,
+but makes it possible to run
+many programs which assume BSD semantics and which do not modify utmp.
+Linux uses the BSD conventions for line contents, as documented above.
+<P>
+
+
+
+
+System V has no <I>ut_host</I> or <I>ut_addr_v6</I> fields.
+<A NAME="lbAH">&nbsp;</A>
+<H2>NOTES</H2>
+
+<P>
+
+Unlike various other
+systems, where utmp logging can be disabled by removing the file, utmp
+must always exist on Linux.
+If you want to disable
+<B><A HREF="../man1/who.1.html">who</A></B>(1)
+
+then do not make utmp world readable.
+<P>
+
+The file format is machine-dependent, so it is recommended that it be
+processed only on the machine architecture where it was created.
 <P>
 
 Note that on <I>biarch</I> platforms, that is, systems which can run both
@@ -231,6 +339,24 @@ Note that on <I>biarch</I> platforms, that is, systems which can run both
 The same goes for <I>ut_session</I> and <I>ut_time</I> if they are present.
 This allows data files and shared memory to be shared between
 32-bit and 64-bit applications.
+This is achieved by changing the type of
+<I>ut_session</I>
+
+to
+<I>int32_t</I>,
+
+and that of
+<I>ut_tv</I>
+
+to a struct with two
+<I>int32_t</I>
+
+fields
+<I>tv_sec</I>
+
+and
+<I>tv_usec</I>.
+
 Since <I>ut_tv</I> may not be the same as <I>struct timeval</I>,
 then instead of the call:
 
@@ -254,49 +380,6 @@ ut.ut_tv.tv_usec = tv.tv_usec;
 </PRE>
 
 
-<A NAME="lbAE">&nbsp;</A>
-<H2>FILES</H2>
-
-/var/run/utmp
-<BR>
-
-/var/log/wtmp
-<A NAME="lbAF">&nbsp;</A>
-<H2>CONFORMING TO</H2>
-
-Linux utmp entries conform neither to v7/BSD nor to System V; they are a
-mix of the two.  v7/BSD has fewer fields; most importantly it lacks
-<I>ut_type</I>, which causes native v7/BSD-like programs to display (for
-example) dead or login entries.
-Further, there is no configuration file
-which allocates slots to sessions.
-BSD does so because it lacks <I>ut_id</I> fields.
-In Linux (as in System V), the <I>ut_id</I> field of a
-record will never change once it has been set, which reserves that slot
-without needing a configuration file.
-Clearing <I>ut_id</I> may result
-in race conditions leading to corrupted utmp entries and potential
-security holes.
-Clearing the above mentioned fields by filling them
-with null bytes is not required by System V semantics, but it allows to run
-many programs which assume BSD semantics and which do not modify utmp.
-Linux uses the BSD conventions for line contents, as documented above.
-<P>
-
-System V only uses the type field to mark them and logs informative messages
-such as <B>&quot;new time&quot;</B> in the line field.
-<B>UT_UNKNOWN</B> seems
-to be a Linux invention.
-System V has no <I>ut_host</I> or <I>ut_addr_v6</I> fields.
-<P>
-
-Unlike various other
-systems, where utmp logging can be disabled by removing the file, utmp
-must always exist on Linux.
-If you want to disable
-<B><A HREF="../man1/who.1.html">who</A></B>(1)
-
-then do not make utmp world readable.
 <P>
 
 Note that the <I>utmp</I> struct from libc5 has changed in libc6.
@@ -304,44 +387,11 @@ Because of this,
 binaries using the old libc5 struct will corrupt
 <I>/var/run/utmp</I> and/or <I>/var/log/wtmp</I>.
 
-<A NAME="lbAG">&nbsp;</A>
-<H2>NOTES</H2>
-
-The file format is machine-dependent, so it is recommended that it be
-processed only on the machine architecture where it was created.
-<P>
-
-Note that on platforms which can run both 32-bit and 64-bit applications
-(x86-64, ppc64, s390x, etc.), the sizes of the fields of a <I>utmp</I> struct
-must be the same in 32-bit mode as in 64-bit mode.
-This is achieved by changing the type of
-<I>ut_session</I>
-
-to
-<I>int32_t</I>,
-
-and that of
-<I>ut_tv</I>
-
-to a struct with two
-<I>int32_t</I>
-
-fields
-<I>tv_sec</I>
-
-and
-<I>tv_usec</I>.
-
-(Thus, in order to fill it, first get the
-time into a real <I>struct timeval</I>,
-then copy the two fields to
-<I>ut_tv</I>.)
-
-<A NAME="lbAH">&nbsp;</A>
+<A NAME="lbAI">&nbsp;</A>
 <H2>BUGS</H2>
 
 This man page is based on the libc5 one, things may work differently now.
-<A NAME="lbAI">&nbsp;</A>
+<A NAME="lbAJ">&nbsp;</A>
 <H2>SEE ALSO</H2>
 
 <B><A HREF="../man1/ac.1.html">ac</A></B>(1),
@@ -355,6 +405,14 @@ This man page is based on the libc5 one, things may work differently now.
 <B><A HREF="../man1/who.1.html">who</A></B>(1),
 
 <B><A HREF="../man3/getutent.3.html">getutent</A></B>(3),
+
+<B><A HREF="../man3/getutmp.3.html">getutmp</A></B>(3),
+
+<B><A HREF="../man3/login.3.html">login</A></B>(3),
+
+<B><A HREF="../man3/logout.3.html">logout</A></B>(3),
+
+<B><A HREF="../man3/logwtmp.3.html">logwtmp</A></B>(3),
 
 <B><A HREF="../man3/updwtmp.3.html">updwtmp</A></B>(3),
 
@@ -370,14 +428,17 @@ This man page is based on the libc5 one, things may work differently now.
 <DT><A HREF="#lbAD">DESCRIPTION</A><DD>
 <DT><A HREF="#lbAE">FILES</A><DD>
 <DT><A HREF="#lbAF">CONFORMING TO</A><DD>
-<DT><A HREF="#lbAG">NOTES</A><DD>
-<DT><A HREF="#lbAH">BUGS</A><DD>
-<DT><A HREF="#lbAI">SEE ALSO</A><DD>
+<DL>
+<DT><A HREF="#lbAG">Comparison with Historical Systems</A><DD>
+</DL>
+<DT><A HREF="#lbAH">NOTES</A><DD>
+<DT><A HREF="#lbAI">BUGS</A><DD>
+<DT><A HREF="#lbAJ">SEE ALSO</A><DD>
 </DL>
 <HR>
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 02:53:43 GMT, April 20, 2020
+Time: 02:54:12 GMT, April 20, 2020
 </BODY>
 </HTML>
