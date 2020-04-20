@@ -170,7 +170,8 @@ main: exiting
 
 static ucontext_t uctx_main, uctx_func1, uctx_func2;
 
-#define die(msg) do { perror(msg); exit(EXIT_FAILURE); } while (0)
+#define handle_error(msg) \
+    do { perror(msg); exit(EXIT_FAILURE); } while (0)
 
 static void
 func1(void)
@@ -178,7 +179,7 @@ func1(void)
     printf(&quot;func1: started\n&quot;);
     printf(&quot;func1: swapcontext(&amp;uctx_func1, &amp;uctx_func2)\n&quot;);
     if (swapcontext(&amp;uctx_func1, &amp;uctx_func2) == -1)
-        die(&quot;swapcontext&quot;);
+        handle_error(&quot;swapcontext&quot;);
     printf(&quot;func1: returning\n&quot;);
 }
 
@@ -188,7 +189,7 @@ func2(void)
     printf(&quot;func2: started\n&quot;);
     printf(&quot;func2: swapcontext(&amp;uctx_func2, &amp;uctx_func1)\n&quot;);
     if (swapcontext(&amp;uctx_func2, &amp;uctx_func1) == -1)
-        die(&quot;swapcontext&quot;);
+        handle_error(&quot;swapcontext&quot;);
     printf(&quot;func2: returning\n&quot;);
 }
 
@@ -199,14 +200,14 @@ main(int argc, char *argv[])
     char func2_stack[16384];
 
     if (getcontext(&amp;uctx_func1) == -1)
-        die(&quot;getcontext&quot;);
+        handle_error(&quot;getcontext&quot;);
     uctx_func1.uc_stack.ss_sp = func1_stack;
     uctx_func1.uc_stack.ss_size = sizeof(func1_stack);
     uctx_func1.uc_link = &amp;uctx_main;
     makecontext(&amp;uctx_func1, func1, 0);
 
     if (getcontext(&amp;uctx_func2) == -1)
-        die(&quot;getcontext&quot;);
+        handle_error(&quot;getcontext&quot;);
     uctx_func2.uc_stack.ss_sp = func2_stack;
     uctx_func2.uc_stack.ss_size = sizeof(func2_stack);
     /* Successor context is f1(), unless argc &gt; 1 */
@@ -215,7 +216,7 @@ main(int argc, char *argv[])
 
     printf(&quot;main: swapcontext(&amp;uctx_main, &amp;uctx_func2)\n&quot;);
     if (swapcontext(&amp;uctx_main, &amp;uctx_func2) == -1)
-        die(&quot;swapcontext&quot;);
+        handle_error(&quot;swapcontext&quot;);
 
     printf(&quot;main: exiting\n&quot;);
     exit(EXIT_SUCCESS);
@@ -254,6 +255,6 @@ main(int argc, char *argv[])
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 02:46:35 GMT, April 20, 2020
+Time: 02:47:05 GMT, April 20, 2020
 </BODY>
 </HTML>

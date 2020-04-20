@@ -5,7 +5,7 @@ Copyright (C) 1996 Andries Brouwer &lt;aeb@cwi.nl&gt;
 <HTML><HEAD><TITLE>Man page of MMAP</TITLE>
 </HEAD><BODY>
 <H1>MMAP</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2007-07-10<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2007-11-25<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -393,7 +393,7 @@ On error, the value
 <B>MAP_FAILED</B>
 
 (that is,
-<I>(void *) -1)</I>
+<I>(void *) -1</I>)
 
 is returned, and
 <I>errno</I>
@@ -665,6 +665,9 @@ to output the desired bytes.
 #include &lt;<A HREF="file:///usr/include/stdlib.h">stdlib.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;
 
+#define handle_error(msg) \
+    do { perror(msg); exit(EXIT_FAILURE); } while (0)
+
 int
 main(int argc, char *argv[])
 {
@@ -681,15 +684,11 @@ main(int argc, char *argv[])
     }
 
     fd = open(argv[1], O_RDONLY);
-    if (fd == -1) {
-        perror(&quot;open&quot;);
-        exit(EXIT_FAILURE);
-    }
+    if (fd == -1)
+        handle_error(&quot;open&quot;);
 
-    if (fstat(fd, &amp;sb) == -1) {         /* To obtain file size */
-        perror(&quot;fstat&quot;);
-        exit(EXIT_FAILURE);
-    }
+    if (fstat(fd, &amp;sb) == -1)           /* To obtain file size */
+        handle_error(&quot;fstat&quot;);
 
     offset = atoi(argv[2]);
     pa_offset = offset &amp; ~(sysconf(_SC_PAGE_SIZE) - 1);
@@ -712,17 +711,15 @@ main(int argc, char *argv[])
 
     addr = mmap(NULL, length + offset - pa_offset, PROT_READ,
                 MAP_PRIVATE, fd, pa_offset);
-    if (addr == MAP_FAILED) {
-        perror(&quot;mmap&quot;);
-        exit(EXIT_FAILURE);
-    }
+    if (addr == MAP_FAILED)
+        handle_error(&quot;mmap&quot;);
 
     s = write(STDOUT_FILENO, addr + offset - pa_offset, length);
     if (s != length) {
         if (s == -1)
-            perror(&quot;write&quot;);
-        else
-            fprintf(stderr, &quot;partial write&quot;);
+            handle_error(&quot;write&quot;);
+
+        fprintf(stderr, &quot;partial write&quot;);
         exit(EXIT_FAILURE);
     }
 
@@ -778,6 +775,6 @@ B.O. Gallmeister, POSIX.4, O'Reilly, pp. 128-129 and 389-391.
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 02:46:27 GMT, April 20, 2020
+Time: 02:46:57 GMT, April 20, 2020
 </BODY>
 </HTML>

@@ -4,7 +4,7 @@
 <HTML><HEAD><TITLE>Man page of FCNTL</TITLE>
 </HEAD><BODY>
 <H1>FCNTL</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2005-05-20<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2007-11-25<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -452,6 +452,10 @@ permission bit (see
 and
 <B><A HREF="../man2/chmod.2.html">chmod</A></B>(2)).
 
+<P>
+The Linux implementation of mandatory locking is unreliable.  See BUGS
+below.
+<P>
 <A NAME="lbAJ">&nbsp;</A>
 <H3>Managing signals</H3>
 
@@ -752,9 +756,9 @@ in Linux as part of the GNU C Library (Glibc).
 and
 <B>F_GETLEASE</B>
 
-(Linux 2.4 onwards) are used (respectively) to establish and
-retrieve the current setting of the calling process's lease on
-the file referred to by
+(Linux 2.4 onwards) are used (respectively) to establish a new lease,
+and retrieve the current lease, on the open file description
+referred to by the file descriptor
 <I>fd</I>.
 
 A file lease provides a mechanism whereby the process holding
@@ -765,7 +769,7 @@ when a process (the &quot;lease breaker&quot;) tries to
 or
 <B><A HREF="../man2/truncate.2.html">truncate</A></B>(2)
 
-that file.
+the file referred to by that file descriptor.
 <DL COMPACT>
 <DT><B>F_SETLEASE</B>
 
@@ -774,10 +778,11 @@ Set or remove a file lease according to which of the following
 values is specified in the integer
 <I>arg</I>:
 
-<P>
 <DL COMPACT><DT><DD>
-<B>F_RDLCK</B>
+<DL COMPACT>
+<DT><B>F_RDLCK</B>
 
+<DD>
 Take out a read lease.
 This will cause the calling process to be notified when
 the file is opened for writing or is truncated.
@@ -785,15 +790,14 @@ the file is opened for writing or is truncated.
 
 A read lease can only be placed on a file descriptor that
 is opened read-only.
-<DL COMPACT>
 <DT><B>F_WRLCK</B>
 
 <DD>
 Take out a write lease.
 This will cause the caller to be notified when
 the file is opened for reading or writing or is truncated.
-A write lease may be placed on a file only if no other process
-currently has the file open.
+A write lease may be placed on a file only if there are no
+other open file descriptors for the file.
 <DT><B>F_UNLCK</B>
 
 <DD>
@@ -804,12 +808,27 @@ Remove our lease from the file.
 </DL>
 <P>
 
-A process may hold only one type of lease on a file.
+Leases are associated with an open file description (see
+<B><A HREF="../man2/open.2.html">open</A></B>(2)).
+
+This means that duplicate file descriptors (created by, for example,
+<B><A HREF="../man2/fork.2.html">fork</A></B>(2)
+
+or
+<B><A HREF="../man2/dup.2.html">dup</A></B>(2))
+
+refer to the same lease, and this lease may be modified
+or released using any of these descriptors.
+Furthermore, the lease is released by either an explicit
+<B>F_UNLCK</B>
+
+operation on any of these duplicate descriptors, or when all
+such descriptors have been closed.
 <P>
 
 Leases may only be taken out on regular files.
 An unprivileged process may only take out a lease on a file whose
-UID matches the file system UID of the process.
+UID (owner) matches the file system UID of the process.
 A process with the
 <B>CAP_LEASE</B>
 
@@ -818,15 +837,13 @@ capability may take out leases on arbitrary files.
 <DT><B>F_GETLEASE</B>
 
 <DD>
-Indicates what type of lease we hold on the file
-referred to by
+Indicates what type of lease is associated with the file descriptor
 <I>fd</I>
 
 by returning either
 <B>F_RDLCK</B>, <B>F_WRLCK</B>, or <B>F_UNLCK</B>,
 
-indicating, respectively, that the calling process holds a
-read, a write, or no lease on the file.
+indicating, respectively, a read lease , a write lease, or no lease.
 (The third argument to
 <B>fcntl</B>()
 
@@ -861,9 +878,10 @@ command specifying
 as
 <B>F_UNLCK</B>.
 
-If we currently hold a write lease on the file,
+If the lease holder currently holds a write lease on the file,
 and the lease breaker is opening the file for reading,
-then it is sufficient to downgrade the lease to a read lease.
+then it is sufficient for the lease holder to downgrade
+the lease to a read lease.
 This is done by performing an
 <B>F_SETLEASE</B>
 
@@ -1064,6 +1082,10 @@ Value of flags.
 
 <DD>
 Value of flags.
+<DT><B>F_GETLEASE</B>
+
+<DD>
+Type of lease held on file descriptor.
 <DT><B>F_GETOWN</B>
 
 <DD>
@@ -1306,6 +1328,24 @@ even when the owner process (group) is one that the caller
 has permission to send signals to.
 Despite this error return, the file descriptor owner is set,
 and signals will be sent to the owner.
+<P>
+The implementation of mandatory locking in all known versions of Linux
+is subject to races which render it unreliable:
+
+a
+<B><A HREF="../man2/write.2.html">write</A></B>(2)
+
+call that overlaps with a lock may modify data after the mandatory lock is
+acquired;
+a
+<B><A HREF="../man2/read.2.html">read</A></B>(2)
+
+call that overlaps with a lock may detect changes to data that were made
+only after a write lock was acquired.
+Similar races exist between mandatory locks and
+<B><A HREF="../man2/mmap.2.html">mmap</A></B>(2).
+
+It is therefore inadvisable to rely on mandatory locking.
 <A NAME="lbAR">&nbsp;</A>
 <H2>SEE ALSO</H2>
 
@@ -1363,6 +1403,6 @@ in the kernel source.
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 02:46:26 GMT, April 20, 2020
+Time: 02:46:56 GMT, April 20, 2020
 </BODY>
 </HTML>
