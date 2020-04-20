@@ -66,6 +66,20 @@ pseudo-files and directories.
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 <DT><I>/proc/[pid]/auxv</I> (since 2.6.0-test7)
 
 <DD>
@@ -74,6 +88,9 @@ to the process at exec time.
 The format is one <I>unsigned long</I> ID
 plus one <I>unsigned long</I> value for each entry.
 The last entry contains two zeros.
+See also
+<B><A HREF="../man3/getauxval.3.html">getauxval</A></B>(3).
+
 <DT><I>/proc/[pid]/cgroup</I> (since Linux 2.6.24)
 
 <DD>
@@ -186,7 +203,7 @@ kernel configuration option is enabled.
 <DT><I>/proc/[pid]/cmdline</I>
 
 <DD>
-This holds the complete command line for the process,
+This read-only file holds the complete command line for the process,
 unless the process is a zombie.
 
 In the latter case, there is nothing in this file:
@@ -194,6 +211,50 @@ that is, a read on this file will return 0 characters.
 The command-line arguments appear in this file as a set of
 strings separated by null bytes ('\0'),
 with a further null byte after the last string.
+<DT><I>/proc/[pid]/comm</I> (since Linux 2.6.33)
+
+<DD>
+
+This file exposes the process's
+<I>comm</I>
+
+value---that is, the command name associated with the process.
+Different threads in the same process may have different
+<I>comm</I>
+
+values, accessible via
+<I>/proc/[pid]/task/[tid]/comm</I>.
+
+A thread may modify its
+<I>comm</I>
+
+value, or that of any of other thread in the same thread group (see
+the discussion of
+<B>CLONE_THREAD</B>
+
+in
+<B><A HREF="../man2/clone.2.html">clone</A></B>(2)),
+
+by writing to the file
+<I>/proc/self/task/[tid]/comm</I>.
+
+Strings longer than
+<B>TASK_COMM_LEN</B>
+
+(16) characters are silently truncated.
+<P>
+This file provides a superset of the
+<B><A HREF="../man2/prctl.2.html">prctl</A></B>(2)
+
+<B>PR_SET_NAME</B>
+
+and
+<B>PR_GET_NAME</B>
+
+operations, and is employed by
+<B><A HREF="../man3/pthread_setname_np.3.html">pthread_setname_np</A></B>(3)
+
+when used to rename threads other than the caller.
 <DT><I>/proc/[pid]/coredump_filter</I> (since kernel 2.6.23)
 
 <DD>
@@ -1139,9 +1200,70 @@ or
 <I>/proc/[pid]/oom_adj</I>
 
 will change the other with its scaled value.
+<DT><I>/proc/[pid]/pagemap</I> (since Linux 2.6.25)
 
+<DD>
+This file shows the mapping of each of the process's virtual pages
+into physical page frames or swap area.
+It contains one 64-bit value for each virtual page,
+with the bits set as follows:
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT>63<DD>
+If set, the page is present in RAM.
+<DT>62<DD>
+If set, the page is in swap space
+<DT>61 (since Linux 3.5)<DD>
+The page is a file-mapped page or a shared anonymous page.
+<DT>60-56 (since Linux 3.11)<DD>
+Zero
 
+<DT>55 (Since Linux 3.11)<DD>
+PTE is soft-dirty
+(see the kernel source file
+<I>Documentation/vm/soft-dirty.txt</I>).
 
+<DT>54-0<DD>
+If the page is present in RAM (bit 63), then these bits
+provide the page frame number, which can be used to index
+<I>/proc/kpageflags</I>
+
+and
+<I>/proc/kpagecount</I>.
+
+If the page is present in swap (bit 62),
+then bits 4-0 give the swap type, and bits 54-5 encode the swap offset.
+</DL>
+</DL>
+
+<DT><DD>
+Before Linux 3.11, bits 60-55 were
+used to encode the base-2 log of the page size.
+<DT><DD>
+To employ
+<I>/proc/[pid]/pagemap</I>
+
+efficiently, use
+<I>/proc/[pid]/maps</I>
+
+to determine which areas of memory are actually mapped and seek
+to skip over unmapped regions.
+<DT><DD>
+The
+<I>/proc/[pid]/pagemap</I>
+
+file is present only if the
+<B>CONFIG_PROC_PAGE_MONITOR</B>
+
+kernel configuration option is enabled.
+<DT><I>/proc/[pid]/personality</I> (since Linux 2.6.28)
+
+<DD>
+
+This read-only file exposes the process's execution domain, as set by
+<B><A HREF="../man2/personality.2.html">personality</A></B>(2).
+
+The value is displayed in hexadecimal notation.
 <DT><I>/proc/[pid]/root</I>
 
 <DD>
@@ -1163,6 +1285,11 @@ In a multithreaded process, the contents of this symbolic link
 are not available if the main thread has already terminated
 (typically by calling
 <B><A HREF="../man3/pthread_exit.3.html">pthread_exit</A></B>(3)).
+
+
+
+
+
 
 
 
@@ -1289,8 +1416,8 @@ Status information about the process.
 This is used by
 <B><A HREF="../man1/ps.1.html">ps</A></B>(1).
 
-It is defined in
-<I>/usr/src/linux/fs/proc/array.c</I>.
+It is defined in the kernel source file
+<I>fs/proc/array.c</I>.
 
 <P>
 The fields, in order, with their proper
@@ -1299,52 +1426,96 @@ The fields, in order, with their proper
 format specifiers, are:
 <DL COMPACT><DT><DD>
 <DL COMPACT>
-<DT><I>pid</I> %d<DD>
-(1) The process ID.
-<DT><I>comm</I> %s<DD>
-(2) The filename of the executable, in parentheses.
+<DT>(1) <I>pid</I> &nbsp;%d<DD>
+<BR>
+
+The process ID.
+<DT>(2) <I>comm</I> &nbsp;%s<DD>
+The filename of the executable, in parentheses.
 This is visible whether or not the executable is swapped out.
-<DT><I>state</I> %c<DD>
-(3) One character from the string &quot;RSDZTW&quot; where R is running, S is
-sleeping in an interruptible wait, D is waiting in uninterruptible
-disk sleep, Z is zombie, T is traced or stopped (on a signal),
-and W is paging.
-<DT><I>ppid</I> %d<DD>
-(4) The PID of the parent.
-<DT><I>pgrp</I> %d<DD>
-(5) The process group ID of the process.
-<DT><I>session</I> %d<DD>
-(6) The session ID of the process.
-<DT><I>tty_nr</I> %d<DD>
-(7) The controlling terminal of the process.
+<DT>(3) <I>state</I> &nbsp;%c<DD>
+One of the following characters, indicating process state:
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT>R<DD>
+Running
+<DT>S<DD>
+Sleeping in an interruptible wait
+<DT>D<DD>
+Waiting in uninterruptible
+disk sleep
+<DT>Z<DD>
+Zombie
+<DT>T<DD>
+Stopped (on a signal) or (before Linux 2.6.33) trace stopped
+<DT>t<DD>
+
+Tracing stop (Linux 2.6.33 onward)
+<DT>W<DD>
+Paging (only before Linux 2.6.0)
+<DT>X<DD>
+Dead (from Linux 2.6.0 onward)
+<DT>x<DD>
+
+Dead (Linux 2.6.33 to
+
+3.13 only)
+<DT>K<DD>
+
+Wakekill (Linux 2.6.33 to
+
+3.13 only)
+<DT>W<DD>
+
+Waking (Linux 2.6.33 to
+
+3.13 only)
+<DT>P<DD>
+
+Parked (Linux 3.9 to
+
+3.13 only)
+</DL>
+</DL>
+
+<DT>(4) <I>ppid</I> &nbsp;%d<DD>
+The PID of the parent of this process.
+<DT>(5) <I>pgrp</I> &nbsp;%d<DD>
+The process group ID of the process.
+<DT>(6) <I>session</I> &nbsp;%d<DD>
+The session ID of the process.
+<DT>(7) <I>tty_nr</I> &nbsp;%d<DD>
+The controlling terminal of the process.
 (The minor device number is contained in the combination of bits
 31 to 20 and 7 to 0;
 the major device number is in bits 15 to 8.)
-<DT><I>tpgid</I> %d<DD>
+<DT>(8) <I>tpgid</I> &nbsp;%d<DD>
 
-(8) The ID of the foreground process group of the controlling
+The ID of the foreground process group of the controlling
 terminal of the process.
-<DT><I>flags</I> %u (%lu before Linux 2.6.22)<DD>
-(9) The kernel flags word of the process.
+<DT>(9) <I>flags</I> &nbsp;%u<DD>
+The kernel flags word of the process.
 For bit meanings,
 see the PF_* defines in the Linux kernel source file
 <I>include/linux/sched.h</I>.
 
 Details depend on the kernel version.
-<DT><I>minflt</I> %lu<DD>
-(10) The number of minor faults the process has made which have not
+<P>
+The format for this field was %lu before Linux 2.6.
+<DT>(1) <I>minflt</I> &nbsp;%lu<DD>
+The number of minor faults the process has made which have not
 required loading a memory page from disk.
-<DT><I>cminflt</I> %lu<DD>
-(11) The number of minor faults that the process's
+<DT>(11) <I>cminflt</I> &nbsp;%lu<DD>
+The number of minor faults that the process's
 waited-for children have made.
-<DT><I>majflt</I> %lu<DD>
-(12) The number of major faults the process has made which have
+<DT>(12) <I>majflt</I> &nbsp;%lu<DD>
+The number of major faults the process has made which have
 required loading a memory page from disk.
-<DT><I>cmajflt</I> %lu<DD>
-(13) The number of major faults that the process's
+<DT>(13) <I>cmajflt</I> &nbsp;%lu<DD>
+The number of major faults that the process's
 waited-for children have made.
-<DT><I>utime</I> %lu<DD>
-(14) Amount of time that this process has been scheduled in user mode,
+<DT>(14) <I>utime</I> &nbsp;%lu<DD>
+Amount of time that this process has been scheduled in user mode,
 measured in clock ticks (divide by
 <I>sysconf(_SC_CLK_TCK)</I>).
 
@@ -1352,13 +1523,13 @@ This includes guest time, <I>guest_time</I>
 (time spent running a virtual CPU, see below),
 so that applications that are not aware of the guest time field
 do not lose that time from their calculations.
-<DT><I>stime</I> %lu<DD>
-(15) Amount of time that this process has been scheduled in kernel mode,
+<DT>(15) <I>stime</I> &nbsp;%lu<DD>
+Amount of time that this process has been scheduled in kernel mode,
 measured in clock ticks (divide by
 <I>sysconf(_SC_CLK_TCK)</I>).
 
-<DT><I>cutime</I> %ld<DD>
-(16) Amount of time that this process's
+<DT>(16) <I>cutime</I> &nbsp;%ld<DD>
+Amount of time that this process's
 waited-for children have been scheduled in user mode,
 measured in clock ticks (divide by
 <I>sysconf(_SC_CLK_TCK)</I>).
@@ -1368,14 +1539,14 @@ measured in clock ticks (divide by
 
 This includes guest time, <I>cguest_time</I>
 (time spent running a virtual CPU, see below).
-<DT><I>cstime</I> %ld<DD>
-(17) Amount of time that this process's
+<DT>(17) <I>cstime</I> &nbsp;%ld<DD>
+Amount of time that this process's
 waited-for children have been scheduled in kernel mode,
 measured in clock ticks (divide by
 <I>sysconf(_SC_CLK_TCK)</I>).
 
-<DT><I>priority</I> %ld<DD>
-(18) (Explanation for Linux 2.6)
+<DT>(18) <I>priority</I> &nbsp;%ld<DD>
+(Explanation for Linux 2.6)
 For processes running a real-time scheduling policy
 (<I>policy</I>
 
@@ -1397,8 +1568,8 @@ corresponding to the user-visible nice range of -20 to 19.
 Before Linux 2.6, this was a scaled value based on
 the scheduler weighting given to this process.
 
-<DT><I>nice</I> %ld<DD>
-(19) The nice value (see
+<DT>(19) <I>nice</I> &nbsp;%ld<DD>
+The nice value (see
 <B><A HREF="../man2/setpriority.2.html">setpriority</A></B>(2)),
 
 a value in the range 19 (low priority) to -20 (high priority).
@@ -1412,115 +1583,153 @@ a value in the range 19 (low priority) to -20 (high priority).
 
 
 
-<DT><I>num_threads</I> %ld<DD>
-(20) Number of threads in this process (since Linux 2.6).
+<DT>(20) <I>num_threads</I> &nbsp;%ld<DD>
+Number of threads in this process (since Linux 2.6).
 Before kernel 2.6, this field was hard coded to 0 as a placeholder
 for an earlier removed field.
-<DT><I>itrealvalue</I> %ld<DD>
-(21) The time in jiffies before the next
+<DT>(21) <I>itrealvalue</I> &nbsp;%ld<DD>
+The time in jiffies before the next
 <B>SIGALRM</B>
 
 is sent to the process due to an interval timer.
 Since kernel 2.6.17, this field is no longer maintained,
 and is hard coded as 0.
-<DT><I>starttime</I> %llu (was %lu before Linux 2.6)<DD>
-(22) The time the process started after system boot.
+<DT>(22) <I>starttime</I> &nbsp;%llu<DD>
+The time the process started after system boot.
 In kernels before Linux 2.6, this value was expressed in jiffies.
 Since Linux 2.6, the value is expressed in clock ticks (divide by
 <I>sysconf(_SC_CLK_TCK)</I>).
 
-<DT><I>vsize</I> %lu<DD>
-(23) Virtual memory size in bytes.
-<DT><I>rss</I> %ld<DD>
-(24) Resident Set Size: number of pages the process has in real memory.
+<P>
+The format for this field was %lu before Linux 2.6.
+<DT>(23) <I>vsize</I> &nbsp;%lu<DD>
+Virtual memory size in bytes.
+<DT>(24) <I>rss</I> &nbsp;%ld<DD>
+Resident Set Size: number of pages the process has in real memory.
 This is just the pages which
 count toward text, data, or stack space.
 This does not include pages
 which have not been demand-loaded in, or which are swapped out.
-<DT><I>rsslim</I> %lu<DD>
-(25) Current soft limit in bytes on the rss of the process;
+<DT>(25) <I>rsslim</I> &nbsp;%lu<DD>
+Current soft limit in bytes on the rss of the process;
 see the description of
 <B>RLIMIT_RSS</B>
 
 in
 <B><A HREF="../man2/getrlimit.2.html">getrlimit</A></B>(2).
 
-<DT><I>startcode</I> %lu<DD>
-(26) The address above which program text can run.
-<DT><I>endcode</I> %lu<DD>
-(27) The address below which program text can run.
-<DT><I>startstack</I> %lu<DD>
-(28) The address of the start (i.e., bottom) of the stack.
-<DT><I>kstkesp</I> %lu<DD>
-(29) The current value of ESP (stack pointer), as found in the
+<DT>(26) <I>startcode</I> &nbsp;%lu<DD>
+The address above which program text can run.
+<DT>(27) <I>endcode</I> &nbsp;%lu<DD>
+The address below which program text can run.
+<DT>(28) <I>startstack</I> &nbsp;%lu<DD>
+The address of the start (i.e., bottom) of the stack.
+<DT>(29) <I>kstkesp</I> &nbsp;%lu<DD>
+The current value of ESP (stack pointer), as found in the
 kernel stack page for the process.
-<DT><I>kstkeip</I> %lu<DD>
-(30) The current EIP (instruction pointer).
-<DT><I>signal</I> %lu<DD>
-(31) The bitmap of pending signals, displayed as a decimal number.
+<DT>(30) <I>kstkeip</I> &nbsp;%lu<DD>
+The current EIP (instruction pointer).
+<DT>(31) <I>signal</I> &nbsp;%lu<DD>
+The bitmap of pending signals, displayed as a decimal number.
 Obsolete, because it does not provide information on real-time signals; use
 <I>/proc/[pid]/status</I>
 
 instead.
-<DT><I>blocked</I> %lu<DD>
-(32) The bitmap of blocked signals, displayed as a decimal number.
+<DT>(32) <I>blocked</I> &nbsp;%lu<DD>
+The bitmap of blocked signals, displayed as a decimal number.
 Obsolete, because it does not provide information on real-time signals; use
 <I>/proc/[pid]/status</I>
 
 instead.
-<DT><I>sigignore</I> %lu<DD>
-(33) The bitmap of ignored signals, displayed as a decimal number.
+<DT>(33) <I>sigignore</I> &nbsp;%lu<DD>
+The bitmap of ignored signals, displayed as a decimal number.
 Obsolete, because it does not provide information on real-time signals; use
 <I>/proc/[pid]/status</I>
 
 instead.
-<DT><I>sigcatch</I> %lu<DD>
-(34) The bitmap of caught signals, displayed as a decimal number.
+<DT>(34) <I>sigcatch</I> &nbsp;%lu<DD>
+The bitmap of caught signals, displayed as a decimal number.
 Obsolete, because it does not provide information on real-time signals; use
 <I>/proc/[pid]/status</I>
 
 instead.
-<DT><I>wchan</I> %lu<DD>
-(35) This is the &quot;channel&quot; in which the process is waiting.
+<DT>(35) <I>wchan</I> &nbsp;%lu<DD>
+This is the &quot;channel&quot; in which the process is waiting.
 It is the address of a location in the kernel where the process is sleeping.
 The corresponding symbolic name can be found in
 <I>/proc/[pid]/wchan</I>.
 
-<DT><I>nswap</I> %lu<DD>
-(36)
+<DT>(36) <I>nswap</I> &nbsp;%lu<DD>
 
 Number of pages swapped (not maintained).
-<DT><I>cnswap</I> %lu<DD>
-(37)
+<DT>(37) <I>cnswap</I> &nbsp;%lu<DD>
 
 Cumulative <I>nswap</I> for child processes (not maintained).
-<DT><I>exit_signal</I> %d (since Linux 2.1.22)<DD>
-(38) Signal to be sent to parent when we die.
-<DT><I>processor</I> %d (since Linux 2.2.8)<DD>
-(39) CPU number last executed on.
-<DT><I>rt_priority</I> %u (since Linux 2.5.19; was %lu before Linux 2.6.22)<DD>
-(40) Real-time scheduling priority, a number in the range 1 to 99 for
+<DT>(38) <I>exit_signal</I> &nbsp;%d &nbsp;(since Linux 2.1.22)<DD>
+Signal to be sent to parent when we die.
+<DT>(39) <I>processor</I> &nbsp;%d &nbsp;(since Linux 2.2.8)<DD>
+CPU number last executed on.
+<DT>(40) <I>rt_priority</I> &nbsp;%u &nbsp;(since Linux 2.5.19)<DD>
+Real-time scheduling priority, a number in the range 1 to 99 for
 processes scheduled under a real-time policy,
 or 0, for non-real-time processes (see
 <B><A HREF="../man2/sched_setscheduler.2.html">sched_setscheduler</A></B>(2)).
 
-<DT><I>policy</I> %u (since Linux 2.5.19; was %lu before Linux 2.6.22)<DD>
-(41) Scheduling policy (see
+<DT>(41) <I>policy</I> &nbsp;%u &nbsp;(since Linux 2.5.19)<DD>
+Scheduling policy (see
 <B><A HREF="../man2/sched_setscheduler.2.html">sched_setscheduler</A></B>(2)).
 
 Decode using the SCHED_* constants in
 <I>linux/sched.h</I>.
 
-<DT><I>delayacct_blkio_ticks</I> %llu (since Linux 2.6.18)<DD>
-(42) Aggregated block I/O delays, measured in clock ticks (centiseconds).
-<DT><I>guest_time</I> %lu (since Linux 2.6.24)<DD>
-(43) Guest time of the process (time spent running a virtual CPU
+<P>
+The format for this field was %lu before Linux 2.6.22.
+<DT>(42) <I>delayacct_blkio_ticks</I> &nbsp;%llu &nbsp;(since Linux 2.6.18)<DD>
+Aggregated block I/O delays, measured in clock ticks (centiseconds).
+<DT>(43) <I>guest_time</I> &nbsp;%lu &nbsp;(since Linux 2.6.24)<DD>
+Guest time of the process (time spent running a virtual CPU
 for a guest operating system), measured in clock ticks (divide by
 <I>sysconf(_SC_CLK_TCK)</I>).
 
-<DT><I>cguest_time</I> %ld (since Linux 2.6.24)<DD>
-(44) Guest time of the process's children, measured in clock ticks (divide by
+<DT>(44) <I>cguest_time</I> &nbsp;%ld &nbsp;(since Linux 2.6.24)<DD>
+Guest time of the process's children, measured in clock ticks (divide by
 <I>sysconf(_SC_CLK_TCK)</I>).
+
+<DT>(45) <I>start_data</I> &nbsp;%lu &nbsp;(since Linux 3.3)<DD>
+
+Address above which program initialized and
+uninitialized (BSS) data are placed.
+<DT>(46) <I>end_data</I> &nbsp;%lu &nbsp;(since Linux 3.3)<DD>
+
+Address below which program initialized and
+uninitialized (BSS) data are placed.
+<DT>(47) <I>start_brk</I> &nbsp;%lu &nbsp;(since Linux 3.3)<DD>
+
+Address above which program heap can be expanded with
+<B><A HREF="../man2/brk.2.html">brk</A></B>(2).
+
+<DT>(48) <I>arg_start</I> &nbsp;%lu &nbsp;(since Linux 3.5)<DD>
+
+Address above which program command-line arguments
+(<I>argv</I>)
+
+are placed.
+<DT>(49) <I>arg_end</I> &nbsp;%lu &nbsp;(since Linux 3.5)<DD>
+
+Address below program command-line arguments
+(<I>argv</I>)
+
+are placed.
+<DT>(50) <I>env_start</I> &nbsp;%lu &nbsp;(since Linux 3.5)<DD>
+
+Address above which program environment is placed.
+<DT>(51) <I>env_end</I> &nbsp;%lu &nbsp;(since Linux 3.5)<DD>
+
+Address below which program environment is placed.
+<DT>(52) <I>exit_code</I> &nbsp;%d &nbsp;(since Linux 3.5)<DD>
+
+The thread's exit status in the form reported by
+<B><A HREF="../man2/waitpid.2.html">waitpid</A></B>(2).
 
 </DL>
 </DL>
@@ -1761,11 +1970,29 @@ Same as previous, but in &quot;list format&quot;
 <B><A HREF="../man7/cpuset.7.html">cpuset</A></B>(7)).
 
 <DT>*<DD>
-<I>voluntary_context_switches</I>, <I>nonvoluntary_context_switches</I>:
+<I>voluntary_ctxt_switches</I>, <I>nonvoluntary_ctxt_switches</I>:
 
 Number of voluntary and involuntary context switches (since Linux 2.6.23).
 </DL>
 </DL>
+
+<DT><I>/proc/[pid]/syscall</I> (since Linux 2.6.27)
+
+<DD>
+
+This file exposes the system call number and argument registers for the
+system call currently being executed by the process,
+followed by the values of the stack pointer and program counter registers.
+The values of all six argument registers are exposed,
+although most system calls use fewer registers.
+<P>
+If the process is blocked, but not in a system call,
+then the file displays -1 in place of the system call number,
+followed by just the values of the stack pointer and program counter.
+If process is not blocked, then file contains just the string &quot;running&quot;.
+<P>
+This file is present only if the kernel was configured with
+<B>CONFIG_HAVE_ARCH_TRACEHOOK</B>.
 
 <DT><I>/proc/[pid]/task</I> (since Linux 2.6.0-test6)
 
@@ -2160,6 +2387,80 @@ Information in this file is retrieved with the
 <B><A HREF="../man1/dmesg.1.html">dmesg</A></B>(1)
 
 program.
+<DT><I>/proc/kpagecount</I> (since Linux 2.6.25)
+
+<DD>
+This file contains a 64-bit count of the number of
+times each physical page frame is mapped,
+indexed by page frame number (see the discussion of
+<I>/proc/[pid]/pagemap</I>).
+
+<DT><DD>
+The
+<I>/proc/kpagecount</I>
+
+file is present only if the
+<B>CONFIG_PROC_PAGE_MONITOR</B>
+
+kernel configuration option is enabled.
+<DT><I>/proc/kpageflags</I> (since Linux 2.6.25)
+
+<DD>
+This file contains 64-bit masks corresponding to each physical page frame;
+it is indexed by page frame number (see the discussion of
+<I>/proc/[pid]/pagemap</I>).
+
+The bits are as follows:
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;0&nbsp;-&nbsp;KPF_LOCKED
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;1&nbsp;-&nbsp;KPF_ERROR
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;2&nbsp;-&nbsp;KPF_REFERENCED
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;3&nbsp;-&nbsp;KPF_UPTODATE
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;4&nbsp;-&nbsp;KPF_DIRTY
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;5&nbsp;-&nbsp;KPF_LRU
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;6&nbsp;-&nbsp;KPF_ACTIVE
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;7&nbsp;-&nbsp;KPF_SLAB
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;8&nbsp;-&nbsp;KPF_WRITEBACK
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;9&nbsp;-&nbsp;KPF_RECLAIM
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;10&nbsp;-&nbsp;KPF_BUDDY
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;11&nbsp;-&nbsp;KPF_MMAP&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(since&nbsp;Linux&nbsp;2.6.31)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;12&nbsp;-&nbsp;KPF_ANON&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(since&nbsp;Linux&nbsp;2.6.31)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;13&nbsp;-&nbsp;KPF_SWAPCACHE&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(since&nbsp;Linux&nbsp;2.6.31)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;14&nbsp;-&nbsp;KPF_SWAPBACKED&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(since&nbsp;Linux&nbsp;2.6.31)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;15&nbsp;-&nbsp;KPF_COMPOUND_HEAD&nbsp;&nbsp;(since&nbsp;Linux&nbsp;2.6.31)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;16&nbsp;-&nbsp;KPF_COMPOUND_TAIL&nbsp;&nbsp;(since&nbsp;Linux&nbsp;2.6.31)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;16&nbsp;-&nbsp;KPF_HUGE&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(since&nbsp;Linux&nbsp;2.6.31)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;18&nbsp;-&nbsp;KPF_UNEVICTABLE&nbsp;&nbsp;&nbsp;&nbsp;(since&nbsp;Linux&nbsp;2.6.31)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;19&nbsp;-&nbsp;KPF_HWPOISON&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(since&nbsp;Linux&nbsp;2.6.31)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;20&nbsp;-&nbsp;KPF_NOPAGE&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(since&nbsp;Linux&nbsp;2.6.31)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;21&nbsp;-&nbsp;KPF_KSM&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(since&nbsp;Linux&nbsp;2.6.32)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;22&nbsp;-&nbsp;KPF_THP&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(since&nbsp;Linux&nbsp;3.4)
+<P>
+For further details on the meanings of these bits,
+see the kernel source file
+<I>Documentation/vm/pagemap.txt</I>.
+
+Before kernel 2.6.29,
+
+
+<B>KPF_WRITEBACK</B>,
+
+<B>KPF_RECLAIM</B>,
+
+<B>KPF_BUDDY</B>,
+
+and
+<B>KPF_LOCKED</B>
+
+did not report correctly.
+<DT><DD>
+The
+<I>/proc/kpageflags</I>
+
+file is present only if the
+<B>CONFIG_PROC_PAGE_MONITOR</B>
+
+kernel configuration option is enabled.
 <DT><I>/proc/ksyms</I> (Linux 1.1.23-2.5.47)
 
 <DD>
@@ -2408,32 +2709,16 @@ Memory used by FUSE for temporary writeback buffers.
 <DT><I>CommitLimit</I> %lu (since Linux 2.6.10)
 
 <DD>
-Based on the overcommit ratio ('vm.overcommit_ratio'),
-this is the total amount of memory currently available to
-be allocated on the system.
+This is the total amount of memory currently available to
+be allocated on the system, expressed in kilobytes.
 This limit is adhered to
 only if strict overcommit accounting is enabled (mode 2 in
-<I>/proc/sys/vm/overcommit_ratio</I>).
+<I>/proc/sys/vm/overcommit_memory</I>).
 
-The
-<I>CommitLimit</I>
+The limit is calculated according to the formula described under
+<I>/proc/sys/vm/overcommit_memory</I>.
 
-is calculated using the following formula:
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;CommitLimit&nbsp;=
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;([total&nbsp;RAM&nbsp;pages]&nbsp;-&nbsp;[total&nbsp;huge&nbsp;TLB&nbsp;pages])&nbsp;*
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;overcommit_ratio&nbsp;/&nbsp;100&nbsp;+&nbsp;[total&nbsp;swap&nbsp;pages]
-<P>
-For example, on a system with 1GB of physical RAM and 7GB
-of swap with a
-<I>overcommit_ratio</I>
-
-of 30, this formula yields a
-<I>CommitLimit</I>
-
-of 7.3GB.
-For more details, see the memory overcommit documentation
-in the kernel source file
+For further details, see the kernel source file
 <I>Documentation/vm/overcommit-accounting</I>.
 
 <DT><I>Committed_AS</I> %lu
@@ -2449,15 +2734,15 @@ A process which allocates 1GB of memory (using
 or similar), but touches only 300MB of that memory will show up
 as using only 300MB of memory even if it has the address space
 allocated for the entire 1GB.
+<P>
 This 1GB is memory which has been &quot;committed&quot; to by the VM
 and can be used at any time by the allocating application.
-With strict overcommit enabled on the system (mode 2
-<I>/proc/sys/vm/overcommit_memory</I>),
-
+With strict overcommit enabled on the system (mode 2 in
+IR /proc/sys/vm/overcommit_memory ),
 allocations which would exceed the
 <I>CommitLimit</I>
 
-(detailed above) will not be permitted.
+will not be permitted.
 This is useful if one needs to guarantee that processes will not
 fail due to lack of memory once that memory has been successfully allocated.
 <DT><I>VmallocTotal</I> %lu
@@ -3783,7 +4068,7 @@ file is also nonzero, then the machine will be rebooted.
 <DD>
 This file specifies the value at which PIDs wrap around
 (i.e., the value in this file is one greater than the maximum PID).
-PIDs greater than this value not allocated;
+PIDs greater than this value are not allocated;
 thus, the value in this file also acts as a system-wide limit
 on the total number of processes and threads.
 The default value for this file, 32768,
@@ -4108,7 +4393,7 @@ To free pagecache, dentries and inodes, use:
 Because writing to this file is a nondestructive operation and dirty objects
 are not freeable, the
 user should run
-<B><A HREF="../man8/sync.8.html">sync</A></B>(8)
+<B><A HREF="../man1/sync.1.html">sync</A></B>(1)
 
 first.
 <DT><I>/proc/sys/vm/legacy_va_layout</I> (since Linux 2.6.9)
@@ -4246,6 +4531,49 @@ is nonzero, it takes precedence over whatever value is used in
 
 <P>
 The default value is 0.
+<DT><I>/proc/sys/vm/overcommit_kbytes</I> (since Linux 3.14)
+
+<DD>
+
+This writable file provides an alternative to
+<I>/proc/sys/vm/overcommit_ratio</I>
+
+for controlling the
+<I>CommitLimit</I>
+
+when
+<I>/proc/sys/vm/overcommit_memory</I>
+
+has the value 2.
+It allows the amount of memory overcommitting to be specified as
+an absolute value (in kB),
+rather than as a percentage, as is done with
+<I>overcommit_ratio</I>.
+
+This allows for finer-grained control of
+<I>CommitLimit</I>
+
+on systems with extremely large memory sizes.
+<P>
+Only one of
+<I>overcommit_kbytes</I>
+
+or
+<I>overcommit_ratio</I>
+
+can have an effect:
+if
+<I>overcommit_kbytes</I>
+
+has a nonzero value, then it is used to calculate
+<I>CommitLimit</I>,
+
+otherwise
+<I>overcommit_ratio</I>
+
+is used.
+Writing a value to either of these files causes the
+value in the other file to be set to zero.
 <DT><I>/proc/sys/vm/overcommit_memory</I>
 
 <DD>
@@ -4274,15 +4602,69 @@ with
 are not checked, and the default check is very weak,
 leading to the risk of getting a process &quot;OOM-killed&quot;.
 Under Linux 2.4, any nonzero value implies mode 1.
+<P>
 In mode 2 (available since Linux 2.6), the total virtual address space
-on the system is limited to (SS + RAM*(r/100)),
-where SS is the size of the swap space, and RAM
-is the size of the physical memory, and r is the contents of the file
-<I>/proc/sys/vm/overcommit_ratio</I>.
+that can be allocated
+(<I>CommitLimit</I>
 
-<DT><I>/proc/sys/vm/overcommit_ratio</I>
+in
+<I>/proc/meminfo</I>)
+
+is calculated as
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;CommitLimit&nbsp;=&nbsp;(total_RAM&nbsp;-&nbsp;total_huge_TLB)&nbsp;*
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;overcommit_ratio&nbsp;/&nbsp;100&nbsp;+&nbsp;total_swap
+<P>
+where:
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT>*<DD>
+<I>total_RAM</I>
+
+is the total amount of RAM on the system;
+<DT>*<DD>
+<I>total_huge_TLB</I>
+
+is the amount of memory set aside for huge pages;
+<DT>*<DD>
+<I>overcommit_ratio</I>
+
+is the value in
+<I>/proc/sys/vm/overcommit_ratio</I>;
+
+and
+<DT>*<DD>
+<I>total_swap</I>
+
+is the amount of swap space.
+</DL>
+</DL>
+
+<DT><DD>
+For example, on a system with 16GB of physical RAM, 16GB
+of swap, no space dedicated to huge pages, and an
+<I>overcommit_ratio</I>
+
+of 50, this formula yields a
+<I>CommitLimit</I>
+
+of 24GB.
+<P>
+Since Linux 3.14, if the value in
+<I>/proc/sys/vm/overcommit_kbytes</I>
+
+is nonzero, then
+<I>CommitLimit</I>
+
+is instead calculated as:
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;CommitLimit&nbsp;=&nbsp;overcommit_kbytes&nbsp;+&nbsp;total_swap
+<DT><I>/proc/sys/vm/overcommit_ratio</I> (since Linux 2.6.0)
 
 <DD>
+This writable file defines a percentage by which memory
+can be overcommitted.
+The default value in the file is 50.
 See the description of
 <I>/proc/sys/vm/overcommit_memory</I>.
 
@@ -4396,15 +4778,6 @@ The
 file is used both to control sampling facility and to read out the
 sampled information.
 <P>
-timer_stats collects information about the timer events which are fired in a
-Linux system over a sample period:
-<P>
-- the pid of the task(process) which initialized the timer
-- the name of the process which initialized the timer
-- the function where the timer was initialized
-- the callback function which is associated to the timer
-- the number of events (callbacks)
-<P>
 The timer_stats functionality is inactive on bootup.
 A sampling period can be started using the following command:
 <P>
@@ -4418,7 +4791,10 @@ The statistics can be retrieved by:
 <P>
 <BR>&nbsp;&nbsp;&nbsp;&nbsp;$&nbsp;cat&nbsp;/proc/timer_stats
 <P>
-While sampling is enabled, each readout from /proc/timer_stats will see
+While sampling is enabled, each readout from
+<I>/proc/timer_stats</I>
+
+will see
 newly updated statistics.
 Once sampling is disabled, the sampled information
 is kept until a new sample period is started.
@@ -4493,6 +4869,11 @@ For example:
 <PRE>
 Linux version 1.0.9 (<A HREF="mailto:quinlan@phaze">quinlan@phaze</A>) #1 Sat May 14 01:51:54 EDT 1994
 </PRE>
+
+
+
+
+
 
 <DT><I>/proc/vmstat</I> (since Linux 2.6)
 
@@ -4600,6 +4981,6 @@ and
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:31:41 GMT, April 20, 2020
+Time: 03:32:13 GMT, April 20, 2020
 </BODY>
 </HTML>

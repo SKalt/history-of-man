@@ -26,7 +26,7 @@ the source, must acknowledge the copyright and authors of this work.
 <HTML><HEAD><TITLE>Man page of GETRLIMIT</TITLE>
 </HEAD><BODY>
 <H1>GETRLIMIT</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2014-05-28<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2014-08-19<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -149,10 +149,12 @@ either this limit is at most 2 GiB, or this resource is unlimited.
 <DT><B>RLIMIT_CORE</B>
 
 <DD>
-Maximum size of
+Maximum size of a
 <I>core</I>
 
-file.
+file (see
+<B><A HREF="../man5/core.5.html">core</A></B>(5)).
+
 When 0 no core dump files are created.
 When nonzero, larger dumps are truncated to this size.
 <DT><B>RLIMIT_CPU</B>
@@ -461,6 +463,15 @@ command-line arguments and environment variables; for details, see
 
 
 
+
+
+
+
+
+
+
+
+
 The Linux-specific
 <B>prlimit</B>()
 
@@ -682,6 +693,20 @@ All new applications should be written using
 <B>setrlimit</B>().
 
 <A NAME="lbAK">&nbsp;</A>
+<H3>C library/ kernel ABI differences</H3>
+
+Since version 2.13, the glibc
+<B>getrlimit</B>()
+
+and
+<B>setrlimit</B>()
+
+wrapper functions no longer invoke the corresponding system calls,
+but instead employ
+<B>prlimit</B>(),
+
+for the reasons described in BUGS.
+<A NAME="lbAL">&nbsp;</A>
 <H2>BUGS</H2>
 
 
@@ -775,7 +800,95 @@ when
 was greater than
 <I>rlim-&gt;rlim_max</I>.
 
-<A NAME="lbAL">&nbsp;</A>
+
+<A NAME="lbAM">&nbsp;</A>
+<H3>Representation of large resource limit values on 32-bit platforms</H3>
+
+The glibc
+<B>getrlimit</B>()
+
+and
+<B>setrlimit</B>()
+
+wrapper functions use a 64-bit
+<I>rlim_t</I>
+
+data type, even on 32-bit platforms.
+However, the
+<I>rlim_t</I>
+
+data type used in the
+<B>getrlimit</B>()
+
+and
+<B>setrlimit</B>()
+
+system calls is a (32-bit)
+<I>unsigned long</I>.
+
+Furthermore, in Linux versions before 2.6.36,
+the kernel represents resource limits on 32-bit platforms as
+<I>unsigned long</I>.
+
+However, a 32-bit data type is not wide enough.
+
+The most pertinent limit here is
+<B>RLIMIT_FSIZE</B>,
+
+which specifies the maximum size to which a file can grow:
+to be useful, this limit must be represented using a type
+that is as wide as the type used to
+represent file offsets---that is, as wide as a 64-bit
+<B>off_t</B>
+
+(assuming a program compiled with
+<I>_FILE_OFFSET_BITS=64</I>).
+
+<P>
+To work around this kernel limitation,
+if a program tried to set a resource limit to a value larger than
+can be represented in a 32-bit
+<I>unsigned long</I>,
+
+then the glibc
+<B>setrlimit</B>()
+
+wrapper function silently converted the limit value to
+<B>RLIM_INFINITY</B>.
+
+In other words, the requested resource limit setting was silently ignored.
+<P>
+This problem was addressed in Linux 2.6.36 with two principal changes:
+<DL COMPACT>
+<DT>*<DD>
+the addition of a new kernel representation of resource limits that
+uses 64 bits, even on 32-bit platforms;
+<DT>*<DD>
+the addition of the
+<B>prlimit</B>()
+
+system call, which employs 64-bit values for its resource limit arguments.
+</DL>
+<P>
+
+Since version 2.13,
+
+glibc works around the limitations of the
+<B>getrlimit</B>()
+
+and
+<B>setrlimit</B>()
+
+system calls by implementing
+<B>setrlimit</B>()
+
+and
+<B>getrlimit</B>()
+
+as wrapper functions that call
+<B>prlimit</B>().
+
+<A NAME="lbAN">&nbsp;</A>
 <H2>EXAMPLE</H2>
 
 The program below demonstrates the use of
@@ -836,7 +949,7 @@ main(int argc, char *argv[])
 }
 </PRE>
 
-<A NAME="lbAM">&nbsp;</A>
+<A NAME="lbAO">&nbsp;</A>
 <H2>SEE ALSO</H2>
 
 <B><A HREF="../man1/prlimit.1.html">prlimit</A></B>(1),
@@ -889,14 +1002,20 @@ main(int argc, char *argv[])
 <DT><A HREF="#lbAH">VERSIONS</A><DD>
 <DT><A HREF="#lbAI">CONFORMING TO</A><DD>
 <DT><A HREF="#lbAJ">NOTES</A><DD>
-<DT><A HREF="#lbAK">BUGS</A><DD>
-<DT><A HREF="#lbAL">EXAMPLE</A><DD>
-<DT><A HREF="#lbAM">SEE ALSO</A><DD>
+<DL>
+<DT><A HREF="#lbAK">C library/ kernel ABI differences</A><DD>
+</DL>
+<DT><A HREF="#lbAL">BUGS</A><DD>
+<DL>
+<DT><A HREF="#lbAM">Representation of large resource limit values on 32-bit platforms</A><DD>
+</DL>
+<DT><A HREF="#lbAN">EXAMPLE</A><DD>
+<DT><A HREF="#lbAO">SEE ALSO</A><DD>
 </DL>
 <HR>
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:31:28 GMT, April 20, 2020
+Time: 03:31:59 GMT, April 20, 2020
 </BODY>
 </HTML>
