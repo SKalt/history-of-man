@@ -4,13 +4,13 @@
 <HTML><HEAD><TITLE>Man page of DUP</TITLE>
 </HEAD><BODY>
 <H1>DUP</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2008-01-12<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2008-10-09<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
 <H2>NAME</H2>
 
-dup, dup2 - duplicate a file descriptor
+dup, dup2, dup3 - duplicate a file descriptor
 <A NAME="lbAC">&nbsp;</A>
 <H2>SYNOPSIS</H2>
 
@@ -19,17 +19,17 @@ dup, dup2 - duplicate a file descriptor
 
 <B>int dup(int </B><I>oldfd</I><B>);</B>
 <B>int dup2(int </B><I>oldfd</I><B>, int </B><I>newfd</I><B>);</B>
+
+<B>#define _GNU_SOURCE</B>
+<B>#include &lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;</B>
+
+<B>int dup3(int </B><I>oldfd</I><B>, int </B><I>newfd</I><B>, int </B><I>flags</I><B>);</B>
 </PRE>
 
 <A NAME="lbAD">&nbsp;</A>
 <H2>DESCRIPTION</H2>
 
-<B>dup</B>()
-
-and
-<B>dup2</B>()
-
-create a copy of the file descriptor
+The system calls create a copy of the file descriptor
 <I>oldfd</I>.
 
 <P>
@@ -70,12 +70,7 @@ does nothing, and returns
 </DL>
 <P>
 
-After a successful return from
-<B>dup</B>()
-
-or
-<B>dup2</B>(),
-
+After a successful return from one of these system calls,
 the old and new file descriptors may be used interchangeably.
 They refer to the same open file description (see
 <B><A HREF="../man2/open.2.html">open</A></B>(2))
@@ -95,18 +90,50 @@ see
 <B><A HREF="../man2/fcntl.2.html">fcntl</A></B>(2))
 
 for the duplicate descriptor is off.
+<P>
+<B>dup3</B>()
+
+is the same as
+<B>dup2</B>(),
+
+except that:
+<DL COMPACT>
+<DT>*<DD>
+The caller can force the close-on-exec flag to be set
+for the new file descriptor by specifying
+<B>O_CLOEXEC</B>
+
+in
+<I>flags</I>.
+
+See the description of the same flag in
+<B><A HREF="../man2/open.2.html">open</A></B>(2)
+
+for reasons why this may be useful.
+<DT>*<DD>
+
+If
+<I>oldfd</I>
+
+equals
+<I>newfd</I>,
+
+then
+<B>dup3</B>()
+
+fails with the error
+<B>EINVAL</B>.
+
+</DL>
 <A NAME="lbAE">&nbsp;</A>
 <H2>RETURN VALUE</H2>
 
-<B>dup</B>()
-
-and
-<B>dup2</B>()
-
-return the new descriptor, or -1 if an error occurred (in which case,
+On success, these system calls
+return the new descriptor.
+On error, -1 is returned, and
 <I>errno</I>
 
-is set appropriately).
+is set appropriately.
 <A NAME="lbAF">&nbsp;</A>
 <H2>ERRORS</H2>
 
@@ -126,6 +153,9 @@ is out of the allowed range for file descriptors.
 (Linux only) This may be returned by
 <B>dup2</B>()
 
+or
+<B>dup3</B>()
+
 during a race condition with
 <B><A HREF="../man2/open.2.html">open</A></B>(2)
 
@@ -138,8 +168,26 @@ and
 The
 <B>dup2</B>()
 
+or
+<B>dup3</B>()
+
 call was interrupted by a signal; see
 <B><A HREF="../man7/signal.7.html">signal</A></B>(7).
+
+<DT><B>EINVAL</B>
+
+<DD>
+(<B>dup3</B>())
+
+<I>flags</I>
+
+contain an invalid value.
+
+Or,
+<I>oldfd</I>
+
+was equal to
+<I>newfd</I>.
 
 <DT><B>EMFILE</B>
 
@@ -148,13 +196,29 @@ The process already has the maximum number of file
 descriptors open and tried to open a new one.
 </DL>
 <A NAME="lbAG">&nbsp;</A>
+<H2>VERSIONS</H2>
+
+<B>dup3</B>()
+
+was added to Linux in version 2.6.27;
+glibc support is available starting with
+version 2.9.
+<A NAME="lbAH">&nbsp;</A>
 <H2>CONFORMING TO</H2>
 
+<B>dup</B>(),
+
+<B>dup2</B>():
+
 SVr4, 4.3BSD, POSIX.1-2001.
+<P>
+<B>dup3</B>()
+
+is Linux-specific.
 
 
 
-<A NAME="lbAH">&nbsp;</A>
+<A NAME="lbAI">&nbsp;</A>
 <H2>NOTES</H2>
 
 The error returned by
@@ -187,11 +251,14 @@ time are lost.
 A careful programmer will not use
 <B>dup2</B>()
 
+or
+<B>dup3</B>()
+
 without closing
 <I>newfd</I>
 
 first.
-<A NAME="lbAI">&nbsp;</A>
+<A NAME="lbAJ">&nbsp;</A>
 <H2>SEE ALSO</H2>
 
 <B><A HREF="../man2/close.2.html">close</A></B>(2),
@@ -210,14 +277,15 @@ first.
 <DT><A HREF="#lbAD">DESCRIPTION</A><DD>
 <DT><A HREF="#lbAE">RETURN VALUE</A><DD>
 <DT><A HREF="#lbAF">ERRORS</A><DD>
-<DT><A HREF="#lbAG">CONFORMING TO</A><DD>
-<DT><A HREF="#lbAH">NOTES</A><DD>
-<DT><A HREF="#lbAI">SEE ALSO</A><DD>
+<DT><A HREF="#lbAG">VERSIONS</A><DD>
+<DT><A HREF="#lbAH">CONFORMING TO</A><DD>
+<DT><A HREF="#lbAI">NOTES</A><DD>
+<DT><A HREF="#lbAJ">SEE ALSO</A><DD>
 </DL>
 <HR>
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 02:58:55 GMT, April 20, 2020
+Time: 02:59:26 GMT, April 20, 2020
 </BODY>
 </HTML>

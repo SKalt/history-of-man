@@ -5,7 +5,7 @@ Copyright (C) Tom Bjorkholm &amp; Markus Kuhn, 1996
 <HTML><HEAD><TITLE>Man page of SCHED_YIELD</TITLE>
 </HEAD><BODY>
 <H1>SCHED_YIELD</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 1996-04-10<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2008-10-18<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -23,25 +23,11 @@ sched_yield - yield the processor
 <A NAME="lbAD">&nbsp;</A>
 <H2>DESCRIPTION</H2>
 
-A process can relinquish the processor voluntarily without blocking by calling
-<B>sched_yield</B>().
-
-The process will then be moved to the end of the queue for its static
-priority and a new process gets to run.
-<P>
-Note: If the calling process is the only process in the highest
-priority list at that time, this process will continue to run after a
-call to
-<B>sched_yield</B>().
-
-<P>
-POSIX systems on which
 <B>sched_yield</B>()
 
-is available define
-<B>_POSIX_PRIORITY_SCHEDULING</B>
-
-in <I>&lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;</I>.
+causes the calling thread to relinquish the CPU.
+The thread is moved to the end of the queue for its static
+priority and a new thread gets to run.
 <A NAME="lbAE">&nbsp;</A>
 <H2>RETURN VALUE</H2>
 
@@ -65,6 +51,37 @@ always succeeds.
 
 POSIX.1-2001.
 <A NAME="lbAH">&nbsp;</A>
+<H2>NOTES</H2>
+
+If the calling thread is the only thread in the highest
+priority list at that time,
+it will continue to run after a call to
+<B>sched_yield</B>().
+
+<P>
+POSIX systems on which
+<B>sched_yield</B>()
+
+is available define
+<B>_POSIX_PRIORITY_SCHEDULING</B>
+
+in <I>&lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;</I>.
+<P>
+Strategic calls to
+<B>sched_yield</B>()
+
+can improve performance by giving other threads or processes
+a chance to run when (heavily) contended resources (e.g., mutexes)
+have been released by the caller.
+Avoid calling
+<B>sched_yield</B>()
+
+unnecessarily or inappropriately
+(e.g., when resources needed by other
+schedulable threads are still held by the caller),
+since doing so will result in unnecessary context switches,
+which will degrade system performance.
+<A NAME="lbAI">&nbsp;</A>
 <H2>SEE ALSO</H2>
 
 <B><A HREF="../man2/sched_setscheduler.2.html">sched_setscheduler</A></B>(2)
@@ -86,12 +103,13 @@ by Bill O. Gallmeister, O'Reilly &amp; Associates, Inc., ISBN 1-56592-074-0
 <DT><A HREF="#lbAE">RETURN VALUE</A><DD>
 <DT><A HREF="#lbAF">ERRORS</A><DD>
 <DT><A HREF="#lbAG">CONFORMING TO</A><DD>
-<DT><A HREF="#lbAH">SEE ALSO</A><DD>
+<DT><A HREF="#lbAH">NOTES</A><DD>
+<DT><A HREF="#lbAI">SEE ALSO</A><DD>
 </DL>
 <HR>
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 02:58:57 GMT, April 20, 2020
+Time: 02:59:28 GMT, April 20, 2020
 </BODY>
 </HTML>

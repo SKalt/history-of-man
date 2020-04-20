@@ -4,7 +4,7 @@
 <HTML><HEAD><TITLE>Man page of LD.SO</TITLE>
 </HEAD><BODY>
 <H1>LD.SO</H1>
-Section: Linux Programmer's Manual (8)<BR>Updated: 2008-04-18<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (8)<BR>Updated: 2008-10-27<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -177,12 +177,25 @@ environment variable setting (see below).
 
 <DD>
 Ignore RPATH and RUNPATH information in object names in LIST.
+This option is ignored if
+<B>ld.so</B>
+
+is set-user-ID or set-group-ID.
 </DL>
 <A NAME="lbAG">&nbsp;</A>
 <H2>ENVIRONMENT</H2>
 
 There are four important environment variables.
 <DL COMPACT>
+<DT><B>LD_BIND_NOW</B>
+
+<DD>
+(libc5; glibc since 2.1.1)
+If set to a non-empty string,
+causes the dynamic linker to resolve all symbols
+at program startup instead of deferring function call resolution to the point
+when they are first referenced.
+This is useful when using a debugger.
 <DT><B>LD_LIBRARY_PATH</B>
 
 <DD>
@@ -201,15 +214,6 @@ This can be used to selectively override functions in other shared libraries.
 For set-user-ID/set-group-ID ELF binaries,
 only libraries in the standard search
 directories that are also set-user-ID will be loaded.
-<DT><B>LD_BIND_NOW</B>
-
-<DD>
-(libc5; glibc since 2.1.1)
-If set to a non-empty string,
-causes the dynamic linker to resolve all symbols
-at program startup instead of deferring function call resolution to the point
-when they are first referenced.
-This is useful when using a debugger.
 <DT><B>LD_TRACE_LOADED_OBJECTS</B>
 
 <DD>
@@ -225,79 +229,6 @@ instead of running normally.
 Then there are lots of more or less obscure variables,
 many obsolete or only for internal use.
 <DL COMPACT>
-<DT><B>LD_WARN</B>
-
-<DD>
-(ELF only)(glibc since 2.1.3)
-If set to a non-empty string, warn about unresolved symbols.
-<DT><B>LD_NOWARN</B>
-
-<DD>
-(a.out only)(libc5)
-Suppress warnings about a.out libraries with incompatible minor
-version numbers.
-<DT><B>LD_BIND_NOT</B>
-
-<DD>
-(glibc since 2.1.95)
-Do not update the GOT (global offset table) and PLT (procedure linkage table)
-after resolving a symbol.
-<DT><B>LD_DEBUG</B>
-
-<DD>
-(glibc since 2.1)
-Output verbose debugging information about the dynamic linker.
-If set to
-<B>all</B>
-
-prints all debugging information it has, if set to
-<B>help</B>
-
-prints a help message about which categories can be specified in this
-environment variable.
-<DT><B>LD_DEBUG_OUTPUT</B>
-
-<DD>
-(glibc since 2.1)
-File where
-<B>LD_DEBUG</B>
-
-output should be fed into, default is standard output.
-<B>LD_DEBUG_OUTPUT</B>
-
-is ignored for set-user-ID/set-group-ID binaries.
-<DT><B>LD_VERBOSE</B>
-
-<DD>
-(glibc since 2.1)
-If set to a non-empty string,
-output symbol versioning information about the
-program if querying information about the program (i.e., either
-<B>LD_TRACE_LOADED_OBJECTS</B>
-
-has been set, or
-<B>--list</B>
-
-or
-<B>--verify</B>
-
-options have been given to the dynamic linker).
-<DT><B>LD_PROFILE</B>
-
-<DD>
-(glibc since 2.1)
-Shared object to be profiled.
-<DT><B>LD_PROFILE_OUTPUT</B>
-
-<DD>
-(glibc since 2.1)
-File where
-<B>LD_PROFILE</B>
-
-output should be stored, default is standard output.
-<B>LD_PROFILE_OUTPUT</B>
-
-is ignored for set-user-ID/set-group-ID binaries.
 <DT><B>LD_AOUT_LIBRARY_PATH</B>
 
 <DD>
@@ -320,32 +251,178 @@ for a.out binaries only.
 Old versions of ld-linux.so.1 also supported
 <B>LD_ELF_PRELOAD</B>.
 
-<DT><B>LD_SHOW_AUXV</B>
+
+
+
+
+
+
+
+<DT><B>LD_BIND_NOT</B>
+
+<DD>
+(glibc since 2.1.95)
+Do not update the GOT (global offset table) and PLT (procedure linkage table)
+after resolving a symbol.
+<DT><B>LD_DEBUG</B>
 
 <DD>
 (glibc since 2.1)
-Show auxiliary array passed up from the kernel.
-<DT><B>LD_HWCAP_MASK</B>
+Output verbose debugging information about the dynamic linker.
+If set to
+<B>all</B>
+
+prints all debugging information it has, if set to
+<B>help</B>
+
+prints a help message about which categories can be specified in this
+environment variable.
+Since glibc 2.3.4,
+<B>LD_DEBUG</B>
+
+is ignored for set-user-ID/set-group-ID binaries.
+<DT><B>LD_DEBUG_OUTPUT</B>
 
 <DD>
 (glibc since 2.1)
-Mask for hardware capabilities.
-<DT><B>LD_ORIGIN_PATH</B>
+File where
+<B>LD_DEBUG</B>
 
-<DD>
-(glibc since 2.1)
-Path where the binary is found (for non-set-user-ID programs).
+output should be fed into, default is standard output.
+<B>LD_DEBUG_OUTPUT</B>
+
+is ignored for set-user-ID/set-group-ID binaries.
 <DT><B>LD_DYNAMIC_WEAK</B>
 
 <DD>
 (glibc since 2.1.91)
 Allow weak symbols to be overridden (reverting to old glibc behavior).
+For security reasons, since glibc 2.3.4,
+<B>LD_DYNAMIC_WEAK</B>
+
+is ignored for set-user-ID/set-group-ID binaries.
+<DT><B>LD_HWCAP_MASK</B>
+
+<DD>
+(glibc since 2.1)
+Mask for hardware capabilities.
 <DT><B>LD_KEEPDIR</B>
 
 <DD>
 (a.out only)(libc5)
 Don't ignore the directory in the names of a.out libraries to be loaded.
 Use of this option is strongly discouraged.
+<DT><B>LD_NOWARN</B>
+
+<DD>
+(a.out only)(libc5)
+Suppress warnings about a.out libraries with incompatible minor
+version numbers.
+<DT><B>LD_ORIGIN_PATH</B>
+
+<DD>
+(glibc since 2.1)
+Path where the binary is found (for non-set-user-ID programs).
+For security reasons, since glibc 2.4,
+<B>LD_ORIGIN_PATH</B>
+
+is ignored for set-user-ID/set-group-ID binaries.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<DT><B>LD_PROFILE</B>
+
+<DD>
+(glibc since 2.1)
+Shared object to be profiled,
+specified either as a pathname or a soname.
+Profiling output is written to the file whose name is:
+&quot;<I>$LD_PROFILE_OUTPUT</I>/<I>$LD_PROFILE</I>.profile&quot;.
+<DT><B>LD_PROFILE_OUTPUT</B>
+
+<DD>
+(glibc since 2.1)
+Directory where
+<B>LD_PROFILE</B>
+
+output should be written.
+If this variable is not defined, or is defined as an empty string,
+then the default is
+<I>/var/tmp</I>.
+
+<B>LD_PROFILE_OUTPUT</B>
+
+is ignored for set-user-ID and set-group-ID programs,
+which always use
+<I>/var/profile</I>.
+
+<DT><B>LD_SHOW_AUXV</B>
+
+<DD>
+(glibc since 2.1)
+Show auxiliary array passed up from the kernel.
+For security reasons, since glibc 2.3.5,
+<B>LD_SHOW_AUXV</B>
+
+is ignored for set-user-ID/set-group-ID binaries.
+
+
+
+
+<DT><B>LD_USE_LOAD_BIAS</B>
+
+<DD>
+
+
+
+By default (i.e., if this variable is not defined)
+executables and prelinked
+shared objects will honor base addresses of their dependent libraries
+and (non-prelinked) position-independent executables (PIEs)
+and other shared objects will not honor them.
+If
+<B>LD_USE_LOAD_BIAS</B>
+
+is defined wit the value, both executables and PIEs
+will honor the base addresses.
+If
+<B>LD_USE_LOAD_BIAS</B>
+
+is defined with the value 0,
+neither executables nor PIEs will honor the base addresses.
+This variable is ignored by set-user-ID and set-group-ID programs.
+<DT><B>LD_VERBOSE</B>
+
+<DD>
+(glibc since 2.1)
+If set to a non-empty string,
+output symbol versioning information about the
+program if querying information about the program (i.e., either
+<B>LD_TRACE_LOADED_OBJECTS</B>
+
+has been set, or
+<B>--list</B>
+
+or
+<B>--verify</B>
+
+options have been given to the dynamic linker).
+<DT><B>LD_WARN</B>
+
+<DD>
+(ELF only)(glibc since 2.1.3)
+If set to a non-empty string, warn about unresolved symbols.
 <DT><B>LDD_ARGV0</B>
 
 <DD>
@@ -429,6 +506,6 @@ ELF functionality is available since Linux 1.1.52 and libc5.
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 02:59:10 GMT, April 20, 2020
+Time: 02:59:41 GMT, April 20, 2020
 </BODY>
 </HTML>

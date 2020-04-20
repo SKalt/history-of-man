@@ -5,7 +5,7 @@ Copyright 2002 Walter Harms &lt;walter.harms@informatik.uni-oldenburg.de&gt;
 <HTML><HEAD><TITLE>Man page of TTY_IOCTL</TITLE>
 </HEAD><BODY>
 <H1>TTY_IOCTL</H1>
-Section: Linux Programmer's Manual (4)<BR>Updated: 2008-07-15<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (4)<BR>Updated: 2008-10-29<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -116,22 +116,34 @@ instead of a
 <A NAME="lbAF">&nbsp;</A>
 <H3>Locking the termios structure</H3>
 
-The termios structure of a tty can be locked.<BR>
-The lock is itself
-a termios structure, with non-zero bits or fields indicating a
+The<BR>
+<I>termios</I>
+
+structure of a terminal can be locked.
+The lock is itself a
+<I>termios</I>
+
+structure, with non-zero bits or fields indicating a
 locked value.
 <DL COMPACT>
 <DT><B>TIOCGLCKTRMIOS<TT>&nbsp;</TT>struct termios *</B><I>argp</I>
 
 <DD>
-Gets the locking status of the termios structure of<BR>
-the terminal.
+Gets the locking status of the<BR>
+<I>termios</I>
+
+structure of the terminal.
 <DT><B>TIOCSLCKTRMIOS<TT>&nbsp;</TT>const struct termios *</B><I>argp</I>
 
 <DD>
-Sets the locking status of the termios structure of<BR>
-the terminal.
-Only root can do this.
+Sets the locking status of the<BR>
+<I>termios</I>
+
+structure of the terminal.
+Only root (more precisely: a process with the
+<B>CAP_SYS_ADMIN</B>
+
+capability) can do this.
 </DL>
 <A NAME="lbAG">&nbsp;</A>
 <H3>Get and Set Window Size</H3>
@@ -221,7 +233,7 @@ times as long as done for zero
 DG/UX and AIX treat
 <I>arg</I>
 
-(when non-zero) as a timeinterval measured in milliseconds.
+(when non-zero) as a time interval measured in milliseconds.
 HP-UX ignores
 <I>arg</I>.)
 
@@ -329,14 +341,19 @@ Redirect output that would have gone to<BR>
 or
 <I>/dev/tty0</I>
 
-to the given tty.
-If that was a pty master, send it to the slave.
-Anybody can do this as long as the output was not redirected yet.
-If it was redirected already
+to the given terminal.
+If that was a pseudo-terminal master, send it to the slave.
+In Linux before version 2.6.10,
+anybody can do this as long as the output was not redirected yet;
+since version 2.6.10, only root (a process with the
+<B>CAP_SYS_ADMIN</B>
+
+capability) may do this.
+If output was redirected already
 <B>EBUSY</B>
 
 is returned,
-but root may stop redirection by using this ioctl with
+but redirection can be stopped by using this ioctl with
 <I>fd</I>
 
 pointing at
@@ -347,29 +364,32 @@ or
 
 </DL>
 <A NAME="lbAM">&nbsp;</A>
-<H3>Controlling tty</H3>
+<H3>Controlling terminal</H3>
 
 <DL COMPACT>
 <DT><B>TIOCSCTTY<TT>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT>int </B><I>arg</I>
 
 <DD>
-Make the given tty the controlling tty of the calling process.<BR>
+Make the given terminal the controlling terminal of the calling process.<BR>
 The calling process must be a session leader and not have a
-controlling tty already.
-If this tty is already the controlling tty
+controlling terminal already.
+If this terminal is already the controlling terminal
 of a different session group then the ioctl fails with
 <B>EPERM</B>,
 
-unless the caller is root and
+unless the caller is root (more precisely: has the
+<B>CAP_SYS_ADMIN</B>
+
+capability) and
 <I>arg</I>
 
-equals 1, in which case the tty is stolen, and all processes that had
-it as controlling tty lose it.
+equals 1, in which case the terminal is stolen, and all processes that had
+it as controlling terminal lose it.
 <DT><B>TIOCNOTTY<TT>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT>void</B>
 
 <DD>
-If the given tty was the controlling tty of the calling process,<BR>
-give up this controlling tty.
+If the given terminal was the controlling terminal of the calling process,<BR>
+give up this controlling terminal.
 If the process was session leader,
 then send
 <B>SIGHUP</B>
@@ -378,7 +398,7 @@ and
 <B>SIGCONT</B>
 
 to the foreground process group
-and all processes in the current session lose their controlling tty.
+and all processes in the current session lose their controlling terminal.
 </DL>
 <A NAME="lbAN">&nbsp;</A>
 <H3>Process group and session ID</H3>
@@ -392,7 +412,7 @@ When successful, equivalent to<BR>
 
 <BR>
 
-Get the process group ID of the foreground process group on this tty.
+Get the process group ID of the foreground process group on this terminal.
 <DT><B>TIOCSPGRP<TT>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT>const pid_t *</B><I>argp</I>
 
 <DD>
@@ -401,15 +421,16 @@ Equivalent to<BR>
 
 <BR>
 
-Set the foreground process group ID of this tty.
+Set the foreground process group ID of this terminal.
 <DT><B>TIOCGSID<TT>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT>pid_t *</B><I>argp</I>
 
 <DD>
-Get the session ID of the given tty.<BR>
+Get the session ID of the given terminal.<BR>
 This will fail with
 <B>ENOTTY</B>
 
-in case the tty is not a master pty and not our controlling tty.
+in case the terminal is not a master pseudo-terminal
+and not our controlling terminal.
 Strange.
 </DL>
 <A NAME="lbAO">&nbsp;</A>
@@ -419,7 +440,7 @@ Strange.
 <DT><B>TIOCEXCL<TT>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT>void</B>
 
 <DD>
-Put the tty into exclusive mode.<BR>
+Put the terminal into exclusive mode.<BR>
 No further
 <B><A HREF="../man2/open.2.html">open</A></B>(2)
 
@@ -427,7 +448,10 @@ operations on the terminal are permitted.
 (They will fail with
 <B>EBUSY</B>,
 
-except for root.)
+except for root, that is, a process with the
+<B>CAP_SYS_ADMIN</B>
+
+capability.)
 <DT><B>TIOCNXCL<TT>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT>void</B>
 
 <DD>
@@ -440,14 +464,14 @@ Disable exclusive mode.<BR>
 <DT><B>TIOCGETD<TT>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT>int *</B><I>argp</I>
 
 <DD>
-Get the line discipline of the tty.<BR>
+Get the line discipline of the terminal.<BR>
 <DT><B>TIOCSETD<TT>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT>const int *</B><I>argp</I>
 
 <DD>
-Set the line discipline of the tty.<BR>
+Set the line discipline of the terminal.<BR>
 </DL>
 <A NAME="lbAQ">&nbsp;</A>
-<H3>Pseudo-tty ioctls</H3>
+<H3>Pseudo-terminal ioctls</H3>
 
 <DL COMPACT>
 <DT><B>TIOCPKT<TT>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT>const int *</B><I>argp</I>
@@ -466,7 +490,7 @@ In packet mode, each subsequent
 
 will return a packet that either contains a single non-zero control byte,
 or has a single byte containing zero ('&nbsp;') followed by data
-written on the slave side of the pty.
+written on the slave side of the pseudo-terminal.
 If the first byte is not
 <B>TIOCPKT_DATA</B>
 
@@ -558,12 +582,17 @@ TIOCM_DSR       DSR (data set ready)
 <DD>
 (&quot;Get software carrier flag&quot;)<BR>
 Get the status of the CLOCAL flag in the c_cflag field of the
-termios structure.
+<I>termios</I>
+
+structure.
 <DT><B>TIOCSSOFTCAR<TT>&nbsp;&nbsp;&nbsp;</TT>const int *</B><I>argp</I>
 
 <DD>
 (&quot;Set software carrier flag&quot;)<BR>
-Set the CLOCAL flag in the termios structure when
+Set the CLOCAL flag in the
+<I>termios</I>
+
+structure when
 *<I>argp</I>
 
 is non-zero, and clear it otherwise.
@@ -577,7 +606,7 @@ flag for a line is off, the hardware carrier detect (DCD)
 signal is significant, and an
 <B><A HREF="../man2/open.2.html">open</A></B>(2)
 
-of the corresponding tty will block until DCD is asserted,
+of the corresponding terminal will block until DCD is asserted,
 unless the
 <B>O_NONBLOCK</B>
 
@@ -724,11 +753,11 @@ main(void)
 <DT><A HREF="#lbAJ">Buffer count and flushing</A><DD>
 <DT><A HREF="#lbAK">Faking input</A><DD>
 <DT><A HREF="#lbAL">Redirecting console output</A><DD>
-<DT><A HREF="#lbAM">Controlling tty</A><DD>
+<DT><A HREF="#lbAM">Controlling terminal</A><DD>
 <DT><A HREF="#lbAN">Process group and session ID</A><DD>
 <DT><A HREF="#lbAO">Exclusive mode</A><DD>
 <DT><A HREF="#lbAP">Line discipline</A><DD>
-<DT><A HREF="#lbAQ">Pseudo-tty ioctls</A><DD>
+<DT><A HREF="#lbAQ">Pseudo-terminal ioctls</A><DD>
 <DT><A HREF="#lbAR">Modem control</A><DD>
 <DT><A HREF="#lbAS">Marking a line as local</A><DD>
 <DT><A HREF="#lbAT">Linux-specific</A><DD>
@@ -743,6 +772,6 @@ main(void)
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 02:59:09 GMT, April 20, 2020
+Time: 02:59:39 GMT, April 20, 2020
 </BODY>
 </HTML>

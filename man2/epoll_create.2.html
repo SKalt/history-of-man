@@ -4,25 +4,29 @@
 <HTML><HEAD><TITLE>Man page of EPOLL_CREATE</TITLE>
 </HEAD><BODY>
 <H1>EPOLL_CREATE</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2008-05-29<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2008-10-10<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
 <H2>NAME</H2>
 
-epoll_create - open an epoll file descriptor
+epoll_create, epoll_create1 - open an epoll file descriptor
 <A NAME="lbAC">&nbsp;</A>
 <H2>SYNOPSIS</H2>
 
+<PRE>
 <B>#include &lt;<A HREF="file:///usr/include/sys/epoll.h">sys/epoll.h</A>&gt;</B>
 
-<P>
 <B>int epoll_create(int </B><I>size</I><B>);</B>
+<B>int epoll_create1(int </B><I>flags</I><B>);</B>
+</PRE>
 
 <A NAME="lbAD">&nbsp;</A>
 <H2>DESCRIPTION</H2>
 
-Open an
+<B>epoll_create</B>()
+
+opens an
 <B>epoll</B>
 
 file descriptor by requesting the kernel to allocate
@@ -35,7 +39,12 @@ The
 
 is not the maximum size of the backing store but
 just a hint to the kernel about how to dimension internal structures.
-The returned file descriptor will be used for all the subsequent calls to the
+(Nowadays,
+<I>size</I>
+
+is ignored; see NOTES below.)
+<P>
+The returned file descriptor is used for all the subsequent calls to the
 <B>epoll</B>
 
 interface.
@@ -45,20 +54,49 @@ The file descriptor returned by
 must be closed by using
 <B><A HREF="../man2/close.2.html">close</A></B>(2).
 
+<P>
+If
+<I>flags</I>
+
+is 0, then, other than the fact that the obsolete
+<I>flags</I>
+
+argument is dropped,
+<B>epoll_create1</B>()
+
+is the same as
+<B>epoll_create</B>().
+
+The following value can be included in
+<I>flags</I>
+
+to obtain different behavior:
+<DL COMPACT>
+<DT><B>EPOLL_CLOEXEC</B>
+
+<DD>
+Set the close-on-exec
+(<B>FD_CLOEXEC</B>)
+
+flag on the new file descriptor.
+See the description of the
+<B>O_CLOEXEC</B>
+
+flag in
+<B><A HREF="../man2/open.2.html">open</A></B>(2)
+
+for reasons why this may be useful.
+</DL>
 <A NAME="lbAE">&nbsp;</A>
 <H2>RETURN VALUE</H2>
 
-When successful,
-<B>epoll_create</B>()
-
-returns a non-negative integer identifying the descriptor.
-When an error occurs,
-<B>epoll_create</B>()
-
-returns -1 and
+On success,
+these system calls
+return a non-negative file descriptor.
+On error, -1 is returned, and
 <I>errno</I>
 
-is set appropriately.
+is set to indicate the error.
 <A NAME="lbAF">&nbsp;</A>
 <H2>ERRORS</H2>
 
@@ -69,6 +107,14 @@ is set appropriately.
 <I>size</I>
 
 is not positive.
+<DT><B>EINVAL</B>
+
+<DD>
+(<B>epoll_create1</B>())
+
+Invalid value specified in
+<I>flags</I>.
+
 <DT><B>ENFILE</B>
 
 <DD>
@@ -92,6 +138,8 @@ Since Linux 2.6.8, the
 <I>size</I>
 
 argument is unused.
+(The kernel dynamically sizes the required data structures
+without needing this initial hint.)
 <A NAME="lbAI">&nbsp;</A>
 <H2>SEE ALSO</H2>
 
@@ -121,6 +169,6 @@ argument is unused.
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 02:58:55 GMT, April 20, 2020
+Time: 02:59:26 GMT, April 20, 2020
 </BODY>
 </HTML>

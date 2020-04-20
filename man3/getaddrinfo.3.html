@@ -6,7 +6,7 @@ Copyright 2000, Sam Varshavchik &lt;mrsam@courier-mta.com&gt;
 <HTML><HEAD><TITLE>Man page of GETADDRINFO</TITLE>
 </HEAD><BODY>
 <H1>GETADDRINFO</H1>
-Section: Linux Programmer's Manual (3)<BR>Updated: 2008-08-29<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2008-10-28<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -620,9 +620,18 @@ Try again later.
 <DT><B>EAI_BADFLAGS</B>
 
 <DD>
-<I>ai_flags</I>
+<I>hints.ai_flags</I>
 
-contains invalid flags.
+contains invalid flags; or,
+<I>hints.ai_flags</I>
+
+included
+<B>AI_CANONNAME</B>
+
+and
+<I>name</I>
+
+was NULL.
 <DT><B>EAI_FAIL</B>
 
 <DD>
@@ -671,10 +680,48 @@ was not a numeric port-number string.
 <DD>
 The requested service is not available for the requested socket type.
 It may be available through another socket type.
+For example, this error could occur if
+<I>service</I>
+
+was &quot;shell&quot; (a service only available on stream sockets), and either
+<I>hints.ai_protocol</I>
+
+was
+<B>IPPROTO_UDP</B>,
+
+or
+<I>hints.ai_socktype</I>
+
+was
+<B>SOCK_DGRAM</B>;
+
+or the error could occur if
+<I>service</I>
+
+was not NULL, and
+<I>hints.ai_socktype</I>
+
+was
+<B>SOCK_RAW</B>
+
+(a socket type that does not support the concept of services).
 <DT><B>EAI_SOCKTYPE</B>
 
 <DD>
 The requested socket type is not supported.
+This could occur, for example, if
+<I>hints.ai_socktype</I>
+
+and
+<I>hints.ai_protocol</I>
+
+are inconsistent (e.g.,
+<B>SOCK_DGRAM</B>
+
+and
+<B>IPPROTO_TCP</B>,
+
+repectively).
 <DT><B>EAI_SYSTEM</B>
 
 <DD>
@@ -739,11 +786,11 @@ and
 <B><A HREF="../man3/getnameinfo.3.html">getnameinfo</A></B>(3).
 
 The programs are an echo server and client for UDP datagrams.
-<P>
-This is the server:
+<A NAME="lbAJ">&nbsp;</A>
+<H3>Server program</H3>
+
 
 <PRE>
-
 #include &lt;<A HREF="file:///usr/include/sys/types.h">sys/types.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/stdlib.h">stdlib.h</A>&gt;
@@ -837,12 +884,11 @@ main(int argc, char *argv[])
 }
 </PRE>
 
+<A NAME="lbAK">&nbsp;</A>
+<H3>Client program</H3>
 
-<P>
-This is the client:
 
 <PRE>
-
 #include &lt;<A HREF="file:///usr/include/sys/types.h">sys/types.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/sys/socket.h">sys/socket.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/netdb.h">netdb.h</A>&gt;
@@ -937,8 +983,7 @@ main(int argc, char *argv[])
 }
 </PRE>
 
-
-<A NAME="lbAJ">&nbsp;</A>
+<A NAME="lbAL">&nbsp;</A>
 <H2>SEE ALSO</H2>
 
 
@@ -968,12 +1013,16 @@ main(int argc, char *argv[])
 <DT><A HREF="#lbAG">CONFORMING TO</A><DD>
 <DT><A HREF="#lbAH">NOTES</A><DD>
 <DT><A HREF="#lbAI">EXAMPLE</A><DD>
-<DT><A HREF="#lbAJ">SEE ALSO</A><DD>
+<DL>
+<DT><A HREF="#lbAJ">Server program</A><DD>
+<DT><A HREF="#lbAK">Client program</A><DD>
+</DL>
+<DT><A HREF="#lbAL">SEE ALSO</A><DD>
 </DL>
 <HR>
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 02:59:03 GMT, April 20, 2020
+Time: 02:59:33 GMT, April 20, 2020
 </BODY>
 </HTML>

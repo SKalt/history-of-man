@@ -5,20 +5,26 @@ Copyright (C) 2005, 2008, Michael Kerrisk &lt;mtk.manpages@gmail.com&gt;
 <HTML><HEAD><TITLE>Man page of PIPE</TITLE>
 </HEAD><BODY>
 <H1>PIPE</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2008-01-09<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2008-10-10<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
 <H2>NAME</H2>
 
-pipe - create pipe
+pipe, pipe2 - create pipe
 <A NAME="lbAC">&nbsp;</A>
 <H2>SYNOPSIS</H2>
 
+<PRE>
 <B>#include &lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;</B>
 
-<P>
 <B>int pipe(int </B><I>pipefd</I><B>[2]);</B>
+
+<B>#define _GNU_SOURCE</B>
+<B>#include &lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;</B>
+
+<B>int pipe2(int </B><I>pipefd</I><B>[2], </B><I>flags</I><B>);</B>
+</PRE>
 
 <A NAME="lbAD">&nbsp;</A>
 <H2>DESCRIPTION</H2>
@@ -42,6 +48,44 @@ until it is read from the read end of the pipe.
 For further details, see
 <B><A HREF="../man7/pipe.7.html">pipe</A></B>(7).
 
+<P>
+If
+<I>flags</I>
+
+is 0, then
+<B>pipe2</B>()
+
+is the same as
+<B>pipe</B>().
+
+The following values can be bitwise ORed in
+<I>flags</I>
+
+to obtain different behavior:
+<DL COMPACT>
+<DT><B>O_NONBLOCK</B>
+
+<DD>
+Set the
+<B>O_NONBLOCK</B>
+
+file status flag on the two new open file descriptions.
+Using this flag saves extra calls to
+<B><A HREF="../man2/fcntl.2.html">fcntl</A></B>(2)
+
+to achieve the same result.
+<DT><B>O_CLOEXEC</B>
+
+<DD>
+Set the close-on-exec
+(<B>FD_CLOEXEC</B>)
+
+flag on the two new file descriptors.
+See the description of the same flag in
+<B><A HREF="../man2/open.2.html">open</A></B>(2)
+
+for reasons why this may be useful.
+</DL>
 <A NAME="lbAE">&nbsp;</A>
 <H2>RETURN VALUE</H2>
 
@@ -60,6 +104,14 @@ is set appropriately.
 <I>pipefd</I>
 
 is not valid.
+<DT><B>EINVAL</B>
+
+<DD>
+(<B>pipe2</B>())
+
+Invalid value in
+<I>flags</I>.
+
 <DT><B>EMFILE</B>
 
 <DD>
@@ -70,10 +122,24 @@ Too many file descriptors are in use by the process.
 The system limit on the total number of open files has been reached.
 </DL>
 <A NAME="lbAG">&nbsp;</A>
+<H2>VERSIONS</H2>
+
+<B>pipe2</B>()
+
+was added to Linux in version 2.6.27;
+glibc support is available starting with
+version 2.9.
+<A NAME="lbAH">&nbsp;</A>
 <H2>CONFORMING TO</H2>
 
+<B>pipe</B>():
+
 POSIX.1-2001.
-<A NAME="lbAH">&nbsp;</A>
+<P>
+<B>pipe2</B>()
+
+is Linux-specific.
+<A NAME="lbAI">&nbsp;</A>
 <H2>EXAMPLE</H2>
 
 
@@ -143,7 +209,7 @@ main(int argc, char *argv[])
 }
 </PRE>
 
-<A NAME="lbAI">&nbsp;</A>
+<A NAME="lbAJ">&nbsp;</A>
 <H2>SEE ALSO</H2>
 
 <B><A HREF="../man2/fork.2.html">fork</A></B>(2),
@@ -168,14 +234,15 @@ main(int argc, char *argv[])
 <DT><A HREF="#lbAD">DESCRIPTION</A><DD>
 <DT><A HREF="#lbAE">RETURN VALUE</A><DD>
 <DT><A HREF="#lbAF">ERRORS</A><DD>
-<DT><A HREF="#lbAG">CONFORMING TO</A><DD>
-<DT><A HREF="#lbAH">EXAMPLE</A><DD>
-<DT><A HREF="#lbAI">SEE ALSO</A><DD>
+<DT><A HREF="#lbAG">VERSIONS</A><DD>
+<DT><A HREF="#lbAH">CONFORMING TO</A><DD>
+<DT><A HREF="#lbAI">EXAMPLE</A><DD>
+<DT><A HREF="#lbAJ">SEE ALSO</A><DD>
 </DL>
 <HR>
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 02:58:57 GMT, April 20, 2020
+Time: 02:59:28 GMT, April 20, 2020
 </BODY>
 </HTML>
