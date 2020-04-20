@@ -5,87 +5,52 @@ Copyright (c) 1989, 1991, 1993, 1994
 <HTML><HEAD><TITLE>Man page of FTS</TITLE>
 </HEAD><BODY>
 <H1>FTS</H1>
-Section: C Library Functions (3)<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2007-12-08<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
-<BR>BSD mandoc<BR>
+
 <A NAME="lbAB">&nbsp;</A>
 <H2>NAME</H2>
 
-
-
-<B>fts</B>
-
- 
-<B>fts_open</B>
-
- 
-<B>fts_read</B>
-
- 
-<B>fts_children</B>
-
- 
-<B>fts_set</B>
-
- 
-<B>fts_close</B>
-
- - traverse a file hierarchy
-
+fts, fts_open, fts_read, fts_children, fts_set, fts_close - traverse a file hierarchy
 <A NAME="lbAC">&nbsp;</A>
 <H2>SYNOPSIS</H2>
 
-Fd #include &lt;<A HREF="file:///usr/include/sys/types.h">sys/types.h</A>&gt;
+<PRE>
+<B>#include &lt;<A HREF="file:///usr/include/sys/types.h">sys/types.h</A>&gt;</B>
+<B>#include &lt;<A HREF="file:///usr/include/sys/stat.h">sys/stat.h</A>&gt;</B>
+<B>#include &lt;<A HREF="file:///usr/include/fts.h">fts.h</A>&gt;</B>
 
-Fd #include &lt;<A HREF="file:///usr/include/sys/stat.h">sys/stat.h</A>&gt;
+<B>FTS *fts_open(char * const *</B><I>path_argv</I><B>, int </B><I>options</I><B>, </B>
+<I>              int (*compar)(const FTSENT **, const FTSENT **)</I><B>);</B>
 
-Fd #include &lt;<A HREF="file:///usr/include/fts.h">fts.h</A>&gt;
+<B>FTSENT *fts_read(FTS *</B><I>ftsp</I><B>);</B>
 
-Ft FTS *
+<B>FTSENT *fts_children(FTS *</B><I>ftsp</I><B>, int </B><I>options</I><B>);</B>
 
-Fn fts_open char * const *path_argv int options int (*compar)(const FTSENT **, const FTSENT **)
+<B>int fts_set(FTS *</B><I>ftsp</I><B>, FTSENT *</B><I>f</I><B>, int </B><I>options</I><B>);</B>
 
-Ft FTSENT *
-
-Fn fts_read FTS *ftsp
-
-Ft FTSENT *
-
-Fn fts_children FTS *ftsp int options
-
-Ft int
-
-Fn fts_set FTS *ftsp FTSENT *f int options
-
-Ft int
-
-Fn fts_close FTS *ftsp
+<B>int fts_close(FTS *</B><I>ftsp</I><B>);</B>
+</PRE>
 
 <A NAME="lbAD">&nbsp;</A>
 <H2>DESCRIPTION</H2>
 
 The
-<B>fts</B>
-
-functions are provided for traversing
-<B>UNIX</B>
-
+fts functions are provided for traversing
 file hierarchies.
 A simple overview is that the
-Fn fts_open
+<B>fts_open</B>()
 
 function returns a ``handle'' on a file hierarchy, which is then supplied to
 the other
-<B>fts</B>
-
-functions.
+fts functions.
 The function
-Fn fts_read
+<B>fts_read</B>()
 
 returns a pointer to a structure describing one of the files in the file
 hierarchy.
 The function
-Fn fts_children
+<B>fts_children</B>()
 
 returns a pointer to a linked list of structures, each of which describes
 one of the files contained in a directory in the hierarchy.
@@ -97,474 +62,409 @@ It is possible to walk the hierarchy ``logically'' (ignoring symbolic links)
 or physically (visiting symbolic links), order the walk of the hierarchy or
 prune and/or re-visit portions of the hierarchy.
 <P>
-
 Two structures are defined (and typedef'd) in the include file
-Aq Pa fts.h .
+<I>&lt;<A HREF="file:///usr/include/fts.h">fts.h</A>&gt;</I>.
 
 The first is
-Fa FTS ,
+<I>FTS</I>,
 
 the structure that represents the file hierarchy itself.
 The second is
-Fa FTSENT ,
+<I>FTSENT</I>,
 
 the structure that represents a file in the file
 hierarchy.
 Normally, an
-Fa FTSENT
+<I>FTSENT</I>
 
 structure is returned for every file in the file
 hierarchy.
-In this manual page, ``file'' and
-``Fa FTSENT <B>structure</B>
-
-
-
-''
-
-are generally
-interchangeable.
+In this manual page, &quot;file&quot; and
+&quot;FTSENT structure&quot;
+are generally interchangeable.
 The
-Fa FTSENT
+<I>FTSENT</I>
 
 structure contains at least the following fields, which are
 described in greater detail below:
 
 <PRE>
+
 typedef struct _ftsent {
-        u_short fts_info;               /* flags for FTSENT structure */
-        char *fts_accpath;              /* access path */
-        char *fts_path;                 /* root path */
-        short fts_pathlen;              /* strlen(fts_path) */
-        char *fts_name;                 /* filename */
-        short fts_namelen;              /* strlen(fts_name) */
-        short fts_level;                /* depth (-1 to N) */
-        int fts_errno;                  /* file errno */
-        long fts_number;                /* local numeric value */
-        void *fts_pointer;              /* local address value */
-        struct ftsent *fts_parent;      /* parent directory */
-        struct ftsent *fts_link;        /* next file structure */
-        struct ftsent *fts_cycle;       /* cycle structure */
-        struct stat *fts_statp;         /* <A HREF="../man2/stat.2.html">stat</A>(2) information */
+    u_short        fts_info;      /* flags for FTSENT structure */
+    char          *fts_accpath;   /* access path */
+    char          *fts_path;      /* root path */
+    short          fts_pathlen;   /* strlen(fts_path) */
+    char          *fts_name;      /* filename */
+    short          fts_namelen;   /* strlen(fts_name) */
+    short          fts_level;     /* depth (-1 to N) */
+    int            fts_errno;     /* file errno */
+    long           fts_number;    /* local numeric value */
+    void          *fts_pointer;   /* local address value */
+    struct ftsent *fts_parent;    /* parent directory */
+    struct ftsent *fts_link;      /* next file structure */
+    struct ftsent *fts_cycle;     /* cycle structure */
+    struct stat   *fts_statp;     /* <A HREF="../man2/stat.2.html">stat</A>(2) information */
 } FTSENT;
 </PRE>
 
-<P>
 
+<P>
 These fields are defined as follows:
+
 <DL COMPACT>
-<P>
-
-<DT><B>Fa </B>fts_info
-
+<DT><I>fts_info</I>
 
 <DD>
 One of the following flags describing the returned
-Fa FTSENT
+<I>FTSENT</I>
 
 structure and
 the file it represents.
 With the exception of directories without errors
-(<B>FTS_D</B>
+(<B>FTS_D</B>),
 
-)
-
- 
 all of these
 entries are terminal, that is, they will not be revisited, nor will any
 of their descendants be visited.
+
+<DL COMPACT><DT><DD>
 <DL COMPACT>
-<P>
-
 <DT><B>FTS_D</B>
-
 
 <DD>
 A directory being visited in pre-order.
 <DT><B>FTS_DC</B>
 
-
 <DD>
 A directory that causes a cycle in the tree.
 (The
-Fa fts_cycle
+<I>fts_cycle</I>
 
 field of the
-Fa FTSENT
+<I>FTSENT</I>
 
 structure will be filled in as well.)
 <DT><B>FTS_DEFAULT</B>
 
-
 <DD>
 Any
-Fa FTSENT
+<I>FTSENT</I>
 
 structure that represents a file type not explicitly described
 by one of the other
-Fa fts_info
+<I>fts_info</I>
 
 values.
 <DT><B>FTS_DNR</B>
 
-
 <DD>
 A directory which cannot be read.
 This is an error return, and the
-Fa fts_errno
+<I>fts_errno</I>
 
 field will be set to indicate what caused the error.
 <DT><B>FTS_DOT</B>
 
-
 <DD>
 A file named
-`.'
-
+&quot;.&quot;
 or
-`..'
-
+&quot;..&quot;
 which was not specified as a filename to
-Fn fts_open
+<B>fts_open</B>()
 
 (see
-<B>FTS_SEEDOT )</B>
+<B>FTS_SEEDOT</B>)<B>.</B>
 
- 
 <DT><B>FTS_DP</B>
-
 
 <DD>
 A directory being visited in post-order.
 The contents of the
-Fa FTSENT
+<I>FTSENT</I>
 
 structure will be unchanged from when
 it was returned in pre-order, that is, with the
-Fa fts_info
+<I>fts_info</I>
 
 field set to
-<B>FTS_D</B>
+<B>FTS_D</B>.
 
- 
 <DT><B>FTS_ERR</B>
-
 
 <DD>
 This is an error return, and the
-Fa fts_errno
+<I>fts_errno</I>
 
 field will be set to indicate what caused the error.
 <DT><B>FTS_F</B>
-
 
 <DD>
 A regular file.
 <DT><B>FTS_NS</B>
 
-
 <DD>
 A file for which no
-<A HREF="../man2/stat.2.html">stat</A>(2)
-
+<B><A HREF="../man2/stat.2.html">stat</A></B>(2)
 
 information was available.
 The contents of the
-Fa fts_statp
+<I>fts_statp</I>
 
 field are undefined.
 This is an error return, and the
-Fa fts_errno
+<I>fts_errno</I>
 
 field will be set to indicate what caused the error.
 <DT><B>FTS_NSOK</B>
 
-
 <DD>
 A file for which no
-<A HREF="../man2/stat.2.html">stat</A>(2)
-
+<B><A HREF="../man2/stat.2.html">stat</A></B>(2)
 
 information was requested.
 The contents of the
-Fa fts_statp
+<I>fts_statp</I>
 
 field are undefined.
 <DT><B>FTS_SL</B>
-
 
 <DD>
 A symbolic link.
 <DT><B>FTS_SLNONE</B>
 
-
 <DD>
 A symbolic link with a non-existent target.
 The contents of the
-Fa fts_statp
+<I>fts_statp</I>
 
 field reference the file characteristic information for the symbolic link
 itself.
+
 </DL>
-<P>
+</DL>
 
-<DT><B>Fa </B>fts_accpath
-
+<DT><I>fts_accpath</I>
 
 <DD>
 A path for accessing the file from the current directory.
-<DT><B>Fa </B>fts_path
-
+<DT><I>fts_path</I>
 
 <DD>
 The path for the file relative to the root of the traversal.
 This path contains the path specified to
-Fn fts_open
+<B>fts_open</B>()
 
 as a prefix.
-<DT><B>Fa </B>fts_pathlen
-
+<DT><I>fts_pathlen</I>
 
 <DD>
 The length of the string referenced by
-Fa fts_path .
+<I>fts_path</I>.
 
-<DT><B>Fa </B>fts_name
-
+<DT><I>fts_name</I>
 
 <DD>
 The name of the file.
-<DT><B>Fa </B>fts_namelen
-
+<DT><I>fts_namelen</I>
 
 <DD>
 The length of the string referenced by
-Fa fts_name .
+<I>fts_name</I>.
 
-<DT><B>Fa </B>fts_level
-
+<DT><I>fts_level</I>
 
 <DD>
 The depth of the traversal, numbered from -1 to N, where this file
 was found.
 The
-Fa FTSENT
+<I>FTSENT</I>
 
 structure representing the parent of the starting point (or root)
 of the traversal is numbered -1, and the
-Fa FTSENT
+<I>FTSENT</I>
 
 structure for the root
 itself is numbered 0.
-<DT><B>Fa </B>fts_errno
-
+<DT><I>fts_errno</I>
 
 <DD>
 Upon return of a
-Fa FTSENT
+<I>FTSENT</I>
 
 structure from the
-Fn fts_children
+<B>fts_children</B>()
 
 or
-Fn fts_read
+<B>fts_read</B>()
 
 functions, with its
-Fa fts_info
+<I>fts_info</I>
 
 field set to
-<B>FTS_DNR</B>
+<B>FTS_DNR</B>,
 
- 
 <B>FTS_ERR</B>
 
 or
-<B>FTS_NS</B>
+<B>FTS_NS</B>,
 
- 
 the
-Fa fts_errno
+<I>fts_errno</I>
 
 field contains the value of the external variable
 <I>errno</I>
 
 specifying the cause of the error.
 Otherwise, the contents of the
-Fa fts_errno
+<I>fts_errno</I>
 
 field are undefined.
-<DT><B>Fa </B>fts_number
-
+<DT><I>fts_number</I>
 
 <DD>
 This field is provided for the use of the application program and is
 not modified by the
-<B>fts</B>
-
-functions.
+fts functions.
 It is initialized to 0.
-<DT><B>Fa </B>fts_pointer
-
+<DT><I>fts_pointer</I>
 
 <DD>
 This field is provided for the use of the application program and is
 not modified by the
-<B>fts</B>
-
-functions.
+fts functions.
 It is initialized to
-<B>NULL</B>
-
- 
-<DT><B>Fa </B>fts_parent
-
+NULL.
+<DT><I>fts_parent</I>
 
 <DD>
 A pointer to the
-Fa FTSENT
+<I>FTSENT</I>
 
 structure referencing the file in the hierarchy
 immediately above the current file, that is, the directory of which this
 file is a member.
 A parent structure for the initial entry point is provided as well,
 however, only the
-Fa fts_level ,
+<I>fts_level</I>,
 
-Fa fts_number
+<I>fts_number</I>
 
 and
-Fa fts_pointer
+<I>fts_pointer</I>
 
 fields are guaranteed to be initialized.
-<DT><B>Fa </B>fts_link
-
+<DT><I>fts_link</I>
 
 <DD>
 Upon return from the
-Fn fts_children
+<B>fts_children</B>()
 
 function, the
-Fa fts_link
+<I>fts_link</I>
 
 field points to the next structure in the NULL-terminated linked list of
 directory members.
 Otherwise, the contents of the
-Fa fts_link
+<I>fts_link</I>
 
 field are undefined.
-<DT><B>Fa </B>fts_cycle
-
+<DT><I>fts_cycle</I>
 
 <DD>
 If a directory causes a cycle in the hierarchy (see
-<B>FTS_DC )</B>
+<B>FTS_DC</B>)<B>,</B>
 
- 
 either because
 of a hard link between two directories, or a symbolic link pointing to a
 directory, the
-Fa fts_cycle
+<I>fts_cycle</I>
 
 field of the structure will point to the
-Fa FTSENT
+<I>FTSENT</I>
 
 structure in the hierarchy that references the same file as the current
-Fa FTSENT
+<I>FTSENT</I>
 
 structure.
 Otherwise, the contents of the
-Fa fts_cycle
+<I>fts_cycle</I>
 
 field are undefined.
-<DT><B>Fa </B>fts_statp
-
+<DT><I>fts_statp</I>
 
 <DD>
 A pointer to
-<A HREF="../man2/stat.2.html">stat</A>(2)
-
+<B><A HREF="../man2/stat.2.html">stat</A></B>(2)
 
 information for the file.
-</DL>
-<P>
 
+</DL>
 <P>
 
 A single buffer is used for all of the paths of all of the files in the
 file hierarchy.
 Therefore, the
-Fa fts_path
+<I>fts_path</I>
 
 and
-Fa fts_accpath
+<I>fts_accpath</I>
 
 fields are guaranteed to be
-<B>NULL -terminated</B>
-
-
-
+NULL-terminated
 <I>only</I>
 
 for the file most recently returned by
-Fn fts_read .
+<B>fts_read</B>().
 
 To use these fields to reference any files represented by other
-Fa FTSENT
+<I>FTSENT</I>
 
 structures will require that the path buffer be modified using the
 information contained in that
-Fa FTSENT
+<I>FTSENT</I>
 
 structure's
-Fa fts_pathlen
+<I>fts_pathlen</I>
 
 field.
 Any such modifications should be undone before further calls to
-Fn fts_read
+<B>fts_read</B>()
 
 are attempted.
 The
-Fa fts_name
+<I>fts_name</I>
 
 field is always
-<B>NULL -terminated.</B>
-
-
-
+NULL-terminated.
 <A NAME="lbAE">&nbsp;</A>
-<H2>FTS_OPEN</H2>
+<H3>fts_open()</H3>
 
 The
-Fn fts_open
+<B>fts_open</B>()
 
 function takes a pointer to an array of character pointers naming one
 or more paths which make up a logical file hierarchy to be traversed.
 The array must be terminated by a
-<B>NULL</B>
-
+NULL
 pointer.
 <P>
-
 There are
 a number of options, at least one of which (either
 <B>FTS_LOGICAL</B>
 
 or
-<B>FTS_PHYSICAL</B>
+<B>FTS_PHYSICAL</B>)
 
- 
 must be specified.
 The options are selected by
-<I>or </I><B>'ing</B>
-
-
+<I>or</I>ing
 
 the following values:
+
 <DL COMPACT>
-<P>
-
 <DT><B>FTS_COMFOLLOW</B>
-
 
 <DD>
 This option causes any symbolic link specified as a root path to be
@@ -574,18 +474,15 @@ followed immediately whether or not
 is also specified.
 <DT><B>FTS_LOGICAL</B>
 
-
 <DD>
 This option causes the
-<B>fts</B>
-
-routines to return
-Fa FTSENT
+fts routines to return
+<I>FTSENT</I>
 
 structures for the targets of symbolic links
 instead of the symbolic links themselves.
 If this option is set, the only symbolic links for which
-Fa FTSENT
+<I>FTSENT</I>
 
 structures
 are returned to the application are those referencing non-existent files.
@@ -598,73 +495,62 @@ or
 <I>must</I>
 
 be provided to the
-Fn fts_open
+<B>fts_open</B>()
 
 function.
 <DT><B>FTS_NOCHDIR</B>
 
-
 <DD>
 As a performance optimization, the
-<B>fts</B>
-
-functions change directories as they walk the file hierarchy.
+fts functions change directories as they walk the file hierarchy.
 This has the side-effect that an application cannot rely on being
 in any particular directory during the traversal.
 The
 <B>FTS_NOCHDIR</B>
 
 option turns off this optimization, and the
-<B>fts</B>
-
-functions will not change the current directory.
+fts functions will not change the current directory.
 Note that applications should not themselves change their current directory
 and try to access files unless
 <B>FTS_NOCHDIR</B>
 
 is specified and absolute
 pathnames were provided as arguments to
-Fn fts_open .
+<B>fts_open</B>().
 
 <DT><B>FTS_NOSTAT</B>
 
-
 <DD>
 By default, returned
-Fa FTSENT
+<I>FTSENT</I>
 
 structures reference file characteristic information (the
-Fa statp
+<I>statp</I>
 
 field) for each file visited.
 This option relaxes that requirement as a performance optimization,
 allowing the
-<B>fts</B>
-
-functions to set the
-Fa fts_info
+fts functions to set the
+<I>fts_info</I>
 
 field to
 <B>FTS_NSOK</B>
 
 and leave the contents of the
-Fa statp
+<I>statp</I>
 
 field undefined.
 <DT><B>FTS_PHYSICAL</B>
 
-
 <DD>
 This option causes the
-<B>fts</B>
-
-routines to return
-Fa FTSENT
+fts routines to return
+<I>FTSENT</I>
 
 structures for symbolic links themselves instead
 of the target files they point to.
 If this option is set,
-Fa FTSENT
+<I>FTSENT</I>
 
 structures for all symbolic links in the
 hierarchy are returned to the application.
@@ -677,106 +563,93 @@ or
 <I>must</I>
 
 be provided to the
-Fn fts_open
+<B>fts_open</B>()
 
 function.
 <DT><B>FTS_SEEDOT</B>
 
-
 <DD>
 By default, unless they are specified as path arguments to
-Fn fts_open ,
+<B>fts_open</B>(),
 
 any files named
-`.'
-
+&quot;.&quot;
 or
-`..'
-
+&quot;..&quot;
 encountered in the file hierarchy are ignored.
 This option causes the
-<B>fts</B>
-
-routines to return
-Fa FTSENT
+fts routines to return
+<I>FTSENT</I>
 
 structures for them.
 <DT><B>FTS_XDEV</B>
 
-
 <DD>
 This option prevents
-<B>fts</B>
-
-from descending into directories that have a different device number
+fts from descending into directories that have a different device number
 than the file from which the descent began.
-</DL>
-<P>
 
 <P>
-
 The argument
-Fn compar
+<B>compar</B>()
 
 specifies a user-defined function which may be used to order the traversal
 of the hierarchy.
 It
 takes two pointers to pointers to
-Fa FTSENT
+<I>FTSENT</I>
 
 structures as arguments and
 should return a negative value, zero, or a positive value to indicate
 if the file referenced by its first argument comes before, in any order
 with respect to, or after, the file referenced by its second argument.
 The
-Fa fts_accpath ,
+<I>fts_accpath</I>,
 
-Fa fts_path
+<I>fts_path</I>
 
 and
-Fa fts_pathlen
+<I>fts_pathlen</I>
 
 fields of the
-Fa FTSENT
+<I>FTSENT</I>
 
 structures may
 <I>never</I>
 
 be used in this comparison.
 If the
-Fa fts_info
+<I>fts_info</I>
 
 field is set to
 <B>FTS_NS</B>
 
 or
-<B>FTS_NSOK</B>
+<B>FTS_NSOK</B>,
 
- 
 the
-Fa fts_statp
+<I>fts_statp</I>
 
 field may not either.
 If the
-Fn compar
+<B>compar</B>()
 
 argument is
-<B>NULL</B>
-
- 
+NULL,
 the directory traversal order is in the order listed in
-Fa path_argv
+<I>path_argv</I>
 
 for the root paths, and in the order listed in the directory for
 everything else.
+</DL>
 <A NAME="lbAF">&nbsp;</A>
-<H2>FTS_READ</H2>
+<H3>fts_read()</H3>
 
 The
-Fn fts_read
+<B>fts_read</B>()
 
 function returns a pointer to an
-Fa FTSENT
+<I>FTSENT</I>
 
 structure describing a file in
 the hierarchy.
@@ -787,391 +660,349 @@ All other files are visited at least once.
 links to symbolic links may cause files to be visited more than once,
 or directories more than twice.)
 <P>
-
 If all the members of the hierarchy have been returned,
-Fn fts_read
+<B>fts_read</B>()
 
 returns
-<B>NULL</B>
-
+NULL
 and sets the external variable
 <I>errno</I>
 
 to 0.
 If an error unrelated to a file in the hierarchy occurs,
-Fn fts_read
+<B>fts_read</B>()
 
 returns
-<B>NULL</B>
-
+NULL
 and sets
 <I>errno</I>
 
 appropriately.
 If an error related to a returned file occurs, a pointer to an
-Fa FTSENT
+<I>FTSENT</I>
 
 structure is returned, and
 <I>errno</I>
 
 may or may not have been set (see
-Fa fts_info ) .
+<I>fts_info</I>).
 
 <P>
-
 The
-Fa FTSENT
+<I>FTSENT</I>
 
 structures returned by
-Fn fts_read
+<B>fts_read</B>()
 
 may be overwritten after a call to
-Fn fts_close
+<B>fts_close</B>()
 
 on the same file hierarchy stream, or, after a call to
-Fn fts_read
+<B>fts_read</B>()
 
 on the same file hierarchy stream unless they represent a file of type
 directory, in which case they will not be overwritten until after a call to
-Fn fts_read
+<B>fts_read</B>()
 
 after the
-Fa FTSENT
+<I>FTSENT</I>
 
 structure has been returned by the function
-Fn fts_read
+<B>fts_read</B>()
 
 in post-order.
 <A NAME="lbAG">&nbsp;</A>
-<H2>FTS_CHILDREN</H2>
+<H3>fts_children()</H3>
 
 The
-Fn fts_children
+<B>fts_children</B>()
 
 function returns a pointer to an
-Fa FTSENT
+<I>FTSENT</I>
 
 structure describing the first entry in a NULL-terminated linked list of
 the files in the directory represented by the
-Fa FTSENT
+<I>FTSENT</I>
 
 structure most recently returned by
-Fn fts_read .
+<B>fts_read</B>().
 
 The list is linked through the
-Fa fts_link
+<I>fts_link</I>
 
 field of the
-Fa FTSENT
+<I>FTSENT</I>
 
 structure, and is ordered by the user-specified comparison function, if any.
 Repeated calls to
-Fn fts_children
+<B>fts_children</B>()
 
 will recreate this linked list.
 <P>
-
 As a special case, if
-Fn fts_read
+<B>fts_read</B>()
 
 has not yet been called for a hierarchy,
-Fn fts_children
+<B>fts_children</B>()
 
 will return a pointer to the files in the logical directory specified to
-Fn fts_open ,
+<B>fts_open</B>(),
 
 that is, the arguments specified to
-Fn fts_open .
+<B>fts_open</B>().
 
 Otherwise, if the
-Fa FTSENT
+<I>FTSENT</I>
 
 structure most recently returned by
-Fn fts_read
+<B>fts_read</B>()
 
 is not a directory being visited in pre-order,
 or the directory does not contain any files,
-Fn fts_children
+<B>fts_children</B>()
 
 returns
-<B>NULL</B>
-
+NULL
 and sets
 <I>errno</I>
 
 to zero.
 If an error occurs,
-Fn fts_children
+<B>fts_children</B>()
 
 returns
-<B>NULL</B>
-
+NULL
 and sets
 <I>errno</I>
 
 appropriately.
 <P>
-
 The
-Fa FTSENT
+<I>FTSENT</I>
 
 structures returned by
-Fn fts_children
+<B>fts_children</B>()
 
 may be overwritten after a call to
-Fn fts_children ,
+<B>fts_children</B>(),
 
-Fn fts_close
+<B>fts_close</B>()
 
 or
-Fn fts_read
+<B>fts_read</B>()
 
 on the same file hierarchy stream.
 <P>
-
 <I>Option</I>
 
 may be set to the following value:
+
 <DL COMPACT>
-<P>
-
 <DT><B>FTS_NAMEONLY</B>
-
 
 <DD>
 Only the names of the files are needed.
 The contents of all the fields in the returned linked list of structures
 are undefined with the exception of the
-Fa fts_name
+<I>fts_name</I>
 
 and
-Fa fts_namelen
+<I>fts_namelen</I>
 
 fields.
-</DL>
-<P>
 
-<A NAME="lbAH">&nbsp;</A>
-<H2>FTS_SET</H2>
 
 The function
-Fn fts_set
+<B>fts_set</B>()
 
 allows the user application to determine further processing for the
 file
-Fa f
+<I>f</I>
 
 of the stream
-Fa ftsp .
+<I>ftsp</I>.
 
 The
-Fn fts_set
+<B>fts_set</B>()
 
 function
 returns 0 on success, and -1 if an error occurs.
 <I>Option</I>
 
 must be set to one of the following values:
-<DL COMPACT>
-<P>
 
 <DT><B>FTS_AGAIN</B>
-
 
 <DD>
 Re-visit the file; any file type may be re-visited.
 The next call to
-Fn fts_read
+<B>fts_read</B>()
 
 will return the referenced file.
 The
-Fa fts_stat
+<I>fts_stat</I>
 
 and
-Fa fts_info
+<I>fts_info</I>
 
 fields of the structure will be reinitialized at that time,
 but no other fields will have been changed.
 This option is meaningful only for the most recently returned
 file from
-Fn fts_read .
+<B>fts_read</B>().
 
 Normal use is for post-order directory visits, where it causes the
 directory to be re-visited (in both pre and post-order) as well as all
 of its descendants.
 <DT><B>FTS_FOLLOW</B>
 
-
 <DD>
 The referenced file must be a symbolic link.
 If the referenced file is the one most recently returned by
-Fn fts_read ,
+<B>fts_read</B>(),
 
 the next call to
-Fn fts_read
+<B>fts_read</B>()
 
 returns the file with the
-Fa fts_info
+<I>fts_info</I>
 
 and
-Fa fts_statp
+<I>fts_statp</I>
 
 fields reinitialized to reflect the target of the symbolic link instead
 of the symbolic link itself.
 If the file is one of those most recently returned by
-Fn fts_children ,
+<B>fts_children</B>(),
 
 the
-Fa fts_info
+<I>fts_info</I>
 
 and
-Fa fts_statp
+<I>fts_statp</I>
 
 fields of the structure, when returned by
-Fn fts_read ,
+<B>fts_read</B>(),
 
 will reflect the target of the symbolic link instead of the symbolic link
 itself.
 In either case, if the target of the symbolic link does not exist the
 fields of the returned structure will be unchanged and the
-Fa fts_info
+<I>fts_info</I>
 
 field will be set to
-<B>FTS_SLNONE</B>
+<B>FTS_SLNONE</B>.
 
- 
 <P>
-
 If the target of the link is a directory, the pre-order return, followed
 by the return of all of its descendants, followed by a post-order return,
 is done.
 <DT><B>FTS_SKIP</B>
 
-
 <DD>
 No descendants of this file are visited.
 The file may be one of those most recently returned by either
-Fn fts_children
+<B>fts_children</B>()
 
 or
-Fn fts_read .
+<B>fts_read</B>().
+
 
 </DL>
-<P>
-
-<A NAME="lbAI">&nbsp;</A>
-<H2>FTS_CLOSE</H2>
+<A NAME="lbAH">&nbsp;</A>
+<H3>fts_close()</H3>
 
 The
-Fn fts_close
+<B>fts_close</B>()
 
 function closes a file hierarchy stream
-Fa ftsp
+<I>ftsp</I>
 
 and restores the current directory to the directory from which
-Fn fts_open
+<B>fts_open</B>()
 
 was called to open
-Fa ftsp .
+<I>ftsp</I>.
 
 The
-Fn fts_close
+<B>fts_close</B>()
 
 function
 returns 0 on success, and -1 if an error occurs.
-<A NAME="lbAJ">&nbsp;</A>
+<A NAME="lbAI">&nbsp;</A>
 <H2>ERRORS</H2>
 
 The function
-Fn fts_open
+<B>fts_open</B>()
 
 may fail and set
 <I>errno</I>
 
-for any of the errors specified for the library functions
-<A HREF="../man2/open.2.html">open</A>(2)
-
+for any of the errors specified for
+<B><A HREF="../man2/open.2.html">open</A></B>(2)
 
 and
-<A HREF="../man3/malloc.3.html">malloc</A>(3).
-
+<B><A HREF="../man3/malloc.3.html">malloc</A></B>(3).
 
 <P>
-
 The function
-Fn fts_close
+<B>fts_close</B>()
 
 may fail and set
 <I>errno</I>
 
-for any of the errors specified for the library functions
-<A HREF="../man2/chdir.2.html">chdir</A>(2)
-
+for any of the errors specified for
+<B><A HREF="../man2/chdir.2.html">chdir</A></B>(2)
 
 and
-<A HREF="../man2/close.2.html">close</A>(2).
-
+<B><A HREF="../man2/close.2.html">close</A></B>(2).
 
 <P>
-
 The functions
-Fn fts_read
+<B>fts_read</B>()
 
 and
-Fn fts_children
+<B>fts_children</B>()
 
 may fail and set
 <I>errno</I>
 
-for any of the errors specified for the library functions
-<A HREF="../man2/chdir.2.html">chdir</A>(2),
+for any of the errors specified for
+<B><A HREF="../man2/chdir.2.html">chdir</A></B>(2),
 
+<B><A HREF="../man3/malloc.3.html">malloc</A></B>(3),
 
-<A HREF="../man3/malloc.3.html">malloc</A>(3),
+<B><A HREF="../man3/opendir.3.html">opendir</A></B>(3),
 
-
-<A HREF="../man3/opendir.3.html">opendir</A>(3),
-
-
-<A HREF="../man3/readdir.3.html">readdir</A>(3)
-
+<B><A HREF="../man3/readdir.3.html">readdir</A></B>(3)
 
 and
-<A HREF="../man2/stat.2.html">stat</A>(2).
-
+<B><A HREF="../man2/stat.2.html">stat</A></B>(2).
 
 <P>
-
 In addition,
-Fn fts_children ,
+<B>fts_children</B>(),
 
-Fn fts_open
+<B>fts_open</B>()
 
 and
-Fn fts_set
+<B>fts_set</B>()
 
 may fail and set
 <I>errno</I>
 
 as follows:
 <DL COMPACT>
-<P>
-
-<DT><B>Bq </B>Er EINVAL
-
-
-
+<DT><B>EINVAL</B>
 
 <DD>
 The options were invalid.
 </DL>
-<P>
-
-<A NAME="lbAK">&nbsp;</A>
+<A NAME="lbAJ">&nbsp;</A>
 <H2>VERSIONS</H2>
 
 These functions are available in Linux since glibc2.
-<A NAME="lbAL">&nbsp;</A>
+<A NAME="lbAK">&nbsp;</A>
 <H2>CONFORMING TO</H2>
 
 4.4BSD.
@@ -1182,23 +1013,18 @@ These functions are available in Linux since glibc2.
 
 
 
-<A NAME="lbAM">&nbsp;</A>
+<A NAME="lbAL">&nbsp;</A>
 <H2>SEE ALSO</H2>
 
-<A HREF="../man1/find.1.html">find</A>(1),
+<B><A HREF="../man1/find.1.html">find</A></B>(1),
 
+<B><A HREF="../man2/chdir.2.html">chdir</A></B>(2),
 
-<A HREF="../man2/chdir.2.html">chdir</A>(2),
+<B><A HREF="../man2/stat.2.html">stat</A></B>(2),
 
+<B><A HREF="../man3/ftw.3.html">ftw</A></B>(3),
 
-<A HREF="../man2/stat.2.html">stat</A>(2),
-
-
-<A HREF="../man3/ftw.3.html">ftw</A>(3),
-
-
-<A HREF="../man3/qsort.3.html">qsort</A>(3)
-
+<B><A HREF="../man3/qsort.3.html">qsort</A></B>(3)
 
 <P>
 
@@ -1208,20 +1034,21 @@ These functions are available in Linux since glibc2.
 <DT><A HREF="#lbAB">NAME</A><DD>
 <DT><A HREF="#lbAC">SYNOPSIS</A><DD>
 <DT><A HREF="#lbAD">DESCRIPTION</A><DD>
-<DT><A HREF="#lbAE">FTS_OPEN</A><DD>
-<DT><A HREF="#lbAF">FTS_READ</A><DD>
-<DT><A HREF="#lbAG">FTS_CHILDREN</A><DD>
-<DT><A HREF="#lbAH">FTS_SET</A><DD>
-<DT><A HREF="#lbAI">FTS_CLOSE</A><DD>
-<DT><A HREF="#lbAJ">ERRORS</A><DD>
-<DT><A HREF="#lbAK">VERSIONS</A><DD>
-<DT><A HREF="#lbAL">CONFORMING TO</A><DD>
-<DT><A HREF="#lbAM">SEE ALSO</A><DD>
+<DL>
+<DT><A HREF="#lbAE">fts_open()</A><DD>
+<DT><A HREF="#lbAF">fts_read()</A><DD>
+<DT><A HREF="#lbAG">fts_children()</A><DD>
+<DT><A HREF="#lbAH">fts_close()</A><DD>
+</DL>
+<DT><A HREF="#lbAI">ERRORS</A><DD>
+<DT><A HREF="#lbAJ">VERSIONS</A><DD>
+<DT><A HREF="#lbAK">CONFORMING TO</A><DD>
+<DT><A HREF="#lbAL">SEE ALSO</A><DD>
 </DL>
 <HR>
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 02:47:32 GMT, April 20, 2020
+Time: 02:48:06 GMT, April 20, 2020
 </BODY>
 </HTML>
