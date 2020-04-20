@@ -82,7 +82,8 @@ The
 
 parameter specifies the type of the mapped object, mapping options and
 whether modifications made to the mapped copy of the page are private to
-the process or are to be shared with other references.  It has bits
+the process or are to be shared with other references.  
+It has bits
 <DL COMPACT>
 <DT><B>MAP_FIXED</B>
 
@@ -100,10 +101,14 @@ If the specified address cannot be used,
 <B>mmap</B>()
 
 will fail.
-If MAP_FIXED is specified,
+If
+<B>MAP_FIXED </B>
+
+is specified,
 <I>start</I>
 
-must be a multiple of the pagesize.  Use of this option is discouraged.
+must be a multiple of the page size.  
+Use of this option is discouraged.
 <DT><B>MAP_SHARED</B>
 
 <DD>
@@ -128,7 +133,12 @@ call are visible in the mapped region.
 </DL>
 <P>
 
-You must specify exactly one of MAP_SHARED and MAP_PRIVATE.
+You must specify exactly one of 
+<B>MAP_SHARED </B>
+
+and 
+<B>MAP_PRIVATE</B>.
+
 <P>
 
 The above three flags are described in POSIX.1b (formerly POSIX.4) and SUSv2.
@@ -140,7 +150,10 @@ Linux also knows about the following non-standard flags:
 This flag is ignored.
 
 (Long ago, it signalled that attempts to write to the underlying file
-should fail with ETXTBUSY. But this was a source of denial-of-service attacks.)
+should fail with 
+<B>ETXTBUSY</B>.
+
+But this was a source of denial-of-service attacks.)
 <DT><B>MAP_EXECUTABLE</B>
 
 <DD>
@@ -189,12 +202,17 @@ and
 <I>offset</I>
 
 arguments are ignored.  
-The use of this flag in conjunction with MAP_SHARED
+The use of this flag in conjunction with 
+<B>MAP_SHARED</B>
+
 is only supported on Linux since kernel 2.4.
 <DT><B>MAP_ANON</B>
 
 <DD>
-Alias for MAP_ANONYMOUS. Deprecated.
+Alias for 
+<B>MAP_ANONYMOUS</B>.
+
+Deprecated.
 <DT><B>MAP_FILE</B>
 
 <DD>
@@ -204,17 +222,25 @@ Compatibility flag. Ignored.
 <DD>
 Put the mapping into the first 2GB of the process address space.
 Ignored when
-<I>MAP_FIXED</I>
+<B>MAP_FIXED</B>
 
-is set. This flag is currently only supported on x86-64 for 64bit programs.
+is set. 
+This flag is currently only supported on x86-64 for 64bit programs.
 <DT><B>MAP_POPULATE</B> (since Linux 2.5.46)
 
 <DD>
-Populate (prefault) pagetables.
+Populate (prefault) page tables for a file mapping, 
+by performing read-ahead on the file.
+Later accesses to the mapping will not be bocked by page faults.
 <DT><B>MAP_NONBLOCK</B> (since Linux 2.5.46)
 
 <DD>
-Do not block on IO.
+Only meaningful in conjunction with
+<B>MAP_POPULATE</B>.
+
+Don't perform read-ahead: 
+only create page tables entries for pages 
+that are already present in RAM.
 </DL>
 <P>
 
@@ -224,15 +250,27 @@ MAP_COPY, and MAP_LOCAL.
 
 <I>fd</I>
 
-should be a valid file descriptor, unless MAP_ANONYMOUS is set.
-If MAP_ANONYMOUS is set, then 
+should be a valid file descriptor, unless 
+<B>MAP_ANONYMOUS </B>
+
+is set.
+If 
+<B>MAP_ANONYMOUS </B>
+
+is set, then 
 <I>fd</I>
 
 is ignored on Linux.
 However, some implementations require 
 <I>fd</I>
 
-to be -1 if MAP_ANONYMOUS (or MAP_ANON) is specified,
+to be -1 if 
+<B>MAP_ANONYMOUS </B>
+
+(or 
+<B>MAP_ANON</B>)
+
+is specified,
 and portable applications should ensure this.
 <P>
 
@@ -292,11 +330,23 @@ The
 and
 <I>st_mtime</I>
 
-field for a file mapped with PROT_WRITE and MAP_SHARED will be updated after
+field for a file mapped with 
+<B>PROT_WRITE </B>
+
+and 
+<B>MAP_SHARED </B>
+
+will be updated after
 a write to the mapped region, and before a subsequent
 <B>msync</B>()
 
-with the MS_SYNC or MS_ASYNC flag, if one occurs.
+with the 
+<B>MS_SYNC </B>
+
+or 
+<B>MS_ASYNC</B>
+
+flag, if one occurs.
 <A NAME="lbAE">&nbsp;</A>
 <H2>RETURN VALUE</H2>
 
@@ -317,18 +367,20 @@ On success,
 returns 0, on failure -1, and
 <I>errno</I>
 
-is set (probably to EINVAL).
+is set (probably to 
+<B>EINVAL</B>).
+
 <A NAME="lbAF">&nbsp;</A>
 <H2>NOTES</H2>
 
 It is architecture dependent whether
-<I>PROT_READ</I>
+<B>PROT_READ</B>
 
 includes
-<I>PROT_EXEC</I>
+<B>PROT_EXEC</B>
 
 or not. Portable programs should always set
-<I>PROT_EXEC</I>
+<B>PROT_EXEC</B>
 
 if they intend to execute code in the new mapping.
 <A NAME="lbAG">&nbsp;</A>
@@ -339,15 +391,27 @@ if they intend to execute code in the new mapping.
 
 <DD>
 A file descriptor refers to a non-regular file.
-Or MAP_PRIVATE was requested, but
+Or 
+<B>MAP_PRIVATE </B>
+
+was requested, but
 <I>fd</I>
 
 is not open for reading.
-Or MAP_SHARED was requested and PROT_WRITE is set, but
+Or 
+<B>MAP_SHARED </B>
+
+was requested and 
+<B>PROT_WRITE </B>
+
+is set, but
 <I>fd</I>
 
 is not open in read/write (O_RDWR) mode.
-Or PROT_WRITE is set, but the file is append-only.
+Or 
+<B>PROT_WRITE </B>
+
+is set, but the file is append-only.
 <DT><B>EAGAIN</B>
 
 <DD>
@@ -359,7 +423,10 @@ The file has been locked, or too much memory has been locked (see
 <DD>
 <I>fd</I>
 
-is not a valid file descriptor (and MAP_ANONYMOUS was not set).
+is not a valid file descriptor (and 
+<B>MAP_ANONYMOUS</B>
+
+was not set).
 <DT><B>EINVAL</B>
 
 <DD>
@@ -372,7 +439,7 @@ or
 or
 <I>offset</I>.
 
-(E.g., they are too large, or not aligned on a PAGESIZE boundary.)
+(E.g., they are too large, or not aligned on a page boundary.)
 
 
 
@@ -411,7 +478,9 @@ was mounted no-exec.
 <DT><B>ETXTBSY</B>
 
 <DD>
-MAP_DENYWRITE was set but the object specified by
+<B>MAP_DENYWRITE </B>
+
+was set but the object specified by
 <I>fd</I>
 
 is open for writing.
@@ -522,6 +591,6 @@ B.O. Gallmeister, POSIX.4, O'Reilly, pp. 128-129 and 389-391.
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 02:29:13 GMT, April 20, 2020
+Time: 02:29:46 GMT, April 20, 2020
 </BODY>
 </HTML>

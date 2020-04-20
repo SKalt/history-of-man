@@ -29,7 +29,7 @@ makecontext, swapcontext - manipulate user context
 <A NAME="lbAD">&nbsp;</A>
 <H2>DESCRIPTION</H2>
 
-In a System V-like environment, one has the type <B>ucontext_t</B> defined in
+In a System V-like environment, one has the type <I>ucontext_t</I> defined in
 <I>&lt;<A HREF="file:///usr/include/ucontext.h">ucontext.h</A>&gt;</I>
 
 and the four functions
@@ -45,15 +45,24 @@ For the type and the first two functions, see
 
 The <B>makecontext</B>() function modifies the context pointed to
 by <I>ucp</I> (which was obtained from a call to <B>getcontext</B>()).
-Before calling <B>makecontext</B>(), one should allocate a new stack
-for this context, assigning to <I>ucp-&gt;uc_stack</I>, and define a
-successor context, assigning to <I>ucp-&gt;uc_link</I>.
+Before invoking <B>makecontext</B>(), the caller must allocate a new stack
+for this context and assign its address to <I>ucp-&gt;uc_stack</I>, 
+and define a successor context and
+assign its address to <I>ucp-&gt;uc_link</I>.
+<P>
 When this context is later activated (using <B>setcontext</B>() or
-<B>swapcontext</B>()) then first the function <I>func</I> is called,
-with the arguments specified following <I>argc</I> (where <I>argc</I>
-must contain the number of these arguments), and when this function
-returns, the successor context is activated. When the successor context
-pointer is NULL, the thread exits.
+<B>swapcontext</B>()) the function <I>func</I> is called,
+and passed the series of integer 
+(<I>int</I>)
+
+arguments that follow
+<I>argc</I>;
+
+the caller must specify the number of these arguments in
+<I>argc</I>.
+
+When this function returns, the successor context is activated. 
+If the successor context pointer is NULL, the thread exits.
 <P>
 
 The <B>swapcontext</B>() function saves the current context in
@@ -66,7 +75,7 @@ When successful, <B>swapcontext</B>()
 does not return. (But we may return later, in case <I>oucp</I> is
 activated, in which case it looks like <B>swapcontext</B>() returns 0.)
 On error, <B>swapcontext</B>() returns -1 and
-sets -1 <I>errno</I> appropriately.
+sets <I>errno</I> appropriately.
 <A NAME="lbAF">&nbsp;</A>
 <H2>ERRORS</H2>
 
@@ -82,15 +91,105 @@ Insufficient stack space left.
 The interpretation of <I>ucp-&gt;uc_stack</I> is just as in
 <B><A HREF="../man2/sigaltstack.2.html">sigaltstack</A></B>(2),
 
-namely, this struct contains start and length of a memory area
-to be used as stack, regardless of the direction of growth of
-the stack. So, it is not necessary for the user program to
+namely, this struct contains the start and length of a memory area
+to be used as the stack, regardless of the direction of growth of
+the stack. 
+Thus, it is not necessary for the user program to
 worry about this direction.
 <A NAME="lbAH">&nbsp;</A>
 <H2>CONFORMING TO</H2>
 
 SUSv2, POSIX 1003.1-2001.
 <A NAME="lbAI">&nbsp;</A>
+<H2>EXAMPLE</H2>
+
+<P>
+
+The example program below demonstrates the use of
+<B>getcontext</B>(),
+
+<B>makecontext</B>(),
+
+and
+<B>swapcontext</B>().
+
+Running the program produces the following output:
+
+<PRE>
+
+$ ./a.out
+main: swapcontext(&amp;uctx_main, &amp;uctx_func2)
+func2: started
+func2: swapcontext(&amp;uctx_func2, &amp;uctx_func1)
+func1: started
+func1: swapcontext(&amp;uctx_func1, &amp;uctx_func2)
+func2: returning
+func1: returning
+main: exiting
+
+</PRE>
+
+
+<PRE>
+#include &lt;<A HREF="file:///usr/include/ucontext.h">ucontext.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/stdlib.h">stdlib.h</A>&gt;
+
+static ucontext_t uctx_main, uctx_func1, uctx_func2;
+
+#define die(msg) do { perror(msg); exit(EXIT_FAILURE); } while (0)
+
+static void
+func1(void)
+{
+    printf(&quot;func1: started\n&quot;);
+    printf(&quot;func1: swapcontext(&amp;uctx_func1, &amp;uctx_func2)\n&quot;);
+    if (swapcontext(&amp;uctx_func1, &amp;uctx_func2) == -1)
+        die(&quot;swapcontext&quot;);
+    printf(&quot;func1: returning\n&quot;);
+}
+
+static void
+func2(void)
+{
+    printf(&quot;func2: started\n&quot;);
+    printf(&quot;func2: swapcontext(&amp;uctx_func2, &amp;uctx_func1)\n&quot;);
+    if (swapcontext(&amp;uctx_func2, &amp;uctx_func1) == -1)
+        die(&quot;swapcontext&quot;);
+    printf(&quot;func2: returning\n&quot;);
+}
+
+int
+main(int argc, char *argv[])
+{
+    char func1_stack[16384];
+    char func2_stack[16384];
+
+    if (getcontext(&amp;uctx_func1) == -1)
+        die(&quot;getcontext&quot;);
+    uctx_func1.uc_stack.ss_sp = func1_stack;
+    uctx_func1.uc_stack.ss_size = sizeof(func1_stack);
+    uctx_func1.uc_link = &amp;uctx_main;
+    makecontext(&amp;uctx_func1, func1, 0);
+
+    if (getcontext(&amp;uctx_func2) == -1)
+        die(&quot;getcontext&quot;);
+    uctx_func2.uc_stack.ss_sp = func2_stack;
+    uctx_func2.uc_stack.ss_size = sizeof(func2_stack);
+    /* Successor context is f1(), unless argc &gt; 1 */
+    uctx_func2.uc_link = (argc &gt; 1) ? NULL : &amp;uctx_func1;
+    makecontext(&amp;uctx_func2, func2, 0);
+
+    printf(&quot;main: swapcontext(&amp;uctx_main, &amp;uctx_func2)\n&quot;);
+    if (swapcontext(&amp;uctx_main, &amp;uctx_func2) == -1)
+        die(&quot;swapcontext&quot;);
+
+    printf(&quot;main: exiting\n&quot;);
+    exit(EXIT_SUCCESS);
+}
+</PRE>
+
+<A NAME="lbAJ">&nbsp;</A>
 <H2>SEE ALSO</H2>
 
 <B><A HREF="../man2/getcontext.2.html">getcontext</A></B>(2),
@@ -115,12 +214,13 @@ SUSv2, POSIX 1003.1-2001.
 <DT><A HREF="#lbAF">ERRORS</A><DD>
 <DT><A HREF="#lbAG">NOTES</A><DD>
 <DT><A HREF="#lbAH">CONFORMING TO</A><DD>
-<DT><A HREF="#lbAI">SEE ALSO</A><DD>
+<DT><A HREF="#lbAI">EXAMPLE</A><DD>
+<DT><A HREF="#lbAJ">SEE ALSO</A><DD>
 </DL>
 <HR>
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 02:29:20 GMT, April 20, 2020
+Time: 02:29:53 GMT, April 20, 2020
 </BODY>
 </HTML>
