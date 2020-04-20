@@ -26,7 +26,7 @@ the source, must acknowledge the copyright and authors of this work.
 <HTML><HEAD><TITLE>Man page of SHMGET</TITLE>
 </HEAD><BODY>
 <H1>SHMGET</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2014-05-21<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2014-10-02<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -395,8 +395,35 @@ call:
 <DT><B>SHMALL</B>
 
 <DD>
-System-wide limit on the number of shared memory pages.
-Since Linux 2.4, the default value for this limit is
+System-wide limit on the number of
+<I>pages</I>
+
+of shared memory.
+<P>
+On Linux, this limit can be read and modified via
+<I>/proc/sys/kernel/shmall</I>.
+
+Since Linux 3.16,
+
+the default value for this limit is:
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;ULONG_MAX&nbsp;-&nbsp;2^24
+<P>
+The effect of this value
+(which is suitable for both 32-bit and 64-bit systems)
+is to impose no limitation on allocations.
+This value, rather than
+<B>ULONG_MAX</B>,
+
+was chosen as the default to prevent some cases where historical
+applications simply raised the existing limit without first checking
+its current value.
+Such applications would cause the value to overflow if the limit was set at
+<B>ULONG_MAX</B>.
+
+<P>
+From Linux 2.4 up to Linux 3.15,
+the default value for this limit was:
 <P>
 <BR>&nbsp;&nbsp;&nbsp;&nbsp;SHMMAX&nbsp;/&nbsp;PAGE_SIZE&nbsp;*&nbsp;(SHMMNI&nbsp;/&nbsp;16)
 <P>
@@ -406,23 +433,42 @@ If
 and
 <B>SHMMNI</B>
 
-are not modified, this yields a limit for the
-total memory used by all shared memory segments of 8 GB:
-with a 4kB page size, this formula yields the value 2^21 (2,097,152);
-with 8kB page size, it yields 2^20 (1048576).
-<P>
-On Linux, this limit can be read and modified via
-<I>/proc/sys/kernel/shmall</I>.
-
+were not modified, then multiplying the result of this formula
+by the page size (to get a value in bytes) yielded a value of 8 GB
+as the limit on the total memory used by all shared memory segments.
 <DT><B>SHMMAX</B>
 
 <DD>
 Maximum size in bytes for a shared memory segment.
-Since Linux 2.2, the default value of this limit is 0x2000000 (32MB).
 <P>
 On Linux, this limit can be read and modified via
 <I>/proc/sys/kernel/shmmax</I>.
 
+Since Linux 3.16,
+
+the default value for this limit is:
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;ULONG_MAX&nbsp;-&nbsp;2^24
+<P>
+The effect of this value
+(which is suitable for both 32-bit and 64-bit systems)
+is to impose no limitation on allocations.
+See the description of
+<B>SHMALL</B>
+
+for a discussion of why this default value (rather than
+<B>ULONG_MAX</B>)
+
+is used.
+<P>
+From Linux 2.2 up to Linux 3.15, the default value of
+this limit was 0x2000000 (32MB).
+<P>
+Because it is not possible to map just part of a shared memory segment,
+the amount of virtual memory places another limit on the maximum size of a
+usable segment:
+for example, on i386 the largest segments that can be mapped have a
+size of around 2.8 GB, and on x86_64 the limit is around 127 TB.
 <DT><B>SHMMIN</B>
 
 <DD>
@@ -511,6 +557,6 @@ would more clearly show its function.
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:33:12 GMT, April 20, 2020
+Time: 03:33:44 GMT, April 20, 2020
 </BODY>
 </HTML>
