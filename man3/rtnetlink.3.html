@@ -31,31 +31,23 @@ rtnetlink - Macros to manipulate rtnetlink messages
 <P>
 <B>rtnetlink_socket = socket(PF_NETLINK, int </B><I>socket_type</I><B>, NETLINK_ROUTE);</B>
 
-<BR>
+<P>
+<B>int RTA_OK(struct rtattr *</B><I>rta</I><B>, int </B><I>rtabuflen</I><B>);</B>
 
-<B>int RTA_OK(struct rtattr *rta, int rtabuflen); </B>
+<P>
+<B>void *RTA_DATA(struct rtattr *</B><I>rta</I><B>);</B>
 
-<BR>
+<P>
+<B>unsigned int RTA_PAYLOAD(struct rtattr *</B><I>rta</I><B>);</B>
 
-<B>void *RTA_DATA(struct rtattr *rta); </B>
+<P>
+<B>struct rtattr *RTA_NEXT(struct rtattr *</B><I>rta</I><B>, unsigned int </B><I>rtabuflen</I><B>);</B>
 
-<BR>
+<P>
+<B>unsigned int RTA_LENGTH(unsigned int </B><I>length</I><B>);</B>
 
-<B>unsigned int RTA_PAYLOAD(struct rtattr *rta); </B>
-
-<BR>
-
-<B>struct rtattr *RTA_NEXT(struct rtattr *rta, unsigned int rtabuflen); </B>
-
-<BR>
-
-<B>unsigned int RTA_LENGTH(unsigned int length); </B>
-
-<BR>
-
-<B>unsigned int RTA_SPACE(unsigned int length); </B>
-
-<BR>
+<P>
+<B>unsigned int RTA_SPACE(unsigned int length</B><I>);</I>
 
 <A NAME="lbAD">&nbsp;</A>
 <H2>DESCRIPTION</H2>
@@ -68,7 +60,6 @@ messages consist of a
 
 message header and appended attributes. The attributes should be only
 manipulated using the macros provided here.
-<P>
 <P>
 
 <B>RTA_OK(</B><I>rta</I><B>, </B><I>attrlen</I><B>)</B>
@@ -125,7 +116,6 @@ returns the amount of space which will be needed in the message with
 <I>len</I>
 
 bytes of data.
-<P>
 <A NAME="lbAE">&nbsp;</A>
 <H2>EXAMPLE</H2>
 
@@ -133,38 +123,38 @@ bytes of data.
 <P>
 Creating a rtnetlink message to set a MTU of a device.
 <PRE>
-        struct {
-               struct nlmsghdr nh;
-               struct ifinfomsg   if;
-               char            attrbuf[512];
-        } req;
-        struct rtattr *rta;
-        unsigned int mtu = 1000; 
-        int rtnetlink_sk = socket(PF_NETLINK, SOCK_DGRAM, NETLINK_ROUTE); 
+    struct {
+        struct nlmsghdr  nh;
+        struct ifinfomsg if;
+        char             attrbuf[512];
+    } req;
 
-        memset(&amp;req, 0, sizeof(req));
-        req.nh.nlmsg_len = NLMSG_LENGTH(sizeof(struct ifinfomsg)); 
-        req.nh.nlmsg_flags = NLM_F_REQUEST; 
-        req.nh.nlmsg_type = RTML_NEWLINK;
-        req.if.ifi_family = AF_UNSPEC;
-        req.if.ifi_index = INTERFACE_INDEX; 
-        req.if.ifi_change = 0xffffffff; /* ???*/
-        rta = (struct rtattr *)(((char *) &amp;req) + 
-                        NLMSG_ALIGN(n-&gt;nlmsg_len));
-        rta-&gt;rta_type = IFLA_MTU;
-        rta-&gt;rta_len = sizeof(unsigned int);
-        req.n.nlmsg_len = NLMSG_ALIGN(req.n.nlmsg_len) + 
-                        RTA_LENGTH(sizeof(mtu)); 
-        memcpy(RTA_DATA(rta), &amp;mtu, sizeof (mtu));
-        send(rtnetlink_sk, &amp;req, req.n.nlmsg_len); 
+    struct rtattr *rta;
+    unsigned int mtu = 1000; 
+
+    int rtnetlink_sk = socket(PF_NETLINK, SOCK_DGRAM, NETLINK_ROUTE); 
+
+    memset(&amp;req, 0, sizeof(req));
+    req.nh.nlmsg_len = NLMSG_LENGTH(sizeof(struct ifinfomsg)); 
+    req.nh.nlmsg_flags = NLM_F_REQUEST; 
+    req.nh.nlmsg_type = RTML_NEWLINK;
+    req.if.ifi_family = AF_UNSPEC;
+    req.if.ifi_index = INTERFACE_INDEX; 
+    req.if.ifi_change = 0xffffffff; /* ???*/
+    rta = (struct rtattr *)(((char *) &amp;req) + 
+                                  NLMSG_ALIGN(n-&gt;nlmsg_len));
+    rta-&gt;rta_type = IFLA_MTU;
+    rta-&gt;rta_len = sizeof(unsigned int);
+    req.n.nlmsg_len = NLMSG_ALIGN(req.n.nlmsg_len) + 
+                                  RTA_LENGTH(sizeof(mtu)); 
+    memcpy(RTA_DATA(rta), &amp;mtu, sizeof (mtu));
+    send(rtnetlink_sk, &amp;req, req.n.nlmsg_len); 
 </PRE>
 
-<P>
 <A NAME="lbAF">&nbsp;</A>
 <H2>BUGS</H2>
 
 This manual page is lacking and incomplete.
-<P>
 <A NAME="lbAG">&nbsp;</A>
 <H2>SEE ALSO</H2>
 
@@ -190,6 +180,6 @@ This manual page is lacking and incomplete.
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 02:33:39 GMT, April 20, 2020
+Time: 02:34:11 GMT, April 20, 2020
 </BODY>
 </HTML>

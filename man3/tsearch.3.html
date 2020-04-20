@@ -19,15 +19,15 @@ tsearch, tfind, tdelete, twalk, tdestroy - manage a binary tree
 <B>#include &lt;<A HREF="file:///usr/include/search.h">search.h</A>&gt;</B>
 
 <B>void *tsearch(const void *</B><I>key</I><B>, void **</B><I>rootp</I><B>,</B>
-<B>                int(*</B><I>compar</I><B>)(const void *, const void *));</B>
+<B>                int (*</B><I>compar</I><B>)(const void *, const void *));</B>
 
 <B>void *tfind(const void *</B><I>key</I><B>, const void **</B><I>rootp</I><B>,</B>
-<B>                int(*</B><I>compar</I><B>)(const void *, const void *));</B>
+<B>                int (*</B><I>compar</I><B>)(const void *, const void *));</B>
 
 <B>void *tdelete(const void *</B><I>key</I><B>, void **</B><I>rootp</I><B>,</B>
-<B>                int(*</B><I>compar</I><B>)(const void *, const void *));</B>
+<B>                int (*</B><I>compar</I><B>)(const void *, const void *));</B>
 
-<B>void twalk(const void *</B><I>root</I><B>, void(*</B><I>action</I><B>)(const void *</B><I>nodep</I><B>,</B>
+<B>void twalk(const void *</B><I>root</I><B>, void (*</B><I>action</I><B>)(const void *</B><I>nodep</I><B>,</B>
 <B>                                   const VISIT </B><I>which</I><B>,</B>
 <B>                                   const int </B><I>depth</I><B>));</B>
 
@@ -35,7 +35,7 @@ tsearch, tfind, tdelete, twalk, tdestroy - manage a binary tree
 <BR>
 <B>#include &lt;<A HREF="file:///usr/include/search.h">search.h</A>&gt;</B>
 
-<B>void tdestroy (void *</B><I>root</I><B>, void (*</B><I>free_node</I><B>)(void *</B><I>nodep</I><B>));</B>
+<B>void tdestroy(void *</B><I>root</I><B>, void (*</B><I>free_node</I><B>)(void *</B><I>nodep</I><B>));</B>
 </PRE>
 
 <A NAME="lbAD">&nbsp;</A>
@@ -142,60 +142,65 @@ tree, where duplicate numbers are collapsed, then prints the numbers
 in order.
 <P>
 <PRE>
-    #include &lt;<A HREF="file:///usr/include/search.h">search.h</A>&gt;
-    #include &lt;<A HREF="file:///usr/include/stdlib.h">stdlib.h</A>&gt;
-    #include &lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;
-    #include &lt;<A HREF="file:///usr/include/time.h">time.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/search.h">search.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/stdlib.h">stdlib.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/time.h">time.h</A>&gt;
     
-    void *root = NULL;
+void *root = NULL;
     
-    void *xmalloc(unsigned n) {
-      void *p;
-      p = <A HREF="../mann/malloc.n.html">malloc</A>(n);
-      if (p) return p;
-      fprintf(stderr, &quot;insufficient memory\n&quot;);
-      <A HREF="../man1/exit.1.html">exit</A>(1);
+void *xmalloc(unsigned n) 
+{
+    void *p;
+    p = <A HREF="../mann/malloc.n.html">malloc</A>(n);
+    if (p) 
+        return p;
+    fprintf(stderr, &quot;insufficient memory\n&quot;);
+    <A HREF="../man1/exit.1.html">exit</A>(1);
+}
+    
+int compare(const void *pa, const void *pb) {
+    if (*(int *) pa &lt; *(int *) pb) 
+        return -1;
+    if (*(int *) pa &gt; *(int *) pb)
+        return 1;
+    return 0;
+}
+    
+void action(const void *nodep, const VISIT which, const int depth) {
+    int *datap;
+    
+    switch(which) {
+    case preorder:
+        break;
+    case postorder:
+        datap = *(int **)nodep;
+        printf(&quot;%6d\n&quot;, *datap);
+        break;
+    case endorder:
+        break;
+    case leaf:
+        datap = *(int **) nodep;
+        printf(&quot;%6d\n&quot;, *datap);
+        break;
     }
+}
     
-    int compare(const void *pa, const void *pb) {
-      if (*(int *)pa &lt; *(int *)pb) return -1;
-      if (*(int *)pa &gt; *(int *)pb) return 1;
-      return 0;
-    }
-    
-    void action(const void *nodep, const VISIT which, const int depth) {
-      int *datap;
-    
-      switch(which) {
-        case preorder:
-          break;
-        case postorder:
-          datap = *(int **)nodep;
-          printf(&quot;%6d\n&quot;, *datap);
-          break;
-        case endorder:
-          break;
-        case leaf:
-          datap = *(int **)nodep;
-          printf(&quot;%6d\n&quot;, *datap);
-          break;
-      }
-    }
-    
-    int main() {
-      int i, *ptr;
-      void *val;
+int main() {
+    int i, *ptr;
+    void *val;
 
-      srand(time(NULL));    
-      for (i = 0; i &lt; 12; i++) {
-          ptr = (int *)xmalloc(sizeof(int));
-          *ptr = rand()&amp;0xff;
-          val = tsearch((void *)ptr, &amp;root, compare);
-          if (val == NULL) <A HREF="../man1/exit.1.html">exit</A>(1);
-      }
-      twalk(root, action);
-      return 0;
+    srand(time(NULL));    
+    for (i = 0; i &lt; 12; i++) {
+        ptr = (int *) xmalloc(sizeof(int));
+        *ptr = rand() &amp; 0xff;
+        val = tsearch((void *) ptr, &amp;root, compare);
+        if (val == NULL) 
+            <A HREF="../man1/exit.1.html">exit</A>(1);
     }
+    twalk(root, action);
+    return 0;
+}
 </PRE>
 
 <A NAME="lbAH">&nbsp;</A>
@@ -237,6 +242,6 @@ is a GNU extension.
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 02:33:40 GMT, April 20, 2020
+Time: 02:34:13 GMT, April 20, 2020
 </BODY>
 </HTML>
