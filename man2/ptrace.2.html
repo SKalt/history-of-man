@@ -1,11 +1,11 @@
 <!--
-Copyright (c) 1993 Michael Haardt
+Copyright (c) 1993 Michael Haardt &lt;michael@moria.de&gt;
 -->
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
 <HTML><HEAD><TITLE>Man page of PTRACE</TITLE>
 </HEAD><BODY>
 <H1>PTRACE</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2009-03-30<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2012-03-06<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -28,69 +28,102 @@ ptrace - process trace
 The
 <B>ptrace</B>()
 
-system call provides a means by which a parent process may observe
-and control the execution of another process,
-and examine and change its core image and registers.
+system call provides a means by which one process (the &quot;tracer&quot;)
+may observe and control the execution of another process (the &quot;tracee&quot;),
+and examine and change the tracee's memory and registers.
 It is primarily used to implement breakpoint debugging and system
 call tracing.
 <P>
 
-The parent can initiate a trace by calling
+A tracee first needs to be attached to the tracer.
+Attachment and subsequent commands are per thread:
+in a multithreaded process,
+every thread can be individually attached to a
+(potentially different) tracer,
+or left not attached and thus not debugged.
+Therefore, &quot;tracee&quot; always means &quot;(one) thread&quot;,
+never &quot;a (possibly multithreaded) process&quot;.
+Ptrace commands are always sent to
+a specific tracee using a call of the form
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;ptrace(PTRACE_foo,&nbsp;pid,&nbsp;...)
+<P>
+where
+<I>pid</I>
+
+is the thread ID of the corresponding Linux thread.
+<P>
+
+(Note that in this page, a &quot;multithreaded process&quot;
+means a thread group consisting of threads created using the
+<B><A HREF="../man2/clone.2.html">clone</A></B>(2)
+
+<B>CLONE_THREAD</B>
+
+flag.)
+<P>
+
+A process can initiate a trace by calling
 <B><A HREF="../man2/fork.2.html">fork</A></B>(2)
 
 and having the resulting child do a
 <B>PTRACE_TRACEME</B>,
 
 followed (typically) by an
-<B><A HREF="../man3/exec.3.html">exec</A></B>(3).
+<B><A HREF="../man2/execve.2.html">execve</A></B>(2).
 
-Alternatively, the parent may commence trace of an existing process using
+Alternatively, one process may commence tracing another process using
 <B>PTRACE_ATTACH</B>.
 
 <P>
 
-While being traced, the child will stop each time a signal is delivered,
+While being traced, the tracee will stop each time a signal is delivered,
 even if the signal is being ignored.
-(The exception is
+(An exception is
 <B>SIGKILL</B>,
 
 which has its usual effect.)
-The parent will be notified at its next
-<B><A HREF="../man2/wait.2.html">wait</A></B>(2)
+The tracer will be notified at its next call to
+<B><A HREF="../man2/waitpid.2.html">waitpid</A></B>(2)
 
-and may inspect and modify the child process while it is stopped.
-The parent then causes the child to continue,
+(or one of the related &quot;wait&quot; system calls); that call will return a
+<I>status</I>
+
+value containing information that indicates
+the cause of the stop in the tracee.
+While the tracee is stopped,
+the tracer can use various ptrace requests to inspect and modify the tracee.
+The tracer then causes the tracee to continue,
 optionally ignoring the delivered signal
 (or even delivering a different signal instead).
 <P>
 
-When the parent is finished tracing, it can terminate the child with
-<B>PTRACE_KILL</B>
-
-or cause it to continue executing in a normal, untraced mode
-via
+When the tracer is finished tracing, it can cause the tracee to continue
+executing in a normal, untraced mode via
 <B>PTRACE_DETACH</B>.
 
 <P>
 
-The value of <I>request</I> determines the action to be performed:
+The value of
+<I>request</I>
+
+determines the action to be performed:
 <DL COMPACT>
 <DT><B>PTRACE_TRACEME</B>
 
 <DD>
-Indicates that this process is to be traced by its parent.
-Any signal
-(except
+Indicate that this process is to be traced by its parent.
+Any signal (except
 <B>SIGKILL</B>)
 
 delivered to this process will cause it to stop and its
 parent to be notified via
-<B><A HREF="../man2/wait.2.html">wait</A></B>(2).
+<B><A HREF="../man2/waitpid.2.html">waitpid</A></B>(2).
 
-Also, all subsequent calls to
+In addition, all subsequent calls to
 <B><A HREF="../man2/execve.2.html">execve</A></B>(2)
 
-by this process will cause a
+by the traced process will cause a
 <B>SIGTRAP</B>
 
 to be sent to it,
@@ -98,184 +131,287 @@ giving the parent a chance to gain control before the new program
 begins execution.
 A process probably shouldn't make this request if its parent
 isn't expecting to trace it.
-(<I>pid</I>, <I>addr</I>, and <I>data</I> are ignored.)
+(<I>pid</I>,
+
+<I>addr</I>,
+
+and
+<I>data</I>
+
+are ignored.)
 </DL>
 <P>
 
-The above request is used only by the child process;
-the rest are used only by the parent.
-In the following requests, <I>pid</I> specifies the child process
-to be acted on.
+The
+<B>PTRACE_TRACEME</B>
+
+request is used only by the tracee;
+the remaining requests are used only by the tracer.
+In the following requests,
+<I>pid</I>
+
+specifies the thread ID of the tracee to be acted on.
 For requests other than
 <B>PTRACE_KILL</B>,
 
-the child process must
-be stopped.
+the tracee must be stopped.
 <DL COMPACT>
 <DT><B>PTRACE_PEEKTEXT</B>, <B>PTRACE_PEEKDATA</B>
 
 <DD>
-Reads a word at the location
+Read a word at the address
 <I>addr</I>
 
-in the child's memory, returning the word as the result of the
+in the tracee's memory, returning the word as the result of the
 <B>ptrace</B>()
 
 call.
-Linux does not have separate text and data address spaces, so the two
-requests are currently equivalent.
-(The argument <I>data</I> is ignored.)
+Linux does not have separate text and data address spaces,
+so these two requests are currently equivalent.
+(<I>data</I>
+
+is ignored.)
 <DT><B>PTRACE_PEEKUSER</B>
 
 <DD>
 
 
-Reads a word at offset
+Read a word at offset
 <I>addr</I>
 
-in the child's USER area,
+in the tracee's USER area,
 which holds the registers and other information about the process
-(see <I>&lt;<A HREF="file:///usr/include/sys/user.h">sys/user.h</A>&gt;</I>).
+(see
+<I>&lt;<A HREF="file:///usr/include/sys/user.h">sys/user.h</A>&gt;</I>).
+
 The word is returned as the result of the
 <B>ptrace</B>()
 
 call.
-Typically the offset must be word-aligned, though this might vary by
+Typically, the offset must be word-aligned, though this might vary by
 architecture.
 See NOTES.
-(<I>data</I> is ignored.)
+(<I>data</I>
+
+is ignored.)
 <DT><B>PTRACE_POKETEXT</B>, <B>PTRACE_POKEDATA</B>
 
 <DD>
-Copies the word
+Copy the word
 <I>data</I>
 
-to location
+to the address
 <I>addr</I>
 
-in the child's memory.
-As above, the two requests are currently equivalent.
+in the tracee's memory.
+As for
+<B>PTRACE_PEEKTEXT</B>
+
+and
+<B>PTRACE_PEEKDATA</B>,
+
+these two requests are currently equivalent.
 <DT><B>PTRACE_POKEUSER</B>
 
 <DD>
 
 
-Copies the word
+Copy the word
 <I>data</I>
 
 to offset
 <I>addr</I>
 
-in the child's USER area.
-As above, the offset must typically be word-aligned.
+in the tracee's USER area.
+As for
+<B>PTRACE_PEEKUSER</B>,
+
+the offset must typically be word-aligned.
 In order to maintain the integrity of the kernel,
 some modifications to the USER area are disallowed.
+
+
 <DT><B>PTRACE_GETREGS</B>, <B>PTRACE_GETFPREGS</B>
 
 <DD>
-Copies the child's general purpose or floating-point registers,
-respectively, to location <I>data</I> in the parent.
-See <I>&lt;<A HREF="file:///usr/include/sys/user.h">sys/user.h</A>&gt;</I> for information on
-the format of this data.
-(<I>addr</I> is ignored.)
+Copy the tracee's general-purpose or floating-point registers,
+respectively, to the address
+<I>data</I>
+
+in the tracer.
+See
+<I>&lt;<A HREF="file:///usr/include/sys/user.h">sys/user.h</A>&gt;</I>
+
+for information on the format of this data.
+(<I>addr</I>
+
+is ignored.)
 <DT><B>PTRACE_GETSIGINFO</B> (since Linux 2.3.99-pre6)
 
 <DD>
 Retrieve information about the signal that caused the stop.
-Copies a <I>siginfo_t</I> structure (see
+Copy a
+<I>siginfo_t</I>
+
+structure (see
 <B><A HREF="../man2/sigaction.2.html">sigaction</A></B>(2))
 
-from the child to location <I>data</I> in the parent.
-(<I>addr</I> is ignored.)
+from the tracee to the address
+<I>data</I>
+
+in the tracer.
+(<I>addr</I>
+
+is ignored.)
 <DT><B>PTRACE_SETREGS</B>, <B>PTRACE_SETFPREGS</B>
 
 <DD>
-Copies the child's general purpose or floating-point registers,
-respectively, from location <I>data</I> in the parent.
+Copy the tracee's general-purpose or floating-point registers,
+respectively, from the address
+<I>data</I>
+
+in the tracer.
 As for
 <B>PTRACE_POKEUSER</B>,
 
-some general
-purpose register modifications may be disallowed.
-(<I>addr</I> is ignored.)
+some general-purpose register modifications may be disallowed.
+
+
+(<I>addr</I>
+
+is ignored.)
 <DT><B>PTRACE_SETSIGINFO</B> (since Linux 2.3.99-pre6)
 
 <DD>
-Set signal information.
-Copies a <I>siginfo_t</I> structure from location <I>data</I> in the
-parent to the child.
-This will only affect signals that would normally be delivered to
-the child and were caught by the tracer.
+Set signal information:
+copy a
+<I>siginfo_t</I>
+
+structure from the address
+<I>data</I>
+
+in the tracer to the tracee.
+This will affect only signals that would normally be delivered to
+the tracee and were caught by the tracer.
 It may be difficult to tell
 these normal signals from synthetic signals generated by
 <B>ptrace</B>()
 
 itself.
-(<I>addr</I> is ignored.)
+(<I>addr</I>
+
+is ignored.)
 <DT><B>PTRACE_SETOPTIONS</B> (since Linux 2.4.6; see BUGS for caveats)
 
 <DD>
-Sets ptrace options from <I>data</I> in the parent.
-(<I>addr</I> is ignored.)
-<I>data</I> is interpreted
-as a bit mask of options, which are specified by the following flags:
+Set ptrace options from
+<I>data</I>.
+
+(<I>addr</I>
+
+is ignored.)
+<I>data</I>
+
+is interpreted as a bit mask of options,
+which are specified by the following flags:
 <DL COMPACT><DT><DD>
 <DL COMPACT>
 <DT><B>PTRACE_O_TRACESYSGOOD</B> (since Linux 2.4.6)
 
 <DD>
-When delivering syscall traps, set bit 7 in the signal number
-(i.e., deliver <I>SIGTRAP | 0x80</I>).
-This makes it easy for the tracer to tell the difference
-between normal traps and those caused by a syscall.
+When delivering system call traps, set bit 7 in the signal number
+(i.e., deliver
+<I>SIGTRAP|0x80</I>).
+
+This makes it easy for the tracer to distinguish
+normal traps from those caused by a system call.
 (<B>PTRACE_O_TRACESYSGOOD</B>
 
 may not work on all architectures.)
 <DT><B>PTRACE_O_TRACEFORK</B> (since Linux 2.5.46)
 
 <DD>
-Stop the child at the next
+Stop the tracee at the next
 <B><A HREF="../man2/fork.2.html">fork</A></B>(2)
 
-call with <I>SIGTRAP | PTRACE_EVENT_FORK&nbsp;&lt;&lt;&nbsp;8</I> and automatically
-start tracing the newly forked process,
+and automatically start tracing the newly forked process,
 which will start with a
 <B>SIGSTOP</B>.
 
-The PID for the new process can be retrieved with
+A
+<B><A HREF="../man2/waitpid.2.html">waitpid</A></B>(2)
+
+by the tracer will return a
+<I>status</I>
+
+value such that
+<P>
+<PRE>
+  status&gt;&gt;8 == (SIGTRAP | (PTRACE_EVENT_FORK&lt;&lt;8))
+</PRE>
+
+<P>
+The PID of the new process can be retrieved with
 <B>PTRACE_GETEVENTMSG</B>.
 
 <DT><B>PTRACE_O_TRACEVFORK</B> (since Linux 2.5.46)
 
 <DD>
-Stop the child at the next
+Stop the tracee at the next
 <B><A HREF="../man2/vfork.2.html">vfork</A></B>(2)
 
-call with <I>SIGTRAP | PTRACE_EVENT_VFORK&nbsp;&lt;&lt;&nbsp;8</I> and automatically start
-tracing the newly vforked process, which will start with a
+and automatically start tracing the newly vforked process,
+which will start with a
 <B>SIGSTOP</B>.
 
-The PID for the new process can be retrieved with
+A
+<B><A HREF="../man2/waitpid.2.html">waitpid</A></B>(2)
+
+by the tracer will return a
+<I>status</I>
+
+value such that
+<P>
+<PRE>
+  status&gt;&gt;8 == (SIGTRAP | (PTRACE_EVENT_VFORK&lt;&lt;8))
+</PRE>
+
+<P>
+The PID of the new process can be retrieved with
 <B>PTRACE_GETEVENTMSG</B>.
 
 <DT><B>PTRACE_O_TRACECLONE</B> (since Linux 2.5.46)
 
 <DD>
-Stop the child at the next
+Stop the tracee at the next
 <B><A HREF="../man2/clone.2.html">clone</A></B>(2)
 
-call with <I>SIGTRAP | PTRACE_EVENT_CLONE&nbsp;&lt;&lt;&nbsp;8</I> and automatically start
-tracing the newly cloned process, which will start with a
+and automatically start tracing the newly cloned process,
+which will start with a
 <B>SIGSTOP</B>.
 
-The PID for the new process can be retrieved with
+A
+<B><A HREF="../man2/waitpid.2.html">waitpid</A></B>(2)
+
+by the tracer will return a
+<I>status</I>
+
+value such that
+<P>
+<PRE>
+  status&gt;&gt;8 == (SIGTRAP | (PTRACE_EVENT_CLONE&lt;&lt;8))
+</PRE>
+
+<P>
+The PID of the new process can be retrieved with
 <B>PTRACE_GETEVENTMSG</B>.
 
+<DT><DD>
 This option may not catch
 <B><A HREF="../man2/clone.2.html">clone</A></B>(2)
 
 calls in all cases.
-If the child calls
+If the tracee calls
 <B><A HREF="../man2/clone.2.html">clone</A></B>(2)
 
 with the
@@ -288,7 +424,7 @@ will be delivered instead
 if
 <B>PTRACE_O_TRACEVFORK</B>
 
-is set; otherwise if the child calls
+is set; otherwise if the tracee calls
 <B><A HREF="../man2/clone.2.html">clone</A></B>(2)
 
 with the exit signal set to
@@ -296,38 +432,79 @@ with the exit signal set to
 
 <B>PTRACE_EVENT_FORK</B>
 
-will be delivered
-if
+will be delivered if
 <B>PTRACE_O_TRACEFORK</B>
 
 is set.
 <DT><B>PTRACE_O_TRACEEXEC</B> (since Linux 2.5.46)
 
 <DD>
-Stop the child at the next
-<B><A HREF="../man2/execve.2.html">execve</A></B>(2)
+Stop the tracee at the next
+<B><A HREF="../man2/execve.2.html">execve</A></B>(2).
 
-call with <I>SIGTRAP | PTRACE_EVENT_EXEC&nbsp;&lt;&lt;&nbsp;8</I>.
+A
+<B><A HREF="../man2/waitpid.2.html">waitpid</A></B>(2)
+
+by the tracer will return a
+<I>status</I>
+
+value such that
+<P>
+<PRE>
+  status&gt;&gt;8 == (SIGTRAP | (PTRACE_EVENT_EXEC&lt;&lt;8))
+</PRE>
+
+<P>
 <DT><B>PTRACE_O_TRACEVFORKDONE</B> (since Linux 2.5.60)
 
 <DD>
-Stop the child at the completion of the next
-<B><A HREF="../man2/vfork.2.html">vfork</A></B>(2)
+Stop the tracee at the completion of the next
+<B><A HREF="../man2/vfork.2.html">vfork</A></B>(2).
 
-call with <I>SIGTRAP | PTRACE_EVENT_VFORK_DONE&nbsp;&lt;&lt;&nbsp;8</I>.
+A
+<B><A HREF="../man2/waitpid.2.html">waitpid</A></B>(2)
+
+by the tracer will return a
+<I>status</I>
+
+value such that
+<P>
+<PRE>
+  status&gt;&gt;8 == (SIGTRAP | (PTRACE_EVENT_VFORK_DONE&lt;&lt;8))
+</PRE>
+
+<P>
+The PID of the new process can (since Linux 2.6.18) be retrieved with
+<B>PTRACE_GETEVENTMSG</B>.
+
 <DT><B>PTRACE_O_TRACEEXIT</B> (since Linux 2.5.60)
 
 <DD>
-Stop the child at exit with <I>SIGTRAP | PTRACE_EVENT_EXIT&nbsp;&lt;&lt;&nbsp;8</I>.
-The child's exit status can be retrieved with
+Stop the tracee at exit.
+A
+<B><A HREF="../man2/waitpid.2.html">waitpid</A></B>(2)
+
+by the tracer will return a
+<I>status</I>
+
+value such that
+<P>
+<PRE>
+  status&gt;&gt;8 == (SIGTRAP | (PTRACE_EVENT_EXIT&lt;&lt;8))
+</PRE>
+
+<P>
+The tracee's exit status can be retrieved with
 <B>PTRACE_GETEVENTMSG</B>.
 
-This stop will be done early during process exit when registers
-are still available, allowing the tracer to see where the exit occurred,
+<DT><DD>
+The tracee is stopped early during process exit,
+when registers are still available,
+allowing the tracer to see where the exit occurred,
 whereas the normal exit notification is done after the process
 is finished exiting.
-Even though context is available, the tracer cannot prevent the exit from
-happening at this point.
+Even though context is available,
+the tracer cannot prevent the exit from happening at this point.
 </DL>
 </DL>
 
@@ -338,49 +515,54 @@ Retrieve a message (as an
 <I>unsigned long</I>)
 
 about the ptrace event
-that just happened, placing it in the location <I>data</I> in the parent.
-For
-<B>PTRACE_EVENT_EXIT</B>
+that just happened, placing it at the address
+<I>data</I>
 
-this is the child's exit status.
+in the tracer.
+For
+<B>PTRACE_EVENT_EXIT</B>,
+
+this is the tracee's exit status.
 For
 <B>PTRACE_EVENT_FORK</B>,
 
-<B>PTRACE_EVENT_VFORK</B>
+<B>PTRACE_EVENT_VFORK</B>,
+
+<B>PTRACE_EVENT_VFORK_DONE</B>,
 
 and
-<B>PTRACE_EVENT_CLONE</B>
+<B>PTRACE_EVENT_CLONE</B>,
 
-this
-is the PID of the new process.
-Since Linux 2.6.18, the PID of the new process is also available
-for
-<B>PTRACE_EVENT_VFORK_DONE</B>.
+this is the PID of the new process.
+(<I>addr</I>
 
-(<I>addr</I> is ignored.)
+is ignored.)
 <DT><B>PTRACE_CONT</B>
 
 <DD>
-Restarts the stopped child process.
-If <I>data</I> is nonzero and not
-<B>SIGSTOP</B>,
+Restart the stopped tracee process.
+If
+<I>data</I>
 
-it is interpreted as a signal to be delivered to the child;
+is nonzero,
+it is interpreted as the number of a signal to be delivered to the tracee;
 otherwise, no signal is delivered.
-Thus, for example, the parent can control
-whether a signal sent to the child is delivered or not.
-(<I>addr</I> is ignored.)
+Thus, for example, the tracer can control
+whether a signal sent to the tracee is delivered or not.
+(<I>addr</I>
+
+is ignored.)
 <DT><B>PTRACE_SYSCALL</B>, <B>PTRACE_SINGLESTEP</B>
 
 <DD>
-Restarts the stopped child as for
+Restart the stopped tracee as for
 <B>PTRACE_CONT</B>,
 
-but arranges for
-the child to be stopped at the next entry to or exit from a system call,
+but arrange for the tracee to be stopped at
+the next entry to or exit from a system call,
 or after execution of a single instruction, respectively.
-(The child will also, as usual, be stopped upon receipt of a signal.)
-From the parent's perspective, the child will appear to have been
+(The tracee will also, as usual, be stopped upon receipt of a signal.)
+From the tracer's perspective, the tracee will appear to have been
 stopped by receipt of a
 <B>SIGTRAP</B>.
 
@@ -392,93 +574,1519 @@ the arguments to the system call at the first stop,
 then do another
 <B>PTRACE_SYSCALL</B>
 
-and inspect the return value of
-the system call at the second stop.
+and inspect the return value of the system call at the second stop.
 The
 <I>data</I>
 
 argument is treated as for
 <B>PTRACE_CONT</B>.
 
-(<I>addr</I> is ignored.)
+(addr
+
+is ignored.)
 <DT><B>PTRACE_SYSEMU</B>, <B>PTRACE_SYSEMU_SINGLESTEP</B> (since Linux 2.6.14)
 
 <DD>
 For
 <B>PTRACE_SYSEMU</B>,
 
-continue and stop on entry to the next syscall,
+continue and stop on entry to the next system call,
 which will not be executed.
 For
 <B>PTRACE_SYSEMU_SINGLESTEP</B>,
 
-do the same
-but also singlestep if not a syscall.
+do the same but also singlestep if not a system call.
 This call is used by programs like
-User Mode Linux that want to emulate all the child's system calls.
+User Mode Linux that want to emulate all the tracee's system calls.
 The
 <I>data</I>
 
 argument is treated as for
 <B>PTRACE_CONT</B>.
 
-(<I>addr</I> is ignored;
+(<I>addr</I>
+
+is ignored;
 not supported on all architectures.)
 <DT><B>PTRACE_KILL</B>
 
 <DD>
-Sends the child a
+Send the tracee a
 <B>SIGKILL</B>
 
 to terminate it.
-(<I>addr</I> and <I>data</I> are ignored.)
+(<I>addr</I>
+
+and
+<I>data</I>
+
+are ignored.)
+<DT><DD>
+<I>This operation is deprecated; do not use it!</I>
+
+Instead, send a
+<B>SIGKILL</B>
+
+directly using
+<B><A HREF="../man2/kill.2.html">kill</A></B>(2)
+
+or
+<B><A HREF="../man2/tgkill.2.html">tgkill</A></B>(2).
+
+The problem with
+<B>PTRACE_KILL</B>
+
+is that it requires the tracee to be in signal-delivery-stop,
+otherwise it may not work
+(i.e., may complete successfully but won't kill the tracee).
+By contrast, sending a
+<B>SIGKILL</B>
+
+directly has no such limitation.
+
+
+
 <DT><B>PTRACE_ATTACH</B>
 
 <DD>
-Attaches to the process specified in
+Attach to the process specified in
 <I>pid</I>,
 
-making it a traced &quot;child&quot; of the calling process;
-the behavior of the child is as if it had done a
-<B>PTRACE_TRACEME</B>.
+making it a tracee of the calling process.
 
-The calling process actually becomes the parent of the child
-process for most purposes (e.g., it will receive
-notification of child events and appears in
-<B><A HREF="../man1/ps.1.html">ps</A></B>(1)
 
-output as the child's parent), but a
-<B><A HREF="../man2/getppid.2.html">getppid</A></B>(2)
 
-by the child will still return the PID of the original parent.
-The child is sent a
+
+
+
+
+
+
+
+
+
+The tracee is sent a
 <B>SIGSTOP</B>,
 
 but will not necessarily have stopped
 by the completion of this call; use
-<B><A HREF="../man2/wait.2.html">wait</A></B>(2)
+<B><A HREF="../man2/waitpid.2.html">waitpid</A></B>(2)
 
-to wait for the child to stop.
-(<I>addr</I> and <I>data</I> are ignored.)
+to wait for the tracee to stop.
+See the &quot;Attaching and detaching&quot; subsection for additional information.
+(<I>addr</I>
+
+and
+<I>data</I>
+
+are ignored.)
 <DT><B>PTRACE_DETACH</B>
 
 <DD>
-Restarts the stopped child as for
+Restart the stopped tracee as for
 <B>PTRACE_CONT</B>,
 
-but first detaches
-from the process, undoing the reparenting effect of
-<B>PTRACE_ATTACH</B>,
+but first detach from it.
+Under Linux, a tracee can be detached in this way regardless
+of which method was used to initiate tracing.
+(<I>addr</I>
 
-and the effects of
-<B>PTRACE_TRACEME</B>.
+is ignored.)
 
-Although perhaps not intended, under Linux a traced child can be
-detached in this way regardless of which method was used to initiate
-tracing.
-(<I>addr</I> is ignored.)
+
+
+
+
+
+
 </DL>
 <A NAME="lbAE">&nbsp;</A>
+<H3>Death under ptrace</H3>
+
+When a (possibly multithreaded) process receives a killing signal
+(one whose disposition is set to
+<B>SIG_DFL</B>
+
+and whose default action is to kill the process),
+all threads exit.
+Tracees report their death to their tracer(s).
+Notification of this event is delivered via
+<B><A HREF="../man2/waitpid.2.html">waitpid</A></B>(2).
+
+<P>
+
+Note that the killing signal will first cause signal-delivery-stop
+(on one tracee only),
+and only after it is injected by the tracer
+(or after it was dispatched to a thread which isn't traced),
+will death from the signal happen on
+<I>all</I>
+
+tracees within a multithreaded process.
+(The term &quot;signal-delivery-stop&quot; is explained below.)
+<P>
+
+<B>SIGKILL</B>
+
+operates similarly, with exceptions.
+No signal-delivery-stop is generated for
+<B>SIGKILL</B>
+
+and therefore the tracer can't suppress it.
+<B>SIGKILL</B>
+
+kills even within system calls
+(syscall-exit-stop is not generated prior to death by
+<B>SIGKILL</B>).
+
+The net effect is that
+<B>SIGKILL</B>
+
+always kills the process (all its threads),
+even if some threads of the process are ptraced.
+<P>
+
+When the tracee calls
+<B><A HREF="../man2/_exit.2.html">_exit</A></B>(2),
+
+it reports its death to its tracer.
+Other threads are not affected.
+<P>
+
+When any thread executes
+<B><A HREF="../man2/exit_group.2.html">exit_group</A></B>(2),
+
+every tracee in its thread group reports its death to its tracer.
+<P>
+
+If the
+<B>PTRACE_O_TRACEEXIT</B>
+
+option is on,
+<B>PTRACE_EVENT_EXIT</B>
+
+will happen before actual death.
+This applies to exits via
+<B><A HREF="../man2/exit.2.html">exit</A></B>(2),
+
+<B><A HREF="../man2/exit_group.2.html">exit_group</A></B>(2),
+
+and signal deaths (except
+<B>SIGKILL</B>),
+
+and when threads are torn down on
+<B><A HREF="../man2/execve.2.html">execve</A></B>(2)
+
+in a multithreaded process.
+<P>
+
+The tracer cannot assume that the ptrace-stopped tracee exists.
+There are many scenarios when the tracee may die while stopped (such as
+<B>SIGKILL</B>).
+
+Therefore, the tracer must be prepared to handle an
+<B>ESRCH</B>
+
+error on any ptrace operation.
+Unfortunately, the same error is returned if the tracee
+exists but is not ptrace-stopped
+(for commands which require a stopped tracee),
+or if it is not traced by the process which issued the ptrace call.
+The tracer needs to keep track of the stopped/running state of the tracee,
+and interpret
+<B>ESRCH</B>
+
+as &quot;tracee died unexpectedly&quot; only if it knows that the tracee has
+been observed to enter ptrace-stop.
+Note that there is no guarantee that
+<I>waitpid(WNOHANG)</I>
+
+will reliably report the tracee's death status if a
+ptrace operation returned
+<B>ESRCH</B>.
+
+<I>waitpid(WNOHANG)</I>
+
+may return 0 instead.
+In other words, the tracee may be &quot;not yet fully dead&quot;,
+but already refusing ptrace requests.
+<P>
+
+The tracer can't assume that the tracee
+<I>always</I>
+
+ends its life by reporting
+<I>WIFEXITED(status)</I>
+
+or
+<I>WIFSIGNALED(status)</I>;
+
+there are cases where this does not occur.
+For example, if a thread other than thread group leader does an
+<B><A HREF="../man2/execve.2.html">execve</A></B>(2),
+
+it disappears;
+its PID will never be seen again,
+and any subsequent ptrace stops will be reported under
+the thread group leader's PID.
+<A NAME="lbAF">&nbsp;</A>
+<H3>Stopped states</H3>
+
+A tracee can be in two states: running or stopped.
+<P>
+
+There are many kinds of states when the tracee is stopped, and in ptrace
+discussions they are often conflated.
+Therefore, it is important to use precise terms.
+<P>
+
+In this manual page, any stopped state in which the tracee is ready
+to accept ptrace commands from the tracer is called
+<I>ptrace-stop</I>.
+
+Ptrace-stops can
+be further subdivided into
+<I>signal-delivery-stop</I>,
+
+<I>group-stop</I>,
+
+<I>syscall-stop</I>,
+
+and so on.
+These stopped states are described in detail below.
+<P>
+
+When the running tracee enters ptrace-stop, it notifies its tracer using
+<B><A HREF="../man2/waitpid.2.html">waitpid</A></B>(2)
+
+(or one of the other &quot;wait&quot; system calls).
+Most of this manual page assumes that the tracer waits with:
+<P>
+
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;pid&nbsp;=&nbsp;waitpid(pid_or_minus_1,&nbsp;&amp;status,&nbsp;__WALL);
+<P>
+
+Ptrace-stopped tracees are reported as returns with
+<I>pid</I>
+
+greater than 0 and
+<I>WIFSTOPPED(status)</I>
+
+true.
+
+
+
+
+
+
+<P>
+
+The
+<B>__WALL</B>
+
+flag does not include the
+<B>WSTOPPED</B>
+
+and
+<B>WEXITED</B>
+
+flags, but implies their functionality.
+<P>
+
+Setting the
+<B>WCONTINUED</B>
+
+flag when calling
+<B><A HREF="../man2/waitpid.2.html">waitpid</A></B>(2)
+
+is not recommended: the &quot;continued&quot; state is per-process and
+consuming it can confuse the real parent of the tracee.
+<P>
+
+Use of the
+<B>WNOHANG</B>
+
+flag may cause
+<B><A HREF="../man2/waitpid.2.html">waitpid</A></B>(2)
+
+to return 0 (&quot;no wait results available yet&quot;)
+even if the tracer knows there should be a notification.
+Example:
+<PRE>
+
+    kill(tracee, SIGKILL);
+    waitpid(tracee, &amp;status, __WALL | WNOHANG);
+</PRE>
+
+
+
+
+<P>
+
+The following kinds of ptrace-stops exist: signal-delivery-stops,
+group-stop, PTRACE_EVENT stops, syscall-stops
+<B>PTRACE_SINGLESTEP</B>,
+
+<B>PTRACE_SYSEMU</B>,
+
+and
+
+They all are reported by
+<B><A HREF="../man2/waitpid.2.html">waitpid</A></B>(2)
+
+with
+<I>WIFSTOPPED(status)</I>
+
+true.
+They may be differentiated by examining the value
+<I>status&gt;&gt;8</I>,
+
+and if there is ambiguity in that value, by querying
+<B>PTRACE_GETSIGINFO</B>.
+
+(Note: the
+<I>WSTOPSIG(status)</I>
+
+macro can't be used to perform this examination,
+because it returns the value
+(<I>status&gt;&gt;8)&nbsp;</I><B>&amp;&nbsp;0xff</B>.)
+<A NAME="lbAG">&nbsp;</A>
+<H3>Signal-delivery-stop</H3>
+
+When a (possibly multithreaded) process receives any signal except
+<B>SIGKILL</B>,
+
+the kernel selects an arbitrary thread which handles the signal.
+(If the signal is generated with
+<B><A HREF="../man2/tgkill.2.html">tgkill</A></B>(2),
+
+the target thread can be explicitly selected by the caller.)
+If the selected thread is traced, it enters signal-delivery-stop.
+At this point, the signal is not yet delivered to the process,
+and can be suppressed by the tracer.
+If the tracer doesn't suppress the signal,
+it passes the signal to the tracee in the next ptrace restart request.
+This second step of signal delivery is called
+<I>signal injection</I>
+
+in this manual page.
+Note that if the signal is blocked,
+signal-delivery-stop doesn't happen until the signal is unblocked,
+with the usual exception that
+<B>SIGSTOP</B>
+
+can't be blocked.
+<P>
+
+Signal-delivery-stop is observed by the tracer as
+<B><A HREF="../man2/waitpid.2.html">waitpid</A></B>(2)
+
+returning with
+<I>WIFSTOPPED(status)</I>
+
+true, with the stopping signal returned by
+<I>WSTOPSIG(status)</I>.
+
+If the stopping signal is
+<B>SIGTRAP</B>,
+
+this may be a different kind of ptrace-stop;
+see the &quot;Syscall-stops&quot; and &quot;execve&quot; sections below for details.
+If
+<I>WSTOPSIG(status)</I>
+
+returns a stopping signal, this may be a group-stop; see below.
+<A NAME="lbAH">&nbsp;</A>
+<H3>Signal injection and suppression</H3>
+
+After signal-delivery-stop is observed by the tracer,
+the tracer should restart the tracee with the call
+<P>
+
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;ptrace(PTRACE_restart,&nbsp;pid,&nbsp;0,&nbsp;sig)
+<P>
+
+where
+<B>PTRACE_restart</B>
+
+is one of the restarting ptrace requests.
+If
+<I>sig</I>
+
+is 0, then a signal is not delivered.
+Otherwise, the signal
+<I>sig</I>
+
+is delivered.
+This operation is called
+<I>signal injection</I>
+
+in this manual page, to distinguish it from signal-delivery-stop.
+<P>
+
+The
+<I>sig</I>
+
+value may be different from the
+<I>WSTOPSIG(status)</I>
+
+value: the tracer can cause a different signal to be injected.
+<P>
+
+Note that a suppressed signal still causes system calls to return
+prematurely.
+Restartable system calls will be restarted (the tracer will
+observe the tracee to execute
+<B><A HREF="../man2/restart_syscall.2.html">restart_syscall</A>(2)</B>
+
+if the tracer uses
+<B>PTRACE_SYSCALL</B>);
+
+non-restartable system calls may fail with
+<B>EINTR</B>
+
+even though no observable signal is injected to the tracee.
+<P>
+
+Restarting ptrace commands issued in ptrace-stops other than
+signal-delivery-stop are not guaranteed to inject a signal, even if
+<I>sig</I>
+
+is nonzero.
+No error is reported; a nonzero
+<I>sig</I>
+
+may simply be ignored.
+Ptrace users should not try to &quot;create a new signal&quot; this way: use
+<B><A HREF="../man2/tgkill.2.html">tgkill</A></B>(2)
+
+instead.
+<P>
+
+The fact that signal injection requests may be ignored
+when restarting the tracee after
+ptrace stops that are not signal-delivery-stops
+is a cause of confusion among ptrace users.
+One typical scenario is that the tracer observes group-stop,
+mistakes it for signal-delivery-stop, restarts the tracee with
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;ptrace(PTRACE_rest,&nbsp;pid,&nbsp;0,&nbsp;stopsig)
+<P>
+with the intention of injecting
+<I>stopsig</I>,
+
+but
+<I>stopsig</I>
+
+gets ignored and the tracee continues to run.
+<P>
+
+The
+<B>SIGCONT</B>
+
+signal has a side effect of waking up (all threads of)
+a group-stopped process.
+This side effect happens before signal-delivery-stop.
+The tracer can't suppress this side-effect (it can
+only suppress signal injection, which only causes the
+<B>SIGCONT</B>
+
+handler to not be executed in the tracee, if such a handler is installed).
+In fact, waking up from group-stop may be followed by
+signal-delivery-stop for signal(s)
+<I>other than</I>
+
+<B>SIGCONT</B>,
+
+if they were pending when
+<B>SIGCONT</B>
+
+was delivered.
+In other words,
+<B>SIGCONT</B>
+
+may be not the first signal observed by the tracee after it was sent.
+<P>
+
+Stopping signals cause (all threads of) a process to enter group-stop.
+This side effect happens after signal injection, and therefore can be
+suppressed by the tracer.
+<P>
+
+In Linux 2.4 and earlier, the
+<B>SIGSTOP</B>
+
+signal can't be injected.
+
+
+
+
+
+
+<P>
+
+<B>PTRACE_GETSIGINFO</B>
+
+can be used to retrieve a
+<I>siginfo_t</I>
+
+structure which corresponds to the delivered signal.
+<B>PTRACE_SETSIGINFO</B>
+
+may be used to modify it.
+If
+<B>PTRACE_SETSIGINFO</B>
+
+has been used to alter
+<I>siginfo_t</I>,
+
+the
+<I>si_signo</I>
+
+field and the
+<I>sig</I>
+
+parameter in the restarting command must match,
+otherwise the result is undefined.
+<A NAME="lbAI">&nbsp;</A>
+<H3>Group-stop</H3>
+
+When a (possibly multithreaded) process receives a stopping signal,
+all threads stop.
+If some threads are traced, they enter a group-stop.
+Note that the stopping signal will first cause signal-delivery-stop
+(on one tracee only), and only after it is injected by the tracer
+(or after it was dispatched to a thread which isn't traced),
+will group-stop be initiated on
+<I>all</I>
+
+tracees within the multithreaded process.
+As usual, every tracee reports its group-stop separately
+to the corresponding tracer.
+<P>
+
+Group-stop is observed by the tracer as
+<B><A HREF="../man2/waitpid.2.html">waitpid</A></B>(2)
+
+returning with
+<I>WIFSTOPPED(status)</I>
+
+true, with the stopping signal available via
+<I>WSTOPSIG(status)</I>.
+
+The same result is returned by some other classes of ptrace-stops,
+therefore the recommended practice is to perform the call
+<P>
+
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;ptrace(PTRACE_GETSIGINFO,&nbsp;pid,&nbsp;0,&nbsp;&amp;siginfo)
+<P>
+
+The call can be avoided if the signal is not
+<B>SIGSTOP</B>,
+
+<B>SIGTSTP</B>,
+
+<B>SIGTTIN</B>,
+
+or
+<B>SIGTTOU</B>;
+
+only these four signals are stopping signals.
+If the tracer sees something else, it can't be a group-stop.
+Otherwise, the tracer needs to call
+<B>PTRACE_GETSIGINFO</B>.
+
+If
+<B>PTRACE_GETSIGINFO</B>
+
+fails with
+<B>EINVAL</B>,
+
+then it is definitely a group-stop.
+(Other failure codes are possible, such as
+<B>ESRCH</B>
+
+(&quot;no such process&quot;) if a
+<B>SIGKILL</B>
+
+killed the tracee.)
+<P>
+
+As of kernel 2.6.38,
+after the tracer sees the tracee ptrace-stop and until it
+restarts or kills it, the tracee will not run,
+and will not send notifications (except
+<B>SIGKILL</B>
+
+death) to the tracer, even if the tracer enters into another
+<B><A HREF="../man2/waitpid.2.html">waitpid</A></B>(2)
+
+call.
+<P>
+
+The kernel behavior described in the previous paragraph
+causes a problem with transparent handling of stopping signals.
+If the tracer restarts the tracee after group-stop,
+the stopping signal
+is effectively ignored---the tracee doesn't remain stopped, it runs.
+If the tracer doesn't restart the tracee before entering into the next
+<B><A HREF="../man2/waitpid.2.html">waitpid</A></B>(2),
+
+future
+<B>SIGCONT</B>
+
+signals will not be reported to the tracer;
+this would cause the
+<B>SIGCONT</B>
+
+signals to have no effect on the tracee.
+<A NAME="lbAJ">&nbsp;</A>
+<H3>PTRACE_EVENT stops</H3>
+
+If the tracer sets
+<B>PTRACE_O_TRACE_*</B>
+
+options, the tracee will enter ptrace-stops called
+<B>PTRACE_EVENT</B>
+
+stops.
+<P>
+
+<B>PTRACE_EVENT</B>
+
+stops are observed by the tracer as
+<B><A HREF="../man2/waitpid.2.html">waitpid</A></B>(2)
+
+returning with
+<I>WIFSTOPPED(status)</I>,
+
+and
+<I>WSTOPSIG(status)</I>
+
+returns
+<B>SIGTRAP</B>.
+
+An additional bit is set in the higher byte of the status word:
+the value
+<I>status&gt;&gt;8</I>
+
+will be
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;(SIGTRAP&nbsp;|&nbsp;PTRACE_EVENT_foo&nbsp;&lt;&lt;&nbsp;8).
+<P>
+The following events exist:
+<DL COMPACT>
+<DT><B>PTRACE_EVENT_VFORK</B>
+
+<DD>
+Stop before return from
+<B><A HREF="../man2/vfork.2.html">vfork</A></B>(2)
+
+or
+<B><A HREF="../man2/clone.2.html">clone</A></B>(2)
+
+with the
+<B>CLONE_VFORK</B>
+
+flag.
+When the tracee is continued after this stop, it will wait for child to
+exit/exec before continuing its execution
+(in other words, the usual behavior on
+<B><A HREF="../man2/vfork.2.html">vfork</A></B>(2)).
+
+<DT><B>PTRACE_EVENT_FORK</B>
+
+<DD>
+Stop before return from
+<B><A HREF="../man2/fork.2.html">fork</A></B>(2)
+
+or
+<B><A HREF="../man2/clone.2.html">clone</A></B>(2)
+
+with the exit signal set to
+<B>SIGCHLD</B>.
+
+<DT><B>PTRACE_EVENT_CLONE</B>
+
+<DD>
+Stop before return from
+<B><A HREF="../man2/clone.2.html">clone</A></B>(2)
+
+<DT><B>PTRACE_EVENT_VFORK_DONE</B>
+
+<DD>
+Stop before return from
+<B><A HREF="../man2/vfork.2.html">vfork</A></B>(2)
+
+or
+<B><A HREF="../man2/clone.2.html">clone</A></B>(2)
+
+with the
+<B>CLONE_VFORK</B>
+
+flag,
+but after the child unblocked this tracee by exiting or execing.
+</DL>
+<P>
+
+For all four stops described above,
+the stop occurs in the parent (i.e., the tracee),
+not in the newly created thread.
+<B>PTRACE_GETEVENTMSG</B>
+
+can be used to retrieve the new thread's ID.
+<DL COMPACT>
+<DT><B>PTRACE_EVENT_EXEC</B>
+
+<DD>
+Stop before return from
+<B><A HREF="../man2/execve.2.html">execve</A></B>(2).
+
+<DT><B>PTRACE_EVENT_EXIT</B>
+
+<DD>
+Stop before exit (including death from
+<B><A HREF="../man2/exit_group.2.html">exit_group</A></B>(2)),
+
+signal death, or exit caused by
+<B><A HREF="../man2/execve.2.html">execve</A></B>(2)
+
+in a multithreaded process.
+<B>PTRACE_GETEVENTMSG</B>
+
+returns the exit status.
+Registers can be examined
+(unlike when &quot;real&quot; exit happens).
+The tracee is still alive; it needs to be
+<B>PTRACE_CONT</B>ed
+
+or
+<B>PTRACE_DETACH</B>ed
+
+to finish exiting.
+</DL>
+<P>
+
+<B>PTRACE_GETSIGINFO</B>
+
+on
+<B>PTRACE_EVENT</B>
+
+stops returns
+<B>SIGTRAP in</B>
+
+<I>si_signo</I>,
+
+with
+<I>si_code</I>
+
+set to
+<I>(event&lt;&lt;8)&nbsp;|&nbsp;SIGTRAP</I>.
+
+<A NAME="lbAK">&nbsp;</A>
+<H3>Syscall-stops</H3>
+
+If the tracee was restarted by
+<B>PTRACE_SYSCALL</B>,
+
+the tracee enters
+syscall-enter-stop just prior to entering any system call.
+If the tracer restarts the tracee with
+<B>PTRACE_SYSCALL</B>,
+
+the tracee enters syscall-exit-stop when the system call is finished,
+or if it is interrupted by a signal.
+(That is, signal-delivery-stop never happens between syscall-enter-stop
+and syscall-exit-stop; it happens
+<I>after</I>
+
+syscall-exit-stop.)
+<P>
+
+Other possibilities are that the tracee may stop in a
+<B>PTRACE_EVENT</B>
+
+stop, exit (if it entered
+<B><A HREF="../man2/_exit.2.html">_exit</A></B>(2)
+
+or
+<B><A HREF="../man2/exit_group.2.html">exit_group</A></B>(2)),
+
+be killed by
+<B>SIGKILL</B>,
+
+or die silently (if it is a thread group leader, the
+<B><A HREF="../man2/execve.2.html">execve</A></B>(2)
+
+happened in another thread,
+and that thread is not traced by the same tracer;
+this situation is discussed later).
+<P>
+
+Syscall-enter-stop and syscall-exit-stop are observed by the tracer as
+<B><A HREF="../man2/waitpid.2.html">waitpid</A></B>(2)
+
+returning with
+<I>WIFSTOPPED(status)</I>
+
+true, and
+<I>WSTOPSIG(status)</I>
+
+giving
+<B>SIGTRAP</B>.
+
+If the
+<B>PTRACE_O_TRACESYSGOOD</B>
+
+option was set by the tracer, then
+<I>WSTOPSIG(status)</I>
+
+will give the value
+<I>(SIGTRAP&nbsp;|&nbsp;0x80)</I>.
+
+<P>
+
+Syscall-stops can be distinguished from signal-delivery-stop with
+<B>SIGTRAP</B>
+
+by querying
+<B>PTRACE_GETSIGINFO</B>
+
+for the following cases:
+<DL COMPACT>
+<DT><I>si_code</I> &lt;= 0
+
+<DD>
+<B>SIGTRAP</B>
+
+was delivered as a result of a userspace action,
+for example, a system call
+(<B><A HREF="../man2/tgkill.2.html">tgkill</A></B>(2),
+
+<B><A HREF="../man2/kill.2.html">kill</A></B>(2),
+
+<B><A HREF="../man3/sigqueue.3.html">sigqueue</A></B>(3),
+
+etc.),
+expiration of a POSIX timer,
+change of state on a POSIX message queue,
+or completion of an asynchronous I/O request.
+<DT><I>si_code</I> == SI_KERNEL (0x80)
+
+<DD>
+<B>SIGTRAP</B>
+
+was sent by the kernel.
+<DT><I>si_code</I> == SIGTRAP or <I>si_code</I> == (SIGTRAP|0x80)
+
+<DD>
+This is a syscall-stop.
+</DL>
+<P>
+
+However, syscall-stops happen very often (twice per system call),
+and performing
+<B>PTRACE_GETSIGINFO</B>
+
+for every syscall-stop may be somewhat expensive.
+<P>
+
+Some architectures allow the cases to be distinguished
+by examining registers.
+For example, on x86,
+<I>rax</I>
+
+==
+-<B>ENOSYS</B>
+
+in syscall-enter-stop.
+Since
+<B>SIGTRAP</B>
+
+(like any other signal) always happens
+<I>after</I>
+
+syscall-exit-stop,
+and at this point
+<I>rax</I>
+
+almost never contains
+-<B>ENOSYS</B>,
+
+the
+<B>SIGTRAP</B>
+
+looks like &quot;syscall-stop which is not syscall-enter-stop&quot;;
+in other words, it looks like a
+&quot;stray syscall-exit-stop&quot; and can be detected this way.
+But such detection is fragile and is best avoided.
+<P>
+
+Using the
+<B>PTRACE_O_TRACESYSGOOD</B>
+
+option is the recommended method to distinquish syscall-stops
+from other kinds of ptrace-stops,
+since it is reliable and does not incur a performance penalty.
+<P>
+
+Syscall-enter-stop and syscall-exit-stop are
+indistinguishable from each other by the tracer.
+The tracer needs to keep track of the sequence of
+ptrace-stops in order to not misinterpret syscall-enter-stop as
+syscall-exit-stop or vice versa.
+The rule is that syscall-enter-stop is
+always followed by syscall-exit-stop,
+<B>PTRACE_EVENT</B>
+
+stop or the tracee's death;
+no other kinds of ptrace-stop can occur in between.
+<P>
+
+If after syscall-enter-stop,
+the tracer uses a restarting command other than
+<B>PTRACE_SYSCALL</B>,
+
+syscall-exit-stop is not generated.
+<P>
+
+<B>PTRACE_GETSIGINFO</B>
+
+on syscall-stops returns
+<B>SIGTRAP</B>
+
+in
+<I>si_signo</I>,
+
+with
+<I>si_code</I>
+
+set to
+<B>SIGTRAP</B>
+
+or
+<I>(SIGTRAP|0x80)</I>.
+
+<A NAME="lbAL">&nbsp;</A>
+<H3>PTRACE_SINGLESTEP, PTRACE_SYSEMU, PTRACE_SYSEMU_SINGLESTEP stops</H3>
+
+[Details of these kinds of stops are yet to be documented.]
+
+
+
+
+<A NAME="lbAM">&nbsp;</A>
+<H3>Informational and restarting ptrace commands</H3>
+
+Most ptrace commands (all except
+<B>PTRACE_ATTACH</B>,
+
+<B>PTRACE_TRACEME</B>,
+
+and
+<B>PTRACE_KILL</B>)
+
+require the tracee to be in a ptrace-stop, otherwise they fail with
+<B>ESRCH</B>.
+
+<P>
+
+When the tracee is in ptrace-stop,
+the tracer can read and write data to
+the tracee using informational commands.
+These commands leave the tracee in ptrace-stopped state:
+<P>
+
+<PRE>
+    ptrace(PTRACE_PEEKTEXT/PEEKDATA/PEEKUSER, pid, addr, 0);
+    ptrace(PTRACE_POKETEXT/POKEDATA/POKEUSER, pid, addr, long_val);
+    ptrace(PTRACE_GETREGS/GETFPREGS, pid, 0, &amp;struct);
+    ptrace(PTRACE_SETREGS/SETFPREGS, pid, 0, &amp;struct);
+    ptrace(PTRACE_GETSIGINFO, pid, 0, &amp;siginfo);
+    ptrace(PTRACE_SETSIGINFO, pid, 0, &amp;siginfo);
+    ptrace(PTRACE_GETEVENTMSG, pid, 0, &amp;long_var);
+    ptrace(PTRACE_SETOPTIONS, pid, 0, PTRACE_O_flags);
+</PRE>
+
+<P>
+
+Note that some errors are not reported.
+For example, setting signal information
+(<I>siginfo</I>)
+
+may have no effect in some ptrace-stops, yet the call may succeed
+(return 0 and not set
+<I>errno</I>);
+
+querying
+<B>PTRACE_GETEVENTMSG</B>
+
+may succeed and return some random value if current ptrace-stop
+is not documented as returning a meaningful event message.
+<P>
+
+The call
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;ptrace(PTRACE_SETOPTIONS,&nbsp;pid,&nbsp;0,&nbsp;PTRACE_O_flags);
+<P>
+affects one tracee.
+The tracee's current flags are replaced.
+Flags are inherited by new tracees created and &quot;auto-attached&quot; via active
+<B>PTRACE_O_TRACEFORK</B>,
+
+<B>PTRACE_O_TRACEVFORK</B>,
+
+or
+<B>PTRACE_O_TRACECLONE</B>
+
+options.
+<P>
+
+Another group of commands makes the ptrace-stopped tracee run.
+They have the form:
+<P>
+
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;ptrace(cmd,&nbsp;pid,&nbsp;0,&nbsp;sig);
+<P>
+
+where
+<I>cmd</I>
+
+is
+<B>PTRACE_CONT</B>,
+
+<B>PTRACE_DETACH</B>,
+
+<B>PTRACE_SYSCALL</B>,
+
+<B>PTRACE_SINGLESTEP</B>,
+
+<B>PTRACE_SYSEMU</B>,
+
+or
+<B>PTRACE_SYSEMU_SINGLESTEP.</B>
+
+If the tracee is in signal-delivery-stop,
+<I>sig</I>
+
+is the signal to be injected (if it is nonzero).
+Otherwise,
+<I>sig</I>
+
+may be ignored.
+(When restarting a tracee from a ptrace-stop other than signal-delivery-stop,
+recommended practice is to always pass 0 in
+<I>sig .)</I>
+
+<A NAME="lbAN">&nbsp;</A>
+<H3>Attaching and detaching</H3>
+
+A thread can be attached to the tracer using the call
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;ptrace(PTRACE_ATTACH,&nbsp;pid,&nbsp;0,&nbsp;0);
+<P>
+This also sends
+<B>SIGSTOP</B>
+
+to this thread.
+If the tracer wants this
+<B>SIGSTOP</B>
+
+to have no effect, it needs to suppress it.
+Note that if other signals are concurrently sent to
+this thread during attach,
+the tracer may see the tracee enter signal-delivery-stop
+with other signal(s) first!
+The usual practice is to reinject these signals until
+<B>SIGSTOP</B>
+
+is seen, then suppress
+<B>SIGSTOP</B>
+
+injection.
+The design bug here is that a ptrace attach and a concurrently delivered
+<B>SIGSTOP</B>
+
+may race and the concurrent
+<B>SIGSTOP</B>
+
+may be lost.
+
+
+
+<P>
+
+Since attaching sends
+<B>SIGSTOP</B>
+
+and the tracer usually suppresses it, this may cause a stray
+<I>EINTR</I>
+
+return from the currently executing system call in the tracee,
+as described in the &quot;signal injection and suppression&quot; section.
+<P>
+
+The request
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;ptrace(PTRACE_TRACEME,&nbsp;0,&nbsp;0,&nbsp;0);
+<P>
+turns the calling thread into a tracee.
+The thread continues to run (doesn't enter ptrace-stop).
+A common practice is to follow the
+<B>PTRACE_TRACEME</B>
+
+with
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;raise(SIGSTOP);
+<P>
+and allow the parent (which is our tracer now) to observe our
+signal-delivery-stop.
+<P>
+
+If the
+<B>PTRACE_O_TRACEFORK</B>,
+
+<B>PTRACE_O_TRACEVFORK</B>,
+
+or
+<B>PTRACE_O_TRACECLONE</B>
+
+options are in effect, then children created by, respectively,
+<B><A HREF="../man2/vfork.2.html">vfork</A></B>(2)
+
+or
+<B><A HREF="../man2/clone.2.html">clone</A></B>(2)
+
+with the
+<B>CLONE_VFORK</B>
+
+flag,
+<B><A HREF="../man2/fork.2.html">fork</A></B>(2)
+
+or
+<B><A HREF="../man2/clone.2.html">clone</A></B>(2)
+
+with the exit signal set to
+<B>SIGCHLD</B>,
+
+and other kinds of
+<B><A HREF="../man2/clone.2.html">clone</A></B>(2),
+
+are automatically attached to the same tracer which traced their parent.
+<B>SIGSTOP</B>
+
+is delivered to the children, causing them to enter
+signal-delivery-stop after they exit the system call which created them.
+<P>
+
+Detaching of the tracee is performed by:
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;ptrace(PTRACE_DETACH,&nbsp;pid,&nbsp;0,&nbsp;sig);
+<P>
+<B>PTRACE_DETACH</B>
+
+is a restarting operation;
+therefore it requires the tracee to be in ptrace-stop.
+If the tracee is in signal-delivery-stop, a signal can be injected.
+Otherwise, the
+<I>sig</I>
+
+parameter may be silently ignored.
+<P>
+
+If the tracee is running when the tracer wants to detach it,
+the usual solution is to send
+<B>SIGSTOP</B>
+
+(using
+<B><A HREF="../man2/tgkill.2.html">tgkill</A></B>(2),
+
+to make sure it goes to the correct thread),
+wait for the tracee to stop in signal-delivery-stop for
+<B>SIGSTOP</B>
+
+and then detach it (suppressing
+<B>SIGSTOP</B>
+
+injection).
+A design bug is that this can race with concurrent
+<B>SIGSTOP</B>s.
+
+Another complication is that the tracee may enter other ptrace-stops
+and needs to be restarted and waited for again, until
+<B>SIGSTOP</B>
+
+is seen.
+Yet another complication is to be sure that
+the tracee is not already ptrace-stopped,
+because no signal delivery happens while it is---not even
+<B>SIGSTOP</B>.
+
+
+
+<P>
+
+If the tracer dies, all tracees are automatically detached and restarted,
+unless they were in group-stop.
+Handling of restart from group-stop is currently buggy,
+but the &quot;as planned&quot; behavior is to leave tracee stopped and waiting for
+<B>SIGCONT</B>.
+
+If the tracee is restarted from signal-delivery-stop,
+the pending signal is injected.
+<A NAME="lbAO">&nbsp;</A>
+<H3><A HREF="../man2/execve.2.html">execve</A>(2) under ptrace</H3>
+
+
+
+
+
+
+When one thread in a multithreaded process calls
+<B><A HREF="../man2/execve.2.html">execve</A></B>(2),
+
+the kernel destroys all other threads in the process,
+
+and resets the thread ID of the execing thread to the
+thread group ID (process ID).
+(Or, to put things another way, when a multithreaded process does an
+<B><A HREF="../man2/execve.2.html">execve</A></B>(2),
+
+at completion of the call, it appears as though the
+<B><A HREF="../man2/execve.2.html">execve</A></B>(2)
+
+occurred in the thread group leader, regardless of which thread did the
+<B><A HREF="../man2/execve.2.html">execve</A></B>(2).)
+
+This resetting of the thread ID looks very confusing to tracers:
+<DL COMPACT>
+<DT>*<DD>
+All other threads stop in
+<B>PTRACE_EVENT_EXIT</B>
+
+stop, if the
+<B>PTRACE_O_TRACEEXIT</B>
+
+option was turned on.
+Then all other threads except the thread group leader report
+death as if they exited via
+<B><A HREF="../man2/_exit.2.html">_exit</A></B>(2)
+
+with exit code 0.
+<DT>*<DD>
+Then a
+<B>PTRACE_EVENT_EXEC</B>
+
+stop happens, if the
+<B>PTRACE_O_TRACEEXEC</B>
+
+option was turned on.
+<DT>*<DD>
+The execing tracee changes its thread ID while it is in the
+<B><A HREF="../man2/execve.2.html">execve</A></B>(2).
+
+(Remember, under ptrace, the &quot;pid&quot; returned from
+<B><A HREF="../man2/waitpid.2.html">waitpid</A></B>(2),
+
+or fed into ptrace calls, is the tracee's thread ID.)
+That is, the tracee's thread ID is reset to be the same as its process ID,
+which is the same as the thread group leader's thread ID.
+<DT>*<DD>
+If the thread group leader has reported its death by this time,
+it appears to the tracer that
+the dead thread leader &quot;reappears from nowhere&quot;.
+If the thread group leader was still alive,
+for the tracer this may look as if thread group leader
+returns from a different system call than it entered,
+or even &quot;returned from a system call even though
+it was not in any system call&quot;.
+If the thread group leader was not traced
+(or was traced by a different tracer), then during
+<B><A HREF="../man2/execve.2.html">execve</A></B>(2)
+
+it will appear as if it has become a tracee of
+the tracer of the execing tracee.
+</DL>
+<P>
+
+All of the above effects are the artifacts of
+the thread ID change in the tracee.
+<P>
+
+The
+<B>PTRACE_O_TRACEEXEC</B>
+
+option is the recommended tool for dealing with this situation.
+It enables
+<B>PTRACE_EVENT_EXEC</B>
+
+stop, which occurs before
+<B><A HREF="../man2/execve.2.html">execve</A></B>(2)
+
+returns.
+First, it enables
+<B>PTRACE_EVENT_EXEC</B>-stop,
+
+which occurs before
+<B><A HREF="../man2/execve.2.html">execve</A>(2)</B>
+
+returns.
+In this stop, the tracer can use
+<B>PTRACE_GETEVENTMSG</B>
+
+to retrieve the tracee's former thread ID.
+(This feature was introduced in Linux 3.0).
+Second, the
+<B>PTRACE_O_TRACEEXEC</B>
+
+option disables legacy
+<B>SIGTRAP</B>
+
+generation on
+<B><A HREF="../man2/execve.2.html">execve</A></B>(2).
+
+<P>
+
+When the tracer receives
+<B>PTRACE_EVENT_EXEC</B>
+
+stop notification,
+it is guaranteed that except this tracee and the thread group leader,
+no other threads from the process are alive.
+<P>
+
+On receiving the
+<B>PTRACE_EVENT_EXEC</B>
+
+stop notification,
+the tracer should clean up all its internal
+data structures describing the threads of this process,
+and retain only one data structure---one which
+describes the single still running tracee, with
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;thread&nbsp;ID&nbsp;==&nbsp;thread&nbsp;group&nbsp;ID&nbsp;==&nbsp;process&nbsp;id.
+<P>
+
+Currently, there is no way to retrieve the former
+thread ID of the execing tracee.
+If the tracer doesn't keep track of its tracees' thread group relations,
+it may be unable to know which tracee execed and therefore no longer
+exists under the old thread ID due to a thread ID change.
+<P>
+
+Example: two threads call
+<B><A HREF="../man2/execve.2.html">execve</A></B>(2)
+
+at the same time:
+<P>
+
+<PRE>
+*** we get syscall-entry-stop in thread 1: **
+PID1 execve(&quot;/bin/foo&quot;, &quot;foo&quot; &lt;unfinished ...&gt;
+*** we issue PTRACE_SYSCALL for thread 1 **
+*** we get syscall-entry-stop in thread 2: **
+PID2 execve(&quot;/bin/bar&quot;, &quot;bar&quot; &lt;unfinished ...&gt;
+*** we issue PTRACE_SYSCALL for thread 2 **
+*** we get PTRACE_EVENT_EXEC for PID0, we issue PTRACE_SYSCALL **
+*** we get syscall-exit-stop for PID0: **
+PID0 &lt;... execve resumed&gt; )             = 0
+</PRE>
+
+<P>
+
+In this situation, there is no way to know which
+<B><A HREF="../man2/execve.2.html">execve</A></B>(2)
+
+succeeded.
+<P>
+
+If the
+<B>PTRACE_O_TRACEEXEC</B>
+
+option is
+<I>not</I>
+
+in effect for the execing tracee, the kernel delivers an extra
+<B>SIGTRAP</B>
+
+to the tracee after
+<B><A HREF="../man2/execve.2.html">execve</A></B>(2)
+
+returns.
+This is an ordinary signal (similar to one which can be
+generated by
+<I>kill -TRAP</I>),
+
+not a special kind of ptrace-stop.
+Employing
+<B>PTRACE_GETSIGINFO</B>
+
+for this signal returns
+<I>si_code</I>
+
+set to 0
+(<I>SI_USER</I>).
+
+This signal may be blocked by signal mask,
+and thus may be delivered (much) later.
+<P>
+
+Usually, the tracer (for example,
+<B><A HREF="../man1/strace.1.html">strace</A></B>(1))
+
+would not want to show this extra post-execve
+<B>SIGTRAP</B>
+
+signal to the user, and would suppress its delivery to the tracee (if
+<B>SIGTRAP</B>
+
+is set to
+<B>SIG_DFL</B>,
+
+it is a killing signal).
+However, determining
+<I>which</I>
+
+<B>SIGTRAP</B>
+
+to suppress is not easy.
+Setting the
+<B>PTRACE_O_TRACEEXEC</B>
+
+option and thus suppressing this extra
+<B>SIGTRAP</B>
+
+is the recommended approach.
+<A NAME="lbAP">&nbsp;</A>
+<H3>Real parent</H3>
+
+The ptrace API (ab)uses the standard UNIX parent/child signaling over
+<B><A HREF="../man2/waitpid.2.html">waitpid</A></B>(2).
+
+This used to cause the real parent of the process to stop receiving
+several kinds of
+<B><A HREF="../man2/waitpid.2.html">waitpid</A></B>(2)
+
+notifications when the child process is traced by some other process.
+<P>
+
+Many of these bugs have been fixed, but as of Linux 2.6.38 several still
+exist; see BUGS below.
+<P>
+
+As of Linux 2.6.38, the following is believed to work correctly:
+<DL COMPACT>
+<DT>*<DD>
+exit/death by signal is reported first to the tracer, then,
+when the tracer consumes the
+<B><A HREF="../man2/waitpid.2.html">waitpid</A></B>(2)
+
+result, to the real parent (to the real parent only when the
+whole multithreaded process exits).
+If the tracer and the real parent are the same process,
+the report is sent only once.
+</DL>
+<A NAME="lbAQ">&nbsp;</A>
 <H2>RETURN VALUE</H2>
 
 On success,
@@ -493,24 +2101,24 @@ is set appropriately.
 Since the value returned by a successful
 <B>PTRACE_PEEK*</B>
 
-request may be -1, the caller must check
+request may be -1, the caller must clear
 <I>errno</I>
 
-after such requests to determine whether or not an error occurred.
-<A NAME="lbAF">&nbsp;</A>
+before the call, and then check it afterward
+to determine whether or not an error occurred.
+<A NAME="lbAR">&nbsp;</A>
 <H2>ERRORS</H2>
 
 <DL COMPACT>
 <DT><B>EBUSY</B>
 
 <DD>
-(i386 only) There was an error with allocating or freeing a debug
-register.
+(i386 only) There was an error with allocating or freeing a debug register.
 <DT><B>EFAULT</B>
 
 <DD>
 There was an attempt to read from or write to an invalid area in
-the parent's or child's memory,
+the tracer's or the tracee's memory,
 probably because the area wasn't mapped or accessible.
 Unfortunately, under Linux, different variations of this fault
 will return
@@ -527,8 +2135,10 @@ An attempt was made to set an invalid option.
 <DT><B>EIO</B>
 
 <DD>
-<I>request</I> is invalid, or an attempt was made to read from or
-write to an invalid area in the parent's or child's memory,
+<I>request</I>
+
+is invalid, or an attempt was made to read from or
+write to an invalid area in the tracer's or the tracee's memory,
 or there was a word-alignment violation,
 or an invalid signal was specified during a restart request.
 <DT><B>EPERM</B>
@@ -536,13 +2146,14 @@ or an invalid signal was specified during a restart request.
 <DD>
 The specified process cannot be traced.
 This could be because the
-parent has insufficient privileges (the required capability is
+tracer has insufficient privileges (the required capability is
 <B>CAP_SYS_PTRACE</B>);
 
 unprivileged processes cannot trace processes that they
 cannot send signals to or those running
 set-user-ID/set-group-ID programs, for obvious reasons.
-Alternatively, the process may already be being traced, or be
+Alternatively, the process may already be being traced,
+or (on kernels before 2.6.26) be
 <B><A HREF="../man8/init.8.html">init</A></B>(8)
 
 (PID 1).
@@ -550,13 +2161,14 @@ Alternatively, the process may already be being traced, or be
 
 <DD>
 The specified process does not exist, or is not currently being traced
-by the caller, or is not stopped (for requests that require that).
+by the caller, or is not stopped
+(for requests that require a stopped tracee).
 </DL>
-<A NAME="lbAG">&nbsp;</A>
+<A NAME="lbAS">&nbsp;</A>
 <H2>CONFORMING TO</H2>
 
 SVr4, 4.3BSD.
-<A NAME="lbAH">&nbsp;</A>
+<A NAME="lbAT">&nbsp;</A>
 <H2>NOTES</H2>
 
 Although arguments to
@@ -566,7 +2178,10 @@ are interpreted according to the prototype given,
 glibc currently declares
 <B>ptrace</B>()
 
-as a variadic function with only the <I>request</I> argument fixed.
+as a variadic function with only the
+<I>request</I>
+
+argument fixed.
 This means that unneeded trailing arguments may be omitted,
 though doing so makes use of undocumented
 <B><A HREF="../man1/gcc.1.html">gcc</A></B>(1)
@@ -574,13 +2189,15 @@ though doing so makes use of undocumented
 behavior.
 <P>
 
+In Linux kernels before 2.6.26,
+
 <B><A HREF="../man8/init.8.html">init</A></B>(8),
 
 the process with PID 1, may not be traced.
 <P>
 
-The layout of the contents of memory and the USER area are quite OS- and
-architecture-specific.
+The layout of the contents of memory and the USER area are
+quite operating-system- and architecture-specific.
 The offset supplied, and the data returned,
 might not entirely match with the definition of
 <I>struct user</I>.
@@ -588,40 +2205,8 @@ might not entirely match with the definition of
 
 <P>
 
-The size of a &quot;word&quot; is determined by the OS variant
+The size of a &quot;word&quot; is determined by the operating-system variant
 (e.g., for 32-bit Linux it is 32 bits, etc.).
-<P>
-
-Tracing causes a few subtle differences in the semantics of
-traced processes.
-For example, if a process is attached to with
-<B>PTRACE_ATTACH</B>,
-
-its original parent can no longer receive notification via
-<B><A HREF="../man2/wait.2.html">wait</A></B>(2)
-
-when it stops, and there is no way for the new parent to
-effectively simulate this notification.
-<P>
-
-When the parent receives an event with
-<B>PTRACE_EVENT_*</B>
-
-set,
-the child is not in the normal signal delivery path.
-This means the parent cannot do
-<B>ptrace</B>(PTRACE_CONT)
-
-with a signal or
-<B>ptrace</B>(PTRACE_KILL).
-
-<B><A HREF="../man2/kill.2.html">kill</A></B>(2)
-
-with a
-<B>SIGKILL</B>
-
-signal can be used instead to kill the child process
-after receiving one of these messages.
 <P>
 
 This page documents the way the
@@ -632,27 +2217,15 @@ Its behavior differs noticeably on other flavors of UNIX.
 In any case, use of
 <B>ptrace</B>()
 
-is highly OS- and architecture-specific.
-<P>
-
-The SunOS man page describes
-<B>ptrace</B>()
-
-as &quot;unique and arcane&quot;, which it is.
-The proc-based debugging interface
-present in Solaris 2 implements a superset of
-<B>ptrace</B>()
-
-functionality in a more powerful and uniform way.
-<A NAME="lbAI">&nbsp;</A>
+is highly specific to the operating system and architecture.
+<A NAME="lbAU">&nbsp;</A>
 <H2>BUGS</H2>
 
 On hosts with 2.6 kernel headers,
 <B>PTRACE_SETOPTIONS</B>
 
-is declared
-with a different value than the one for 2.4.
-This leads to applications compiled with such
+is declared with a different value than the one for 2.4.
+This leads to applications compiled with 2.6 kernel
 headers failing when run on 2.4 kernels.
 This can be worked around by redefining
 <B>PTRACE_SETOPTIONS</B>
@@ -661,24 +2234,91 @@ to
 <B>PTRACE_OLDSETOPTIONS</B>,
 
 if that is defined.
-<A NAME="lbAJ">&nbsp;</A>
+<P>
+
+Group-stop notifications are sent to the tracer, but not to real parent.
+Last confirmed on 2.6.38.6.
+<P>
+
+If a thread group leader is traced and exits by calling
+<B><A HREF="../man2/_exit.2.html">_exit</A></B>(2),
+
+
+
+
+
+
+
+
+
+
+a
+<B>PTRACE_EVENT_EXIT</B>
+
+stop will happen for it (if requested), but the subsequent
+<B>WIFEXITED</B>
+
+notification will not be delivered until all other threads exit.
+As explained above, if one of other threads calls
+<B><A HREF="../man2/execve.2.html">execve</A></B>(2),
+
+the death of the thread group leader will
+<I>never</I>
+
+be reported.
+If the execed thread is not traced by this tracer,
+the tracer will never know that
+<B><A HREF="../man2/execve.2.html">execve</A></B>(2)
+
+happened.
+One possible workaround is to
+<B>PTRACE_DETACH</B>
+
+the thread group leader instead of restarting it in this case.
+Last confirmed on 2.6.38.6.
+
+<P>
+
+A
+<B>SIGKILL</B>
+
+signal may still cause a
+<B>PTRACE_EVENT_EXIT</B>
+
+stop before actual signal death.
+This may be changed in the future;
+<B>SIGKILL</B>
+
+is meant to always immediately kill tasks even under ptrace.
+Last confirmed on 2.6.38.6.
+<A NAME="lbAV">&nbsp;</A>
 <H2>SEE ALSO</H2>
 
 <B><A HREF="../man1/gdb.1.html">gdb</A></B>(1),
 
 <B><A HREF="../man1/strace.1.html">strace</A></B>(1),
 
+<B><A HREF="../man2/clone.2.html">clone</A></B>(2),
+
 <B><A HREF="../man2/execve.2.html">execve</A></B>(2),
 
 <B><A HREF="../man2/fork.2.html">fork</A></B>(2),
 
-<B><A HREF="../man2/signal.2.html">signal</A></B>(2),
+<B><A HREF="../man2/gettid.2.html">gettid</A></B>(2),
 
-<B><A HREF="../man2/wait.2.html">wait</A></B>(2),
+<B><A HREF="../man2/sigaction.2.html">sigaction</A></B>(2),
+
+<B><A HREF="../man2/tgkill.2.html">tgkill</A></B>(2),
+
+<B><A HREF="../man2/vfork.2.html">vfork</A></B>(2),
+
+<B><A HREF="../man2/waitpid.2.html">waitpid</A></B>(2),
 
 <B><A HREF="../man3/exec.3.html">exec</A></B>(3),
 
-<B><A HREF="../man7/capabilities.7.html">capabilities</A></B>(7)
+<B><A HREF="../man7/capabilities.7.html">capabilities</A></B>(7),
+
+<B><A HREF="../man7/signal.7.html">signal</A></B>(7)
 
 <P>
 
@@ -688,17 +2328,31 @@ if that is defined.
 <DT><A HREF="#lbAB">NAME</A><DD>
 <DT><A HREF="#lbAC">SYNOPSIS</A><DD>
 <DT><A HREF="#lbAD">DESCRIPTION</A><DD>
-<DT><A HREF="#lbAE">RETURN VALUE</A><DD>
-<DT><A HREF="#lbAF">ERRORS</A><DD>
-<DT><A HREF="#lbAG">CONFORMING TO</A><DD>
-<DT><A HREF="#lbAH">NOTES</A><DD>
-<DT><A HREF="#lbAI">BUGS</A><DD>
-<DT><A HREF="#lbAJ">SEE ALSO</A><DD>
+<DL>
+<DT><A HREF="#lbAE">Death under ptrace</A><DD>
+<DT><A HREF="#lbAF">Stopped states</A><DD>
+<DT><A HREF="#lbAG">Signal-delivery-stop</A><DD>
+<DT><A HREF="#lbAH">Signal injection and suppression</A><DD>
+<DT><A HREF="#lbAI">Group-stop</A><DD>
+<DT><A HREF="#lbAJ">PTRACE_EVENT stops</A><DD>
+<DT><A HREF="#lbAK">Syscall-stops</A><DD>
+<DT><A HREF="#lbAL">PTRACE_SINGLESTEP, PTRACE_SYSEMU, PTRACE_SYSEMU_SINGLESTEP stops</A><DD>
+<DT><A HREF="#lbAM">Informational and restarting ptrace commands</A><DD>
+<DT><A HREF="#lbAN">Attaching and detaching</A><DD>
+<DT><A HREF="#lbAO">execve(2) under ptrace</A><DD>
+<DT><A HREF="#lbAP">Real parent</A><DD>
+</DL>
+<DT><A HREF="#lbAQ">RETURN VALUE</A><DD>
+<DT><A HREF="#lbAR">ERRORS</A><DD>
+<DT><A HREF="#lbAS">CONFORMING TO</A><DD>
+<DT><A HREF="#lbAT">NOTES</A><DD>
+<DT><A HREF="#lbAU">BUGS</A><DD>
+<DT><A HREF="#lbAV">SEE ALSO</A><DD>
 </DL>
 <HR>
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:12:19 GMT, April 20, 2020
+Time: 03:12:49 GMT, April 20, 2020
 </BODY>
 </HTML>

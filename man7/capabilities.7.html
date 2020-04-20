@@ -5,7 +5,7 @@ Copyright (c) 2002 by Michael Kerrisk &lt;mtk.manpages@gmail.com&gt;
 <HTML><HEAD><TITLE>Man page of CAPABILITIES</TITLE>
 </HEAD><BODY>
 <H1>CAPABILITIES</H1>
-Section: Linux Programmer's Manual (7)<BR>Updated: 2011-10-04<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (7)<BR>Updated: 2012-03-05<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -120,6 +120,8 @@ the file system or any of the supplementary GIDs of the calling process.
 <DT><B>CAP_IPC_LOCK</B>
 
 <DD>
+
+
 Lock memory
 (<B><A HREF="../man2/mlock.2.html">mlock</A></B>(2),
 
@@ -188,10 +190,47 @@ Create special files using
 <DT><B>CAP_NET_ADMIN</B>
 
 <DD>
-Perform various network-related operations
-(e.g., setting privileged socket options,
-enabling multicasting, interface configuration,
-modifying routing tables).
+Perform various network-related operations:
+
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT>*<DD>
+interface configuration;
+<DT>*<DD>
+administration of IP firewall, masquerading, and accounting
+<DT>*<DD>
+modify routing tables;
+<DT>*<DD>
+bind to any address for transparent proxying;
+<DT>*<DD>
+set type-of-service (TOS)
+<DT>*<DD>
+clear driver statistics;
+<DT>*<DD>
+set promiscuous mode;
+<DT>*<DD>
+enabling multicasting;
+<DT>*<DD>
+use
+<B><A HREF="../man2/setsockopt.2.html">setsockopt</A></B>(2)
+
+to set the following socket options:
+<B>SO_DEBUG</B>,
+
+<B>SO_MARK</B>,
+
+<B>SO_PRIORITY</B>
+
+(for a priority outside the range 0 to 6),
+<B>SO_RCVBUFFORCE</B>,
+
+and
+<B>SO_SNDBUFFORCE</B>.
+
+</DL>
+</DL>
+
+
 <DT><B>CAP_NET_BIND_SERVICE</B>
 
 <DD>
@@ -204,7 +243,17 @@ Bind a socket to Internet domain privileged ports
 <DT><B>CAP_NET_RAW</B>
 
 <DD>
-Use RAW and PACKET sockets.
+
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT>*<DD>
+use RAW and PACKET sockets;
+<DT>*<DD>
+bind to any address for transparent proxying.
+</DL>
+</DL>
+
+
 
 <DT><B>CAP_SETGID</B>
 
@@ -289,6 +338,13 @@ operations (since Linux 2.6.37,
 should be used to permit such operations);
 <DT>*<DD>
 perform
+<B>VM86_REQUEST_IRQ</B>
+
+<B><A HREF="../man2/vm86.2.html">vm86</A></B>(2)
+
+command;
+<DT>*<DD>
+perform
 <B>IPC_SET</B>
 
 and
@@ -338,9 +394,9 @@ in system calls that open files (e.g.,
 
 <DT>*<DD>
 employ
-<B>CLONE_NEWNS</B>
+<B>CLONE_*</B>
 
-flag with
+flags that create new namespaces with
 <B><A HREF="../man2/clone.2.html">clone</A></B>(2)
 
 and
@@ -348,7 +404,20 @@ and
 
 <DT>*<DD>
 call
+<B><A HREF="../man2/perf_event_open.2.html">perf_event_open</A></B>(2);
+
+<DT>*<DD>
+call
+<DT>*<DD>
+access privileged
+<I>perf</I>
+
+event information;
 <B><A HREF="../man2/setns.2.html">setns</A></B>(2);
+
+<DT>*<DD>
+call
+<B><A HREF="../man2/fanotify_init.2.html">fanotify_init</A></B>(2);
 
 <DT>*<DD>
 perform
@@ -366,7 +435,37 @@ perform
 
 <B>MADV_HWPOISON</B>
 
-operation.
+operation;
+<DT>*<DD>
+employ the
+<B>TIOCSTI</B>
+
+<B><A HREF="../man2/ioctl.2.html">ioctl</A></B>(2)
+
+to insert characters into the input queue of a terminal other than
+the caller's controlling terminal.
+<DT>*<DD>
+employ the obsolete
+<B><A HREF="../man2/nfsservctl.2.html">nfsservctl</A></B>(2);
+
+system call;
+<DT>*<DD>
+employ the obsolete
+<B><A HREF="../man2/bdflush.2.html">bdflush</A></B>(2)
+
+system call;
+<DT>*<DD>
+perform various privileged block-device
+<B><A HREF="../man2/ioctl.2.html">ioctl</A></B>(2)
+
+operations;
+<DT>*<DD>
+perform various privileged file-system
+<B><A HREF="../man2/ioctl.2.html">ioctl</A></B>(2)
+
+operations;
+<DT>*<DD>
+perform administrative operations on many device drivers.
 </DL>
 </DL>
 
@@ -481,8 +580,14 @@ and
 <B><A HREF="../man2/ioperm.2.html">ioperm</A></B>(2));
 
 access
-<I>/proc/kcore</I>.
+<I>/proc/kcore</I>;
 
+employ the
+<B>FIBMAP</B>
+
+<B><A HREF="../man2/ioctl.2.html">ioctl</A></B>(2)
+
+operation.
 <DT><B>CAP_SYS_RESOURCE</B>
 
 <DD>
@@ -508,6 +613,12 @@ override
 
 resource limit;
 <DT>*<DD>
+override maximum number of consoles on console allocation;
+<DT>*<DD>
+override maximum number of keymaps;
+<DT>*<DD>
+allow more than 64hz interrupts from the real-time clock;
+<DT>*<DD>
 raise
 <I>msg_qbytes</I>
 
@@ -518,14 +629,31 @@ limit for a System V message queue above the limit in
 <B><A HREF="../man2/msgop.2.html">msgop</A></B>(2)
 
 and
-<B><A HREF="../man2/msgctl.2.html">msgctl</A></B>(2)).
+<B><A HREF="../man2/msgctl.2.html">msgctl</A></B>(2));
 
+<DT>*<DD>
+override the
+<I>/proc/sys/fs/pipe-size-max</I>
+
+limit when setting the capacity of a pipe using the
+<B>F_SETPIPE_SZ</B>
+
+<B><A HREF="../man2/fcntl.2.html">fcntl</A></B>(2)
+
+command.
 <DT>*<DD>
 use
 <B>F_SETPIPE_SZ</B>
 
 to increase the capacity of a pipe above the limit specified by
-<I>/proc/sys/fs/pipe-max-size</I>.
+<I>/proc/sys/fs/pipe-max-size</I>;
+
+<DT>*<DD>
+override
+<I>/proc/sys/fs/mqueue/queues_max</I>
+
+limit when creating POSIX message queues (see
+<B><A HREF="../man7/mq_overview.7.html">mq_overview</A></B>(7)).
 
 </DL>
 </DL>
@@ -546,8 +674,12 @@ set real-time (hardware) clock.
 
 <DD>
 Use
-<B><A HREF="../man2/vhangup.2.html">vhangup</A></B>(2).
+<B><A HREF="../man2/vhangup.2.html">vhangup</A></B>(2);
 
+employ various privileged
+<B><A HREF="../man2/ioctl.2.html">ioctl</A></B>(2)
+
+operations on virtual terminals.
 <DT><B>CAP_SYSLOG</B> (since Linux 2.6.37)
 
 <DD>
@@ -559,6 +691,16 @@ See
 <B><A HREF="../man2/syslog.2.html">syslog</A></B>(2)
 
 for information on which operations require privilege.
+<DT><B>CAP_WAKE_ALARM</B> (since Linux 3.0)
+
+<DD>
+Trigger something that will wake up the system (set
+<B>CLOCK_REALTIME_ALARM</B>
+
+and
+<B>CLOCK_BOOTTIME_ALARM</B>
+
+timers).
 
 </DL>
 <A NAME="lbAE">&nbsp;</A>
@@ -1256,6 +1398,8 @@ created on the system.
 
 <B><A HREF="../man3/capsetp.3.html">capsetp</A></B>(3),
 
+<B><A HREF="../man3/libcap.3.html">libcap</A></B>(3),
+
 <B><A HREF="../man7/credentials.7.html">credentials</A></B>(7),
 
 <B><A HREF="../man7/pthreads.7.html">pthreads</A></B>(7),
@@ -1266,6 +1410,7 @@ created on the system.
 
 <P>
 
+Comments on the purposes of various capabilities in
 <I>include/linux/capability.h</I>
 
 in the kernel source
@@ -1296,6 +1441,6 @@ in the kernel source
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:12:32 GMT, April 20, 2020
+Time: 03:13:01 GMT, April 20, 2020
 </BODY>
 </HTML>
