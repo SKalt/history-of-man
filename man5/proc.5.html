@@ -25,7 +25,7 @@ License along with this manual; if not, see
 <HTML><HEAD><TITLE>Man page of PROC</TITLE>
 </HEAD><BODY>
 <H1>PROC</H1>
-Section: Linux Programmer's Manual (5)<BR>Updated: 2014-07-08<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (5)<BR>Updated: 2014-09-21<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -255,13 +255,13 @@ operations, and is employed by
 <B><A HREF="../man3/pthread_setname_np.3.html">pthread_setname_np</A></B>(3)
 
 when used to rename threads other than the caller.
-<DT><I>/proc/[pid]/coredump_filter</I> (since kernel 2.6.23)
+<DT><I>/proc/[pid]/coredump_filter</I> (since Linux 2.6.23)
 
 <DD>
 See
 <B><A HREF="../man5/core.5.html">core</A></B>(5).
 
-<DT><I>/proc/[pid]/cpuset</I> (since kernel 2.6.12)
+<DT><I>/proc/[pid]/cpuset</I> (since Linux 2.6.12)
 
 <DD>
 
@@ -489,7 +489,7 @@ $<B> foobar -i /dev/stdin -o /dev/stdout ...</B>
 
 
 
-<DT><I>/proc/[pid]/fdinfo/</I> (since kernel 2.6.22)
+<DT><I>/proc/[pid]/fdinfo/</I> (since Linux 2.6.22)
 
 <DD>
 This is a subdirectory containing one entry for each file which the
@@ -634,7 +634,14 @@ if process A reads process B's
 
 while process B is updating one of these 64-bit counters,
 process A could see an intermediate result.
-<DT><I>/proc/[pid]/limits</I> (since kernel 2.6.24)
+<DT><I>/proc/[pid]/gid_map</I> (since Linux 3.5)
+
+<DD>
+See the description of
+<I>/proc/[pid]/uid_map</I>.
+
+<P>
+<DT><I>/proc/[pid]/limits</I> (since Linux 2.6.24)
 
 <DD>
 This file displays the soft limit, hard limit, and units of measurement
@@ -935,11 +942,15 @@ and
 <B><A HREF="../man2/epoll_wait.2.html">epoll_wait</A></B>(2)
 
 mark the file as having an error condition.
+See
+<B><A HREF="../man7/namespaces.7.html">namespaces</A></B>(7)
+
+for more information.
 <DT><I>/proc/[pid]/mountstats</I> (since Linux 2.6.17)
 
 <DD>
 This file exports information (statistics, configuration information)
-about the mount points in the process's name space.
+about the mount points in the process's mount namespace.
 Lines in this file have the form:
 <PRE>
 
@@ -967,6 +978,11 @@ information via this field.
 
 <DT><DD>
 This file is readable only by the owner of the process.
+<P>
+See
+<B><A HREF="../man7/namespaces.7.html">namespaces</A></B>(7)
+
+for more information.
 <DT><I>/proc/[pid]/ns/</I> (since Linux 3.0)
 
 <DD>
@@ -975,75 +991,10 @@ This is a subdirectory containing one entry for each namespace that
 supports being manipulated by
 <B><A HREF="../man2/setns.2.html">setns</A></B>(2).
 
-For information about namespaces, see
-<B><A HREF="../man2/clone.2.html">clone</A></B>(2).
+For more information, see
+<B><A HREF="../man7/namespaces.7.html">namespaces</A></B>(7).
 
-<DT><I>/proc/[pid]/ns/ipc</I> (since Linux 3.0)
-
-<DD>
-Bind mounting this file (see
-<B><A HREF="../man2/mount.2.html">mount</A></B>(2))
-
-to somewhere else in the filesystem keeps
-the IPC namespace of the process specified by
-<I>pid</I>
-
-alive even if all processes currently in the namespace terminate.
 <P>
-Opening this file returns a file handle for the IPC namespace
-of the process specified by
-<I>pid</I>.
-
-As long as this file descriptor remains open,
-the IPC namespace will remain alive,
-even if all processes in the namespace terminate.
-The file descriptor can be passed to
-<B><A HREF="../man2/setns.2.html">setns</A></B>(2).
-
-<DT><I>/proc/[pid]/ns/net</I> (since Linux 3.0)
-
-<DD>
-Bind mounting this file (see
-<B><A HREF="../man2/mount.2.html">mount</A></B>(2))
-
-to somewhere else in the filesystem keeps
-the network namespace of the process specified by
-<I>pid</I>
-
-alive even if all processes in the namespace terminate.
-<P>
-Opening this file returns a file handle for the network namespace
-of the process specified by
-<I>pid</I>.
-
-As long as this file descriptor remains open,
-the network namespace will remain alive,
-even if all processes in the namespace terminate.
-The file descriptor can be passed to
-<B><A HREF="../man2/setns.2.html">setns</A></B>(2).
-
-<DT><I>/proc/[pid]/ns/uts</I> (since Linux 3.0)
-
-<DD>
-Bind mounting this file (see
-<B><A HREF="../man2/mount.2.html">mount</A></B>(2))
-
-to somewhere else in the filesystem keeps
-the UTS namespace of the process specified by
-<I>pid</I>
-
-alive even if all processes currently in the namespace terminate.
-<P>
-Opening this file returns a file handle for the UTS namespace
-of the process specified by
-<I>pid</I>.
-
-As long as this file descriptor remains open,
-the UTS namespace will remain alive,
-even if all processes in the namespace terminate.
-The file descriptor can be passed to
-<B><A HREF="../man2/setns.2.html">setns</A></B>(2).
-
 <DT><I>/proc/[pid]/numa_maps</I> (since Linux 2.6.14)
 
 <DD>
@@ -1166,7 +1117,7 @@ Acceptable values range from -1000
 (OOM_SCORE_ADJ_MIN) to +1000 (OOM_SCORE_ADJ_MAX).
 This allows user space to control the preference for OOM-killing,
 ranging from always preferring a certain
-task or completely disabling it from OOM-killing.
+task or completely disabling it from OOM killing.
 The lowest possible value, -1000, is
 equivalent to disabling OOM-killing entirely for that task,
 since it will always report a badness score of 0.
@@ -1285,6 +1236,8 @@ In a multithreaded process, the contents of this symbolic link
 are not available if the main thread has already terminated
 (typically by calling
 <B><A HREF="../man3/pthread_exit.3.html">pthread_exit</A></B>(3)).
+
+
 
 
 
@@ -1940,7 +1893,7 @@ Masks of capabilities enabled in inheritable, permitted, and effective sets
 <I>CapBnd</I>:
 
 Capability Bounding set
-(since kernel 2.6.26, see
+(since Linux 2.6.26, see
 <B><A HREF="../man7/capabilities.7.html">capabilities</A></B>(7)).
 
 <DT>*<DD>
@@ -2045,6 +1998,186 @@ In a multithreaded process, the contents of the
 directory are not available if the main thread has already terminated
 (typically by calling
 <B><A HREF="../man3/pthread_exit.3.html">pthread_exit</A></B>(3)).
+
+<DT><I>/proc/[pid]/uid_map</I>, <I>/proc/[pid]/gid_map</I> (since Linux 3.5)
+
+<DD>
+
+These files expose the mappings for user and group IDs
+inside the user namespace for the process
+<I>pid</I>.
+
+The description here explains the details for
+<I>uid_map</I>;
+
+<I>gid_map</I>
+
+is exactly the same,
+but each instance of &quot;user ID&quot; is replaced by &quot;group ID&quot;.
+<P>
+The
+<I>uid_map</I>
+
+file exposes the mapping of user IDs from the user namespace
+of the process
+<I>pid</I>
+
+to the user namespace of the process that opened
+<I>uid_map</I>
+
+(but see a qualification to this point below).
+In other words, processes that are in different user namespaces
+will potentially see different values when reading from a particular
+<I>uid_map</I>
+
+file, depending on the user ID mappings for the user namespaces
+of the reading processes.
+<P>
+<P>
+Each line in the file specifies a 1-to-1 mapping of a range of contiguous
+between two user namespaces.
+The specification in each line takes the form of
+three numbers delimited by white space.
+The first two numbers specify the starting user ID in
+each user namespace.
+The third number specifies the length of the mapped range.
+In detail, the fields are interpreted as follows:
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT>(1)<DD>
+The start of the range of user IDs in
+the user namespace of the process
+<I>pid</I>.
+
+<DT>(2)<DD>
+The start of the range of user
+IDs to which the user IDs specified by field one map.
+How field two is interpreted depends on whether the process that opened
+<I>uid_map</I>
+
+and the process
+<I>pid</I>
+
+are in the same user namespace, as follows:
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT>a)<DD>
+If the two processes are in different user namespaces:
+field two is the start of a range of
+user IDs in the user namespace of the process that opened
+<I>uid_map</I>.
+
+<DT>b)<DD>
+If the two processes are in the same user namespace:
+field two is the start of the range of
+user IDs in the parent user namespace of the process
+<I>pid</I>.
+
+(The &quot;parent user namespace&quot;
+is the user namespace of the process that created a user namespace
+via a call to
+<B><A HREF="../man2/unshare.2.html">unshare</A></B>(2)
+
+or
+<B><A HREF="../man2/clone.2.html">clone</A></B>(2)
+
+with the
+<B>CLONE_NEWUSER</B>
+
+flag.)
+This case enables the opener of
+<I>uid_map</I>
+
+(the common case here is opening
+<I>/proc/self/uid_map</I>)
+
+to see the mapping of user IDs into the user namespace of the process
+that created this user namespace.
+</DL>
+</DL>
+
+<DT>(3)<DD>
+The length of the range of user IDs that is mapped between the two
+user namespaces.
+</DL>
+</DL>
+
+<DT><DD>
+After the creation of a new user namespace, the
+<I>uid_map</I>
+
+file may be written to exactly once to specify
+the mapping of user IDs in the new user namespace.
+(An attempt to write more than once to the file fails with the error
+<B>EPERM</B>.)
+
+<DT><DD>
+The lines written to
+<I>uid_map</I>
+
+must conform to the following rules:
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT>*<DD>
+The three fields must be valid numbers,
+and the last field must be greater than 0.
+<DT>*<DD>
+Lines are terminated by newline characters.
+<DT>*<DD>
+There is an (arbitrary) limit on the number of lines in the file.
+As at Linux 3.8, the limit is five lines.
+<DT>*<DD>
+The range of user IDs specified in each line cannot overlap with the ranges
+in any other lines.
+In the current implementation (Linux 3.8), this requirement is
+satisfied by a simplistic implementation that imposes the further
+requirement that
+the values in both field 1 and field 2 of successive lines must be
+in ascending numerical order.
+</DL>
+</DL>
+
+<DT><DD>
+Writes that violate the above rules fail with the error
+<B>EINVAL</B>.
+
+<P>
+In order for a process to write to the
+<I>/proc/[pid]/uid_map</I>
+
+(<I>/proc/[pid]/gid_map</I>)
+
+file, the following requirements must be met:
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT>*<DD>
+The process must have the
+<B>CAP_SETUID</B>
+
+(<B>CAP_SETGID</B>)
+
+capability in the user namespace of the process
+<I>pid</I>.
+
+<DT>*<DD>
+The process must have the
+<B>CAP_SETUID</B>
+
+(<B>CAP_SETGID</B>)
+
+capability in the parent user namespace.
+<DT>*<DD>
+The process must be in either the user namespace of the process
+<I>pid</I>
+
+or inside the parent user namespace of the process
+<I>pid</I>.
+
+</DL>
+</DL>
+
+For further details, see
+<B><A HREF="../man7/namespaces.7.html">namespaces</A></B>(7).
 
 <DT><I>/proc/[pid]/wchan</I> (since Linux 2.6.0)
 
@@ -4933,6 +5066,8 @@ of thing that needs to be updated very often.
 
 <B><A HREF="../man7/hier.7.html">hier</A></B>(7),
 
+<B><A HREF="../man7/namespaces.7.html">namespaces</A></B>(7),
+
 <B><A HREF="../man7/time.7.html">time</A></B>(7),
 
 <B><A HREF="../man8/arp.8.html">arp</A></B>(8),
@@ -4984,6 +5119,6 @@ and
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:32:50 GMT, April 20, 2020
+Time: 03:33:23 GMT, April 20, 2020
 </BODY>
 </HTML>

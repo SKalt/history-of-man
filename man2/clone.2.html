@@ -8,7 +8,7 @@ May be distributed under the GNU General Public License.
 <HTML><HEAD><TITLE>Man page of CLONE</TITLE>
 </HEAD><BODY>
 <H1>CLONE</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2014-08-19<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2014-09-21<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -347,17 +347,18 @@ When an IPC namespace is destroyed
 (i.e., when the last process that is a member of the namespace terminates),
 all IPC objects in the namespace are automatically destroyed.
 <P>
-Use of this flag requires: a kernel configured with the
-<B>CONFIG_SYSVIPC</B>
+Only a privileged process
+(<B>CAP_SYS_ADMIN</B>)
 
-and
-<B>CONFIG_IPC_NS</B>
-
-options and that the process be privileged
-(<B>CAP_SYS_ADMIN</B>).
+can employ
+<B>CLONE_NEWIPC</B>.
 
 This flag can't be specified in conjunction with
 <B>CLONE_SYSVSEM</B>.
+
+<P>
+For further information on IPC namespaces, see
+<B><A HREF="../man7/namespaces.7.html">namespaces</A></B>(7).
 
 <DT><B>CLONE_NEWNET</B> (since Linux 2.6.24)
 
@@ -370,7 +371,7 @@ If
 
 is set, then create the process in a new network namespace.
 If this flag is not set, then (as with
-<B><A HREF="../man2/fork.2.html">fork</A></B>(2)),
+<B><A HREF="../man2/fork.2.html">fork</A></B>(2))
 
 the process is created in the same network namespace as
 the calling process.
@@ -397,64 +398,46 @@ When a network namespace is freed
 (i.e., when the last process in the namespace terminates),
 its physical network devices are moved back to the
 initial network namespace (not to the parent of the process).
-<P>
-Use of this flag requires: a kernel configured with the
-<B>CONFIG_NET_NS</B>
+For further information on network namespaces, see
+<B><A HREF="../man7/namespaces.7.html">namespaces</A></B>(7).
 
-option and that the process be privileged
-(<B>CAP_SYS_ADMIN</B>).
+<P>
+Only a privileged process
+(<B>CAP_SYS_ADMIN</B>)
+
+can employ
+<B>CLONE_NEWNET</B>.
 
 <DT><B>CLONE_NEWNS</B> (since Linux 2.4.19)
 
 <DD>
-Start the child in a new mount namespace.
-<P>
-Every process lives in a mount namespace.
-The
-<I>namespace</I>
-
-of a process is the data (the set of mounts) describing the file hierarchy
-as seen by that process.
-After a
-<B><A HREF="../man2/fork.2.html">fork</A></B>(2)
-
-or
-<B>clone</B>()
-
-where the
+If
 <B>CLONE_NEWNS</B>
 
-flag is not set, the child lives in the same mount
-namespace as the parent.
-The system calls
-<B><A HREF="../man2/mount.2.html">mount</A></B>(2)
-
-and
-<B><A HREF="../man2/umount.2.html">umount</A></B>(2)
-
-change the mount namespace of the calling process, and hence affect
-all processes that live in the same namespace, but do not affect
-processes in a different mount namespace.
-<P>
-After a
-<B>clone</B>()
-
-where the
-<B>CLONE_NEWNS</B>
-
-flag is set, the cloned child is started in a new mount namespace,
+is set, the cloned child is started in a new mount namespace,
 initialized with a copy of the namespace of the parent.
-<P>
-Only a privileged process (one having the <B>CAP_SYS_ADMIN</B> capability)
-may specify the
+If
 <B>CLONE_NEWNS</B>
 
-flag.
+is not set, the child lives in the same mount
+namespace as the parent.
+<P>
+For further information on mount namespaces, see
+<B><A HREF="../man7/namespaces.7.html">namespaces</A></B>(7).
+
+<P>
+Only a privileged process
+(<B>CAP_SYS_ADMIN</B>)
+
+can employ
+<B>CLONE_NEWNS</B>.
+
 It is not permitted to specify both
 <B>CLONE_NEWNS</B>
 
 and
 <B>CLONE_FS</B>
+
 
 in the same
 <B>clone</B>()
@@ -475,88 +458,96 @@ If
 
 is set, then create the process in a new PID namespace.
 If this flag is not set, then (as with
-<B><A HREF="../man2/fork.2.html">fork</A></B>(2)),
+<B><A HREF="../man2/fork.2.html">fork</A></B>(2))
 
 the process is created in the same PID namespace as
 the calling process.
 This flag is intended for the implementation of containers.
 <P>
-A PID namespace provides an isolated environment for PIDs:
-PIDs in a new namespace start at 1,
-somewhat like a standalone system, and calls to
-<B><A HREF="../man2/fork.2.html">fork</A></B>(2),
+For further information on PID namespaces, see
+<B><A HREF="../man7/namespaces.7.html">namespaces</A></B>(7)
 
-<B><A HREF="../man2/vfork.2.html">vfork</A></B>(2),
-
-or
-<B>clone</B>()
-
-will produce processes with PIDs that are unique within the namespace.
-<P>
-The first process created in a new namespace
-(i.e., the process created using the
-<B>CLONE_NEWPID</B>
-
-flag) has the PID 1, and is the &quot;init&quot; process for the namespace.
-Children that are orphaned within the namespace will be reparented
-to this process rather than
-<B><A HREF="../man8/init.8.html">init</A></B>(8).
-
-Unlike the traditional
-<B>init</B>
-
-process, the &quot;init&quot; process of a PID namespace can terminate,
-and if it does, all of the processes in the namespace are terminated.
-<P>
-PID namespaces form a hierarchy.
-When a new PID namespace is created,
-the processes in that namespace are visible
-in the PID namespace of the process that created the new namespace;
-analogously, if the parent PID namespace is itself
-the child of another PID namespace,
-then processes in the child and parent PID namespaces will both be
-visible in the grandparent PID namespace.
-Conversely, the processes in the &quot;child&quot; PID namespace do not see
-the processes in the parent namespace.
-The existence of a namespace hierarchy means that each process
-may now have multiple PIDs:
-one for each namespace in which it is visible;
-each of these PIDs is unique within the corresponding namespace.
-(A call to
-<B><A HREF="../man2/getpid.2.html">getpid</A></B>(2)
-
-always returns the PID associated with the namespace in which
-the process lives.)
-<P>
-After creating the new namespace,
-it is useful for the child to change its root directory
-and mount a new procfs instance at
-<I>/proc</I>
-
-so that tools such as
-<B><A HREF="../man1/ps.1.html">ps</A></B>(1)
-
-work correctly.
-
-(If
-<B>CLONE_NEWNS</B>
-
-is also included in
-<I>flags</I>,
-
-then it isn't necessary to change the root directory:
-a new procfs instance can be mounted directly over
-<I>/proc</I>.)
+and
+<B><A HREF="../man7/pid_namespaces.7.html">pid_namespaces</A></B>(7)
 
 <P>
-Use of this flag requires: a kernel configured with the
-<B>CONFIG_PID_NS</B>
+Only a privileged process
+(<B>CAP_SYS_ADMIN</B>)
 
-option and that the process be privileged
-(<B>CAP_SYS_ADMIN</B>).
+can employ
+<B>CLONE_NEWPID</B>.
 
 This flag can't be specified in conjunction with
-<B>CLONE_THREAD</B>.
+<B>CLONE_THREAD</B>
+
+or
+<B>CLONE_PARENT</B>.
+
+<DT><B>CLONE_NEWUSER</B>
+
+<DD>
+(This flag first became meaningful for
+<B>clone</B>()
+
+in Linux 2.6.23,
+the current
+<B>clone()</B>
+
+semantics were merged in Linux 3.5,
+and the final pieces to make the user namespaces completely usable were
+merged in Linux 3.8.)
+<P>
+If
+<B>CLONE_NEWUSER</B>
+
+is set, then create the process in a new user namespace.
+If this flag is not set, then (as with
+<B><A HREF="../man2/fork.2.html">fork</A></B>(2))
+
+the process is created in the same user namespace as the calling process.
+<P>
+For further information on user namespaces, see
+<B><A HREF="../man7/namespaces.7.html">namespaces</A></B>(7)
+
+and
+<B><A HREF="../man7/user_namespaces.7.html">user_namespaces</A></B>(7)
+
+<P>
+Before Linux 3.8, use of
+<B>CLONE_NEWUSER</B>
+
+required that the caller have three capabilities:
+<B>CAP_SYS_ADMIN</B>,
+
+<B>CAP_SETUID</B>,
+
+and
+<B>CAP_SETGID</B>.
+
+
+Starting with Linux 3.8,
+no privileges are needed to create a user namespace.
+<P>
+This flag can't be specified in conjunction with
+<B>CLONE_THREAD</B>
+
+or
+<B>CLONE_PARENT</B>.
+
+For security reasons,
+
+
+
+
+
+<B>CLONE_NEWUSER</B>
+
+cannot be specified in conjunction with
+<B>CLONE_FS</B>.
+
+<P>
+For further information on user namespaces, see
+<B><A HREF="../man7/user_namespaces.7.html">user_namespaces</A></B>(7).
 
 <DT><B>CLONE_NEWUTS</B> (since Linux 2.6.19)
 
@@ -568,7 +559,7 @@ is set, then create the process in a new UTS namespace,
 whose identifiers are initialized by duplicating the identifiers
 from the UTS namespace of the calling process.
 If this flag is not set, then (as with
-<B><A HREF="../man2/fork.2.html">fork</A></B>(2)),
+<B><A HREF="../man2/fork.2.html">fork</A></B>(2))
 
 the process is created in the same UTS namespace as
 the calling process.
@@ -588,11 +579,15 @@ Changes made to the identifiers in a UTS namespace
 are visible to all other processes in the same namespace,
 but are not visible to processes in other UTS namespaces.
 <P>
-Use of this flag requires: a kernel configured with the
-<B>CONFIG_UTS_NS</B>
+Only a privileged process
+(<B>CAP_SYS_ADMIN</B>)
 
-option and that the process be privileged
-(<B>CAP_SYS_ADMIN</B>).
+can employ
+<B>CLONE_NEWUTS</B>.
+
+<P>
+For further information on UTS namespaces, see
+<B><A HREF="../man7/namespaces.7.html">namespaces</A></B>(7).
 
 <DT><B>CLONE_PARENT</B> (since Linux 2.3.12)
 
@@ -741,11 +736,24 @@ If
 <B>CLONE_SYSVSEM</B>
 
 is set, then the child and the calling process share
-a single list of System&nbsp;V semaphore undo values (see
+a single list of System V semaphore adjustment
+(<I>semadj</I>)
+
+values (see
 <B><A HREF="../man2/semop.2.html">semop</A></B>(2)).
 
-If this flag is not set, then the child has a separate undo list,
-which is initially empty.
+In this case, the shared list accumulates
+<I>semadj</I>
+
+values across all processes sharing the list,
+and semaphore adjustments are performed only when the last process
+that is sharing the list terminates (or ceases sharing the list using
+<B><A HREF="../man2/unshare.2.html">unshare</A></B>(2)).
+
+If this flag is not set, then the child has a separate
+<I>semadj</I>
+
+list that is initially empty.
 <DT><B>CLONE_THREAD</B> (since Linux 2.4.0-test8)
 
 <DD>
@@ -1137,11 +1145,24 @@ was not.
 <DT><B>EINVAL</B>
 
 <DD>
+
 Both
 <B>CLONE_FS</B>
 
 and
 <B>CLONE_NEWNS</B>
+
+were specified in
+<I>flags</I>.
+
+<DT><B>EINVAL</B> (since Linux 3.9)
+
+<DD>
+Both
+<B>CLONE_NEWUSER</B>
+
+and
+<B>CLONE_FS</B>
 
 were specified in
 <I>flags</I>.
@@ -1161,11 +1182,17 @@ were specified in
 <DT><B>EINVAL</B>
 
 <DD>
-Both
+One (or both) of
 <B>CLONE_NEWPID</B>
 
-and
+or
+<B>CLONE_NEWUSER</B>
+
+and one (or both) of
 <B>CLONE_THREAD</B>
+
+or
+<B>CLONE_PARENT</B>
 
 were specified in
 <I>flags</I>.
@@ -1257,15 +1284,63 @@ was specified by an unprivileged process (process without <B>CAP_SYS_ADMIN</B>).
 <B>CLONE_PID</B>
 
 was specified by a process other than process 0.
+<DT><B>EPERM</B>
+
+<DD>
+<B>CLONE_NEWUSER</B>
+
+was specified in
+<I>flags</I>,
+
+but either the effective user ID or the effective group ID of the caller
+does not have a mapping in the parent namespace (see
+<B><A HREF="../man7/user_namespaces.7.html">user_namespaces</A></B>(7)).
+
+<DT><B>EPERM</B> (since Linux 3.9)
+
+<DD>
+
+<B>CLONE_NEWUSER was specified in</B>
+
+<I>flags</I>
+
+and the caller is in a chroot environment
+
+(i.e., the caller's root directory does not match the root directory
+of the mount namespace in which it resides).
+<DT><B>EUSERS</B> (since Linux 3.11)
+
+<DD>
+<B>CLONE_NEWUSER</B>
+
+was specified in
+<I>flags</I>,
+
+and the call would cause the limit on the number of
+nested user namespaces to be exceeded.
+See
+<B><A HREF="../man7/user_namespaces.7.html">user_namespaces</A></B>(7).
+
 </DL>
 <A NAME="lbAK">&nbsp;</A>
+<H2>VERSIONS</H2>
+
+There is no entry for
+<B>clone</B>()
+
+in libc5.
+glibc2 provides
+<B>clone</B>()
+
+as described in this manual page.
+<A NAME="lbAL">&nbsp;</A>
 <H2>CONFORMING TO</H2>
 
 <B>clone</B>()
 
 is Linux-specific and should not be used in programs
 intended to be portable.
-<A NAME="lbAL">&nbsp;</A>
+<A NAME="lbAM">&nbsp;</A>
 <H2>NOTES</H2>
 
 In the kernel 2.4.x series,
@@ -1299,7 +1374,7 @@ On i386,
 should not be called through vsyscall, but directly through
 <I>int $0x80</I>.
 
-<A NAME="lbAM">&nbsp;</A>
+<A NAME="lbAN">&nbsp;</A>
 <H2>BUGS</H2>
 
 Versions of the GNU C library that include the NPTL threading library
@@ -1354,7 +1429,7 @@ To get the truth, it may be necessary to use code such as the following:
 
 
 
-<A NAME="lbAN">&nbsp;</A>
+<A NAME="lbAO">&nbsp;</A>
 <H2>EXAMPLE</H2>
 
 The following program demonstrates the use of
@@ -1368,7 +1443,7 @@ differs in the UTS namespaces of the parent and child.
 For an example of the use of this program, see
 <B><A HREF="../man2/setns.2.html">setns</A></B>(2).
 
-<A NAME="lbAO">&nbsp;</A>
+<A NAME="lbAP">&nbsp;</A>
 <H3>Program source</H3>
 
 <PRE>
@@ -1458,7 +1533,7 @@ main(int argc, char *argv[])
 }
 </PRE>
 
-<A NAME="lbAP">&nbsp;</A>
+<A NAME="lbAQ">&nbsp;</A>
 <H2>SEE ALSO</H2>
 
 <B><A HREF="../man2/fork.2.html">fork</A></B>(2),
@@ -1485,6 +1560,8 @@ main(int argc, char *argv[])
 
 <B><A HREF="../man7/capabilities.7.html">capabilities</A></B>(7),
 
+<B><A HREF="../man7/namespaces.7.html">namespaces</A></B>(7),
+
 <B><A HREF="../man7/pthreads.7.html">pthreads</A></B>(7)
 
 <P>
@@ -1503,19 +1580,20 @@ main(int argc, char *argv[])
 </DL>
 <DT><A HREF="#lbAI">RETURN VALUE</A><DD>
 <DT><A HREF="#lbAJ">ERRORS</A><DD>
-<DT><A HREF="#lbAK">CONFORMING TO</A><DD>
-<DT><A HREF="#lbAL">NOTES</A><DD>
-<DT><A HREF="#lbAM">BUGS</A><DD>
-<DT><A HREF="#lbAN">EXAMPLE</A><DD>
+<DT><A HREF="#lbAK">VERSIONS</A><DD>
+<DT><A HREF="#lbAL">CONFORMING TO</A><DD>
+<DT><A HREF="#lbAM">NOTES</A><DD>
+<DT><A HREF="#lbAN">BUGS</A><DD>
+<DT><A HREF="#lbAO">EXAMPLE</A><DD>
 <DL>
-<DT><A HREF="#lbAO">Program source</A><DD>
+<DT><A HREF="#lbAP">Program source</A><DD>
 </DL>
-<DT><A HREF="#lbAP">SEE ALSO</A><DD>
+<DT><A HREF="#lbAQ">SEE ALSO</A><DD>
 </DL>
 <HR>
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:32:36 GMT, April 20, 2020
+Time: 03:33:09 GMT, April 20, 2020
 </BODY>
 </HTML>
