@@ -8,7 +8,7 @@ This file may be distributed under the GNU General Public License.
 <HTML><HEAD><TITLE>Man page of HOSTS.EQUIV</TITLE>
 </HEAD><BODY>
 <H1>HOSTS.EQUIV</H1>
-Section: Linux Programmer's Manual (5)<BR>Updated: 2003-08-24<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (5)<BR>Updated: 2015-07-23<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -39,7 +39,7 @@ supplying a password.
 
 The file uses the following format:
 <DL COMPACT>
-<DT><I>[ + | - ]</I> <I>[hostname]</I> <I>[username]</I><DD>
+<DT><I>+|[-]hostname|+@netgroup|-@netgroup</I> <I>[+|[-]username|+@netgroup|-@netgroup]</I><DD>
 </DL>
 <P>
 
@@ -59,9 +59,9 @@ You can explicitly deny access to a host by preceding the
 <I>hostname</I>
 
 by a minus (-) sign.
-Users from that host must always supply a password.
-For security reasons you should always use the FQDN of the hostname and
-not the short hostname.
+Users from that host must always supply additional credentials,
+including possibly a password. For security reasons you should always
+use the FQDN of the hostname and not the short hostname.
 <P>
 
 The
@@ -118,6 +118,111 @@ the particular service
 (e.g., <B>rlogin</B>).
 
 <A NAME="lbAF">&nbsp;</A>
+<H2>EXAMPLE</H2>
+
+Below are some example
+<I>/etc/host.equiv</I>
+
+or
+<I>~/.rhosts</I>
+
+files.
+<P>
+Allow any user to log in from any host:
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;+
+<P>
+Allow any user from
+<I>host</I>
+
+with a matching local account to log in:
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;host
+<P>
+Note: the use of
+<I>+host</I>
+
+is never a valid syntax,
+including attempting to specify that any user from the host is allowed.
+<P>
+Allow any user from
+<I>host</I>
+
+to log in:
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;host&nbsp;+
+<P>
+Note: this is distinct from the previous example
+since it does not require a matching local account.
+<P>
+Allow
+<I>user</I>
+
+from
+<I>host</I>
+
+to log in as any non-root user:
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;host&nbsp;user
+<P>
+Allow all users with matching local accounts from
+<I>host</I>
+
+to log in except for
+<I>baduser</I>:
+
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;host&nbsp;-baduser
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;host
+<P>
+Deny all users from
+<I>host</I>:
+
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;-host
+<P>
+Note: the use of
+<I>-host&nbsp;-user</I>
+
+is never a valid syntax,
+including attempting to specify that a particular user from the host
+is not trusted.
+<P>
+Allow all users with matching local accounts on all hosts in a
+<I>netgroup</I>:
+
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;+@netgroup
+<P>
+Disallow all users on all hosts in a
+<I>netgroup</I>:
+
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;-@netgroup
+<P>
+Allow all users in a
+<I>netgroup</I>
+
+to log in from
+<I>host</I>
+
+as any non-root user:
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;host&nbsp;+@netgroup
+<P>
+Allow all users with matching local accounts on all hosts in a
+<I>netgroup</I>
+
+except
+<I>baduser</I>:
+
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;+@netgroup&nbsp;-baduser
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;+@netgroup
+<P>
+Note: the deny statements must always precede the allow statements because
+the file is processed sequentially until the first matching rule is found.
+<A NAME="lbAG">&nbsp;</A>
 <H2>SEE ALSO</H2>
 
 <B><A HREF="../man5/rhosts.5.html">rhosts</A></B>(5),
@@ -135,12 +240,13 @@ the particular service
 <DT><A HREF="#lbAC">DESCRIPTION</A><DD>
 <DT><A HREF="#lbAD">FILES</A><DD>
 <DT><A HREF="#lbAE">NOTES</A><DD>
-<DT><A HREF="#lbAF">SEE ALSO</A><DD>
+<DT><A HREF="#lbAF">EXAMPLE</A><DD>
+<DT><A HREF="#lbAG">SEE ALSO</A><DD>
 </DL>
 <HR>
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:39:38 GMT, April 20, 2020
+Time: 03:40:10 GMT, April 20, 2020
 </BODY>
 </HTML>

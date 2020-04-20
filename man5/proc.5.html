@@ -83,10 +83,10 @@ directories but their own (the
 
 directories themselves remain visible).
 Sensitive files such as
-<I>/proc/[pid]cmdline</I>
+<I>/proc/[pid]/cmdline</I>
 
 and
-<I>/proc/[pid]status</I>
+<I>/proc/[pid]/status</I>
 
 are now protected against other users.
 This makes it impossible to learn whether any user is running a
@@ -2412,82 +2412,6 @@ directory are not available if the main thread has already terminated
 (typically by calling
 <B><A HREF="../man3/pthread_exit.3.html">pthread_exit</A></B>(3)).
 
-<DT><I>/proc/[pid]/uid_map</I>, <I>/proc/[pid]/gid_map</I> (since Linux 3.5)
-
-<DD>
-See
-<B><A HREF="../man7/user_namespaces.7.html">user_namespaces</A></B>(7).
-
-<DT><I>/proc/[pid]/wchan</I> (since Linux 2.6.0)
-
-<DD>
-The symbolic name corresponding to the location
-in the kernel where the process is sleeping.
-<DT><I>/proc/apm</I>
-
-<DD>
-Advanced power management version and battery information when
-<B>CONFIG_APM</B>
-
-is defined at kernel compilation time.
-<DT><I>/proc/buddyinfo</I>
-
-<DD>
-This file contains information which is used for diagnosing memory
-fragmentation issues.
-Each line starts with the identification of the node and the name
-of the zone which together identify a memory region
-This is then
-followed by the count of available chunks of a certain order in
-which these zones are split.
-The size in bytes of a certain order is given by the formula:
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;(2^order)&nbsp;*&nbsp;PAGE_SIZE
-<P>
-The binary buddy allocator algorithm inside the kernel will split
-one chunk into two chunks of a smaller order (thus with half the
-size) or combine two contiguous chunks into one larger chunk of
-a higher order (thus with double the size) to satisfy allocation
-requests and to counter memory fragmentation.
-The order matches the column number, when starting to count at zero.
-<P>
-For example on a x86_64 system:
-<P>
-
-<PRE>
-Node 0, zone     DMA     1    1    1    0    2    1    1    0    1    1    3
-Node 0, zone   DMA32    65   47    4   81   52   28   13   10    5    1  404
-Node 0, zone  Normal   216   55  189  101   84   38   37   27    5    3  587
-</PRE>
-
-
-<P>
-In this example, there is one node containing three zones and there
-are 11 different chunk sizes.
-If the page size is 4 kilobytes, then the first zone called
-<I>DMA</I>
-
-(on x86 the first 16 megabyte of memory) has 1 chunk of 4 kilobytes
-(order 0) available and has 3 chunks of 4 megabytes (order 10) available.
-<P>
-If the memory is heavily fragmented, the counters for higher
-order chunks will be zero and allocation of large contiguous areas
-will fail.
-<P>
-Further information about the zones can be found in
-<I>/proc/zoneinfo</I>.
-
-<DT><I>/proc/bus</I>
-
-<DD>
-Contains subdirectories for installed busses.
-<DT><I>/proc/bus/pccard</I>
-
-<DD>
-Subdirectory for PCMCIA devices when
-<B>CONFIG_PCMCIA</B>
-
-is set at kernel compilation time.
 <DT><I>/proc/[pid]/timers</I> (since Linux 3.10)
 
 <DD>
@@ -2578,6 +2502,82 @@ in this field.
 This file is available only when the kernel was configured with
 <B>CONFIG_CHECKPOINT_RESTORE</B>.
 
+<DT><I>/proc/[pid]/uid_map</I>, <I>/proc/[pid]/gid_map</I> (since Linux 3.5)
+
+<DD>
+See
+<B><A HREF="../man7/user_namespaces.7.html">user_namespaces</A></B>(7).
+
+<DT><I>/proc/[pid]/wchan</I> (since Linux 2.6.0)
+
+<DD>
+The symbolic name corresponding to the location
+in the kernel where the process is sleeping.
+<DT><I>/proc/apm</I>
+
+<DD>
+Advanced power management version and battery information when
+<B>CONFIG_APM</B>
+
+is defined at kernel compilation time.
+<DT><I>/proc/buddyinfo</I>
+
+<DD>
+This file contains information which is used for diagnosing memory
+fragmentation issues.
+Each line starts with the identification of the node and the name
+of the zone which together identify a memory region
+This is then
+followed by the count of available chunks of a certain order in
+which these zones are split.
+The size in bytes of a certain order is given by the formula:
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;(2^order)&nbsp;*&nbsp;PAGE_SIZE
+<P>
+The binary buddy allocator algorithm inside the kernel will split
+one chunk into two chunks of a smaller order (thus with half the
+size) or combine two contiguous chunks into one larger chunk of
+a higher order (thus with double the size) to satisfy allocation
+requests and to counter memory fragmentation.
+The order matches the column number, when starting to count at zero.
+<P>
+For example on a x86_64 system:
+<P>
+
+<PRE>
+Node 0, zone     DMA     1    1    1    0    2    1    1    0    1    1    3
+Node 0, zone   DMA32    65   47    4   81   52   28   13   10    5    1  404
+Node 0, zone  Normal   216   55  189  101   84   38   37   27    5    3  587
+</PRE>
+
+
+<P>
+In this example, there is one node containing three zones and there
+are 11 different chunk sizes.
+If the page size is 4 kilobytes, then the first zone called
+<I>DMA</I>
+
+(on x86 the first 16 megabyte of memory) has 1 chunk of 4 kilobytes
+(order 0) available and has 3 chunks of 4 megabytes (order 10) available.
+<P>
+If the memory is heavily fragmented, the counters for higher
+order chunks will be zero and allocation of large contiguous areas
+will fail.
+<P>
+Further information about the zones can be found in
+<I>/proc/zoneinfo</I>.
+
+<DT><I>/proc/bus</I>
+
+<DD>
+Contains subdirectories for installed busses.
+<DT><I>/proc/bus/pccard</I>
+
+<DD>
+Subdirectory for PCMCIA devices when
+<B>CONFIG_PCMCIA</B>
+
+is set at kernel compilation time.
 <DT><I>/proc/bus/pccard/drivers</I>
 
 <DD>
@@ -2646,6 +2646,20 @@ cat /lib/modules/$(uname -r)/build/.config
 is provided only if the kernel is configured with
 <B>CONFIG_IKCONFIG_PROC</B>.
 
+<DT><I>/proc/crypto</I>
+
+<DD>
+A list of the ciphers provided by the kernel crypto API.
+For details, see the kernel
+<I>Linux Kernel Crypto API</I>
+
+documentation available under the kernel source directory
+<I>Documentation/DocBook</I>.
+
+(That documentation can be built using a command such as
+<I>make htmldocs</I>
+
+in the root directory of the kernel source tree.)
 <DT><I>/proc/cpuinfo</I>
 
 <DD>
@@ -4900,6 +4914,63 @@ This value defaults to
 This file
 specifies the system-wide maximum number of System V shared memory
 segments that can be created.
+<DT><I>/proc/sys/kernel/sysctl_writes_strict</I> (since Linux 3.16)
+
+<DD>
+
+
+
+
+The value in this file determines how the file offset affects
+the behavior of updating entries in files under
+<I>/proc/sys</I>.
+
+The file has three possible values:
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT>-1<DD>
+This provides legacy handling, with no printk warnings.
+Each
+<B><A HREF="../man2/write.2.html">write</A></B>(2)
+
+must fully contain the value to be written,
+and multiple writes on the same file descriptor
+will overwrite the entire value, regardless of the file position.
+<DT>0<DD>
+(default) This provides the same behavior as for -1,
+but printk warnings are written for processes that
+perform writes when the file offset is not 0.
+<DT>1<DD>
+Respect the file offset when writing strings into
+<I>/proc/sys</I>
+
+files.
+Multiple writes will
+<I>append</I>
+
+to the value buffer.
+Anything written beyond the maximum length
+of the value buffer will be ignored.
+Writes to numeric
+<I>/proc/sys</I>
+
+entries must always be at file offset 0 and the value must be
+fully contained in the buffer provided to
+<B><A HREF="../man2/write.2.html">write</A></B>(2).
+
+
+
+
+
+
+
+
+
+
+
+</DL>
+</DL>
+
 <DT><I>/proc/sys/kernel/sysrq</I>
 
 <DD>
@@ -4910,19 +4981,41 @@ the file contains 1 meaning that every possible SysRq request is allowed
 and you were required to specifically enable it at run-time,
 but this is not the case any more).
 Possible values in this file are:
-<P>
-<BR>&nbsp;&nbsp;&nbsp;0&nbsp;-&nbsp;disable&nbsp;sysrq&nbsp;completely
-<BR>&nbsp;&nbsp;&nbsp;1&nbsp;-&nbsp;enable&nbsp;all&nbsp;functions&nbsp;of&nbsp;sysrq
-<BR>&nbsp;&nbsp;&gt;1&nbsp;-&nbsp;bit&nbsp;mask&nbsp;of&nbsp;allowed&nbsp;sysrq&nbsp;functions,&nbsp;as&nbsp;follows:
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;2&nbsp;-&nbsp;enable&nbsp;control&nbsp;of&nbsp;console&nbsp;logging&nbsp;level
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;4&nbsp;-&nbsp;enable&nbsp;control&nbsp;of&nbsp;keyboard&nbsp;(SAK,&nbsp;unraw)
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;8&nbsp;-&nbsp;enable&nbsp;debugging&nbsp;dumps&nbsp;of&nbsp;processes&nbsp;etc.
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;16&nbsp;-&nbsp;enable&nbsp;sync&nbsp;command
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;32&nbsp;-&nbsp;enable&nbsp;remount&nbsp;read-only
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;64&nbsp;-&nbsp;enable&nbsp;signaling&nbsp;of&nbsp;processes&nbsp;(term,&nbsp;kill,&nbsp;oom-kill)
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;128&nbsp;-&nbsp;allow&nbsp;reboot/poweroff
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;256&nbsp;-&nbsp;allow&nbsp;nicing&nbsp;of&nbsp;all&nbsp;real-time&nbsp;tasks
-<P>
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT>0<DD>
+Disable sysrq completely
+<DT>1<DD>
+Enable all functions of sysrq
+<DT>&gt; 1<DD>
+Bit mask of allowed sysrq functions, as follows:
+
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT>&nbsp;&nbsp;2<DD>
+Enable control of console logging level
+<DT>&nbsp;&nbsp;4<DD>
+Enable control of keyboard (SAK, unraw)
+<DT>&nbsp;&nbsp;8<DD>
+Enable debugging dumps of processes etc.
+<DT>&nbsp;16<DD>
+Enable sync command
+<DT>&nbsp;32<DD>
+Enable remount read-only
+<DT>&nbsp;64<DD>
+Enable signaling of processes (term, kill, oom-kill)
+<DT>128<DD>
+Allow reboot/poweroff
+<DT>256<DD>
+Allow nicing of all real-time tasks
+</DL>
+</DL>
+
+
+</DL>
+</DL>
+
+<DT><DD>
 This file is present only if the
 <B>CONFIG_MAGIC_SYSRQ</B>
 
@@ -4933,13 +5026,13 @@ For further details see the Linux kernel source file
 <DT><I>/proc/sys/kernel/version</I>
 
 <DD>
-This file contains a string like:
+This file contains a string such as:
 <P>
 <BR>&nbsp;&nbsp;&nbsp;&nbsp;#5&nbsp;Wed&nbsp;Feb&nbsp;25&nbsp;21:49:24&nbsp;MET&nbsp;1998
 <P>
 The &quot;#5&quot; means that
 this is the fifth kernel built from this source base and the
-date behind it indicates the time the kernel was built.
+date following it indicates the time the kernel was built.
 <DT><I>/proc/sys/kernel/threads-max</I> (since Linux 2.3.11)
 
 <DD>
@@ -4961,6 +5054,12 @@ Explanations for some of the files under this directory can be found in
 
 and
 <B><A HREF="../man7/ip.7.html">ip</A></B>(7).
+
+<DT><B>/proc/sys/net/core/bpf_jit_enable</B>
+
+<DD>
+See
+<B><A HREF="../man2/bpf.2.html">bpf</A></B>(2).
 
 <DT><I>/proc/sys/net/core/somaxconn</I>
 
@@ -5524,10 +5623,840 @@ Linux version 1.0.9 (<A HREF="mailto:quinlan@phaze">quinlan@phaze</A>) #1 Sat Ma
 
 
 
-<DT><I>/proc/vmstat</I> (since Linux 2.6)
+<DT><I>/proc/vmstat</I> (since Linux 2.6.0)
 
 <DD>
 This file displays various virtual memory statistics.
+Each line of this file contains a single name-value pair,
+delimited by white space.
+Some files are present only if the kernel was configured with
+suitable options.
+(In some cases, the options required for particular files have changed
+across kernel versions, so they are not listed here.
+Details can be found by consulting the kernel source code.)
+The following fields may be present:
+
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT><I>nr_free_pages</I> (since Linux 2.6.31)
+
+<DD>
+
+<DT><I>nr_alloc_batch</I> (since Linux 3.12)
+
+<DD>
+
+<DT><I>nr_inactive_anon</I> (since Linux 2.6.28)
+
+<DD>
+
+<DT><I>nr_active_anon</I> (since Linux 2.6.28)
+
+<DD>
+
+<DT><I>nr_inactive_file</I> (since Linux 2.6.28)
+
+<DD>
+
+<DT><I>nr_active_file</I> (since Linux 2.6.28)
+
+<DD>
+
+<DT><I>nr_unevictable</I> (since Linux 2.6.28)
+
+<DD>
+
+<DT><I>nr_mlock</I> (since Linux 2.6.28)
+
+<DD>
+
+<DT><I>nr_anon_pages</I> (since Linux 2.6.18)
+
+<DD>
+
+<DT><I>nr_mapped</I> (since Linux 2.6.0)
+
+<DD>
+<DT><I>nr_file_pages</I> (since Linux 2.6.18)
+
+<DD>
+
+<DT><I>nr_dirty</I> (since Linux 2.6.0)
+
+<DD>
+<DT><I>nr_writeback</I> (since Linux 2.6.0)
+
+<DD>
+<DT><I>nr_slab_reclaimable</I> (since Linux 2.6.19)
+
+<DD>
+
+
+<DT><I>nr_slab_unreclaimable</I> (since Linux 2.6.19)
+
+<DD>
+
+<DT><I>nr_page_table_pages</I> (since Linux 2.6.0)
+
+<DD>
+<DT><I>nr_kernel_stack</I> (since Linux 2.6.32)
+
+<DD>
+
+Amount of memory allocated to kernel stacks.
+<DT><I>nr_unstable</I> (since Linux 2.6.0)
+
+<DD>
+<DT><I>nr_bounce</I> (since Linux 2.6.12)
+
+<DD>
+
+<DT><I>nr_vmscan_write</I> (since Linux 2.6.19)
+
+<DD>
+
+<DT><I>nr_vmscan_immediate_reclaim</I> (since Linux 3.2)
+
+<DD>
+
+<DT><I>nr_writeback_temp</I> (since Linux 2.6.26)
+
+<DD>
+
+<DT><I>nr_isolated_anon</I> (since Linux 2.6.32)
+
+<DD>
+
+<DT><I>nr_isolated_file</I> (since Linux 2.6.32)
+
+<DD>
+
+<DT><I>nr_shmem</I> (since Linux 2.6.32)
+
+<DD>
+
+Pages used by shmem and tmpfs.
+<DT><I>nr_dirtied</I> (since Linux 2.6.37)
+
+<DD>
+
+<DT><I>nr_written</I> (since Linux 2.6.37)
+
+<DD>
+
+<DT><I>nr_pages_scanned</I> (since Linux 3.17)
+
+<DD>
+
+<DT><I>numa_hit</I> (since Linux 2.6.18)
+
+<DD>
+
+
+
+<DT><I>numa_miss</I> (since Linux 2.6.18)
+
+<DD>
+
+
+
+<DT><I>numa_foreign</I> (since Linux 2.6.18)
+
+<DD>
+
+
+
+<DT><I>numa_interleave</I> (since Linux 2.6.18)
+
+<DD>
+
+
+
+<DT><I>numa_local</I> (since Linux 2.6.18)
+
+<DD>
+
+
+
+<DT><I>numa_other</I> (since Linux 2.6.18)
+
+<DD>
+
+
+
+<DT><I>workingset_refault</I> (since Linux 3.15)
+
+<DD>
+
+
+
+<DT><I>workingset_activate</I> (since Linux 3.15)
+
+<DD>
+
+
+
+<DT><I>workingset_nodereclaim</I> (since Linux 3.15)
+
+<DD>
+
+
+
+<DT><I>nr_anon_transparent_hugepages</I> (since Linux 2.6.38)
+
+<DD>
+
+
+<DT><I>nr_free_cma</I> (since Linux 3.7)
+
+<DD>
+
+Number of free CMA (Contiguous Memory Allocator) pages.
+
+
+<DT><I>nr_dirty_threshold</I> (since Linux 2.6.37)
+
+<DD>
+
+
+
+<DT><I>nr_dirty_background_threshold</I> (since Linux 2.6.37)
+
+<DD>
+
+
+
+<DT><I>pgpgin</I> (since Linux 2.6.0)
+
+<DD>
+
+
+<DT><I>pgpgout</I> (since Linux 2.6.0)
+
+<DD>
+
+
+<DT><I>pswpin</I> (since Linux 2.6.0)
+
+<DD>
+
+
+<DT><I>pswpout</I> (since Linux 2.6.0)
+
+<DD>
+
+
+<DT><I>pgalloc_dma</I> (since Linux 2.6.5)
+
+<DD>
+
+
+
+<DT><I>pgalloc_dma32</I> (since Linux 2.6.16)
+
+<DD>
+
+
+
+<DT><I>pgalloc_normal</I> (since Linux 2.6.5)
+
+<DD>
+
+
+<DT><I>pgalloc_high</I> (since Linux 2.6.5)
+
+<DD>
+
+
+
+
+<DT><I>pgalloc_movable</I> (since Linux 2.6.23)
+
+<DD>
+
+
+
+<DT><I>pgfree</I> (since Linux 2.6.0)
+
+<DD>
+
+
+<DT><I>pgactivate</I> (since Linux 2.6.0)
+
+<DD>
+
+
+<DT><I>pgdeactivate</I> (since Linux 2.6.0)
+
+<DD>
+
+
+<DT><I>pgfault</I> (since Linux 2.6.0)
+
+<DD>
+
+
+<DT><I>pgmajfault</I> (since Linux 2.6.0)
+
+<DD>
+
+
+<DT><I>pgrefill_dma</I> (since Linux 2.6.5)
+
+<DD>
+
+
+
+<DT><I>pgrefill_dma32</I> (since Linux 2.6.16)
+
+<DD>
+
+
+
+<DT><I>pgrefill_normal</I> (since Linux 2.6.5)
+
+<DD>
+
+
+<DT><I>pgrefill_high</I> (since Linux 2.6.5)
+
+<DD>
+
+
+
+
+<DT><I>pgrefill_movable</I> (since Linux 2.6.23)
+
+<DD>
+
+
+
+
+
+
+
+
+
+
+<DT><I>pgsteal_kswapd_dma</I> (since Linux 3.4)
+
+<DD>
+
+
+
+
+<DT><I>pgsteal_kswapd_dma32</I> (since Linux 3.4)
+
+<DD>
+
+
+
+
+<DT><I>pgsteal_kswapd_normal</I> (since Linux 3.4)
+
+<DD>
+
+
+
+<DT><I>pgsteal_kswapd_high</I> (since Linux 3.4)
+
+<DD>
+
+
+
+
+
+<DT><I>pgsteal_kswapd_movable</I> (since Linux 3.4)
+
+<DD>
+
+
+
+<DT><I>pgsteal_direct_dma</I>
+
+<DD>
+
+
+<DT><I>pgsteal_direct_dma32</I> (since Linux 3.4)
+
+<DD>
+
+
+
+<DT><I>pgsteal_direct_normal</I> (since Linux 3.4)
+
+<DD>
+
+
+
+<DT><I>pgsteal_direct_high</I> (since Linux 3.4)
+
+<DD>
+
+
+
+
+
+<DT><I>pgsteal_direct_movable</I> (since Linux 2.6.23)
+
+<DD>
+
+
+
+<DT><I>pgscan_kswapd_dma</I>
+
+<DD>
+
+
+
+<DT><I>pgscan_kswapd_dma32</I> (since Linux 2.6.16)
+
+<DD>
+
+
+
+<DT><I>pgscan_kswapd_normal</I> (since Linux 2.6.5)
+
+<DD>
+
+
+<DT><I>pgscan_kswapd_high</I>
+
+<DD>
+
+
+
+
+<DT><I>pgscan_kswapd_movable</I> (since Linux 2.6.23)
+
+<DD>
+
+
+
+<DT><I>pgscan_direct_dma</I>
+
+<DD>
+
+
+<DT><I>pgscan_direct_dma32</I> (since Linux 2.6.16)
+
+<DD>
+
+
+
+<DT><I>pgscan_direct_normal</I>
+
+<DD>
+
+
+<DT><I>pgscan_direct_high</I>
+
+<DD>
+
+
+
+
+<DT><I>pgscan_direct_movable</I> (since Linux 2.6.23)
+
+<DD>
+
+
+
+<DT><I>pgscan_direct_throttle</I> (since Linux 3.6)
+
+<DD>
+
+
+
+<DT><I>zone_reclaim_failed</I> (since linux 2.6.31)
+
+<DD>
+
+
+
+
+
+<DT><I>pginodesteal</I> (since linux 2.6.0)
+
+<DD>
+
+
+<DT><I>slabs_scanned</I> (since linux 2.6.5)
+
+<DD>
+
+
+<DT><I>kswapd_inodesteal</I> (since linux 2.6.0)
+
+<DD>
+
+
+<DT><I>kswapd_low_wmark_hit_quickly</I> (since 2.6.33)
+
+<DD>
+
+
+
+<DT><I>kswapd_high_wmark_hit_quickly</I> (since 2.6.33)
+
+<DD>
+
+
+
+<DT><I>pageoutrun</I> (since Linux 2.6.0)
+
+<DD>
+
+
+<DT><I>allocstall</I> (since Linux 2.6.0)
+
+<DD>
+
+
+<DT><I>pgrotated</I> (since Linux 2.6.0)
+
+<DD>
+
+
+<DT><I>drop_pagecache</I> (since Linux 3.15)
+
+<DD>
+
+
+
+<DT><I>drop_slab</I> (since Linux 3.15)
+
+<DD>
+
+
+
+<DT><I>numa_pte_updates</I> (since Linux 3.8)
+
+<DD>
+
+
+
+
+
+<DT><I>numa_huge_pte_updates</I> (since Linux 3.13)
+
+<DD>
+
+
+
+
+
+<DT><I>numa_hint_faults</I> (since Linux 3.8)
+
+<DD>
+
+
+
+
+
+<DT><I>numa_hint_faults_local</I> (since Linux 3.8)
+
+<DD>
+
+
+
+
+
+<DT><I>numa_pages_migrated</I> (since Linux 3.8)
+
+<DD>
+
+
+
+
+
+
+
+<DT><I>pgmigrate_success</I> (since Linux 3.8)
+
+<DD>
+
+
+
+
+
+<DT><I>pgmigrate_fail</I> (since Linux 3.8)
+
+<DD>
+
+
+
+
+
+<DT><I>compact_migrate_scanned</I> (since Linux 3.8)
+
+<DD>
+
+
+
+
+
+
+
+<DT><I>compact_free_scanned</I> (since Linux 3.8)
+
+<DD>
+
+
+
+
+
+<DT><I>compact_isolated</I> (since Linux 3.8)
+
+<DD>
+
+
+
+
+
+<DT><I>compact_stall</I> (since Linux 2.6.35)
+
+<DD>
+
+See the kernel source file
+<I>Documentation/vm/transhuge.txt</I>.
+
+
+
+
+
+<DT><I>compact_fail</I> (since Linux 2.6.35)
+
+<DD>
+
+See the kernel source file
+<I>Documentation/vm/transhuge.txt</I>.
+
+
+
+
+
+<DT><I>compact_success</I> (since Linux 2.6.35)
+
+<DD>
+
+See the kernel source file
+<I>Documentation/vm/transhuge.txt</I>.
+
+
+
+
+
+<DT><I>htlb_buddy_alloc_success</I> (since Linux 2.6.26)
+
+<DD>
+
+
+
+
+
+<DT><I>htlb_buddy_alloc_fail</I> (since Linux 2.6.26)
+
+<DD>
+
+
+
+
+
+<DT><I>unevictable_pgs_culled</I> (since Linux 2.6.28)
+
+<DD>
+
+
+
+<DT><I>unevictable_pgs_scanned</I> (since Linux 2.6.28)
+
+<DD>
+
+
+
+<DT><I>unevictable_pgs_rescued</I> (since Linux 2.6.28)
+
+<DD>
+
+
+
+<DT><I>unevictable_pgs_mlocked</I> (since Linux 2.6.28)
+
+<DD>
+
+
+
+<DT><I>unevictable_pgs_munlocked</I> (since Linux 2.6.28)
+
+<DD>
+
+
+
+<DT><I>unevictable_pgs_cleared</I> (since Linux 2.6.28)
+
+<DD>
+
+
+
+<DT><I>unevictable_pgs_stranded</I> (since Linux 2.6.28)
+
+<DD>
+
+
+
+
+<DT><I>thp_fault_alloc</I> (since Linux 2.6.39)
+
+<DD>
+
+See the kernel source file
+<I>Documentation/vm/transhuge.txt</I>.
+
+
+
+
+
+<DT><I>thp_fault_fallback</I> (since Linux 2.6.39)
+
+<DD>
+
+See the kernel source file
+<I>Documentation/vm/transhuge.txt</I>.
+
+
+
+
+
+<DT><I>thp_collapse_alloc</I> (since Linux 2.6.39)
+
+<DD>
+
+See the kernel source file
+<I>Documentation/vm/transhuge.txt</I>.
+
+
+
+
+
+<DT><I>thp_collapse_alloc_failed</I> (since Linux 2.6.39)
+
+<DD>
+
+See the kernel source file
+<I>Documentation/vm/transhuge.txt</I>.
+
+
+
+
+
+<DT><I>thp_split</I> (since Linux 2.6.39)
+
+<DD>
+
+See the kernel source file
+<I>Documentation/vm/transhuge.txt</I>.
+
+
+
+
+
+<DT><I>thp_zero_page_alloc</I> (since Linux 3.8)
+
+<DD>
+
+See the kernel source file
+<I>Documentation/vm/transhuge.txt</I>.
+
+
+
+
+
+<DT><I>thp_zero_page_alloc_failed</I> (since Linux 3.8)
+
+<DD>
+
+See the kernel source file
+<I>Documentation/vm/transhuge.txt</I>.
+
+
+
+
+
+<DT><I>balloon_inflate</I> (since Linux 3.18)
+
+<DD>
+
+
+
+
+
+<DT><I>balloon_deflate</I> (since Linux 3.18)
+
+<DD>
+
+
+
+
+
+<DT><I>balloon_migrate</I> (since Linux 3.18)
+
+<DD>
+
+
+
+
+
+
+<DT><I>nr_tlb_remote_flush</I> (since Linux 3.12)
+
+<DD>
+
+
+
+
+
+<DT><I>nr_tlb_remote_flush_received</I> (since Linux 3.12)
+
+<DD>
+
+
+
+
+
+<DT><I>nr_tlb_local_flush_all</I> (since Linux 3.12)
+
+<DD>
+
+
+
+<DT><I>nr_tlb_local_flush_one</I> (since Linux 3.12)
+
+<DD>
+
+
+
+<DT><I>vmacache_find_calls</I> (since Linux 3.16)
+
+<DD>
+
+
+
+<DT><I>vmacache_find_hits</I> (since Linux 3.16)
+
+<DD>
+
+
+
+<DT><I>vmacache_full_flushes</I> (since Linux 3.19)
+
+<DD>
+
+
+
+</DL>
+</DL>
+
 <DT><I>/proc/zoneinfo</I> (since Linux 2.6.13)
 
 <DD>
@@ -5636,6 +6565,6 @@ and
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:39:38 GMT, April 20, 2020
+Time: 03:40:10 GMT, April 20, 2020
 </BODY>
 </HTML>

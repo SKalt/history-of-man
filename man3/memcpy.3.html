@@ -26,7 +26,7 @@ the source, must acknowledge the copyright and authors of this work.
 <HTML><HEAD><TITLE>Man page of MEMCPY</TITLE>
 </HEAD><BODY>
 <H1>MEMCPY</H1>
-Section: Linux Programmer's Manual (3)<BR>Updated: 2015-03-02<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2015-07-23<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -81,6 +81,57 @@ For an explanation of the terms used in this section, see
 
 SVr4, 4.3BSD, C89, C99, POSIX.1-2001.
 <A NAME="lbAH">&nbsp;</A>
+<H2>NOTES</H2>
+
+Failure to observe the requirement that the memory areas
+do not overlap has been the source of real bugs.
+(POSIX and the C standards are explicit that employing
+<B>memcpy</B>()
+
+with overlapping areas produces undefined behavior.)
+Most notably, in glibc 2.13
+
+a performance optimization of
+<B>memcpy</B>()
+
+on some platforms (including x86-64) included changing the order
+
+in which bytes were copied from
+<I>src</I>
+
+to
+<I>dest</I>.
+
+<P>
+This change revealed breakages in a number of applications that performed
+copying with overlapping areas.
+
+
+
+
+
+
+
+
+
+Under the previous implementation,
+the order in which the bytes were copied had fortuitously hidden the bug,
+which was revealed when the copying order was reversed.
+In glibc 2.14,
+
+a versioned symbol was added so that old binaries
+(i.e., those linked against glibc versions earlier than 2.14)
+employed a
+<B>memcpy</B>()
+
+implementation that safely handles the overlapping buffers case
+(by providing an &quot;older&quot;
+<B>memcpy</B>()
+
+implementation that was aliased to
+<B><A HREF="../man3/memmove.3.html">memmove</A></B>(3)).
+
+<A NAME="lbAI">&nbsp;</A>
 <H2>SEE ALSO</H2>
 
 <B><A HREF="../man3/bcopy.3.html">bcopy</A></B>(3),
@@ -108,12 +159,13 @@ SVr4, 4.3BSD, C89, C99, POSIX.1-2001.
 <DT><A HREF="#lbAE">RETURN VALUE</A><DD>
 <DT><A HREF="#lbAF">ATTRIBUTES</A><DD>
 <DT><A HREF="#lbAG">CONFORMING TO</A><DD>
-<DT><A HREF="#lbAH">SEE ALSO</A><DD>
+<DT><A HREF="#lbAH">NOTES</A><DD>
+<DT><A HREF="#lbAI">SEE ALSO</A><DD>
 </DL>
 <HR>
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:39:34 GMT, April 20, 2020
+Time: 03:40:06 GMT, April 20, 2020
 </BODY>
 </HTML>

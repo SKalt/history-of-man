@@ -322,10 +322,29 @@ can be discovered by listing the subdirectories in
 <DT><B>MAP_LOCKED</B> (since Linux 2.5.37)
 
 <DD>
-Lock the pages of the mapped region into memory in the manner of
+Mark the mmaped region to be locked in the same way as
 <B><A HREF="../man2/mlock.2.html">mlock</A></B>(2).
 
-This flag is ignored in older kernels.
+This implementation will try to populate (prefault) the whole range but
+the mmap call doesn't fail with
+<B>ENOMEM</B>
+
+if this fails.
+Therefore major faults might happen later on.
+So the semantic is not as strong as
+<B><A HREF="../man2/mlock.2.html">mlock</A></B>(2).
+
+One should use
+<B><A HREF="../man2/mmap.2.html">mmap</A></B>(2)
+
+plus
+<B><A HREF="../man2/mlock.2.html">mlock</A></B>(2)
+
+when major faults are not acceptable after the initialization of the mapping.
+The
+<B>MAP_LOCKED</B>
+
+flag is ignored in older kernels.
 
 <DT><B>MAP_NONBLOCK</B> (since Linux 2.5.46)
 
@@ -371,7 +390,7 @@ private writable mappings.
 <DD>
 Populate (prefault) page tables for a mapping.
 For a file mapping, this causes read-ahead on the file.
-Later accesses to the mapping will not be blocked by page faults.
+This will help to reduce blocking on page faults later.
 <B>MAP_POPULATE</B>
 
 is supported for private mappings only since Linux 2.6.23.
@@ -626,8 +645,17 @@ memory mapping.
 <DT><B>ENOMEM</B>
 
 <DD>
-No memory is available, or the process's maximum number of mappings would
-have been exceeded.
+No memory is available.
+<DT><B>ENOMEM</B>
+
+<DD>
+The process's maximum number of mappings would have been exceeded.
+This error can also occur for
+<B><A HREF="../man2/munmap.2.html">munmap</A></B>(2),
+
+when unmapping a region in the middle of an existing mapping,
+since this results in two smaller mappings on either side of
+the region being unmapped.
 <DT><B>EPERM</B>
 
 <DD>
@@ -819,7 +847,7 @@ and
 
 
 <A NAME="lbAM">&nbsp;</A>
-<H3>C library/kernel ABI differences</H3>
+<H3>C library/kernel differences</H3>
 
 This page describes the interface provided by the glibc
 <B>mmap</B>()
@@ -1050,7 +1078,7 @@ B.O. Gallmeister, POSIX.4, O'Reilly, pp. 128-129 and 389-391.
 <DT><A HREF="#lbAK">AVAILABILITY</A><DD>
 <DT><A HREF="#lbAL">NOTES</A><DD>
 <DL>
-<DT><A HREF="#lbAM">C library/kernel ABI differences</A><DD>
+<DT><A HREF="#lbAM">C library/kernel differences</A><DD>
 </DL>
 <DT><A HREF="#lbAN">BUGS</A><DD>
 <DT><A HREF="#lbAO">EXAMPLE</A><DD>
@@ -1063,6 +1091,6 @@ B.O. Gallmeister, POSIX.4, O'Reilly, pp. 128-129 and 389-391.
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:39:26 GMT, April 20, 2020
+Time: 03:39:57 GMT, April 20, 2020
 </BODY>
 </HTML>

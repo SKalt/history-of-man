@@ -26,7 +26,7 @@ the source, must acknowledge the copyright and authors of this work.
 <HTML><HEAD><TITLE>Man page of CHROOT</TITLE>
 </HEAD><BODY>
 <H1>CHROOT</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2010-09-20<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2015-07-23<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -89,6 +89,35 @@ capability) may call
 <P>
 This call changes an ingredient in the pathname resolution process
 and does nothing else.
+In particular, it is not intended to be used
+for any kind of security purpose, neither to fully sandbox a process nor
+to restrict filesystem system calls.
+In the past,
+<B>chroot</B>()
+
+has been used by daemons to restrict themselves prior to passing paths
+supplied by untrusted users to system calls such as
+<B><A HREF="../man2/open.2.html">open</A></B>(2).
+
+However, if a folder is moved out of the chroot directory, an attacker
+can exploit that to get out of the chroot directory as well.
+The easiest way to do that is to
+<B><A HREF="../man2/chdir.2.html">chdir</A></B>(2)
+
+to the to-be-moved directory, wait for it to be moved out, then open a
+path like ../../../etc/passwd.
+<P>
+
+
+A slightly
+trickier variation also works under some circumstances if
+<B><A HREF="../man2/chdir.2.html">chdir</A></B>(2)
+
+is not permitted.
+If a daemon allows a &quot;chroot directory&quot; to be specified,
+that usually means that if you want to prevent remote users from accessing
+files outside the chroot directory, you must ensure that folders are never
+moved out of it.
 <P>
 This call does not change the current working directory,
 so that after the call '<I>.</I>' can
@@ -103,6 +132,7 @@ by doing:
 <P>
 This call does not close open file descriptors, and such file
 descriptors may allow access to files outside the chroot tree.
+<P>
 <A NAME="lbAE">&nbsp;</A>
 <H2>RETURN VALUE</H2>
 
@@ -217,6 +247,6 @@ system call.
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:39:25 GMT, April 20, 2020
+Time: 03:39:56 GMT, April 20, 2020
 </BODY>
 </HTML>

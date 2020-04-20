@@ -22,7 +22,7 @@ License along with this manual; if not, see
 <HTML><HEAD><TITLE>Man page of LOCALE</TITLE>
 </HEAD><BODY>
 <H1>LOCALE</H1>
-Section: Linux User Manual (5)<BR>Updated: 2015-01-22<BR><A HREF="#index">Index</A>
+Section: Linux User Manual (5)<BR>Updated: 2015-07-23<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -42,6 +42,10 @@ command needs to convert it into the binary locale database.
 <P>
 The definition files consist of sections which each describe a
 locale category in detail.
+See
+<B><A HREF="../man7/locale.7.html">locale</A></B>(7)
+
+for additional details for these categories.
 <A NAME="lbAD">&nbsp;</A>
 <H3>Syntax</H3>
 
@@ -73,6 +77,16 @@ the only valid keyword in the definition is
 
 followed by the name of the locale in double quotes which should be
 copied.
+The exceptions for this rule are
+<B>LC_COLLATE</B>
+
+and
+<B>LC_CTYPE</B>
+
+where a
+<B>copy</B>
+
+statement can be followed by locale-specific rules and selected overrides.
 <P>
 
 When defining a category from scratch, all field descriptors and strings
@@ -149,7 +163,7 @@ for a more detailed description of each category.
 <H3>LC_ADDRESS</H3>
 
 The definition starts with the string
-<B>LC_ADDRESS</B>
+<I>LC_ADDRESS</I>
 
 in the first column.
 <P>
@@ -255,7 +269,7 @@ followed by the code for the country car number.
 <DT><I>country_isbn</I>
 
 <DD>
-followed by the ISBN code as plain numbers (for books).
+followed by the ISBN code (for books).
 <DT><I>lang_name</I>
 
 <DD>
@@ -292,18 +306,11 @@ definition ends with the string
 <H3>LC_CTYPE</H3>
 
 The definition starts with the string
-<B>LC_CTYPE</B>
+<I>LC_CTYPE</I>
 
 in the first column.
 <P>
 The following keywords are allowed:
-
-
-
-
-
-
-
 <DL COMPACT>
 <DT><I>upper</I>
 
@@ -555,6 +562,11 @@ and
 <B>&lt;tab&gt;</B>
 
 are automatically included.
+<DT><I>charclass</I>
+
+<DD>
+followed by a list of locale-specific character class names
+which are then to be defined in the locale.
 <DT><I>toupper</I>
 
 <DD>
@@ -574,6 +586,78 @@ followed by a list of mappings from uppercase to lowercase
 letters.
 If the keyword tolower is not present, the reverse of the
 toupper list is used.
+<DT><I>map totitle</I>
+
+<DD>
+followed by a list of mapping pairs of
+characters and letters
+to be used in titles (headings).
+<DT><I>class</I>
+
+<DD>
+followed by a locale-specific character class definition,
+starting with the class name followed by the characters
+belonging to the class.
+<DT><I>charconv</I>
+
+<DD>
+followed by a list of locale-specific character mapping names
+which are then to be defined in the locale.
+<DT><I>outdigit</I>
+
+<DD>
+followed by a list of alternate output digits for the locale.
+<DT><I>map to_inpunct</I>
+
+<DD>
+followed by a list of mapping pairs of
+alternate digits and separators
+for input digits for the locale.
+<DT><I>map to_outpunct</I>
+
+<DD>
+followed by a list of mapping pairs of
+alternate separators
+for output for the locale.
+<DT><I>translit_start</I>
+
+<DD>
+marks the start of the transliteration rules section.
+The section can contain the
+<I>include</I>
+
+keyword in the beginning followed by
+locale-specific rules and overrides.
+Any rule specified in the locale file
+will override any rule
+copied or included from other files.
+In case of duplicate rule definitions in the locale file,
+only the first rule is used.
+<P>
+A transliteration rule consist of a character to be transliterated
+followed by a list of transliteration targets separated by semicolons.
+The first target which can be presented in the target character set
+is used, if none of them can be used the
+<I>default_missing</I>
+
+character will be used instead.
+<DT><I>include</I>
+
+<DD>
+in the transliteration rules section includes
+a transliteration rule file
+(and optionally a repertoire map file).
+<DT><I>default_missing</I>
+
+<DD>
+in the transliteration rules section
+defines the default character to be used for
+transliteration where none of the targets cannot be presented
+in the target character set.
+<DT><I>translit_end</I>
+
+<DD>
+marks the end of the transliteration rules.
 </DL>
 <P>
 
@@ -589,11 +673,15 @@ definition ends with the string
 Due to limitations of glibc not all POSIX-options are implemented.
 <P>
 The definition starts with the string
-<B>LC_COLLATE</B>
+<I>LC_COLLATE</I>
 
 in the first column.
 <P>
 The following keywords are allowed:
+
+
+
+
 
 
 
@@ -628,11 +716,6 @@ The order definition consists of lines that describe the order
 and is terminated with the keyword
 <I>order_end</I>.
 
-
-
-
-
-
 </DL>
 <P>
 
@@ -646,7 +729,7 @@ definition ends with the string
 <H3>LC_IDENTIFICATION</H3>
 
 The definition starts with the string
-<B>LC_IDENTIFICATION</B>
+<I>LC_IDENTIFICATION</I>
 
 in the first column.
 <P>
@@ -749,7 +832,7 @@ definition ends with the string
 <H3>LC_MESSAGES</H3>
 
 The definition starts with the string
-<B>LC_MESSAGES</B>
+<I>LC_MESSAGES</I>
 
 in the first column.
 <P>
@@ -786,7 +869,7 @@ definition ends with the string
 <H3>LC_MEASUREMENT</H3>
 
 The definition starts with the string
-<B>LC_MEASUREMENT</B>
+<I>LC_MEASUREMENT</I>
 
 in the first column.
 <P>
@@ -823,7 +906,7 @@ definition ends with the string
 <H3>LC_MONETARY</H3>
 
 The definition starts with the string
-<B>LC_MONETARY</B>
+<I>LC_MONETARY</I>
 
 in the first column.
 <P>
@@ -920,36 +1003,6 @@ the symbol precedes the value.
 </DL>
 </DL>
 
-<DT><I>n_cs_precedes</I>
-
-<DD>
-followed by an integer that indicates the placement of
-<I>currency_symbol</I>
-
-for a negative formatted monetary quantity.
-The same values are recognized as for
-<I>p_cs_precedes</I>.
-
-<DT><I>int_p_cs_precedes</I>
-
-<DD>
-followed by an integer that indicates the placement of
-<I>int_currency_symbol</I>
-
-for a nonnegative internationally formatted monetary quantity.
-The same values are recognized as for
-<I>p_cs_precedes</I>.
-
-<DT><I>int_n_cs_precedes</I>
-
-<DD>
-followed by an integer that indicates the placement of
-<I>int_currency_symbol</I>
-
-for a negative internationally formatted monetary quantity.
-The same values are recognized as for
-<I>p_cs_precedes</I>.
-
 <DT><I>p_sep_by_space</I>
 
 <DD>
@@ -979,6 +1032,16 @@ otherwise a space separates the sign string and the value.
 </DL>
 </DL>
 
+<DT><I>n_cs_precedes</I>
+
+<DD>
+followed by an integer that indicates the placement of
+<I>currency_symbol</I>
+
+for a negative formatted monetary quantity.
+The same values are recognized as for
+<I>p_cs_precedes</I>.
+
 <DT><I>n_sep_by_space</I>
 
 <DD>
@@ -986,28 +1049,6 @@ followed by an integer that indicates the separation of
 <I>currency_symbol</I>,
 
 the sign string, and the value for a negative formatted monetary quantity.
-The same values are recognized as for
-<I>p_sep_by_space</I>.
-
-<DT><I>int_p_sep_by_space</I>
-
-<DD>
-followed by an integer that indicates the separation of
-<I>int_currency_symbol</I>,
-
-the sign string,
-and the value for a nonnegative internationally formatted monetary quantity.
-The same values are recognized as for
-<I>p_sep_by_space</I>.
-
-<DT><I>int_n_sep_by_space</I>
-
-<DD>
-followed by an integer that indicates the separation of
-<I>int_currency_symbol</I>,
-
-the sign string,
-and the value for a negative internationally formatted monetary quantity.
 The same values are recognized as for
 <I>p_sep_by_space</I>.
 
@@ -1078,6 +1119,48 @@ should be placed for a negative monetary quantity.
 The same values are recognized as for
 <I>p_sign_posn</I>.
 
+<DT><I>int_p_cs_precedes</I>
+
+<DD>
+followed by an integer that indicates the placement of
+<I>int_currency_symbol</I>
+
+for a nonnegative internationally formatted monetary quantity.
+The same values are recognized as for
+<I>p_cs_precedes</I>.
+
+<DT><I>int_n_cs_precedes</I>
+
+<DD>
+followed by an integer that indicates the placement of
+<I>int_currency_symbol</I>
+
+for a negative internationally formatted monetary quantity.
+The same values are recognized as for
+<I>p_cs_precedes</I>.
+
+<DT><I>int_p_sep_by_space</I>
+
+<DD>
+followed by an integer that indicates the separation of
+<I>int_currency_symbol</I>,
+
+the sign string,
+and the value for a nonnegative internationally formatted monetary quantity.
+The same values are recognized as for
+<I>p_sep_by_space</I>.
+
+<DT><I>int_n_sep_by_space</I>
+
+<DD>
+followed by an integer that indicates the separation of
+<I>int_currency_symbol</I>,
+
+the sign string,
+and the value for a negative internationally formatted monetary quantity.
+The same values are recognized as for
+<I>p_sep_by_space</I>.
+
 <DT><I>int_p_sign_posn</I>
 
 <DD>
@@ -1113,7 +1196,7 @@ definition ends with the string
 <H3>LC_NAME</H3>
 
 The definition starts with the string
-<B>LC_NAME</B>
+<I>LC_NAME</I>
 
 in the first column.
 <P>
@@ -1206,7 +1289,7 @@ definition ends with the string
 <H3>LC_NUMERIC</H3>
 
 The definition starts with the string
-<B>LC_NUMERIC</B>
+<I>LC_NUMERIC</I>
 
 in the first column.
 <P>
@@ -1249,7 +1332,7 @@ definition ends with the string
 <H3>LC_PAPER</H3>
 
 The definition starts with the string
-<B>LC_PAPER</B>
+<I>LC_PAPER</I>
 
 in the first column.
 <P>
@@ -1278,7 +1361,7 @@ definition ends with the string
 <H3>LC_TELEPHONE</H3>
 
 The definition starts with the string
-<B>LC_TELEPHONE</B>
+<I>LC_TELEPHONE</I>
 
 in the first column.
 <P>
@@ -1340,17 +1423,11 @@ definition ends with the string
 <H3>LC_TIME</H3>
 
 The definition starts with the string
-<B>LC_TIME</B>
+<I>LC_TIME</I>
 
 in the first column.
 <P>
 The following keywords are allowed:
-
-
-
-
-
-
 <DL COMPACT>
 <DT><I>abday</I>
 
@@ -1380,6 +1457,27 @@ followed by a list of abbreviated month names.
 
 <DD>
 followed by a list of month names.
+<DT><I>d_t_fmt</I>
+
+<DD>
+followed by the appropriate date and time format
+(for syntax, see
+<B><A HREF="../man3/strftime.3.html">strftime</A></B>(3)).
+
+<DT><I>d_fmt</I>
+
+<DD>
+followed by the appropriate date format
+(for syntax, see
+<B><A HREF="../man3/strftime.3.html">strftime</A></B>(3)).
+
+<DT><I>t_fmt</I>
+
+<DD>
+followed by the appropriate time format
+(for syntax, see
+<B><A HREF="../man3/strftime.3.html">strftime</A></B>(3)).
+
 <DT><I>am_pm</I>
 
 <DD>
@@ -1391,23 +1489,144 @@ and
 
 strings.
 This should be left empty for locales not using AM/PM convention.
-<DT><I>d_t_fmt</I>
-
-<DD>
-followed by the appropriate date and time format.
-<DT><I>d_fmt</I>
-
-<DD>
-followed by the appropriate date format.
-<DT><I>t_fmt</I>
-
-<DD>
-followed by the appropriate time format.
 <DT><I>t_fmt_ampm</I>
 
 <DD>
-followed by the appropriate time format when using 12h clock format.
+followed by the appropriate time format
+(for syntax, see
+<B><A HREF="../man3/strftime.3.html">strftime</A></B>(3))
+
+when using 12h clock format.
 This should be left empty for locales not using AM/PM convention.
+<DT><I>era</I>
+
+<DD>
+followed by semicolon-separated strings that define how years are
+counted and displayed for each era in the locale.
+Each string has the following format:
+<DL COMPACT><DT><DD>
+<P>
+
+<I>direction</I>:<I>offset</I>:<I>start_date</I>:<I>end_date</I>:<I>era_name</I>:<I>era_format</I>
+
+<P>
+
+The fields are to be defined as follows:
+<P>
+
+<DL COMPACT>
+<DT><I>direction</I>
+
+<DD>
+Either
+<B>+</B>
+
+or
+<B>-.</B>
+
+<B>+</B>
+
+means the years closer to
+<I>start_date</I>
+
+have lower numbers than years closer to
+<I>end_date</I>.
+
+<B>-</B>
+
+means the opposite.
+<DT><I>offset</I>
+
+<DD>
+The number of the year closest to
+<I>start_date</I>
+
+in the era, corresponding to the
+<I>%Ey</I>
+
+descriptor (see
+<B><A HREF="../man3/strptime.3.html">strptime</A></B>(3)).
+
+<DT><I>start_date</I>
+
+<DD>
+The start of the era in the form of
+<I>yyyy/mm/dd</I>.
+
+Years prior AD 1 are represented as negative numbers.
+<DT><I>end_date</I>
+
+<DD>
+The end of the era in the form of
+<I>yyyy/mm/dd</I>,
+
+or one of the two special values of
+<B>-*</B>
+
+or
+<B>+*</B>.
+
+<B>-*</B>
+
+means the ending date is the beginning of time.
+<B>+*</B>
+
+means the ending date is the end of time.
+<DT><I>era_name</I>
+
+<DD>
+The name of the era corresponding to the
+<I>%EC</I>
+
+descriptor (see
+<B><A HREF="../man3/strptime.3.html">strptime</A></B>(3)).
+
+<DT><I>era_format</I>
+
+<DD>
+The format of the year in the era corresponding to the
+<I>%EY</I>
+
+descriptor (see
+<B><A HREF="../man3/strptime.3.html">strptime</A></B>(3)).
+
+</DL>
+</DL>
+
+<DT><I>era_d_fmt</I>
+
+<DD>
+followed by the format of the date in alternative era notation,
+corresponding to the
+<I>%Ex</I>
+
+descriptor (see
+<B><A HREF="../man3/strptime.3.html">strptime</A></B>(3)).
+
+<DT><I>era_t_fmt</I>
+
+<DD>
+followed by the format of the time in alternative era notation,
+corresponding to the
+<I>%EX</I>
+
+descriptor (see
+<B><A HREF="../man3/strptime.3.html">strptime</A></B>(3)).
+
+<DT><I>era_d_t_fmt</I>
+
+<DD>
+followed by the format of the date and time in alternative era notation,
+corresponding to the
+<I>%Ec</I>
+
+descriptor (see
+<B><A HREF="../man3/strptime.3.html">strptime</A></B>(3)).
+
+<DT><I>alt_digits</I>
+
+<DD>
+followed by the alternative digits used for date and time in the locale.
 <DT><I>week</I>
 
 <DD>
@@ -1478,7 +1697,10 @@ Right-left from top.
 
 <DD>
 followed by the appropriate date representation for
-<B><A HREF="../man1/date.1.html">date</A></B>(1).
+<B><A HREF="../man1/date.1.html">date</A></B>(1)
+
+(for syntax, see
+<B><A HREF="../man3/strftime.3.html">strftime</A></B>(3)).
 
 </DL>
 <P>
@@ -1574,15 +1796,13 @@ or
 
 depending on whether the week and work week actually starts on Sunday or
 Monday for the locale.
+
+
 </DL>
 <A NAME="lbAU">&nbsp;</A>
-<H2>BUGS</H2>
-
-This manual page isn't complete.
-
-
-<A NAME="lbAV">&nbsp;</A>
 <H2>SEE ALSO</H2>
+
+<B><A HREF="../man1/iconv.1.html">iconv</A></B>(1),
 
 <B><A HREF="../man1/locale.1.html">locale</A></B>(1),
 
@@ -1593,6 +1813,10 @@ This manual page isn't complete.
 <B><A HREF="../man3/newlocale.3.html">newlocale</A></B>(3),
 
 <B><A HREF="../man3/setlocale.3.html">setlocale</A></B>(3),
+
+<B><A HREF="../man3/strftime.3.html">strftime</A></B>(3),
+
+<B><A HREF="../man3/strptime.3.html">strptime</A></B>(3),
 
 <B><A HREF="../man3/uselocale.3.html">uselocale</A></B>(3),
 
@@ -1632,13 +1856,12 @@ This manual page isn't complete.
 <DT><A HREF="#lbAR">FILES</A><DD>
 <DT><A HREF="#lbAS">CONFORMING TO</A><DD>
 <DT><A HREF="#lbAT">NOTES</A><DD>
-<DT><A HREF="#lbAU">BUGS</A><DD>
-<DT><A HREF="#lbAV">SEE ALSO</A><DD>
+<DT><A HREF="#lbAU">SEE ALSO</A><DD>
 </DL>
 <HR>
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:39:38 GMT, April 20, 2020
+Time: 03:40:10 GMT, April 20, 2020
 </BODY>
 </HTML>

@@ -25,7 +25,7 @@ the source, must acknowledge the copyright and authors of this work.
 <HTML><HEAD><TITLE>Man page of RENAME</TITLE>
 </HEAD><BODY>
 <H1>RENAME</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2014-08-19<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2015-07-23<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -234,17 +234,6 @@ The
 
 argument is a bit mask consisting of zero or more of the following flags:
 <DL COMPACT>
-<DT><B>RENAME_NOREPLACE</B>
-
-<DD>
-Don't overwrite
-<I>newpath</I>
-
-of the rename.
-Return an error if
-<I>newpath</I>
-
-already exists.
 <DT><B>RENAME_EXCHANGE</B>
 
 <DD>
@@ -257,6 +246,81 @@ and
 Both pathnames must exist
 but may be of different types (e.g., one could be a non-empty directory
 and the other a symbolic link).
+<DT><B>RENAME_NOREPLACE</B>
+
+<DD>
+Don't overwrite
+<I>newpath</I>
+
+of the rename.
+Return an error if
+<I>newpath</I>
+
+already exists.
+<P>
+<B>RENAME_NOREPLACE</B>
+
+can't be employed together with
+<B>RENAME_EXCHANGE</B>.
+
+<DT><B>RENAME_WHITEOUT</B> (since Linux 3.18)
+
+<DD>
+
+
+This operation makes sense only for overlay/union
+filesystem implementations.
+<P>
+Specifying
+<B>RENAME_WHITEOUT</B>
+
+creates a &quot;whiteout&quot; object at the source of
+the rename at the same time as performing the rename.
+The whole operation is atomic,
+so that if the rename succeeds then the whiteout will also have been created.
+<P>
+A &quot;whiteout&quot; is an object that has special meaning in union/overlay
+filesystem constructs.
+In these constructs,
+multiple layers exist and only the top one is ever modified.
+A whiteout on an upper layer will effectively hide a
+matching file in the lower layer,
+making it appear as if the file didn't exist.
+<P>
+When a file that exists on the lower layer is renamed,
+the file is first copied up (if not already on the upper layer)
+and then renamed on the upper, read-write layer.
+At the same time, the source file needs to be &quot;whiteouted&quot;
+(so that the version of the source file in the lower layer
+is rendered invisible).
+The whole operation needs to be done atomically.
+<P>
+When not part of a union/overlay,
+the whiteout appears as a character device with a {0,0} device number.
+<P>
+<B>RENAME_WHITEOUT</B>
+
+requires the same privileges as creating a device node (i.e., the
+<B>CAP_MKNOD</B>
+
+capability).
+<P>
+<B>RENAME_WHITEOUT</B>
+
+can't be employed together with
+<B>RENAME_EXCHANGE</B>.
+
+<P>
+<B>RENAME_WHITEOUT</B>
+
+requires support from the underlying filesystem.
+Among the filesystems that provide that support are
+shmem (since Linux 3.18),
+
+ext4 (since Linux 3.18),
+
+and XFS (since Linux 4.1).
+
 </DL>
 <A NAME="lbAG">&nbsp;</A>
 <H2>RETURN VALUE</H2>
@@ -512,15 +576,32 @@ already exists.
 
 <DD>
 An invalid flag was specified in
-<I>flags</I>,
+<I>flags</I>.
 
-or both
+<DT><B>EINVAL</B>
+
+<DD>
+Both
 <B>RENAME_NOREPLACE</B>
 
 and
 <B>RENAME_EXCHANGE</B>
 
-were specified.
+were specified in
+<I>flags</I>.
+
+<DT><B>EINVAL</B>
+
+<DD>
+Both
+<B>RENAME_WHITEOUT</B>
+
+and
+<B>RENAME_EXCHANGE</B>
+
+were specified in
+<I>flags</I>.
+
 <DT><B>EINVAL</B>
 
 <DD>
@@ -539,6 +620,18 @@ and
 <I>newpath</I>
 
 does not exist.
+<DT><B>EPERM</B>
+
+<DD>
+<B>RENAME_WHITEOUT</B>
+
+was specified in
+<I>flags</I>,
+
+but the caller does not have the
+<B>CAP_MKNOD</B>
+
+capability.
 </DL>
 <A NAME="lbAI">&nbsp;</A>
 <H2>VERSIONS</H2>
@@ -653,6 +746,6 @@ for a similar problem.
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:39:27 GMT, April 20, 2020
+Time: 03:39:58 GMT, April 20, 2020
 </BODY>
 </HTML>

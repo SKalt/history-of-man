@@ -25,22 +25,25 @@ License along with this manual; if not, see
 <HTML><HEAD><TITLE>Man page of STRFMON</TITLE>
 </HEAD><BODY>
 <H1>STRFMON</H1>
-Section: Linux Programmer's Manual (3)<BR>Updated: 2015-03-02<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2015-07-23<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
 <H2>NAME</H2>
 
-strfmon - convert monetary value to a string
+strfmon, strfmon_l - convert monetary value to a string
 <A NAME="lbAC">&nbsp;</A>
 <H2>SYNOPSIS</H2>
 
+<PRE>
 <B>#include &lt;<A HREF="file:///usr/include/monetary.h">monetary.h</A>&gt;</B>
 
-<P>
 <B>ssize_t strfmon(char *</B><I>s</I><B>, size_t </B><I>max</I><B>, const char *</B><I>format</I><B>,</B>
-
 <B>...);</B>
+
+<B>ssize_t strfmon_l(char *</B><I>s</I><B>, size_t </B><I>max</I><B>, locale_t </B><I>locale</I><B>,</B>
+<B>const char * format , ...);</B>
+</PRE>
 
 <A NAME="lbAD">&nbsp;</A>
 <H2>DESCRIPTION</H2>
@@ -48,8 +51,9 @@ strfmon - convert monetary value to a string
 The
 <B>strfmon</B>()
 
-function formats the specified amounts
-according to the format specification
+function formats the specified monetary amount
+according to the current locale
+and format specification
 <I>format</I>
 
 and places the
@@ -59,6 +63,29 @@ result in the character array
 of size
 <I>max</I>.
 
+<P>
+The
+<B>strfmon_l</B>()
+
+function performs the same task,
+but uses
+the locale specified by
+<I>locale</I>.
+
+The behavior of
+<B>strfmon_l</B>()
+
+is undefined if
+<I>locale</I>
+
+is the special locale object
+<B>LC_GLOBAL_LOCALE</B>
+
+(see
+<B><A HREF="../man3/duplocale.3.html">duplocale</A></B>(3))
+
+or is not a valid locale object handle.
+<P>
 <P>
 
 Ordinary characters in
@@ -198,14 +225,17 @@ For an explanation of the terms used in this section, see
 <B>strfmon</B>()
 
 </TD><TD>Thread safety</TD><TD>MT-Safe locale<BR></TD></TR>
+<TR VALIGN=top><TD>
+<B>strfmon_l</B>()
+
+</TD><TD>Thread safety</TD><TD>MT-Safe<BR></TD></TR>
 </TABLE>
 
 <P>
 <A NAME="lbAG">&nbsp;</A>
 <H2>CONFORMING TO</H2>
 
-Not in POSIX.1-2001.
-Present on several other systems.
+POSIX.1-2008.
 <A NAME="lbAH">&nbsp;</A>
 <H2>EXAMPLE</H2>
 
@@ -222,33 +252,41 @@ strfmon(buf, sizeof(buf), &quot;[%^=*#6n] [%=*#6i]&quot;,
 outputs
 
 <P>
-[ fl **1234,57] [ NLG  **1 234,57]
+[€ **1234,57] [EUR **1 234,57]
 <P>
 
-in the Dutch locale (with fl for &quot;florijnen&quot; and NLG for Netherlands Guilders).
-The grouping character is very ugly because it takes as much space
-as a digit, while it should not take more than half that,
-and will no doubt cause confusion.
-Surprisingly, the &quot;fl&quot; is preceded and followed by a space,
-and &quot;NLG&quot; is preceded by one and followed by two spaces.
-This may be a bug in the locale files.
-The Italian, Australian, Swiss,
-and Portuguese locales yield
+in the
+<I>nl_NL</I>
+
+locale.
+The
+<I>de_DE</I>,
+
+<I>de_CH</I>,
+
+<I>en_AU</I>,
+
+and
+<I>en_GB</I>
+
+locales yield
 
 <P>
-[ L. **1235] [ ITL  **1.235]
+[ **1234,57 €] [ **1.234,57 EUR]
 <BR>
 
-[ $**1234.57] [ AUD **1,234.57]
+[ Fr. **1234.57] [ CHF **1'234.57]
 <BR>
 
-[Fr. **1234,57] [CHF  **1.234,57]
+[ $**1234.57] [ AUD**1,234.57]
 <BR>
 
-[ **1234$57Esc] [ **1.234$57PTE ]
+[ £**1234.57] [ GBP**1,234.57]
 
 <A NAME="lbAI">&nbsp;</A>
 <H2>SEE ALSO</H2>
+
+<B><A HREF="../man3/duplocale.3.html">duplocale</A></B>(3),
 
 <B><A HREF="../man3/setlocale.3.html">setlocale</A></B>(3),
 
@@ -274,6 +312,6 @@ and Portuguese locales yield
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:39:36 GMT, April 20, 2020
+Time: 03:40:07 GMT, April 20, 2020
 </BODY>
 </HTML>

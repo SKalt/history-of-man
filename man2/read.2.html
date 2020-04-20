@@ -25,7 +25,7 @@ the source, must acknowledge the copyright and authors of this work.
 <HTML><HEAD><TITLE>Man page of READ</TITLE>
 </HEAD><BODY>
 <H1>READ</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2014-05-04<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2015-07-23<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -105,6 +105,8 @@ because we are reading from a pipe, or from a terminal), or because
 <B>read</B>()
 
 was interrupted by a signal.
+See also NOTES.
+<P>
 On error, -1 is returned, and
 <I>errno</I>
 
@@ -125,6 +127,13 @@ refers to a file other than a socket and has been marked nonblocking
 (<B>O_NONBLOCK</B>),
 
 and the read would block.
+See
+<B><A HREF="../man2/open.2.html">open</A></B>(2)
+
+for further details on the
+<B>O_NONBLOCK</B>
+
+flag.
 <DT><B>EAGAIN</B> or <B>EWOULDBLOCK</B>
 
 <DD>
@@ -231,16 +240,31 @@ SVr4, 4.3BSD, POSIX.1-2001.
 <A NAME="lbAH">&nbsp;</A>
 <H2>NOTES</H2>
 
+On Linux,
+<B>read</B>()
+
+(and similar system calls) will transfer at most
+0x7ffff000 (2,147,479,552) bytes,
+returning the number of bytes actually transferred.
+
+(This is true on both 32-bit and 64-bit systems.)
+<P>
 On NFS filesystems, reading small amounts of data will update the
 timestamp only the first time, subsequent calls may not do so.
 This is caused
 by client side attribute caching, because most if not all NFS clients
-leave st_atime (last file access time)
-updates to the server and client side reads satisfied from the
-client's cache will not cause st_atime updates on the server as there are no
-server side reads.
-UNIX semantics can be obtained by disabling client
-side attribute caching, but in most situations this will substantially
+leave
+<I>st_atime</I>
+
+(last file access time)
+updates to the server, and client side reads satisfied from the
+client's cache will not cause
+<I>st_atime</I>
+
+updates on the server as there are no
+server-side reads.
+UNIX semantics can be obtained by disabling client-side attribute caching,
+but in most situations this will substantially
 increase server load and decrease performance.
 <A NAME="lbAI">&nbsp;</A>
 <H2>BUGS</H2>
@@ -335,6 +359,6 @@ This problem was fixed in Linux 3.14.
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:39:27 GMT, April 20, 2020
+Time: 03:39:58 GMT, April 20, 2020
 </BODY>
 </HTML>
