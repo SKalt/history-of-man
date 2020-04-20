@@ -26,7 +26,7 @@ the source, must acknowledge the copyright and authors of this work.
 <HTML><HEAD><TITLE>Man page of EXECVE</TITLE>
 </HEAD><BODY>
 <H1>EXECVE</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2014-01-08<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2014-05-10<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -603,8 +603,6 @@ Set-user-ID and set-group-ID processes can not be
 <B><A HREF="../man2/ptrace.2.html">ptrace</A></B>(2)d.
 
 <P>
-Linux ignores the set-user-ID and set-group-ID bits on scripts.
-<P>
 The result of mounting a filesystem
 <I>nosuid</I>
 
@@ -618,33 +616,6 @@ some will just ignore the set-user-ID and set-group-ID bits and
 <B>exec</B>()
 
 successfully.
-<P>
-A maximum line length of 127 characters is allowed for the first line in
-a #! executable shell script.
-<P>
-The semantics of the
-<I>optional-arg</I>
-
-argument of an interpreter script vary across implementations.
-On Linux, the entire string following the
-<I>interpreter</I>
-
-name is passed as a single argument to the interpreter,
-and this string can include white space.
-However, behavior differs on some other systems.
-Some systems
-
-use the first white space to terminate
-<I>optional-arg</I>.
-
-On some systems,
-
-an interpreter script can have multiple arguments,
-and white spaces in
-<I>optional-arg</I>
-
-are used to delimit the arguments.
-<P>
 On Linux,
 <I>argv</I>
 
@@ -679,16 +650,56 @@ resource limit changes, then the value reported by
 will also change,
 to reflect the fact that the limit on space for holding
 command-line arguments and environment variables has changed.
+<P>
+In most cases where
+<B>execve</B>()
 
+fails, control returns to the original executable image,
+and the caller of
+<B>execve</B>()
 
+can then handle the error.
+However, in (rare) cases (typically caused by resource exhaustion),
+failure may occur past the point of no return:
+the original executable image has been torn down,
+but the new image could not be completely built.
+In such cases, the kernel kills the process with a
+<B>SIGKILL</B>
 
-
-
-
-
-
+signal.
 
 <A NAME="lbAK">&nbsp;</A>
+<H3>Interpreter scripts</H3>
+
+A maximum line length of 127 characters is allowed for the first line in
+an interpreter scripts.
+<P>
+The semantics of the
+<I>optional-arg</I>
+
+argument of an interpreter script vary across implementations.
+On Linux, the entire string following the
+<I>interpreter</I>
+
+name is passed as a single argument to the interpreter,
+and this string can include white space.
+However, behavior differs on some other systems.
+Some systems
+
+use the first white space to terminate
+<I>optional-arg</I>.
+
+On some systems,
+
+an interpreter script can have multiple arguments,
+and white spaces in
+<I>optional-arg</I>
+
+are used to delimit the arguments.
+<P>
+Linux ignores the set-user-ID and set-group-ID bits on scripts.
+
+<A NAME="lbAL">&nbsp;</A>
 <H3>Historical</H3>
 
 With UNIX&nbsp;V6, the argument list of an
@@ -704,7 +715,16 @@ Thus, this argument list was not directly usable in a further
 
 call.
 Since UNIX&nbsp;V7, both are NULL.
-<A NAME="lbAL">&nbsp;</A>
+
+
+
+
+
+
+
+
+
+<A NAME="lbAM">&nbsp;</A>
 <H2>EXAMPLE</H2>
 
 The following program is designed to be execed by the second program below.
@@ -807,7 +827,7 @@ argv[4]: world
 </PRE>
 
 
-<A NAME="lbAM">&nbsp;</A>
+<A NAME="lbAN">&nbsp;</A>
 <H2>SEE ALSO</H2>
 
 <B><A HREF="../man2/chmod.2.html">chmod</A></B>(2),
@@ -847,15 +867,16 @@ argv[4]: world
 <DT><A HREF="#lbAI">CONFORMING TO</A><DD>
 <DT><A HREF="#lbAJ">NOTES</A><DD>
 <DL>
-<DT><A HREF="#lbAK">Historical</A><DD>
+<DT><A HREF="#lbAK">Interpreter scripts</A><DD>
+<DT><A HREF="#lbAL">Historical</A><DD>
 </DL>
-<DT><A HREF="#lbAL">EXAMPLE</A><DD>
-<DT><A HREF="#lbAM">SEE ALSO</A><DD>
+<DT><A HREF="#lbAM">EXAMPLE</A><DD>
+<DT><A HREF="#lbAN">SEE ALSO</A><DD>
 </DL>
 <HR>
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:29:01 GMT, April 20, 2020
+Time: 03:29:38 GMT, April 20, 2020
 </BODY>
 </HTML>

@@ -10,7 +10,7 @@ of the modification is added to the header.
 <HTML><HEAD><TITLE>Man page of IP</TITLE>
 </HEAD><BODY>
 <H1>IP</H1>
-Section: Linux Programmer's Manual (7)<BR>Updated: 2013-09-17<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (7)<BR>Updated: 2014-05-10<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -1129,7 +1129,11 @@ This socket option allows
 the calling application to bind to a nonlocal IP address and operate
 both as a client and a server with the foreign address as the local endpoint.
 NOTE: this requires that routing be set up in a way that
-packets going to the foreign address are routed through the TProxy box.
+packets going to the foreign address are routed through the TProxy box
+(i.e., the system hosting the application that employs the
+<B>IP_TRANSPARENT</B>
+
+socket option).
 Enabling this socket option requires superuser privileges
 (the
 <B>CAP_NET_ADMIN</B>
@@ -1242,14 +1246,49 @@ IP forwarding can be also set on a per-interface basis.
 
 <DD>
 
-Contains two integers that define the default local port range
-allocated to sockets.
-Allocation starts with the first number and ends with the second number.
-Note that these should not conflict with the ports used by masquerading
+This file contains two integers that define the default local port range
+allocated to sockets that are not explicitly bound to a port number---that
+is, the range used for
+<I>ephemeral ports</I>.
+
+An ephemeral port is allocated to a socket in the following circumstances:
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT>*<DD>
+the port number in a socket address is specified as 0 when calling
+<B><A HREF="../man2/bind.2.html">bind</A></B>(2);
+
+<DT>*<DD>
+<B><A HREF="../man2/listen.2.html">listen</A></B>(2)
+
+is called on a stream socket that was not previously bound;
+<DT>*<DD>
+<B><A HREF="../man2/connect.2.html">connect</A></B>(2)
+
+was called on a socket that was not not previously bound;
+<DT>*<DD>
+<B><A HREF="../man2/sendto.2.html">sendto</A></B>(2)
+
+is called on a datagram socket that was not not previously bound.
+</DL>
+</DL>
+
+<DT><DD>
+Allocation of ephemeral ports starts with the first number in
+<I>ip_local_port_range</I>
+
+and ends with the second number.
+If the range of ephemeral ports is exhausted,
+then the relevant system call returns an error (but see BUGS)
+<DT><DD>
+Note that the port range in
+<I>ip_local_port_range</I>
+
+should not conflict with the ports used by masquerading
 (although the case is handled).
-Also arbitrary choices may cause problems with some firewall packet
+Also, arbitrary choices may cause problems with some firewall packet
 filters that make assumptions about the local ports in use.
-First number should be at least greater than 1024,
+The first number should be at least greater than 1024,
 or better, greater than 4096, to avoid clashes
 with well known ports and to minimize firewall problems.
 
@@ -1555,14 +1594,25 @@ address structure for generic link layer information instead of the old
 There are too many inconsistent error values.
 <P>
 
-The ioctls to configure IP-specific interface options and ARP tables are
-not described.
+The error used to diagnose exhaustion of the ephemeral port range differs
+across the various system calls
+(<B><A HREF="../man2/connect.2.html">connect</A></B>(2),
+
+<B><A HREF="../man2/bind.2.html">bind</A></B>(2),
+
+<B><A HREF="../man2/listen.2.html">listen</A></B>(2),
+
+<B><A HREF="../man2/sendto.2.html">sendto</A></B>(2))
+
+that can assign ephemeral ports.
 <P>
 
-Some versions of glibc forget to declare
-<I>in_pktinfo</I>.
+The ioctls to configure IP-specific interface options and ARP tables are
+not described.
 
-Workaround currently is to copy it into your program from this man page.
+
+
+
 <P>
 
 Receiving the original destination address with
@@ -1636,6 +1686,6 @@ RFC&nbsp;1812 for the IPv4 router requirements.
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:29:15 GMT, April 20, 2020
+Time: 03:29:52 GMT, April 20, 2020
 </BODY>
 </HTML>

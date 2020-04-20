@@ -25,7 +25,7 @@ the source, must acknowledge the copyright and authors of this work.
 <HTML><HEAD><TITLE>Man page of LINK</TITLE>
 </HEAD><BODY>
 <H1>LINK</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2014-05-05<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2014-05-10<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -171,19 +171,19 @@ flag).
 In this case,
 <I>olddirfd</I>
 
-must refer to a file other than a directory.
+can refer to any type of file, not just a directory.
+This will generally not work if the file has a link count of zero (files
+created with
+<B>O_TMPFILE</B>
+
+and without
+<B>O_EXCL</B>
+
+are an exception).
 The caller must have the
 <B>CAP_DAC_READ_SEARCH</B>
 
-capability in order to use this flag;
-this prevents arbitrary users from creating hard links
-using file descriptors received via a UNIX domain socket
-(see the discussion of
-<B>SCM_RIGHTS</B>
-
-in
-<B><A HREF="../man7/unix.7.html">unix</A></B>(7)).
-
+capability in order to use this flag.
 This flag is Linux-specific; define
 <B>_GNU_SOURCE</B>
 
@@ -211,6 +211,17 @@ to cause
 <I>oldpath</I>
 
 to be dereferenced if it is a symbolic link.
+If procfs is mounted,
+this can be used as an alternative to
+<B>AT_EMPTY_PATH</B>,
+
+like this:
+<P>
+<PRE>
+linkat(AT_FDCWD, &quot;/proc/self/fd/&lt;fd&gt;&quot;, newdirfd,
+       newname, AT_SYMLINK_FOLLOW);
+</PRE>
+
 </DL>
 <P>
 
@@ -567,6 +578,6 @@ to find out if the link got created.
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:29:02 GMT, April 20, 2020
+Time: 03:29:39 GMT, April 20, 2020
 </BODY>
 </HTML>

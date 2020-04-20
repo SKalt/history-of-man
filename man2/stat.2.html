@@ -26,7 +26,7 @@ the source, must acknowledge the copyright and authors of this work.
 <HTML><HEAD><TITLE>Man page of STAT</TITLE>
 </HEAD><BODY>
 <H1>STAT</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2014-03-19<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2014-05-10<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -68,7 +68,13 @@ Feature Test Macro Requirements for glibc (see
 <B>lstat</B>():
 
 <DL COMPACT><DT><DD>
-_BSD_SOURCE || _XOPEN_SOURCE&nbsp;&gt;=&nbsp;500 ||
+/* glibc 2.19 and earlier */ _BSD_SOURCE ||
+<BR>
+
+/* Since glibc 2.20 */_DEFAULT_SOURCE ||
+<BR>
+
+_XOPEN_SOURCE&nbsp;&gt;=&nbsp;500 ||
 _XOPEN_SOURCE&nbsp;&amp;&amp;&nbsp;_XOPEN_SOURCE_EXTENDED
 <BR>
 
@@ -326,10 +332,42 @@ is changed by writing or by setting inode information
 (i.e., owner, group, link count, mode, etc.).
 <P>
 
-The following POSIX macros are defined to check the file type using the
+The following mask values are defined for the file type component of the
 <I>st_mode</I>
 
 field:
+
+<TABLE>
+<TR VALIGN=top><TD><B>S_IFMT</B></TD><TD>0170000</TD><TD>bit mask for the file type bit fields<BR></TD></TR>
+<TR VALIGN=top><TD><B></B></TD><TD></TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B>S_IFSOCK</B></TD><TD>0140000</TD><TD>socket<BR></TD></TR>
+<TR VALIGN=top><TD><B>S_IFLNK</B></TD><TD>0120000</TD><TD>symbolic link<BR></TD></TR>
+<TR VALIGN=top><TD><B>S_IFREG</B></TD><TD>0100000</TD><TD>regular file<BR></TD></TR>
+<TR VALIGN=top><TD><B>S_IFBLK</B></TD><TD>0060000</TD><TD>block device<BR></TD></TR>
+<TR VALIGN=top><TD><B>S_IFDIR</B></TD><TD>0040000</TD><TD>directory<BR></TD></TR>
+<TR VALIGN=top><TD><B>S_IFCHR</B></TD><TD>0020000</TD><TD>character device<BR></TD></TR>
+<TR VALIGN=top><TD><B>S_IFIFO</B></TD><TD>0010000</TD><TD>FIFO<BR></TD></TR>
+</TABLE>
+
+
+<P>
+
+Thus, to test for a regular file (for example), one could write:
+<P>
+<PRE>
+stat(pathname, &amp;sb);
+if ((sb.st_mode &amp; S_IFMT) == S_IFREG) {
+    /* Handle regular file */
+}
+</PRE>
+
+<P>
+
+Because tests of the above form are common, additional
+macros are defined by POSIX to allow the test of the file type in
+<I>st_mode</I>
+
+to be written more concisely:
 <DL COMPACT><DT><DD>
 <DL COMPACT>
 <DT><B>S_ISREG</B>(m)
@@ -365,37 +403,92 @@ socket?  (Not in POSIX.1-1996.)
 
 <P>
 
-The following flags are defined for the
+The preceding code snippet could thus be rewritten as:
+<P>
+<PRE>
+stat(pathname, &amp;sb);
+if (S_ISREG(sb.st_mode)) {
+    /* Handle regular file */
+}
+</PRE>
+
+<P>
+
+The definitions of most of the above file type test macros
+are provided if any of the following feature test macros are defined:
+<B>_BSD_SOURCE</B>
+
+(in glibc 2.19 and earlier),
+<B>_SVID_SOURCE</B>
+
+(in glibc 2.19 and earlier),
+or
+<B>_DEFAULT_SOURCE</B>
+
+(in glibc 2.20 and later).
+In addition, definitions of all of the above macros except
+<B>S_IFSOCK</B>
+
+and
+<B>S_ISSOCK</B>()
+
+are provided if
+<B>_XOPEN_SOURCE</B>
+
+is defined.
+The definition of
+<B>S_IFSOCK</B>
+
+can also be exposed by defining
+<B>_XOPEN_SOURCE</B>
+
+with a value of 500 or greater.
+<P>
+The definition of
+<B>S_ISSOCK</B>()
+
+is exposed if any of the following feature test macros is defined:
+<B>_BSD_SOURCE</B>
+
+(in glibc 2.19 and earlier),
+<B>_DEFAULT_SOURCE</B>
+
+(in glibc 2.20 and later),
+<B>_XOPEN_SOURCE</B>
+
+with a value of 500 or greater, or
+<B>_POSIX_C_SOURCE</B>
+
+with a value of 200112L or greater.
+<P>
+
+The following mask values are defined for
+the file permissions component of the
 <I>st_mode</I>
 
 field:
 
 <TABLE>
-<TR VALIGN=top><TD><B>S_IFMT</B></TD><TD>0170000</TD><TD>bit mask for the file type bit fields<BR></TD></TR>
-<TR VALIGN=top><TD><B>S_IFSOCK</B></TD><TD>0140000</TD><TD>socket<BR></TD></TR>
-<TR VALIGN=top><TD><B>S_IFLNK</B></TD><TD>0120000</TD><TD>symbolic link<BR></TD></TR>
-<TR VALIGN=top><TD><B>S_IFREG</B></TD><TD>0100000</TD><TD>regular file<BR></TD></TR>
-<TR VALIGN=top><TD><B>S_IFBLK</B></TD><TD>0060000</TD><TD>block device<BR></TD></TR>
-<TR VALIGN=top><TD><B>S_IFDIR</B></TD><TD>0040000</TD><TD>directory<BR></TD></TR>
-<TR VALIGN=top><TD><B>S_IFCHR</B></TD><TD>0020000</TD><TD>character device<BR></TD></TR>
-<TR VALIGN=top><TD><B>S_IFIFO</B></TD><TD>0010000</TD><TD>FIFO<BR></TD></TR>
 <TR VALIGN=top><TD><B>S_ISUID</B></TD><TD>0004000</TD><TD>set-user-ID bit<BR></TD></TR>
 <TR VALIGN=top><TD><B>S_ISGID</B></TD><TD>0002000</TD><TD>set-group-ID bit (see below)<BR></TD></TR>
 <TR VALIGN=top><TD><B>S_ISVTX</B></TD><TD>0001000</TD><TD>sticky bit (see below)<BR></TD></TR>
-<TR VALIGN=top><TD><B>S_IRWXU</B></TD><TD>00700</TD><TD>mask for file owner permissions<BR></TD></TR>
-<TR VALIGN=top><TD><B>S_IRUSR</B></TD><TD>00400</TD><TD>owner has read permission<BR></TD></TR>
-<TR VALIGN=top><TD><B>S_IWUSR</B></TD><TD>00200</TD><TD>owner has write permission<BR></TD></TR>
-<TR VALIGN=top><TD><B>S_IXUSR</B></TD><TD>00100</TD><TD>owner has execute permission<BR></TD></TR>
-<TR VALIGN=top><TD><B>S_IRWXG</B></TD><TD>00070</TD><TD>mask for group permissions<BR></TD></TR>
-<TR VALIGN=top><TD><B>S_IRGRP</B></TD><TD>00040</TD><TD>group has read permission<BR></TD></TR>
-<TR VALIGN=top><TD><B>S_IWGRP</B></TD><TD>00020</TD><TD>group has write permission<BR></TD></TR>
-<TR VALIGN=top><TD><B>S_IXGRP</B></TD><TD>00010</TD><TD>group has execute permission<BR></TD></TR>
-<TR VALIGN=top><TD><B>S_IRWXO</B></TD><TD>00007</TD><TD>
+<TR VALIGN=top><TD><B></B></TD><TD></TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B>S_IRWXU</B></TD><TD>  00700</TD><TD>mask for file owner permissions<BR></TD></TR>
+<TR VALIGN=top><TD><B>S_IRUSR</B></TD><TD>  00400</TD><TD>owner has read permission<BR></TD></TR>
+<TR VALIGN=top><TD><B>S_IWUSR</B></TD><TD>  00200</TD><TD>owner has write permission<BR></TD></TR>
+<TR VALIGN=top><TD><B>S_IXUSR</B></TD><TD>  00100</TD><TD>owner has execute permission<BR></TD></TR>
+<TR VALIGN=top><TD><B></B></TD><TD></TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B>S_IRWXG</B></TD><TD>  00070</TD><TD>mask for group permissions<BR></TD></TR>
+<TR VALIGN=top><TD><B>S_IRGRP</B></TD><TD>  00040</TD><TD>group has read permission<BR></TD></TR>
+<TR VALIGN=top><TD><B>S_IWGRP</B></TD><TD>  00020</TD><TD>group has write permission<BR></TD></TR>
+<TR VALIGN=top><TD><B>S_IXGRP</B></TD><TD>  00010</TD><TD>group has execute permission<BR></TD></TR>
+<TR VALIGN=top><TD><B></B></TD><TD></TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD><B>S_IRWXO</B></TD><TD>  00007</TD><TD>
 mask for permissions for others (not in group)
 <BR></TD></TR>
-<TR VALIGN=top><TD><B>S_IROTH</B></TD><TD>00004</TD><TD>others have read permission<BR></TD></TR>
-<TR VALIGN=top><TD><B>S_IWOTH</B></TD><TD>00002</TD><TD>others have write permission<BR></TD></TR>
-<TR VALIGN=top><TD><B>S_IXOTH</B></TD><TD>00001</TD><TD>others have execute permission<BR></TD></TR>
+<TR VALIGN=top><TD><B>S_IROTH</B></TD><TD>  00004</TD><TD>others have read permission<BR></TD></TR>
+<TR VALIGN=top><TD><B>S_IWOTH</B></TD><TD>  00002</TD><TD>others have write permission<BR></TD></TR>
+<TR VALIGN=top><TD><B>S_IXOTH</B></TD><TD>  00001</TD><TD>others have execute permission<BR></TD></TR>
 </TABLE>
 
 
@@ -405,7 +498,7 @@ The set-group-ID bit
 (<B>S_ISGID</B>)
 
 has several special uses.
-For a directory it indicates that BSD semantics is to be used
+For a directory, it indicates that BSD semantics is to be used
 for that directory: files created there inherit their group ID from
 the directory, not from the effective group ID of the creating process,
 and directories created there will also get the
@@ -948,7 +1041,7 @@ then the nanosecond values are exposed with names of the form
 Nanosecond timestamps are supported on XFS, JFS, Btrfs, and
 ext4 (since Linux 2.6.23).
 
-Nanosecond timestamps are not supported in ext2, ext3, and Resierfs.
+Nanosecond timestamps are not supported in ext2, ext3, and Reiserfs.
 On filesystems that do not support subsecond timestamps,
 the nanosecond fields are returned with the value 0.
 <A NAME="lbAM">&nbsp;</A>
@@ -1144,6 +1237,6 @@ main(int argc, char *argv[])
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:29:04 GMT, April 20, 2020
+Time: 03:29:41 GMT, April 20, 2020
 </BODY>
 </HTML>

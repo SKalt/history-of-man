@@ -26,7 +26,7 @@ the source, must acknowledge the copyright and authors of this work.
 <HTML><HEAD><TITLE>Man page of MSGOP</TITLE>
 </HEAD><BODY>
 <H1>MSGOP</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2014-04-28<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2014-05-16<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -119,7 +119,7 @@ If sufficient space is available in the queue,
 <B>msgsnd</B>()
 
 succeeds immediately.
-(The queue capacity is defined by the
+The queue capacity is governed by the
 <I>msg_qbytes</I>
 
 field in the associated data structure for the message queue.
@@ -127,7 +127,29 @@ During queue creation this field is initialized to
 <B>MSGMNB</B>
 
 bytes, but this limit can be modified using
-<B><A HREF="../man2/msgctl.2.html">msgctl</A></B>(2).)
+<B><A HREF="../man2/msgctl.2.html">msgctl</A></B>(2).
+
+A message queue is considered to be full if either of the following
+conditions is true:
+<DL COMPACT>
+<DT>*<DD>
+Adding a new message to the queue would cause the total number of bytes
+in the queue to exceed the queue's maximum size (the
+<I>msg_qbytes</I>
+
+field).
+<DT>*<DD>
+Adding another message to the queue would cause the total number of messages
+in the queue to exceed the queue's maximum size (the
+<I>msg_qbytes</I>
+
+field).
+This check is necessary to prevent an unlimited number of zero-length
+messages being placed on the queue.
+Although such messages contain no data,
+they nevertheless consume (locked) kernel memory.
+</DL>
+<P>
 
 If insufficient space is available in the queue, then the default
 behavior of
@@ -807,6 +829,6 @@ in Linux 3.14.
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:29:02 GMT, April 20, 2020
+Time: 03:29:39 GMT, April 20, 2020
 </BODY>
 </HTML>
