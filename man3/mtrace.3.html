@@ -1,16 +1,17 @@
 <!--
+Copyright (c) 2012 by Michael Kerrisk &lt;mtk.manpages@gmail.com&gt;
 -->
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
 <HTML><HEAD><TITLE>Man page of MTRACE</TITLE>
 </HEAD><BODY>
 <H1>MTRACE</H1>
-Section: Linux Programmer's Manual (3)<BR>Updated: 2002-07-20<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2012-03-22<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
 <H2>NAME</H2>
 
-mtrace, muntrace - malloc debugging
+mtrace, muntrace - malloc tracing
 <A NAME="lbAC">&nbsp;</A>
 <H2>SYNOPSIS</H2>
 
@@ -25,49 +26,181 @@ mtrace, muntrace - malloc debugging
 <A NAME="lbAD">&nbsp;</A>
 <H2>DESCRIPTION</H2>
 
-The function
+The
 <B>mtrace</B>()
 
-installs handlers for
-<B><A HREF="../man3/malloc.3.html">malloc</A></B>(3),
+function installs hook functions for the memory-allocation functions
+(<B><A HREF="../man3/malloc.3.html">malloc</A></B>(3),
 
 <B><A HREF="../man3/realloc.3.html">realloc</A></B>(3)
 
-and
-<B><A HREF="../man3/free.3.html">free</A></B>(3).
+<B><A HREF="../man3/memalign.3.html">memalign</A></B>(3),
 
-The function
+<B><A HREF="../man3/free.3.html">free</A></B>(3)).
+
+These hook functions record tracing information about memory allocation
+and deallocation.
+The tracing information can be used to discover memory leaks and
+attempts to free nonallocated memory in a program.
+<P>
+The
 <B>muntrace</B>()
 
-disables these handlers.
-<BR>
+function disables the hook functions installed by
+<B>mtrace</B>(),
 
-The environment variable
+so that tracing information is no longer recorded
+for the memory-allocation functions.
+If no hook functions were successfully installed by
+<B>mtrace</B>(),
+
+<B>muntrace</B>()
+
+does nothing.
+<P>
+When
+<B><A HREF="../man3/mtrace.3.html">mtrace</A></B>(3)
+
+is called, it checks the value of the environment variable
+<B>MALLOC_TRACE</B>,
+
+which should contain the pathname of a file in which
+the tracing information is to be recorded.
+If the pathname is successfully opened, it is truncated to zero length.
+<P>
+If
 <B>MALLOC_TRACE</B>
 
-defines a file where
+is not set,
+or the pathname it specifies is invalid or not writable,
+then no hook functions are installed, and
 <B>mtrace</B>()
 
-writes its output.
-This file must be writable to the user or
+has no effect.
+In set-user-ID and set-group-ID programs,
+<B>MALLOC_TRACE</B>
+
+is ignored, and
 <B>mtrace</B>()
 
-will do nothing.
-If the file is not empty it will be truncated.
+has no effect.
 <A NAME="lbAE">&nbsp;</A>
 <H2>CONFORMING TO</H2>
 
-These are GNU extensions.
+These functions are GNU extensions.
 <A NAME="lbAF">&nbsp;</A>
 <H2>NOTES</H2>
 
-The output of
+In normal usage,
 <B>mtrace</B>()
 
-will be ASCII but not in a friendly format.
-So glibc comes with a perl-script called mtrace to make sense of it.
+is called once at the start of execution of a program, and
+<B>muntrace</B>()
+
+is never called.
+<P>
+The tracing output produced after a call to
+<B>mtrace</B>()
+
+is textual, but not designed to be human readable.
+The GNU C library provides a Perl script,
+<B><A HREF="../man1/mtrace.1.html">mtrace</A></B>(1),
+
+that interprets the trace log and produces human-readable output.
+For best results,
+the traced program should be compiled with debugging enabled,
+so that line-number information is recorded in the executable.
+<P>
+The tracing performed by
+<B>mtrace</B>()
+
+incurs a performance penalty (if
+<B>MALLOC_TRACE</B>
+
+points to a valid, writable pathname).
 <A NAME="lbAG">&nbsp;</A>
+<H2>BUGS</H2>
+
+The line-number information produced by
+<B><A HREF="../man1/mtrace.1.html">mtrace</A></B>(1)
+
+is not always precise:
+the line number references may refer to the previous or following (non-blank)
+line of the source code.
+<A NAME="lbAH">&nbsp;</A>
+<H2>EXAMPLE</H2>
+
+The shell session below demonstrates the use of the
+<B>mtrace</B>()
+
+function and the
+<B><A HREF="../man1/mtrace.1.html">mtrace</A></B>(1)
+
+command in a program that has memory leaks at two different locations.
+The demonstration uses the following program:
+
+<PRE>
+
+$ <B>cat t_mtrace.c</B>
+#include &lt;<A HREF="file:///usr/include/mcheck.h">mcheck.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/stdlib.h">stdlib.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;
+
+int
+main(int argc, char *argv[])
+{
+    int j;
+
+    mtrace();
+
+    for (j = 0; j &lt; 2; j++)
+        malloc(100);            /* Never freed--a memory leak */
+
+    calloc(16, 16);             /* Never freed--a memory leak */
+    exit(EXIT_SUCCESS);
+}
+
+</PRE>
+
+
+When we run the program as follows, we see that
+<B>mtrace</B>()
+
+diagnosed memory leaks at two different locations in the program:
+
+<PRE>
+
+$ <B>cc -g t_mtrace.c -o t_mtrace</B>
+$ <B>export MALLOC_TRACE=/tmp/t</B>
+$ <B>./t_mtrace</B>
+$ <B>mtrace ./t_mtrace $MALLOC_TRACE</B>
+Memory not freed:
+-----------------
+   Address     Size     Caller
+0x084c9378     0x64  at /home/cecilia/t_mtrace.c:12
+0x084c93e0     0x64  at /home/cecilia/t_mtrace.c:12
+0x084c9448    0x100  at /home/cecilia/t_mtrace.c:16
+</PRE>
+
+
+<P>
+The first two messages about unfreed memory correspond to the two
+<B><A HREF="../man3/malloc.3.html">malloc</A></B>(3)
+
+calls inside the
+<I>for</I>
+
+loop.
+The final message corresponds to the call to
+<B><A HREF="../man3/calloc.3.html">calloc</A></B>(3)
+
+(which in turn calls
+<B><A HREF="../man3/malloc.3.html">malloc</A></B>(3)).
+
+<A NAME="lbAI">&nbsp;</A>
 <H2>SEE ALSO</H2>
+
+<B><A HREF="../man1/mtrace.1.html">mtrace</A></B>(1),
 
 <B><A HREF="../man3/malloc.3.html">malloc</A></B>(3),
 
@@ -83,12 +216,14 @@ So glibc comes with a perl-script called mtrace to make sense of it.
 <DT><A HREF="#lbAD">DESCRIPTION</A><DD>
 <DT><A HREF="#lbAE">CONFORMING TO</A><DD>
 <DT><A HREF="#lbAF">NOTES</A><DD>
-<DT><A HREF="#lbAG">SEE ALSO</A><DD>
+<DT><A HREF="#lbAG">BUGS</A><DD>
+<DT><A HREF="#lbAH">EXAMPLE</A><DD>
+<DT><A HREF="#lbAI">SEE ALSO</A><DD>
 </DL>
 <HR>
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:12:57 GMT, April 20, 2020
+Time: 03:13:33 GMT, April 20, 2020
 </BODY>
 </HTML>

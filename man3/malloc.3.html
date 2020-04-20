@@ -5,7 +5,7 @@ Copyright (c) 1993 by Thomas Koenig (ig25@rz.uni-karlsruhe.de)
 <HTML><HEAD><TITLE>Man page of MALLOC</TITLE>
 </HEAD><BODY>
 <H1>MALLOC</H1>
-Section: Linux Programmer's Manual (3)<BR>Updated: 2011-09-08<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2012-03-20<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -268,6 +268,27 @@ resource limit (see
 <B><A HREF="../man2/getrlimit.2.html">getrlimit</A></B>(2)).
 
 <P>
+To avoid corruption in multithreaded applications,
+mutexes are used internally to protect the memory-management
+data structures employed by these functions.
+In a multithreaded application in which threads simultaneously
+allocate and free memory,
+there could be contention for these mutexes.
+To scalably handle memory allocation in multithreaded applications,
+glibc creates additional
+<I>memory allocation arenas</I>
+
+if mutex contention is detected.
+Each arena is a large region of memory that is internally allocated
+by the system
+(using
+<B><A HREF="../man2/brk.2.html">brk</A></B>(2)
+
+or
+<B><A HREF="../man2/mmap.2.html">mmap</A></B>(2)),
+
+and managed with its own mutexes.
+<P>
 The UNIX 98 standard requires
 <B>malloc</B>(),
 
@@ -313,44 +334,33 @@ include a
 <B>malloc</B>()
 
 implementation which is tunable via environment variables.
-When
-<B>MALLOC_CHECK_</B>
+For details, see
+<B><A HREF="../man3/mallopt.3.html">mallopt</A></B>(3).
 
-is set, a special (less efficient) implementation is used which
-is designed to be tolerant against simple errors, such as double
-calls of
-<B>free</B>()
-
-with the same argument, or overruns of a single byte (off-by-one
-bugs).
-Not all such errors can be protected against, however, and
-memory leaks can result.
-If
-<B>MALLOC_CHECK_</B>
-
-is set to 0, any detected heap corruption is silently ignored;
-if set to 1, a diagnostic message is printed on <I>stderr</I>;
-if set to 2,
-<B><A HREF="../man3/abort.3.html">abort</A></B>(3)
-
-is called immediately;
-if set to 3, a diagnostic message is printed on <I>stderr</I>
-and the program is aborted.
-Using a nonzero
-<B>MALLOC_CHECK_</B>
-
-value can be useful because otherwise
-a crash may happen much later, and the true cause for the problem
-is then very hard to track down.
 <A NAME="lbAH">&nbsp;</A>
 <H2>SEE ALSO</H2>
 
-<B><A HREF="../man2/brk.2.html">brk</A></B>(2),
 
+
+
+
+
+
+
+
+
+
+<B><A HREF="../man2/brk.2.html">brk</A></B>(2),
 
 <B><A HREF="../man2/mmap.2.html">mmap</A></B>(2),
 
 <B><A HREF="../man3/alloca.3.html">alloca</A></B>(3),
+
+<B><A HREF="../man3/malloc_get_state.3.html">malloc_get_state</A></B>(3),
+
+<B><A HREF="../man3/mallopt.3.html">mallopt</A></B>(3),
+
+<B><A HREF="../man3/mtrace.3.html">mtrace</A></B>(3),
 
 <B><A HREF="../man3/posix_memalign.3.html">posix_memalign</A></B>(3)
 
@@ -371,6 +381,6 @@ is then very hard to track down.
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:12:56 GMT, April 20, 2020
+Time: 03:13:32 GMT, April 20, 2020
 </BODY>
 </HTML>

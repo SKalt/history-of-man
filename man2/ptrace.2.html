@@ -5,7 +5,7 @@ Copyright (c) 1993 Michael Haardt &lt;michael@moria.de&gt;
 <HTML><HEAD><TITLE>Man page of PTRACE</TITLE>
 </HEAD><BODY>
 <H1>PTRACE</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2012-03-06<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2012-03-24<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -455,6 +455,11 @@ value such that
 </PRE>
 
 <P>
+If the execing thread is not a thread group leader,
+the thread ID is reset to thread group leader's ID before this stop.
+Since Linux 3.0, the former thread ID can be retrieved with
+<B>PTRACE_GETEVENTMSG</B>.
+
 <DT><B>PTRACE_O_TRACEVFORKDONE</B> (since Linux 2.5.60)
 
 <DD>
@@ -581,7 +586,7 @@ The
 argument is treated as for
 <B>PTRACE_CONT</B>.
 
-(addr
+(<I>addr</I>
 
 is ignored.)
 <DT><B>PTRACE_SYSEMU</B>, <B>PTRACE_SYSEMU_SINGLESTEP</B> (since Linux 2.6.14)
@@ -692,13 +697,6 @@ of which method was used to initiate tracing.
 (<I>addr</I>
 
 is ignored.)
-
-
-
-
-
-
-
 </DL>
 <A NAME="lbAE">&nbsp;</A>
 <H3>Death under ptrace</H3>
@@ -924,13 +922,10 @@ Example:
 <P>
 
 The following kinds of ptrace-stops exist: signal-delivery-stops,
-group-stop, PTRACE_EVENT stops, syscall-stops
-<B>PTRACE_SINGLESTEP</B>,
+group-stops,
+<B>PTRACE_EVENT</B>
 
-<B>PTRACE_SYSEMU</B>,
-
-and
-
+stops, syscall-stops.
 They all are reported by
 <B><A HREF="../man2/waitpid.2.html">waitpid</A></B>(2)
 
@@ -949,7 +944,8 @@ and if there is ambiguity in that value, by querying
 
 macro can't be used to perform this examination,
 because it returns the value
-(<I>status&gt;&gt;8)&nbsp;</I><B>&amp;&nbsp;0xff</B>.)
+<I>(status&gt;&gt;8)&nbsp;&amp;&nbsp;0xff</I>.)
+
 <A NAME="lbAG">&nbsp;</A>
 <H3>Signal-delivery-stop</H3>
 
@@ -984,10 +980,10 @@ Signal-delivery-stop is observed by the tracer as
 returning with
 <I>WIFSTOPPED(status)</I>
 
-true, with the stopping signal returned by
+true, with the signal returned by
 <I>WSTOPSIG(status)</I>.
 
-If the stopping signal is
+If the signal is
 <B>SIGTRAP</B>,
 
 this may be a different kind of ptrace-stop;
@@ -1035,14 +1031,20 @@ value: the tracer can cause a different signal to be injected.
 
 Note that a suppressed signal still causes system calls to return
 prematurely.
-Restartable system calls will be restarted (the tracer will
-observe the tracee to execute
-<B><A HREF="../man2/restart_syscall.2.html">restart_syscall</A>(2)</B>
+In this case system calls will be restarted: the tracer will
+observe the tracee to reexecute the interrupted system call (or
+<B><A HREF="../man2/restart_syscall.2.html">restart_syscall</A></B>(2)
 
-if the tracer uses
-<B>PTRACE_SYSCALL</B>);
+system call for a few syscalls which use a different mechanism
+for restarting) if the tracer uses
+<B>PTRACE_SYSCALL</B>.
 
-non-restartable system calls may fail with
+Even system calls (such as
+<B><A HREF="../man2/poll.2.html">poll</A></B>(2))
+
+which are not restartable after signal are restarted after
+signal is suppressed;
+however, kernel bugs exist which cause some syscalls to fail with
 <B>EINTR</B>
 
 even though no observable signal is injected to the tracee.
@@ -1087,7 +1089,7 @@ The
 signal has a side effect of waking up (all threads of)
 a group-stopped process.
 This side effect happens before signal-delivery-stop.
-The tracer can't suppress this side-effect (it can
+The tracer can't suppress this side effect (it can
 only suppress signal injection, which only causes the
 <B>SIGCONT</B>
 
@@ -1310,7 +1312,7 @@ with the exit signal set to
 
 <DD>
 Stop before return from
-<B><A HREF="../man2/clone.2.html">clone</A></B>(2)
+<B><A HREF="../man2/clone.2.html">clone</A></B>(2).
 
 <DT><B>PTRACE_EVENT_VFORK_DONE</B>
 
@@ -1342,6 +1344,10 @@ can be used to retrieve the new thread's ID.
 Stop before return from
 <B><A HREF="../man2/execve.2.html">execve</A></B>(2).
 
+Since Linux 3.0,
+<B>PTRACE_GETEVENTMSG</B>
+
+returns the former thread ID.
 <DT><B>PTRACE_EVENT_EXIT</B>
 
 <DD>
@@ -1373,8 +1379,9 @@ on
 <B>PTRACE_EVENT</B>
 
 stops returns
-<B>SIGTRAP in</B>
+<B>SIGTRAP</B>
 
+in
 <I>si_signo</I>,
 
 with
@@ -1525,7 +1532,7 @@ But such detection is fragile and is best avoided.
 Using the
 <B>PTRACE_O_TRACESYSGOOD</B>
 
-option is the recommended method to distinquish syscall-stops
+option is the recommended method to distinguish syscall-stops
 from other kinds of ptrace-stops,
 since it is reliable and does not incur a performance penalty.
 <P>
@@ -1664,7 +1671,7 @@ is
 <B>PTRACE_SYSEMU</B>,
 
 or
-<B>PTRACE_SYSEMU_SINGLESTEP.</B>
+<B>PTRACE_SYSEMU_SINGLESTEP</B>.
 
 If the tracee is in signal-delivery-stop,
 <I>sig</I>
@@ -1676,7 +1683,7 @@ Otherwise,
 may be ignored.
 (When restarting a tracee from a ptrace-stop other than signal-delivery-stop,
 recommended practice is to always pass 0 in
-<I>sig .)</I>
+<I>sig</I>.)
 
 <A NAME="lbAN">&nbsp;</A>
 <H3>Attaching and detaching</H3>
@@ -1720,10 +1727,10 @@ Since attaching sends
 <B>SIGSTOP</B>
 
 and the tracer usually suppresses it, this may cause a stray
-<I>EINTR</I>
+<B>EINTR</B>
 
 return from the currently executing system call in the tracee,
-as described in the &quot;signal injection and suppression&quot; section.
+as described in the &quot;Signal injection and suppression&quot; section.
 <P>
 
 The request
@@ -1874,14 +1881,6 @@ death as if they exited via
 
 with exit code 0.
 <DT>*<DD>
-Then a
-<B>PTRACE_EVENT_EXEC</B>
-
-stop happens, if the
-<B>PTRACE_O_TRACEEXEC</B>
-
-option was turned on.
-<DT>*<DD>
 The execing tracee changes its thread ID while it is in the
 <B><A HREF="../man2/execve.2.html">execve</A></B>(2).
 
@@ -1892,9 +1891,26 @@ or fed into ptrace calls, is the tracee's thread ID.)
 That is, the tracee's thread ID is reset to be the same as its process ID,
 which is the same as the thread group leader's thread ID.
 <DT>*<DD>
-If the thread group leader has reported its death by this time,
+Then a
+<B>PTRACE_EVENT_EXEC</B>
+
+stop happens, if the
+<B>PTRACE_O_TRACEEXEC</B>
+
+option was turned on.
+<DT>*<DD>
+If the thread group leader has reported its
+<B>PTRACE_EVENT_EXIT</B>
+
+stop by this time,
 it appears to the tracer that
 the dead thread leader &quot;reappears from nowhere&quot;.
+(Note: the thread group leader does not report death via
+<I>WIFEXITED(status)</I>
+
+until there is at least one other live thread.
+This eliminates the possibility that the tracer will see
+it dying and then reappearing.)
 If the thread group leader was still alive,
 for the tracer this may look as if thread group leader
 returns from a different system call than it entered,
@@ -1917,18 +1933,12 @@ The
 <B>PTRACE_O_TRACEEXEC</B>
 
 option is the recommended tool for dealing with this situation.
-It enables
+First, it enables
 <B>PTRACE_EVENT_EXEC</B>
 
-stop, which occurs before
-<B><A HREF="../man2/execve.2.html">execve</A></B>(2)
-
-returns.
-First, it enables
-<B>PTRACE_EVENT_EXEC</B>-stop,
-
+stop,
 which occurs before
-<B><A HREF="../man2/execve.2.html">execve</A>(2)</B>
+<B><A HREF="../man2/execve.2.html">execve</A></B>(2)
 
 returns.
 In this stop, the tracer can use
@@ -1964,14 +1974,7 @@ data structures describing the threads of this process,
 and retain only one data structure---one which
 describes the single still running tracee, with
 <P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;thread&nbsp;ID&nbsp;==&nbsp;thread&nbsp;group&nbsp;ID&nbsp;==&nbsp;process&nbsp;id.
-<P>
-
-Currently, there is no way to retrieve the former
-thread ID of the execing tracee.
-If the tracer doesn't keep track of its tracees' thread group relations,
-it may be unable to know which tracee execed and therefore no longer
-exists under the old thread ID due to a thread ID change.
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;thread&nbsp;ID&nbsp;==&nbsp;thread&nbsp;group&nbsp;ID&nbsp;==&nbsp;process&nbsp;ID.
 <P>
 
 Example: two threads call
@@ -1981,10 +1984,10 @@ at the same time:
 <P>
 
 <PRE>
-*** we get syscall-entry-stop in thread 1: **
+*** we get syscall-enter-stop in thread 1: **
 PID1 execve(&quot;/bin/foo&quot;, &quot;foo&quot; &lt;unfinished ...&gt;
 *** we issue PTRACE_SYSCALL for thread 1 **
-*** we get syscall-entry-stop in thread 2: **
+*** we get syscall-enter-stop in thread 2: **
 PID2 execve(&quot;/bin/bar&quot;, &quot;bar&quot; &lt;unfinished ...&gt;
 *** we issue PTRACE_SYSCALL for thread 2 **
 *** we get PTRACE_EVENT_EXEC for PID0, we issue PTRACE_SYSCALL **
@@ -1992,12 +1995,6 @@ PID2 execve(&quot;/bin/bar&quot;, &quot;bar&quot; &lt;unfinished ...&gt;
 PID0 &lt;... execve resumed&gt; )             = 0
 </PRE>
 
-<P>
-
-In this situation, there is no way to know which
-<B><A HREF="../man2/execve.2.html">execve</A></B>(2)
-
-succeeded.
 <P>
 
 If the
@@ -2291,6 +2288,28 @@ This may be changed in the future;
 
 is meant to always immediately kill tasks even under ptrace.
 Last confirmed on 2.6.38.6.
+<P>
+
+Some system calls return with
+<B>EINTR</B>
+
+if a signal was sent to a tracee, but delivery was suppressed by the tracer.
+(This is very typical operation: it is usually
+done by debuggers on every attach, in order to not introduce
+a bogus
+<B>SIGSTOP</B>).
+
+As of Linux 3.2.9, the following system calls are affected
+(this list is likely incomplete):
+<B><A HREF="../man2/epoll_wait.2.html">epoll_wait</A></B>(2),
+
+and
+<B><A HREF="../man2/read.2.html">read</A></B>(2)
+
+from an
+<B><A HREF="../man7/inotify.7.html">inotify</A></B>(7)
+
+file descriptor.
 <A NAME="lbAV">&nbsp;</A>
 <H2>SEE ALSO</H2>
 
@@ -2353,6 +2372,6 @@ Last confirmed on 2.6.38.6.
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:12:49 GMT, April 20, 2020
+Time: 03:13:25 GMT, April 20, 2020
 </BODY>
 </HTML>
