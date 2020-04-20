@@ -26,7 +26,7 @@ the source, must acknowledge the copyright and authors of this work.
 <HTML><HEAD><TITLE>Man page of CAPABILITIES</TITLE>
 </HEAD><BODY>
 <H1>CAPABILITIES</H1>
-Section: Linux Programmer's Manual (7)<BR>Updated: 2017-09-15<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (7)<BR>Updated: 2018-02-02<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -343,23 +343,11 @@ write a group ID mapping in a user namespace (see
 <DT><B>CAP_SETFCAP</B> (since Linux 2.6.24)
 
 <DD>
-Set file capabilities.
+Set arbitrary capabilities on a file.
 <DT><B>CAP_SETPCAP</B>
 
 <DD>
-If file capabilities are not supported:
-grant or remove any capability in the
-caller's permitted capability set to or from any other process.
-(This property of
-<B>CAP_SETPCAP</B>
-
-is not available when the kernel is configured to support
-file capabilities, since
-<B>CAP_SETPCAP</B>
-
-has entirely different semantics for such kernels.)
-<DT><DD>
-If file capabilities are supported:
+If file capabilities are supported (i.e., since Linux 2.6.24):
 add any capability from the calling thread's bounding set
 to its inheritable set;
 drop capabilities from the bounding set (via
@@ -371,6 +359,18 @@ make changes to the
 <I>securebits</I>
 
 flags.
+<DT><DD>
+If file capabilities are not supported (i.e., kernels before Linux 2.6.24):
+grant or remove any capability in the
+caller's permitted capability set to or from any other process.
+(This property of
+<B>CAP_SETPCAP</B>
+
+is not available when the kernel is configured to support
+file capabilities, since
+<B>CAP_SETPCAP</B>
+
+has entirely different semantics for such kernels.)
 <DT><B>CAP_SETUID</B>
 
 <DD>
@@ -1064,7 +1064,7 @@ If you have determined that it really is necessary to create
 a new capability for your feature,
 don't make or name it as a &quot;single-use&quot; capability.
 Thus, for example, the addition of the highly specific
-<B>CAP_PACCT</B>
+<B>CAP_SYS_PACCT</B>
 
 was probably a mistake.
 Instead, try to identify and name your new capability as a broader
@@ -1465,11 +1465,11 @@ a file that has the capability in its inheritable set.
 <P>
 
 Note that the bounding set masks the file permitted capabilities,
-but not the inherited capabilities.
-If a thread maintains a capability in its inherited set
+but not the inheritable capabilities.
+If a thread maintains a capability in its inheritable set
 that is not in its bounding set,
 then it can still gain that capability in its permitted set
-by executing a file that has the capability in its inherited set.
+by executing a file that has the capability in its inheritable set.
 <P>
 
 Depending on the kernel version, the capability bounding set is either
@@ -1495,7 +1495,7 @@ Only the
 <B>init</B>
 
 process may set capabilities in the capability bounding set;
-other than that, the superuser (more precisely: programs with the
+other than that, the superuser (more precisely: a process with the
 <B>CAP_SYS_MODULE</B>
 
 capability) may only clear capabilities from this set.
@@ -1583,9 +1583,9 @@ no file capabilities.
 <P>
 
 Removing a capability from the bounding set does not remove it
-from the thread's inherited set.
+from the thread's inheritable set.
 However it does prevent the capability from being added
-back into the thread's inherited set in the future.
+back into the thread's inheritable set in the future.
 
 
 <A NAME="lbAN">&nbsp;</A>
@@ -1606,7 +1606,7 @@ or similar):
 If one or more of the real, effective or saved set user IDs
 was previously 0, and as a result of the UID changes all of these IDs
 have a nonzero value,
-then all capabilities are cleared from the permitted and effective
+then all capabilities are cleared from the permitted, effective, and ambient
 capability sets.
 <DT>2.<DD>
 If the effective user ID is changed from 0 to nonzero,
@@ -1647,11 +1647,6 @@ are enabled in the effective set.
 If a thread that has a 0 value for one or more of its user IDs wants
 to prevent its permitted capability set being cleared when it resets
 all of its user IDs to nonzero values, it can do so using the
-<B><A HREF="../man2/prctl.2.html">prctl</A></B>(2)
-
-<B>PR_SET_KEEPCAPS</B>
-
-operation or the
 <B>SECBIT_KEEP_CAPS</B>
 
 securebits flag described below.
@@ -1717,22 +1712,35 @@ These flags are as follows:
 
 <DD>
 Setting this flag allows a thread that has one or more 0 UIDs to retain
-its capabilities when it switches all of its UIDs to a nonzero value.
+capabilities in its permitted and effective sets
+when it switches all of its UIDs to nonzero values.
 If this flag is not set,
-then such a UID switch causes the thread to lose all capabilities.
+then such a UID switch causes the thread to lose all capabilities
+in those sets.
 This flag is always cleared on an
 <B><A HREF="../man2/execve.2.html">execve</A></B>(2).
 
-(This flag provides the same functionality as the older
+<DT><DD>
+The setting of the
+<B>SECBIT_KEEP_CAPS</B>
+
+flag is ignored if the
+<B>SECBIT_NO_SETUID_FIXUP</B>
+
+flag is set.
+(The latter flag provides a superset of the effect of the former flag.)
+<DT><DD>
+This flag provides the same functionality as the older
 <B><A HREF="../man2/prctl.2.html">prctl</A></B>(2)
 
 <B>PR_SET_KEEPCAPS</B>
 
-operation.)
+operation.
 <DT><B>SECBIT_NO_SETUID_FIXUP</B>
 
 <DD>
-Setting this flag stops the kernel from adjusting capability sets when
+Setting this flag stops the kernel from adjusting the process's
+permitted, effective, and ambient capability sets when
 the thread's effective and filesystem UIDs are switched between
 zero and nonzero values.
 (See the subsection
@@ -1823,7 +1831,7 @@ prctl(PR_SET_SECUREBITS,
 <BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;SECBIT_NO_SETUID_FIXUP_LOCKED&nbsp;|
 <BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;SECBIT_NOROOT&nbsp;|
 <BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;SECBIT_NOROOT_LOCKED);
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Setting/locking&nbsp;SECURE_NO_CAP_AMBIENT_RAISE
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Setting/locking&nbsp;SECBIT_NO_CAP_AMBIENT_RAISE
 <BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;is&nbsp;not&nbsp;required&nbsp;*/
 
 
@@ -2008,6 +2016,6 @@ in the Linux kernel source tree
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:48:00 GMT, April 20, 2020
+Time: 03:48:38 GMT, April 20, 2020
 </BODY>
 </HTML>

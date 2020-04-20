@@ -25,7 +25,7 @@ the source, must acknowledge the copyright and authors of this work.
 <HTML><HEAD><TITLE>Man page of FCNTL</TITLE>
 </HEAD><BODY>
 <H1>FCNTL</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2017-09-15<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2018-02-02<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -870,7 +870,42 @@ and
 Mandatory locking is not specified by POSIX.
 Some other systems also support mandatory locking,
 although the details of how to enable it vary across systems.
+
 <A NAME="lbAK">&nbsp;</A>
+<H3>Lost locks</H3>
+
+When an advisory lock is obtained on a networked filesystem such as
+NFS it is possible that the lock might get lost.
+This may happen due to administrative action on the server, or due to a
+network partition (i.e., loss of network connectivity with the server)
+which lasts long enough for the server to assume
+that the client is no longer functioning.
+<P>
+
+When the filesystem determines that a lock has been lost, future
+<B><A HREF="../man2/read.2.html">read</A></B>(2)
+
+or
+<B><A HREF="../man2/write.2.html">write</A></B>(2)
+
+requests may fail with the error
+<B>EIO</B>.
+
+This error will persist until the lock is removed or the file
+descriptor is closed.
+Since Linux 3.12,
+
+this happens at least for NFSv4 (including all minor versions).
+<P>
+
+Some versions of UNIX send a signal
+(<B>SIGLOST</B>)
+
+in this circumstance.
+Linux does not define this signal, and does not provide any
+asynchronous notification of lost locks.
+
+<A NAME="lbAL">&nbsp;</A>
 <H3>Managing signals</H3>
 
 <B>F_GETOWN</B>,
@@ -1354,7 +1389,7 @@ POSIX has asynchronous I/O and the
 
 structure to achieve similar things; these are also available
 in Linux as part of the GNU C Library (Glibc).
-<A NAME="lbAL">&nbsp;</A>
+<A NAME="lbAM">&nbsp;</A>
 <H3>Leases</H3>
 
 <B>F_SETLEASE</B>
@@ -1582,7 +1617,7 @@ structure as its second argument, and the
 field of this argument will hold the file descriptor of the leased file
 that has been accessed by another process.
 (This is useful if the caller holds leases against multiple files.)
-<A NAME="lbAM">&nbsp;</A>
+<A NAME="lbAN">&nbsp;</A>
 <H3>File and directory change notification (dnotify)</H3>
 
 <DL COMPACT>
@@ -1768,7 +1803,7 @@ See
 <B><A HREF="../man7/inotify.7.html">inotify</A></B>(7).
 
 </DL>
-<A NAME="lbAN">&nbsp;</A>
+<A NAME="lbAO">&nbsp;</A>
 <H3>Changing the capacity of a pipe</H3>
 
 <DL COMPACT>
@@ -1824,7 +1859,7 @@ Return (as the function result) the capacity of the pipe referred to by
 
 
 </DL>
-<A NAME="lbAO">&nbsp;</A>
+<A NAME="lbAP">&nbsp;</A>
 <H3>File Sealing</H3>
 
 File seals limit the set of allowed operations on a given file.
@@ -2019,7 +2054,7 @@ pending on the file,
 all outstanding writes will be discarded.
 
 </DL>
-<A NAME="lbAP">&nbsp;</A>
+<A NAME="lbAQ">&nbsp;</A>
 <H3>File read/write hints</H3>
 
 Write lifetime hints can be used to inform the kernel about the relative
@@ -2130,7 +2165,7 @@ data written with
 
 All the write-specific hints are relative to each other,
 and no individual absolute meaning should be attributed to them.
-<A NAME="lbAQ">&nbsp;</A>
+<A NAME="lbAR">&nbsp;</A>
 <H2>RETURN VALUE</H2>
 
 For a successful call, the return value depends on the operation:
@@ -2183,7 +2218,7 @@ On error, -1 is returned, and
 <I>errno</I>
 
 is set appropriately.
-<A NAME="lbAR">&nbsp;</A>
+<A NAME="lbAS">&nbsp;</A>
 <H2>ERRORS</H2>
 
 <DL COMPACT>
@@ -2432,7 +2467,7 @@ or the current set of seals on the file already includes
 <B>F_SEAL_SEAL</B>.
 
 </DL>
-<A NAME="lbAS">&nbsp;</A>
+<A NAME="lbAT">&nbsp;</A>
 <H2>CONFORMING TO</H2>
 
 SVr4, 4.3BSD, POSIX.1-2001.
@@ -2535,7 +2570,7 @@ and
 
 are Linux-specific.
 
-<A NAME="lbAT">&nbsp;</A>
+<A NAME="lbAU">&nbsp;</A>
 <H2>NOTES</H2>
 
 The errors returned by
@@ -2545,7 +2580,7 @@ are different from those returned by
 <B>F_DUPFD</B>.
 
 
-<A NAME="lbAU">&nbsp;</A>
+<A NAME="lbAV">&nbsp;</A>
 <H3>File locking</H3>
 
 The original Linux
@@ -2577,7 +2612,7 @@ However, these details can be ignored by applications using glibc, whose
 wrapper function transparently employs the more recent system call
 where it is available.
 
-<A NAME="lbAV">&nbsp;</A>
+<A NAME="lbAW">&nbsp;</A>
 <H3>Record locks</H3>
 
 Since kernel 2.0, there is no interaction between the types of lock
@@ -2633,7 +2668,7 @@ However, these details can be ignored by applications using glibc, whose
 
 wrapper function transparently employs the more recent system call
 where it is available.
-<A NAME="lbAW">&nbsp;</A>
+<A NAME="lbAX">&nbsp;</A>
 <H3>Record locking and NFS</H3>
 
 Before Linux 3.12, if an NFSv4 client
@@ -2680,10 +2715,10 @@ when contact is reestablished with the server.
 Because of the attendant risk of data corruption,
 
 this parameter defaults to 0 (disabled).
-<A NAME="lbAX">&nbsp;</A>
+<A NAME="lbAY">&nbsp;</A>
 <H2>BUGS</H2>
 
-<A NAME="lbAY">&nbsp;</A>
+<A NAME="lbAZ">&nbsp;</A>
 <H3>F_SETFL</H3>
 
 It is not possible to use
@@ -2700,7 +2735,7 @@ flags.
 
 
 Attempts to change the state of these flags are silently ignored.
-<A NAME="lbAZ">&nbsp;</A>
+<A NAME="lbBA">&nbsp;</A>
 <H3>F_GETOWN</H3>
 
 A limitation of the Linux system call conventions on some
@@ -2735,7 +2770,7 @@ problem invisible by implementing
 using
 <B>F_GETOWN_EX</B>.
 
-<A NAME="lbBA">&nbsp;</A>
+<A NAME="lbBB">&nbsp;</A>
 <H3>F_SETOWN</H3>
 
 In Linux 2.4 and earlier, there is bug that can occur
@@ -2759,7 +2794,7 @@ has permission to send signals to.
 Despite this error return, the file descriptor owner is set,
 and signals will be sent to the owner.
 
-<A NAME="lbBB">&nbsp;</A>
+<A NAME="lbBC">&nbsp;</A>
 <H3>Deadlock detection</H3>
 
 The deadlock-detection algorithm employed by the kernel when dealing with
@@ -2784,7 +2819,7 @@ when two or more processes created using the
 
 flag place locks that appear (to the kernel) to conflict.
 
-<A NAME="lbBC">&nbsp;</A>
+<A NAME="lbBD">&nbsp;</A>
 <H3>Mandatory locking</H3>
 
 The Linux implementation of mandatory locking
@@ -2811,7 +2846,7 @@ Similar races exist between mandatory locks and
 <B><A HREF="../man2/mmap.2.html">mmap</A></B>(2).
 
 It is therefore inadvisable to rely on mandatory locking.
-<A NAME="lbBD">&nbsp;</A>
+<A NAME="lbBE">&nbsp;</A>
 <H2>SEE ALSO</H2>
 
 <B><A HREF="../man2/dup2.2.html">dup2</A></B>(2),
@@ -2866,36 +2901,37 @@ is called
 <DT><A HREF="#lbAH">Advisory record locking</A><DD>
 <DT><A HREF="#lbAI">Open file description locks (non-POSIX)</A><DD>
 <DT><A HREF="#lbAJ">Mandatory locking</A><DD>
-<DT><A HREF="#lbAK">Managing signals</A><DD>
-<DT><A HREF="#lbAL">Leases</A><DD>
-<DT><A HREF="#lbAM">File and directory change notification (dnotify)</A><DD>
-<DT><A HREF="#lbAN">Changing the capacity of a pipe</A><DD>
-<DT><A HREF="#lbAO">File Sealing</A><DD>
-<DT><A HREF="#lbAP">File read/write hints</A><DD>
+<DT><A HREF="#lbAK">Lost locks</A><DD>
+<DT><A HREF="#lbAL">Managing signals</A><DD>
+<DT><A HREF="#lbAM">Leases</A><DD>
+<DT><A HREF="#lbAN">File and directory change notification (dnotify)</A><DD>
+<DT><A HREF="#lbAO">Changing the capacity of a pipe</A><DD>
+<DT><A HREF="#lbAP">File Sealing</A><DD>
+<DT><A HREF="#lbAQ">File read/write hints</A><DD>
 </DL>
-<DT><A HREF="#lbAQ">RETURN VALUE</A><DD>
-<DT><A HREF="#lbAR">ERRORS</A><DD>
-<DT><A HREF="#lbAS">CONFORMING TO</A><DD>
-<DT><A HREF="#lbAT">NOTES</A><DD>
+<DT><A HREF="#lbAR">RETURN VALUE</A><DD>
+<DT><A HREF="#lbAS">ERRORS</A><DD>
+<DT><A HREF="#lbAT">CONFORMING TO</A><DD>
+<DT><A HREF="#lbAU">NOTES</A><DD>
 <DL>
-<DT><A HREF="#lbAU">File locking</A><DD>
-<DT><A HREF="#lbAV">Record locks</A><DD>
-<DT><A HREF="#lbAW">Record locking and NFS</A><DD>
+<DT><A HREF="#lbAV">File locking</A><DD>
+<DT><A HREF="#lbAW">Record locks</A><DD>
+<DT><A HREF="#lbAX">Record locking and NFS</A><DD>
 </DL>
-<DT><A HREF="#lbAX">BUGS</A><DD>
+<DT><A HREF="#lbAY">BUGS</A><DD>
 <DL>
-<DT><A HREF="#lbAY">F_SETFL</A><DD>
-<DT><A HREF="#lbAZ">F_GETOWN</A><DD>
-<DT><A HREF="#lbBA">F_SETOWN</A><DD>
-<DT><A HREF="#lbBB">Deadlock detection</A><DD>
-<DT><A HREF="#lbBC">Mandatory locking</A><DD>
+<DT><A HREF="#lbAZ">F_SETFL</A><DD>
+<DT><A HREF="#lbBA">F_GETOWN</A><DD>
+<DT><A HREF="#lbBB">F_SETOWN</A><DD>
+<DT><A HREF="#lbBC">Deadlock detection</A><DD>
+<DT><A HREF="#lbBD">Mandatory locking</A><DD>
 </DL>
-<DT><A HREF="#lbBD">SEE ALSO</A><DD>
+<DT><A HREF="#lbBE">SEE ALSO</A><DD>
 </DL>
 <HR>
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:47:46 GMT, April 20, 2020
+Time: 03:48:24 GMT, April 20, 2020
 </BODY>
 </HTML>
