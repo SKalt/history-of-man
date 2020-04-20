@@ -456,57 +456,6 @@ return the new file descriptor, or -1 if an error occurred
 
 is set appropriately).
 <A NAME="lbAF">&nbsp;</A>
-<H2>NOTES</H2>
-
-There are many infelicities in the protocol underlying NFS, affecting
-amongst others
-<B>O_SYNC</B> and <B>O_NDELAY</B>.
-
-<P>
-POSIX provides for three different variants of synchronised I/O,
-corresponding to the flags <B>O_SYNC</B>, <B>O_DSYNC</B> and
-<B>O_RSYNC</B>.
-Currently (2.1.130) these are all synonymous under Linux.
-<P>
-Note that
-<B>open</B>()
-
-can open device special files, but
-<B>creat</B>()
-
-cannot create them; use
-<B><A HREF="../man2/mknod.2.html">mknod</A></B>(2)
-
-instead.
-<P>
-
-On NFS file systems with UID mapping enabled,
-<B>open</B>()
-
-may
-return a file descriptor but e.g.
-<B><A HREF="../man2/read.2.html">read</A></B>(2)
-
-requests are denied
-with <B>EACCES</B>.
-This is because the client performs
-<B>open</B>()
-
-by checking the
-permissions, but UID mapping is performed by the server upon
-read and write requests.
-<P>
-If the file is newly created, its st_atime, st_ctime, st_mtime fields
-(respectively, time of last access, time of last status change, and
-time of last modification; see
-<B><A HREF="../man2/stat.2.html">stat</A></B>(2))
-
-are set
-to the current time, and so are the st_ctime and st_mtime fields of the
-parent directory.
-Otherwise, if the file is modified because of the O_TRUNC flag,
-its st_ctime and st_mtime fields are set to the current time.
-<A NAME="lbAG">&nbsp;</A>
 <H2>ERRORS</H2>
 
 <DL COMPACT>
@@ -668,16 +617,7 @@ flag was specified, and an incompatible lease was held on the file
 <B><A HREF="../man2/fcntl.2.html">fcntl</A></B>(2)).
 
 </DL>
-<A NAME="lbAH">&nbsp;</A>
-<H2>NOTES</H2>
-
-Under Linux, the O_NONBLOCK flag indicates that one wants to open
-but does not necessarily have the intention to read or write.
-This is typically used to open devices in order to get a file descriptor
-for use with
-<B><A HREF="../man2/ioctl.2.html">ioctl</A></B>(2).
-
-<A NAME="lbAI">&nbsp;</A>
+<A NAME="lbAG">&nbsp;</A>
 <H2>CONFORMING TO</H2>
 
 SVr4, 4.3BSD, POSIX.1-2001.
@@ -694,6 +634,18 @@ One may have to define the
 <B>_GNU_SOURCE</B>
 
 macro to get their definitions.
+<A NAME="lbAH">&nbsp;</A>
+<H2>NOTES</H2>
+
+Under Linux, the 
+<B>O_NONBLOCK</B>
+
+flag indicates that one wants to open
+but does not necessarily have the intention to read or write.
+This is typically used to open devices in order to get a file descriptor
+for use with
+<B><A HREF="../man2/ioctl.2.html">ioctl</A></B>(2).
+
 <P>
 
 The (undefined) effect of
@@ -724,7 +676,72 @@ One may have to define the
 <B>_GNU_SOURCE</B>
 
 macro to get its definition.
-<A NAME="lbAJ">&nbsp;</A>
+<P>
+
+There are many infelicities in the protocol underlying NFS, affecting
+amongst others
+<B>O_SYNC</B> and <B>O_NDELAY</B>.
+
+<P>
+POSIX provides for three different variants of synchronised I/O,
+corresponding to the flags <B>O_SYNC</B>, <B>O_DSYNC</B> and
+<B>O_RSYNC</B>.
+Currently (2.1.130) these are all synonymous under Linux.
+<P>
+Note that
+<B>open</B>()
+
+can open device special files, but
+<B>creat</B>()
+
+cannot create them; use
+<B><A HREF="../man2/mknod.2.html">mknod</A></B>(2)
+
+instead.
+<P>
+
+On NFS file systems with UID mapping enabled,
+<B>open</B>()
+
+may
+return a file descriptor but e.g.
+<B><A HREF="../man2/read.2.html">read</A></B>(2)
+
+requests are denied
+with <B>EACCES</B>.
+This is because the client performs
+<B>open</B>()
+
+by checking the
+permissions, but UID mapping is performed by the server upon
+read and write requests.
+<P>
+If the file is newly created, its
+<I>st_atime</I>,
+
+<I>st_ctime</I>,
+
+<I>st_mtime</I>
+
+fields
+(respectively, time of last access, time of last status change, and
+time of last modification; see
+<B><A HREF="../man2/stat.2.html">stat</A></B>(2))
+
+are set
+to the current time, and so are the
+<I>st_ctime</I>
+
+and 
+<I>st_mtime</I>
+
+fields of the
+parent directory.
+Otherwise, if the file is modified because of the 
+<B>O_TRUNC</B>
+
+flag, its st_ctime and st_mtime fields are set to the current time.
+<A NAME="lbAI">&nbsp;</A>
 <H2>BUGS</H2>
 
 &quot;The thing that has always disturbed me about O_DIRECT is that the whole
@@ -744,7 +761,7 @@ use
 to enable this flag.
 
 
-<A NAME="lbAK">&nbsp;</A>
+<A NAME="lbAJ">&nbsp;</A>
 <H2>SEE ALSO</H2>
 
 <B><A HREF="../man2/close.2.html">close</A></B>(2),
@@ -794,17 +811,16 @@ to enable this flag.
 <DT><A HREF="#lbAC">SYNOPSIS</A><DD>
 <DT><A HREF="#lbAD">DESCRIPTION</A><DD>
 <DT><A HREF="#lbAE">RETURN VALUE</A><DD>
-<DT><A HREF="#lbAF">NOTES</A><DD>
-<DT><A HREF="#lbAG">ERRORS</A><DD>
+<DT><A HREF="#lbAF">ERRORS</A><DD>
+<DT><A HREF="#lbAG">CONFORMING TO</A><DD>
 <DT><A HREF="#lbAH">NOTES</A><DD>
-<DT><A HREF="#lbAI">CONFORMING TO</A><DD>
-<DT><A HREF="#lbAJ">BUGS</A><DD>
-<DT><A HREF="#lbAK">SEE ALSO</A><DD>
+<DT><A HREF="#lbAI">BUGS</A><DD>
+<DT><A HREF="#lbAJ">SEE ALSO</A><DD>
 </DL>
 <HR>
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 02:37:48 GMT, April 20, 2020
+Time: 02:38:22 GMT, April 20, 2020
 </BODY>
 </HTML>

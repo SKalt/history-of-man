@@ -110,7 +110,7 @@ When a packet is received, it is passed to any raw sockets which have
 been bound to its protocol before it is passed to other protocol handlers
 (e.g. kernel protocol modules).
 <A NAME="lbAE">&nbsp;</A>
-<H2>ADDRESS FORMAT</H2>
+<H3>Address Format</H3>
 
 Raw sockets use the standard
 <I>sockaddr_in</I>
@@ -133,7 +133,7 @@ See the
 
 include file for valid IP protocols.
 <A NAME="lbAF">&nbsp;</A>
-<H2>SOCKET OPTIONS</H2>
+<H3>Socket Options</H3>
 
 Raw socket options can be set with
 <B><A HREF="../man2/setsockopt.2.html">setsockopt</A></B>(2)
@@ -167,6 +167,85 @@ In addition all
 
 socket options valid for datagram sockets are supported.
 <A NAME="lbAG">&nbsp;</A>
+<H3>Error Handling</H3>
+
+Errors originating from the network are only passed to the user when the
+socket is connected or the
+<B>IP_RECVERR</B>
+
+flag is enabled.
+For connected sockets only
+<B>EMSGSIZE</B>
+
+and
+<B>EPROTO</B>
+
+are passed for compatibility.
+With
+<B>IP_RECVERR</B>
+
+all network errors are saved in the error queue.
+<A NAME="lbAH">&nbsp;</A>
+<H2>ERRORS</H2>
+
+<DL COMPACT>
+<DT><B>EMSGSIZE</B>
+
+<DD>
+Packet too big.
+Either Path MTU Discovery is enabled (the
+<B>IP_MTU_DISCOVER</B>
+
+socket flag) or the packet size exceeds the maximum allowed IPv4
+packet size of 64KB.
+<DT><B>EACCES</B>
+
+<DD>
+User tried to send to a broadcast address without having the
+broadcast flag set on the socket.
+<DT><B>EPROTO</B>
+
+<DD>
+An ICMP error has arrived reporting a parameter problem.
+<DT><B>EFAULT</B>
+
+<DD>
+An invalid memory address was supplied.
+<DT><B>EOPNOTSUPP</B>
+
+<DD>
+Invalid flag has been passed to a socket call (like
+<B>MSG_OOB</B>).
+
+<DT><B>EINVAL</B>
+
+<DD>
+Invalid argument.
+<DT><B>EPERM</B>
+
+<DD>
+The user doesn't have permission to open raw sockets.
+Only processes with a effective user ID of 0 or the
+<B>CAP_NET_RAW</B>
+
+attribute may do that.
+</DL>
+<A NAME="lbAI">&nbsp;</A>
+<H2>VERSIONS</H2>
+
+<B>IP_RECVERR</B>
+
+and
+<B>ICMP_FILTER</B>
+
+are new in Linux 2.2.
+They are Linux extensions and should not be used in portable programs.
+<P>
+Linux 2.0 enabled some bug-to-bug compatibility with BSD in the
+raw socket code when the
+SO_BSDCOMPAT socket option was set --- since Linux 2.2,
+this option no longer has that effect.
+<A NAME="lbAJ">&nbsp;</A>
 <H2>NOTES</H2>
 
 By default raw sockets do path MTU (Maximum Transmission Unit) discovery.
@@ -248,85 +327,6 @@ this ability was lost in Linux 2.2.
 The workaround is to use
 <B>IP_HDRINCL</B>.
 
-<A NAME="lbAH">&nbsp;</A>
-<H2>ERROR HANDLING</H2>
-
-Errors originating from the network are only passed to the user when the
-socket is connected or the
-<B>IP_RECVERR</B>
-
-flag is enabled.
-For connected sockets only
-<B>EMSGSIZE</B>
-
-and
-<B>EPROTO</B>
-
-are passed for compatibility.
-With
-<B>IP_RECVERR</B>
-
-all network errors are saved in the error queue.
-<A NAME="lbAI">&nbsp;</A>
-<H2>ERRORS</H2>
-
-<DL COMPACT>
-<DT><B>EMSGSIZE</B>
-
-<DD>
-Packet too big.
-Either Path MTU Discovery is enabled (the
-<B>IP_MTU_DISCOVER</B>
-
-socket flag) or the packet size exceeds the maximum allowed IPv4
-packet size of 64KB.
-<DT><B>EACCES</B>
-
-<DD>
-User tried to send to a broadcast address without having the
-broadcast flag set on the socket.
-<DT><B>EPROTO</B>
-
-<DD>
-An ICMP error has arrived reporting a parameter problem.
-<DT><B>EFAULT</B>
-
-<DD>
-An invalid memory address was supplied.
-<DT><B>EOPNOTSUPP</B>
-
-<DD>
-Invalid flag has been passed to a socket call (like
-<B>MSG_OOB</B>).
-
-<DT><B>EINVAL</B>
-
-<DD>
-Invalid argument.
-<DT><B>EPERM</B>
-
-<DD>
-The user doesn't have permission to open raw sockets.
-Only processes with a effective user ID of 0 or the
-<B>CAP_NET_RAW</B>
-
-attribute may do that.
-</DL>
-<A NAME="lbAJ">&nbsp;</A>
-<H2>VERSIONS</H2>
-
-<B>IP_RECVERR</B>
-
-and
-<B>ICMP_FILTER</B>
-
-are new in Linux 2.2.
-They are Linux extensions and should not be used in portable programs.
-<P>
-Linux 2.0 enabled some bug-to-bug compatibility with BSD in the
-raw socket code when the
-SO_BSDCOMPAT socket option was set --- since Linux 2.2,
-this option no longer has that effect.
 <A NAME="lbAK">&nbsp;</A>
 <H2>BUGS</H2>
 
@@ -381,12 +381,14 @@ include file for the IP protocol.
 <DT><A HREF="#lbAB">NAME</A><DD>
 <DT><A HREF="#lbAC">SYNOPSIS</A><DD>
 <DT><A HREF="#lbAD">DESCRIPTION</A><DD>
-<DT><A HREF="#lbAE">ADDRESS FORMAT</A><DD>
-<DT><A HREF="#lbAF">SOCKET OPTIONS</A><DD>
-<DT><A HREF="#lbAG">NOTES</A><DD>
-<DT><A HREF="#lbAH">ERROR HANDLING</A><DD>
-<DT><A HREF="#lbAI">ERRORS</A><DD>
-<DT><A HREF="#lbAJ">VERSIONS</A><DD>
+<DL>
+<DT><A HREF="#lbAE">Address Format</A><DD>
+<DT><A HREF="#lbAF">Socket Options</A><DD>
+<DT><A HREF="#lbAG">Error Handling</A><DD>
+</DL>
+<DT><A HREF="#lbAH">ERRORS</A><DD>
+<DT><A HREF="#lbAI">VERSIONS</A><DD>
+<DT><A HREF="#lbAJ">NOTES</A><DD>
 <DT><A HREF="#lbAK">BUGS</A><DD>
 <DT><A HREF="#lbAL">SEE ALSO</A><DD>
 </DL>
@@ -394,6 +396,6 @@ include file for the IP protocol.
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 02:38:01 GMT, April 20, 2020
+Time: 02:38:34 GMT, April 20, 2020
 </BODY>
 </HTML>

@@ -317,6 +317,73 @@ tracing.
 (<I>addr</I> is ignored.)
 </DL>
 <A NAME="lbAE">&nbsp;</A>
+<H2>RETURN VALUE</H2>
+
+On success, PTRACE_PEEK* requests return the requested data,
+while other requests return zero.
+On error, all requests return -1, and
+<I>errno</I>
+
+is set appropriately.
+Since the value returned by a successful PTRACE_PEEK*
+request may be -1, the caller must check
+<I>errno</I>
+
+after such requests to determine whether or not an error occurred.
+<A NAME="lbAF">&nbsp;</A>
+<H2>ERRORS</H2>
+
+<DL COMPACT>
+<DT><B>EBUSY</B>
+
+<DD>
+(i386 only) There was an error with allocating or freeing a debug
+register.
+<DT><B>EFAULT</B>
+
+<DD>
+There was an attempt to read from or write to an invalid area in
+the parent's or child's memory,
+probably because the area wasn't mapped or accessible.
+Unfortunately, under Linux, different variations of this fault
+will return EIO or EFAULT more or less arbitrarily.
+<DT><B>EINVAL</B>
+
+<DD>
+An attempt was made to set an invalid option.
+<DT><B>EIO</B>
+
+<DD>
+<I>request</I> is invalid, or an attempt was made to read from or
+write to an invalid area in the parent's or child's memory,
+or there was a word-alignment violation,
+or an invalid signal was specified during a restart request.
+<DT><B>EPERM</B>
+
+<DD>
+The specified process cannot be traced.
+This could be because the
+parent has insufficient privileges (the required capability is
+<B>CAP_SYS_PTRACE</B>);
+
+non-root processes cannot trace processes that they
+cannot send signals to or those running
+set-user-ID/set-group-ID programs, for obvious reasons.
+Alternatively, the process may already be being traced, or be
+<B>init</B>
+
+(PID 1).
+<DT><B>ESRCH</B>
+
+<DD>
+The specified process does not exist, or is not currently being traced
+by the caller, or is not stopped (for requests that require that).
+</DL>
+<A NAME="lbAG">&nbsp;</A>
+<H2>CONFORMING TO</H2>
+
+SVr4, 4.3BSD
+<A NAME="lbAH">&nbsp;</A>
 <H2>NOTES</H2>
 
 Although arguments to
@@ -391,21 +458,7 @@ present in Solaris 2 implements a superset of
 <B>ptrace</B>()
 
 functionality in a more powerful and uniform way.
-<A NAME="lbAF">&nbsp;</A>
-<H2>RETURN VALUE</H2>
-
-On success, PTRACE_PEEK* requests return the requested data,
-while other requests return zero.
-On error, all requests return -1, and
-<I>errno</I>
-
-is set appropriately.
-Since the value returned by a successful PTRACE_PEEK*
-request may be -1, the caller must check
-<I>errno</I>
-
-after such requests to determine whether or not an error occurred.
-<A NAME="lbAG">&nbsp;</A>
+<A NAME="lbAI">&nbsp;</A>
 <H2>BUGS</H2>
 
 On hosts with 2.6 kernel headers, PTRACE_SETOPTIONS is declared
@@ -414,59 +467,6 @@ This leads to applications compiled with such
 headers failing when run on 2.4 kernels.
 This can be worked around by redefining PTRACE_SETOPTIONS to
 PTRACE_OLDSETOPTIONS, if that is defined.
-<A NAME="lbAH">&nbsp;</A>
-<H2>ERRORS</H2>
-
-<DL COMPACT>
-<DT><B>EBUSY</B>
-
-<DD>
-(i386 only) There was an error with allocating or freeing a debug
-register.
-<DT><B>EFAULT</B>
-
-<DD>
-There was an attempt to read from or write to an invalid area in
-the parent's or child's memory,
-probably because the area wasn't mapped or accessible.
-Unfortunately, under Linux, different variations of this fault
-will return EIO or EFAULT more or less arbitrarily.
-<DT><B>EINVAL</B>
-
-<DD>
-An attempt was made to set an invalid option.
-<DT><B>EIO</B>
-
-<DD>
-<I>request</I> is invalid, or an attempt was made to read from or
-write to an invalid area in the parent's or child's memory,
-or there was a word-alignment violation,
-or an invalid signal was specified during a restart request.
-<DT><B>EPERM</B>
-
-<DD>
-The specified process cannot be traced.
-This could be because the
-parent has insufficient privileges (the required capability is
-<B>CAP_SYS_PTRACE</B>);
-
-non-root processes cannot trace processes that they
-cannot send signals to or those running
-set-user-ID/set-group-ID programs, for obvious reasons.
-Alternatively, the process may already be being traced, or be
-<B>init</B>
-
-(PID 1).
-<DT><B>ESRCH</B>
-
-<DD>
-The specified process does not exist, or is not currently being traced
-by the caller, or is not stopped (for requests that require that).
-</DL>
-<A NAME="lbAI">&nbsp;</A>
-<H2>CONFORMING TO</H2>
-
-SVr4, 4.3BSD
 <A NAME="lbAJ">&nbsp;</A>
 <H2>SEE ALSO</H2>
 
@@ -494,17 +494,17 @@ SVr4, 4.3BSD
 <DT><A HREF="#lbAB">NAME</A><DD>
 <DT><A HREF="#lbAC">SYNOPSIS</A><DD>
 <DT><A HREF="#lbAD">DESCRIPTION</A><DD>
-<DT><A HREF="#lbAE">NOTES</A><DD>
-<DT><A HREF="#lbAF">RETURN VALUE</A><DD>
-<DT><A HREF="#lbAG">BUGS</A><DD>
-<DT><A HREF="#lbAH">ERRORS</A><DD>
-<DT><A HREF="#lbAI">CONFORMING TO</A><DD>
+<DT><A HREF="#lbAE">RETURN VALUE</A><DD>
+<DT><A HREF="#lbAF">ERRORS</A><DD>
+<DT><A HREF="#lbAG">CONFORMING TO</A><DD>
+<DT><A HREF="#lbAH">NOTES</A><DD>
+<DT><A HREF="#lbAI">BUGS</A><DD>
 <DT><A HREF="#lbAJ">SEE ALSO</A><DD>
 </DL>
 <HR>
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 02:37:48 GMT, April 20, 2020
+Time: 02:38:22 GMT, April 20, 2020
 </BODY>
 </HTML>

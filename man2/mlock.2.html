@@ -134,106 +134,6 @@ signal to the process.
 unlocks all pages mapped into the address space of the
 calling process.
 <A NAME="lbAG">&nbsp;</A>
-<H2>NOTES</H2>
-
-Memory locking has two main applications: real-time algorithms and
-high-security data processing.
-Real-time applications require
-deterministic timing, and, like scheduling, paging is one major cause
-of unexpected program execution delays.
-Real-time applications will
-usually also switch to a real-time scheduler with
-<B><A HREF="../man2/sched_setscheduler.2.html">sched_setscheduler</A></B>(2).
-
-Cryptographic security software often handles critical bytes like
-passwords or secret keys as data structures.
-As a result of paging,
-these secrets could be transferred onto a persistent swap store medium,
-where they might be accessible to the enemy long after the security
-software has erased the secrets in RAM and terminated.
-(But be aware that the suspend mode on laptops and some desktop
-computers will save a copy of the system's RAM to disk, regardless
-of memory locks.)
-<P>
-Real-time processes that are using
-<B>mlockall</B>()
-
-to prevent delays on page faults should reserve enough
-locked stack pages before entering the time-critical section,
-so that no page fault can be caused by function calls.
-This can be achieved by calling a function that allocates a
-sufficiently large automatic variable (an array) and writes to the
-memory occupied by this array in order to touch these stack pages.
-This way, enough pages will be mapped for the stack and can be
-locked into RAM.
-The dummy writes ensure that not even copy-on-write
-page faults can occur in the critical section.
-<P>
-Memory locks are not inherited by a child created via
-<B><A HREF="../man2/fork.2.html">fork</A></B>(2)
-
-and are automatically removed (unlocked) during an
-<B><A HREF="../man2/execve.2.html">execve</A></B>(2)
-
-or when the process terminates.
-<P>
-The memory lock on an address range is automatically removed
-if the address range is unmapped via
-<B><A HREF="../man2/munmap.2.html">munmap</A></B>(2).
-
-<P>
-Memory locks do not stack, i.e., pages which have been locked several times
-by calls to
-<B>mlock</B>()
-
-or
-<B>mlockall</B>()
-
-will be unlocked by a single call to
-<B>munlock</B>()
-
-for the corresponding range or by
-<B>munlockall</B>().
-
-Pages which are mapped to several locations or by several processes stay
-locked into RAM as long as they are locked at least at one location or by
-at least one process.
-<A NAME="lbAH">&nbsp;</A>
-<H3>Linux Notes</H3>
-
-Under Linux,
-<B>mlock</B>()
-
-and
-<B>munlock</B>()
-
-automatically round
-<I>addr</I>
-
-down to the nearest page boundary.
-However, POSIX.1-2001 allows an implementation to require that
-<I>addr</I>
-
-is page aligned, so portable applications should ensure this.
-<A NAME="lbAI">&nbsp;</A>
-<H3>Limits and permissions</H3>
-
-In Linux 2.6.8 and earlier,
-a process must be privileged
-(<B>CAP_IPC_LOCK</B>)
-
-in order to lock memory and the
-<B>RLIMIT_MEMLOCK</B>
-
-soft resource limit defines a limit on how much memory the process may lock.
-<P>
-Since Linux 2.6.9, no limits are placed on the amount of memory
-that a privileged process can lock and the
-<B>RLIMIT_MEMLOCK</B>
-
-soft resource limit instead defines a limit on how much memory an
-unprivileged process may lock.
-<A NAME="lbAJ">&nbsp;</A>
 <H2>RETURN VALUE</H2>
 
 On success these system calls return 0.
@@ -242,7 +142,7 @@ On error, -1 is returned,
 
 is set appropriately, and no changes are made to any locks in the
 address space of the process.
-<A NAME="lbAK">&nbsp;</A>
+<A NAME="lbAH">&nbsp;</A>
 <H2>ERRORS</H2>
 
 <DL COMPACT>
@@ -345,42 +245,11 @@ For
 (<B>CAP_IPC_LOCK</B>).
 
 </DL>
-<A NAME="lbAL">&nbsp;</A>
-<H2>BUGS</H2>
+<A NAME="lbAI">&nbsp;</A>
+<H2>CONFORMING TO</H2>
 
-In the 2.4 series Linux kernels up to and including 2.4.17,
-a bug caused the
-<B>mlockall</B>()
-
-<B>MCL_FUTURE</B>
-
-flag to be inherited across a
-<B><A HREF="../man2/fork.2.html">fork</A></B>(2).
-
-This was rectified in kernel 2.4.18.
-<P>
-Since kernel 2.6.9, if a privileged process calls
-<I>mlockall(MCL_FUTURE)</I>
-
-and later drops privileges (loses the
-<B>CAP_IPC_LOCK</B>
-
-capability by, for example,
-setting its effective UID to a non-zero value),
-then subsequent memory allocations (e.g.,
-<B><A HREF="../man2/mmap.2.html">mmap</A></B>(2),
-
-<B><A HREF="../man2/brk.2.html">brk</A></B>(2))
-
-will fail if the
-<B>RLIMIT_MEMLOCK</B>
-
-resource limit is encountered.
-
-
-
-
-<A NAME="lbAM">&nbsp;</A>
+POSIX.1-2001, SVr4
+<A NAME="lbAJ">&nbsp;</A>
 <H2>AVAILABILITY</H2>
 
 On POSIX systems on which
@@ -415,10 +284,141 @@ is defined in &lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt; to a v
 
 
 
-<A NAME="lbAN">&nbsp;</A>
-<H2>CONFORMING TO</H2>
+<A NAME="lbAK">&nbsp;</A>
+<H2>NOTES</H2>
 
-POSIX.1-2001, SVr4
+Memory locking has two main applications: real-time algorithms and
+high-security data processing.
+Real-time applications require
+deterministic timing, and, like scheduling, paging is one major cause
+of unexpected program execution delays.
+Real-time applications will
+usually also switch to a real-time scheduler with
+<B><A HREF="../man2/sched_setscheduler.2.html">sched_setscheduler</A></B>(2).
+
+Cryptographic security software often handles critical bytes like
+passwords or secret keys as data structures.
+As a result of paging,
+these secrets could be transferred onto a persistent swap store medium,
+where they might be accessible to the enemy long after the security
+software has erased the secrets in RAM and terminated.
+(But be aware that the suspend mode on laptops and some desktop
+computers will save a copy of the system's RAM to disk, regardless
+of memory locks.)
+<P>
+Real-time processes that are using
+<B>mlockall</B>()
+
+to prevent delays on page faults should reserve enough
+locked stack pages before entering the time-critical section,
+so that no page fault can be caused by function calls.
+This can be achieved by calling a function that allocates a
+sufficiently large automatic variable (an array) and writes to the
+memory occupied by this array in order to touch these stack pages.
+This way, enough pages will be mapped for the stack and can be
+locked into RAM.
+The dummy writes ensure that not even copy-on-write
+page faults can occur in the critical section.
+<P>
+Memory locks are not inherited by a child created via
+<B><A HREF="../man2/fork.2.html">fork</A></B>(2)
+
+and are automatically removed (unlocked) during an
+<B><A HREF="../man2/execve.2.html">execve</A></B>(2)
+
+or when the process terminates.
+<P>
+The memory lock on an address range is automatically removed
+if the address range is unmapped via
+<B><A HREF="../man2/munmap.2.html">munmap</A></B>(2).
+
+<P>
+Memory locks do not stack, i.e., pages which have been locked several times
+by calls to
+<B>mlock</B>()
+
+or
+<B>mlockall</B>()
+
+will be unlocked by a single call to
+<B>munlock</B>()
+
+for the corresponding range or by
+<B>munlockall</B>().
+
+Pages which are mapped to several locations or by several processes stay
+locked into RAM as long as they are locked at least at one location or by
+at least one process.
+<A NAME="lbAL">&nbsp;</A>
+<H3>Linux Notes</H3>
+
+Under Linux,
+<B>mlock</B>()
+
+and
+<B>munlock</B>()
+
+automatically round
+<I>addr</I>
+
+down to the nearest page boundary.
+However, POSIX.1-2001 allows an implementation to require that
+<I>addr</I>
+
+is page aligned, so portable applications should ensure this.
+<A NAME="lbAM">&nbsp;</A>
+<H3>Limits and permissions</H3>
+
+In Linux 2.6.8 and earlier,
+a process must be privileged
+(<B>CAP_IPC_LOCK</B>)
+
+in order to lock memory and the
+<B>RLIMIT_MEMLOCK</B>
+
+soft resource limit defines a limit on how much memory the process may lock.
+<P>
+Since Linux 2.6.9, no limits are placed on the amount of memory
+that a privileged process can lock and the
+<B>RLIMIT_MEMLOCK</B>
+
+soft resource limit instead defines a limit on how much memory an
+unprivileged process may lock.
+<A NAME="lbAN">&nbsp;</A>
+<H2>BUGS</H2>
+
+In the 2.4 series Linux kernels up to and including 2.4.17,
+a bug caused the
+<B>mlockall</B>()
+
+<B>MCL_FUTURE</B>
+
+flag to be inherited across a
+<B><A HREF="../man2/fork.2.html">fork</A></B>(2).
+
+This was rectified in kernel 2.4.18.
+<P>
+Since kernel 2.6.9, if a privileged process calls
+<I>mlockall(MCL_FUTURE)</I>
+
+and later drops privileges (loses the
+<B>CAP_IPC_LOCK</B>
+
+capability by, for example,
+setting its effective UID to a non-zero value),
+then subsequent memory allocations (e.g.,
+<B><A HREF="../man2/mmap.2.html">mmap</A></B>(2),
+
+<B><A HREF="../man2/brk.2.html">brk</A></B>(2))
+
+will fail if the
+<B>RLIMIT_MEMLOCK</B>
+
+resource limit is encountered.
+
+
+
+
 <A NAME="lbAO">&nbsp;</A>
 <H2>SEE ALSO</H2>
 
@@ -444,22 +444,22 @@ POSIX.1-2001, SVr4
 <DT><A HREF="#lbAE">mlock() and munlock()</A><DD>
 <DT><A HREF="#lbAF">mlockall() and munlockall()</A><DD>
 </DL>
-<DT><A HREF="#lbAG">NOTES</A><DD>
+<DT><A HREF="#lbAG">RETURN VALUE</A><DD>
+<DT><A HREF="#lbAH">ERRORS</A><DD>
+<DT><A HREF="#lbAI">CONFORMING TO</A><DD>
+<DT><A HREF="#lbAJ">AVAILABILITY</A><DD>
+<DT><A HREF="#lbAK">NOTES</A><DD>
 <DL>
-<DT><A HREF="#lbAH">Linux Notes</A><DD>
-<DT><A HREF="#lbAI">Limits and permissions</A><DD>
+<DT><A HREF="#lbAL">Linux Notes</A><DD>
+<DT><A HREF="#lbAM">Limits and permissions</A><DD>
 </DL>
-<DT><A HREF="#lbAJ">RETURN VALUE</A><DD>
-<DT><A HREF="#lbAK">ERRORS</A><DD>
-<DT><A HREF="#lbAL">BUGS</A><DD>
-<DT><A HREF="#lbAM">AVAILABILITY</A><DD>
-<DT><A HREF="#lbAN">CONFORMING TO</A><DD>
+<DT><A HREF="#lbAN">BUGS</A><DD>
 <DT><A HREF="#lbAO">SEE ALSO</A><DD>
 </DL>
 <HR>
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 02:37:48 GMT, April 20, 2020
+Time: 02:38:22 GMT, April 20, 2020
 </BODY>
 </HTML>
