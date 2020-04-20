@@ -26,7 +26,7 @@ the source, must acknowledge the copyright and authors of this work.
 <HTML><HEAD><TITLE>Man page of SYSCONF</TITLE>
 </HEAD><BODY>
 <H1>SYSCONF</H1>
-Section: Linux Programmer's Manual (3)<BR>Updated: 2015-08-08<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2017-07-13<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -63,7 +63,7 @@ At run time, one can ask for numerical values using the present function
 <B>sysconf</B>().
 
 One can ask for numerical values that may depend
-on the filesystem a file is in using the calls
+on the filesystem in which a file resides using
 <B><A HREF="../man3/fpathconf.3.html">fpathconf</A></B>(3)
 
 and
@@ -424,23 +424,70 @@ The number of processors currently online (available).
 <A NAME="lbAG">&nbsp;</A>
 <H2>RETURN VALUE</H2>
 
+The return value of
+<B>sysconf</B>()
+
+is one of the following:
+<DL COMPACT>
+<DT>*<DD>
+On error, -1 is returned and
+<I>errno</I>
+
+is set to indicate the cause of the error
+(for example,
+<B>EINVAL</B>,
+
+indicating that
+<I>name</I>
+
+is invalid).
+<DT>*<DD>
 If
 <I>name</I>
 
-is invalid, -1 is returned, and
-<I>errno</I>
-
-is set to
-<B>EINVAL</B>.
-
-Otherwise, the value returned is the value of the system resource and
+corresponds to a maximum or minimum limit, and that limit is indeterminate,
+-1 is returned and
 <I>errno</I>
 
 is not changed.
-In the case of options, a positive value is returned if a queried option
-is available, and -1 if it is not.
-In the case of limits, -1 means that there is no definite limit.
+(To distinguish an indeterminate limit from an error, set
+<I>errno</I>
+
+to zero before the call, and then check whether
+<I>errno</I>
+
+is nonzero when -1 is returned.)
+<DT>*<DD>
+If
+<I>name</I>
+
+corresponds to an option,
+a positive value is returned if the option is supported,
+and -1 is returned if the option is not supported.
+<DT>*<DD>
+Otherwise,
+the current value of the option or limit is returned.
+This value will not be more restrictive than
+the corresponding value that was described to the application in
+<I>&lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;</I>
+
+or
+<I>&lt;<A HREF="file:///usr/include/limits.h">limits.h</A>&gt;</I>
+
+when the application was compiled.
+</DL>
 <A NAME="lbAH">&nbsp;</A>
+<H2>ERRORS</H2>
+
+<DL COMPACT>
+<DT><B>EINVAL</B>
+
+<DD>
+<I>name</I>
+
+is invalid.
+</DL>
+<A NAME="lbAI">&nbsp;</A>
 <H2>ATTRIBUTES</H2>
 
 For an explanation of the terms used in this section, see
@@ -454,11 +501,11 @@ For an explanation of the terms used in this section, see
 </TD><TD>Thread safety</TD><TD>MT-Safe env<BR></TD></TR>
 </TABLE>
 
-<A NAME="lbAI">&nbsp;</A>
+<A NAME="lbAJ">&nbsp;</A>
 <H2>CONFORMING TO</H2>
 
 POSIX.1-2001, POSIX.1-2008.
-<A NAME="lbAJ">&nbsp;</A>
+<A NAME="lbAK">&nbsp;</A>
 <H2>BUGS</H2>
 
 It is difficult to use
@@ -472,7 +519,7 @@ is consumed by the user's environment variables.
 
 Some returned values may be huge; they are not suitable for allocating
 memory.
-<A NAME="lbAK">&nbsp;</A>
+<A NAME="lbAL">&nbsp;</A>
 <H2>SEE ALSO</H2>
 
 <B><A HREF="../man1/bc.1.html">bc</A></B>(1),
@@ -504,15 +551,16 @@ memory.
 <DT><A HREF="#lbAF">POSIX.2 variables</A><DD>
 </DL>
 <DT><A HREF="#lbAG">RETURN VALUE</A><DD>
-<DT><A HREF="#lbAH">ATTRIBUTES</A><DD>
-<DT><A HREF="#lbAI">CONFORMING TO</A><DD>
-<DT><A HREF="#lbAJ">BUGS</A><DD>
-<DT><A HREF="#lbAK">SEE ALSO</A><DD>
+<DT><A HREF="#lbAH">ERRORS</A><DD>
+<DT><A HREF="#lbAI">ATTRIBUTES</A><DD>
+<DT><A HREF="#lbAJ">CONFORMING TO</A><DD>
+<DT><A HREF="#lbAK">BUGS</A><DD>
+<DT><A HREF="#lbAL">SEE ALSO</A><DD>
 </DL>
 <HR>
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:46:10 GMT, April 20, 2020
+Time: 03:46:48 GMT, April 20, 2020
 </BODY>
 </HTML>

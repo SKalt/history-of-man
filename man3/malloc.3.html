@@ -26,7 +26,7 @@ the source, must acknowledge the copyright and authors of this work.
 <HTML><HEAD><TITLE>Man page of MALLOC</TITLE>
 </HEAD><BODY>
 <H1>MALLOC</H1>
-Section: Linux Programmer's Manual (3)<BR>Updated: 2015-08-08<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2017-07-13<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -43,7 +43,27 @@ malloc, free, calloc, realloc - allocate and free dynamic memory
 <B>void free(void </B><I>*ptr</I><B>);</B>
 <B>void *calloc(size_t </B><I>nmemb</I><B>, size_t </B><I>size</I><B>);</B>
 <B>void *realloc(void </B><I>*ptr</I><B>, size_t </B><I>size</I><B>);</B>
+<B>void *reallocarray(void </B><I>*ptr</I><B>, size_t </B><I>nmemb</I><B>, size_t </B><I>size</I><B>);</B>
 </PRE>
+
+<P>
+
+
+Feature Test Macro Requirements for glibc (see
+<B><A HREF="../man7/feature_test_macros.7.html">feature_test_macros</A></B>(7)):
+
+
+<P>
+
+<B>reallocarray</B>():
+
+<BR>
+
+<DL COMPACT><DT><DD>
+
+_GNU_SOURCE
+</DL>
+
 
 <A NAME="lbAD">&nbsp;</A>
 <H2>DESCRIPTION</H2>
@@ -164,7 +184,7 @@ Unless
 is NULL, it must have been returned by an earlier call to
 <B>malloc</B>(),
 
-<B>calloc</B>()
+<B>calloc</B>(),
 
 or
 <B>realloc</B>().
@@ -173,6 +193,46 @@ If the area pointed to was moved, a
 <I>free(ptr)</I>
 
 is done.
+<P>
+
+The
+<B>reallocarray</B>()
+
+function changes the size of the memory block pointed to by
+<I>ptr</I>
+
+to be large enough for an array of
+<I>nmemb</I>
+
+elements, each of which is
+<I>size</I>
+
+bytes.
+It is equivalent to the call
+<P>
+
+
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;realloc(ptr,&nbsp;nmemb&nbsp;*&nbsp;size);
+
+<P>
+
+However, unlike that
+<B>realloc</B>()
+
+call,
+<B>reallocarray</B>()
+
+fails safely in the case where the multiplication would overflow.
+If such an overflow occurs,
+<B>reallocarray</B>()
+
+returns NULL, sets
+<I>errno</I>
+
+to
+<B>ENOMEM</B>,
+
+and leaves the original block of memory unchanged.
 <A NAME="lbAE">&nbsp;</A>
 <H2>RETURN VALUE</H2>
 
@@ -229,6 +289,14 @@ If
 <B>realloc</B>()
 
 fails, the original block is left untouched; it is not freed or moved.
+<P>
+
+On success, the
+<B>reallocarray</B>()
+
+function returns a pointer to the newly allocated memory.
+On failure,
+it returns NULL and the original block of memory is left untouched.
 <A NAME="lbAF">&nbsp;</A>
 <H2>ERRORS</H2>
 
@@ -236,8 +304,10 @@ fails, the original block is left untouched; it is not freed or moved.
 
 <B>malloc</B>(),
 
+<B>realloc</B>(),
+
 and
-<B>realloc</B>()
+<B>reallocarray</B>()
 
 can fail with the following error:
 <DL COMPACT>
@@ -280,7 +350,20 @@ For an explanation of the terms used in this section, see
 <A NAME="lbAH">&nbsp;</A>
 <H2>CONFORMING TO</H2>
 
+<B>malloc</B>(),
+
+<B>free</B>(),
+
+<B>calloc</B>(),
+
+<B>realloc</B>():
+
 POSIX.1-2001, POSIX.1-2008, C89, C99.
+<P>
+
+<B>reallocarray</B>()
+
+is a nonstandard extension that first appeared in OpenBSD 5.6 and FreeBSD 11.0.
 <A NAME="lbAI">&nbsp;</A>
 <H2>NOTES</H2>
 
@@ -305,6 +388,7 @@ and the Linux kernel source file
 <I>Documentation/vm/overcommit-accounting</I>.
 
 <P>
+
 Normally,
 <B>malloc</B>()
 
@@ -336,6 +420,7 @@ resource limit (see
 <B><A HREF="../man2/getrlimit.2.html">getrlimit</A></B>(2)).
 
 <P>
+
 To avoid corruption in multithreaded applications,
 mutexes are used internally to protect the memory-management
 data structures employed by these functions.
@@ -357,6 +442,7 @@ or
 
 and managed with its own mutexes.
 <P>
+
 SUSv2 requires
 <B>malloc</B>(),
 
@@ -460,6 +546,6 @@ for details.
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:46:08 GMT, April 20, 2020
+Time: 03:46:46 GMT, April 20, 2020
 </BODY>
 </HTML>

@@ -676,12 +676,22 @@ fills in
 and other fields as described in
 <B><A HREF="../man2/seccomp.2.html">seccomp</A></B>(2).
 
-</DL>
-<P>
 
+</DL>
+<A NAME="lbAF">&nbsp;</A>
+<H3>The si_code field</H3>
+
+The
 <I>si_code</I>
 
-is a value (not a bit mask) indicating why this signal was sent.
+field inside the
+<I>siginfo_t</I>
+
+argument that is passed to a
+<B>SA_SIGINFO</B>
+
+signal handler is a value (not a bit mask)
+indicating why this signal was sent.
 For a
 <B><A HREF="../man2/ptrace.2.html">ptrace</A></B>(2)
 
@@ -698,11 +708,53 @@ and have the ptrace event in the high byte:
 </PRE>
 
 <P>
+
+For a
+non-<B><A HREF="../man2/ptrace.2.html">ptrace</A></B>(2)
+
+event, the values that can appear in
+<I>si_code</I>
+
+are described in the remainder of this section.
+Since glibc 2.20,
+the definitions of most of these symbols are obtained from
+<I>&lt;<A HREF="file:///usr/include/signal.h">signal.h</A>&gt;</I>
+
+by defining feature test macros (before including
+<I>any</I>
+
+header file) as follows:
+<DL COMPACT>
+<DT>*<DD>
+<B>_XOPEN_SOURCE</B>
+
+with the value 500 or greater;
+<DT>*<DD>
+<B>_XOPEN_SOURCE</B>
+
+and
+<B>_XOPEN_SOURCE_EXTENDED</B>;
+
+or
+<DT>*<DD>
+<B>_POSIX_C_SOURCE</B>
+
+with the value 200809L or greater.
+</DL>
+<P>
+
+For the
+<B>TRAP_*</B>
+
+constants, the symbol definitions are provided only in the first two cases.
+Before glibc 2.20, no feature test macros were required to obtain these symbols.
+<P>
+
 For a regular signal, the following list shows the values which can be
 placed in
 <I>si_code</I>
 
-for any signal, along with reason that the signal was generated.
+for any signal, along with the reason that the signal was generated.
 <DL COMPACT><DT><DD>
 <DL COMPACT>
 <DT><B>SI_USER</B>
@@ -943,11 +995,11 @@ Process breakpoint.
 
 <DD>
 Process trace trap.
-<DT><B>TRAP_BRANCH</B> (since Linux 2.4)
+<DT><B>TRAP_BRANCH</B> (since Linux 2.4, IA64 only))
 
 <DD>
 Process taken branch trap.
-<DT><B>TRAP_HWBKPT</B> (since Linux 2.4)
+<DT><B>TRAP_HWBKPT</B> (since Linux 2.4, IA64 only))
 
 <DD>
 Hardware breakpoint/watchpoint.
@@ -1051,7 +1103,7 @@ filter rule.
 </DL>
 </DL>
 
-<A NAME="lbAF">&nbsp;</A>
+<A NAME="lbAG">&nbsp;</A>
 <H2>RETURN VALUE</H2>
 
 <B>sigaction</B>()
@@ -1060,7 +1112,7 @@ returns 0 on success; on error, -1 is returned, and
 <I>errno</I>
 
 is set to indicate the error.
-<A NAME="lbAG">&nbsp;</A>
+<A NAME="lbAH">&nbsp;</A>
 <H2>ERRORS</H2>
 
 <DL COMPACT>
@@ -1080,12 +1132,12 @@ is made to change the action for
 
 which cannot be caught or ignored.
 </DL>
-<A NAME="lbAH">&nbsp;</A>
+<A NAME="lbAI">&nbsp;</A>
 <H2>CONFORMING TO</H2>
 
 POSIX.1-2001, POSIX.1-2008, SVr4.
 
-<A NAME="lbAI">&nbsp;</A>
+<A NAME="lbAJ">&nbsp;</A>
 <H2>NOTES</H2>
 
 A child created via
@@ -1223,7 +1275,7 @@ See
 for a list of the async-signal-safe functions that can be
 safely called inside from inside a signal handler.
 
-<A NAME="lbAJ">&nbsp;</A>
+<A NAME="lbAK">&nbsp;</A>
 <H3>C library/kernel differences</H3>
 
 The glibc wrapper function for
@@ -1278,7 +1330,7 @@ wrapper function hides these details from us, transparently calling
 
 when the kernel provides it.
 
-<A NAME="lbAK">&nbsp;</A>
+<A NAME="lbAL">&nbsp;</A>
 <H3>Undocumented</H3>
 
 Before the introduction of
@@ -1293,7 +1345,7 @@ with second argument of type
 
 See the relevant Linux kernel sources for details.
 This use is obsolete now.
-<A NAME="lbAL">&nbsp;</A>
+<A NAME="lbAM">&nbsp;</A>
 <H2>BUGS</H2>
 
 In kernels up to and including 2.6.13, specifying
@@ -1307,13 +1359,13 @@ execution of the handler, but also the signals specified in
 <I>sa_mask</I>.
 
 This bug was fixed in kernel 2.6.14.
-<A NAME="lbAM">&nbsp;</A>
+<A NAME="lbAN">&nbsp;</A>
 <H2>EXAMPLE</H2>
 
 See
 <B><A HREF="../man2/mprotect.2.html">mprotect</A></B>(2).
 
-<A NAME="lbAN">&nbsp;</A>
+<A NAME="lbAO">&nbsp;</A>
 <H2>SEE ALSO</H2>
 
 <B><A HREF="../man1/kill.1.html">kill</A></B>(1),
@@ -1368,23 +1420,24 @@ See
 <DT><A HREF="#lbAD">DESCRIPTION</A><DD>
 <DL>
 <DT><A HREF="#lbAE">The siginfo_t argument to a SA_SIGINFO handler</A><DD>
+<DT><A HREF="#lbAF">The si_code field</A><DD>
 </DL>
-<DT><A HREF="#lbAF">RETURN VALUE</A><DD>
-<DT><A HREF="#lbAG">ERRORS</A><DD>
-<DT><A HREF="#lbAH">CONFORMING TO</A><DD>
-<DT><A HREF="#lbAI">NOTES</A><DD>
+<DT><A HREF="#lbAG">RETURN VALUE</A><DD>
+<DT><A HREF="#lbAH">ERRORS</A><DD>
+<DT><A HREF="#lbAI">CONFORMING TO</A><DD>
+<DT><A HREF="#lbAJ">NOTES</A><DD>
 <DL>
-<DT><A HREF="#lbAJ">C library/kernel differences</A><DD>
-<DT><A HREF="#lbAK">Undocumented</A><DD>
+<DT><A HREF="#lbAK">C library/kernel differences</A><DD>
+<DT><A HREF="#lbAL">Undocumented</A><DD>
 </DL>
-<DT><A HREF="#lbAL">BUGS</A><DD>
-<DT><A HREF="#lbAM">EXAMPLE</A><DD>
-<DT><A HREF="#lbAN">SEE ALSO</A><DD>
+<DT><A HREF="#lbAM">BUGS</A><DD>
+<DT><A HREF="#lbAN">EXAMPLE</A><DD>
+<DT><A HREF="#lbAO">SEE ALSO</A><DD>
 </DL>
 <HR>
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:46:02 GMT, April 20, 2020
+Time: 03:46:39 GMT, April 20, 2020
 </BODY>
 </HTML>

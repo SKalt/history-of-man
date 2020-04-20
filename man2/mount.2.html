@@ -26,7 +26,7 @@ the source, must acknowledge the copyright and authors of this work.
 <HTML><HEAD><TITLE>Man page of MOUNT</TITLE>
 </HEAD><BODY>
 <H1>MOUNT</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2016-12-12<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2017-07-13<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -59,11 +59,13 @@ specified by the pathname in
 <I>target</I>.
 
 <P>
+
 Appropriate privilege (Linux: the
 <B>CAP_SYS_ADMIN</B>
 
 capability) is required to mount filesystems.
 <P>
+
 Values for the
 <I>filesystemtype</I>
 
@@ -75,6 +77,7 @@ argument supported by the kernel are listed in
 Further types may become available when the appropriate modules
 are loaded.
 <P>
+
 The
 <I>data</I>
 
@@ -86,6 +89,7 @@ See
 
 for details of the options available for each filesystem type.
 <P>
+
 A call to
 <B>mount</B>()
 
@@ -205,7 +209,9 @@ This mount option significantly reduces writes
 needed to update the inode's timestamps, especially mtime and atime.
 However, in the event of a system crash, the atime and mtime fields
 on disk might be out of date by up to 24 hours.
+</DL>
 <P>
+
 Examples of workloads where this option could be of significant benefit
 include frequent random writes to preallocated files,
 as well as cases where the
@@ -223,6 +229,7 @@ is that
 
 will return the correctly updated atime, but the atime updates
 will be flushed to disk only in the cases listed above.)
+<DL COMPACT>
 <DT><B>MS_MANDLOCK</B>
 
 <DD>
@@ -364,6 +371,13 @@ The
 <B>MS_RELATIME</B>
 
 flag is also settable on a per-mount-point basis.
+Since Linux 2.6.16,
+<B>MS_RDONLY</B>
+
+can be set or cleared on a per-mount-point basis as well as on
+the underlying filesystem.
+The mounted filesystem will be writable only if neither the filesystem
+nor the mountpoint are flagged as read-only.
 
 <A NAME="lbAF">&nbsp;</A>
 <H3>Remounting an existing mount</H3>
@@ -388,6 +402,7 @@ should be the same value specified in the initial
 
 call.
 <P>
+
 The
 <I>source</I>
 
@@ -396,6 +411,7 @@ and
 
 arguments are ignored.
 <P>
+
 The
 <I>mountflags</I>
 
@@ -406,7 +422,13 @@ arguments should match the values used in the original
 <B>mount</B>()
 
 call, except for those parameters that are being deliberately changed.
+Another exception is that
+<B>MS_BIND</B>
+
+has a different meaning for remount, and it should be included only if
+explicitly desired.
 <P>
+
 The following
 <I>mountflags</I>
 
@@ -438,6 +460,7 @@ Attempts to change the setting of the
 
 flag during a remount are silently ignored.
 <P>
+
 Since Linux 3.17,
 
 if none of
@@ -458,19 +481,25 @@ then the remount operation preserves the existing values of these flags
 <B>MS_RELATIME</B>).
 
 <P>
-Since Linux 2.6.26, this flag can also be used to make
 
-an existing bind mount read-only by specifying
+Since Linux 2.6.26, this flag can be used with
+<B>MS_BIND</B>
+
+to modify only the per-mount-point flags.
+
+This is particularly useful for setting or clearing the &quot;read-only&quot;
+flag on a mount point without changing the underlying filesystem.
+Specifying
 <I>mountflags</I>
 
 as:
 <P>
+
 <BR>&nbsp;&nbsp;&nbsp;&nbsp;MS_REMOUNT&nbsp;|&nbsp;MS_BIND&nbsp;|&nbsp;MS_RDONLY
 <P>
-Note that only the
-<B>MS_RDONLY</B>
 
-setting of the bind mount can be changed in this manner.
+will make access through this mountpoint read-only, without affecting
+other mount points.
 
 <A NAME="lbAG">&nbsp;</A>
 <H3>Creating a bind mount</H3>
@@ -491,6 +520,7 @@ Bind mounts may cross filesystem boundaries and span
 
 jails.
 <P>
+
 The
 <I>filesystemtype</I>
 
@@ -499,6 +529,7 @@ and
 
 arguments are ignored.
 <P>
+
 The remaining bits in the
 <I>mountflags</I>
 
@@ -510,6 +541,7 @@ the underlying mount point.)
 However, see the discussion of remounting above,
 for a method of making an existing bind mount read-only.
 <P>
+
 By default, when a directory is bind mounted,
 only that directory is mounted;
 if there are any submounts under the directory tree,
@@ -547,6 +579,7 @@ or
 then the propagation type of an existing mount is changed.
 If more than one of these flags is specified, an error results.
 <P>
+
 The only flags that can be used with changing the propagation type are
 <B>MS_REC</B>
 
@@ -554,6 +587,7 @@ and
 <B>MS_SILENT</B>.
 
 <P>
+
 The
 <I>source</I>,
 
@@ -564,6 +598,7 @@ and
 
 arguments are ignored.
 <P>
+
 The meanings of the propagation type flags are as follows:
 <DL COMPACT>
 <DT><B>MS_SHARED</B>
@@ -589,15 +624,19 @@ that contains other members, convert it to a slave mount.
 If this is a shared mount point that is a member of a peer group
 that contains no other members, convert it to a private mount.
 Otherwise, the propagation type of the mount point is left unchanged.
+</DL>
 <P>
+
 When a mount point is a slave,
 mount and unmount events propagate into this mount point from
 the (master) shared peer group of which it was formerly a member.
 Mount and unmount events under this mount point do not propagate to any peer.
 <P>
+
 A mount point can be the slave of another peer group
 while at the same time sharing mount and unmount events
 with a peer group of which it is a member.
+<DL COMPACT>
 <DT><B>MS_UNBINDABLE</B>
 
 <DD>
@@ -635,6 +674,7 @@ then the propagation type of all mount points under
 
 is also changed.
 <P>
+
 For further details regarding mount propagation types
 (including the default propagation type assigned to new mounts), see
 <B><A HREF="../man7/mount_namespaces.7.html">mount_namespaces</A></B>(7).
@@ -659,6 +699,7 @@ specifies an existing mount point and
 specifies the new location to which that mount point is to be relocated.
 The move is atomic: at no point is the subtree unmounted.
 <P>
+
 The remaining bits in the
 <I>mountflags</I>
 
@@ -703,6 +744,7 @@ specifies the source for the new mount point, and
 
 specifies the directory at which to create the mount point.
 <P>
+
 The
 <I>filesystemtype</I>
 
@@ -958,6 +1000,7 @@ multiple mount points, and multiple mounts can be stacked
 on the same mount point.
 
 <P>
+
 The
 <I>mountflags</I>
 
@@ -973,6 +1016,7 @@ Specifying
 was required in kernel versions prior to 2.4,
 but since Linux 2.4 is no longer required and is ignored if specified.
 <P>
+
 The original
 <B>MS_SYNC</B>
 
@@ -997,7 +1041,6 @@ Since Linux 2.4 the set-user-ID and set-group-ID bits are
 just silently ignored in this case.
 
 
-<P>
 <A NAME="lbAP">&nbsp;</A>
 <H3>Per-process namespaces</H3>
 
@@ -1012,6 +1055,7 @@ are visible to all other processes sharing the same namespace.
 (The pre-2.4.19 Linux situation can be considered as one in which
 a single namespace was shared by every process on the system.)
 <P>
+
 A child process created by
 <B><A HREF="../man2/fork.2.html">fork</A></B>(2)
 
@@ -1020,6 +1064,7 @@ the mount namespace is preserved across an
 <B><A HREF="../man2/execve.2.html">execve</A></B>(2).
 
 <P>
+
 A process can obtain a private mount namespace if:
 it was created using the
 <B><A HREF="../man2/clone.2.html">clone</A></B>(2)
@@ -1046,6 +1091,7 @@ so that future mounts and unmounts by the caller are invisible
 to other processes (except child processes that the caller
 subsequently creates) and vice versa.
 <P>
+
 The Linux-specific
 <I>/proc/[pid]/mounts</I>
 
@@ -1103,6 +1149,6 @@ for details.
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:46:00 GMT, April 20, 2020
+Time: 03:46:38 GMT, April 20, 2020
 </BODY>
 </HTML>

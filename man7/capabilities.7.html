@@ -26,7 +26,7 @@ the source, must acknowledge the copyright and authors of this work.
 <HTML><HEAD><TITLE>Man page of CAPABILITIES</TITLE>
 </HEAD><BODY>
 <H1>CAPABILITIES</H1>
-Section: Linux Programmer's Manual (7)<BR>Updated: 2016-12-12<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (7)<BR>Updated: 2017-07-13<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -238,12 +238,12 @@ inode flags (see
 <DT><B>CAP_MAC_ADMIN</B> (since Linux 2.6.25)
 
 <DD>
-Override Mandatory Access Control (MAC).
+Allow MAC configuration or state changes.
 Implemented for the Smack Linux Security Module (LSM).
 <DT><B>CAP_MAC_OVERRIDE</B> (since Linux 2.6.25)
 
 <DD>
-Allow MAC configuration or state changes.
+Override Mandatory Access Control (MAC).
 Implemented for the Smack LSM.
 <DT><B>CAP_MKNOD</B> (since Linux 2.4)
 
@@ -1289,9 +1289,25 @@ has the set-user-ID or set-group-ID bit set.
 the capability transitions described above may
 <I>not</I>
 
-performed (i.e., file capabilities may be ignored) for the same reasons
+be performed (i.e., file capabilities may be ignored) for the same reasons
 that the set-user-ID and set-group-ID bits are ignored; see
 <B><A HREF="../man2/execve.2.html">execve</A></B>(2).
+
+<P>
+<I>Note</I>:
+
+according to the rules above,
+if a process with nonzero user IDs performs an
+<B><A HREF="../man2/execve.2.html">execve</A></B>(2)
+
+then any capabilities that are present in
+its permitted and effective sets will be cleared.
+For the treatment of capabilities when a process with a
+user ID of zero performs an
+<B><A HREF="../man2/execve.2.html">execve</A></B>(2),
+
+see below under
+<I>Capabilities and execution of programs by root</I>.
 
 
 <A NAME="lbAJ">&nbsp;</A>
@@ -1349,18 +1365,22 @@ using capability sets, during an
 <DL COMPACT>
 <DT>1.<DD>
 If a set-user-ID-root program is being executed,
-or the real user ID of the process is 0 (root)
+or the real or effective user ID of the process is 0 (root)
 then the file inheritable and permitted sets are defined to be all ones
 (i.e., all capabilities enabled).
 <DT>2.<DD>
 If a set-user-ID-root program is being executed,
+or the effective user ID of the process is 0 (root)
 then the file effective bit is defined to be one (enabled).
 </DL>
 <P>
 
 The upshot of the above rules,
 combined with the capabilities transformations described above,
-is that when a process
+is as follows:
+<DL COMPACT>
+<DT>*<DD>
+When a process
 <B><A HREF="../man2/execve.2.html">execve</A></B>(2)s
 
 a set-user-ID-root program, or when a process with an effective UID of 0
@@ -1369,10 +1389,18 @@ a set-user-ID-root program, or when a process with an effective UID of 0
 a program,
 it gains all capabilities in its permitted and effective capability sets,
 except those masked out by the capability bounding set.
+<DT>*<DD>
+When a process with a real UID of 0
+<B><A HREF="../man2/execve.2.html">execve</A></B>(2)s
 
+a program,
+it gains all capabilities in its permitted capability set,
 
+except those masked out by the capability bounding set.
+</DL>
+<P>
 
-This provides semantics that are the same as those provided by
+The above steps yield semantics that are the same as those provided by
 traditional UNIX systems.
 <A NAME="lbAL">&nbsp;</A>
 <H3>Capability bounding set</H3>
@@ -1893,7 +1921,13 @@ created on the system.
 
 <B><A HREF="../man7/user_namespaces.7.html">user_namespaces</A></B>(7),
 
+<B><A HREF="../man8/filecap.8.html">filecap</A></B>(8),
+
 <B><A HREF="../man8/getcap.8.html">getcap</A></B>(8),
+
+<B><A HREF="../man8/netcap.8.html">netcap</A></B>(8),
+
+<B><A HREF="../man8/pscap.8.html">pscap</A></B>(8),
 
 <B><A HREF="../man8/setcap.8.html">setcap</A></B>(8)
 
@@ -1932,6 +1966,6 @@ in the Linux kernel source tree
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:46:13 GMT, April 20, 2020
+Time: 03:46:51 GMT, April 20, 2020
 </BODY>
 </HTML>

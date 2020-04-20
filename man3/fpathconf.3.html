@@ -26,7 +26,7 @@ the source, must acknowledge the copyright and authors of this work.
 <HTML><HEAD><TITLE>Man page of FPATHCONF</TITLE>
 </HEAD><BODY>
 <H1>FPATHCONF</H1>
-Section: Linux Programmer's Manual (3)<BR>Updated: 2015-08-08<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2017-07-13<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -89,7 +89,7 @@ configuration options:
 <DT><B>_PC_LINK_MAX</B>
 
 <DD>
-returns the maximum number of links to the file.
+The maximum number of links to the file.
 If
 <I>fd</I>
 
@@ -103,7 +103,7 @@ The corresponding macro is
 <DT><B>_PC_MAX_CANON</B>
 
 <DD>
-returns the maximum length of a formatted input line, where
+The maximum length of a formatted input line, where
 <I>fd</I>
 
 or
@@ -116,7 +116,7 @@ The corresponding macro is
 <DT><B>_PC_MAX_INPUT</B>
 
 <DD>
-returns the maximum length of an input line, where
+The maximum length of an input line, where
 <I>fd</I>
 
 or
@@ -129,7 +129,7 @@ The corresponding macro is
 <DT><B>_PC_NAME_MAX</B>
 
 <DD>
-returns the maximum length of a filename in the directory
+The maximum length of a filename in the directory
 <I>path</I>
 
 or
@@ -142,7 +142,7 @@ The corresponding macro is
 <DT><B>_PC_PATH_MAX</B>
 
 <DD>
-returns the maximum length of a relative pathname when
+The maximum length of a relative pathname when
 <I>path</I>
 
 or
@@ -155,38 +155,55 @@ The corresponding macro is
 <DT><B>_PC_PIPE_BUF</B>
 
 <DD>
-returns the size of the pipe buffer, where
+The maximum number of bytes that can be written atomically to a pipe of FIFO.
+For
+<B>fpathconf</B>(),
+
 <I>fd</I>
 
-must refer to a pipe or FIFO and
+should refer to a pipe or FIFO.
+For
+<B>fpathconf</B>(),
+
 <I>path</I>
 
-must refer to a FIFO.
+should refer to a FIFO or a directory; in the latter case,
+the returned value corresponds to FIFOs created in that directory.
 The corresponding macro is
 <B>_POSIX_PIPE_BUF</B>.
 
 <DT><B>_PC_CHOWN_RESTRICTED</B>
 
 <DD>
-returns nonzero if the
+This returns a positive value if the use of
 <B><A HREF="../man2/chown.2.html">chown</A></B>(2)
 
-call may not be used on this file.
+and
+<B><A HREF="../man2/fchown.2.html">fchown</A></B>(2)
+
+for changing a file's user ID is restricted to a process
+with appropriate privileges,
+and changing a file's group ID to a value other than the process's
+effective group ID or one of its supplementary group IDs
+is restricted to a process with appropriate privileges.
+According to POSIX.1,
+this variable shall always be defined with a value other than -1.
+The corresponding macro is
+<B>_POSIX_CHOWN_RESTRICTED</B>.
+
+<DT><DD>
 If
 <I>fd</I>
 
 or
 <I>path</I>
 
-refer to a directory, then this applies to all files in that
-directory.
-The corresponding macro is
-<B>_POSIX_CHOWN_RESTRICTED</B>.
-
+refers to a directory,
+then the return value applies to all files in that directory.
 <DT><B>_PC_NO_TRUNC</B>
 
 <DD>
-returns nonzero if accessing filenames longer than
+This returns nonzero if accessing filenames longer than
 <B>_POSIX_NAME_MAX</B>
 
 generates an error.
@@ -196,7 +213,7 @@ The corresponding macro is
 <DT><B>_PC_VDISABLE</B>
 
 <DD>
-returns nonzero if special character processing can be disabled, where
+This returns nonzero if special character processing can be disabled, where
 <I>fd</I>
 
 or
@@ -207,17 +224,127 @@ must refer to a terminal.
 <A NAME="lbAE">&nbsp;</A>
 <H2>RETURN VALUE</H2>
 
-The limit is returned, if one exists.
-If the system does not have a
-limit for the requested resource, -1 is returned, and
+The return value of these functions is one of the following:
+<DL COMPACT>
+<DT>*<DD>
+On error, -1 is returned and
 <I>errno</I>
 
-is unchanged.
-If there is an error, -1 is returned, and
+is set to indicate the cause of the error
+(for example,
+<B>EINVAL</B>,
+
+indicating that
+<I>name</I>
+
+is invalid).
+<DT>*<DD>
+If
+<I>name</I>
+
+corresponds to a maximum or minimum limit, and that limit is indeterminate,
+-1 is returned and
 <I>errno</I>
 
-is set to reflect the nature of the error.
+is not changed.
+(To distinguish an indeterminate limit from an error, set
+<I>errno</I>
+
+to zero before the call, and then check whether
+<I>errno</I>
+
+is nonzero when -1 is returned.)
+<DT>*<DD>
+If
+<I>name</I>
+
+corresponds to an option,
+a positive value is returned if the option is supported,
+and -1 is returned if the option is not supported.
+<DT>*<DD>
+Otherwise,
+the current value of the option or limit is returned.
+This value will not be more restrictive than
+the corresponding value that was described to the application in
+<I>&lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;</I>
+
+or
+<I>&lt;<A HREF="file:///usr/include/limits.h">limits.h</A>&gt;</I>
+
+when the application was compiled.
+</DL>
 <A NAME="lbAF">&nbsp;</A>
+<H2>ERRORS</H2>
+
+<DL COMPACT>
+<DT><B>EACCES</B>
+
+<DD>
+(<B>pathconf</B>())
+
+Search permission is denied for one of the directories in the path prefix of
+<I>path</I>.
+
+<DT><B>EBADF</B>
+
+<DD>
+(<B>fpathconf</B>())
+
+<I>fd</I>
+
+is not a valid file descriptor.
+<DT><B>EINVAL</B>
+
+<DD>
+<I>name</I>
+
+is invalid.
+<DT><B>EINVAL</B>
+
+<DD>
+The implementation does not support an association of
+<I>name</I>
+
+with the specified file.
+<DT><B>ELOOP</B>
+
+<DD>
+(<B>pathconf</B>())
+
+Too many symbolic links were encountered while resolving
+<I>path</I>.
+
+<DT><B>ENAMETOOLONG</B>
+
+<DD>
+(<B>pathconf</B>())
+
+<I>path</I>
+
+is too long.
+<DT><B>ENOENT</B>
+
+<DD>
+(<B>pathconf</B>())
+
+A component of
+<I>path</I>
+
+does not exist, or
+<I>path</I>
+
+is an empty string.
+<DT><B>ENOTDIR</B>
+
+<DD>
+(<B>pathconf</B>())
+
+A component used as a directory in
+<I>path</I>
+
+is not in fact a directory.
+</DL>
+<A NAME="lbAG">&nbsp;</A>
 <H2>ATTRIBUTES</H2>
 
 For an explanation of the terms used in this section, see
@@ -233,12 +360,11 @@ For an explanation of the terms used in this section, see
 </TD><TD>Thread safety</TD><TD>MT-Safe<BR></TD></TR>
 </TABLE>
 
-<P>
-<A NAME="lbAG">&nbsp;</A>
+<A NAME="lbAH">&nbsp;</A>
 <H2>CONFORMING TO</H2>
 
 POSIX.1-2001, POSIX.1-2008.
-<A NAME="lbAH">&nbsp;</A>
+<A NAME="lbAI">&nbsp;</A>
 <H2>NOTES</H2>
 
 Files with name lengths longer than the value returned for
@@ -252,7 +378,7 @@ may exist in the given directory.
 
 Some returned values may be huge; they are not suitable for allocating
 memory.
-<A NAME="lbAI">&nbsp;</A>
+<A NAME="lbAJ">&nbsp;</A>
 <H2>SEE ALSO</H2>
 
 <B><A HREF="../man1/getconf.1.html">getconf</A></B>(1),
@@ -274,15 +400,16 @@ memory.
 <DT><A HREF="#lbAC">SYNOPSIS</A><DD>
 <DT><A HREF="#lbAD">DESCRIPTION</A><DD>
 <DT><A HREF="#lbAE">RETURN VALUE</A><DD>
-<DT><A HREF="#lbAF">ATTRIBUTES</A><DD>
-<DT><A HREF="#lbAG">CONFORMING TO</A><DD>
-<DT><A HREF="#lbAH">NOTES</A><DD>
-<DT><A HREF="#lbAI">SEE ALSO</A><DD>
+<DT><A HREF="#lbAF">ERRORS</A><DD>
+<DT><A HREF="#lbAG">ATTRIBUTES</A><DD>
+<DT><A HREF="#lbAH">CONFORMING TO</A><DD>
+<DT><A HREF="#lbAI">NOTES</A><DD>
+<DT><A HREF="#lbAJ">SEE ALSO</A><DD>
 </DL>
 <HR>
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:46:06 GMT, April 20, 2020
+Time: 03:46:44 GMT, April 20, 2020
 </BODY>
 </HTML>

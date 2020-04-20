@@ -26,7 +26,7 @@ the source, must acknowledge the copyright and authors of this work.
 <HTML><HEAD><TITLE>Man page of SIGALTSTACK</TITLE>
 </HEAD><BODY>
 <H1>SIGALTSTACK</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2016-03-15<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2017-07-13<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -39,15 +39,17 @@ sigaltstack - set and/or get signal stack context
 <B>#include &lt;<A HREF="file:///usr/include/signal.h">signal.h</A>&gt;</B>
 
 <P>
-<B>int sigaltstack(const stack_t *</B><I>ss</I><B>, stack_t *</B><I>oss</I><B>);</B>
+<B>int sigaltstack(const stack_t *</B><I>ss</I><B>, stack_t *</B><I>old_ss</I><B>);</B>
 
 <P>
+
 
 Feature Test Macro Requirements for glibc (see
 <B><A HREF="../man7/feature_test_macros.7.html">feature_test_macros</A></B>(7)):
 
 
 <P>
+
 <B>sigaltstack</B>():
 
 
@@ -75,6 +77,7 @@ execution of a signal handler if the establishment of that handler (see
 
 requested it.
 <P>
+
 The normal sequence of events for using an alternate signal stack
 is the following:
 <DL COMPACT>
@@ -98,12 +101,17 @@ specifying the <B>SA_ONSTACK</B> flag.
 <P>
 
 The <I>ss</I> argument is used to specify a new
-alternate signal stack, while the <I>oss</I> argument
+alternate signal stack, while the <I>old_ss</I> argument
 is used to retrieve information about the currently
 established signal stack.
 If we are interested in performing just one
 of these tasks, then the other argument can be specified as NULL.
-Each of these arguments is a structure of the following type:
+<P>
+
+The
+<I>stack_t</I>
+
+type used to type the arguments of this function is defined as follows:
 <P>
 
 <PRE>
@@ -117,31 +125,44 @@ typedef struct {
 
 <P>
 To establish a new alternate signal stack,
-<I>ss.ss_flags</I> is set to zero, and <I>ss.ss_sp</I> and
-<I>ss.ss_size</I> specify the starting address and size of
-the stack.
+the fields of this structure are set as follows:
+<DL COMPACT>
+<DT><I>ss.ss_flags</I>
+
+<DD>
+This field is set to zero.
+<DT><I>ss.ss_sp</I>
+
+<DD>
+This field specifies the starting address of the stack.
+When a signal handler is invoked on the alternate stack,
+the kernel automatically aligns the address given in <I>ss.ss_sp</I>
+to a suitable address boundary for the underlying hardware architecture.
+<DT><I>ss.ss_size</I>
+
+<DD>
+This field specifies the size of the stack.
 The constant <B>SIGSTKSZ</B> is defined to be large enough
 to cover the usual size requirements for an alternate signal stack,
 and the constant <B>MINSIGSTKSZ</B> defines the minimum
 size required to execute a signal handler.
+</DL>
 <P>
-When a signal handler is invoked on the alternate stack,
-the kernel automatically aligns the address given in <I>ss.ss_sp</I>
-to a suitable address boundary for the underlying hardware architecture.
-<P>
+
 To disable an existing stack, specify <I>ss.ss_flags</I>
 as <B>SS_DISABLE</B>.
 In this case, the remaining fields
 in <I>ss</I> are ignored.
 <P>
-If <I>oss</I> is not NULL, then it is used to return information about
+
+If <I>old_ss</I> is not NULL, then it is used to return information about
 the alternate signal stack which was in effect prior to the
 call to
 <B>sigaltstack</B>().
 
-The <I>oss.ss_sp</I> and <I>oss.ss_size</I> fields return the starting
+The <I>old_ss.ss_sp</I> and <I>old_ss.ss_size</I> fields return the starting
 address and size of that stack.
-The <I>oss.ss_flags</I> may return either of the following values:
+The <I>old_ss.ss_flags</I> may return either of the following values:
 <DL COMPACT>
 <DT><B>SS_ONSTACK</B>
 
@@ -155,6 +176,16 @@ currently executing on it.)
 <DD>
 The alternate signal stack is currently disabled.
 </DL>
+<P>
+
+By specifying
+<I>ss</I>
+
+as NULL, and
+<I>old_ss</I>
+
+as a non-NULL value, one can obtain the current settings for
+the alternate signal stack without changing them.
 <A NAME="lbAE">&nbsp;</A>
 <H2>RETURN VALUE</H2>
 
@@ -169,15 +200,13 @@ returns 0 on success, or -1 on failure with
 <DT><B>EFAULT</B>
 
 <DD>
-Either <I>ss</I> or <I>oss</I> is not NULL and points to an area
+Either <I>ss</I> or <I>old_ss</I> is not NULL and points to an area
 outside of the process's address space.
 <DT><B>EINVAL</B>
 
 <DD>
 <I>ss</I> is not NULL and the <I>ss_flags</I> field contains
-a nonzero value other than
-<B>SS_DISABLE</B>.
-
+an invalid flag.
 <DT><B>ENOMEM</B>
 
 <DD>
@@ -208,7 +237,6 @@ For an explanation of the terms used in this section, see
 </TD><TD>Thread safety</TD><TD>MT-Safe<BR></TD></TR>
 </TABLE>
 
-<P>
 <A NAME="lbAH">&nbsp;</A>
 <H2>CONFORMING TO</H2>
 
@@ -311,6 +339,39 @@ if (sigaltstack(&amp;ss, NULL) == -1)
 
 
 <A NAME="lbAL">&nbsp;</A>
+<H2>BUGS</H2>
+
+In the lead up to the development of the Linux 2.4 kernel,
+
+someone got confused and allowed the kernel to accept
+<B>SS_ONSTACK</B>
+
+in
+<I>ss.ss_flags</I>,
+
+which results in behavior that is the same as when
+<I>ss_flags</I>
+
+is 0.
+On other implementations, and according to POSIX.1,
+<B>SS_ONSTACK</B>
+
+appears only as a reported flag in
+<I>old_ss.ss_flags</I>.
+
+There is no need ever to specify this flag in
+<I>ss.ss_flags</I>
+
+(and indeed, doing so decreases portability,
+since some implementations
+
+give an error if
+<B>SS_ONSTACK</B>
+
+is specified in
+<I>ss.ss_flags</I>).
+
+<A NAME="lbAM">&nbsp;</A>
 <H2>SEE ALSO</H2>
 
 <B><A HREF="../man2/execve.2.html">execve</A></B>(2),
@@ -342,12 +403,13 @@ if (sigaltstack(&amp;ss, NULL) == -1)
 <DT><A HREF="#lbAJ">History</A><DD>
 </DL>
 <DT><A HREF="#lbAK">EXAMPLE</A><DD>
-<DT><A HREF="#lbAL">SEE ALSO</A><DD>
+<DT><A HREF="#lbAL">BUGS</A><DD>
+<DT><A HREF="#lbAM">SEE ALSO</A><DD>
 </DL>
 <HR>
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:46:02 GMT, April 20, 2020
+Time: 03:46:39 GMT, April 20, 2020
 </BODY>
 </HTML>

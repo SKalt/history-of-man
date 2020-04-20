@@ -58,6 +58,7 @@ returns the process ID of the calling process.
 (This is often used by
 routines that generate unique temporary filenames.)
 <P>
+
 <B>getppid</B>()
 
 returns the process ID of the parent of the calling process.
@@ -95,17 +96,17 @@ returns 0.
 <A NAME="lbAH">&nbsp;</A>
 <H3>C library/kernel differences</H3>
 
-Since glibc version 2.3.4,
+From glibc version 2.3.4 up to and including version 2.24,
 the glibc wrapper function for
 <B>getpid</B>()
 
-caches PIDs,
-so as to avoid additional system calls when a process calls
+cached PIDs,
+with the goal of avoiding additional system calls when a process calls
 <B>getpid</B>()
 
 repeatedly.
-Normally this caching is invisible,
-but its correct operation relies on support in the wrapper functions for
+Normally this caching was invisible,
+but its correct operation relied on support in the wrapper functions for
 <B><A HREF="../man2/fork.2.html">fork</A></B>(2),
 
 <B><A HREF="../man2/vfork.2.html">vfork</A></B>(2),
@@ -113,14 +114,14 @@ but its correct operation relies on support in the wrapper functions for
 and
 <B><A HREF="../man2/clone.2.html">clone</A></B>(2):
 
-if an application bypasses the glibc wrappers for these system calls by using
+if an application bypassed the glibc wrappers for these system calls by using
 <B><A HREF="../man2/syscall.2.html">syscall</A></B>(2),
 
 then a call to
 <B>getpid</B>()
 
-in the child will return the wrong value
-(to be precise: it will return the PID of the parent process).
+in the child would return the wrong value
+(to be precise: it would return the PID of the parent process).
 
 
 
@@ -146,16 +147,30 @@ in the child will return the wrong value
 
 
 
-See also
-<B><A HREF="../man2/clone.2.html">clone</A></B>(2)
-
-for discussion of a case where
+In addition, there were cases where
 <B>getpid</B>()
 
-may return the wrong value even when invoking
+could return the wrong value even when invoking
 <B><A HREF="../man2/clone.2.html">clone</A></B>(2)
 
 via the glibc wrapper function.
+(For a discussion of one such case, see BUGS in
+<B><A HREF="../man2/clone.2.html">clone</A></B>(2).)
+
+Furthermore, the complexity of the caching code had been
+the source of a few bugs within glibc over the years.
+<P>
+
+Because of the aforementioned problems,
+since glibc version 2.25, the PID cache is removed:
+
+
+calls to
+<B>getpid</B>()
+
+always invoke the actual system call, rather than returning a cached value.
+
+
 <A NAME="lbAI">&nbsp;</A>
 <H2>SEE ALSO</H2>
 
@@ -199,6 +214,6 @@ via the glibc wrapper function.
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:45:59 GMT, April 20, 2020
+Time: 03:46:37 GMT, April 20, 2020
 </BODY>
 </HTML>
