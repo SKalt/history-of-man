@@ -5,7 +5,7 @@ Copyright (c) 1992 Drew Eckhardt &lt;drew@cs.colorado.edu&gt;, March 28, 1992
 <HTML><HEAD><TITLE>Man page of CLONE</TITLE>
 </HEAD><BODY>
 <H1>CLONE</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2008-11-25<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2009-07-18<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -21,7 +21,7 @@ clone, __clone2 - create a child process
 
 <B>int clone(int (*</B><I>fn</I><B>)(void *), void *</B><I>child_stack</I><B>,</B>
 <B>          int </B><I>flags</I><B>, void *</B><I>arg</I><B>, ... </B>
-<B>          /* pid_t *</B><I>pid</I><B>, struct user_desc *</B><I>tls</I><B>, pid_t *</B><I>ctid</I><B> */ );</B>
+<B>          /* pid_t *</B><I>ptid</I><B>, struct user_desc *</B><I>tls</I><B>, pid_t *</B><I>ctid</I><B> */ );</B>
 </PRE>
 
 <A NAME="lbAD">&nbsp;</A>
@@ -155,7 +155,7 @@ and the child process:
 
 <DD>
 Erase child thread ID at location
-<I>child_tidptr</I>
+<I>ctid</I>
 
 in child memory when the child exits, and do a wakeup on the futex
 at that address.
@@ -168,7 +168,7 @@ This is used by threading libraries.
 
 <DD>
 Store child thread ID at location
-<I>child_tidptr</I>
+<I>ctid</I>
 
 in child memory.
 <DT><B>CLONE_FILES</B>
@@ -278,7 +278,7 @@ If the kernel is not configured with the
 <B>CONFIG_BLOCK</B>
 
 option, this flag is a no-op.
-<DT><B>CLONE_NEWIPC</B> (since Linux 2.4.19)
+<DT><B>CLONE_NEWIPC</B> (since Linux 2.6.19)
 
 <DD>
 If
@@ -589,7 +589,7 @@ calling process itself, will be signaled.
 
 <DD>
 Store child thread ID at location
-<I>parent_tidptr</I>
+<I>ptid</I>
 
 in parent and child memory.
 (In Linux 2.5.32-2.5.48 there was a flag
@@ -961,22 +961,16 @@ In this case, for correct operation, the
 
 option should not be specified.
 <P>
-Since Linux 2.5.49 the system call has five arguments.
-The two new arguments are
-<I>parent_tidptr</I>
+In Linux 2.4 and earlier,
+<B>clone</B>()
 
-which points to the location (in parent and child memory) where
-the child thread ID will be written in case
-<B>CLONE_PARENT_SETTID</B>
+does not take arguments
+<I>ptid</I>,
 
-was specified, and
-<I>child_tidptr</I>
+<I>tls</I>,
 
-which points to the location (in child memory) where the child thread ID
-will be written in case
-<B>CLONE_CHILD_SETTID</B>
+and
 
-was specified.
 <A NAME="lbAF">&nbsp;</A>
 <H2>RETURN VALUE</H2>
 
@@ -1212,7 +1206,7 @@ On ia64, a different system call is used:
 <B>int __clone2(int (*</B><I>fn</I><B>)(void *), </B>
 <B>             void *</B><I>child_stack_base</I><B>, size_t </B><I>stack_size</I><B>,</B>
 <B>             int </B><I>flags</I><B>, void *</B><I>arg</I><B>, ... </B>
-<B>          /* pid_t *</B><I>pid</I><B>, struct user_desc *</B><I>tls</I><B>, pid_t *</B><I>ctid</I><B> */ );</B>
+<B>          /* pid_t *</B><I>ptid</I><B>, struct user_desc *</B><I>tls</I><B>, pid_t *</B><I>ctid</I><B> */ );</B>
 </PRE>
 
 <P>
@@ -1336,6 +1330,6 @@ To get the truth, it may be necessary to use code such as the following:
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:04:23 GMT, April 20, 2020
+Time: 03:04:55 GMT, April 20, 2020
 </BODY>
 </HTML>
