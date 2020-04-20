@@ -5,7 +5,7 @@ Copyright (C) 1998 Andries Brouwer (aeb@cwi.nl)
 <HTML><HEAD><TITLE>Man page of PRCTL</TITLE>
 </HEAD><BODY>
 <H1>PRCTL</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2008-07-16<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2010-05-13<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -181,15 +181,22 @@ in the location pointed to by
 
 <DD>
 Set the state of the thread's &quot;keep capabilities&quot; flag,
-which determines whether the threads's effective and permitted
-capability sets are cleared when a change is made to the threads's user IDs
+which determines whether the threads's permitted
+capability set is cleared when a change is made to the threads's user IDs
 such that the threads's real UID, effective UID, and saved set-user-ID
 all become nonzero when at least one of them previously had the value 0.
-(By default, these credential sets are cleared).
+By default, the permitted capability set is cleared when such a change is made;
+setting the &quot;keep capabilities&quot; flag prevents it from being cleared.
 <I>arg2</I>
 
-must be either 0 (capabilities are cleared) or 1 (capabilities are kept).
-This value will be reset to 0 on subsequent calls to
+must be either 0 (permitted capabilities are cleared)
+or 1 (permitted capabilities are kept).
+(A thread's
+<I>effective</I>
+
+capability set is always cleared when such a credential change is made,
+regardless of the setting of the &quot;keep capabilities&quot; flag.)
+The &quot;keep capabilities&quot; value will be reset to 0 on subsequent calls to
 <B><A HREF="../man2/execve.2.html">execve</A></B>(2).
 
 <DT><B>PR_GET_KEEPCAPS</B> (since Linux 2.2.18)
@@ -373,6 +380,71 @@ for information on versions and architectures)
 Return unaligned access control bits, in the location pointed to by
 <I>(int&nbsp;*) arg2</I>.
 
+<DT><B>PR_MCE_KILL</B> (since Linux 2.6.32)
+
+<DD>
+Set the machine check memory corruption kill policy for the current thread.
+If
+<I>arg2</I>
+
+is
+<B>PR_MCE_KILL_CLEAR</B>,
+
+clear the thread memory corruption kill policy and use the system-wide default.
+(The system-wide default is defined by
+<I>/proc/sys/vm/memory_failure_early_kill</I>;
+
+see
+<B><A HREF="../man5/proc.5.html">proc</A></B>(5).)
+
+If
+<I>arg2</I>
+
+is
+<B>PR_MCE_KILL_SET</B>,
+
+use a thread-specific memory corruption kill policy.
+In this case,
+<I>arg3</I>
+
+defines whether the policy is
+<I>early kill</I>
+
+(<B>PR_MCE_KILL_EARLY</B>),
+
+<I>late kill</I>
+
+(<B>PR_MCE_KILL_LATE</B>),
+
+or the system-wide default
+(<B>PR_MCE_KILL_DEFAULT</B>).
+
+Early kill means that the task receives a
+<B>SIGBUS</B>
+
+signal as soon as hardware memory corruption is detected inside
+its address space.
+In late kill mode, the process is only killed when it accesses a corrupted page.
+See
+<I><A HREF="../man2/sigaction.2.html">sigaction</A>(2)</I>
+
+for more information on the
+<B>SIGBUS</B>
+
+signal.
+The policy is inherited by children.
+The remaining unused
+<B>prctl</B>()
+
+arguments must be zero for future compatibility.
+<DT><B>PR_MCE_KILL_GET</B> (since Linux 2.6.32)
+
+<DD>
+Return the current per-process machine check kill policy.
+All unused
+<B>prctl</B>()
+
+arguments must be zero.
 </DL>
 <A NAME="lbAE">&nbsp;</A>
 <H2>RETURN VALUE</H2>
@@ -387,6 +459,8 @@ On success,
 <B>PR_GET_TIMING</B>,
 
 <B>PR_GET_SECUREBITS</B>,
+
+<B>PR_MCE_KILL_GET</B>,
 
 and (if it returns)
 <B>PR_GET_SECCOMP</B>
@@ -417,6 +491,21 @@ The value of
 <I>option</I>
 
 is not recognized.
+<DT><B>EINVAL</B>
+
+<DD>
+<I>option</I>
+
+is
+<B>PR_MCE_KILL</B>
+
+or
+<B>PR_MCE_KILL_GET</B>,
+
+and unused
+<B>prctl</B>()
+
+arguments were not specified as zero.
 <DT><B>EINVAL</B>
 
 <DD>
@@ -543,6 +632,6 @@ get or set the maximum stack size, etc.
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:05:56 GMT, April 20, 2020
+Time: 03:06:30 GMT, April 20, 2020
 </BODY>
 </HTML>

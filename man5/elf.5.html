@@ -4,7 +4,7 @@
 <HTML><HEAD><TITLE>Man page of ELF</TITLE>
 </HEAD><BODY>
 <H1>ELF</H1>
-Section: Linux Programmer's Manual (5)<BR>Updated: 2007-12-28<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (5)<BR>Updated: 2010-06-19<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -402,10 +402,12 @@ The value for
 
 will change in
 the future if currently unused bytes are given meanings.
-<DT><B>EI_BRAND</B>
 
-<DD>
-Start of architecture identification.
+
+
+
+
+
 <DT><B>EI_NIDENT</B>
 
 <DD>
@@ -651,6 +653,39 @@ If a file has no program header,
 <I>e_phnum</I>
 
 holds the value zero.
+<DT><DD>
+If the number of entries in the program header table is larger than or equal to
+
+<B>PN_XNUM</B>
+
+(0xffff), this member holds
+<B>PN_XNUM</B>
+
+(0xffff) and the real number of entries in the program header table is held
+in the
+<I>sh_info</I>
+
+member of the initial entry in section header table.
+Otherwise, the
+<I>sh_info</I>
+
+member of the initial entry contains the value zero.
+
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT><B>PN_XNUM</B>
+
+<DD>
+This is defined as 0xffff, the largest number
+<I>e_phnum</I>
+
+can have, specifying where the actual number of program headers is assigned.
+
+</DL>
+</DL>
+
+
+<DT><DD>
 <DT><I>e_shentsize</I>
 
 <DD>
@@ -674,6 +709,22 @@ header table,
 <I>e_shnum</I>
 
 holds the value of zero.
+<DT><DD>
+If the number of entries in the section header table is larger than or equal to
+<B>SHN_LORESERVE</B>
+
+(0xff00),
+<I>e_shnum</I>
+
+holds the value zero and the real number of entries in the section header
+table is held in the
+<I>sh_size</I>
+
+member of the initial entry in section header table.
+Otherwise, the
+<I>sh_size</I>
+
+member of the initial entry in the section header table holds the value zero.
 <DT><I>e_shstrndx</I>
 
 <DD>
@@ -683,6 +734,21 @@ If the file has no section name string
 table, this member holds the value
 <B>SHN_UNDEF</B>.
 
+<DT><DD>
+If the index of section name string table section is larger than or equal to
+<B>SHN_LORESERVE</B>
+
+(0xff00), this member holds
+<B>SHN_XINDEX</B>
+
+(0xffff) and the real index of the section name string table section
+is held in the
+<I>sh_link</I>
+
+member of the initial entry in section header table. Otherwise, the
+<I>sh_link</I>
+
+member of the initial entry in section header table contains the value zero.
 <DL COMPACT><DT><DD>
 
 <DL COMPACT>
@@ -1040,10 +1106,26 @@ holds the size in bytes of each entry.
 
 A section header table index is a subscript into this array.
 Some section
-header table indices are reserved.
+header table indices are reserved:
+the initial entry and the indices between
+<B>SHN_LORESERVE</B>
+
+and
+<B>SHN_HIRESERVE</B>.
+
+The initial entry is used in ELF extensions for
+<I>e_phnum</I>,
+
+<I>e_shnum</I>
+
+and
+<I>e_strndx</I>;
+
+in other cases, each field in the initial entry is set to zero.
 An object file does not have sections for
 these special indices:
 
+<DL COMPACT><DT><DD>
 <DL COMPACT>
 <DT><B>SHN_UNDEF</B>
 
@@ -1096,8 +1178,10 @@ and
 inclusive.
 The section header table does not contain entries for the
 reserved indices.
-
 </DL>
+</DL>
+
+
 <P>
 
 The section header has the following structure:
@@ -1651,7 +1735,7 @@ No attribute types are used.
 <DD>
 This section holds information in the
 &quot;Note Section&quot;
-format described below.
+format.
 This section is of type
 <B>SHT_NOTE</B>.
 
@@ -2343,6 +2427,20 @@ This is automatically populated by the linker.
 ELF first appeared in
 System V.
 The ELF format is an adopted standard.
+<P>
+
+The extensions for
+<I>e_phnum</I>,
+
+<I>e_shnum</I>
+
+and
+<I>e_strndx</I>
+
+respectively are
+Linux extensions.
+Sun, BSD and AMD64 also support them; for further information,
+look under SEE ALSO.
 
 
 
@@ -2384,6 +2482,18 @@ Unix System Laboratories,
 
 <P>
 
+Sun Microsystems,
+<I>Linker and Libraries Guide</I>.
+
+<P>
+
+AMD64 ABI Draft,
+<I>System V Application Binary Interface AMD64 Architecture Processor Supplement</I>.
+
+<P>
+
+<P>
+
 <HR>
 <A NAME="index">&nbsp;</A><H2>Index</H2>
 <DL>
@@ -2397,6 +2507,6 @@ Unix System Laboratories,
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:06:08 GMT, April 20, 2020
+Time: 03:06:41 GMT, April 20, 2020
 </BODY>
 </HTML>

@@ -5,7 +5,7 @@ Copyright 1993 David Metcalfe (david@prism.demon.co.uk)
 <HTML><HEAD><TITLE>Man page of MKSTEMP</TITLE>
 </HEAD><BODY>
 <H1>MKSTEMP</H1>
-Section: Linux Programmer's Manual (3)<BR>Updated: 2008-06-19<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2010-06-19<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -21,6 +21,10 @@ mkstemp, mkostemp - create a unique temporary file
 <B>int mkstemp(char *</B><I>template</I><B>);</B>
 
 <B>int mkostemp (char *</B><I>template</I><B>, int </B><I>flags</I><B>);</B>
+
+<B>int mkstemps(char *</B><I>template</I><B>, int </B><I>suffixlen</I><B>);</B>
+
+<B>int mkostemps(char *</B><I>template</I><B>, int </B><I>suffixlen</I><B>, int </B><I>flags</I><B>);</B>
 </PRE>
 
 <P>
@@ -36,6 +40,16 @@ _BSD_SOURCE || _SVID_SOURCE || _XOPEN_SOURCE&nbsp;&gt;=&nbsp;500
 <BR>
 
 <B>mkostemp</B>():
+
+_GNU_SOURCE
+<BR>
+
+<B>mkstemps</B>():
+
+_BSD_SOURCE || _SVID_SOURCE
+<BR>
+
+<B>mkostemps</B>():
 
 _GNU_SOURCE
 <A NAME="lbAD">&nbsp;</A>
@@ -72,9 +86,10 @@ The file is opened with the
 
 flag, guaranteeing that the caller is the process that creates the file.
 <P>
+The
 <B>mkostemp</B>()
 
-is like
+function is like
 <B>mkstemp</B>(),
 
 with the difference that flags as for
@@ -87,6 +102,42 @@ may be specified in
 <B>O_APPEND</B>,
 
 <B>O_SYNC</B>).
+
+<P>
+The
+<B>mkstemps</B>()
+
+function is like
+<B>mkstemp</B>(),
+
+except that the string in
+<I>template</I>
+
+contains a suffix of
+<I>suffixlen</I>
+
+characters.
+Thus,
+<I>template</I>
+
+is of the form
+<I>prefixXXXXXXsuffix</I>,
+
+and the string XXXXXX is modified as for
+<B>mkstemp</B>().
+
+<P>
+The
+<B>mkostemps</B>()
+
+function is to
+<B>mkstemps</B>()
+
+as
+<B>mkostemp</B>()
+
+is to
+<B>mkstemp</B>().
 
 <A NAME="lbAE">&nbsp;</A>
 <H2>RETURN VALUE</H2>
@@ -109,8 +160,30 @@ Now the contents of <I>template</I> are undefined.
 <DT><B>EINVAL</B>
 
 <DD>
-The last six characters of <I>template</I> were not XXXXXX.
-Now <I>template</I> is unchanged.
+For
+<B>mkstemp</B>()
+
+and
+<B>mkostemp</B>():
+
+The last six characters of <I>template</I> were not XXXXXX;
+now <I>template</I> is unchanged.
+<P>
+For
+<B>mkstemps</B>()
+
+and
+<B>mkostemps</B>()
+
+<I>template</I>
+
+is less than
+<I>(6 + suffixlen)</I>
+
+characters long, or the last 6 characters before the suffix in
+<I>template</I>
+
+were not XXXXXX.
 </DL>
 <P>
 
@@ -123,15 +196,31 @@ These functions may also fail with any of the errors described for
 <B>mkostemp</B>()
 
 is available since glibc 2.7.
+<B>mkstemps</B>()
+
+and
+<B>mkostemps</B>()
+
+are available since glibc 2.11.
 <A NAME="lbAH">&nbsp;</A>
 <H2>CONFORMING TO</H2>
 
 <B>mkstemp</B>():
 
 4.3BSD, POSIX.1-2001.
-<B>mkostemp</B>():
+<P>
+<B>mkstemps</B>():
 
-is a glibc extension.
+unstandardized, but appears on several other systems.
+
+
+<P>
+<B>mkostemp</B>()
+
+and
+<B>mkostemps</B>():
+
+are glibc extensions.
 <A NAME="lbAI">&nbsp;</A>
 <H2>NOTES</H2>
 
@@ -195,6 +284,6 @@ for libc4, libc5, glibc1; glibc2 follows POSIX.1 and has the prototype in
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:06:04 GMT, April 20, 2020
+Time: 03:06:37 GMT, April 20, 2020
 </BODY>
 </HTML>

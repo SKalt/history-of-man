@@ -5,7 +5,7 @@ Copyright (C) 1997 Andries Brouwer (aeb@cwi.nl)
 <HTML><HEAD><TITLE>Man page of POLL</TITLE>
 </HEAD><BODY>
 <H1>POLL</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2009-09-15<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2010-06-12<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -24,7 +24,7 @@ poll, ppoll - wait for some event on a file descriptor
 <B>#include &lt;<A HREF="file:///usr/include/poll.h">poll.h</A>&gt;</B>
 
 <B>int ppoll(struct pollfd *</B><I>fds</I><B>, nfds_t </B><I>nfds</I><B>, </B>
-<B>        const struct timespec *</B><I>timeout</I><B>, const sigset_t *</B><I>sigmask</I><B>);</B>
+<B>        const struct timespec *</B><I>timeout_ts</I><B>, const sigset_t *</B><I>sigmask</I><B>);</B>
 </PRE>
 
 <A NAME="lbAD">&nbsp;</A>
@@ -228,16 +228,14 @@ allows an application to safely wait until either a file descriptor
 becomes ready or until a signal is caught.
 <P>
 
-Other than the difference in the
-<I>timeout</I>
-
-argument, the following
+Other than the difference in the precision of the
+timeout argument, the following
 <B>ppoll</B>()
 
 call:
 <PRE>
 
-    ready = ppoll(&amp;fds, nfds, timeout, &amp;sigmask);
+    ready = ppoll(&amp;fds, nfds, timeout_ts, &amp;sigmask);
 
 </PRE>
 
@@ -248,7 +246,10 @@ executing the following calls:
 <PRE>
 
     sigset_t origmask;
+    int timeout;
 
+    timeout = (timeout_ts == NULL) ? -1 :
+              (timeout_ts.tv_sec * 1000 + timeout_ts.tv_nsec / 1000000);
     sigprocmask(SIG_SETMASK, &amp;sigmask, &amp;origmask);
     ready = poll(&amp;fds, nfds, timeout);
     sigprocmask(SIG_SETMASK, &amp;origmask, NULL);
@@ -275,13 +276,10 @@ no signal mask manipulation is performed
 differs from
 <B>poll</B>()
 
-only in the precision of the
-<I>timeout</I>
-
-argument).
+only in the precision of the timeout argument).
 <P>
 The
-<I>timeout</I>
+<I>timeout_ts</I>
 
 argument specifies an upper limit on the amount of time that
 <B>ppoll</B>()
@@ -300,7 +298,7 @@ struct timespec {
 
 <P>
 If
-<I>timeout</I>
+<I>timeout_ts</I>
 
 is specified as NULL, then
 <B>ppoll</B>()
@@ -392,7 +390,10 @@ Some implementations define the nonstandard constant
 <B>INFTIM</B>
 
 with the value -1 for use as a
-<I>timeout</I>.
+<I>timeout</I>
+
+for
+<B>poll</B>()..
 
 This constant is not provided in glibc.
 <A NAME="lbAK">&nbsp;</A>
@@ -402,7 +403,7 @@ The Linux
 <B>ppoll</B>()
 
 system call modifies its
-<I>timeout</I>
+<I>timeout_ts</I>
 
 argument.
 However, the glibc wrapper function hides this behavior
@@ -412,7 +413,7 @@ Thus, the glibc
 <B>ppoll</B>()
 
 function does not modify its
-<I>timeout</I>
+<I>timeout_ts</I>
 
 argument.
 <A NAME="lbAL">&nbsp;</A>
@@ -459,6 +460,6 @@ BUGS section of
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:05:56 GMT, April 20, 2020
+Time: 03:06:29 GMT, April 20, 2020
 </BODY>
 </HTML>

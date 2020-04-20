@@ -5,7 +5,7 @@ Copyright (C) 1994, 1995 by Daniel Quinlan (quinlan@yggdrasil.com)
 <HTML><HEAD><TITLE>Man page of PROC</TITLE>
 </HEAD><BODY>
 <H1>PROC</H1>
-Section: Linux Programmer's Manual (5)<BR>Updated: 2009-09-30<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (5)<BR>Updated: 2010-06-19<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -660,7 +660,7 @@ The session ID of the process.
 The controlling terminal of the process.
 (The minor device number is contained in the combination of bits
 31 to 20 and 7 to 0;
-the major device number is in bits 15 t0 8.)
+the major device number is in bits 15 to 8.)
 <DT><I>tpgid</I> %d<DD>
 
 The ID of the foreground process group of the controlling
@@ -1888,12 +1888,6 @@ the <I>/proc</I> file system, and the (deprecated)
 <B><A HREF="../man2/sysctl.2.html">sysctl</A></B>(2)
 
 system call.
-Presently, there are subdirectories
-<I>abi</I>, <I>debug</I>, <I>dev</I>, <I>fs</I>, <I>kernel</I>, <I>net</I>, <I>proc</I>, 
-
-<I>rxrpc</I>, <I>sunrpc</I> and <I>vm</I>
-
-that each contain more files and subdirectories.
 <DT><I>/proc/sys/abi</I> (since Linux 2.4.10)
 
 <DD>
@@ -1918,22 +1912,8 @@ some systems, it may be empty.
 <DT><I>/proc/sys/fs</I>
 
 <DD>
-This contains the subdirectories
-<I>binfmt_misc</I>, <I>epoll</I>, <I>inotify</I>, and <I>mqueue</I>,
-
-and files
-<I>dentry-state</I>, <I>dir-notify-enable</I>, <I>dquot-nr</I>, <I>file-max</I>, 
-
-<I>file-nr</I>, <I>inode-max</I>, <I>inode-nr</I>, <I>inode-state</I>, 
-
-<I>lease-break-time</I>, <I>leases-enable</I>, 
-
-<I>overflowgid</I>, <I>overflowuid</I>, 
-
-<I>suid_dumpable</I>, 
-
-<I>super-max</I>, and <I>super-nr</I>.
-
+This directory contains the files and subdirectories for kernel variables
+related to file systems.
 <DT><I>/proc/sys/fs/binfmt_misc</I>
 
 <DD>
@@ -2177,6 +2157,23 @@ UIDs and GIDs are 32 bits.
 When one of these file systems is mounted
 with writes enabled, any UID or GID that would exceed 65535 is translated
 to the overflow value before being written to disk.
+<DT><I>/proc/sys/fs/pipe-max-size</I> (since Linux 2.6.35)
+
+<DD>
+The value in this file defines an upper limit for raising the capacity
+of a pipe using the
+<B><A HREF="../man2/fcntl.2.html">fcntl</A></B>(2)
+
+<B>F_SETPIPE_SZ</B>
+
+operation.
+This limit applies only to unprivileged processes.
+The default value for this file is 1,048,576.
+The value assigned to this file may be rounded upward,
+to reflect the value actually employed for a convenient implementation.
+To determine the rounded-up value,
+display the contents of this file after assigning a value to it.
+The minimum value that can be assigned to this file is the system page size.
 <DT><I>/proc/sys/fs/suid_dumpable</I> (since Linux 2.6.13)
 
 <DD>
@@ -2751,21 +2748,89 @@ user should run
 <B><A HREF="../man8/sync.8.html">sync</A></B>(8)
 
 first.
-<DT><I>/proc/sys/vm/swappiness</I>
-
-<DD>
-
-The value in this file controls how aggressively the kernel will swap
-memory pages.
-Higher values increase agressiveness, lower values
-descrease aggressiveness.
-The default value is 60.
 <DT><I>/proc/sys/vm/legacy_va_layout</I> (since Linux 2.6.9)
 
 <DD>
 
 If nonzero, this disables the new 32-bit memory-mapping layout;
 the kernel will use the legacy (2.4) layout for all processes.
+<DT><I>/proc/sys/vm/memory_failure_early_kill</I> (since Linux 2.6.32)
+
+<DD>
+
+Control how to kill processes when an uncorrected memory error
+(typically a 2-bit error in a memory module)
+that cannot be handled by the kernel
+is detected in the background by hardware.
+In some cases (like the page still having a valid copy on disk),
+the kernel will handle the failure
+transparently without affecting any applications.
+But if there is no other up-to-date copy of the data,
+it will kill processes to prevent any data corruptions from propagating.
+<P>
+The file has one of the following values:
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT>1:<DD>
+Kill all processes that have the corrupted-and-not-reloadable page mapped
+as soon as the corruption is detected.
+Note this is not supported for a few types of pages, like kernel internally
+allocated data or the swap cache, but works for the majority of user pages.
+<DT>0:<DD>
+Only unmap the corrupted page from all processes and only kill a process
+who tries to access it.
+</DL>
+</DL>
+
+<DT><DD>
+The kill is performed using a
+<B>SIGBUS</B>
+
+signal with
+<I>si_code</I>
+
+set to
+<B>BUS_MCEERR_AO</B>.
+
+Processes can handle this if they want to; see
+<B><A HREF="../man2/sigaction.2.html">sigaction</A></B>(2)
+
+for more details.
+<P>
+This feature is only active on architectures/platforms with advanced machine
+check handling and depends on the hardware capabilities.
+<P>
+Applications can override the
+<I>memory_failure_early_kill</I>
+
+setting individually with the
+<B><A HREF="../man2/prctl.2.html">prctl</A></B>(2)
+
+<B>PR_MCE_KILL</B>
+
+operation.
+<DT><DD>
+Only present if the kernel was configured with
+<B>CONFIG_MEMORY_FAILURE</B>.
+
+<DT><I>/proc/sys/vm/memory_failure_recovery</I> (since Linux 2.6.32)
+
+<DD>
+
+Enable memory failure recovery (when supported by the platform)
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT>1:<DD>
+Attempt recovery.
+<DT>0:<DD>
+Always panic on a memory failure.
+</DL>
+</DL>
+
+<DT><DD>
+Only present if the kernel was configured with
+<B>CONFIG_MEMORY_FAILURE</B>.
+
 <DT><I>/proc/sys/vm/oom_dump_tasks</I> (since Linux 2.6.25)
 
 <DD>
@@ -2894,6 +2959,15 @@ the kernel always panics when an out-of-memory condition occurs.
 The default value is 0.
 1 and 2 are for failover of clustering.
 Select either according to your policy of failover.
+<DT><I>/proc/sys/vm/swappiness</I>
+
+<DD>
+
+The value in this file controls how aggressively the kernel will swap
+memory pages.
+Higher values increase agressiveness, lower values
+decrease aggressiveness.
+The default value is 60.
 <DT><I>/proc/sysrq-trigger</I> (since Linux 2.4.21)
 
 <DD>
@@ -3057,6 +3131,6 @@ The kernel source files:
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:06:08 GMT, April 20, 2020
+Time: 03:06:42 GMT, April 20, 2020
 </BODY>
 </HTML>

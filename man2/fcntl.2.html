@@ -4,7 +4,7 @@
 <HTML><HEAD><TITLE>Man page of FCNTL</TITLE>
 </HEAD><BODY>
 <H1>FCNTL</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2009-10-17<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2010-06-19<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -1306,6 +1306,59 @@ See
 
 </DL>
 <A NAME="lbAM">&nbsp;</A>
+<H3>Changing the capacity of a pipe</H3>
+
+<DL COMPACT>
+<DT><B>F_SETPIPE_SZ</B> (<I>long</I>; since Linux 2.6.35)
+
+<DD>
+Change the capacity of the pipe referred to by
+<I>fd</I>
+
+to be at least
+<I>arg</I>
+
+bytes.
+An unprivileged process can adjust the pipe capacity to any value
+between the system page size and the limit defined in
+<I>/proc/sys/fs/pipe-size-max</I>
+
+(see
+<B><A HREF="../man5/proc.5.html">proc</A></B>(5)).
+
+Attempts to set the pipe capacity below the page size are silently
+rounded up to the page size.
+Attempts by an unprivileged process to set the pipe capacity above the limit in
+<I>/proc/sys/fs/pipe-size-max</I>
+
+yield the error
+<B>EPERM</B>;
+
+a privileged process
+(<B>CAP_SYS_RESOURCE</B>)
+
+can override the limit.
+When allocating the buffer for the pipe,
+the kernel may use a capacity larger than
+<I>arg</I>,
+
+if that is convenient for the implementation.
+The
+<B>F_GETPIPE_SZ</B>
+
+operation returns the actual size used.
+Attempting to set the pipe capacity smaller than the amount
+of buffer space currently used to store data produces the error
+<B>EBUSY</B>.
+
+<DT><B>F_GETPIPE_SZ</B> (<I>void</I>; since Linux 2.6.35)
+
+<DD>
+Return (as the function result) the capacity of the pipe referred to by
+<I>fd</I>.
+
+</DL>
+<A NAME="lbAN">&nbsp;</A>
 <H2>RETURN VALUE</H2>
 
 For a successful call, the return value depends on the operation:
@@ -1338,6 +1391,10 @@ for traditional
 <B>SIGIO</B>
 
 behavior.
+<DT><B>F_GETPIPE_SZ</B>
+
+<DD>
+The pipe capacity.
 <DT>All other commands<DD>
 Zero.
 </DL>
@@ -1347,7 +1404,7 @@ On error, -1 is returned, and
 <I>errno</I>
 
 is set appropriately.
-<A NAME="lbAN">&nbsp;</A>
+<A NAME="lbAO">&nbsp;</A>
 <H2>ERRORS</H2>
 
 <DL COMPACT>
@@ -1437,7 +1494,7 @@ Attempted to clear the
 
 flag on a file that has the append-only attribute set.
 </DL>
-<A NAME="lbAO">&nbsp;</A>
+<A NAME="lbAP">&nbsp;</A>
 <H2>CONFORMING TO</H2>
 
 SVr4, 4.3BSD, POSIX.1-2001.
@@ -1473,6 +1530,10 @@ is specified in POSIX.1-2008.
 
 <B>F_SETOWN_EX</B>,
 
+<B>F_SETPIPE_SZ</B>,
+
+<B>F_GETPIPE_SZ</B>,
+
 <B>F_GETSIG</B>,
 
 <B>F_SETSIG</B>,
@@ -1491,7 +1552,7 @@ are Linux-specific.
 macro to obtain these definitions.)
 
 
-<A NAME="lbAP">&nbsp;</A>
+<A NAME="lbAQ">&nbsp;</A>
 <H2>NOTES</H2>
 
 The errors returned by
@@ -1522,7 +1583,7 @@ Clearly,
 
 alone is not going to be very useful if the process holding the lock
 may live on a different machine.
-<A NAME="lbAQ">&nbsp;</A>
+<A NAME="lbAR">&nbsp;</A>
 <H2>BUGS</H2>
 
 A limitation of the Linux system call conventions on some
@@ -1541,15 +1602,21 @@ will be -1, and
 
 will contain the (positive) process group ID.
 The Linux-specific
-<B>F_SETOWN_EX</B>
-
-and
 <B>F_GETOWN_EX</B>
 
-operations avoid this problem.
+operation avoids this problem.
 
 
 
+
+Since glibc version 2.11, glibc makes the kernel
+<B>F_GETOWN</B>
+
+problem invisible by implementing
+<B>F_GETOWN</B>
+
+using
+<B>F_GETOWN_EX</B>.
 
 <P>
 In Linux 2.4 and earlier, there is bug that can occur
@@ -1590,7 +1657,7 @@ Similar races exist between mandatory locks and
 <B><A HREF="../man2/mmap.2.html">mmap</A></B>(2).
 
 It is therefore inadvisable to rely on mandatory locking.
-<A NAME="lbAR">&nbsp;</A>
+<A NAME="lbAS">&nbsp;</A>
 <H2>SEE ALSO</H2>
 
 <B><A HREF="../man2/dup2.2.html">dup2</A></B>(2),
@@ -1646,18 +1713,19 @@ is called
 <DT><A HREF="#lbAJ">Managing signals</A><DD>
 <DT><A HREF="#lbAK">Leases</A><DD>
 <DT><A HREF="#lbAL">File and directory change notification (dnotify)</A><DD>
+<DT><A HREF="#lbAM">Changing the capacity of a pipe</A><DD>
 </DL>
-<DT><A HREF="#lbAM">RETURN VALUE</A><DD>
-<DT><A HREF="#lbAN">ERRORS</A><DD>
-<DT><A HREF="#lbAO">CONFORMING TO</A><DD>
-<DT><A HREF="#lbAP">NOTES</A><DD>
-<DT><A HREF="#lbAQ">BUGS</A><DD>
-<DT><A HREF="#lbAR">SEE ALSO</A><DD>
+<DT><A HREF="#lbAN">RETURN VALUE</A><DD>
+<DT><A HREF="#lbAO">ERRORS</A><DD>
+<DT><A HREF="#lbAP">CONFORMING TO</A><DD>
+<DT><A HREF="#lbAQ">NOTES</A><DD>
+<DT><A HREF="#lbAR">BUGS</A><DD>
+<DT><A HREF="#lbAS">SEE ALSO</A><DD>
 </DL>
 <HR>
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:05:54 GMT, April 20, 2020
+Time: 03:06:28 GMT, April 20, 2020
 </BODY>
 </HTML>

@@ -5,7 +5,7 @@ Copyright (c) 1994,1995 Mike Battersby &lt;mib@deakin.edu.au&gt;
 <HTML><HEAD><TITLE>Man page of SIGACTION</TITLE>
 </HEAD><BODY>
 <H1>SIGACTION</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2009-07-25<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2010-06-16<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -196,7 +196,7 @@ or resume (i.e., they receive
 This flag is only meaningful when establishing a handler for
 <B>SIGCHLD</B>.
 
-<DT><B>SA_NOCLDWAIT</B> (Since Linux 2.6)
+<DT><B>SA_NOCLDWAIT</B> (since Linux 2.6)
 
 <DD>
 
@@ -315,8 +315,11 @@ siginfo_t {
     int      si_overrun;  /* Timer overrun count; POSIX.1b timers */
     int      si_timerid;  /* Timer ID; POSIX.1b timers */
     void    *si_addr;     /* Memory location which caused fault */
-    int      si_band;     /* Band event */
+    long     si_band;     /* Band event (was <I>int</I> in
+                             glibc 2.3.2 and earlier) */
     int      si_fd;       /* File descriptor */
+    short    si_addr_lsb; /* Least significant bit of address
+                             (since kernel 2.6.32) */
 }
 </PRE>
 
@@ -332,14 +335,28 @@ The rest of the struct may be a union, so that one should only
 read the fields that are meaningful for the given signal:
 <DL COMPACT>
 <DT>*<DD>
-POSIX.1b signals and
-<B>SIGCHLD</B>
+Signals sent with
+<B><A HREF="../man2/kill.2.html">kill</A></B>(2)
+
+and
+<B><A HREF="../man2/sigqueue.2.html">sigqueue</A></B>(2)
 
 fill in
 <I>si_pid</I> and <I>si_uid</I>.
 
+In addition, signals sent with
+<B><A HREF="../man2/sigqueue.2.html">sigqueue</A></B>(2)
+
+fill in
+<I>si_int</I> and <I>si_ptr</I>
+
+with the values specified by the sender the signal;
+see
+<B><A HREF="../man2/sigqueue.2.html">sigqueue</A></B>(2)
+
+for more details.
 <DT>*<DD>
-POSIX.1b timers (since Linux 2.6) fill in
+Signals sent by POSIX.1b timers (since Linux 2.6) fill in
 <I>si_overrun</I>
 
 and
@@ -352,19 +369,68 @@ field is an internal ID used by the kernel to identify
 the timer; it is not the same as the timer ID returned by
 <B><A HREF="../man2/timer_create.2.html">timer_create</A></B>(2).
 
+The
+<I>si_overrun</I>
+
+field is the timer overrun count;
+this is the same information as is obtained by a call to
+<B><A HREF="../man2/timer_getoverrun.2.html">timer_getoverrun</A></B>(2).
+
+These fields are nonstandard Linux extensions.
+<DT>*<DD>
+Signals sent for message queue notification (see the description of
+<B>SIGEV_SIGNAL</B>
+
+in
+<B><A HREF="../man3/mq_notify.3.html">mq_notify</A></B>(3))
+
+fill in
+<I>si_int</I>/<I>si_ptr</I>,
+
+with the
+<I>sigev_value</I>
+
+supplied to
+<B><A HREF="../man3/mq_notify.3.html">mq_notify</A></B>(3);
+
+<I>si_pid</I>,
+
+with the process ID of the message sender; and
+<I>si_uid</I>,
+
+with the real user ID of the message sender.
 <DT>*<DD>
 <B>SIGCHLD</B>
 
 fills in
-<I>si_status</I>, <I>si_utime</I> and <I>si_stime</I>.
+<I>si_pid</I>, <I>si_uid</I>, <I>si_status</I>, <I>si_utime</I> and <I>si_stime</I>,
 
+providing information about the child.
+The
+<I>si_pid</I>
+
+field is the process ID of the child;
+<I>si_uid</I>
+
+is the child's real user ID.
+The
+<I>si_status</I>
+
+field contains the exit status of the child (if
+<I>si_code</I>
+
+is
+<B>CLD_EXITED</B>),
+
+or the signal number that caused the process to change state.
 The
 <I>si_utime</I>
 
 and
 <I>si_stime</I>
 
-fields do not include the times used by waited-for children (unlike
+contain the user and system CPU time used by the child process;
+these fields do not include the times used by waited-for children (unlike
 <B><A HREF="../man2/getrusage.2.html">getrusage</A></B>(2)
 
 and
@@ -392,14 +458,7 @@ of the (configurable) system jiffy (see
 
 
 
-<DT>*<DD>
-<I>si_int</I> and <I>si_ptr</I>
 
-are specified by the sender of the POSIX.1b signal.
-See
-<B><A HREF="../man2/sigqueue.2.html">sigqueue</A></B>(2)
-
-for more details.
 <DT>*<DD>
 <B>SIGILL</B>,
 
@@ -407,18 +466,69 @@ for more details.
 
 <B>SIGSEGV</B>,
 
+<B>SIGBUS</B>,
+
 and
-<B>SIGBUS</B>
+<B>SIGTRAP</B>
 
 fill in
 <I>si_addr</I>
 
 with the address of the fault.
-<B>SIGPOLL</B>
+
+
+
+
+On some architectures,
+these signals also fill in the
+<I>si_trapno</I>
+
+filed.
+Some suberrors of
+<B>SIGBUS</B>,
+
+in particular
+<B>BUS_MCEERR_AO</B>
+
+and
+<B>BUS_MCEERR_AR</B>,
+
+also fill in
+<I>si_addr_lsb</I>.
+
+This field indicates the least significant bit of the reported address
+and therefore the extent of the corruption.
+For example, if a full page was corrupted,
+<I>si_addr_lsb</I>
+
+contains
+<I>log2(sysconf(_SC_PAGESIZE))</I>.
+
+<B>BUS_MCERR_*</B>
+
+and
+<I>si_addr_lsb</I>
+
+are Linux-specific extensions.
+<DT>*<DD>
+<B>SIGPOLL</B>/<B>SIGIO</B>
 
 fills in
 <I>si_band</I> and <I>si_fd</I>.
 
+The
+<I>si_band</I>
+
+event is a bit mask containing the same values as are filled in the
+<I>revents</I>
+
+field by
+<B><A HREF="../man2/poll.2.html">poll</A></B>(2).
+
+The
+<I>si_fd</I>
+
+field indicates the file descriptor for which the I/O event occurred.
 </DL>
 <P>
 
@@ -619,6 +729,14 @@ nonexistent physical address
 
 <DD>
 object-specific hardware error
+<DT><B>BUS_MCEERR_AR</B> (since Linux 2.6.32)
+
+<DD>
+Hardware memory error consumed on a machine check; action required.
+<DT><B>BUS_MCEERR_AO</B> (since Linux 2.6.32)
+
+<DD>
+Hardware memory error detected in process but not consumed; action optional.
 </DL>
 </DL>
 
@@ -641,6 +759,14 @@ process breakpoint
 
 <DD>
 process trace trap
+<DT><B>TRAP_BRANCH</B> (since Linux 2.4)
+
+<DD>
+process taken branch trap
+<DT><B>TRAP_HWBKPT</B> (since Linux 2.4)
+
+<DD>
+hardware breakpoint/watchpoint
 </DL>
 </DL>
 
@@ -708,7 +834,7 @@ input message available
 <DT><B>POLL_ERR</B>
 
 <DD>
-i/o error
+I/O error
 <DT><B>POLL_PRI</B>
 
 <DD>
@@ -979,6 +1105,6 @@ See
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:05:57 GMT, April 20, 2020
+Time: 03:06:30 GMT, April 20, 2020
 </BODY>
 </HTML>

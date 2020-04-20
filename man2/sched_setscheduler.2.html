@@ -5,7 +5,7 @@ Copyright (C) Tom Bjorkholm, Markus Kuhn &amp; David A. Wheeler 1996-1999
 <HTML><HEAD><TITLE>Man page of SCHED_SETSCHEDULER</TITLE>
 </HEAD><BODY>
 <H1>SCHED_SETSCHEDULER</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2008-11-06<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2010-06-19<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -276,6 +276,73 @@ or
 policies).
 
 <A NAME="lbAK">&nbsp;</A>
+<H3>Resetting scheduling policy for child processes</H3>
+
+Since Linux 2.6.32, the
+<B>SCHED_RESET_ON_FORK</B>
+
+flag can be ORed in
+<I>policy</I>
+
+when calling
+<B>sched_setscheduler</B>().
+
+As a result of including this flag, children created by
+<B><A HREF="../man2/fork.2.html">fork</A></B>(2)
+
+do not inherit privileged scheduling policies.
+This feature is intended for media-playback applications,
+and can be used to prevent applications evading the
+<B>RLIMIT_RTTIME</B>
+
+resource limit (see
+<B><A HREF="../man2/getrlimit.2.html">getrlimit</A></B>(2))
+
+by creating multiple child processes.
+<P>
+More precisely, if the
+<B>SCHED_RESET_ON_FORK</B>
+
+flag is specified,
+the following rules apply for subsequently created children:
+<DL COMPACT>
+<DT>*<DD>
+If the calling process has a scheduling policy of
+<B>SCHED_FIFO</B>
+
+or
+<B>SCHED_RR</B>,
+
+the policy is reset to
+<B>SCHED_OTHER</B>
+
+in child processes.
+<DT>*<DD>
+If the calling processes has a negative nuce value,
+the nice value is reset to zero in child processes.
+</DL>
+<P>
+
+After the
+<B>SCHED_RESET_ON_FORK</B>
+
+flag has been enabled,
+it can only be reset if the process has the
+<B>CAP_SYS_NICE</B>
+
+capability.
+This flag is disabled in child processes created by
+<B><A HREF="../man2/fork.2.html">fork</A></B>(2).
+
+<P>
+The
+<B>SCHED_RESET_ON_FORK</B>
+
+flag is visible in the policy value returned by
+<B>sched_getscheduler</B>()
+
+
+<A NAME="lbAL">&nbsp;</A>
 <H3>Privileges and resource limits</H3>
 
 In Linux kernels before 2.6.12, only privileged
@@ -355,7 +422,7 @@ See
 for further information on
 <B>RLIMIT_RTPRIO</B>.
 
-<A NAME="lbAL">&nbsp;</A>
+<A NAME="lbAM">&nbsp;</A>
 <H3>Response time</H3>
 
 A blocked high priority process waiting for the I/O has a certain
@@ -365,7 +432,7 @@ can greatly reduce this response time by using a &quot;slow interrupt&quot;
 interrupt handler.
 
 
-<A NAME="lbAM">&nbsp;</A>
+<A NAME="lbAN">&nbsp;</A>
 <H3>Miscellaneous</H3>
 
 Child processes inherit the scheduling policy and parameters across a
@@ -407,7 +474,7 @@ are available define
 <B>_POSIX_PRIORITY_SCHEDULING</B>
 
 in <I>&lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;</I>.
-<A NAME="lbAN">&nbsp;</A>
+<A NAME="lbAO">&nbsp;</A>
 <H2>RETURN VALUE</H2>
 
 On success,
@@ -422,7 +489,7 @@ On error, -1 is returned, and
 <I>errno</I>
 
 is set appropriately.
-<A NAME="lbAO">&nbsp;</A>
+<A NAME="lbAP">&nbsp;</A>
 <H2>ERRORS</H2>
 
 <DL COMPACT>
@@ -440,12 +507,12 @@ The calling process does not have appropriate privileges.
 <DD>
 The process whose ID is <I>pid</I> could not be found.
 </DL>
-<A NAME="lbAP">&nbsp;</A>
+<A NAME="lbAQ">&nbsp;</A>
 <H2>CONFORMING TO</H2>
 
 POSIX.1-2001 (but see BUGS below).
 The <B>SCHED_BATCH</B> and <B>SCHED_IDLE</B> policies are Linux-specific.
-<A NAME="lbAQ">&nbsp;</A>
+<A NAME="lbAR">&nbsp;</A>
 <H2>NOTES</H2>
 
 POSIX.1 does not detail the permissions that an unprivileged
@@ -467,7 +534,7 @@ allowed for kernel preemption and the newly introduced <A HREF="../man1/O.1.html
 ensures that the time needed to schedule is fixed and deterministic
 irrespective of the number of active tasks, true real-time computing
 was not possible up to kernel version 2.6.17.
-<A NAME="lbAR">&nbsp;</A>
+<A NAME="lbAS">&nbsp;</A>
 <H3>Real-time features in the mainline Linux kernel</H3>
 
 
@@ -521,7 +588,7 @@ The FIFO and RR scheduling policies that can be selected using
 
 are then used to run a process
 with true real-time priority and a minimum worst-case scheduling latency.
-<A NAME="lbAS">&nbsp;</A>
+<A NAME="lbAT">&nbsp;</A>
 <H2>BUGS</H2>
 
 POSIX says that on success,
@@ -533,7 +600,7 @@ Linux
 
 does not conform to this requirement,
 since it always returns 0 on success.
-<A NAME="lbAT">&nbsp;</A>
+<A NAME="lbAU">&nbsp;</A>
 <H2>SEE ALSO</H2>
 
 <B><A HREF="../man2/getpriority.2.html">getpriority</A></B>(2),
@@ -596,24 +663,25 @@ The kernel source file
 <DT><A HREF="#lbAH">SCHED_OTHER: Default Linux time-sharing scheduling</A><DD>
 <DT><A HREF="#lbAI">SCHED_BATCH: Scheduling batch processes</A><DD>
 <DT><A HREF="#lbAJ">SCHED_IDLE: Scheduling very low priority jobs</A><DD>
-<DT><A HREF="#lbAK">Privileges and resource limits</A><DD>
-<DT><A HREF="#lbAL">Response time</A><DD>
-<DT><A HREF="#lbAM">Miscellaneous</A><DD>
+<DT><A HREF="#lbAK">Resetting scheduling policy for child processes</A><DD>
+<DT><A HREF="#lbAL">Privileges and resource limits</A><DD>
+<DT><A HREF="#lbAM">Response time</A><DD>
+<DT><A HREF="#lbAN">Miscellaneous</A><DD>
 </DL>
-<DT><A HREF="#lbAN">RETURN VALUE</A><DD>
-<DT><A HREF="#lbAO">ERRORS</A><DD>
-<DT><A HREF="#lbAP">CONFORMING TO</A><DD>
-<DT><A HREF="#lbAQ">NOTES</A><DD>
+<DT><A HREF="#lbAO">RETURN VALUE</A><DD>
+<DT><A HREF="#lbAP">ERRORS</A><DD>
+<DT><A HREF="#lbAQ">CONFORMING TO</A><DD>
+<DT><A HREF="#lbAR">NOTES</A><DD>
 <DL>
-<DT><A HREF="#lbAR">Real-time features in the mainline Linux kernel</A><DD>
+<DT><A HREF="#lbAS">Real-time features in the mainline Linux kernel</A><DD>
 </DL>
-<DT><A HREF="#lbAS">BUGS</A><DD>
-<DT><A HREF="#lbAT">SEE ALSO</A><DD>
+<DT><A HREF="#lbAT">BUGS</A><DD>
+<DT><A HREF="#lbAU">SEE ALSO</A><DD>
 </DL>
 <HR>
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:05:56 GMT, April 20, 2020
+Time: 03:06:30 GMT, April 20, 2020
 </BODY>
 </HTML>

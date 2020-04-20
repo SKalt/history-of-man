@@ -5,7 +5,7 @@ Copyright (C) 2003 Andries Brouwer (aeb@cwi.nl)
 <HTML><HEAD><TITLE>Man page of STATFS</TITLE>
 </HEAD><BODY>
 <H1>STATFS</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2004-06-23<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2010-06-13<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -43,16 +43,25 @@ structure defined approximately as follows:
 <P>
 
 <PRE>
+#if __WORDSIZE == 32            /* System word size */
+# define __UWORD_TYPE           unsigned int
+#else /* __WORDSIZE == 64 */
+# define __SWORD_TYPE           long int
+#endif
+
 struct statfs {
-   long    f_type;     /* type of file system (see below) */
-   long    f_bsize;    /* optimal transfer block size */
-   long    f_blocks;   /* total data blocks in file system */
-   long    f_bfree;    /* free blocks in fs */
-   long    f_bavail;   /* free blocks avail to unprivileged user */
-   long    f_files;    /* total file nodes in file system */
-   long    f_ffree;    /* free file nodes in fs */
-   fsid_t  f_fsid;     /* file system id */
-   long    f_namelen;  /* maximum length of filenames */
+    __SWORD_TYPE f_type;    /* type of file system (see below) */
+    __SWORD_TYPE f_bsize;   /* optimal transfer block size */
+    fsblkcnt_t   f_blocks;  /* total data blocks in file system */
+    fsblkcnt_t   f_bfree;   /* free blocks in fs */
+    fsblkcnt_t   f_bavail;  /* free blocks available to
+                               unprivileged user */
+    fsfilcnt_t   f_files;   /* total file nodes in file system */
+    fsfilcnt_t   f_ffree;   /* free file nodes in fs */
+    fsid_t       f_fsid;    /* file system id */
+    __SWORD_TYPE f_namelen; /* maximum length of filenames */
+    __SWORD_TYPE f_frsize;  /* fragment size (since Linux 2.6) */
+    __SWORD_TYPE f_spare[5];
 };
 
 File system types:
@@ -71,6 +80,7 @@ File system types:
    EXT2_OLD_SUPER_MAGIC  0xEF51
    EXT2_SUPER_MAGIC      0xEF53
    EXT3_SUPER_MAGIC      0xEF53
+   EXT4_SUPER_MAGIC      0xEF53
    HFS_SUPER_MAGIC       0x4244
    HPFS_SUPER_MAGIC      0xF995E849
    HUGETLBFS_MAGIC       0x958458f6
@@ -303,7 +313,7 @@ contains some random stuff such that the pair
 (<I>f_fsid</I>,<I>ino</I>)
 
 uniquely determines a file.
-Some OSes use (a variation on) the device number, or the device number
+Some operating systems use (a variation on) the device number, or the device number
 combined with the file-system type.
 Several OSes restrict giving out the
 <I>f_fsid</I>
@@ -350,6 +360,6 @@ system call.
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:05:57 GMT, April 20, 2020
+Time: 03:06:31 GMT, April 20, 2020
 </BODY>
 </HTML>
