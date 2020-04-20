@@ -22,9 +22,9 @@ pivot_root - change the root file system
 
 <B>pivot_root</B>()
 
-moves the root file system of the current process to the
+moves the root file system of the calling process to the
 directory <I>put_old</I> and makes <I>new_root</I> the new root file system
-of the current process.
+of the calling process.
 
 
 
@@ -41,15 +41,15 @@ the current root of all relevant processes or threads.
 <B>pivot_root</B>()
 
 may or may not change the current root and the current
-working directory (cwd) of any processes or threads which use the old
+working directory of any processes or threads which use the old
 root directory.
 The caller of
 <B>pivot_root</B>()
 
-must ensure that processes with root or cwd at the old root operate
-correctly in either case.
+must ensure that processes with root or current working directory
+at the old root operate correctly in either case.
 An easy way to ensure this is to change their
-root and cwd to <I>new_root</I> before invoking
+root and current working directory to <I>new_root</I> before invoking
 <B>pivot_root</B>().
 
 <P>
@@ -61,11 +61,12 @@ may change in the future.
 At the time of writing,
 <B>pivot_root</B>()
 
-changes root and cwd of each process or
+changes root and current working directory of each process or
 thread to <I>new_root</I> if they point to the old root directory.
 This
 is necessary in order to prevent kernel threads from keeping the old
-root directory busy with their root and cwd, even if they never access
+root directory busy with their root and current working directory,
+even if they never access
 the file system in any way.
 In the future, there may be a mechanism for
 kernel threads to explicitly relinquish any access to the file system,
@@ -73,11 +74,11 @@ such that this fairly intrusive mechanism can be removed from
 <B>pivot_root</B>().
 
 <P>
-Note that this also applies to the current process:
+Note that this also applies to the calling process:
 <B>pivot_root</B>()
 
 may
-or may not affect its cwd.
+or may not affect its current working directory.
 It is therefore recommended to call
 <B>chdir(&quot;/&quot;)</B> immediately after
 <B>pivot_root</B>().
@@ -91,7 +92,7 @@ They must be directories.
 <I>new_root</I> and <I>put_old</I> must not be on the same file system as
 the current root.
 <DT>-<DD>
-<I>put_old</I> must be underneath <I>new_root</I>, that is, adding a non-zero
+<I>put_old</I> must be underneath <I>new_root</I>, that is, adding a nonzero
 number of <I>/..</I> to the string pointed to by <I>put_old</I> must yield
 the same directory as <I>new_root</I>.
 <DT>-<DD>
@@ -149,7 +150,7 @@ or a file system is already mounted on <I>put_old</I>.
 <DT><B>EPERM</B>
 
 <DD>
-The current process does not have the
+The calling process does not have the
 <B>CAP_SYS_ADMIN</B>
 
 capability.
@@ -165,7 +166,7 @@ was introduced in Linux 2.3.41.
 
 <B>pivot_root</B>()
 
-is Linux specific and hence is not portable.
+is Linux-specific and hence is not portable.
 <A NAME="lbAI">&nbsp;</A>
 <H2>NOTES</H2>
 
@@ -177,7 +178,7 @@ Glibc does not provide a wrapper for this system call; call it using
 
 <B>pivot_root</B>()
 
-should not have to change root and cwd of all other
+should not have to change root and current working directory of all other
 processes in the system.
 <P>
 Some of the more obscure uses of
@@ -218,6 +219,6 @@ insanity.
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 02:49:32 GMT, April 20, 2020
+Time: 02:50:00 GMT, April 20, 2020
 </BODY>
 </HTML>

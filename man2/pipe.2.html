@@ -18,7 +18,7 @@ pipe - create pipe
 <B>#include &lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;</B>
 
 <P>
-<B>int pipe(int </B><I>filedes</I><B>[2]);</B>
+<B>int pipe(int </B><I>pipefd</I><B>[2]);</B>
 
 <A NAME="lbAD">&nbsp;</A>
 <H2>DESCRIPTION</H2>
@@ -27,12 +27,12 @@ pipe - create pipe
 
 creates a pair of file descriptors, pointing to a pipe inode, and places
 them in the array pointed to by
-<I>filedes</I>.
+<I>pipefd</I>.
 
-<I>filedes[0]</I>
+<I>pipefd[0]</I>
 
 is for reading,
-<I>filedes[1]</I>
+<I>pipefd[1]</I>
 
 is for writing.
 <A NAME="lbAE">&nbsp;</A>
@@ -50,7 +50,7 @@ is set appropriately.
 <DT><B>EFAULT</B>
 
 <DD>
-<I>filedes</I>
+<I>pipefd</I>
 
 is not valid.
 <DT><B>EMFILE</B>
@@ -97,13 +97,13 @@ and echoes it on standard output.
 int
 main(int argc, char *argv[])
 {
-    int pfd[2];
+    int pipefd[2];
     pid_t cpid;
     char buf;
 
     assert(argc == 2);
 
-    if (pipe(pfd) == -1) {
+    if (pipe(pipefd) == -1) {
         perror(&quot;pipe&quot;);
         exit(EXIT_FAILURE);
     }
@@ -115,20 +115,20 @@ main(int argc, char *argv[])
     }
 
     if (cpid == 0) {    /* Child reads from pipe */
-        close(pfd[1]);          /* Close unused write end */
+        close(pipefd[1]);          /* Close unused write end */
 
-        while (read(pfd[0], &amp;buf, 1) &gt; 0)
+        while (read(pipefd[0], &amp;buf, 1) &gt; 0)
             write(STDOUT_FILENO, &amp;buf, 1);
 
         write(STDOUT_FILENO, &quot;\n&quot;, 1);
-        close(pfd[0]);
+        close(pipefd[0]);
         _exit(EXIT_SUCCESS);
 
     } else {            /* Parent writes argv[1] to pipe */
-        close(pfd[0]);          /* Close unused read end */
-        write(pfd[1], argv[1], strlen(argv[1]));
-        close(pfd[1]);          /* Reader will see EOF */
-        wait(NULL);             /* Wait for child */
+        close(pipefd[0]);          /* Close unused read end */
+        write(pipefd[1], argv[1], strlen(argv[1]));
+        close(pipefd[1]);          /* Reader will see EOF */
+        wait(NULL);                /* Wait for child */
         exit(EXIT_SUCCESS);
     }
 }
@@ -167,6 +167,6 @@ main(int argc, char *argv[])
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 02:49:32 GMT, April 20, 2020
+Time: 02:50:00 GMT, April 20, 2020
 </BODY>
 </HTML>

@@ -64,16 +64,16 @@ Get keyboard type.
 This returns the value KB_101, defined as 0x02.
 <DT><B>KDADDIO</B><DD>
 Add I/O port as valid.
-Equivalent to ioperm(arg,1,1).
+Equivalent to <I>ioperm(arg,1,1)</I>.
 <DT><B>KDDELIO</B><DD>
 Delete I/O port as valid.
-Equivalent to ioperm(arg,1,0).
+Equivalent to <I>ioperm(arg,1,0)</I>.
 <DT><B>KDENABIO</B><DD>
 Enable I/O to video board.
-Equivalent to ioperm(0x3b4, 0x3df-0x3b4+1, 1).
+Equivalent to <I>ioperm(0x3b4, 0x3df-0x3b4+1, 1)</I>.
 <DT><B>KDDISABIO</B><DD>
 Disable I/O to video board.
-Equivalent to ioperm(0x3b4, 0x3df-0x3b4+1, 0).
+Equivalent to <I>ioperm(0x3b4, 0x3df-0x3b4+1, 0)</I>.
 <DT><B>KDSETMODE</B><DD>
 Set text/graphics mode.
 <I>argp</I> is one of these:
@@ -148,13 +148,18 @@ Sets screen font and associated rendering information.
 <I>argp</I>
 points to a
 <P>
+
 <PRE>
 struct consolefontdesc {
-    u_short <I>charcount</I>;    /* characters in font (256 or 512) */
-    u_short <I>charheight</I>;   /* scan lines per character (1-32) */
-    char *<I>chardata</I>;       /* font data in expanded form */
+    unsigned short charcount;  /* characters in font
+                                  (256 or 512) */
+    unsigned short charheight; /* scan lines per
+                                  character (1-32) */
+    char          *chardata;   /* font data in
+                                  expanded form */
 };
 </PRE>
+
 
 <P>
 If necessary, the screen will be appropriately resized, and
@@ -197,22 +202,26 @@ symbols.
 Get Unicode-to-font mapping from kernel.
 <I>argp</I> points to a
 <P>
+
 <PRE>
 struct unimapdesc {
-    u_short <I>entry_ct</I>;
-    struct unipair *<I>entries</I>;
+    unsigned short  entry_ct;
+    struct unipair *entries;
 };
 </PRE>
+
 
 <P>
 where <I>entries</I> points to an array of
 <P>
+
 <PRE>
 struct unipair {
-    u_short <I>unicode</I>;
-    u_short <I>fontpos</I>;
+    unsigned short unicode;
+    unsigned short fontpos;
 };
 </PRE>
+
 
 <P>
 (Since 1.1.92.)
@@ -224,13 +233,15 @@ Put unicode-to-font mapping in kernel.
 Clear table, possibly advise hash algorithm.
 <I>argp</I> points to a
 <P>
+
 <PRE>
 struct unimapinit {
-    u_short <I>advised_hashsize</I>;  /* 0 if no opinion */
-    u_short <I>advised_hashstep</I>;  /* 0 if no opinion */
-    u_short <I>advised_hashlevel</I>; /* 0 if no opinion */
+    unsigned short advised_hashsize;  /* 0 if no opinion */
+    unsigned short advised_hashstep;  /* 0 if no opinion */
+    unsigned short advised_hashlevel; /* 0 if no opinion */
 };
 </PRE>
+
 
 <P>
 (Since 1.1.92.)
@@ -260,13 +271,15 @@ Sets meta key handling mode.
 Gets one entry in key translation table (keycode to action code).
 <I>argp</I> points to a
 <P>
+
 <PRE>
 struct kbentry {
-    u_char <I>kb_table</I>;
-    u_char <I>kb_index</I>;
-    u_short <I>kb_value</I>;
+    unsigned char  kb_table;
+    unsigned char  kb_index;
+    unsigned short kb_value;
 };
 </PRE>
+
 
 <P>
 with the first two members filled in:
@@ -283,12 +296,14 @@ a <I>struct kbentry</I>.
 Gets one function key string.
 <I>argp</I> points to a
 <P>
+
 <PRE>
 struct kbsentry {
-    u_char <I>kb_func</I>;
-    u_char <I>kb_string</I>[512];
+    unsigned char kb_func;
+    unsigned char kb_string[512];
 };
 </PRE>
+
 
 <P>
 <I>kb_string</I> is set to the (NULL terminated) string corresponding to
@@ -301,31 +316,41 @@ a <I>struct kbsentry</I>.
 Read kernel accent table.
 <I>argp</I> points to a
 <P>
+
 <PRE>
 struct kbdiacrs {
-    unsigned int <I>kb_cnt</I>;
-    struct kbdiacr <I>kbdiacr</I>[256];
+    unsigned int   kb_cnt;
+    struct kbdiacr kbdiacr[256];
 };
 </PRE>
+
 
 <P>
 where <I>kb_cnt</I> is the number of entries in the array, each of which
 is a
 <P>
+
 <PRE>
 struct kbdiacr {
-    u_char <I>diacr</I>;
-    u_char <I>base</I>;
-    u_char <I>result</I>;
-};
-<DT><B>KDGETKEYCODE</B><DD>Read kernel keycode table entry (scan code to keycode).
-<I>argp</I> points to a
-
-struct kbkeycode {
-    unsigned int <I>scancode</I>;
-    unsigned int <I>keycode</I>;
+    unsigned char diacr;
+    unsigned char base;
+    unsigned char result;
 };
 </PRE>
+
+
+<DT><B>KDGETKEYCODE</B><DD>
+Read kernel keycode table entry (scan code to keycode).
+<I>argp</I> points to a
+<P>
+
+<PRE>
+struct kbkeycode {
+    unsigned int scancode;
+    unsigned int keycode;
+};
+</PRE>
+
 
 <P>
 <I>keycode</I> is set to correspond to the given <I>scancode</I>.
@@ -350,15 +375,17 @@ number of the vt (1 &lt;= <I>*argp</I> &lt;= MAX_NR_CONSOLES).
 Get mode of active vt.
 <I>argp</I> points to a
 <P>
+
 <PRE>
 struct vt_mode {
-    char <I>mode</I>;     /* vt mode */
-    char <I>waitv</I>;    /* if set, hang on writes if not active */
-    short <I>relsig</I>;  /* signal to raise on release req */
-    short <I>acqsig</I>;  /* signal to raise on acquisition */
-    short <I>frsig</I>;   /* unused (set to 0) */
+    char  mode;    /* vt mode */
+    char  waitv;   /* if set, hang on writes if not active */
+    short relsig;  /* signal to raise on release req */
+    short acqsig;  /* signal to raise on acquisition */
+    short frsig;   /* unused (set to 0) */
 };
 </PRE>
+
 
 <P>
 which is set to the mode of the active vt.
@@ -375,13 +402,15 @@ a <I>struct vt_mode</I>.
 Get global vt state info.
 <I>argp</I> points to a
 <P>
+
 <PRE>
 struct vt_stat {
-    ushort <I>v_active</I>;  /* active vt */
-    ushort <I>v_signal</I>;  /* signal to send */
-    ushort <I>v_state</I>;   /* vt bit mask */
+    unsigned short v_active;  /* active vt */
+    unsigned short v_signal;  /* signal to send */
+    unsigned short v_state;   /* vt bit mask */
 };
 </PRE>
+
 
 <P>
 For each vt in use, the corresponding bit in the <I>v_state</I> member is set.
@@ -399,13 +428,15 @@ Deallocate the memory associated with vt <I>argp</I>.
 Set the kernel's idea of screensize.
 <I>argp</I> points to a
 <P>
+
 <PRE>
 struct vt_sizes {
-    ushort <I>v_rows</I>;       /* # rows */
-    ushort <I>v_cols</I>;       /* # columns */
-    ushort <I>v_scrollsize</I>; /* no longer used */
+    unsigned short v_rows;       /* # rows */
+    unsigned short v_cols;       /* # columns */
+    unsigned short v_scrollsize; /* no longer used */
 };
 </PRE>
+
 
 <P>
 Note that this does not change the videomode.
@@ -417,16 +448,22 @@ See
 Set the kernel's idea of various screen parameters.
 <I>argp</I> points to a
 <P>
+
 <PRE>
 struct vt_consize {
-    ushort <I>v_rows</I>;    /* number of rows */
-    ushort <I>v_cols</I>;    /* number of columns */
-    ushort <I>v_vlin</I>;    /* number of pixel rows on screen */
-    ushort <I>v_clin</I>;    /* number of pixel rows per character */
-    ushort <I>v_vcol</I>;    /* number of pixel columns on screen */
-    ushort <I>v_ccol</I>;    /* number of pixel columns per character */
+    unsigned short v_rows;  /* number of rows */
+    unsigned short v_cols;  /* number of columns */
+    unsigned short v_vlin;  /* number of pixel rows
+                               on screen */
+    unsigned short v_clin;  /* number of pixel rows
+                               per character */
+    unsigned short v_vcol;  /* number of pixel columns
+                               on screen */
+    unsigned short v_ccol;  /* number of pixel columns
+                               per character */
 };
 </PRE>
+
 
 <P>
 Any parameter may be set to zero, indicating &quot;no change&quot;, but if
@@ -456,10 +493,10 @@ Set selection.
 <PRE>
 
 struct {
-   char <I>subcode</I>;
-   short <I>xs</I>, <I>ys</I>, <I>xe</I>, <I>ye</I>;
-   short <I>sel_mode</I>;
-}
+   char  subcode;
+   short xs, ys, xe, ye;
+   short sel_mode;
+};
 
 </PRE>
 
@@ -645,6 +682,6 @@ Use POSIX functions.
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 02:49:42 GMT, April 20, 2020
+Time: 02:50:11 GMT, April 20, 2020
 </BODY>
 </HTML>
