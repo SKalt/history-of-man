@@ -5,7 +5,7 @@ Copyright (C) 1998 Andries Brouwer (aeb@cwi.nl)
 <HTML><HEAD><TITLE>Man page of PRCTL</TITLE>
 </HEAD><BODY>
 <H1>PRCTL</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2012-04-23<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2012-10-25<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -212,7 +212,7 @@ Return (as the function result) the current state of the calling threads's
 <DT><B>PR_SET_NAME</B> (since Linux 2.6.9)
 
 <DD>
-Set the process name for the calling process,
+Set the process name for the calling thread,
 using the value in the location pointed to by
 <I>(char&nbsp;*) arg2</I>.
 
@@ -222,12 +222,63 @@ and should be null-terminated if it contains fewer bytes.
 <DT><B>PR_GET_NAME</B> (since Linux 2.6.11)
 
 <DD>
-Return the process name for the calling process,
+Return the name for the calling thread,
 in the buffer pointed to by
 <I>(char&nbsp;*) arg2</I>.
 
 The buffer should allow space for up to 16 bytes;
 the returned string will be null-terminated if it is shorter than that.
+<DT><B>PR_SET_NO_NEW_PRIVS</B> (since Linux 3.5)
+
+<DD>
+Set the calling process's
+<I>no_new_privs</I>
+
+bit to the value in
+<I>arg2</I>.
+
+With
+<I>no_new_privs</I>
+
+set to 1,
+<B><A HREF="../man2/execve.2.html">execve</A></B>(2)
+
+promises not to grant privileges to do anything
+that could not have been done without the
+<B><A HREF="../man2/execve.2.html">execve</A></B>(2)
+
+call (for example,
+rendering the set-user-ID and set-group-ID permission bits,
+and file capabilities non-functional).
+Once set, this bit cannot be unset.
+The setting of this bit is inherited by children created by
+<B><A HREF="../man2/fork.2.html">fork</A></B>(2)
+
+and
+<B><A HREF="../man2/clone.2.html">clone</A></B>(2),
+
+and preserved across
+<B><A HREF="../man2/execve.2.html">execve</A></B>(2).
+
+<P>
+For more information, see the kernel source file
+<I>Documentation/prctl/no_new_privs.txt</I>.
+
+<DT><B>PR_GET_NO_NEW_PRIVS</B> (since Linux 3.5)
+
+<DD>
+Return the value of the
+<I>no_new_privs</I>
+
+bit for the current process.
+A value of 0 indicates the regular
+<B><A HREF="../man2/execve.2.html">execve</A></B>(2)
+
+behavior.
+A value of 1 indicates
+<B><A HREF="../man2/execve.2.html">execve</A></B>(2)
+
+will operate in the privilege-restricting mode described above.
 <DT><B>PR_SET_PDEATHSIG</B> (since Linux 2.1.57)
 
 <DD>
@@ -239,8 +290,8 @@ parent dies.
 This value is cleared for the child of a
 <B><A HREF="../man2/fork.2.html">fork</A></B>(2)
 
-and (since Linux 2.5.36 / 2.6.23)
-when executing a set-user_ID or set-group-ID binary.
+and (since Linux 2.4.36 / 2.6.23)
+when executing a set-user-ID or set-group-ID binary.
 <DT><B>PR_GET_PDEATHSIG</B> (since Linux 2.3.15)
 
 <DD>
@@ -254,12 +305,21 @@ in the location pointed to by
 
 
 
-Set the secure computing mode for the calling thread.
-In the current implementation,
+Set the secure computing (seccomp) mode for the calling thread, to limit
+the available system calls.
+The seccomp mode is selected via
+<I>arg2</I>.
+
+(The seccomp constants are defined in
+<I>&lt;<A HREF="file:///usr/include/linux/seccomp.h">linux/seccomp.h</A>&gt;</I>.)
+
+<P>
+With
 <I>arg2</I>
 
-must be 1.
-After the secure computing mode has been set to 1,
+set to
+<B>SECCOMP_MODE_STRICT</B>
+
 the only system calls that the thread is permitted to make are
 <B><A HREF="../man2/read.2.html">read</A></B>(2),
 
@@ -274,27 +334,78 @@ Other system calls result in the delivery of a
 <B>SIGKILL</B>
 
 signal.
-Secure computing mode is useful for number-crunching applications
+Strict secure computing mode is useful for number-crunching applications
 that may need to execute untrusted byte code,
 perhaps obtained by reading from a pipe or socket.
 This operation is only available
-if the kernel is configured with CONFIG_SECCOMP enabled.
+if the kernel is configured with
+<B>CONFIG_SECCOMP</B>
+
+enabled.
+<P>
+With
+<I>arg2</I>
+
+set to
+<B>SECCOMP_MODE_FILTER</B> (since Linux 3.5)
+
+the system calls allowed are defined by a pointer
+to a Berkeley Packet Filter passed in
+<I>arg3</I>.
+
+This argument is a pointer to
+<I>struct sock_fprog</I>;
+
+it can be designed to filter
+arbitrary system calls and system call arguments.
+This mode is only available if the kernel is configured with
+<B>CONFIG_SECCOMP_FILTER</B>
+
+enabled.
+<P>
+If
+<B>SECCOMP_MODE_FILTER</B>
+
+filters permit
+<B><A HREF="../man2/fork.2.html">fork</A></B>(2),
+
+then the seccomp mode is inherited by children created by
+<B><A HREF="../man2/fork.2.html">fork</A></B>(2);
+
+if
+<B><A HREF="../man2/execve.2.html">execve</A></B>(2)
+
+is permitted, then the seccomp mode is preserved across
+<B><A HREF="../man2/execve.2.html">execve</A></B>(2).
+
+If the filters permit
+<B>prctl</B>(0
+
+calls, then additional filters can be added;
+they are run in order until the first non-allow result is seen.
+<P>
+For further information, see the kernel source file
+<I>Documentation/prctl/seccomp_filter.txt</I>.
+
 <DT><B>PR_GET_SECCOMP</B> (since Linux 2.6.23)
 
 <DD>
 Return the secure computing mode of the calling thread.
-Not very useful for the current implementation (mode equals 1),
-but may be useful for other possible future modes:
-if the caller is not in secure computing mode, this operation returns 0;
-if the caller is in secure computing mode, then the
+If the caller is not in secure computing mode, this operation returns 0;
+if the caller is in strict secure computing mode, then the
 <B>prctl</B>()
 
 call will cause a
 <B>SIGKILL</B>
 
 signal to be sent to the process.
+If the caller is in filter mode, and this system call is allowed by the
+seccomp filters, it returns 2.
 This operation is only available
-if the kernel is configured with CONFIG_SECCOMP enabled.
+if the kernel is configured with
+<B>CONFIG_SECCOMP</B>
+
+enabled.
 <DT><B>PR_SET_SECUREBITS</B> (since Linux 2.6.26)
 
 <DD>
@@ -312,6 +423,91 @@ the &quot;securebits&quot; flags of the calling thread.
 See
 <B><A HREF="../man7/capabilities.7.html">capabilities</A></B>(7).
 
+<DT><B>PR_SET_TIMERSLACK</B> (since Linux 2.6.28)
+
+<DD>
+
+
+Set the current timer slack for the calling thread to the nanosecond value
+supplied in
+<I>arg2</I>.
+
+If
+<I>arg2</I>
+
+is less than or equal to zero,
+
+
+reset the current timer slack to the thread's default timer slack value.
+The timer slack is used by the kernel to group timer expirations
+for the calling thread that are close to one another;
+as a consequence, timer expirations for the thread may be
+up to the specified number of nanoseconds late (but will never expire early).
+Grouping timer expirations can help reduce system power consumption
+by minimizing CPU wake-ups.
+<P>
+The timer expirations affected by timer slack are those set by
+<B><A HREF="../man2/select.2.html">select</A></B>(2),
+
+<B><A HREF="../man2/pselect.2.html">pselect</A></B>(2),
+
+<B><A HREF="../man2/poll.2.html">poll</A></B>(2),
+
+<B><A HREF="../man2/ppoll.2.html">ppoll</A></B>(2),
+
+<B><A HREF="../man2/epoll_wait.2.html">epoll_wait</A></B>(2),
+
+<B><A HREF="../man2/epoll_pwait.2.html">epoll_pwait</A></B>(2),
+
+<B><A HREF="../man2/clock_nanosleep.2.html">clock_nanosleep</A></B>(2),
+
+<B><A HREF="../man2/nanosleep.2.html">nanosleep</A></B>(2),
+
+and
+<B><A HREF="../man2/futex.2.html">futex</A></B>(2)
+
+(and thus the library functions implemented via futexes, including
+
+<B><A HREF="../man3/pthread_cond_timedwait.3.html">pthread_cond_timedwait</A></B>(3),
+
+<B><A HREF="../man3/pthread_mutex_timedlock.3.html">pthread_mutex_timedlock</A></B>(3),
+
+<B><A HREF="../man3/pthread_rwlock_timedrdlock.3.html">pthread_rwlock_timedrdlock</A></B>(3),
+
+<B><A HREF="../man3/pthread_rwlock_timedwrlock.3.html">pthread_rwlock_timedwrlock</A></B>(3),
+
+and
+<B><A HREF="../man3/sem_timedwait.3.html">sem_timedwait</A></B>(3)).
+
+<P>
+Timer slack is not applied to threads that are scheduled under
+a realtime scheduling policy (see
+<B><A HREF="../man2/sched_setscheduler.2.html">sched_setscheduler</A></B>(2)).
+
+<P>
+Each thread has two associated timer slack values:
+a &quot;default&quot; value, and a &quot;current&quot; value.
+The current value is the one that governs grouping
+of timer expirations.
+When a new thread is created,
+the two timer slack values are made the same as the current value
+of the creating thread.
+Thereafter, a thread can adjust its current timer slack value via
+<B>PR_SET_TIMERSLACK</B>
+
+(the default value can't be changed).
+The timer slack values of
+<I>init</I>
+
+(PID 1), the ancestor of all processes,
+is 50,000 nanoseconds (50 microseconds).
+The timer slack values are preserved across
+<B><A HREF="../man2/execve.2.html">execve</A></B>(2).
+
+<DT><B>PR_GET_TIMERSLACK</B> (since Linux 2.6.28)
+
+<DD>
+Return the current timer slack value of the calling thread.
 <DT><B>PR_SET_TIMING</B> (since Linux 2.6.0-test4)
 
 <DD>
@@ -651,6 +847,8 @@ On success,
 
 <B>PR_GET_KEEPCAPS</B>,
 
+<B>PR_GET_NO_NEW_PRIVS</B>,
+
 <B>PR_CAPBSET_READ</B>,
 
 <B>PR_GET_TIMING</B>,
@@ -940,6 +1138,6 @@ get or set the maximum stack size, and so on.
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:16:04 GMT, April 20, 2020
+Time: 03:16:40 GMT, April 20, 2020
 </BODY>
 </HTML>

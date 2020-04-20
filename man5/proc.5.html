@@ -5,7 +5,7 @@ Copyright (C) 1994, 1995 by Daniel Quinlan (quinlan@yggdrasil.com)
 <HTML><HEAD><TITLE>Man page of PROC</TITLE>
 </HEAD><BODY>
 <H1>PROC</H1>
-Section: Linux Programmer's Manual (5)<BR>Updated: 2012-10-15<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (5)<BR>Updated: 2012-10-27<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -1567,6 +1567,312 @@ It is used by
 to report the amount of free and used memory (both physical and swap)
 on the system as well as the shared memory and buffers used by the
 kernel.
+Each line of the file consists of a parameter name, followed by a colon,
+the value of the parameter, and an option unit of measurement (e.g., &quot;kB&quot;).
+The list below describes the parameter names and
+the format specifier required to read the field value.
+Except as noted below,
+all of the fields have been present since at least Linux 2.6.0.
+Some fileds are only displayed if the kernel was configured
+with various options; those dependencies are noted in the list.
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT><I>MemTotal</I> %lu
+
+<DD>
+Total usable RAM (i.e. physical RAM minus a few reserved
+bits and the kernel binary code).
+<DT><I>MemFree</I> %lu
+
+<DD>
+The sum of
+<I>LowFree</I>+<I>HighFree</I>.
+
+<DT><I>Buffers</I> %lu
+
+<DD>
+Relatively temporary storage for raw disk blocks that
+shouldn't get tremendously large (20MB or so).
+<DT><I>Cached</I> %lu
+
+<DD>
+In-memory cache for files read from the disk (the page cache).
+Doesn't include
+<I>SwapCached</I>.
+
+<DT><I>SwapCached</I> %lu
+
+<DD>
+Memory that once was swapped out, is swapped back in but
+still also is in the swap file.
+(If memory pressure is high, these pages
+don't need to be swapped out again because they are already
+in the swap file.
+This saves I/O.)
+<DT><I>Active</I> %lu
+
+<DD>
+Memory that has been used more recently and usually not
+reclaimed unless absolutely necessary.
+<DT><I>Inactive</I> %lu
+
+<DD>
+Memory which has been less recently used.
+It is more eligible to be reclaimed for other purposes.
+<DT><I>Active(anon)</I> %lu (since Linux 2.6.28)
+
+<DD>
+[To be documented.]
+<DT><I>Inactive(anon)</I> %lu (since Linux 2.6.28)
+
+<DD>
+[To be documented.]
+<DT><I>Active(file)</I> %lu (since Linux 2.6.28)
+
+<DD>
+[To be documented.]
+<DT><I>Inactive(file)</I> %lu (since Linux 2.6.28)
+
+<DD>
+[To be documented.]
+<DT><I>Unevictable</I> %lu (since Linux 2.6.28)
+
+<DD>
+(From Linux 2.6.28 to 2.6.30,
+<B>CONFIG_UNEVICTABLE_LRU</B> was required.)
+[To be documented.]
+<DT><I>Mlock</I> %lu (since Linux 2.6.28)
+
+<DD>
+(From Linux 2.6.28 to 2.6.30,
+<B>CONFIG_UNEVICTABLE_LRU</B> was required.)
+[To be documented.]
+<DT><I>HighTotal</I> %lu
+
+<DD>
+(Starting with Linux 2.6.19, <B>CONFIG_HIGHMEM</B> is required.)
+Total amount of highmem.
+Highmem is all memory above ~860MB of physical memory.
+Highmem areas are for use by user-space programs,
+or for the page cache.
+The kernel must use tricks to access
+this memory, making it slower to access than lowmem.
+<DT><I>HighFree</I> %lu
+
+<DD>
+(Starting with Linux 2.6.19, <B>CONFIG_HIGHMEM</B> is required.)
+Amount of free highmem.
+<DT><I>LowTotal</I> %lu
+
+<DD>
+(Starting with Linux 2.6.19, <B>CONFIG_HIGHMEM</B> is required.)
+Total amount of lowmem.
+Lowmem is memory which can be used for everything that
+highmem can be used for, but it is also available for the
+kernel's use for its own data structures.
+Among many other things,
+it is where everything from
+<I>Slab</I>
+
+is allocated.
+Bad things happen when you're out of lowmem.
+<DT><I>LowFree</I> %lu
+
+<DD>
+(Starting with Linux 2.6.19, <B>CONFIG_HIGHMEM</B> is required.)
+Amount of free lowmem.
+<DT><I>MmapCopy</I> %lu (since Linux 2.6.29)
+
+<DD>
+(<B>CONFIG_MMU</B>
+
+is required.)
+[To be documented.]
+<DT><I>SwapTotal</I> %lu
+
+<DD>
+Total amount of swap space available.
+<DT><I>SwapFree</I> %lu
+
+<DD>
+Memory which has been evicted from RAM,
+and is temporarily on the disk.
+<DT><I>Dirty</I> %lu
+
+<DD>
+Memory which is waiting to get written back to the disk.
+<DT><I>Writeback</I> %lu
+
+<DD>
+Memory which is actively being written back to the disk.
+<DT><I>AnonPages</I> %lu (since Linux 2.6.18)
+
+<DD>
+Non-file backed pages mapped into user-space page tables.
+<DT><I>Mapped</I> %lu
+
+<DD>
+Files which have been mmaped, such as libraries.
+<DT><I>Shmem</I> %lu (since Linux 2.6.32)
+
+<DD>
+[To be documented.]
+<DT><I>Slab</I> %lu
+
+<DD>
+In-kernel data structures cache.
+<DT><I>SReclaimable</I> %lu (since Linux 2.6.19)
+
+<DD>
+Part of
+<I>Slab</I>,
+
+that might be reclaimed, such as caches.
+<DT><I>SUnreclaim</I> %lu (since Linux 2.6.19)
+
+<DD>
+Part of
+<I>Slab</I>,
+
+that cannot be reclaimed on memory pressure.
+<DT><I>KernelStack</I> %lu (since Linux 2.6.32)
+
+<DD>
+Amount of memory allocated to kernel stacks.
+<DT><I>PageTables</I> %lu (since Linux 2.6.18)
+
+<DD>
+Amount of memory dedicated to the lowest level of page tables.
+<DT><I>Quicklists</I> %lu (since Linux 2.6.27)
+
+<DD>
+(<B>CONFIG_QUICKLIST</B> is required.)
+[To be documented.]
+<DT><I>NFS_Unstable</I> %lu (since Linux 2.6.18)
+
+<DD>
+NFS pages sent to the server, but not yet committed to stable storage.
+<DT><I>Bounce</I> %lu (since Linux 2.6.18)
+
+<DD>
+Memory used for block device &quot;bounce buffers&quot;.
+<DT><I>WritebackTmp</I> %lu (since Linux 2.6.26)
+
+<DD>
+Memory used by FUSE for temporary writeback buffers.
+<DT><I>CommitLimit</I> %lu (since Linux 2.6.10)
+
+<DD>
+Based on the overcommit ratio ('vm.overcommit_ratio'),
+this is the total amount of  memory currently available to
+be allocated on the system. This limit is only adhered to
+if strict overcommit accounting is enabled (mode 2 in
+<I>/proc/sys/vm/overcommit_ratio</I>).
+
+The
+<I>CommitLimit</I>
+
+is calculated using the following formula:
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;CommitLimit&nbsp;=&nbsp;(overcommit_ratio&nbsp;*&nbsp;Physical&nbsp;RAM)&nbsp;+&nbsp;Swap
+<P>
+For example, on a system with 1GB of physical RAM and 7GB
+of swap with a
+<I>overcommit_ratio</I>
+
+of 30, this formula yields a
+<I>CommitLimit</I>
+
+of 7.3GB.
+For more details, see the memory overcommit documentation
+in the kernel source file
+<I>Documentation/vm/overcommit-accounting</I>.
+
+<DT><I>Committed_AS</I> %lu
+
+<DD>
+The amount of memory presently allocated on the system.
+The committed memory is a sum of all of the memory which
+has been allocated by processes, even if it has not been
+&quot;used&quot; by them as of yet.
+A process which allocates 1GB of memory (using
+<B><A HREF="../man3/malloc.3.html">malloc</A></B>(3)
+
+or similar), but only touches 300MB of that memory will only show up
+as using 300MB of memory even if it has the address space
+allocated for the entire 1GB.
+This 1GB is memory which has been &quot;committed&quot; to by the VM
+and can be used at any time by the allocating application.
+With strict overcommit enabled on the system (mode 2
+<I>/proc/sys/vm/overcommit_memory</I>),
+
+allocations which would exceed the
+<I>CommitLimit</I>
+
+(detailed above) will not be permitted.
+This is useful if one needs to guarantee that processes will not
+fail due to lack of memory once that memory has been successfully allocated.
+<DT><I>VmallocTotal</I> %lu
+
+<DD>
+Total size of vmalloc memory area.
+<DT><I>VmallocUsed</I> %lu
+
+<DD>
+Amount of vmalloc area which is used.
+<DT><I>VmallocChunk</I> %lu
+
+<DD>
+Largest contiguous block of vmalloc area which is free.
+<DT><I>HardwareCorrupted</I> %lu (since Linux 2.6.32)
+
+<DD>
+(<B>CONFIG_MEMORY_FAILURE</B> is required.)
+[To be documented.]
+<DT><I>AnonHugePages</I> %lu (since Linux 2.6.38)
+
+<DD>
+(<B>CONFIG_TRANSPARENT_HUGEPAGE</B> is required.)
+Non-file backed huge pages mapped into user-space page tables.
+<DT><I>HugePages_Total</I> %lu
+
+<DD>
+(<B>CONFIG_HUGETLB_PAGE</B> is required.)
+The size of the pool of huge pages.
+<DT><I>HugePages_Free</I> %lu
+
+<DD>
+(<B>CONFIG_HUGETLB_PAGE</B> is required.)
+The number of huge pages in the pool that are not yet allocated.
+<DT><I>HugePages_Rsvd</I> %lu (since Linux 2.6.17)
+
+<DD>
+(<B>CONFIG_HUGETLB_PAGE</B> is required.)
+This is the number of huge pages for
+which a commitment to allocate from the pool has been made,
+but no allocation has yet been made.
+These reserved huge pages
+guarantee that an application will be able to allocate a
+huge page from the pool of huge pages at fault time.
+<DT><I>HugePages_Surp</I> %lu (since Linux 2.6.24)
+
+<DD>
+(<B>CONFIG_HUGETLB_PAGE</B> is required.)
+This is the number of huge pages in
+the pool above the value in
+<I>/proc/sys/vm/nr_hugepages</I>.
+
+The maximum number of surplus huge pages is controlled by
+<I>/proc/sys/vm/nr_overcommit_hugepages</I>.
+
+<DT><I>Hugepagesize</I> %lu
+
+<DD>
+(<B>CONFIG_HUGETLB_PAGE</B> is required.)
+The size of huge pages.
+</DL>
+</DL>
+
 <DT><I>/proc/modules</I>
 
 <DD>
@@ -2313,7 +2619,7 @@ The minimum value that can be assigned to this file is the system page size.
 <DD>
 
 When the value in this file is 0,
-no restrictions are placed the creation of hard links
+no restrictions are placed on the creation of hard links
 (i.e., this is the historical behaviour before Linux 3.6).
 When the value in this file is 1,
 a hard link can be created to a target file
@@ -2354,9 +2660,10 @@ suitable capabilities).
 </DL>
 
 <DT><DD>
-The default value in this file is 1.
-This setting prevents a longstanding class of security issues caused by
-the hard-link-based time-of-check, time-of-use races,
+The default value in this file is 0.
+Setting the value to 1
+prevents a longstanding class of security issues caused by
+hard-link-based time-of-check, time-of-use races,
 most commonly seen in world-writable directories such as
 <I>/tmp</I>.
 
@@ -2393,8 +2700,16 @@ the symbolic link and and its parent directory have the same owner (UID)
 </DL>
 
 <DT><DD>
-The default value in this file is 1.
-This setting avoids a longstanding class of security issues
+A system call that fails to follow a symbolic link
+because of the above restrictions returns the error
+<B>EACCES</B>
+
+in
+<I>errno</I>.
+
+<DT><DD>
+The default value in this file is 0.
+Setting the value to 1 avoids a longstanding class of security issues
 based on time-of-check, time-of-use races when accessing symbolic links.
 <DT><I>/proc/sys/fs/suid_dumpable</I> (since Linux 2.6.13)
 
@@ -2630,13 +2945,30 @@ The default value is
 <I>/sbin/modprobe</I>.
 
 The file is only present if the kernel is built with the
-<B>CONFIG_KMOD</B>
+<B>CONFIG_MODULES</B>
 
+(<B>CONFIG_KMOD</B>
+
+in Linux 2.6.26 and earlier)
 option enabled.
 It is described by the Linux kernel source file
 <I>Documentation/kmod.txt</I>
 
 (only present in kernel 2.4 and earlier).
+<DT><I>/proc/sys/kernel/modules_disabled</I> (since Linux 2.6.31)
+
+<DD>
+
+
+A toggle value indicating if modules are allowed to be loaded
+in an otherwise modular kernel.
+This toggle defaults to off (0), but can be set true (1).
+Once true, modules can be neither loaded nor unloaded,
+and the toggle cannot be set back to false.
+The file is only present if the kernel is built with the
+<B>CONFIG_MODULES</B>
+
+option enabled.
 <DT><I>/proc/sys/kernel/msgmax</I>
 
 <DD>
@@ -3357,8 +3689,7 @@ of thing that needs to be updated very often.
 
 <B><A HREF="../man8/route.8.html">route</A></B>(8)
 
-<BR>
-
+<P>
 The Linux kernel source files:
 <I>Documentation/filesystems/proc.txt</I>
 
@@ -3379,6 +3710,6 @@ and
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:16:16 GMT, April 20, 2020
+Time: 03:16:52 GMT, April 20, 2020
 </BODY>
 </HTML>
