@@ -4,7 +4,7 @@
 <HTML><HEAD><TITLE>Man page of FSYNC</TITLE>
 </HEAD><BODY>
 <H1>FSYNC</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2008-11-07<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2012-02-27<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -51,12 +51,15 @@ transfers (&quot;flushes&quot;) all modified in-core data of
 file referred to by the file descriptor
 <I>fd</I>
 
-to the disk device (or other permanent storage device)
-where that file resides.
+to the disk device (or other permanent storage device) so that all
+changed information can be retrieved even after the system crashed or
+was rebooted.
+This includes writing through or flushing a disk cache if present.
 The call blocks until the device reports that the transfer has completed.
 It also flushes metadata information associated with the file (see
 <B><A HREF="../man2/stat.2.html">stat</A></B>(2)).
 
+<P>
 <P>
 Calling
 <B>fsync</B>()
@@ -118,7 +121,7 @@ is set appropriately.
 <DD>
 <I>fd</I>
 
-is not a valid file descriptor open for writing.
+is not a valid open file descriptor.
 <DT><B>EIO</B>
 
 <DD>
@@ -156,55 +159,13 @@ to a value greater than 0.
 <A NAME="lbAI">&nbsp;</A>
 <H2>NOTES</H2>
 
-Applications that access databases or log files often write a tiny
-data fragment (e.g., one line in a log file) and then call
-<B>fsync</B>()
+On some UNIX systems (but not Linux),
+<I>fd</I>
 
-immediately in order to ensure that the written data is physically
-stored on the harddisk.
-Unfortunately,
-<B>fsync</B>()
+must be a
+<I>writable</I>
 
-will always initiate two write operations: one for the newly written
-data and another one in order to update the modification time stored
-in the inode.
-If the modification time is not a part of the transaction
-concept
-<B>fdatasync</B>()
-
-can be used to avoid unnecessary inode disk write operations.
-<P>
-If the underlying hard disk has write caching enabled, then
-the data may not really be on permanent storage when
-<B>fsync</B>()
-
-/
-<B>fdatasync</B>()
-
-return.
-
-
-
-<P>
-
-When an ext2 file system is mounted with the
-<I>sync</I>
-
-option, directory entries are also implicitly synced by
-<B>fsync</B>().
-
-<P>
-
-On kernels before 2.4,
-<B>fsync</B>()
-
-on big files can be inefficient.
-An alternative might be to use the
-<B>O_SYNC</B>
-
-flag to
-<B><A HREF="../man2/open.2.html">open</A></B>(2).
-
+file descriptor.
 <P>
 In Linux 2.2 and earlier,
 <B>fdatasync</B>()
@@ -213,6 +174,19 @@ is equivalent to
 <B>fsync</B>(),
 
 and so has no performance advantage.
+<P>
+The
+<B>fsync</B>()
+
+implementations in older kernels and lesser used filesystems
+does not know how to flush disk caches.
+In these cases disk caches need to be disabled using
+<B><A HREF="../man8/hdparm.8.html">hdparm</A></B>(8)
+
+or
+<B><A HREF="../man8/sdparm.8.html">sdparm</A></B>(8)
+
+to guarantee safe operation.
 <A NAME="lbAJ">&nbsp;</A>
 <H2>SEE ALSO</H2>
 
@@ -252,6 +226,6 @@ and so has no performance advantage.
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:11:48 GMT, April 20, 2020
+Time: 03:12:18 GMT, April 20, 2020
 </BODY>
 </HTML>

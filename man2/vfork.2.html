@@ -5,7 +5,7 @@ Copyright (c) 1999 Andries Brouwer (aeb@cwi.nl), 1 Nov 1999
 <HTML><HEAD><TITLE>Man page of VFORK</TITLE>
 </HEAD><BODY>
 <H1>VFORK</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2010-09-20<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2012-02-08<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -118,7 +118,7 @@ where a child is created which then immediately issues an
 differs from
 <B><A HREF="../man2/fork.2.html">fork</A></B>(2)
 
-in that the parent is suspended until the child terminates
+in that the calling thread is suspended until the child terminates
 (either normally,
 by calling
 <B><A HREF="../man2/_exit.2.html">_exit</A></B>(2),
@@ -136,9 +136,21 @@ but may call
 <B><A HREF="../man2/_exit.2.html">_exit</A></B>(2).
 
 <P>
+As with
+<B><A HREF="../man2/fork.2.html">fork</A></B>(2),
 
-Signal handlers are inherited, but not shared.
-Signals to the parent
+the child process created by
+<B>vfork</B>()
+
+inherits copies of various of the caller's process attributes
+(e.g., file descriptors, signal dispositions, and current working directory);
+the
+<B>vfork</B>()
+
+call differs only in the treatment of the virtual address space,
+as described above.
+<P>
+Signals sent to the parent
 arrive after the child releases the parent's memory
 (i.e., after the child terminates
 or calls
@@ -183,10 +195,11 @@ held in a register.
 <A NAME="lbAH">&nbsp;</A>
 <H2>CONFORMING TO</H2>
 
-4.3BSD, POSIX.1-2001.
+4.3BSD; POSIX.1-2001 (but marked OBSOLETE).
 POSIX.1-2008 removes the specification of
 <B>vfork</B>().
 
+<P>
 The requirements put on
 <B>vfork</B>()
 
@@ -203,6 +216,57 @@ and cannot rely on any specific behavior with respect to shared memory.
 <A NAME="lbAI">&nbsp;</A>
 <H2>NOTES</H2>
 
+<P>
+
+Some consider the semantics of
+<B>vfork</B>()
+
+to be an architectural blemish, and the 4.2BSD man page stated:
+&quot;This system call will be eliminated when proper system sharing mechanisms
+are implemented.
+Users should not depend on the memory sharing semantics of
+<B>vfork</B>()
+
+as it will, in that case, be made synonymous to
+<B><A HREF="../man2/fork.2.html">fork</A></B>(2).&quot;
+However, even though modern memory management hardware
+has decreased the performance difference between
+<B>fork</B>()
+
+and
+<B><A HREF="../man2/vfork.2.html">vfork</A></B>(2),
+
+there are various reasons why Linux and other systems have retained
+<B>vfork</B>():
+
+<DL COMPACT>
+<DT>*<DD>
+Some performance-critical applications require the small performance
+advantage conferred by
+<B>vfork</B>().
+
+<DT>*<DD>
+<B><A HREF="../man2/vfork.2.html">vfork</A></B>(2)
+
+can be implemented on systems that lack a memory-management unit (MMU), but
+<B><A HREF="../man2/fork.2.html">fork</A></B>(2)
+
+can't be implemented on such systems.
+(POSIX.1-2008 removed
+<B>vfork</B>()
+
+from the standard; the POSIX rationale for the
+<B><A HREF="../man3/posix_spawn.3.html">posix_spawn</A></B>(3)
+
+function notes that that function,
+which provides functionality equivalent to
+<B><A HREF="../man2/fork.2.html">fork</A></B>(2)+<B><A HREF="../man3/exec.3.html">exec</A></B>(3),
+
+is designed to be implementable on systems that lack an MMU.)
+
+
+
+</DL>
 <A NAME="lbAJ">&nbsp;</A>
 <H3>Linux Notes</H3>
 
@@ -219,6 +283,20 @@ LinuxThreads threading library.
 <B><A HREF="../man7/pthreads.7.html">pthreads</A></B>(7)
 
 for a description of Linux threading libraries.)
+<P>
+A call to
+<B>vfork</B>()
+
+is equivalent to calling
+<B><A HREF="../man2/clone.2.html">clone</A></B>(2)
+
+with
+<I>flags</I>
+
+specified as:
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;CLONE_VM&nbsp;|&nbsp;CLONE_VFORK&nbsp;|&nbsp;SIGCHLD
+<P>
 <A NAME="lbAK">&nbsp;</A>
 <H3>History</H3>
 
@@ -243,16 +321,8 @@ Support was added in glibc 2.0.112.
 <A NAME="lbAL">&nbsp;</A>
 <H2>BUGS</H2>
 
-It is rather unfortunate that Linux revived this specter from the past.
-The BSD man page states:
-&quot;This system call will be eliminated when proper system sharing mechanisms
-are implemented.
-Users should not depend on the memory sharing semantics of
-<B>vfork</B>()
-
-as it will, in that case, be made synonymous to
-<B><A HREF="../man2/fork.2.html">fork</A></B>(2).&quot;
 <P>
+
 Details of the signal handling are obscure and differ between systems.
 The BSD man page states:
 &quot;To avoid a possible deadlock situation, processes that are children
@@ -315,6 +385,6 @@ are allowed and input attempts result in an end-of-file indication.&quot;
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:11:51 GMT, April 20, 2020
+Time: 03:12:21 GMT, April 20, 2020
 </BODY>
 </HTML>
