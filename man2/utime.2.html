@@ -5,13 +5,13 @@ Copyright (c) 1992 Drew Eckhardt (drew@cs.colorado.edu), March 28, 1992
 <HTML><HEAD><TITLE>Man page of UTIME</TITLE>
 </HEAD><BODY>
 <H1>UTIME</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2007-07-27<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2008-05-23<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
 <H2>NAME</H2>
 
-utime, utimes - change access and/or modification times of an inode
+utime, utimes - change file last access and modification times
 <A NAME="lbAC">&nbsp;</A>
 <H2>SYNOPSIS</H2>
 
@@ -20,7 +20,7 @@ utime, utimes - change access and/or modification times of an inode
 <BR>
 <B>#include &lt;<A HREF="file:///usr/include/utime.h">utime.h</A>&gt;</B>
 
-<B>int utime(const char *</B><I>filename</I><B>, const struct utimbuf *</B><I>buf</I><B>);</B>
+<B>int utime(const char *</B><I>filename</I><B>, const struct utimbuf *</B><I>times</I><B>);</B>
 
 <B>#include &lt;<A HREF="file:///usr/include/sys/time.h">sys/time.h</A>&gt;</B>
 
@@ -30,8 +30,10 @@ utime, utimes - change access and/or modification times of an inode
 <A NAME="lbAD">&nbsp;</A>
 <H2>DESCRIPTION</H2>
 
+The
 <B>utime</B>()
 
+system call
 changes the access and modification times of the inode specified by
 <I>filename</I>
 
@@ -39,25 +41,23 @@ to the
 <I>actime</I> and <I>modtime</I>
 
 fields of
-<I>buf</I>
+<I>times</I>
 
 respectively.
 <P>
 If
-<I>buf</I>
+<I>times</I>
 
 is NULL, then the access and modification times of the file are set
 to the current time.
 <P>
-Changing time stamps is permitted when: either
-the process has appropriate privileges (Linux: has the
-<B>CAP_FOWNER</B>
-
-capability), or the effective user ID equals the user ID
+Changing timestamps is permitted when: either
+the process has appropriate privileges,
+or the effective user ID equals the user ID
 of the file, or
-<I>buf</I>
+<I>times</I>
 
-is NULL and the process has write permission to the file.
+is NULL and the process has write permission for the file.
 <P>
 The
 <I>utimbuf</I>
@@ -74,20 +74,22 @@ struct utimbuf {
 
 
 <P>
-The function
+The
 <B>utime</B>()
 
-allows specification of time stamps with a resolution of 1 second.
-<A NAME="lbAE">&nbsp;</A>
-<H3>utimes()</H3>
-
-The function
+system call
+allows specification of timestamps with a resolution of 1 second.
+<P>
+The
 <B>utimes</B>()
 
+system call
 is similar, but the
 <I>times</I>
 
-argument allows a resolution of 1 microsecond for the timestamps.
+argument refers to an array rather than a structure,
+and the structure allows a precision of 1 microsecond for
+specifying the timestamps.
 The
 <I>timeval</I>
 
@@ -118,7 +120,7 @@ is NULL, then analogously to
 
 the access and modification times of the file are
 set to the current time.
-<A NAME="lbAF">&nbsp;</A>
+<A NAME="lbAE">&nbsp;</A>
 <H2>RETURN VALUE</H2>
 
 On success, zero is returned.
@@ -126,7 +128,7 @@ On error, -1 is returned, and
 <I>errno</I>
 
 is set appropriately.
-<A NAME="lbAG">&nbsp;</A>
+<A NAME="lbAF">&nbsp;</A>
 <H2>ERRORS</H2>
 
 <DL COMPACT>
@@ -138,13 +140,24 @@ the path prefix of
 <I>path</I>
 
 (see also
-<B><A HREF="../man7/path_resolution.7.html">path_resolution</A></B>(7)),
+<B><A HREF="../man7/path_resolution.7.html">path_resolution</A></B>(7)).
 
-or
-<I>buf</I>
+<DT><B>EACCES</B>
 
-is NULL and the process does not have permission to change the time stamps
-(see above).
+<DD>
+<I>times</I>
+
+is NULL,
+the caller's effective user ID does not match the owner of the file,
+the caller does not have write access to the file,
+and the caller is not privileged
+(Linux: does not have either the
+<B>CAP_DAC_OVERRIDE</B>
+
+or the
+<B>CAP_FOWNER</B>
+
+capability).
 <DT><B>ENOENT</B>
 
 <DD>
@@ -154,9 +167,15 @@ does not exist.
 <DT><B>EPERM</B>
 
 <DD>
-<I>buf</I>
+<I>times</I>
 
-is not NULL and the process does not have permission to change the time stamps.
+is not NULL,
+the caller's effective UID does not match the owner of the file,
+and the caller is not privileged
+(Linux: does not have the
+<B>CAP_FOWNER</B>
+
+capability).
 <DT><B>EROFS</B>
 
 <DD>
@@ -164,7 +183,7 @@ is not NULL and the process does not have permission to change the time stamps.
 
 resides on a read-only file system.
 </DL>
-<A NAME="lbAH">&nbsp;</A>
+<A NAME="lbAG">&nbsp;</A>
 <H2>CONFORMING TO</H2>
 
 <B>utime</B>():
@@ -172,16 +191,17 @@ resides on a read-only file system.
 SVr4, POSIX.1-2001.
 
 
+
 <BR>
 
 <B>utimes</B>():
 
-4.3BSD
-<A NAME="lbAI">&nbsp;</A>
+4.3BSD, POSIX.1-2001.
+<A NAME="lbAH">&nbsp;</A>
 <H2>NOTES</H2>
 
-Linux does not allow changing the time stamps on an immutable file,
-or setting the time stamps to something other than the current time
+Linux does not allow changing the timestamps on an immutable file,
+or setting the timestamps to something other than the current time
 on an append-only file.
 <P>
 In libc4 and libc5,
@@ -199,23 +219,13 @@ legacy, which is strange since it provides more functionality than
 <B>utime</B>().
 
 
-<A NAME="lbAJ">&nbsp;</A>
-<H2>BUGS</H2>
 
-Linux is not careful to distinguish between the
-<B>EACCES</B>
 
-and
-<B>EPERM</B>
-
-error returns.
-On the other hand, POSIX.1-2001 is buggy in its error description for
-<B>utimes</B>().
-
-<A NAME="lbAK">&nbsp;</A>
+<A NAME="lbAI">&nbsp;</A>
 <H2>SEE ALSO</H2>
 
 <B><A HREF="../man1/chattr.1.html">chattr</A></B>(1),
+
 
 <B><A HREF="../man2/futimesat.2.html">futimesat</A></B>(2),
 
@@ -231,20 +241,16 @@ On the other hand, POSIX.1-2001 is buggy in its error description for
 <DT><A HREF="#lbAB">NAME</A><DD>
 <DT><A HREF="#lbAC">SYNOPSIS</A><DD>
 <DT><A HREF="#lbAD">DESCRIPTION</A><DD>
-<DL>
-<DT><A HREF="#lbAE">utimes()</A><DD>
-</DL>
-<DT><A HREF="#lbAF">RETURN VALUE</A><DD>
-<DT><A HREF="#lbAG">ERRORS</A><DD>
-<DT><A HREF="#lbAH">CONFORMING TO</A><DD>
-<DT><A HREF="#lbAI">NOTES</A><DD>
-<DT><A HREF="#lbAJ">BUGS</A><DD>
-<DT><A HREF="#lbAK">SEE ALSO</A><DD>
+<DT><A HREF="#lbAE">RETURN VALUE</A><DD>
+<DT><A HREF="#lbAF">ERRORS</A><DD>
+<DT><A HREF="#lbAG">CONFORMING TO</A><DD>
+<DT><A HREF="#lbAH">NOTES</A><DD>
+<DT><A HREF="#lbAI">SEE ALSO</A><DD>
 </DL>
 <HR>
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 02:52:01 GMT, April 20, 2020
+Time: 02:52:35 GMT, April 20, 2020
 </BODY>
 </HTML>

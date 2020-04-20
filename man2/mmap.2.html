@@ -5,7 +5,7 @@ Copyright (C) 1996 Andries Brouwer &lt;aeb@cwi.nl&gt;
 <HTML><HEAD><TITLE>Man page of MMAP</TITLE>
 </HEAD><BODY>
 <H1>MMAP</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2007-11-25<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2008-06-05<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -18,9 +18,9 @@ mmap, munmap - map or unmap files or devices into memory
 <PRE>
 <B>#include &lt;<A HREF="file:///usr/include/sys/mman.h">sys/mman.h</A>&gt;</B>
 
-<B>void *mmap(void *</B><I>start</I><B>, size_t </B><I>length</I><B>, int </B><I>prot</I><B>, int </B><I>flags</I><B>,</B>
+<B>void *mmap(void *</B><I>addr</I><B>, size_t </B><I>length</I><B>, int </B><I>prot</I><B>, int </B><I>flags</I><B>,</B>
 <B>           int </B><I>fd</I><B>, off_t </B><I>offset</I><B>);</B>
-<B>int munmap(void *</B><I>start</I><B>, size_t </B><I>length</I><B>);</B>
+<B>int munmap(void *</B><I>addr</I><B>, size_t </B><I>length</I><B>);</B>
 </PRE>
 
 <A NAME="lbAD">&nbsp;</A>
@@ -31,7 +31,7 @@ mmap, munmap - map or unmap files or devices into memory
 creates a new mapping in the virtual address space of
 the calling process.
 The starting address for the new mapping is specified in
-<I>start</I>.
+<I>addr</I>.
 
 The
 <I>length</I>
@@ -39,13 +39,13 @@ The
 argument specifies the length of the mapping.
 <P>
 If
-<I>start</I>
+<I>addr</I>
 
 is NULL,
 then the kernel chooses the address at which to create the mapping;
 this is the most portable method of creating a new mapping.
 If
-<I>start</I>
+<I>addr</I>
 
 is not NULL,
 then the kernel takes it as a hint about where to place the mapping;
@@ -105,7 +105,7 @@ The
 
 argument determines whether updates to the mapping
 are visible to other processes mapping the same region,
-and whether updates are caried through to the underlying file.
+and whether updates are carried through to the underlying file.
 This behavior is determined by including exactly one
 of the following values in
 <I>flags</I>:
@@ -220,14 +220,14 @@ Ignored.
 
 <DD>
 Don't interpret
-<I>start</I>
+<I>addr</I>
 
 as a hint: place the mapping at exactly that address.
-<I>start</I>
+<I>addr</I>
 
 must be a multiple of the page size.
 If the memory region specified by
-<I>start</I>
+<I>addr</I>
 
 and
 <I>len</I>
@@ -263,6 +263,18 @@ Only meaningful in conjunction with
 Don't perform read-ahead:
 only create page tables entries for pages
 that are already present in RAM.
+Since Linux 2.6.23,
+this flags causes
+<B>MAP_POPULATE</B>
+
+to do nothing.
+One day the combination of
+<B>MAP_POPULATE</B>
+
+and
+<B>MAP_NONBLOCK</B>
+
+may be re-implemented.
 <DT><B>MAP_NORESERVE</B>
 
 <DD>
@@ -285,9 +297,12 @@ private writable mappings.
 <DT><B>MAP_POPULATE</B> (since Linux 2.5.46)
 
 <DD>
-Populate (prefault) page tables for a file mapping,
-by performing read-ahead on the file.
+Populate (prefault) page tables for a mapping.
+For a file mapping, this causes read-ahead on the file.
 Later accesses to the mapping will not be blocked by page faults.
+<B>MAP_POPULATE</B>
+
+is only supported for private mappings since Linux 2.6.23.
 </DL>
 <P>
 
@@ -331,7 +346,9 @@ and writes to that region are not written out to the file.
 The effect of
 changing the size of the underlying file of a mapping on the pages that
 correspond to added or removed regions of the file is unspecified.
-<P>
+<A NAME="lbAE">&nbsp;</A>
+<H3>munmap()</H3>
+
 The
 <B>munmap</B>()
 
@@ -345,7 +362,7 @@ descriptor does not unmap the region.
 <P>
 
 The address
-<I>start</I>
+<I>addr</I>
 
 must be a multiple of the page size.
 All pages containing a part
@@ -355,7 +372,9 @@ to these pages will generate
 
 It is not an error if the
 indicated range does not contain any mapped pages.
-<P>
+<A NAME="lbAF">&nbsp;</A>
+<H3>Timestamps changes for file-backed mappings</H3>
+
 For file-backed mappings, the
 <I>st_atime</I>
 
@@ -389,7 +408,7 @@ or
 <B>MS_ASYNC</B>
 
 flag, if one occurs.
-<A NAME="lbAE">&nbsp;</A>
+<A NAME="lbAG">&nbsp;</A>
 <H2>RETURN VALUE</H2>
 
 On success,
@@ -415,7 +434,7 @@ returns 0, on failure -1, and
 is set (probably to
 <B>EINVAL</B>).
 
-<A NAME="lbAF">&nbsp;</A>
+<A NAME="lbAH">&nbsp;</A>
 <H2>ERRORS</H2>
 
 <DL COMPACT>
@@ -466,7 +485,7 @@ was not set).
 
 <DD>
 We don't like
-<I>start</I>,
+<I>addr</I>,
 
 <I>length</I>,
 
@@ -477,7 +496,7 @@ or
 <DT><B>EINVAL</B>
 
 <DD>
-(since Linux 2.6.12),
+(since Linux 2.6.12)
 <I>length</I>
 
 was 0.
@@ -505,7 +524,7 @@ The system limit on the total number of open files has been reached.
 <DT><B>ENODEV</B>
 
 <DD>
-The underlying filesystem of the specified file does not support
+The underlying file system of the specified file does not support
 memory mapping.
 <DT><B>ENOMEM</B>
 
@@ -521,7 +540,7 @@ The
 argument asks for
 <B>PROT_EXEC</B>
 
-but the mapped area belongs to a file on a filesystem that
+but the mapped area belongs to a file on a file system that
 was mounted no-exec.
 
 <DT><B>ETXTBSY</B>
@@ -549,13 +568,13 @@ Attempted access to a portion of the buffer that does not correspond
 to the file (for example, beyond the end of the file, including the
 case where another process has truncated the file).
 </DL>
-<A NAME="lbAG">&nbsp;</A>
+<A NAME="lbAI">&nbsp;</A>
 <H2>CONFORMING TO</H2>
 
 SVr4, 4.4BSD, POSIX.1-2001.
 
 
-<A NAME="lbAH">&nbsp;</A>
+<A NAME="lbAJ">&nbsp;</A>
 <H2>AVAILABILITY</H2>
 
 On POSIX systems on which
@@ -575,7 +594,7 @@ is defined in <I>&lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;</I>
 
 
 
-<A NAME="lbAI">&nbsp;</A>
+<A NAME="lbAK">&nbsp;</A>
 <H2>NOTES</H2>
 
 Since kernel 2.4, this system call has been superseded by
@@ -610,7 +629,27 @@ Portable programs should always set
 <B>PROT_EXEC</B>
 
 if they intend to execute code in the new mapping.
-<A NAME="lbAJ">&nbsp;</A>
+<P>
+The portable way to create a mapping is to specify
+<I>addr</I>
+
+as 0 (NULL), and omit
+<B>MAP_FIXED</B>
+
+from
+<I>flags</I>.
+
+In this case, the system chooses the address for the mapping;
+the address is chosen so as not to conflict with any existing mapping,
+and will not be 0.
+If the
+<B>MAP_FIXED</B>
+
+flag is specified, and
+<I>addr</I>
+
+is 0 (NULL), then the mapped adddress will be 0 (NULL).
+<A NAME="lbAL">&nbsp;</A>
 <H2>BUGS</H2>
 
 On Linux there are no guarantees like those suggested above under
@@ -640,7 +679,7 @@ However, in kernels before 2.6.12,
 <B>mmap</B>()
 
 succeeded in this case: no mapping was created and the call returned
-<I>start</I>.
+<I>addr</I>.
 
 Since kernel 2.6.12,
 <B>mmap</B>()
@@ -649,8 +688,10 @@ fails with the error
 <B>EINVAL</B>
 
 for this case.
-<A NAME="lbAK">&nbsp;</A>
+<A NAME="lbAM">&nbsp;</A>
 <H2>EXAMPLE</H2>
+
+
 
 <P>
 
@@ -734,7 +775,7 @@ main(int argc, char *argv[])
 } /* main */
 </PRE>
 
-<A NAME="lbAL">&nbsp;</A>
+<A NAME="lbAN">&nbsp;</A>
 <H2>SEE ALSO</H2>
 
 <B><A HREF="../man2/getpagesize.2.html">getpagesize</A></B>(2),
@@ -745,6 +786,8 @@ main(int argc, char *argv[])
 
 <B><A HREF="../man2/mmap2.2.html">mmap2</A></B>(2),
 
+<B><A HREF="../man2/mprotect.2.html">mprotect</A></B>(2),
+
 <B><A HREF="../man2/mremap.2.html">mremap</A></B>(2),
 
 <B><A HREF="../man2/msync.2.html">msync</A></B>(2),
@@ -752,6 +795,8 @@ main(int argc, char *argv[])
 <B><A HREF="../man2/remap_file_pages.2.html">remap_file_pages</A></B>(2),
 
 <B><A HREF="../man2/setrlimit.2.html">setrlimit</A></B>(2),
+
+<B><A HREF="../man2/shmat.2.html">shmat</A></B>(2),
 
 <B><A HREF="../man3/shm_open.3.html">shm_open</A></B>(3)
 
@@ -769,19 +814,23 @@ B.O. Gallmeister, POSIX.4, O'Reilly, pp. 128-129 and 389-391.
 <DT><A HREF="#lbAB">NAME</A><DD>
 <DT><A HREF="#lbAC">SYNOPSIS</A><DD>
 <DT><A HREF="#lbAD">DESCRIPTION</A><DD>
-<DT><A HREF="#lbAE">RETURN VALUE</A><DD>
-<DT><A HREF="#lbAF">ERRORS</A><DD>
-<DT><A HREF="#lbAG">CONFORMING TO</A><DD>
-<DT><A HREF="#lbAH">AVAILABILITY</A><DD>
-<DT><A HREF="#lbAI">NOTES</A><DD>
-<DT><A HREF="#lbAJ">BUGS</A><DD>
-<DT><A HREF="#lbAK">EXAMPLE</A><DD>
-<DT><A HREF="#lbAL">SEE ALSO</A><DD>
+<DL>
+<DT><A HREF="#lbAE">munmap()</A><DD>
+<DT><A HREF="#lbAF">Timestamps changes for file-backed mappings</A><DD>
+</DL>
+<DT><A HREF="#lbAG">RETURN VALUE</A><DD>
+<DT><A HREF="#lbAH">ERRORS</A><DD>
+<DT><A HREF="#lbAI">CONFORMING TO</A><DD>
+<DT><A HREF="#lbAJ">AVAILABILITY</A><DD>
+<DT><A HREF="#lbAK">NOTES</A><DD>
+<DT><A HREF="#lbAL">BUGS</A><DD>
+<DT><A HREF="#lbAM">EXAMPLE</A><DD>
+<DT><A HREF="#lbAN">SEE ALSO</A><DD>
 </DL>
 <HR>
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 02:51:59 GMT, April 20, 2020
+Time: 02:52:33 GMT, April 20, 2020
 </BODY>
 </HTML>

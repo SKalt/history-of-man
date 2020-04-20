@@ -5,7 +5,7 @@ Copyright (C) Tom Bjorkholm, Markus Kuhn &amp; David A. Wheeler 1996-1999
 <HTML><HEAD><TITLE>Man page of SCHED_SETSCHEDULER</TITLE>
 </HEAD><BODY>
 <H1>SCHED_SETSCHEDULER</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2007-11-25<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2008-03-07<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -44,7 +44,7 @@ scheduler of the calling process will be set.
 The interpretation of
 the parameter <I>param</I> depends on the selected policy.
 Currently, the
-following three scheduling policies are supported under Linux:
+following scheduling policies are supported under Linux:
 <B>SCHED_FIFO</B>,
 
 <B>SCHED_RR</B>,
@@ -53,8 +53,10 @@ following three scheduling policies are supported under Linux:
 
 
 
+<B>SCHED_BATCH</B>,
+
 and
-<B>SCHED_BATCH</B>;
+<B>SCHED_IDLE</B>;
 
 their respective semantics are described below.
 <P>
@@ -80,7 +82,7 @@ processes for each possible <I>sched_priority</I> value, and
 <I>sched_priority</I> can have a value in the range 0 to 99.
 In order
 to determine the process that runs next, the Linux scheduler looks for
-the nonempty list with the highest static priority and takes the
+the non-empty list with the highest static priority and takes the
 process at the head of this list.
 The scheduling policy determines for
 each process, where it will be inserted into the list of processes
@@ -89,12 +91,15 @@ with equal static priority and how it will move inside this list.
 <B>SCHED_OTHER</B> is the default universal time-sharing scheduler
 policy used by most processes.
 <B>SCHED_BATCH</B> is intended for &quot;batch&quot; style execution of processes.
+<B>SCHED_IDLE</B> is intended for running <I>very</I>
+low priority background jobs.
 <B>SCHED_FIFO</B> and <B>SCHED_RR</B> are
 intended for special time-critical applications that need precise
 control over the way in which runnable processes are selected for
 execution.
 <P>
-Processes scheduled with <B>SCHED_OTHER</B> or <B>SCHED_BATCH</B>
+Processes scheduled with <B>SCHED_OTHER</B>, <B>SCHED_BATCH</B>, or
+<B>SCHED_IDLE</B>
 must be assigned the static priority 0.
 Processes scheduled under <B>SCHED_FIFO</B> or
 <B>SCHED_RR</B> can have a static priority in the range 1 to 99.
@@ -120,7 +125,7 @@ priority.
 <B>SCHED_FIFO</B> can only be used with static priorities higher than
 0, which means that when a <B>SCHED_FIFO</B> processes becomes runnable,
 it will always immediately preempt any currently running
-<B>SCHED_OTHER</B> or <B>SCHED_BATCH</B> process.
+<B>SCHED_OTHER</B>, <B>SCHED_BATCH</B>, or <B>SCHED_IDLE</B> process.
 <B>SCHED_FIFO</B> is a simple scheduling
 algorithm without time slicing.
 For processes scheduled under the
@@ -191,7 +196,7 @@ real-time mechanisms.
 The process to run is chosen from the static
 priority 0 list based on a dynamic priority that is determined only
 inside this list.
-The dynamic priority is based on the nice level (set
+The dynamic priority is based on the nice value (set
 by
 <B><A HREF="../man2/nice.2.html">nice</A></B>(2)
 
@@ -208,12 +213,15 @@ processes.
 
 (Since Linux 2.6.16.)
 <B>SCHED_BATCH</B> can only be used at static priority 0.
-This policy is similar to <B>SCHED_OTHER</B>, except that
-this policy will cause the scheduler to always assume
+This policy is similar to <B>SCHED_OTHER</B> in that it schedules
+the process according to its dynamic priority
+(based on the nice value).
+The difference is that this policy
+will cause the scheduler to always assume
 that the process is CPU-intensive.
 Consequently, the scheduler will apply a small scheduling
-penalty so that this process is mildly disfavored in scheduling
-decisions.
+penalty with respect to wakeup behaviour,
+so that this process is mildly disfavored in scheduling decisions.
 
 
 
@@ -221,13 +229,29 @@ This policy is useful for workloads that are non-interactive,
 but do not want to lower their nice value,
 and for workloads that want a deterministic scheduling policy without
 interactivity causing extra preemptions (between the workload's tasks).
+
 <A NAME="lbAJ">&nbsp;</A>
+<H3>SCHED_IDLE: Scheduling very low priority jobs</H3>
+
+(Since Linux 2.6.23.)
+<B>SCHED_IDLE</B> can only be used at static priority 0;
+the process nice value has no influence for this policy.
+This policy is intended for running jobs at extremely low
+priority (lower even than a +19 nice value with the
+<B>SCHED_OTHER</B>
+
+or
+<B>SCHED_BATCH</B>
+
+policies).
+
+<A NAME="lbAK">&nbsp;</A>
 <H3>Privileges and resource limits</H3>
 
 In Linux kernels before 2.6.12, only privileged
 (<B>CAP_SYS_NICE</B>)
 
-processes can set a nonzero static priority.
+processes can set a non-zero static priority.
 The only change that an unprivileged process can make is to set the
 <B>SCHED_OTHER</B>
 
@@ -251,7 +275,7 @@ and
 <B>SCHED_FIFO</B>
 
 policies.
-If an unprivileged process has a nonzero
+If an unprivileged process has a non-zero
 <B>RLIMIT_RTPRIO</B>
 
 soft limit, then it can change its scheduling policy and priority,
@@ -279,7 +303,7 @@ Privileged
 
 processes ignore this limit; as with older kernels,
 they can make arbitrary changes to scheduling policy and priority.
-<A NAME="lbAK">&nbsp;</A>
+<A NAME="lbAL">&nbsp;</A>
 <H3>Response time</H3>
 
 A blocked high priority process waiting for the I/O has a certain
@@ -289,7 +313,7 @@ can greatly reduce this response time by using a &quot;slow interrupt&quot;
 interrupt handler.
 
 
-<A NAME="lbAL">&nbsp;</A>
+<A NAME="lbAM">&nbsp;</A>
 <H3>Miscellaneous</H3>
 
 Child processes inherit the scheduling algorithm and parameters across a
@@ -325,7 +349,7 @@ are available define
 <B>_POSIX_PRIORITY_SCHEDULING</B>
 
 in <I>&lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;</I>.
-<A NAME="lbAM">&nbsp;</A>
+<A NAME="lbAN">&nbsp;</A>
 <H2>RETURN VALUE</H2>
 
 On success,
@@ -340,7 +364,7 @@ On error, -1 is returned, and
 <I>errno</I>
 
 is set appropriately.
-<A NAME="lbAN">&nbsp;</A>
+<A NAME="lbAO">&nbsp;</A>
 <H2>ERRORS</H2>
 
 <DL COMPACT>
@@ -358,12 +382,12 @@ The calling process does not have appropriate privileges.
 <DD>
 The process whose ID is <I>pid</I> could not be found.
 </DL>
-<A NAME="lbAO">&nbsp;</A>
+<A NAME="lbAP">&nbsp;</A>
 <H2>CONFORMING TO</H2>
 
 POSIX.1-2001 (but see BUGS below).
-The <B>SCHED_BATCH</B> policy is Linux-specific.
-<A NAME="lbAP">&nbsp;</A>
+The <B>SCHED_BATCH</B> and <B>SCHED_IDLE</B> policies are Linux-specific.
+<A NAME="lbAQ">&nbsp;</A>
 <H2>NOTES</H2>
 
 POSIX.1 does not detail the permissions that an unprivileged
@@ -385,7 +409,7 @@ allowed for kernel preemption and the newly introduced <A HREF="../man1/O.1.html
 ensures that the time needed to schedule is fixed and deterministic
 irrespective of the number of active tasks, true real-time computing
 was not possible up to kernel version 2.6.17.
-<A NAME="lbAQ">&nbsp;</A>
+<A NAME="lbAR">&nbsp;</A>
 <H3>Real-time features in the mainline Linux kernel</H3>
 
 
@@ -393,13 +417,13 @@ was not possible up to kernel version 2.6.17.
 From kernel version 2.6.18 onwards, however, Linux is gradually
 becoming equipped with real-time capabilities,
 most of which are derived from the former
-realtime-preempt patches developed by Ingo Molnar, Thomas Gleixner and
-others.
+<I>realtime-preempt</I>
+
+patches developed by Ingo Molnar, Thomas Gleixner and others.
 Until the patches have been completely merged into the
 mainline kernel
 (this is expected to be around kernel version 2.6.24 or 2.6.25),
-the realtime-preempt patches must be installed to achieve the best
-realtime performance.
+they must be installed to achieve the best real-time performance.
 These patches are named:
 
 <PRE>
@@ -438,7 +462,7 @@ The FIFO and RR scheduling policies that can be selected using
 
 are then used to run a process
 with true real-time priority and a minimum worst-case scheduling latency.
-<A NAME="lbAR">&nbsp;</A>
+<A NAME="lbAS">&nbsp;</A>
 <H2>BUGS</H2>
 
 POSIX says that on success,
@@ -450,7 +474,7 @@ Linux
 
 does not conform to this requirement,
 since it always returns 0 on success.
-<A NAME="lbAS">&nbsp;</A>
+<A NAME="lbAT">&nbsp;</A>
 <H2>SEE ALSO</H2>
 
 <B><A HREF="../man2/getpriority.2.html">getpriority</A></B>(2),
@@ -504,24 +528,25 @@ by Bill O. Gallmeister, O'Reilly &amp; Associates, Inc., ISBN 1-56592-074-0
 <DT><A HREF="#lbAG">SCHED_RR: Round Robin scheduling</A><DD>
 <DT><A HREF="#lbAH">SCHED_OTHER: Default Linux time-sharing scheduling</A><DD>
 <DT><A HREF="#lbAI">SCHED_BATCH: Scheduling batch processes</A><DD>
-<DT><A HREF="#lbAJ">Privileges and resource limits</A><DD>
-<DT><A HREF="#lbAK">Response time</A><DD>
-<DT><A HREF="#lbAL">Miscellaneous</A><DD>
+<DT><A HREF="#lbAJ">SCHED_IDLE: Scheduling very low priority jobs</A><DD>
+<DT><A HREF="#lbAK">Privileges and resource limits</A><DD>
+<DT><A HREF="#lbAL">Response time</A><DD>
+<DT><A HREF="#lbAM">Miscellaneous</A><DD>
 </DL>
-<DT><A HREF="#lbAM">RETURN VALUE</A><DD>
-<DT><A HREF="#lbAN">ERRORS</A><DD>
-<DT><A HREF="#lbAO">CONFORMING TO</A><DD>
-<DT><A HREF="#lbAP">NOTES</A><DD>
+<DT><A HREF="#lbAN">RETURN VALUE</A><DD>
+<DT><A HREF="#lbAO">ERRORS</A><DD>
+<DT><A HREF="#lbAP">CONFORMING TO</A><DD>
+<DT><A HREF="#lbAQ">NOTES</A><DD>
 <DL>
-<DT><A HREF="#lbAQ">Real-time features in the mainline Linux kernel</A><DD>
+<DT><A HREF="#lbAR">Real-time features in the mainline Linux kernel</A><DD>
 </DL>
-<DT><A HREF="#lbAR">BUGS</A><DD>
-<DT><A HREF="#lbAS">SEE ALSO</A><DD>
+<DT><A HREF="#lbAS">BUGS</A><DD>
+<DT><A HREF="#lbAT">SEE ALSO</A><DD>
 </DL>
 <HR>
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 02:52:00 GMT, April 20, 2020
+Time: 02:52:34 GMT, April 20, 2020
 </BODY>
 </HTML>

@@ -4,13 +4,13 @@
 <HTML><HEAD><TITLE>Man page of RAISE</TITLE>
 </HEAD><BODY>
 <H1>RAISE</H1>
-Section: Linux Programmer's Manual (3)<BR>Updated: 1995-08-31<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2008-04-17<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
 <H2>NAME</H2>
 
-raise - send a signal to the calling process
+raise - send a signal to the caller
 <A NAME="lbAC">&nbsp;</A>
 <H2>SYNOPSIS</H2>
 
@@ -26,22 +26,41 @@ raise - send a signal to the calling process
 The
 <B>raise</B>()
 
-function sends a signal to the calling process.
-It is equivalent to
+function sends a signal to the calling process or thread.
+In a single-threaded program it is equivalent to
 <P>
-<DL COMPACT><DT><DD>
-<B>kill(getpid(), </B><I>sig</I><B>);</B>
 
-</DL>
+<PRE>
+kill(getpid(), sig);
+</PRE>
 
+
+<P>
+
+In a multithreaded program it is equivalent to
+<P>
+
+<PRE>
+pthread_kill(pthread_self(), sig);
+</PRE>
+
+
+<P>
+
+If the signal causes a handler to be called,
+<B>raise</B>()
+
+will only return after the signal handler has returned.
 <A NAME="lbAE">&nbsp;</A>
 <H2>RETURN VALUE</H2>
 
-0 on success, nonzero for failure.
+<B>raise</B>()
+
+returns 0 on success, and non-zero for failure.
 <A NAME="lbAF">&nbsp;</A>
 <H2>CONFORMING TO</H2>
 
-C89, C99.
+C89, C99, POSIX.1-2001.
 <A NAME="lbAG">&nbsp;</A>
 <H2>SEE ALSO</H2>
 
@@ -49,7 +68,11 @@ C89, C99.
 
 <B><A HREF="../man2/kill.2.html">kill</A></B>(2),
 
-<B><A HREF="../man2/signal.2.html">signal</A></B>(2)
+<B><A HREF="../man2/signal.2.html">signal</A></B>(2),
+
+<B><A HREF="../man2/sigaction.2.html">sigaction</A></B>(2),
+
+<B><A HREF="../man7/signal.7.html">signal</A></B>(7)
 
 <P>
 
@@ -67,6 +90,6 @@ C89, C99.
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 02:52:08 GMT, April 20, 2020
+Time: 02:52:42 GMT, April 20, 2020
 </BODY>
 </HTML>
