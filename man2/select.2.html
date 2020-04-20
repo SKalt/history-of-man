@@ -54,10 +54,23 @@ void FD_CLR(int </B><I>fd</I><B>, fd_set *</B><I>set</I><B>);</B>
 and
 <B>pselect</B>()
 
-wait for one or more file descriptors to change status.
+allow a program to monitor multiple file descriptors,
+waiting until one or more of the file descriptors become &quot;ready&quot;
+for some class of I/O operation (e.g., input possible).
+A file descriptor is considered ready if it is possible to
+perform the corresponding I/O operation (e.g., 
+<B><A HREF="../man2/read.2.html">read</A></B>(2))
+
+without blocking.
 <P>
 
-Their operation is identical, with three differences:
+The operation of
+<B>select</B>()
+
+and
+<B>pselect</B>()
+
+is identical, with three differences:
 <DL COMPACT>
 <DT>(i)<DD>
 <B>select</B>()
@@ -97,7 +110,8 @@ called with NULL
 </DL>
 <P>
 
-Three independent sets of descriptors are watched.  Those listed in
+Three independent sets of file descriptors are watched.  
+Those listed in
 <I>readfds</I>
 
 will be watched to see if characters become
@@ -111,7 +125,10 @@ those in
 <I>exceptfds</I>
 
 will be watched for exceptions.  On exit, the sets are modified in place
-to indicate which descriptors actually changed status.
+to indicate which file descriptors actually changed status.
+Each of the three file descriptor sets may be specified as NULL
+if no file descriptors are to be watched for the corresponding class 
+of events.
 <P>
 
 Four macros are provided to manipulate the sets.
@@ -123,10 +140,11 @@ clears a set.
 and
 <B>FD_CLR</B>()
 
-respectively add and remove a given descriptor from a set.
+respectively add and remove a given file descriptor from a set.
 <B>FD_ISSET</B>()
 
-tests to see if a descriptor is part of the set; this is useful after
+tests to see if a file descriptor is part of the set; 
+this is useful after
 <B>select</B>()
 
 returns.
@@ -134,7 +152,7 @@ returns.
 
 <I>n</I>
 
-is the highest-numbered descriptor in any of the three sets, plus 1.
+is the highest-numbered file descriptor in any of the three sets, plus 1.
 <P>
 
 <I>timeout</I>
@@ -260,7 +278,7 @@ Some code calls
 with all three sets empty,
 <I>n</I>
 
-zero, and a non-null
+zero, and a non-NULL
 <I>timeout</I>
 
 as a fairly portable way to sleep with subsecond precision.
@@ -302,8 +320,8 @@ On success,
 and
 <B>pselect</B>()
 
-return the number of descriptors contained in the three returned
-descriptor sets (that is, the total number of one bits in
+return the number of file descriptors contained in the three returned
+descriptor sets (that is, the total number of bits that are set in
 <I>readfds</I>,
 
 <I>writefds</I>,
@@ -403,7 +421,17 @@ POSIX 1003.1-2001.
 <A NAME="lbAJ">&nbsp;</A>
 <H2>NOTES</H2>
 
-An fd_set is a fixed size buffer. Executing FD_CLR or FD_SET with a value of
+An 
+<I>fd_set </I>
+
+is a fixed size buffer. 
+Executing 
+<B>FD_CLR</B>()
+
+or 
+<B>FD_SET</B>()
+
+with a value of
 <I>fd</I>
 
 that is negative or is equal to or larger than FD_SETSIZE will result
@@ -413,8 +441,11 @@ in undefined behavior. Moreover, POSIX requires
 to be a valid file descriptor.
 <P>
 Concerning the types involved, the classical situation is that
-the two fields of a struct timeval are longs (as shown above),
-and the struct is defined in
+the two fields of a
+<I>timeval </I>
+
+structure are longs (as shown above),
+and the structure is defined in
 <I>&lt;<A HREF="file:///usr/include/sys/time.h">sys/time.h</A>&gt;</I>.
 
 The POSIX 1003.1-2001 situation is
@@ -430,10 +461,16 @@ struct timeval {
 </DL>
 
 <P>
-where the struct is defined in
+where the structure is defined in
 <I>&lt;<A HREF="file:///usr/include/sys/select.h">sys/select.h</A>&gt;</I>
 
-and the data types time_t and suseconds_t are defined in
+and the data types i
+<I>time_t </I>
+
+and 
+<I>suseconds_t </I>
+
+are defined in
 <I>&lt;<A HREF="file:///usr/include/sys/types.h">sys/types.h</A>&gt;</I>.
 
 <P>
@@ -574,7 +611,9 @@ For vaguely related stuff, see
 
 <B><A HREF="../man2/sigprocmask.2.html">sigprocmask</A></B>(2),
 
-<B><A HREF="../man2/write.2.html">write</A></B>(2)
+<B><A HREF="../man2/write.2.html">write</A></B>(2),
+
+<B><A HREF="../man7/ftm.7.html">ftm</A></B>(7)
 
 <P>
 
@@ -601,6 +640,6 @@ For vaguely related stuff, see
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 02:26:19 GMT, April 20, 2020
+Time: 02:26:48 GMT, April 20, 2020
 </BODY>
 </HTML>

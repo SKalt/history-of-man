@@ -157,7 +157,6 @@ On raw sockets
 
 is set to the IP protocol.
 <P>
-<P>
 
 
 <PRE>
@@ -191,10 +190,10 @@ contains the port in network byte order.
 The port numbers below 1024 are called
 <I>reserved ports</I>.
 
-Only processes with effective user ID 0 or the 
+Only privileged processes (i.e., those having the
 <B>CAP_NET_BIND_SERVICE </B>
 
-capability may 
+capability) may 
 <B><A HREF="../man2/bind.2.html">bind</A></B>(2)
 
 to these sockets. 
@@ -211,15 +210,16 @@ and
 
 is the IP host address.
 The 
-<I>addr</I>
+<I>s_addr</I>
 
 member of 
 <I>struct in_addr</I>
 
-contains the host interface address in network order. 
+contains the host interface address in network byte order. 
 <I>in_addr </I>
 
-should be only accessed using the
+should be assigned one of the INADDR_* values (e.g., INADDR_ANY)
+or set using the
 <B><A HREF="../man3/inet_aton.3.html">inet_aton</A></B>(3),
 
 <B><A HREF="../man3/inet_addr.3.html">inet_addr</A></B>(3),
@@ -242,12 +242,13 @@ In the current implementation connection oriented sockets are only allowed
 to use unicast addresses.
 
 <P>
-Note that the address and the port are always stored in network order.
+Note that the address and the port are always stored in 
+network byte order.
 In particular, this means that you need to call
 <B><A HREF="../man3/htons.3.html">htons</A></B>(3)
 
 on the number that is assigned to a port. All address/port manipulation 
-functions in the standard library work in network order.
+functions in the standard library work in network byte order.
 <P>
 There are several special addresses: 
 <B>INADDR_LOOPBACK</B>
@@ -265,7 +266,6 @@ means any host and has the same effect on bind as
 <B>INADDR_ANY</B>
 
 for historical reasons.
-<P>
 <A NAME="lbAF">&nbsp;</A>
 <H2>SOCKET OPTIONS</H2>
 
@@ -281,7 +281,6 @@ The socket option level for IP is
 
 
 A boolean integer flag is zero when it is false, otherwise true.
-<P>
 <DL COMPACT>
 <DT><B>IP_OPTIONS</B>
 
@@ -315,7 +314,6 @@ with
 <I>IP_OPTIONS</I>
 
 puts the current IP options used for sending into the supplied buffer.
-<P>
 <DT><B>IP_PKTINFO</B>
 
 <DD>
@@ -336,7 +334,6 @@ as control message with a packet using
 or
 <B><A HREF="../man2/sendmsg.2.html">sendmsg</A></B>(2).
 
-<P>
 <DT><DD>
 
 <PRE>
@@ -390,7 +387,6 @@ ancillary message is passed with incoming packets.
 It contains a byte which specifies the Type of Service/Precedence 
 field of the packet header.
 Expects a boolean integer flag. 
-<P>
 <DT><B>IP_RECVTTL</B>
 
 <DD>
@@ -403,7 +399,6 @@ field of the received packet as a byte. Not supported for
 <B>SOCK_STREAM</B>
 
 sockets.
-<P>
 <DT><B>IP_RECVOPTS</B>
 
 <DD>
@@ -416,7 +411,6 @@ for the local host. Not supported for
 <I>SOCK_STREAM </I>
 
 sockets.
-<P>
 <DT><B>IP_RETOPTS</B>
 
 <DD>
@@ -425,7 +419,6 @@ Identical to
 
 but returns raw unprocessed options with timestamp and route record
 options not filled in for this hop.
-<P>
 <DT><B>IP_TOS</B>
 
 <DD>
@@ -453,23 +446,21 @@ Linux sends
 datagrams first by default,
 but the exact behaviour depends on the configured queueing discipline. 
 
-Some high priority levels may require an effective user ID of 0 or the
+Some high priority levels may require superuser privileges (the
 <B>CAP_NET_ADMIN</B>
 
-capability.
+capability).
 The priority can also be set in a protocol independent way by the
 (<B>SOL_SOCKET</B>, <B>SO_PRIORITY</B>)
 
 socket option (see
 <B><A HREF="../man7/socket.7.html">socket</A></B>(7)).
 
-<P>
 <DT><B>IP_TTL</B>
 
 <DD>
 Set or retrieve the current time to live field that is used in every packet
 sent from this socket.
-<P>
 <DT><B>IP_HDRINCL</B>
 
 <DD>
@@ -490,7 +481,6 @@ and
 <I>IP_TOS</I>
 
 are ignored.
-<P>
 <DT><B>IP_RECVERR</B> (defined in &lt;<A HREF="file:///usr/include/linux/errqueue.h">linux/errqueue.h</A>&gt;)
 
 <DD>
@@ -655,7 +645,6 @@ It sets or retrieves an integer boolean flag.
 <I>IP_RECVERR</I>
 
 defaults to off. 
-<P>
 <DT><B>IP_MTU_DISCOVER</B>
 
 <DD>
@@ -679,7 +668,6 @@ path MTU if this flag is set (with
 <B>EMSGSIZE</B>
 
 ). 
-<P>
 <TABLE>
 <TR VALIGN=top><TD ALIGN=center>Path MTU discovery flags</TD><TD>Meaning<BR></TD></TR>
 <TR VALIGN=top><TD>IP_PMTUDISC_WANT</TD><TD>Use per-route settings.<BR></TD></TR>
@@ -687,7 +675,6 @@ path MTU if this flag is set (with
 <TR VALIGN=top><TD>IP_PMTUDISC_DO</TD><TD>Always do Path MTU Discovery. <BR></TD></TR>
 </TABLE>
 
-<P>
 <P>
 When PMTU discovery is enabled the kernel automatically keeps track of
 the path MTU per destination host. 
@@ -729,7 +716,6 @@ with the
 <B>IP_MTU</B>
 
 option.     
-<P>
 <DT><B>IP_MTU</B>
 
 <DD>
@@ -1097,22 +1083,22 @@ Datagram is bigger than an MTU on the path and it cannot be fragmented.
 <DD>
 The user tried to execute an operation without the necessary permissions. 
 These include:
-Sending a packet to a broadcast address without having the 
+sending a packet to a broadcast address without having the 
 <B>SO_BROADCAST</B>
 
-flag set.
-Sending a packet via a 
+flag set;
+sending a packet via a 
 <I>prohibit</I>
 
-route.
-Modifying firewall settings without 
+route;
+modifying firewall settings without superuser privileges (the
 <B>CAP_NET_ADMIN</B>
 
-or effective user ID 0.
-Binding to a reserved port without the
+capability);
+binding to a reserved port without superuser privileges (the
 <B>CAP_NET_BIND_SERVICE</B>
 
-capability or effective user ID 0. 
+capability).
 <P>
 <DT><B>EADDRINUSE</B>
 
@@ -1328,6 +1314,6 @@ RFC&nbsp;1812 for the IPv4 router requirements.
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 02:26:30 GMT, April 20, 2020
+Time: 02:26:59 GMT, April 20, 2020
 </BODY>
 </HTML>

@@ -1,6 +1,6 @@
 <!--
 Copyright (c) 1993 by Thomas Koenig (ig25@rz.uni-karlsruhe.de)
-Copyright (c) 2002 by Michael Kerrisk &lt;mtk-manpages@gmx.net&gt;
+Copyright (c) 2002,2006 by Michael Kerrisk &lt;mtk-manpages@gmx.net&gt;
 -->
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
 <HTML><HEAD><TITLE>Man page of SIGNAL</TITLE>
@@ -19,6 +19,97 @@ signal - list of available signals
 Linux supports both POSIX reliable signals (hereinafter
 &quot;standard signals&quot;) and POSIX real-time signals.
 <A NAME="lbAD">&nbsp;</A>
+<H3>Signal Dispositions</H3>
+
+Each signal has a current 
+<I>disposition</I>,
+
+which determines how the process behaves when it is delivered 
+the signal.
+<P>
+The entries in the &quot;Action&quot; column of the tables below specify
+the default disposition for each signal, as follows:
+<DL COMPACT>
+<DT>Term<DD>
+Default action is to terminate the process.
+<DT>Ign<DD>
+Default action is to ignore the signal.
+<DT>Core<DD>
+Default action is to terminate the process and dump core (see
+<B><A HREF="../man5/core.5.html">core</A></B>(5)).
+
+<DT>Stop<DD>
+Default action is to stop the process.
+<DT>Cont<DD>
+Default action is to continue the process if it is currently stopped.
+</DL>
+<P>
+
+A process can change the disposition of a signal using
+<B><A HREF="../man2/sigaction.2.html">sigaction</A></B>(2)
+
+or (less portably)
+<B><A HREF="../man2/signal.2.html">signal</A></B>(2).
+
+Using these system calls, a process can elect one of the 
+following behaviours to occur on delivery of the signal: 
+perform the default action; ignore the signal; 
+or catch the signal with a
+<I>signal handler</I>,
+
+a programmer-defined function that is automatically invoked 
+when the signal is delivered.
+<P>
+The signal disposition is a per-process attribute:
+in a multithreaded application, the disposition of a 
+particular signal is the same for all threads.
+<A NAME="lbAE">&nbsp;</A>
+<H3>Signal Mask and Pending Signals</H3>
+
+A signal may be
+<I>blocked</I>,
+
+which means that it will not be delivered until it is later unblocked.
+Between the time when it is generated and when it is delivered
+a signal is said to be 
+<I>pending</I>.
+
+<P>
+Each thread in a process has an independent 
+<I>signal mask</I>,
+
+which indicates the set of signals that the thread is currently blocking.
+A thread can manipulate its signal mask using
+<B><A HREF="../man3/pthread_sigmask.3.html">pthread_sigmask</A></B>(3).
+
+In a traditional single-threaded application, 
+<B><A HREF="../man2/sigprocmask.2.html">sigprocmask</A></B>(2)
+
+can be used to manipulate the signal mask.
+<P>
+A signal may be generated (and thus pending)
+for a process as a whole (e.g., when sent using
+<B><A HREF="../man2/kill.2.html">kill</A></B>(2))
+
+or for a specific thread (e.g., certain signals, 
+such as SIGSEGV and SIGFPE, generated as a 
+consequence of executing a specific machine-language instruction 
+are thread directed, as are signals targeted at a specific thread using
+<B><A HREF="../man2/pthread_kill.2.html">pthread_kill</A></B>(2)).
+
+A process-directed signal may be delivered to any one of the
+threads that does not currently have the signal blocked.
+If more than one of the threads has the signal unblocked, then the 
+kernel chooses an arbitrary thread to which to deliver the signal.
+<P>
+A thread can obtain the set of signals that it currently has pending
+using
+<B><A HREF="../man2/sigpending.2.html">sigpending</A></B>(2).
+
+This set will consist of the union of the set of pending 
+process-directed signals and the set of signals pending for 
+the calling thread.
+<A NAME="lbAF">&nbsp;</A>
 <H3>Standard Signals</H3>
 
 Linux supports the standard signals listed below. Several signal numbers
@@ -28,24 +119,7 @@ alpha and sparc, the middle one for i386, ppc and sh, and
 the last one for mips.
 A - denotes that a signal is absent on the corresponding architecture.)
 <P>
-The entries in the &quot;Action&quot; column of the table specify
-the default action for the signal, as follows:
-<DL COMPACT>
-<DT>Term<DD>
-Default action is to terminate the process.
-<DT>Ign<DD>
-Default action is to ignore the signal.
-<DT>Core<DD>
-Default action is to terminate the process and dump core.
-<DT>Stop<DD>
-Default action is to stop the process.
-</DL>
-<P>
-
 First the signals described in the original POSIX.1 standard.
-<P>
-<P>
-
 <TABLE>
 <TR VALIGN=top><TD>Signal</TD><TD ALIGN=center>Value</TD><TD ALIGN=center>Action</TD><TD>Comment<BR></TD></TR>
 <TR VALIGN=top><TD><HR></TD><TD><HR></TD><TD><HR></TD><TD><HR></TD></TR>
@@ -63,7 +137,7 @@ First the signals described in the original POSIX.1 standard.
 <TR VALIGN=top><TD><B>SIGUSR1</B></TD><TD ALIGN=center>30,10,16</TD><TD ALIGN=center>Term</TD><TD>User-defined signal 1<BR></TD></TR>
 <TR VALIGN=top><TD><B>SIGUSR2</B></TD><TD ALIGN=center>31,12,17</TD><TD ALIGN=center>Term</TD><TD>User-defined signal 2<BR></TD></TR>
 <TR VALIGN=top><TD><B>SIGCHLD</B></TD><TD ALIGN=center>20,17,18</TD><TD ALIGN=center>Ign</TD><TD>Child stopped or terminated<BR></TD></TR>
-<TR VALIGN=top><TD><B>SIGCONT</B></TD><TD ALIGN=center>19,18,25</TD><TD ALIGN=center></TD><TD>Continue if stopped<BR></TD></TR>
+<TR VALIGN=top><TD><B>SIGCONT</B></TD><TD ALIGN=center>19,18,25</TD><TD ALIGN=center>Cont</TD><TD>Continue if stopped<BR></TD></TR>
 <TR VALIGN=top><TD><B>SIGSTOP</B></TD><TD ALIGN=center>17,19,23</TD><TD ALIGN=center>Stop</TD><TD>Stop process<BR></TD></TR>
 <TR VALIGN=top><TD><B>SIGTSTP</B></TD><TD ALIGN=center>18,20,24</TD><TD ALIGN=center>Stop</TD><TD>Stop typed at tty<BR></TD></TR>
 <TR VALIGN=top><TD><B>SIGTTIN</B></TD><TD ALIGN=center>21,21,26</TD><TD ALIGN=center>Stop</TD><TD>tty input for background process<BR></TD></TR>
@@ -81,9 +155,6 @@ cannot be caught, blocked, or ignored.
 <P>
 Next the signals not in the POSIX.1 standard but described in SUSv2 and
 SUSv3 / POSIX 1003.1-2001.
-<P>
-<P>
-
 <TABLE>
 <TR VALIGN=top><TD>Signal</TD><TD ALIGN=center>Value</TD><TD ALIGN=center>Action</TD><TD>Comment<BR></TD></TR>
 <TR VALIGN=top><TD><HR></TD><TD><HR></TD><TD><HR></TD><TD><HR></TD></TR>
@@ -91,10 +162,10 @@ SUSv3 / POSIX 1003.1-2001.
 <TR VALIGN=top><TD><B>SIGPROF</B></TD><TD ALIGN=center>27,27,29</TD><TD ALIGN=center>Term</TD><TD>Profiling timer expired<BR></TD></TR>
 <TR VALIGN=top><TD><B>SIGSYS</B></TD><TD ALIGN=center>12,-,12</TD><TD ALIGN=center>Core</TD><TD>Bad argument to routine (SVID)<BR></TD></TR>
 <TR VALIGN=top><TD><B>SIGTRAP</B></TD><TD ALIGN=center>5</TD><TD ALIGN=center>Core</TD><TD>Trace/breakpoint trap<BR></TD></TR>
-<TR VALIGN=top><TD><B>SIGURG</B></TD><TD ALIGN=center>16,23,21</TD><TD ALIGN=center>Ign</TD><TD>Urgent condition on socket (4.2 BSD)<BR></TD></TR>
-<TR VALIGN=top><TD><B>SIGVTALRM</B></TD><TD ALIGN=center>26,26,28</TD><TD ALIGN=center>Term</TD><TD>Virtual alarm clock (4.2 BSD)<BR></TD></TR>
-<TR VALIGN=top><TD><B>SIGXCPU</B></TD><TD ALIGN=center>24,24,30</TD><TD ALIGN=center>Core</TD><TD>CPU time limit exceeded (4.2 BSD)<BR></TD></TR>
-<TR VALIGN=top><TD><B>SIGXFSZ</B></TD><TD ALIGN=center>25,25,31</TD><TD ALIGN=center>Core</TD><TD>File size limit exceeded (4.2 BSD)<BR></TD></TR>
+<TR VALIGN=top><TD><B>SIGURG</B></TD><TD ALIGN=center>16,23,21</TD><TD ALIGN=center>Ign</TD><TD>Urgent condition on socket (4.2BSD)<BR></TD></TR>
+<TR VALIGN=top><TD><B>SIGVTALRM</B></TD><TD ALIGN=center>26,26,28</TD><TD ALIGN=center>Term</TD><TD>Virtual alarm clock (4.2BSD)<BR></TD></TR>
+<TR VALIGN=top><TD><B>SIGXCPU</B></TD><TD ALIGN=center>24,24,30</TD><TD ALIGN=center>Core</TD><TD>CPU time limit exceeded (4.2BSD)<BR></TD></TR>
+<TR VALIGN=top><TD><B>SIGXFSZ</B></TD><TD ALIGN=center>25,25,31</TD><TD ALIGN=center>Core</TD><TD>File size limit exceeded (4.2BSD)<BR></TD></TR>
 </TABLE>
 
 <P>
@@ -113,20 +184,17 @@ Linux 2.4 conforms to the POSIX 1003.1-2001 requirements for these signals,
 terminating the process with a core dump.
 <P>
 Next various other signals.
-<P>
-<P>
-
 <TABLE>
 <TR VALIGN=top><TD>Signal</TD><TD ALIGN=center>Value</TD><TD ALIGN=center>Action</TD><TD>Comment<BR></TD></TR>
 <TR VALIGN=top><TD><HR></TD><TD><HR></TD><TD><HR></TD><TD><HR></TD></TR>
 <TR VALIGN=top><TD><B>SIGEMT</B></TD><TD ALIGN=center>7,-,7</TD><TD ALIGN=center>Term</TD><TD><BR></TD></TR>
 <TR VALIGN=top><TD><B>SIGSTKFLT</B></TD><TD ALIGN=center>-,16,-</TD><TD ALIGN=center>Term</TD><TD>Stack fault on coprocessor (unused)<BR></TD></TR>
-<TR VALIGN=top><TD><B>SIGIO</B></TD><TD ALIGN=center>23,29,22</TD><TD ALIGN=center>Term</TD><TD>I/O now possible (4.2 BSD)<BR></TD></TR>
+<TR VALIGN=top><TD><B>SIGIO</B></TD><TD ALIGN=center>23,29,22</TD><TD ALIGN=center>Term</TD><TD>I/O now possible (4.2BSD)<BR></TD></TR>
 <TR VALIGN=top><TD><B>SIGCLD</B></TD><TD ALIGN=center>-,-,18</TD><TD ALIGN=center>Ign</TD><TD>A synonym for SIGCHLD<BR></TD></TR>
 <TR VALIGN=top><TD><B>SIGPWR</B></TD><TD ALIGN=center>29,30,19</TD><TD ALIGN=center>Term</TD><TD>Power failure (System V)<BR></TD></TR>
 <TR VALIGN=top><TD><B>SIGINFO</B></TD><TD ALIGN=center>29,-,-</TD><TD ALIGN=center></TD><TD>A synonym for SIGPWR<BR></TD></TR>
 <TR VALIGN=top><TD><B>SIGLOST</B></TD><TD ALIGN=center>-,-,-</TD><TD ALIGN=center>Term</TD><TD>File lock lost<BR></TD></TR>
-<TR VALIGN=top><TD><B>SIGWINCH</B></TD><TD ALIGN=center>28,28,20</TD><TD ALIGN=center>Ign</TD><TD>Window resize signal (4.3 BSD, Sun)<BR></TD></TR>
+<TR VALIGN=top><TD><B>SIGWINCH</B></TD><TD ALIGN=center>28,28,20</TD><TD ALIGN=center>Ign</TD><TD>Window resize signal (4.3BSD, Sun)<BR></TD></TR>
 <TR VALIGN=top><TD><B>SIGUNUSED</B></TD><TD ALIGN=center>-,31,-</TD><TD ALIGN=center>Term</TD><TD>Unused signal (will be SIGSYS)<BR></TD></TR>
 </TABLE>
 
@@ -157,7 +225,7 @@ by default on those other Unices where it appears.
 
 (which is not specified in POSIX 1003.1-2001) is ignored by default
 on several other Unices.
-<A NAME="lbAE">&nbsp;</A>
+<A NAME="lbAG">&nbsp;</A>
 <H3>Real-time Signals</H3>
 
 Linux supports real-time signals as originally defined in the POSIX.4
@@ -260,11 +328,11 @@ signals; see
 <B><A HREF="../man2/setrlimit.2.html">setrlimit</A></B>(2)
 
 for further details.
-<A NAME="lbAF">&nbsp;</A>
+<A NAME="lbAH">&nbsp;</A>
 <H2>CONFORMING TO</H2>
 
 POSIX.1
-<A NAME="lbAG">&nbsp;</A>
+<A NAME="lbAI">&nbsp;</A>
 <H2>BUGS</H2>
 
 <B>SIGIO</B>
@@ -278,12 +346,14 @@ the build process of some software still thinks that
 signal 29 is
 <B>SIGLOST</B>.
 
-<A NAME="lbAH">&nbsp;</A>
+<A NAME="lbAJ">&nbsp;</A>
 <H2>SEE ALSO</H2>
 
 <B><A HREF="../man1/kill.1.html">kill</A></B>(1),
 
 <B><A HREF="../man2/kill.2.html">kill</A></B>(2),
+
+<B><A HREF="../man2/killpg.2.html">killpg</A></B>(2),
 
 <B><A HREF="../man2/setitimer.2.html">setitimer</A></B>(2),
 
@@ -301,9 +371,15 @@ signal 29 is
 
 <B><A HREF="../man2/sigsuspend.2.html">sigsuspend</A></B>(2),
 
+<B><A HREF="../man2/sigwaitinfo.2.html">sigwaitinfo</A></B>(2),
+
+<B><A HREF="../man3/raise.3.html">raise</A></B>(3),
+
 <B><A HREF="../man3/sigvec.3.html">sigvec</A></B>(3),
 
 <B><A HREF="../man3/sigset.3.html">sigset</A></B>(3),
+
+<B><A HREF="../man3/strsignal.3.html">strsignal</A></B>(3),
 
 <B><A HREF="../man5/core.5.html">core</A></B>(5),
 
@@ -319,17 +395,19 @@ signal 29 is
 <DT><A HREF="#lbAB">NAME</A><DD>
 <DT><A HREF="#lbAC">DESCRIPTION</A><DD>
 <DL>
-<DT><A HREF="#lbAD">Standard Signals</A><DD>
-<DT><A HREF="#lbAE">Real-time Signals</A><DD>
+<DT><A HREF="#lbAD">Signal Dispositions</A><DD>
+<DT><A HREF="#lbAE">Signal Mask and Pending Signals</A><DD>
+<DT><A HREF="#lbAF">Standard Signals</A><DD>
+<DT><A HREF="#lbAG">Real-time Signals</A><DD>
 </DL>
-<DT><A HREF="#lbAF">CONFORMING TO</A><DD>
-<DT><A HREF="#lbAG">BUGS</A><DD>
-<DT><A HREF="#lbAH">SEE ALSO</A><DD>
+<DT><A HREF="#lbAH">CONFORMING TO</A><DD>
+<DT><A HREF="#lbAI">BUGS</A><DD>
+<DT><A HREF="#lbAJ">SEE ALSO</A><DD>
 </DL>
 <HR>
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 02:26:30 GMT, April 20, 2020
+Time: 02:26:59 GMT, April 20, 2020
 </BODY>
 </HTML>
