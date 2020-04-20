@@ -26,7 +26,7 @@ the source, must acknowledge the copyright and authors of this work.
 <HTML><HEAD><TITLE>Man page of MSGOP</TITLE>
 </HEAD><BODY>
 <H1>MSGOP</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2012-05-31<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2014-01-23<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -65,7 +65,7 @@ in order to send a message, and read permission to receive a message.
 The
 <I>msgp</I>
 
-argument is a pointer to caller-defined structure
+argument is a pointer to a caller-defined structure
 of the following general form:
 
 <PRE>
@@ -246,10 +246,17 @@ set to
 
 <P>
 
-The argument
+Unless
+<B>MSG_COPY</B>
+
+is specified in
+<I>msgflg</I>
+
+(see below),
+the
 <I>msgtyp</I>
 
-specifies the type of message requested as follows:
+argument specifies the type of message requested, as follows:
 <DL COMPACT>
 <DT>*<DD>
 If
@@ -305,6 +312,28 @@ The system call fails with
 set to
 <B>ENOMSG</B>.
 
+<DT><B>MSG_COPY</B> (since Linux 3.8)
+
+<DD>
+
+Nondestructively fetch a copy of the message at the ordinal position
+in the queue specified by
+<I>msgtyp</I>
+
+(messages are considered to be numbered starting at 0).
+This flag should be specified in conjunction with
+<B>IPC_NOWAIT</B>,
+
+so that if there is no message available at the given position,
+the call fails immediately with the error
+<B>ENOMSG</B>.
+
+This flag was added for the implementation of
+the kernel checkpoint-restore facility and
+is available only if the kernel was built with the
+<B>CONFIG_CHECKPOINT_RESTORE</B>
+
+option.
 <DT><B>MSG_EXCEPT</B>
 
 <DD>
@@ -543,11 +572,50 @@ was specified in
 <I>msgflg</I>
 
 and no message of the requested type existed on the message queue.
+<DT><B>ENOMSG</B>
+
+<DD>
+<B>IPC_NOWAIT</B>
+
+and
+<B>MSG_COPY</B>
+
+were specified in
+<I>msgflg</I>
+
+and the queue contains less than
+<I>msgtyp</I>
+
+messages.
+<DT><B>ENOSYS</B> (since Linux 3.8)
+
+<DD>
+<I>MSG_COPY</I>
+
+was specified in
+<I>msgflg</I>,
+
+and this kernel was configured without
+<B>CONFIG_CHECKPOINT_RESTORE</B>.
+
 </DL>
 <A NAME="lbAI">&nbsp;</A>
 <H2>CONFORMING TO</H2>
 
 SVr4, POSIX.1-2001.
+<P>
+The
+<B>MSG_EXCEPT</B>
+
+and
+<B>MSG_COPY</B>
+
+flags are Linux-specific;
+their definitions can be obtained by defining the
+<B>_GNU_SOURCE</B>
+
+
+feature test macro.
 <A NAME="lbAJ">&nbsp;</A>
 <H2>NOTES</H2>
 
@@ -611,6 +679,47 @@ and for the system wide maximum size in bytes of the message pool
 (<B>MSGPOOL</B>).
 
 <A NAME="lbAK">&nbsp;</A>
+<H2>BUGS</H2>
+
+If
+<B>msgrcv</B>()
+
+is called with the
+<B>MSG_COPY</B>
+
+flag, but without
+<B>IPC_NOWAIT</B>,
+
+and the message queue contains less than
+<I>msgtyp</I>
+
+messages, then the call will block until the next message is written
+to the queue.
+
+At that point, the call will return a copy of the message,
+<I>regardless</I>
+
+of whether that message is at the ordinal position
+<I>msgtyp</I>.
+
+<P>
+Specifying both
+<B>MSG_COPY</B>
+
+and
+<B>MSC_EXCEPT</B>
+
+in
+<I>msgflg</I>
+
+is a logical error (since these flags impose different interpretations on
+<I>msgtyp</I>).
+
+
+However, as at Linux 3.13, this error is not diagnosed by
+<I>msgsrv</I>().
+
+<A NAME="lbAL">&nbsp;</A>
 <H2>SEE ALSO</H2>
 
 <B><A HREF="../man2/msgctl.2.html">msgctl</A></B>(2),
@@ -639,12 +748,13 @@ and for the system wide maximum size in bytes of the message pool
 <DT><A HREF="#lbAH">ERRORS</A><DD>
 <DT><A HREF="#lbAI">CONFORMING TO</A><DD>
 <DT><A HREF="#lbAJ">NOTES</A><DD>
-<DT><A HREF="#lbAK">SEE ALSO</A><DD>
+<DT><A HREF="#lbAK">BUGS</A><DD>
+<DT><A HREF="#lbAL">SEE ALSO</A><DD>
 </DL>
 <HR>
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:23:18 GMT, April 20, 2020
+Time: 03:23:54 GMT, April 20, 2020
 </BODY>
 </HTML>

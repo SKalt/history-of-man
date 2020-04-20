@@ -25,7 +25,7 @@ License along with this manual; if not, see
 <HTML><HEAD><TITLE>Man page of PTRACE</TITLE>
 </HEAD><BODY>
 <H1>PTRACE</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2013-07-11<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2014-01-20<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -407,6 +407,109 @@ itself.
 (<I>addr</I>
 
 is ignored.)
+<DT><B>PTRACE_PEEKSIGINFO</B> (since Linux 3.10)
+
+<DD>
+
+Retrieve
+<I>siginfo_t</I>
+
+structures without removing signals from a queue.
+<I>addr</I>
+
+points to a
+<I>ptrace_peeksiginfo_args</I>
+
+structure that specifies the ordinal position from which
+copying of signals should start,
+and the number of signals to copy.
+<I>siginfo_t</I>
+
+structures are copied into the buffer pointed to by
+<I>data</I>.
+
+The return value contains the number of copied signals (zero indicates
+that there is no signal corresponding to the specified ordinal position).
+Within the returned
+<I>siginfo</I>
+
+structures,
+the
+<I>si_code</I>
+
+field includes information
+(<B>__SI_CHLD</B>,
+
+<B>__SI_FAULT</B>,
+
+etc.), that are not otherwise exposed to user space.
+</DL>
+<P>
+
+
+<PRE>
+struct ptrace_peeksiginfo_args {
+    u64 off;    /* Ordinal position in queue at which
+                   to start copying signals */
+    u32 flags;  /* PTRACE_PEEKSIGINFO_SHARED or 0 */
+    s32 nr;     /* Number of signals to copy */
+};
+</PRE>
+
+<P>
+Currently, there is only one flag,
+<B>PTRACE_PEEKSIGINFO_SHARED</B>,
+
+for dumping signals from the process-wide signal queue.
+If this flag is not set,
+signals are read from the per-thread queue of the specified thread.
+
+<P>
+
+<DL COMPACT>
+<DT><B>PTRACE_GETSIGMASK</B> (since Linux 3.11)
+
+<DD>
+
+Place a copy of the mask of blocked signals (see
+<B><A HREF="../man2/sigprocmask.2.html">sigprocmask</A></B>(2))
+
+in the buffer pointed to by
+<I>data</I>,
+
+which should be a pointer to a buffer of type
+<I>sigset_t</I>.
+
+The
+<I>addr</I>
+
+argument contains the size of the buffer pointed to by
+<I>data</I>
+
+(i.e.,
+<I>sizeof(sigset_t)</I>).
+
+<DT><B>PTRACE_SETSIGMASK</B> (since Linux 3.11)
+
+<DD>
+Change the mask of blocked signals (see
+<B><A HREF="../man2/sigprocmask.2.html">sigprocmask</A></B>(2))
+
+to the value specified in the buffer pointed to by
+<I>data</I>,
+
+which should be a pointer to a buffer of type
+<I>sigset_t</I>.
+
+The
+<I>addr</I>
+
+argument contains the size of the buffer pointed to by
+<I>data</I>
+
+(i.e.,
+<I>sizeof(sigset_t)</I>).
+
 <DT><B>PTRACE_SETOPTIONS</B> (since Linux 2.4.6; see BUGS for caveats)
 
 <DD>
@@ -2770,6 +2873,6 @@ attach.)
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:23:18 GMT, April 20, 2020
+Time: 03:23:55 GMT, April 20, 2020
 </BODY>
 </HTML>

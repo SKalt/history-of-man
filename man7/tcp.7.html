@@ -10,7 +10,7 @@ of the modification is added to the header.
 <HTML><HEAD><TITLE>Man page of TCP</TITLE>
 </HEAD><BODY>
 <H1>TCP</H1>
-Section: Linux Programmer's Manual (7)<BR>Updated: 2013-12-12<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (7)<BR>Updated: 2014-01-23<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -312,9 +312,10 @@ processes (see the description of the
 <B>TCP_CONGESTION</B>
 
 socket option).
+The items in the list are separated by white space and
+terminated by a newline character.
 The list is a subset of those listed in
 <I>tcp_available_congestion_control</I>.
-
 
 The default value for this list is &quot;reno&quot; plus the default setting of
 <I>tcp_congestion_control</I>.
@@ -325,7 +326,8 @@ The default value for this list is &quot;reno&quot; plus the default setting of
 
 Show a list of the congestion-control algorithms
 that are registered.
-
+The items in the list are separated by white space and
+terminated by a newline character.
 This list is a limiting set for the list in
 <I>tcp_allowed_congestion_control</I>.
 
@@ -1020,6 +1022,26 @@ For more information see
 <B><A HREF="../man7/ip.7.html">ip</A></B>(7).
 
 <DL COMPACT>
+<DT><B>TCP_CONGESTION</B> (since Linux 2.6.13)
+
+<DD>
+
+
+The argument for this option is a string.
+This option allows the caller to set the TCP congestion control
+algorithm to be used, on a per-socket basis.
+Unprivileged processes are restricted to choosing one of the algorithms in
+<I>tcp_allowed_congestion_control</I>
+
+(described above).
+Privileged processes
+(<B>CAP_NET_ADMIN</B>)
+
+processes can choose from any of the available congestion-control algorithms
+(see the description of
+<I>tcp_available_congestion_control</I>
+
+above).
 <DT><B>TCP_CORK</B> (since Linux 2.2)
 
 <DD>
@@ -1043,6 +1065,9 @@ This option should not be used in code intended to be portable.
 <DT><B>TCP_DEFER_ACCEPT</B> (since Linux 2.4)
 
 <DD>
+
+
+
 
 Allow a listener to be awakened only when data arrives on the socket.
 Takes an integer value (seconds), this can
@@ -1153,6 +1178,57 @@ Set the number of SYN retransmits that TCP should send before
 aborting the attempt to connect.
 It cannot exceed 255.
 This option should not be used in code intended to be portable.
+<DT><B>TCP_USER_TIMEOUT</B> (since Linux 2.6.37)
+
+<DD>
+
+
+
+
+
+This option takes an
+<I>unsigned int</I>
+
+as an argument.
+When the value is greater than 0,
+it specifies the maximum amount of time in imilliseconds that transmitted
+data may remain unacknowledged before TCP will forcibly close the
+corresponding connection and return
+<B>ETIMEDOUT</B>
+
+to the application.
+If the option value is specified as 0,
+TCP will to use the system default.
+<P>
+Increasing user timeouts allows a TCP connection to survive extended
+periods without end-to-end connectivity.
+Decreasing user timeouts
+allows applications to &quot;fail fast&quot;, if so desired.
+Otherwise, failure may take upto 20 minutes with
+the current system defaults in a normal WAN environment.
+<P>
+This option can be set during any state of a TCP connection,
+but is only effective during the synchronized states of a connection
+(ESTABLISHED, FIN-WAIT-1, FIN-WAIT-2, CLOSE-WAIT, CLOSING, and LAST-ACK).
+Moreover, when used with the TCP keepalive
+(<B>SO_KEEPALIVE</B>)
+
+option,
+<B>TCP_USER_TIMEOUT</B>
+
+will override keepalive to determine when to close a
+connection due to keepalive failure.
+<P>
+The option has no effect on when TCP retransmits a packet,
+nor when a keepalive probe is sent.
+<P>
+This option, like many others, will be inherited by the socket returned by
+<B><A HREF="../man2/accept.2.html">accept</A></B>(2),
+
+if it was set on the listening socket.
+<P>
+Further details on the user timeout&quot; feature can be found in
+RFC&nbsp;793 and RFC&nbsp;5482 (&quot;TCP User Timeout Option&quot;).
 <DT><B>TCP_WINDOW_CLAMP</B> (since Linux 2.4)
 
 <DD>
@@ -1476,6 +1552,6 @@ RFC&nbsp;2018 and RFC&nbsp;2883 for SACK and extensions to SACK.
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:23:31 GMT, April 20, 2020
+Time: 03:24:08 GMT, April 20, 2020
 </BODY>
 </HTML>

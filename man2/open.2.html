@@ -25,7 +25,7 @@ the source, must acknowledge the copyright and authors of this work.
 <HTML><HEAD><TITLE>Man page of OPEN</TITLE>
 </HEAD><BODY>
 <H1>OPEN</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2013-08-09<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2014-01-20<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -141,6 +141,8 @@ are
 
 <B>O_NOFOLLOW</B>,
 
+<B>O_TMPFILE</B>,
+
 <B>O_TRUNC</B>,
 
 and
@@ -164,9 +166,11 @@ are all of the remaining flags listed below.
 
 The distinction between these two groups of flags is that
 the file status flags can be retrieved and (in some cases)
-modified using
-<B><A HREF="../man2/fcntl.2.html">fcntl</A></B>(2).
+modified; see
+<B><A HREF="../man2/fcntl.2.html">fcntl</A></B>(2)
 
+for details.
+<P>
 The full list of file creation flags and file status flags is as follows:
 <DL COMPACT>
 <DT><B>O_APPEND</B>
@@ -207,7 +211,8 @@ See
 <B><A HREF="../man2/fcntl.2.html">fcntl</A></B>(2)
 
 for further details.
-<DT><B>O_CLOEXEC</B> (Since Linux 2.6.23)
+See also BUGS, below.
+<DT><B>O_CLOEXEC</B> (since Linux 2.6.23)
 
 <DD>
 Enable the close-on-exec flag for the new file descriptor.
@@ -250,7 +255,7 @@ of the process.
 The group ownership (group ID) is set either to
 the effective group ID of the process or to the group ID of the
 parent directory (depending on filesystem type and mount options,
-and the mode of the parent directory, see the mount options
+and the mode of the parent directory; see the mount options
 <I>bsdgroups</I>
 
 and
@@ -270,13 +275,19 @@ specifies the permissions to use in case a new file is created.
 This argument must be supplied when
 <B>O_CREAT</B>
 
+or
+<B>O_TMPFILE</B>
+
 is specified in
 <I>flags</I>;
 
-if
+if neither
 <B>O_CREAT</B>
 
-is not specified, then
+nor
+<B>O_TMPFILE</B>
+
+is specified, then
 <I>mode</I>
 
 is ignored.
@@ -350,7 +361,7 @@ The following symbolic constants are provided for
 </DL>
 </DL>
 
-<DT><B>O_DIRECT</B> (Since Linux 2.4.10)
+<DT><B>O_DIRECT</B> (since Linux 2.4.10)
 
 <DD>
 Try to minimize cache effects of the I/O to and from this file.
@@ -496,7 +507,7 @@ is the preferred
 method of accessing large files on 32-bit systems (see
 <B><A HREF="../man7/feature_test_macros.7.html">feature_test_macros</A></B>(7)).
 
-<DT><B>O_NOATIME</B> (Since Linux 2.6.8)
+<DT><B>O_NOATIME</B> (since Linux 2.6.8)
 
 <DD>
 Do not update the file last access time
@@ -531,7 +542,7 @@ This is a FreeBSD extension, which was added to Linux in version 2.1.126.
 Symbolic links in earlier components of the pathname will still be
 followed.
 See also
-<B>O_NOPATH</B>
+<B>O_PATH</B>
 
 below.
 
@@ -695,10 +706,126 @@ on the resulting file descriptor will block the calling process until
 the data has been physically written to the underlying hardware.
 <I>But see NOTES below</I>.
 
+<DT><B>O_TMPFILE</B> (since Linux 3.11)
+
+<DD>
+
+
+
+Create an unnamed temporary file.
+The
+<I>pathname</I>
+
+argument specifies a directory;
+an unnamed inode will be created in that directory's filesystem.
+Anything written to the resulting file will be lost when
+the last file descriptor is closed, unless the file is given a name.
+<P>
+<B>O_TMPFILE</B>
+
+must be specified with one of
+<B>O_RDWR</B>
+
+or
+<B>O_WRONLY</B>
+
+and, optionally,
+<B>O_EXCL</B>.
+
+If
+<B>O_EXCL</B>
+
+is not specified, then
+<B><A HREF="../man2/linkat.2.html">linkat</A></B>(2)
+
+can be used to link the temporary file into the filesystem, making it
+permanent, using code like the following:
+<P>
+
+<PRE>
+char path[PATH_MAX];
+fd = open(&quot;/path/to/dir&quot;, O_TMPFILE | O_RDWR,
+                        S_IRUSR | S_IWUSR);
+
+/* File I/O on 'fd'... */
+
+snprintf(path, PATH_MAX,  &quot;/proc/self/fd/%d&quot;, fd);
+linkat(AT_FDCWD, path, AT_FDCWD, &quot;/path/for/file&quot;,
+                        AT_SYMLINK_FOLLOW);
+</PRE>
+
+
+<P>
+In this case,
+the
+<B>open</B>()
+
+<I>mode</I>
+
+argument determines the file permission mode, as with
+<B>O_CREAT</B>.
+
+<P>
+Specifying
+<B>O_EXCL</B>
+
+in conjunction with
+<B>O_TMPFILE</B>
+
+prevents a temporary file from being linked into the filesystem
+in the above manner.
+(Note that the meaning of
+<B>O_EXCL</B>
+
+in this case is different from the meaning of
+<B>O_EXCL</B>
+
+otherwise.)
+<P>
+<P>
+There are two main use cases for
+
+<B>O_TMPFILE</B>:
+
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT>*<DD>
+Improved
+<B><A HREF="../man3/tmpfile.3.html">tmpfile</A></B>(3)
+
+functionality: race-free creation of temporary files that
+(1) are automatically deleted when closed;
+(2) can never be reached via any pathname;
+(3) are not subject to symlink attacks; and
+(4) do not require the caller to devise unique names.
+<DT>*<DD>
+Creating a file that is initially invisible, which is then populated
+with data and adjusted to have appropriate filesystem attributes
+(<B><A HREF="../man2/chown.2.html">chown</A></B>(2),
+
+<B><A HREF="../man2/chmod.2.html">chmod</A></B>(2),
+
+<B><A HREF="../man2/fsetxattr.2.html">fsetxattr</A></B>(2),
+
+etc.)
+before being atomically linked into the filesystem
+in a fully formed state (using
+<B><A HREF="../man2/linkat.2.html">linkat</A></B>(2)
+
+as described above).
+</DL>
+</DL>
+
+<DT><DD>
+<B>O_TMPFILE</B>
+
+requires support by the underlying filesystem;
+
+only a subset of Linux filesystems provide that support.
 <DT><B>O_TRUNC</B>
 
 <DD>
-If the file already exists and is a regular file and the open mode allows
+If the file already exists and is a regular file and the access mode allows
 writing (i.e., is
 <B>O_RDWR</B>
 
@@ -717,11 +844,6 @@ is unspecified.
 </DL>
 <P>
 
-Some of these optional flags can be altered using
-<B><A HREF="../man2/fcntl.2.html">fcntl</A></B>(2)
-
-after the file has been opened.
-<P>
 <B>creat</B>()
 
 is equivalent to
@@ -807,10 +929,33 @@ the call was interrupted by a signal handler; see
 The filesystem does not support the
 <B>O_DIRECT</B>
 
-flag. See
+flag.
+See
 <B>NOTES</B>
 
 for more information.
+<DT><B>EINVAL</B>
+
+<DD>
+Invalid value in
+
+<I>flags</I>.
+
+<DT><B>EINVAL</B>
+
+<DD>
+<B>O_TMPFILE</B>
+
+was specified in
+<I>flags</I>,
+
+but neither
+<B>O_WRONLY</B>
+
+nor
+<B>O_RDWR</B>
+
+was specified.
 <DT><B>EISDIR</B>
 
 <DD>
@@ -824,6 +969,27 @@ or
 <B>O_RDWR</B>
 
 is set).
+<DT><B>EISDIR</B>
+
+<DD>
+<I>pathname</I>
+
+refers to an existing directory,
+<B>O_TMPFILE</B>
+
+and one of
+<B>O_WRONLY</B>
+
+or
+<B>O_RDWR</B>
+
+were specified in
+<I>flags</I>,
+
+but this kernel version does not provide the
+<B>O_TMPFILE</B>
+
+functionality.
 <DT><B>ELOOP</B>
 
 <DD>
@@ -868,6 +1034,27 @@ Or, a directory component in
 <I>pathname</I>
 
 does not exist or is a dangling symbolic link.
+<DT><B>ENOENT</B>
+
+<DD>
+<I>pathname</I>
+
+refers to a nonexistent directory,
+<B>O_TMPFILE</B>
+
+and one of
+<B>O_WRONLY</B>
+
+or
+<B>O_RDWR</B>
+
+were specified in
+<I>flags</I>,
+
+but this kernel version does not provide the
+<B>O_TMPFILE</B>
+
+functionality.
 <DT><B>ENOMEM</B>
 
 <DD>
@@ -899,6 +1086,15 @@ was not a directory.
 is set, the named file is a FIFO and
 no process has the file open for reading.
 Or, the file is a device special file and no corresponding device exists.
+<DT><B>EOPNOTSUPP</B>
+
+<DD>
+The filesystem containing
+<I>pathname</I>
+
+does not support
+<B>O_TMPFILE</B>.
+
 <DT><B>EOVERFLOW</B>
 
 <DD>
@@ -964,42 +1160,60 @@ flag was specified, and an incompatible lease was held on the file
 <A NAME="lbAG">&nbsp;</A>
 <H2>CONFORMING TO</H2>
 
-SVr4, 4.3BSD, POSIX.1-2001.
+SVr4, 4.3BSD, POSIX.1-2001, POSIX.1-2008.
+<P>
 The
-<B>O_DIRECTORY</B>,
+<B>O_DIRECT</B>,
 
 <B>O_NOATIME</B>,
 
-<B>O_NOFOLLOW</B>,
+<B>O_PATH</B>,
 
 and
-<B>O_PATH</B>
+<B>O_TMPFILE</B>
 
-flags are Linux-specific, and one may need to define
+flags are Linux-specific.
+One must define
 <B>_GNU_SOURCE</B>
 
-(before including
-<I>any</I>
-
-header files)
 to obtain their definitions.
 <P>
 The
-<B>O_CLOEXEC</B>
+<B>O_CLOEXEC</B>,
 
-flag is not specified in POSIX.1-2001,
-but is specified in POSIX.1-2008.
+<B>O_DIRECTORY</B>,
+
+and
+<B>O_NOFOLLOW</B>
+
+flags are not specified in POSIX.1-2001,
+but are specified in POSIX.1-2008.
+Since glibc 2.12, one can obtain their definitions by defining either
+<B>_POSIX_C_SOURCE</B>
+
+with a value greater than or equal to 200809L or
+<B>_XOPEN_SOURCE</B>
+
+with a value greater than or equal to 700.
+In glibc 2.11 and earlier, one obtains the definitions by defining
+<B>_GNU_SOURCE</B>.
+
 <P>
-<B>O_DIRECT</B>
+As noted in
+<B><A HREF="../man7/feature_test_macros.7.html">feature_test_macros</A></B>(7),
 
-is not specified in POSIX; one has to define
+feature test macros such as
+<B>_POSIX_C_SOURCE</B>,
+
+<B>_XOPEN_SOURCE</B>,
+
+and
 <B>_GNU_SOURCE</B>
 
-(before including
+must be defined before including
 <I>any</I>
 
-header files)
-to get its definition.
+header files.
 <A NAME="lbAH">&nbsp;</A>
 <H2>NOTES</H2>
 
@@ -1020,7 +1234,7 @@ the
 <I>access mode</I>
 
 values
-<B>O_RDONLY</B>, <B>O_WRONLY</B>, and <B>O_RDWR</B>,
+<B>O_RDONLY</B>, <B>O_WRONLY</B>, and <B>O_RDWR</B>
 
 do not specify individual bits.
 Rather, they define the low order two bits of
@@ -1330,6 +1544,17 @@ use
 to enable this flag.
 
 
+<P>
+One must check for two different error codes,
+<B>EISDIR</B>
+
+and
+<B>ENOENT</B>,
+
+when trying to determine whether the kernel supports
+<B>O_TMP_FILE</B>
+
+functionality.
 <A NAME="lbAK">&nbsp;</A>
 <H2>SEE ALSO</H2>
 
@@ -1397,6 +1622,6 @@ to enable this flag.
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:23:18 GMT, April 20, 2020
+Time: 03:23:54 GMT, April 20, 2020
 </BODY>
 </HTML>

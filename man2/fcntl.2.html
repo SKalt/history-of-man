@@ -25,7 +25,7 @@ the source, must acknowledge the copyright and authors of this work.
 <HTML><HEAD><TITLE>Man page of FCNTL</TITLE>
 </HEAD><BODY>
 <H1>FCNTL</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2012-04-15<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2014-01-21<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -218,9 +218,13 @@ and
 <B>O_NONBLOCK</B>
 
 flags.
+It is not possible to change the
+<B>O_DSYNC</B>
 
+and
+<B>O_SYNC</B>
 
-
+flags; see BUGS, below.
 </DL>
 <A NAME="lbAH">&nbsp;</A>
 <H3>Advisory locking</H3>
@@ -971,13 +975,23 @@ most of the time.
 <P>
 
 The use of
-<B>O_ASYNC</B>,
-
-<B>F_GETOWN</B>,
-
-<B>F_SETOWN</B>
+<B>O_ASYNC</B>
 
 is specific to BSD and Linux.
+The only use of
+<B>F_GETOWN</B>
+
+and
+<B>F_SETOWN</B>
+
+specified in POSIX.1 is in conjunction with the use of the
+<B>SIGURG</B>
+
+signal on sockets.
+(POSIX does not specify the
+<B>SIGIO</B>
+
+signal.)
 <B>F_GETOWN_EX</B>,
 
 <B>F_SETOWN_EX</B>,
@@ -1672,6 +1686,26 @@ may live on a different machine.
 <A NAME="lbAR">&nbsp;</A>
 <H2>BUGS</H2>
 
+<A NAME="lbAS">&nbsp;</A>
+<H3>F_SETFL</H3>
+
+It is not possible to use
+<B>F_SETFL</B>
+
+to change the state of the
+<B>O_DYSNC</B>
+
+and
+<B>O_SYNC</B>
+
+flags.
+
+
+
+Attempts to change the state of these flags are silently ignored.
+<A NAME="lbAT">&nbsp;</A>
+<H3>F_GETOWN</H3>
+
 A limitation of the Linux system call conventions on some
 architectures (notably i386) means that if a (negative)
 process group ID to be returned by
@@ -1704,7 +1738,9 @@ problem invisible by implementing
 using
 <B>F_GETOWN_EX</B>.
 
-<P>
+<A NAME="lbAU">&nbsp;</A>
+<H3>F_SETOWN</H3>
+
 In Linux 2.4 and earlier, there is bug that can occur
 when an unprivileged process uses
 <B>F_SETOWN</B>
@@ -1725,7 +1761,9 @@ even when the owner process (group) is one that the caller
 has permission to send signals to.
 Despite this error return, the file descriptor owner is set,
 and signals will be sent to the owner.
-<P>
+<A NAME="lbAV">&nbsp;</A>
+<H3>Mandatory locking</H3>
+
 The implementation of mandatory locking in all known versions of Linux
 is subject to race conditions which render it unreliable:
 
@@ -1743,7 +1781,7 @@ Similar races exist between mandatory locks and
 <B><A HREF="../man2/mmap.2.html">mmap</A></B>(2).
 
 It is therefore inadvisable to rely on mandatory locking.
-<A NAME="lbAS">&nbsp;</A>
+<A NAME="lbAW">&nbsp;</A>
 <H2>SEE ALSO</H2>
 
 <B><A HREF="../man2/dup2.2.html">dup2</A></B>(2),
@@ -1804,12 +1842,18 @@ is called
 <DT><A HREF="#lbAP">CONFORMING TO</A><DD>
 <DT><A HREF="#lbAQ">NOTES</A><DD>
 <DT><A HREF="#lbAR">BUGS</A><DD>
-<DT><A HREF="#lbAS">SEE ALSO</A><DD>
+<DL>
+<DT><A HREF="#lbAS">F_SETFL</A><DD>
+<DT><A HREF="#lbAT">F_GETOWN</A><DD>
+<DT><A HREF="#lbAU">F_SETOWN</A><DD>
+<DT><A HREF="#lbAV">Mandatory locking</A><DD>
+</DL>
+<DT><A HREF="#lbAW">SEE ALSO</A><DD>
 </DL>
 <HR>
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:23:17 GMT, April 20, 2020
+Time: 03:23:53 GMT, April 20, 2020
 </BODY>
 </HTML>
