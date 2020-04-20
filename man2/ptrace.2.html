@@ -25,7 +25,7 @@ License along with this manual; if not, see
 <HTML><HEAD><TITLE>Man page of PTRACE</TITLE>
 </HEAD><BODY>
 <H1>PTRACE</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2014-08-19<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2015-01-22<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -747,6 +747,39 @@ value such that
 The PID of the new process can (since Linux 2.6.18) be retrieved with
 <B>PTRACE_GETEVENTMSG</B>.
 
+<DT><B>PTRACE_O_TRACESECCOMP</B> (since Linux 3.5)
+
+<DD>
+Stop the tracee when a
+<B><A HREF="../man2/seccomp.2.html">seccomp</A></B>(2)
+
+<B>SECCOMP_RET_TRACE</B>
+
+rule is triggered.
+A
+<B><A HREF="../man2/waitpid.2.html">waitpid</A></B>(2)
+
+by the tracer will return a
+<I>status</I>
+
+value such that
+<P>
+<PRE>
+  status&gt;&gt;8 == (SIGTRAP | (PTRACE_EVENT_SECCOMP&lt;&lt;8))
+</PRE>
+
+<P>
+While this triggers a
+<B>PTRACE_EVENT</B>
+
+stop, it is similar to a syscall-enter-stop, in that the tracee has
+not yet entered the syscall that seccomp triggered on.
+The seccomp event message data (from the
+<B>SECCOMP_RET_DATA</B>
+
+portion of the seccomp filter rule) can be retrieved with
+<B>PTRACE_GETEVENTMSG</B>.
+
 </DL>
 </DL>
 
@@ -776,6 +809,16 @@ and
 <B>PTRACE_EVENT_CLONE</B>,
 
 this is the PID of the new process.
+For
+<B>PTRACE_EVENT_SECCOMP</B>,
+
+this is the
+<B><A HREF="../man2/seccomp.2.html">seccomp</A></B>(2)
+
+filter's
+<B>SECCOMP_RET_DATA</B>
+
+associated with the triggered rule.
 (<I>addr</I>
 
 is ignored.)
@@ -1768,6 +1811,22 @@ if
 <B>PTRACE_SEIZE</B>
 
 was used.
+<DT><B>PTRACE_EVENT_SECCOMP</B>
+
+<DD>
+Stop triggered by a
+<B><A HREF="../man2/seccomp.2.html">seccomp</A></B>(2)
+
+rule on tracee syscall entry when
+<B>PTRACE_O_TRACESECCOMP</B>
+
+has been set by the tracer.
+The seccomp event message data (from the
+<B>SECCOMP_RET_DATA</B>
+
+portion of the seccomp filter rule) can be retrieved with
+<B>PTRACE_GETEVENTMSG</B>.
+
 </DL>
 <P>
 
@@ -2832,6 +2891,8 @@ attach.)
 
 <B><A HREF="../man2/gettid.2.html">gettid</A></B>(2),
 
+<B><A HREF="../man2/seccomp.2.html">seccomp</A></B>(2),
+
 <B><A HREF="../man2/sigaction.2.html">sigaction</A></B>(2),
 
 <B><A HREF="../man2/tgkill.2.html">tgkill</A></B>(2),
@@ -2882,6 +2943,6 @@ attach.)
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:35:23 GMT, April 20, 2020
+Time: 03:36:00 GMT, April 20, 2020
 </BODY>
 </HTML>

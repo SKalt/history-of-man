@@ -34,7 +34,7 @@ SUCH DAMAGE.
 <HTML><HEAD><TITLE>Man page of SYSCALL</TITLE>
 </HEAD><BODY>
 <H1>SYSCALL</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2014-12-31<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2015-01-22<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -196,14 +196,11 @@ and the register used to return the system call result.
 <TR VALIGN=top><TD COLSPAN=5><HR></TD></TR>
 <TR VALIGN=top><TD>arm/OABI</TD><TD>swi NR&nbsp;</TD><TD>-</TD><TD>a1&nbsp;</TD><TD>NR is syscall #<BR></TD></TR>
 <TR VALIGN=top><TD>arm/EABI</TD><TD>swi 0x0&nbsp;</TD><TD>r7</TD><TD>r0&nbsp;</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD>arm64</TD><TD>svc #0&nbsp;</TD><TD>x8</TD><TD>x0&nbsp;</TD><TD><BR></TD></TR>
 <TR VALIGN=top><TD>blackfin</TD><TD>excpt 0x0&nbsp;</TD><TD>P0</TD><TD>R0&nbsp;</TD><TD><BR></TD></TR>
 <TR VALIGN=top><TD>i386</TD><TD>int $0x80&nbsp;</TD><TD>eax</TD><TD>eax&nbsp;</TD><TD><BR></TD></TR>
-<TR VALIGN=top><TD>ia64</TD><TD>break 0x100000&nbsp;</TD><TD>r15</TD><TD>r10/r8&nbsp;</TD><TD>
-bool error/
-<BR>
-
-errno value
-<BR></TD></TR>
+<TR VALIGN=top><TD>ia64</TD><TD>break 0x100000&nbsp;</TD><TD>r15</TD><TD>r8&nbsp;</TD><TD>See below<BR></TD></TR>
+<TR VALIGN=top><TD>mips</TD><TD>syscall&nbsp;</TD><TD>v0</TD><TD>v0&nbsp;</TD><TD>See below<BR></TD></TR>
 <TR VALIGN=top><TD>parisc</TD><TD>ble 0x100(%sr2, %r0)&nbsp;</TD><TD>r20</TD><TD>r28&nbsp;</TD><TD><BR></TD></TR>
 <TR VALIGN=top><TD>s390</TD><TD>svc 0&nbsp;</TD><TD>r1</TD><TD>r2&nbsp;</TD><TD>See below<BR></TD></TR>
 <TR VALIGN=top><TD>s390x</TD><TD>svc 0&nbsp;</TD><TD>r1</TD><TD>r2&nbsp;</TD><TD>See below<BR></TD></TR>
@@ -216,27 +213,44 @@ errno value
 
 For s390 and s390x, NR (the system call number)
 may be passed directly with &quot;svc NR&quot; if it is less than 256.
+<P>
+On a few architectures,
+a register is used to indicate simple boolean failure of the system call:
+ia64 uses
+<I>r10</I>
+
+for this purpose,
+and mips uses
+<I>a3</I>.
+
 
 <P>
 
 The second table shows the registers used to pass the system call arguments.
 
 <TABLE>
-<TR VALIGN=top><TD>arch/ABI</TD><TD>arg1</TD><TD>arg2</TD><TD>arg3</TD><TD>arg4</TD><TD>arg5</TD><TD>arg6</TD><TD>arg7<BR></TD></TR>
-<TR VALIGN=top><TD COLSPAN=8><HR></TD></TR>
-<TR VALIGN=top><TD>arm/OABI</TD><TD>a1</TD><TD>a2</TD><TD>a3</TD><TD>a4</TD><TD>v1</TD><TD>v2</TD><TD>v3<BR></TD></TR>
-<TR VALIGN=top><TD>arm/EABI</TD><TD>r0</TD><TD>r1</TD><TD>r2</TD><TD>r3</TD><TD>r4</TD><TD>r5</TD><TD>r6<BR></TD></TR>
-<TR VALIGN=top><TD>blackfin</TD><TD>R0</TD><TD>R1</TD><TD>R2</TD><TD>R3</TD><TD>R4</TD><TD>R5</TD><TD>-<BR></TD></TR>
-<TR VALIGN=top><TD>i386</TD><TD>ebx</TD><TD>ecx</TD><TD>edx</TD><TD>esi</TD><TD>edi</TD><TD>ebp</TD><TD>-<BR></TD></TR>
-<TR VALIGN=top><TD>ia64</TD><TD>out0</TD><TD>out1</TD><TD>out2</TD><TD>out3</TD><TD>out4</TD><TD>out5</TD><TD>-<BR></TD></TR>
-<TR VALIGN=top><TD>parisc</TD><TD>r26</TD><TD>r25</TD><TD>r24</TD><TD>r23</TD><TD>r22</TD><TD>r21</TD><TD>-<BR></TD></TR>
-<TR VALIGN=top><TD>s390</TD><TD>r2</TD><TD>r3</TD><TD>r4</TD><TD>r5</TD><TD>r6</TD><TD>r7</TD><TD>-<BR></TD></TR>
-<TR VALIGN=top><TD>s390x</TD><TD>r2</TD><TD>r3</TD><TD>r4</TD><TD>r5</TD><TD>r6</TD><TD>r7</TD><TD>-<BR></TD></TR>
-<TR VALIGN=top><TD>sparc/32</TD><TD>o0</TD><TD>o1</TD><TD>o2</TD><TD>o3</TD><TD>o4</TD><TD>o5</TD><TD>-<BR></TD></TR>
-<TR VALIGN=top><TD>sparc/64</TD><TD>o0</TD><TD>o1</TD><TD>o2</TD><TD>o3</TD><TD>o4</TD><TD>o5</TD><TD>-<BR></TD></TR>
-<TR VALIGN=top><TD>x86_64</TD><TD>rdi</TD><TD>rsi</TD><TD>rdx</TD><TD>r10</TD><TD>r8</TD><TD>r9</TD><TD>-<BR></TD></TR>
+<TR VALIGN=top><TD>arch/ABI</TD><TD>arg1&nbsp;&nbsp;</TD><TD>arg2&nbsp;&nbsp;</TD><TD>arg3&nbsp;&nbsp;</TD><TD>arg4&nbsp;&nbsp;</TD><TD>arg5&nbsp;&nbsp;</TD><TD>arg6&nbsp;&nbsp;</TD><TD>arg7&nbsp;&nbsp;</TD><TD>Notes<BR></TD></TR>
+<TR VALIGN=top><TD COLSPAN=9><HR></TD></TR>
+<TR VALIGN=top><TD>arm/OABI</TD><TD>a1&nbsp;&nbsp;</TD><TD>a2&nbsp;&nbsp;</TD><TD>a3&nbsp;&nbsp;</TD><TD>a4&nbsp;&nbsp;</TD><TD>v1&nbsp;&nbsp;</TD><TD>v2&nbsp;&nbsp;</TD><TD>v3&nbsp;&nbsp;</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD>arm/EABI</TD><TD>r0&nbsp;&nbsp;</TD><TD>r1&nbsp;&nbsp;</TD><TD>r2&nbsp;&nbsp;</TD><TD>r3&nbsp;&nbsp;</TD><TD>r4&nbsp;&nbsp;</TD><TD>r5&nbsp;&nbsp;</TD><TD>r6&nbsp;&nbsp;</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD>arm64</TD><TD>x0&nbsp;&nbsp;</TD><TD>x1&nbsp;&nbsp;</TD><TD>x2&nbsp;&nbsp;</TD><TD>x3&nbsp;&nbsp;</TD><TD>x4&nbsp;&nbsp;</TD><TD>x5&nbsp;&nbsp;</TD><TD>-&nbsp;&nbsp;</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD>blackfin</TD><TD>R0&nbsp;&nbsp;</TD><TD>R1&nbsp;&nbsp;</TD><TD>R2&nbsp;&nbsp;</TD><TD>R3&nbsp;&nbsp;</TD><TD>R4&nbsp;&nbsp;</TD><TD>R5&nbsp;&nbsp;</TD><TD>-&nbsp;&nbsp;</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD>i386</TD><TD>ebx&nbsp;&nbsp;</TD><TD>ecx&nbsp;&nbsp;</TD><TD>edx&nbsp;&nbsp;</TD><TD>esi&nbsp;&nbsp;</TD><TD>edi&nbsp;&nbsp;</TD><TD>ebp&nbsp;&nbsp;</TD><TD>-&nbsp;&nbsp;</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD>ia64</TD><TD>out0&nbsp;&nbsp;</TD><TD>out1&nbsp;&nbsp;</TD><TD>out2&nbsp;&nbsp;</TD><TD>out3&nbsp;&nbsp;</TD><TD>out4&nbsp;&nbsp;</TD><TD>out5&nbsp;&nbsp;</TD><TD>-&nbsp;&nbsp;</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD>mips/o32</TD><TD>a0&nbsp;&nbsp;</TD><TD>a1&nbsp;&nbsp;</TD><TD>a2&nbsp;&nbsp;</TD><TD>a3&nbsp;&nbsp;</TD><TD>-&nbsp;&nbsp;</TD><TD>-&nbsp;&nbsp;</TD><TD>-&nbsp;&nbsp;</TD><TD>See below<BR></TD></TR>
+<TR VALIGN=top><TD>mips/n32,64</TD><TD>a0&nbsp;&nbsp;</TD><TD>a1&nbsp;&nbsp;</TD><TD>a2&nbsp;&nbsp;</TD><TD>a3&nbsp;&nbsp;</TD><TD>a4&nbsp;&nbsp;</TD><TD>a5&nbsp;&nbsp;</TD><TD>-&nbsp;&nbsp;</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD>parisc</TD><TD>r26&nbsp;&nbsp;</TD><TD>r25&nbsp;&nbsp;</TD><TD>r24&nbsp;&nbsp;</TD><TD>r23&nbsp;&nbsp;</TD><TD>r22&nbsp;&nbsp;</TD><TD>r21&nbsp;&nbsp;</TD><TD>-&nbsp;&nbsp;</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD>s390</TD><TD>r2&nbsp;&nbsp;</TD><TD>r3&nbsp;&nbsp;</TD><TD>r4&nbsp;&nbsp;</TD><TD>r5&nbsp;&nbsp;</TD><TD>r6&nbsp;&nbsp;</TD><TD>r7&nbsp;&nbsp;</TD><TD>-&nbsp;&nbsp;</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD>s390x</TD><TD>r2&nbsp;&nbsp;</TD><TD>r3&nbsp;&nbsp;</TD><TD>r4&nbsp;&nbsp;</TD><TD>r5&nbsp;&nbsp;</TD><TD>r6&nbsp;&nbsp;</TD><TD>r7&nbsp;&nbsp;</TD><TD>-&nbsp;&nbsp;</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD>sparc/32</TD><TD>o0&nbsp;&nbsp;</TD><TD>o1&nbsp;&nbsp;</TD><TD>o2&nbsp;&nbsp;</TD><TD>o3&nbsp;&nbsp;</TD><TD>o4&nbsp;&nbsp;</TD><TD>o5&nbsp;&nbsp;</TD><TD>-&nbsp;&nbsp;</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD>sparc/64</TD><TD>o0&nbsp;&nbsp;</TD><TD>o1&nbsp;&nbsp;</TD><TD>o2&nbsp;&nbsp;</TD><TD>o3&nbsp;&nbsp;</TD><TD>o4&nbsp;&nbsp;</TD><TD>o5&nbsp;&nbsp;</TD><TD>-&nbsp;&nbsp;</TD><TD><BR></TD></TR>
+<TR VALIGN=top><TD>x86_64</TD><TD>rdi&nbsp;&nbsp;</TD><TD>rsi&nbsp;&nbsp;</TD><TD>rdx&nbsp;&nbsp;</TD><TD>r10&nbsp;&nbsp;</TD><TD>r8&nbsp;&nbsp;</TD><TD>r9&nbsp;&nbsp;</TD><TD>-&nbsp;&nbsp;</TD><TD><BR></TD></TR>
 </TABLE>
 
+<P>
+
+The mips/o32 system call convention passes
+arguments 5 through 8 on the user stack.
 
 <P>
 
@@ -296,6 +310,6 @@ main(int argc, char *argv[])
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:35:25 GMT, April 20, 2020
+Time: 03:36:02 GMT, April 20, 2020
 </BODY>
 </HTML>

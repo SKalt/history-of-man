@@ -26,7 +26,7 @@ the source, must acknowledge the copyright and authors of this work.
 <HTML><HEAD><TITLE>Man page of READV</TITLE>
 </HEAD><BODY>
 <H1>READV</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2014-10-15<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2015-01-22<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -280,7 +280,10 @@ values overflows an
 <I>ssize_t</I>
 
 value.
-Or, the vector count <I>iovcnt</I> is less than zero or greater than the
+<DT><B>EINVAL</B>
+
+<DD>
+The vector count <I>iovcnt</I> is less than zero or greater than the
 permitted maximum.
 </DL>
 <A NAME="lbAH">&nbsp;</A>
@@ -313,9 +316,6 @@ nonstandard, but present also on the modern BSDs.
 <A NAME="lbAJ">&nbsp;</A>
 <H2>NOTES</H2>
 
-<A NAME="lbAK">&nbsp;</A>
-<H3>C library/kernel ABI differences</H3>
-
 POSIX.1-2001 allows an implementation to place a limit on
 the number of items that can be passed in
 <I>iov</I>.
@@ -329,35 +329,11 @@ in
 or at run time via the return value from
 <I>sysconf(_SC_IOV_MAX)</I>.
 
-On Linux, the limit advertised by these mechanisms is 1024,
-which is the true kernel limit.
-However, the glibc wrapper functions do some extra work if
-they detect that the underlying kernel system call failed because this
-limit was exceeded.
-In the case of
-<B>readv</B>(),
+On modern Linux systems, the limit is 1024.
+Back in Linux 2.0 days, this limit was 16.
+<A NAME="lbAK">&nbsp;</A>
+<H3>C library/kernel ABI differences</H3>
 
-the wrapper function allocates a temporary buffer large enough
-for all of the items specified by
-<I>iov</I>,
-
-passes that buffer in a call to
-<B><A HREF="../man2/read.2.html">read</A></B>(2),
-
-copies data from the buffer to the locations specified by the
-<I>iov_base</I>
-
-fields of the elements of
-<I>iov</I>,
-
-and then frees the buffer.
-The wrapper function for
-<B>writev</B>()
-
-performs the analogous task using a temporary buffer and a call to
-<B><A HREF="../man2/write.2.html">write</A></B>(2).
-
-<P>
 The raw
 <B>preadv</B>()
 
@@ -378,6 +354,55 @@ These arguments contain, respectively, the low order and high order 32 bits of
 <I>offset</I>.
 
 <A NAME="lbAL">&nbsp;</A>
+<H3>Historical C library/kernel ABI differences</H3>
+
+To deal with the fact that
+<B>IOV_MAX</B>
+
+was so low on early versions of Linux,
+the glibc wrapper functions for
+<B>readv</B>()
+
+and
+<B>writev</B>()
+
+did some extra work if they detected that the underlying kernel
+system call failed because this limit was exceeded.
+In the case of
+<B>readv</B>(),
+
+the wrapper function allocated a temporary buffer large enough
+for all of the items specified by
+<I>iov</I>,
+
+passed that buffer in a call to
+<B><A HREF="../man2/read.2.html">read</A></B>(2),
+
+copied data from the buffer to the locations specified by the
+<I>iov_base</I>
+
+fields of the elements of
+<I>iov</I>,
+
+and then freed the buffer.
+The wrapper function for
+<B>writev</B>()
+
+performed the analogous task using a temporary buffer and a call to
+<B><A HREF="../man2/write.2.html">write</A></B>(2).
+
+<P>
+The need for this extra effort in the glibc wrapper functions
+went away with Linux 2.2 and later.
+However, glibc continued to provide this behavior until version 2.10.
+Starting with glibc version 2.9,
+the wrapper functions provide this behavior only if the library detects
+that the system is running a Linux kernel older than version 2.6.18
+(an arbitrarily selected kernel version).
+And since glibc 2.20
+(which requires a minimum Linux kernel version of 2.6.32),
+the glibc wrapper functions always just directly invoke the system calls.
+<A NAME="lbAM">&nbsp;</A>
 <H2>BUGS</H2>
 
 It is not advisable to mix calls to
@@ -388,7 +413,7 @@ or
 
 which operate on file descriptors, with the functions from the stdio
 library; the results will be undefined and probably not what you want.
-<A NAME="lbAM">&nbsp;</A>
+<A NAME="lbAN">&nbsp;</A>
 <H2>EXAMPLE</H2>
 
 The following code sample demonstrates the use of
@@ -411,7 +436,7 @@ nwritten = writev(STDOUT_FILENO, iov, 2);
 </PRE>
 
 
-<A NAME="lbAN">&nbsp;</A>
+<A NAME="lbAO">&nbsp;</A>
 <H2>SEE ALSO</H2>
 
 <B><A HREF="../man2/pread.2.html">pread</A></B>(2),
@@ -438,15 +463,16 @@ nwritten = writev(STDOUT_FILENO, iov, 2);
 <DT><A HREF="#lbAJ">NOTES</A><DD>
 <DL>
 <DT><A HREF="#lbAK">C library/kernel ABI differences</A><DD>
+<DT><A HREF="#lbAL">Historical C library/kernel ABI differences</A><DD>
 </DL>
-<DT><A HREF="#lbAL">BUGS</A><DD>
-<DT><A HREF="#lbAM">EXAMPLE</A><DD>
-<DT><A HREF="#lbAN">SEE ALSO</A><DD>
+<DT><A HREF="#lbAM">BUGS</A><DD>
+<DT><A HREF="#lbAN">EXAMPLE</A><DD>
+<DT><A HREF="#lbAO">SEE ALSO</A><DD>
 </DL>
 <HR>
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:35:23 GMT, April 20, 2020
+Time: 03:36:01 GMT, April 20, 2020
 </BODY>
 </HTML>

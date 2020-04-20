@@ -25,7 +25,7 @@ the source, must acknowledge the copyright and authors of this work.
 <HTML><HEAD><TITLE>Man page of FCNTL</TITLE>
 </HEAD><BODY>
 <H1>FCNTL</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2014-09-06<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2015-01-22<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -1734,8 +1734,200 @@ of buffer space currently used to store data produces the error
 Return (as the function result) the capacity of the pipe referred to by
 <I>fd</I>.
 
+
 </DL>
 <A NAME="lbAO">&nbsp;</A>
+<H3>File Sealing</H3>
+
+File seals limit the set of allowed operations on a given file.
+For each seal that is set on a file,
+a specific set of operations will fail with
+<B>EPERM</B>
+
+on this file from now on.
+The file is said to be sealed.
+The default set of seals depends on the type of the underlying
+file and filesystem.
+For an overview of file sealing, a discussion of its purpose,
+and some code examples, see
+<B><A HREF="../man2/memfd_create.2.html">memfd_create</A></B>(2).
+
+<P>
+Currently, only the
+<I>tmpfs</I>
+
+filesystem supports sealing.
+On other filesystems, all
+<B><A HREF="../man2/fcntl.2.html">fcntl</A></B>(2)
+
+operations that operate on seals will return
+<B>EINVAL</B>.
+
+<P>
+Seals are a property of an inode.
+Thus, all open file descriptors referring to the same inode share
+the same set of seals.
+Furthermore, seals can never be removed, only added.
+<DL COMPACT>
+<DT><B>F_ADD_SEALS</B> (<I>int</I>; since Linux 3.17)
+
+<DD>
+Add the seals given in the bit-mask argument
+<I>arg</I>
+
+to the set of seals of the inode referred to by the file descriptor
+<I>fd</I>.
+
+Seals cannot be removed again.
+Once this call succeeds, the seals are enforced by the kernel immediately.
+If the current set of seals includes
+<B>F_SEAL_SEAL</B>
+
+(see below), then this call will be rejected with
+<B>EPERM</B>.
+
+Adding a seal that is already set is a no-op, in case
+<B>F_SEAL_SEAL</B>
+
+is not set already.
+In order to place a seal, the file descriptor
+<I>fd</I>
+
+must be writable.
+<DT><B>F_GET_SEALS</B> (<I>void</I>; since Linux 3.17)
+
+<DD>
+Return (as the function result) the current set of seals
+of the inode referred to by
+<I>fd</I>.
+
+If no seals are set, 0 is returned.
+If the file does not support sealing, -1 is returned and
+<I>errno</I>
+
+is set to
+<B>EINVAL</B>.
+
+</DL>
+<P>
+
+The following seals are available:
+<DL COMPACT>
+<DT><B>F_SEAL_SEAL</B>
+
+<DD>
+If this seal is set, any further call to
+<B><A HREF="../man2/fcntl.2.html">fcntl</A></B>(2)
+
+with
+<B>F_ADD_SEALS</B>
+
+will fail with
+<B>EPERM</B>.
+
+Therefore, this seal prevents any modifications to the set of seals itself.
+If the initial set of seals of a file includes
+<B>F_SEAL_SEAL</B>,
+
+then this effectively causes the set of seals to be constant and locked.
+<DT><B>F_SEAL_SHRINK</B>
+
+<DD>
+If this seal is set, the file in question cannot be reduced in size.
+This affects
+<B><A HREF="../man2/open.2.html">open</A></B>(2)
+
+with the
+<B>O_TRUNC</B>
+
+flag as well as
+<B><A HREF="../man2/truncate.2.html">truncate</A></B>(2)
+
+and
+<B><A HREF="../man2/ftruncate.2.html">ftruncate</A></B>(2).
+
+Those calls will fail with
+<B>EPERM</B>
+
+if you try to shrink the file in question.
+Increasing the file size is still possible.
+<DT><B>F_SEAL_GROW</B>
+
+<DD>
+If this seal is set, the size of the file in question cannot be increased.
+This affects
+<B><A HREF="../man2/write.2.html">write</A></B>(2)
+
+beyond the end of the file,
+<B><A HREF="../man2/truncate.2.html">truncate</A></B>(2),
+
+<B><A HREF="../man2/ftruncate.2.html">ftruncate</A></B>(2),
+
+and
+<B><A HREF="../man2/fallocate.2.html">fallocate</A></B>(2).
+
+These calls will fail with
+<B>EPERM</B>
+
+if you use them to increase the file size.
+If you keep the size or shrink it, those calls still work as expected.
+<DT><B>F_SEAL_WRITE</B>
+
+<DD>
+If this seal is set, you cannot modify the contents of the file.
+Note that shrinking or growing the size of the file is
+still possible and allowed.
+
+
+
+
+
+
+
+
+Thus, this seal is normally used in combination with one of the other seals.
+This seal affects
+<B><A HREF="../man2/write.2.html">write</A></B>(2)
+
+and
+<B><A HREF="../man2/fallocate.2.html">fallocate</A></B>(2)
+
+(only in combination with the
+<B>FALLOC_FL_PUNCH_HOLE</B>
+
+flag).
+Those calls will fail with
+<B>EPERM</B>
+
+if this seal is set.
+Furthermore, trying to create new shared, writable memory-mappings via
+<B><A HREF="../man2/mmap.2.html">mmap</A></B>(2)
+
+will also fail with
+<B>EPERM</B>.
+
+<P>
+Setting
+<B>F_SEAL_WRITE</B>
+
+via
+<B><A HREF="../man2/fcntl.2.html">fcntl</A></B>(2)
+
+with
+<B>F_ADD_SEALS</B>
+
+will fail with
+<B>EBUSY</B>
+
+if any writable, shared mapping exists.
+Such mappings must be unmapped before you can add this seal.
+Furthermore, if there are any asynchronous I/O operations
+(<B><A HREF="../man2/io_submit.2.html">io_submit</A></B>(2))
+
+pending on the file,
+all outstanding writes will be discarded.
+</DL>
+<A NAME="lbAP">&nbsp;</A>
 <H2>RETURN VALUE</H2>
 
 For a successful call, the return value depends on the operation:
@@ -1772,6 +1964,13 @@ behavior.
 
 <DD>
 The pipe capacity.
+<DT><B>F_GET_SEALS</B>
+
+<DD>
+A bit mask identifying the seals that have been set
+for the inode referred to by
+<I>fd</I>.
+
 <DT>All other commands<DD>
 Zero.
 </DL>
@@ -1781,7 +1980,7 @@ On error, -1 is returned, and
 <I>errno</I>
 
 is set appropriately.
-<A NAME="lbAP">&nbsp;</A>
+<A NAME="lbAQ">&nbsp;</A>
 <H2>ERRORS</H2>
 
 <DL COMPACT>
@@ -1799,7 +1998,13 @@ another process.
 <DD>
 <I>fd</I>
 
-is not an open file descriptor, or the command was
+is not an open file descriptor
+<DT><B>EBADF</B>
+
+<DD>
+<I>cmd</I>
+
+is
 <B>F_SETLK</B>
 
 or
@@ -1807,6 +2012,35 @@ or
 
 and the file descriptor open mode doesn't match with the
 type of lock requested.
+<DT><B>EBUSY</B>
+
+<DD>
+<I>cmd</I>
+
+is
+<B>F_SETPIPE_SZ</B>
+
+and the new pipe capacity specified in
+<I>arg</I>
+
+is smaller than the amount of buffer space currently
+used to store data in the pipe.
+<DT><B>EBUSY</B>
+
+<DD>
+<I>cmd</I>
+
+is
+<B>F_ADD_SEALS</B>,
+
+<I>arg</I>
+
+includes
+<B>F_SEAL_WRITE</B>,
+
+and there exists a writable, shared mapping on the file referred to by
+<I>fd</I>.
+
 <DT><B>EDEADLK</B>
 
 <DD>
@@ -1823,16 +2057,33 @@ is outside your accessible address space.
 <DT><B>EINTR</B>
 
 <DD>
-For
-<B>F_SETLKW</B>,
+<I>cmd</I>
 
-the command was interrupted by a signal; see
+is
+<B>F_SETLKW</B>
+
+or
+<B>F_OFD_SETLKW</B>
+
+and the operation was interrupted by a signal; see
 <B><A HREF="../man7/signal.7.html">signal</A></B>(7).
 
-For
-<B>F_GETLK</B> and <B>F_SETLK</B>,
+<DT><B>EINTR</B>
 
-the command was interrupted by a signal before the lock was checked or
+<DD>
+<I>cmd</I>
+
+is
+<B>F_GETLK</B>,
+
+<B>F_SETLK</B>,
+
+<B>F_OFD_GETLK</B>,
+
+or
+<B>F_OFD_SETLK</B>,
+
+and the operation was interrupted by a signal before the lock was checked or
 acquired.
 Most likely when locking a remote file (e.g., locking over
 NFS), but can sometimes happen locally.
@@ -1846,15 +2097,57 @@ is not recognized by this kernel.
 <DT><B>EINVAL</B>
 
 <DD>
-For
-<B>F_DUPFD</B>,
+<I>cmd</I>
 
+is
+<B>F_ADD_SEALS</B>
+
+and
 <I>arg</I>
 
-is negative or is greater than the maximum allowable value.
-For
-<B>F_SETSIG</B>,
+includes an unrecognized sealing bit.
+<DT><B>EINVAL</B>
 
+<DD>
+<I>cmd</I>
+
+is
+<B>F_ADD_SEALS</B>
+
+or
+<B>F_GET_SEALS</B>
+
+and the filesystem containing the inode referred to by
+<I>fd</I>
+
+does not support sealing.
+<DT><B>EINVAL</B>
+
+<DD>
+<I>cmd</I>
+
+is
+<B>F_DUPFD</B>
+
+and
+<I>arg</I>
+
+is negative or is greater than the maximum allowable value
+(see the discussion of
+<B>RLIMIT_NOFILE</B>
+
+in
+<B><A HREF="../man2/getrlimit.2.html">getrlimit</A></B>(2)).
+
+<DT><B>EINVAL</B>
+
+<DD>
+<I>cmd</I>
+
+is
+<B>F_SETSIG</B>
+
+and
 <I>arg</I>
 
 is not an allowable signal number.
@@ -1878,10 +2171,12 @@ was not specified as zero.
 <DT><B>EMFILE</B>
 
 <DD>
-For
-<B>F_DUPFD</B>,
+<I>cmd</I>
 
-the process already has the maximum number of file descriptors open.
+is
+<B>F_DUPFD</B>
+
+and the process already has the maximum number of file descriptors open.
 <DT><B>ENOLCK</B>
 
 <DD>
@@ -1906,8 +2201,23 @@ Attempted to clear the
 <B>O_APPEND</B>
 
 flag on a file that has the append-only attribute set.
+<DT><B>EPERM</B>
+
+<DD>
+<I>cmd</I>
+
+was
+<B>F_ADD_SEALS</B>,
+
+but
+<I>fd</I>
+
+was not open for writing
+or the current set of seals on the file already includes
+<B>F_SEAL_SEAL</B>.
+
 </DL>
-<A NAME="lbAQ">&nbsp;</A>
+<A NAME="lbAR">&nbsp;</A>
 <H2>CONFORMING TO</H2>
 
 SVr4, 4.3BSD, POSIX.1-2001.
@@ -1998,7 +2308,15 @@ are Linux-specific (and one must define
 
 to obtain their definitions),
 but work is being done to have them included in the next version of POSIX.1.
-<A NAME="lbAR">&nbsp;</A>
+<P>
+<B>F_ADD_SEALS</B>
+
+and
+<B>F_GET_SEALS</B>
+
+are Lnux-specific.
+
+<A NAME="lbAS">&nbsp;</A>
 <H2>NOTES</H2>
 
 The errors returned by
@@ -2008,7 +2326,7 @@ are different from those returned by
 <B>F_DUPFD</B>.
 
 
-<A NAME="lbAS">&nbsp;</A>
+<A NAME="lbAT">&nbsp;</A>
 <H3>File locking</H3>
 
 The original Linux
@@ -2046,7 +2364,7 @@ The errors returned by
 are different from those returned by
 <B>F_DUPFD</B>.
 
-<A NAME="lbAT">&nbsp;</A>
+<A NAME="lbAU">&nbsp;</A>
 <H3>Record locks</H3>
 
 Since kernel 2.0, there is no interaction between the types of lock
@@ -2100,7 +2418,7 @@ However, these details can be ignored by applications using glibc, whose
 
 wrapper function transparently employs the more recent system call
 where it is available.
-<A NAME="lbAU">&nbsp;</A>
+<A NAME="lbAV">&nbsp;</A>
 <H3>Record locking and NFS</H3>
 
 Before Linux 3.12, if an NFSv4 client
@@ -2146,10 +2464,10 @@ when contact is reestablished with the server.
 Because of the attendant risk of data corruption,
 
 this parameter defaults to 0 (disabled).
-<A NAME="lbAV">&nbsp;</A>
+<A NAME="lbAW">&nbsp;</A>
 <H2>BUGS</H2>
 
-<A NAME="lbAW">&nbsp;</A>
+<A NAME="lbAX">&nbsp;</A>
 <H3>F_SETFL</H3>
 
 It is not possible to use
@@ -2166,7 +2484,7 @@ flags.
 
 
 Attempts to change the state of these flags are silently ignored.
-<A NAME="lbAX">&nbsp;</A>
+<A NAME="lbAY">&nbsp;</A>
 <H3>F_GETOWN</H3>
 
 A limitation of the Linux system call conventions on some
@@ -2201,7 +2519,7 @@ problem invisible by implementing
 using
 <B>F_GETOWN_EX</B>.
 
-<A NAME="lbAY">&nbsp;</A>
+<A NAME="lbAZ">&nbsp;</A>
 <H3>F_SETOWN</H3>
 
 In Linux 2.4 and earlier, there is bug that can occur
@@ -2225,7 +2543,7 @@ has permission to send signals to.
 Despite this error return, the file descriptor owner is set,
 and signals will be sent to the owner.
 
-<A NAME="lbAZ">&nbsp;</A>
+<A NAME="lbBA">&nbsp;</A>
 <H3>Deadlock detection</H3>
 
 The deadlock-detection algorithm employed by the kernel when dealing with
@@ -2250,7 +2568,7 @@ when two or more processes created using the
 
 flag place locks that appear (to the kernel) to conflict.
 
-<A NAME="lbBA">&nbsp;</A>
+<A NAME="lbBB">&nbsp;</A>
 <H3>Mandatory locking</H3>
 
 The Linux implementation of mandatory locking
@@ -2277,7 +2595,7 @@ Similar races exist between mandatory locks and
 <B><A HREF="../man2/mmap.2.html">mmap</A></B>(2).
 
 It is therefore inadvisable to rely on mandatory locking.
-<A NAME="lbBB">&nbsp;</A>
+<A NAME="lbBC">&nbsp;</A>
 <H2>SEE ALSO</H2>
 
 <B><A HREF="../man2/dup2.2.html">dup2</A></B>(2),
@@ -2333,30 +2651,31 @@ is called
 <DT><A HREF="#lbAL">Leases</A><DD>
 <DT><A HREF="#lbAM">File and directory change notification (dnotify)</A><DD>
 <DT><A HREF="#lbAN">Changing the capacity of a pipe</A><DD>
+<DT><A HREF="#lbAO">File Sealing</A><DD>
 </DL>
-<DT><A HREF="#lbAO">RETURN VALUE</A><DD>
-<DT><A HREF="#lbAP">ERRORS</A><DD>
-<DT><A HREF="#lbAQ">CONFORMING TO</A><DD>
-<DT><A HREF="#lbAR">NOTES</A><DD>
+<DT><A HREF="#lbAP">RETURN VALUE</A><DD>
+<DT><A HREF="#lbAQ">ERRORS</A><DD>
+<DT><A HREF="#lbAR">CONFORMING TO</A><DD>
+<DT><A HREF="#lbAS">NOTES</A><DD>
 <DL>
-<DT><A HREF="#lbAS">File locking</A><DD>
-<DT><A HREF="#lbAT">Record locks</A><DD>
-<DT><A HREF="#lbAU">Record locking and NFS</A><DD>
+<DT><A HREF="#lbAT">File locking</A><DD>
+<DT><A HREF="#lbAU">Record locks</A><DD>
+<DT><A HREF="#lbAV">Record locking and NFS</A><DD>
 </DL>
-<DT><A HREF="#lbAV">BUGS</A><DD>
+<DT><A HREF="#lbAW">BUGS</A><DD>
 <DL>
-<DT><A HREF="#lbAW">F_SETFL</A><DD>
-<DT><A HREF="#lbAX">F_GETOWN</A><DD>
-<DT><A HREF="#lbAY">F_SETOWN</A><DD>
-<DT><A HREF="#lbAZ">Deadlock detection</A><DD>
-<DT><A HREF="#lbBA">Mandatory locking</A><DD>
+<DT><A HREF="#lbAX">F_SETFL</A><DD>
+<DT><A HREF="#lbAY">F_GETOWN</A><DD>
+<DT><A HREF="#lbAZ">F_SETOWN</A><DD>
+<DT><A HREF="#lbBA">Deadlock detection</A><DD>
+<DT><A HREF="#lbBB">Mandatory locking</A><DD>
 </DL>
-<DT><A HREF="#lbBB">SEE ALSO</A><DD>
+<DT><A HREF="#lbBC">SEE ALSO</A><DD>
 </DL>
 <HR>
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:35:22 GMT, April 20, 2020
+Time: 03:35:59 GMT, April 20, 2020
 </BODY>
 </HTML>

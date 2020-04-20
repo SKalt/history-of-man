@@ -26,7 +26,7 @@ the source, must acknowledge the copyright and authors of this work.
 <HTML><HEAD><TITLE>Man page of SIGACTION</TITLE>
 </HEAD><BODY>
 <H1>SIGACTION</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2014-12-31<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2015-01-22<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -529,10 +529,6 @@ fill in
 <I>si_addr</I>
 
 with the address of the fault.
-
-
-
-
 On some architectures,
 these signals also fill in the
 <I>si_trapno</I>
@@ -558,7 +554,28 @@ For example, if a full page was corrupted,
 contains
 <I>log2(sysconf(_SC_PAGESIZE))</I>.
 
-<B>BUS_MCERR_*</B>
+When
+<B>SIGTRAP</B>
+
+is delivered in response to a
+<B><A HREF="../man2/ptrace.2.html">ptrace</A></B>(2)
+
+event (PTRACE_EVENT_foo),
+<I>si_addr</I>
+
+is not populated, but
+<I>si_pid</I>
+
+and
+<I>si_uid</I>
+
+are populated with the respective process ID and user ID responsible for
+delivering the trap.
+In the case of
+<B><A HREF="../man2/seccomp.2.html">seccomp</A></B>(2),
+
+the tracee will be shown as delivering the event.
+<B>BUS_MCEERR_*</B>
 
 and
 <I>si_addr_lsb</I>
@@ -585,13 +602,12 @@ The
 
 field indicates the file descriptor for which the I/O event occurred.
 <DT>*<DD>
-The
-<B>SIGSYS</B>
+<B>SIGSYS</B>,
 
-signal that is (since Linux 3.5)
+generated (since Linux 3.5)
 
-generated when a seccomp filter returns
-<B>SECCOMP_RET_TRAP</B>
+when a seccomp filter returns
+<B>SECCOMP_RET_TRAP</B>,
 
 fills in
 <I>si_call_addr</I>,
@@ -600,7 +616,9 @@ fills in
 
 <I>si_arch</I>,
 
-and various other fields as described in
+<I>si_errno</I>,
+
+and other fields as described in
 <B><A HREF="../man2/seccomp.2.html">seccomp</A></B>(2).
 
 </DL>
@@ -608,9 +626,25 @@ and various other fields as described in
 
 <I>si_code</I>
 
-is a value (not a bit mask)
-indicating why this signal was sent.
-The following list shows the values which can be placed in
+is a value (not a bit mask) indicating why this signal was sent.
+For a
+<B><A HREF="../man2/ptrace.2.html">ptrace</A></B>(2)
+
+event,
+<I>si_code</I>
+
+will contain
+<B>SIGTRAP</B>
+
+and have the ptrace event in the high byte:
+<P>
+<PRE>
+    (SIGTRAP | PTRACE_EVENT_foo &lt;&lt; 8).
+</PRE>
+
+<P>
+For a regular signal, the following list shows the values which can be
+placed in
 <I>si_code</I>
 
 for any signal, along with reason that the signal was generated.
@@ -619,7 +653,7 @@ for any signal, along with reason that the signal was generated.
 <DT><B>SI_USER</B>
 
 <DD>
-<B><A HREF="../man2/kill.2.html">kill</A></B>(2)
+<B><A HREF="../man2/kill.2.html">kill</A></B>(2).
 
 <DT><B>SI_KERNEL</B>
 
@@ -628,22 +662,22 @@ Sent by the kernel.
 <DT><B>SI_QUEUE</B>
 
 <DD>
-<B><A HREF="../man3/sigqueue.3.html">sigqueue</A></B>(3)
+<B><A HREF="../man3/sigqueue.3.html">sigqueue</A></B>(3).
 
 <DT><B>SI_TIMER</B>
 
 <DD>
-POSIX timer expired
-<DT><B>SI_MESGQ</B>
+POSIX timer expired.
+<DT><B>SI_MESGQ</B> (since Linux 2.6.6)
 
 <DD>
-POSIX message queue state changed (since Linux 2.6.6); see
-<B><A HREF="../man3/mq_notify.3.html">mq_notify</A></B>(3)
+POSIX message queue state changed; see
+<B><A HREF="../man3/mq_notify.3.html">mq_notify</A></B>(3).
 
 <DT><B>SI_ASYNCIO</B>
 
 <DD>
-AIO completed
+AIO completed.
 <DT><B>SI_SIGIO</B>
 
 <DD>
@@ -657,17 +691,13 @@ fills in
 <I>si_code</I>
 
 as described below).
-<DT><B>SI_TKILL</B>
+<DT><B>SI_TKILL</B> (since Linux 2.4.19)
 
 <DD>
 <B><A HREF="../man2/tkill.2.html">tkill</A></B>(2)
 
 or
-<B><A HREF="../man2/tgkill.2.html">tgkill</A></B>(2)
-
-(since Linux 2.4.19)
-
-
+<B><A HREF="../man2/tgkill.2.html">tgkill</A></B>(2).
 
 
 
@@ -689,35 +719,35 @@ signal:
 <DT><B>ILL_ILLOPC</B>
 
 <DD>
-illegal opcode
+Illegal opcode.
 <DT><B>ILL_ILLOPN</B>
 
 <DD>
-illegal operand
+Illegal operand.
 <DT><B>ILL_ILLADR</B>
 
 <DD>
-illegal addressing mode
+Illegal addressing mode.
 <DT><B>ILL_ILLTRP</B>
 
 <DD>
-illegal trap
+Illegal trap.
 <DT><B>ILL_PRVOPC</B>
 
 <DD>
-privileged opcode
+Privileged opcode.
 <DT><B>ILL_PRVREG</B>
 
 <DD>
-privileged register
+Privileged register.
 <DT><B>ILL_COPROC</B>
 
 <DD>
-coprocessor error
+Coprocessor error.
 <DT><B>ILL_BADSTK</B>
 
 <DD>
-internal stack error
+Internal stack error.
 </DL>
 </DL>
 
@@ -735,35 +765,35 @@ signal:
 <DT><B>FPE_INTDIV</B>
 
 <DD>
-integer divide by zero
+Integer divide by zero.
 <DT><B>FPE_INTOVF</B>
 
 <DD>
-integer overflow
+Integer overflow.
 <DT><B>FPE_FLTDIV</B>
 
 <DD>
-floating-point divide by zero
+Floating-point divide by zero.
 <DT><B>FPE_FLTOVF</B>
 
 <DD>
-floating-point overflow
+Floating-point overflow.
 <DT><B>FPE_FLTUND</B>
 
 <DD>
-floating-point underflow
+Floating-point underflow.
 <DT><B>FPE_FLTRES</B>
 
 <DD>
-floating-point inexact result
+Floating-point inexact result.
 <DT><B>FPE_FLTINV</B>
 
 <DD>
-floating-point invalid operation
+Floating-point invalid operation.
 <DT><B>FPE_FLTSUB</B>
 
 <DD>
-subscript out of range
+Subscript out of range.
 </DL>
 </DL>
 
@@ -781,11 +811,11 @@ signal:
 <DT><B>SEGV_MAPERR</B>
 
 <DD>
-address not mapped to object
+Address not mapped to object.
 <DT><B>SEGV_ACCERR</B>
 
 <DD>
-invalid permissions for mapped object
+Invalid permissions for mapped object.
 </DL>
 </DL>
 
@@ -803,15 +833,15 @@ signal:
 <DT><B>BUS_ADRALN</B>
 
 <DD>
-invalid address alignment
+Invalid address alignment.
 <DT><B>BUS_ADRERR</B>
 
 <DD>
-nonexistent physical address
+Nonexistent physical address.
 <DT><B>BUS_OBJERR</B>
 
 <DD>
-object-specific hardware error
+Object-specific hardware error.
 <DT><B>BUS_MCEERR_AR</B> (since Linux 2.6.32)
 
 <DD>
@@ -837,19 +867,19 @@ signal:
 <DT><B>TRAP_BRKPT</B>
 
 <DD>
-process breakpoint
+Process breakpoint.
 <DT><B>TRAP_TRACE</B>
 
 <DD>
-process trace trap
+Process trace trap.
 <DT><B>TRAP_BRANCH</B> (since Linux 2.4)
 
 <DD>
-process taken branch trap
+Process taken branch trap.
 <DT><B>TRAP_HWBKPT</B> (since Linux 2.4)
 
 <DD>
-hardware breakpoint/watchpoint
+Hardware breakpoint/watchpoint.
 </DL>
 </DL>
 
@@ -867,27 +897,27 @@ signal:
 <DT><B>CLD_EXITED</B>
 
 <DD>
-child has exited
+Child has exited.
 <DT><B>CLD_KILLED</B>
 
 <DD>
-child was killed
+Child was killed.
 <DT><B>CLD_DUMPED</B>
 
 <DD>
-child terminated abnormally
+Child terminated abnormally.
 <DT><B>CLD_TRAPPED</B>
 
 <DD>
-traced child has trapped
+Traced child has trapped.
 <DT><B>CLD_STOPPED</B>
 
 <DD>
-child has stopped
-<DT><B>CLD_CONTINUED</B>
+Child has stopped.
+<DT><B>CLD_CONTINUED</B> (since Linux 2.6.9)
 
 <DD>
-stopped child has continued (since Linux 2.6.9)
+Stopped child has continued.
 </DL>
 </DL>
 
@@ -905,27 +935,48 @@ signal:
 <DT><B>POLL_IN</B>
 
 <DD>
-data input available
+Data input available.
 <DT><B>POLL_OUT</B>
 
 <DD>
-output buffers available
+Output buffers available.
 <DT><B>POLL_MSG</B>
 
 <DD>
-input message available
+Input message available.
 <DT><B>POLL_ERR</B>
 
 <DD>
-I/O error
+I/O error.
 <DT><B>POLL_PRI</B>
 
 <DD>
-high priority input available
+High priority input available.
 <DT><B>POLL_HUP</B>
 
 <DD>
-device disconnected
+Device disconnected.
+</DL>
+</DL>
+
+<P>
+
+The following value can be placed in
+<I>si_code</I>
+
+for a
+<B>SIGSYS</B>
+
+signal:
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT><B>SYS_SECCOMP</B> (since Linux 3.5)
+
+<DD>
+Triggered by a
+<B><A HREF="../man2/seccomp.2.html">seccomp</A></B>(2)
+
+filter rule.
 </DL>
 </DL>
 
@@ -1142,6 +1193,8 @@ See
 
 <B><A HREF="../man2/restart_syscall.2.html">restart_syscall</A></B>(2),
 
+<B><A HREF="../man2/seccomp.2.html">seccomp</A></B>(2)
+
 <B><A HREF="../man2/sigaltstack.2.html">sigaltstack</A></B>(2),
 
 <B><A HREF="../man2/signal.2.html">signal</A></B>(2),
@@ -1195,6 +1248,6 @@ See
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:35:24 GMT, April 20, 2020
+Time: 03:36:01 GMT, April 20, 2020
 </BODY>
 </HTML>
