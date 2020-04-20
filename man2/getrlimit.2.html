@@ -5,13 +5,13 @@ Copyright (c) 1992 Drew Eckhardt, March 28, 1992
 <HTML><HEAD><TITLE>Man page of GETRLIMIT</TITLE>
 </HEAD><BODY>
 <H1>GETRLIMIT</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2010-09-26<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2010-11-06<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
 <H2>NAME</H2>
 
-getrlimit, setrlimit - get/set resource limits
+getrlimit, setrlimit, prlimit - get/set resource limits
 <A NAME="lbAC">&nbsp;</A>
 <H2>SYNOPSIS</H2>
 
@@ -28,27 +28,38 @@ getrlimit, setrlimit - get/set resource limits
 
 <B>int setrlimit(int </B><I>resource</I><B>, const struct rlimit *</B><I>rlim</I><B>);</B>
 
+<P>
+<B>int prlimit(pid_t </B><I>pid</I><B>, int </B><I>resource</I><B>, const struct rlimit *</B><I>new_limit</I><B>,</B>
+
+<BR>
+
+<B>            struct rlimit *</B><I>old_limit</I><B>);</B>
+
+<P>
+
+Feature Test Macro Requirements for glibc (see
+<B><A HREF="../man7/feature_test_macros.7.html">feature_test_macros</A></B>(7)):
+
+
+<P>
+<B>prlimit</B>():
+
+_GNU_SOURCE
 <A NAME="lbAD">&nbsp;</A>
 <H2>DESCRIPTION</H2>
 
+The
+the
 <B>getrlimit</B>()
 
 and
 <B>setrlimit</B>()
 
-get and set resource limits respectively.
+system calls get and set resource limits respectively.
 Each resource has an associated soft and hard limit, as defined by the
 <I>rlimit</I>
 
-structure (the
-<I>rlim</I>
-
-argument to both
-<B>getrlimit</B>()
-
-and
-<B>setrlimit</B>()):
-
+structure:
 <P>
 
 
@@ -83,9 +94,10 @@ and in the structure passed to
 
 <P>
 
+The
 <I>resource</I>
 
-must be one of:
+argument must be one of:
 <DL COMPACT>
 <DT><B>RLIMIT_AS</B>
 
@@ -417,31 +429,110 @@ command-line arguments and environment variables; for details, see
 
 </DL>
 <A NAME="lbAE">&nbsp;</A>
+<H3>prlimit()</H3>
+
+
+
+
+The Linux-specific
+<B>prlimit</B>()
+
+system call combines and extends the functionality of
+<B>setrlimit</B>()
+
+and
+<B>getrlimit</B>().
+
+It can be used to both set and get the resource limits of an arbitrary process.
+<P>
+The
+<I>resource</I>
+
+argument has the same meaning as for
+<B>setrlimit</B>()
+
+and
+<B>getrlimit</B>().
+
+<P>
+If the
+<I>new_limit</I>
+
+argument is a not NULL, then the
+<I>rlimit</I>
+
+structure to which it points is used to set new values for
+the soft and hard limits for
+<I>resource</I>.
+
+If the
+<I>old_limit</I>
+
+argument is a not NULL, then a successful call to
+<B>prlimit</B>()
+
+places the previous soft and hard limits for
+<I>resource</I>
+
+in the
+<I>rlimit</I>
+
+structure pointed to by
+<I>old_limit</I>.
+
+<P>
+The
+<I>pid</I>
+
+argument specifies the ID of the process on which the call is to operate.
+If
+<I>pid</I>
+
+is 0, then the call applies to the calling process.
+To set or get the resources of a process other than itself,
+the caller must have the
+<B>CAP_SYS_RESOURCE</B>
+
+capability, or the
+real, effective, and saved set user IDs of the target process
+must match the real user ID of the caller
+<I>and</I>
+
+the real, effective, and saved set group IDs of the target process
+must match the real group ID of the caller.
+
+
+
+<A NAME="lbAF">&nbsp;</A>
 <H2>RETURN VALUE</H2>
 
-On success, zero is returned.
+On success, these system calls return 0.
 On error, -1 is returned, and
 <I>errno</I>
 
 is set appropriately.
-<A NAME="lbAF">&nbsp;</A>
+<A NAME="lbAG">&nbsp;</A>
 <H2>ERRORS</H2>
 
 <DL COMPACT>
 <DT><B>EFAULT</B>
 
 <DD>
-<I>rlim</I>
-
-points outside the accessible address space.
+A pointer argument points to a location
+outside the accessible address space.
 <DT><B>EINVAL</B>
 
 <DD>
+The value specified in
 <I>resource</I>
 
 is not valid;
+The value specified in
 or, for
-<B>setrlimit</B>():
+<B>setrlimit</B>()
+
+or
+<B>prlimit</B>():
 
 <I>rlim-&gt;rlim_cur</I>
 
@@ -451,30 +542,50 @@ was greater than
 <DT><B>EPERM</B>
 
 <DD>
-An unprivileged process tried to use
-<B>setrlimit</B>()
-
-to
-increase a soft or hard limit above the current hard limit; the
+An unprivileged process tried to raise the hard limit; the
 <B>CAP_SYS_RESOURCE</B>
 
 capability is required to do this.
-Or, the process tried to use
-<B>setrlimit</B>()
-
-to increase
-the soft or hard
+Or, the the caller tried to increase the hard
 <B>RLIMIT_NOFILE</B>
 
-limit above the current kernel
-maximum
+limit above the current kernel maximum
 (<B>NR_OPEN</B>).
 
+Or, the calling process did not have permission to set limits
+for the process specified by
+<I>pid</I>.
+
+<DT><B>ESRCH</B>
+
+<DD>
+Could not find a process with the ID specified in
+<I>pid</I>.
+
 </DL>
-<A NAME="lbAG">&nbsp;</A>
+<A NAME="lbAH">&nbsp;</A>
+<H2>VERSIONS</H2>
+
+<B>The</B>
+
+<B>prlimit</B>()
+
+system call is available since Linux 2.6.36.
+Library support is available since glibc 2.13.
+<A NAME="lbAI">&nbsp;</A>
 <H2>CONFORMING TO</H2>
 
+<B>getrlimit</B>(),
+
+<B>setrlimit</B>():
+
 SVr4, 4.3BSD, POSIX.1-2001.
+<BR>
+
+<B>prlimit</B>():
+
+Linux-specific.
+<P>
 <B>RLIMIT_MEMLOCK</B>
 
 and
@@ -498,7 +609,7 @@ and
 <B>RLIMIT_SIGPENDING</B>
 
 are Linux-specific.
-<A NAME="lbAH">&nbsp;</A>
+<A NAME="lbAJ">&nbsp;</A>
 <H2>NOTES</H2>
 
 A child process created via
@@ -533,8 +644,11 @@ For backward compatibility, glibc also provides
 All new applications should be written using
 <B>setrlimit</B>().
 
-<A NAME="lbAI">&nbsp;</A>
+<A NAME="lbAK">&nbsp;</A>
 <H2>BUGS</H2>
+
+
+
 
 In older Linux kernels, the
 <B>SIGXCPU</B>
@@ -589,7 +703,7 @@ when
 was greater than
 <I>rlim-&gt;rlim_max</I>.
 
-<A NAME="lbAJ">&nbsp;</A>
+<A NAME="lbAL">&nbsp;</A>
 <H2>SEE ALSO</H2>
 
 <B><A HREF="../man2/dup.2.html">dup</A></B>(2),
@@ -632,17 +746,21 @@ was greater than
 <DT><A HREF="#lbAB">NAME</A><DD>
 <DT><A HREF="#lbAC">SYNOPSIS</A><DD>
 <DT><A HREF="#lbAD">DESCRIPTION</A><DD>
-<DT><A HREF="#lbAE">RETURN VALUE</A><DD>
-<DT><A HREF="#lbAF">ERRORS</A><DD>
-<DT><A HREF="#lbAG">CONFORMING TO</A><DD>
-<DT><A HREF="#lbAH">NOTES</A><DD>
-<DT><A HREF="#lbAI">BUGS</A><DD>
-<DT><A HREF="#lbAJ">SEE ALSO</A><DD>
+<DL>
+<DT><A HREF="#lbAE">prlimit()</A><DD>
+</DL>
+<DT><A HREF="#lbAF">RETURN VALUE</A><DD>
+<DT><A HREF="#lbAG">ERRORS</A><DD>
+<DT><A HREF="#lbAH">VERSIONS</A><DD>
+<DT><A HREF="#lbAI">CONFORMING TO</A><DD>
+<DT><A HREF="#lbAJ">NOTES</A><DD>
+<DT><A HREF="#lbAK">BUGS</A><DD>
+<DT><A HREF="#lbAL">SEE ALSO</A><DD>
 </DL>
 <HR>
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:09:10 GMT, April 20, 2020
+Time: 03:09:39 GMT, April 20, 2020
 </BODY>
 </HTML>
