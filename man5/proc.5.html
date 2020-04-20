@@ -49,9 +49,8 @@ null-separated strings, with a further null byte after the last string.
 <DT><I>/proc/[number]/cwd</I>
 
 <DD>
-This is a link to the current working directory of the process.  To find 
-out
-the cwd of process 20, for instance, you can do this:
+This is a isymbolic link to the current working directory of the process.  
+To find out the cwd of process 20, for instance, you can do this:
 <P>
 <BR>
 
@@ -61,14 +60,24 @@ cd /proc/20/cwd; /bin/pwd
 
 
 <P>
-Note that the pwd command is often a shell builtin, and might
+Note that the 
+<I>pwd </I>
+
+command is often a shell builtin, and might
 not work properly. In bash, you may use pwd -P.
+<P>
+
+In a multithreaded process, the contents of this symbolic link 
+are not available if the main thread has already terminated 
+(typically by calling
+<B><A HREF="../man3/pthread_exit.3.html">pthread_exit</A></B>(3).
+
 <DT><I>/proc/[number]/environ</I>
 
 <DD>
 This file contains the environment for the process.
-The entries are separated by null characters,
-and there may be a null character at the end.
+The entries are separated by null bytes ('\0'),
+and there may be a null bytes at the end.
 Thus, to print out the environment of process 1, you would do:
 <P>
 <BR>
@@ -93,6 +102,12 @@ it will open the executable.  You can even type
 
 to run another copy of the same executable as is being run by 
 process [number].
+
+In a multithreaded process, the contents of this symbolic link 
+are not available if the main thread has already terminated 
+(typically by calling
+<B><A HREF="../man3/pthread_exit.3.html">pthread_exit</A></B>(3)).
+
 <P>
 Under Linux 2.0 and earlier
 <I>/proc/[number]/exe</I>
@@ -118,6 +133,13 @@ This is a subdirectory containing one entry for each file which the
 process has open, named by its file descriptor, and which is a
 symbolic link to the actual file.  Thus, 0 is
 standard input, 1 standard output, 2 standard error, etc.
+<P>
+
+In a multithreaded process, the contents of this directory
+are not available if the main thread has already terminated 
+(typically by calling
+<B><A HREF="../man3/pthread_exit.3.html">pthread_exit</A></B>(3)).
+
 <P>
 Programs that will take a filename, but will not take the standard
 input, and which write to a file, but will not send their output to
@@ -212,6 +234,13 @@ filesystem, set by the
 
 system call.  This file is a symbolic link that points to the process's
 root directory, and behaves as exe, fd/*, etc. do.
+<P>
+
+In a multithreaded process, the contents of this symbolic link 
+are not available if the main thread has already terminated 
+(typically by calling
+<B><A HREF="../man3/pthread_exit.3.html">pthread_exit</A></B>(3)).
+
 
 
 <DT><I>/proc/[number]/stat</I>
@@ -381,6 +410,54 @@ and
 <I>/proc/[number]/statm</I>
 
 in a format that's easier for humans to parse.
+<DT><I>/proc/[number]/task</I> (since kernel 2.6.0-test6)
+
+<DD>
+This is a directory that contains one subdirectory
+for each thread in the process.
+The name of each subdirectory is the numerical thread ID of the
+thread (see
+<B><A HREF="../man2/gettid.2.html">gettid</A></B>(2)).
+
+Within each of these subdirectories, there is a set of
+files with the same names and contents as under the
+<I>/proc/[number]</I>
+
+directories.
+For attributes that are shared by all threads, the contents for
+each of the files under the
+<I>task/[thread-ID]</I>
+
+subdirectories will be the same as in the corresponding
+file in the parent 
+<I>/proc/[number]</I>
+
+directory
+(e.g., in a multithreaded process, all of the 
+<I>task/[thread-ID]/cwd</I>
+
+files will have the same value as the 
+<I>/proc/[number]/cwd</I>
+
+file in the parent directory, since all of the threads in a process 
+share a working directory).
+For attributes that are distinct for each thread,
+the corresponding files under 
+<I>task/[thread-ID]</I>
+
+may have different values (e.g., various fields in each of the
+<I>task/[thread-ID]/status</I>
+
+files may be different for each thread).
+<P>
+
+In a multithreaded process, the contents of the
+<I>/proc/[number]/task</I>
+
+directory are not available if the main thread has already terminated 
+(typically by calling
+<B><A HREF="../man3/pthread_exit.3.html">pthread_exit</A></B>(3)).
+
 <DT><I>/proc/apm</I>
 
 <DD>
@@ -610,6 +687,18 @@ This is a list of all the file systems currently mounted on the system.
 The format of this file is documented in
 <B><A HREF="../man5/fstab.5.html">fstab</A></B>(5).
 
+Since kernel version 2.6.15, this file is pollable: 
+after opening the file for reading, a change in this file
+(i.e., a file system mount or unmount) causes
+<B><A HREF="../man2/select.2.html">select</A></B>(2)
+
+to mark the file descriptor as readable, and
+<B><A HREF="../man2/poll.2.html">poll</A></B>(2)
+
+and
+<B><A HREF="../man2/epoll_wait.2.html">epoll_wait</A></B>(2)
+
+mark the file as having an error condition.
 <DT><I>/proc/modules</I>
 
 <DD>
@@ -1587,14 +1676,17 @@ This file defines the maximum number of pseudo-terminals.
 <DD>
 This read-only file
 indicates how many pseudo-terminals are currently in use.
-<DT>
-<DD>
-<I>/proc/sys/kernel/random</I>
+<DT><I>/proc/sys/kernel/random</I>
 
+<DD>
 This directory
 contains various parameters controlling the operation of the file
 <I>/dev/random</I>.
 
+See 
+<B><A HREF="../man4/random.4.html">random</A></B>(4)
+
+for further information.
 <DT><I>/proc/sys/kernel/real-root-dev</I>
 
 <DD>
@@ -1869,7 +1961,8 @@ This is useful for analysing virtual memory behaviour.
 <H2>CAVEATS</H2>
 
 Note that many strings (i.e., the environment and command line) are in
-the internal format, with sub-fields terminated by NUL bytes, so you
+the internal format, with sub-fields terminated by null bytes ('\0'), 
+so you
 may find that things are more readable if you use <I>od -c</I> or <I>tr
 &quot;\000&quot; &quot;\n&quot;</I> to read them.
 Alternatively, <I>echo `cat &lt;file&gt;`</I> works well.
@@ -1896,6 +1989,6 @@ kernel source documentation files written by Rik van Riel.
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 02:21:19 GMT, April 20, 2020
+Time: 02:21:51 GMT, April 20, 2020
 </BODY>
 </HTML>

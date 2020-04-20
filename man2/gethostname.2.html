@@ -27,18 +27,18 @@ gethostname, sethostname - get/set host name
 <A NAME="lbAD">&nbsp;</A>
 <H2>DESCRIPTION</H2>
 
-These functions are used to access or to change the host name of the
+These system calls are used to access or to change the host name of the
 current processor.
 The
 <B>gethostname</B>()
 
-function returns a NUL-terminated hostname (set earlier by
+system call returns a null-terminated hostname (set earlier by
 <B>sethostname</B>())
 
 in the array <I>name</I> that has a length of <I>len</I> bytes.
-In case the NUL-terminated hostname does not fit, no error is
+In case the null-terminated hostname does not fit, no error is
 returned, but the hostname is truncated. It is unspecified
-whether the truncated hostname will be NUL-terminated.
+whether the truncated hostname will be null-terminated.
 <A NAME="lbAE">&nbsp;</A>
 <H2>RETURN VALUE</H2>
 
@@ -89,7 +89,7 @@ capability.
 <A NAME="lbAG">&nbsp;</A>
 <H2>CONFORMING TO</H2>
 
-SVr4, 4.4BSD  (this function first appeared in 4.2BSD).
+SVr4, 4.4BSD  (this interfaces first appeared in 4.2BSD).
 POSIX 1003.1-2001 specifies
 <B>gethostname</B>()
 
@@ -97,18 +97,58 @@ but not
 <B>sethostname</B>().
 
 <A NAME="lbAH">&nbsp;</A>
-<H2>BUGS</H2>
-
-For many Linux kernel / libc combinations
-<B>gethostname</B>()
-
-will return an error instead of returning a truncated hostname.
-<A NAME="lbAI">&nbsp;</A>
 <H2>NOTES</H2>
 
 SUSv2 guarantees that `Host names are limited to 255 bytes'.
 POSIX 1003.1-2001 guarantees that `Host names (not including
-the terminating NUL) are limited to HOST_NAME_MAX bytes'.
+the terminating null byte) are limited to HOST_NAME_MAX bytes'.
+<A NAME="lbAI">&nbsp;</A>
+<H2>GLIBC NOTES</H2>
+
+The GNU C library implements 
+<B>gethostname</B>()
+
+as a library function that calls calls 
+<B><A HREF="../man2/uname.2.html">uname</A></B>(2)
+
+and copies up to 
+<I>len</I>
+
+bytes from the returned 
+<I>nodename </I>
+
+field into
+<I>name</I>.
+
+Having performed the copy, the function then checks if the length of the
+<I>nodename</I>
+
+was greater than or equal to
+<I>len</I>,
+
+and if it is, then the function returns -1 with 
+<I>errno </I>
+
+set to
+<B>ENAMETOOLONG</B>.
+
+Versions of glibc before 2.2 
+
+handle the case where the length of the
+<I>nodename</I>
+
+was greater than or equal to
+<I>len</I>
+
+differently: nothing is copied into 
+<I>name</I>
+
+and the function returns -1 with
+<I>errno </I>
+
+set to
+<B>ENAMETOOLONG</B>.
+
 <A NAME="lbAJ">&nbsp;</A>
 <H2>SEE ALSO</H2>
 
@@ -129,14 +169,14 @@ the terminating NUL) are limited to HOST_NAME_MAX bytes'.
 <DT><A HREF="#lbAE">RETURN VALUE</A><DD>
 <DT><A HREF="#lbAF">ERRORS</A><DD>
 <DT><A HREF="#lbAG">CONFORMING TO</A><DD>
-<DT><A HREF="#lbAH">BUGS</A><DD>
-<DT><A HREF="#lbAI">NOTES</A><DD>
+<DT><A HREF="#lbAH">NOTES</A><DD>
+<DT><A HREF="#lbAI">GLIBC NOTES</A><DD>
 <DT><A HREF="#lbAJ">SEE ALSO</A><DD>
 </DL>
 <HR>
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 02:21:07 GMT, April 20, 2020
+Time: 02:21:38 GMT, April 20, 2020
 </BODY>
 </HTML>
