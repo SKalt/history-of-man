@@ -4,7 +4,7 @@
 <HTML><HEAD><TITLE>Man page of INSQUE</TITLE>
 </HEAD><BODY>
 <H1>INSQUE</H1>
-Section: Linux Programmer's Manual (3)<BR>Updated: 2008-07-11<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2010-09-09<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -29,34 +29,64 @@ Feature Test Macro Requirements for glibc (see
 
 
 <P>
+
 <B>insque</B>(),
 
 <B>remque</B>():
 
-_SVID_SOURCE || _XOPEN_SOURCE&nbsp;&gt;=&nbsp;500
+<DL COMPACT><DT><DD>
+_SVID_SOURCE || _XOPEN_SOURCE&nbsp;&gt;=&nbsp;500 ||
+_XOPEN_SOURCE&nbsp;&amp;&amp;&nbsp;_XOPEN_SOURCE_EXTENDED
+</DL>
+
+
 <A NAME="lbAD">&nbsp;</A>
 <H2>DESCRIPTION</H2>
 
+The
 <B>insque</B>()
 
 and
 <B>remque</B>()
 
-are functions for manipulating
-doubly-linked lists.
+functions manipulate doubly-linked lists.
 Each element in the list is a structure of
-which the first two structure elements are a forward and a
+which the first two elements are a forward and a
 backward pointer.
+The linked list may be linear (i.e., NULL forward pointer at
+the end of the list and NULL backward pointer at the start of the list)
+or circular.
 <P>
+The
 <B>insque</B>()
 
-inserts the element pointed to by <I>elem</I>
-immediately after the element pointed to by <I>prev</I>, which must
-not be NULL.
+function inserts the element pointed to by <I>elem</I>
+immediately after the element pointed to by <I>prev</I>.
 <P>
+If the list is linear, then the call
+<I>insque(elem, NULL)</I>
+
+can be used to insert the initial list element,
+and the call sets the forward and backward pointers of
+<I>elem</I>
+
+to NULL.
+<P>
+If the list is circular,
+the caller should ensure that the forward and backward pointers of the
+first element are initialized to point to that element,
+and the
+<I>prev</I>
+
+argument of the
+<B>insque</B>()
+
+call should also point to the element.
+<P>
+The
 <B>remque</B>()
 
-removes the element pointed to by <I>elem</I> from the
+function removes the element pointed to by <I>elem</I> from the
 doubly-linked list.
 <A NAME="lbAE">&nbsp;</A>
 <H2>CONFORMING TO</H2>
@@ -92,6 +122,133 @@ The above is the POSIX version.
 Some systems place them in <I>&lt;<A HREF="file:///usr/include/string.h">string.h</A>&gt;</I>.
 Linux libc4 and libc 5 placed them
 in <I>&lt;<A HREF="file:///usr/include/stdlib.h">stdlib.h</A>&gt;</I>.
+<A NAME="lbAG">&nbsp;</A>
+<H2>BUGS</H2>
+
+In glibc 2.4 and earlier, it was not possible to specify
+<I>prev</I>
+
+as NULL.
+Consequently, to build a linear list, the caller had to build a list
+using an initial call that contained the first two elements of the list,
+with the forward and backward pointers in each element suitably initialized.
+<A NAME="lbAH">&nbsp;</A>
+<H2>EXAMPLE</H2>
+
+The program below demonstrates the use of
+<B>insque</B>().
+
+Here is an example run of the program:
+
+<PRE>
+
+$ <B>./a.out -c a b c</B>
+Traversing completed list:
+    a
+    b
+    c
+That was a circular list
+</PRE>
+
+
+<A NAME="lbAI">&nbsp;</A>
+<H3>Program source</H3>
+
+
+<PRE>
+#include &lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/stdlib.h">stdlib.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/search.h">search.h</A>&gt;
+
+struct element {
+    struct element *forward;
+    struct element *backward;
+    char *name;
+};
+
+static struct element *
+new_element(void)
+{
+    struct element *e;
+
+    e = malloc(sizeof(struct element));
+    if (e == NULL) {
+        fprintf(stderr, &quot;malloc() failed\n&quot;);
+        exit(EXIT_FAILURE);
+    }
+
+    return e;
+}
+
+int
+main(int argc, char *argv[])
+{
+    struct element *first, *elem, *prev;
+    int circular, opt, errfnd;
+
+    /* The &quot;-c&quot; command-line option can be used to specify that the
+       list is circular */
+
+    errfnd = 0;
+    circular = 0;
+    while ((opt = getopt(argc, argv, &quot;c&quot;)) != -1) {
+        switch (opt) {
+        case 'c':
+            circular = 1;
+            break;
+        default:
+            errfnd = 1;
+            break;
+        }
+    }
+
+    if (errfnd || optind &gt;= argc) {
+        fprintf(stderr,  &quot;Usage: %s [-c] string...\n&quot;, argv[0]);
+        exit(EXIT_FAILURE);
+    }
+
+    /* Create first element and place it in the linked list */
+
+    elem = new_element();
+    first = elem;
+
+    elem-&gt;name = argv[optind];
+
+    if (circular) {
+        elem-&gt;forward = elem;
+        elem-&gt;backward = elem;
+        insque(elem, elem);
+    } else {
+        insque(elem, NULL);
+    }
+
+    /* Add remaining command-line arguments as list elements */
+
+    while (++optind &lt; argc) {
+        prev = elem;
+
+        elem = new_element();
+        elem-&gt;name = argv[optind];
+        insque(elem, prev);
+    }
+
+    /* Traverse the list from the start, printing element names */
+
+    printf(&quot;Traversing completed list:\n&quot;);
+    elem = first;
+    do {
+        printf(&quot;    %s\n&quot;, elem-&gt;name);
+        elem = elem-&gt;forward;
+    } while (elem != NULL &amp;&amp; elem != first);
+
+    if (elem == first)
+        printf(&quot;That was a circular list\n&quot;);
+
+    exit(EXIT_SUCCESS);
+}
+</PRE>
+
 <P>
 
 <HR>
@@ -102,11 +259,16 @@ in <I>&lt;<A HREF="file:///usr/include/stdlib.h">stdlib.h</A>&gt;</I>.
 <DT><A HREF="#lbAD">DESCRIPTION</A><DD>
 <DT><A HREF="#lbAE">CONFORMING TO</A><DD>
 <DT><A HREF="#lbAF">NOTES</A><DD>
+<DT><A HREF="#lbAG">BUGS</A><DD>
+<DT><A HREF="#lbAH">EXAMPLE</A><DD>
+<DL>
+<DT><A HREF="#lbAI">Program source</A><DD>
+</DL>
 </DL>
 <HR>
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:07:06 GMT, April 20, 2020
+Time: 03:07:40 GMT, April 20, 2020
 </BODY>
 </HTML>

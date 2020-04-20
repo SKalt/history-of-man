@@ -5,7 +5,7 @@ Copyright (c) 1992 Drew Eckhardt (drew@cs.colorado.edu), March 28, 1992
 <HTML><HEAD><TITLE>Man page of STAT</TITLE>
 </HEAD><BODY>
 <H1>STAT</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2009-09-30<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2010-09-20<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -42,10 +42,25 @@ Feature Test Macro Requirements for glibc (see
 <B><A HREF="../man7/feature_test_macros.7.html">feature_test_macros</A></B>(7)):
 
 
+
+
 <P>
 <B>lstat</B>():
 
-_BSD_SOURCE || _XOPEN_SOURCE&nbsp;&gt;=&nbsp;500
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT>Since glibc 2.10<DD>
+_POSIX_C_SOURCE&nbsp;&gt;=&nbsp;200112L ||
+_BSD_SOURCE || _XOPEN_SOURCE&nbsp;&gt;=&nbsp;500 ||
+_XOPEN_SOURCE&nbsp;&amp;&amp;&nbsp;_XOPEN_SOURCE_EXTENDED
+<DT>Before glibc 2.10<DD>
+_BSD_SOURCE || _XOPEN_SOURCE&nbsp;&gt;=&nbsp;500 ||
+_XOPEN_SOURCE&nbsp;&amp;&amp;&nbsp;_XOPEN_SOURCE_EXTENDED
+</DL>
+</DL>
+
+
+
 <A NAME="lbAD">&nbsp;</A>
 <H2>DESCRIPTION</H2>
 
@@ -562,11 +577,9 @@ A sticky command appeared in Version 32V AT&amp;T UNIX.
 Since kernel 2.5.48, the
 <I>stat</I>
 
-structure supports nanosecond resolution for the three
-file timestamp fields.
-Glibc exposes the nanosecond component of each field using names either
-of the form
-<I>st_atim.tv_nsec</I>,
+structure supports nanosecond resolution for the three file timestamp fields.
+Glibc exposes the nanosecond component of each field using names of the form
+<I>st_atim.tv_nsec</I>
 
 if the
 <B>_BSD_SOURCE</B>
@@ -574,14 +587,21 @@ if the
 or
 <B>_SVID_SOURCE</B>
 
-feature test macro is defined,
-or of the form
-<I>st_atimensec</I>,
+feature test macro is defined.
+These fields are specified in POSIX.1-2008, and, starting with version 2.12,
+glibc also exposes these field names if
+<B>_POSIX_C_SOURCE</B>
 
-if neither of these macros is defined.
+is defined with the value 200809L or greater, or
+<B>_XOPEN_SOURCE</B>
+
+is defined with the value 700 or greater.
+If none of the aforementioned macros are defined,
+then the nanosecond values are exposed with names of the form
+<I>st_atimensec</I>.
+
 On file systems that do not support subsecond timestamps,
-these nanosecond fields are returned with the value 0.
-
+the nanosecond fields are returned with the value 0.
 
 
 <P>
@@ -782,6 +802,6 @@ main(int argc, char *argv[])
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:07:00 GMT, April 20, 2020
+Time: 03:07:35 GMT, April 20, 2020
 </BODY>
 </HTML>
