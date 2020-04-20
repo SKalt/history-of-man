@@ -51,7 +51,12 @@ void FD_CLR(int </B><I>fd</I><B>, fd_set *</B><I>set</I><B>);</B>
 <H2>DESCRIPTION</H2>
 
 <P>
-<B>select</B>() (or <B>pselect</B>()) is the pivot function of
+<B>select</B>()
+
+(or
+<B>pselect</B>())
+
+is the pivot function of
 most C programs that
 handle more than one simultaneous file descriptor (or socket handle)
 in an efficient
@@ -59,7 +64,9 @@ manner.
 Its principal arguments are three arrays of file descriptors:
 <I>readfds</I>, <I>writefds</I>, and <I>exceptfds</I>.
 The way that
-<B>select</B>() is usually used is to block while waiting for a &quot;change of
+<B>select</B>()
+
+is usually used is to block while waiting for a &quot;change of
 status&quot; on one or more of the file descriptors.
 A &quot;change of status&quot; is
 when more characters become available from the file descriptor, <I>or</I>
@@ -68,21 +75,50 @@ more to be written to the file descriptor, <I>or</I> when a file
 descriptor goes into error (in the case of a socket or pipe this is
 when the other end of the connection is closed).
 <P>
-In summary, <B>select</B>() just watches multiple file descriptors,
+In summary,
+<B>select</B>()
+
+just watches multiple file descriptors,
 and is the standard Unix call to do so.
 <P>
 The arrays of file descriptors are called <I>file descriptor sets</I>.
 Each set is declared as type <B>fd_set</B>, and its contents can be
-altered with the macros <B>FD_CLR</B>(), <B>FD_ISSET</B>(), <B>FD_SET</B>(),  and
-<B>FD_ZERO</B>(). <B>FD_ZERO</B>() is usually the first function to be used on
+altered with the macros
+<B>FD_CLR</B>(),
+
+<B>FD_ISSET</B>(),
+
+<B>FD_SET</B>(),
+
+and
+<B>FD_ZERO</B>().
+
+<B>FD_ZERO</B>()
+
+is usually the first function to be used on
 a newly declared set.
 Thereafter, the individual file descriptors that
-you are interested in can be added one by one with <B>FD_SET</B>().
-<B>select</B>() modifies the contents of the sets according to the rules
-described below; after calling <B>select</B>() you can test if your file
-descriptor is still present in the set with the <B>FD_ISSET</B>() macro.
-<B>FD_ISSET</B>() returns non-zero if the descriptor is present and zero if
-it is not. <B>FD_CLR</B>() removes a file descriptor from the set.
+you are interested in can be added one by one with
+<B>FD_SET</B>().
+
+<B>select</B>()
+
+modifies the contents of the sets according to the rules
+described below; after calling
+<B>select</B>()
+
+you can test if your file
+descriptor is still present in the set with the
+<B>FD_ISSET</B>()
+
+macro.
+<B>FD_ISSET</B>()
+
+returns non-zero if the descriptor is present and zero if
+it is not.
+<B>FD_CLR</B>()
+
+removes a file descriptor from the set.
 <A NAME="lbAE">&nbsp;</A>
 <H2>ARGUMENTS</H2>
 
@@ -90,17 +126,33 @@ it is not. <B>FD_CLR</B>() removes a file descriptor from the set.
 <DT><I>readfds</I><DD>
 This set is watched to see if data is available for reading from any of
 its file descriptors.
-After <B>select</B>() has returned, <I>readfds</I> will be
+After
+<B>select</B>()
+
+has returned, <I>readfds</I> will be
 cleared of all file descriptors except for those file descriptors that
-are immediately available for reading with a <B>recv</B>() (for sockets) or
-<B>read</B>() (for pipes, files, and sockets) call.
+are immediately available for reading with a
+<B><A HREF="../man2/recv.2.html">recv</A></B>(2)
+
+(for sockets) or
+<B><A HREF="../man2/read.2.html">read</A></B>(2)
+
+(for pipes, files, and sockets) call.
 <DT><I>writefds</I><DD>
 This set is watched to see if there is space to write data to any of
 its file descriptors.
-After <B>select</B>() has returned, <I>writefds</I> will be
+After
+<B>select</B>()
+
+has returned, <I>writefds</I> will be
 cleared of all file descriptors except for those file descriptors that
-are immediately available for writing with a <B>send</B>() (for sockets) or
-<B>write</B>() (for pipes, files, and sockets) call.
+are immediately available for writing with a
+<B><A HREF="../man2/send.2.html">send</A></B>(2)
+
+(for sockets) or
+<B><A HREF="../man2/write.2.html">write</A></B>(2)
+
+(for pipes, files, and sockets) call.
 <DT><I>exceptfds</I><DD>
 This set is watched for exceptions or errors on any of the file
 descriptors.
@@ -110,14 +162,28 @@ How you use
 OOB data
 is data sent on a socket using the <B>MSG_OOB</B> flag, and hence
 <I>exceptfds</I> only really applies to sockets.
-See <B><A HREF="../man2/recv.2.html">recv</A></B>(2) and
-<B><A HREF="../man2/send.2.html">send</A></B>(2) about this.
-After <B>select</B>() has returned,
+See
+<B><A HREF="../man2/recv.2.html">recv</A></B>(2)
+
+and
+<B><A HREF="../man2/send.2.html">send</A></B>(2)
+
+about this.
+After
+<B>select</B>()
+
+has returned,
 <I>exceptfds</I> will be cleared of all file descriptors except for those
 descriptors that are available for reading OOB data.
 You can only ever
-read one byte of OOB data though (which is done with <B>recv</B>()), and
-writing OOB data (done with <B>send</B>()) can be done at any time and will
+read one byte of OOB data though (which is done with
+<B><A HREF="../man2/recv.2.html">recv</A></B>(2)),
+
+and
+writing OOB data (done with
+<B><A HREF="../man2/send.2.html">send</A></B>(2))
+
+can be done at any time and will
 not block.
 Hence there is no need for a fourth set to check if a socket
 is available for writing OOB data.
@@ -128,13 +194,23 @@ In other words, while you are busy adding file descriptors
 to your sets, you must calculate the maximum integer value of all of
 them, then increment this value by one, and then pass this as <I>nfds</I> to
 <B>select</B>().
+
 <DT><I>utimeout</I><DD>
 <DL COMPACT><DT><DD>
-This is the longest time <B>select</B>() must wait before returning, even
+This is the longest time
+<B>select</B>()
+
+must wait before returning, even
 if nothing interesting happened.
 If this value is passed as NULL,
-then <B>select</B>() blocks indefinitely waiting for an event.
-<I>utimeout</I> can be set to zero seconds, which causes <B>select</B>() to
+then
+<B>select</B>()
+
+blocks indefinitely waiting for an event.
+<I>utimeout</I> can be set to zero seconds, which causes
+<B>select</B>()
+
+to
 return immediately.
 The structure <B>struct timeval</B> is defined as,
 <P>
@@ -165,44 +241,77 @@ struct timespec {
 
 <DT><I>sigmask</I><DD>
 This argument holds a set of signals to allow while performing a
-<B>pselect</B>() call (see <B><A HREF="../man3/sigaddset.3.html">sigaddset</A></B>(3) and <B><A HREF="../man2/sigprocmask.2.html">sigprocmask</A></B>(2)).
+<B>pselect</B>()
+
+call (see
+<B><A HREF="../man3/sigaddset.3.html">sigaddset</A></B>(3)
+
+and
+<B><A HREF="../man2/sigprocmask.2.html">sigprocmask</A></B>(2)).
+
 It can be passed
 as NULL, in which case it does not modify the set of allowed signals on
 entry and exit to the function.
-It will then behave just like <B>select</B>().
+It will then behave just like
+<B>select</B>().
+
 </DL>
 <A NAME="lbAF">&nbsp;</A>
 <H2>COMBINING SIGNAL AND DATA EVENTS</H2>
 
-<B>pselect</B>() must be used if you are waiting for a signal as well as
+<B>pselect</B>()
+
+must be used if you are waiting for a signal as well as
 data from a file descriptor.
 Programs that receive signals as events
 normally use the signal handler only to raise a global flag.
 The global
 flag will indicate that the event must be processed in the main loop of
 the program.
-A signal will cause the <B>select</B>() (or <B>pselect</B>())
+A signal will cause the
+<B>select</B>()
+
+(or
+<B>pselect</B>())
+
 call to return with <I>errno</I> set to <B>EINTR</B>.
 This behavior is
 essential so that signals can be processed in the main loop of the
-program, otherwise <B>select</B>() would block indefinitely.
+program, otherwise
+<B>select</B>()
+
+would block indefinitely.
 Now, somewhere
 in the main loop will be a conditional to check the global flag.
 So we
 must ask: what if a signal arrives after the conditional, but before the
-<B>select</B>() call?
-The answer is that <B>select</B>() would block
+<B>select</B>()
+
+call?
+The answer is that
+<B>select</B>()
+
+would block
 indefinitely, even though an event is actually pending.
 This race
-condition is solved by the <B>pselect</B>() call.
+condition is solved by the
+<B>pselect</B>()
+
+call.
 This call can be used to
 mask out signals that are not to be received except within the
-<B>pselect</B>() call.
+<B>pselect</B>()
+
+call.
 For instance, let us say that the event in question
 was the exit of a child process.
 Before the start of the main loop, we
-would block <B>SIGCHLD</B> using <B>sigprocmask</B>().
-Our <B>pselect</B>()
+would block <B>SIGCHLD</B> using
+<B><A HREF="../man2/sigprocmask.2.html">sigprocmask</A></B>(2).
+
+Our
+<B>pselect</B>()
+
 call would enable <B>SIGCHLD</B> by using the virgin signal mask.
 Our
 program would look like:
@@ -243,9 +352,15 @@ main(int argc, char **argv)
 <A NAME="lbAG">&nbsp;</A>
 <H2>PRACTICAL</H2>
 
-So what is the point of <B>select</B>()? Can't I just read and write to my
+So what is the point of
+<B>select</B>()?
+
+Can't I just read and write to my
 descriptors whenever I want?
-The point of <B>select</B>() is that it watches
+The point of
+<B>select</B>()
+
+is that it watches
 multiple descriptors at the same time and properly puts the process to
 sleep if there is no activity.
 It does this while enabling you to handle
@@ -254,10 +369,19 @@ Unix programmers often find
 themselves in a position where they have to handle I/O from more than one
 file descriptor where the data flow may be intermittent.
 If you were to
-merely create a sequence of <B>read</B>() and <B>write</B>() calls, you would
+merely create a sequence of
+<B><A HREF="../man2/read.2.html">read</A></B>(2)
+
+and
+<B><A HREF="../man2/write.2.html">write</A></B>(2)
+
+calls, you would
 find that one of your calls may block waiting for data from/to a file
 descriptor, while another file descriptor is unused though available
-for data. <B>select</B>() efficiently copes with this situation.
+for data.
+<B>select</B>()
+
+efficiently copes with this situation.
 <P>
 A simple example of the use of
 <B>select</B>()
@@ -271,6 +395,7 @@ manual page.
 
 Here is an example that better demonstrates the true utility of
 <B>select</B>().
+
 The listing below is a TCP forwarding program that forwards
 from one TCP port to another.
 <P>
@@ -546,12 +671,16 @@ including OOB signal data transmitted by <B>telnet</B> servers.
 It
 handles the tricky problem of having data flow in both directions
 simultaneously.
-You might think it more efficient to use a <B>fork</B>()
+You might think it more efficient to use a
+<B><A HREF="../man2/fork.2.html">fork</A></B>(2)
+
 call and devote a thread to each stream.
 This becomes more tricky than
 you might suspect.
 Another idea is to set non-blocking I/O using an
-<B>ioctl</B>() call.
+<B><A HREF="../man2/ioctl.2.html">ioctl</A></B>(2)
+
+call.
 This also has its problems because you end up having
 to have inefficient timeouts.
 <P>
@@ -563,19 +692,31 @@ connections cause the current connection to be dropped.
 <A NAME="lbAI">&nbsp;</A>
 <H2>SELECT LAW</H2>
 
-Many people who try to use <B>select</B>() come across behavior that is
+Many people who try to use
+<B>select</B>()
+
+come across behavior that is
 difficult to understand and produces non-portable or borderline
 results.
 For instance, the above program is carefully written not to
 block at any point, even though it does not set its file descriptors to
-non-blocking mode at all (see <B><A HREF="../man2/ioctl.2.html">ioctl</A></B>(2)).
+non-blocking mode at all (see
+<B><A HREF="../man2/ioctl.2.html">ioctl</A></B>(2)).
+
 It is easy to introduce
-subtle errors that will remove the advantage of using <B>select</B>(),
+subtle errors that will remove the advantage of using
+<B>select</B>(),
+
 hence I will present a list of essentials to watch for when using the
-<B>select</B>() call.
+<B>select</B>()
+
+call.
 <DL COMPACT>
 <DT><B>1.</B><DD>
-You should always try to use <B>select</B>() without a timeout.
+You should always try to use
+<B>select</B>()
+
+without a timeout.
 Your program
 should have nothing to do if there is no data available.
 Code that
@@ -585,19 +726,34 @@ The value <I>nfds</I> must be properly calculated for efficiency as
 explained above.
 <DT><B>3.</B><DD>
 No file descriptor must be added to any set if you do not intend
-to check its result after the <B>select</B>() call, and respond
+to check its result after the
+<B>select</B>()
+
+call, and respond
 appropriately.
 See next rule.
 <DT><B>4.</B><DD>
-After <B>select</B>() returns, all file descriptors in all sets
+After
+<B>select</B>()
+
+returns, all file descriptors in all sets
 should be checked to see if they are ready.
 
 
 
 
 <DT><B>5.</B><DD>
-The functions <B>read</B>(), <B>recv</B>(), <B>write</B>(), and
-<B>send</B>() do <I>not</I> necessarily read/write the full amount of data
+The functions
+<B><A HREF="../man2/read.2.html">read</A></B>(2),
+
+<B><A HREF="../man2/recv.2.html">recv</A></B>(2),
+
+<B><A HREF="../man2/write.2.html">write</A></B>(2),
+
+and
+<B><A HREF="../man2/send.2.html">send</A></B>(2)
+
+do <I>not</I> necessarily read/write the full amount of data
 that you have requested.
 If they do read/write the full amount, its
 because you have a low traffic load and a fast stream.
@@ -613,8 +769,20 @@ inefficient not to read/write as much data as you can buffer each time.
 The buffers in the example above are 1024 bytes although they could
 easily be made larger.
 <DT><B>7.</B><DD>
-The functions <B>read</B>(), <B>recv</B>(), <B>write</B>(), and
-<B>send</B>() as well as the <B>select</B>() call can return -1 with
+The functions
+<B><A HREF="../man2/read.2.html">read</A></B>(2),
+
+<B><A HREF="../man2/recv.2.html">recv</A></B>(2),
+
+<B><A HREF="../man2/write.2.html">write</A></B>(2),
+
+and
+<B><A HREF="../man2/send.2.html">send</A></B>(2)
+
+as well as the
+<B>select</B>()
+
+call can return -1 with
 <I>errno</I>
 
 set to <B>EINTR</B>,
@@ -631,11 +799,29 @@ set non-blocking I/O, you will not get <B>EAGAIN</B>.
 Nonetheless
 you should still cope with these errors for completeness.
 <DT><B>8.</B><DD>
-Never call <B>read</B>(), <B>recv</B>(), <B>write</B>(), or <B>send</B>()
+Never call
+<B><A HREF="../man2/read.2.html">read</A></B>(2),
+
+<B><A HREF="../man2/recv.2.html">recv</A></B>(2),
+
+<B><A HREF="../man2/write.2.html">write</A></B>(2),
+
+or
+<B><A HREF="../man2/send.2.html">send</A></B>(2)
+
 with a buffer length of zero.
 <DT><B>9.</B><DD>
-If the functions <B>read</B>(),
-<B>recv</B>(), <B>write</B>(), and <B>send</B>() fail
+If the functions
+<B><A HREF="../man2/read.2.html">read</A></B>(2),
+
+<B><A HREF="../man2/recv.2.html">recv</A></B>(2),
+
+<B><A HREF="../man2/write.2.html">write</A></B>(2),
+
+and
+<B><A HREF="../man2/send.2.html">send</A></B>(2)
+
+fail
 with errors other than those listed in <B>7.</B>,
 or one of the input functions returns 0, indicating end of file,
 then you should <I>not</I> pass that descriptor to
@@ -646,13 +832,20 @@ In the above example,
 I close the descriptor immediately, and then set it to -1
 to prevent it being included in a set.
 <DT><B>10.</B><DD>
-The timeout value must be initialized with each new call to <B>select</B>(),
-since some operating systems modify the structure. <B>pselect</B>()
+The timeout value must be initialized with each new call to
+<B>select</B>(),
+
+since some operating systems modify the structure.
+<B>pselect</B>()
+
 however does not modify its timeout structure.
 <DT><B>11.</B><DD>
 I have heard that the Windows socket layer does not cope with OOB data
 properly.
-It also does not cope with <B>select</B>() calls when no file
+It also does not cope with
+<B>select</B>()
+
+calls when no file
 descriptors are set at all.
 Having no file descriptors set is a useful
 way to sleep the process with sub-second precision by using the timeout.
@@ -661,8 +854,13 @@ way to sleep the process with sub-second precision by using the timeout.
 <A NAME="lbAJ">&nbsp;</A>
 <H2>USLEEP EMULATION</H2>
 
-On systems that do not have a <B>usleep</B>() function, you can call
-<B>select</B>() with a finite timeout and no file descriptors as
+On systems that do not have a
+<B><A HREF="../man3/usleep.3.html">usleep</A></B>(3)
+
+function, you can call
+<B>select</B>()
+
+with a finite timeout and no file descriptors as
 follows:
 <P>
 
@@ -679,10 +877,16 @@ This is only guaranteed to work on Unix systems, however.
 <A NAME="lbAK">&nbsp;</A>
 <H2>RETURN VALUE</H2>
 
-On success, <B>select</B>() returns the total number of file descriptors
+On success,
+<B>select</B>()
+
+returns the total number of file descriptors
 still present in the file descriptor sets.
 <P>
-If <B>select</B>() timed out, then
+If
+<B>select</B>()
+
+timed out, then
 the return value will be zero.
 The file descriptors set should be all
 empty (but may not be on some systems).
@@ -691,17 +895,23 @@ A return value of -1 indicates an error, with <I>errno</I> being
 set appropriately.
 In the case of an error, the returned sets and
 the timeout struct contents are undefined and should not be used.
-<B>pselect</B>() however never modifies <I>ntimeout</I>.
+<B>pselect</B>()
+
+however never modifies <I>ntimeout</I>.
 <A NAME="lbAL">&nbsp;</A>
 <H2>NOTES</H2>
 
 Generally speaking, all operating systems that support sockets, also
-support <B>select</B>().
+support
+<B>select</B>().
+
 Many types of programs become
 extremely complicated without the use of
 <B>select</B>().
 
-<B>select</B>() can be used to solve
+<B>select</B>()
+
+can be used to solve
 many problems in a portable and efficient way that naive programmers try
 to solve in a more complicated manner using
 threads, forking, IPCs, signals, memory sharing, and so on.
@@ -710,11 +920,15 @@ threads, forking, IPCs, signals, memory sharing, and so on.
 The
 <B><A HREF="../man2/poll.2.html">poll</A></B>(2)
 
-system call has the same functionality as <B>select</B>(),
+system call has the same functionality as
+<B>select</B>(),
+
 and is somewhat more efficient when monitoring sparse
 file descriptor sets.
 It is nowadays widely available,
-but historically was less portable than <B>select</B>().
+but historically was less portable than
+<B>select</B>().
+
 <P>
 
 The Linux-specific
@@ -786,6 +1000,6 @@ when monitoring large numbers of file descriptors.
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 02:36:41 GMT, April 20, 2020
+Time: 02:37:15 GMT, April 20, 2020
 </BODY>
 </HTML>
