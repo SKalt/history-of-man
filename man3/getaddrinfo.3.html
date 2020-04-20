@@ -5,7 +5,7 @@ Copyright 2000 Sam Varshavchik &lt;mrsam@courier-mta.com&gt;
 <HTML><HEAD><TITLE>Man page of GETADDRINFO</TITLE>
 </HEAD><BODY>
 <H1>GETADDRINFO</H1>
-Section: Linux Programmer's Manual (3)<BR>Updated: 2007-11-15<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2008-02-26<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -32,6 +32,21 @@ getaddrinfo, freeaddrinfo, gai_strerror - network address and service translatio
 <A NAME="lbAD">&nbsp;</A>
 <H2>DESCRIPTION</H2>
 
+Given
+<I>node</I>
+
+and
+<I>service</I>,
+
+<B>getaddrinfo</B>()
+
+returns one or more structures containing values that can be used by the
+<B><A HREF="../man2/bind.2.html">bind</A></B>(2)
+
+and
+<B><A HREF="../man2/connect.2.html">connect</A></B>(2)
+
+system calls to create a client or a server socket.
 The
 <B>getaddrinfo</B>()
 
@@ -43,32 +58,11 @@ function combines the functionality provided by the
 and
 <B><A HREF="../man3/getservbyport.3.html">getservbyport</A></B>(3)
 
-functions into a single interface.
-The thread-safe
+functions into a single interface, but unlike the latter functions,
 <B>getaddrinfo</B>()
 
-function creates one or more socket address structures
-that can be used by the
-<B><A HREF="../man2/bind.2.html">bind</A></B>(2)
-
-and
-<B><A HREF="../man2/connect.2.html">connect</A></B>(2)
-
-system calls to create a client or a server socket.
-<P>
-
-The
-<B>getaddrinfo</B>()
-
-function is not limited to creating IPv4 socket address structures;
-IPv6 socket address structures can be created if IPv6 support is available.
-These socket address structures can be used directly by
-<B><A HREF="../man2/bind.2.html">bind</A></B>(2)
-
-or
-<B><A HREF="../man2/connect.2.html">connect</A></B>(2),
-
-to prepare a client or a server socket.
+is reentrant
+and allows programs to eliminate IPv4-versus-IPv6 dependencies.
 <P>
 
 The
@@ -120,42 +114,16 @@ address and another
 address, for example).
 <P>
 
-The members
-<I>ai_family</I>,
-
-<I>ai_socktype</I>,
-
-and
-<I>ai_protocol</I>
-
-have the same meaning as the corresponding parameters in the
-<B><A HREF="../man2/socket.2.html">socket</A></B>(2)
-
-system call.
-The
-<B>getaddrinfo</B>()
-
-function returns socket addresses in either IPv4 or IPv6
-address family,
-(<I>ai_family</I>
-
-will be set to either
-<B>AF_INET</B>
-
-or
-<B>AF_INET6</B>).
-
-<P>
-
 The
 <I>hints</I>
 
-parameter specifies
-the preferred socket type, or protocol.
-A NULL
-<I>hints</I>
+parameter points to an
+<I>addrinfo</I>
 
-specifies that any network address or protocol is acceptable.
+structure that specifies criteria for selecting the socket address
+structures returned in the list pointed to by
+<I>res</I>.
+
 If this parameter is not NULL it points to an
 <I>addrinfo</I>
 
@@ -192,6 +160,27 @@ All the other members in the
 <I>hints</I>
 
 parameter must contain either 0, or a null pointer.
+Specifying
+<I>hints</I>
+
+as NULL is equivalent to setting
+<I>ai_socktype</I>
+
+and
+<I>ai_protocol</I>
+
+to 0;
+<I>ai_family</I>
+
+to
+<B>AF_UNSPEC</B>;
+
+and
+<I>ai_flags</I>
+
+to
+<B>(AI_V4MAPPED&nbsp;|&nbsp;AI_ADDRCONFIG)</B>.
+
 <P>
 
 The
@@ -257,7 +246,10 @@ flag.
 and
 <I>ai_protocol</I>
 
-specify the socket creation parameters.
+specify the socket creation parameters (i.e., these fields have
+the same meaning as the corresponding parameters of
+<B><A HREF="../man2/socket.2.html">socket</A></B>(2)).
+
 A pointer to the socket address is placed in the
 <I>ai_addr</I>
 
@@ -266,6 +258,21 @@ is placed in the
 <I>ai_addrlen</I>
 
 member.
+<P>
+
+The
+<B>getaddrinfo</B>()
+
+function returns socket addresses in either IPv4 or IPv6
+address family
+(<I>ai_family</I>
+
+will be set to either
+<B>AF_INET</B>
+
+or
+<B>AF_INET6</B>).
+
 <P>
 
 If
@@ -822,6 +829,6 @@ main(int argc, char *argv[])
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 02:51:36 GMT, April 20, 2020
+Time: 02:52:05 GMT, April 20, 2020
 </BODY>
 </HTML>

@@ -4,7 +4,7 @@
 <HTML><HEAD><TITLE>Man page of EPOLL</TITLE>
 </HEAD><BODY>
 <H1>EPOLL</H1>
-Section: Linux Programmer's Manual (7)<BR>Updated: 2007-06-22<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (7)<BR>Updated: 2008-02-28<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -61,7 +61,7 @@ event distribution interface is able to behave both as edge-triggered
 The difference between the two mechanisms
 can be described as follows.
 Suppose that
-this scenario happens :
+this scenario happens:
 <DL COMPACT>
 <DT>1.<DD>
 The file descriptor that represents the read side of a pipe
@@ -102,6 +102,7 @@ file descriptor has been added to the
 interface using the
 <B>EPOLLET</B>
 
+(edge-triggered)
 flag, the call to
 <B><A HREF="../man2/epoll_wait.2.html">epoll_wait</A></B>(2)
 
@@ -142,8 +143,7 @@ might block indefinitely.
 An application that employs the
 <B>EPOLLET</B>
 
-flag (edge-triggered)
-should use non-blocking file descriptors to avoid having a blocking
+flag should use non-blocking file descriptors to avoid having a blocking
 read or write starve a task that is handling multiple file descriptors.
 The suggested way to use
 <B>epoll</B>
@@ -157,7 +157,7 @@ interface is as follows:
 <DT><B>i</B>
 
 <DD>
-with non-blocking file descriptors
+with non-blocking file descriptors; and
 <DT><B>ii</B>
 
 <DD>
@@ -175,7 +175,11 @@ return
 
 <P>
 
-By contrast, when used as a level-triggered interface,
+By contrast, when used as a level-triggered interface
+(the default, when
+<B>EPOLLET</B>
+
+is not specified),
 <B>epoll</B>
 
 is simply a faster
@@ -224,8 +228,10 @@ non-blocking socket on which
 <B><A HREF="../man2/listen.2.html">listen</A></B>(2)
 
 has been called.
-The function do_use_fd() uses the new ready
-file descriptor until
+The function
+<I>do_use_fd()</I>
+
+uses the new ready file descriptor until
 <B>EAGAIN</B>
 
 is returned by either
@@ -237,7 +243,9 @@ or
 An event-driven state machine application should, after having received
 <B>EAGAIN</B>,
 
-record its current state so that at the next call to do_use_fd()
+record its current state so that at the next call to
+<I>do_use_fd()</I>
+
 it will continue to
 <B><A HREF="../man2/read.2.html">read</A></B>(2)
 
@@ -246,6 +254,7 @@ or
 
 from where it stopped before.
 <P>
+
 <PRE>
 struct epoll_event ev, *events;
 
@@ -263,8 +272,10 @@ for (;;) {
             setnonblocking(client);
             ev.events = EPOLLIN | EPOLLET;
             ev.data.fd = client;
-            if (epoll_ctl(kdpfd, EPOLL_CTL_ADD, client, &amp;ev) &lt; 0) {
-                fprintf(stderr, &quot;epoll set insertion error: fd=%d\n&quot;,
+            if (epoll_ctl(kdpfd, EPOLL_CTL_ADD, client, &amp;ev)
+                    == -1) {
+                fprintf(stderr,
+                        &quot;epoll set insertion error: fd=%d\n&quot;,
                         client);
                 return -1;
             }
@@ -275,9 +286,13 @@ for (;;) {
 }
 </PRE>
 
+
 <P>
 When used as an edge-triggered interface, for performance reasons, it is
-possible to add the file descriptor inside the epoll interface
+possible to add the file descriptor inside the
+<B>epoll</B>
+
+interface
 (<B>EPOLL_CTL_ADD</B>)
 
 once by specifying
@@ -300,19 +315,66 @@ with
 <H3>Questions and Answers</H3>
 
 <DL COMPACT>
+<DT><B>Q0</B>
+
+<DD>
+What is the key used to distinguish the file descriptors in an
+<B>epoll</B>
+
+set?
+<DT><B>A0</B>
+
+<DD>
+The key is the combination of the file descriptor number and
+the open file description
+(also known as an &quot;open file handle&quot;,
+the kernel's internal representation of an open file).
 <DT><B>Q1</B>
 
 <DD>
-What happens if you add the same file descriptor to an epoll set twice?
+What happens if you add the same file descriptor to an
+<B>epoll</B>
+
+set twice?
 <DT><B>A1</B>
 
 <DD>
 You will probably get
 <B>EEXIST</B>.
 
-However, it is possible that two
-threads may add the same file descriptor twice.
-This is a harmless condition.
+However, it is possible to add a duplicate
+(<B><A HREF="../man2/dup.2.html">dup</A></B>(2),
+
+<B><A HREF="../man2/dup2.2.html">dup2</A></B>(2),
+
+<B><A HREF="../man2/fcntl.2.html">fcntl</A></B>(2)
+
+<B>F_DUPFD</B>)
+
+descriptor to the same
+<B>epoll</B>
+
+set.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+This can be a useful technique for filtering events,
+if the duplicate file descriptors are registered with different
+<I>events</I>
+
+masks.
 <DT><B>Q2</B>
 
 <DD>
@@ -340,6 +402,11 @@ file descriptor itself poll/epoll/selectable?
 
 <DD>
 Yes.
+If an
+<B>epoll</B>
+
+file descriptor has events waiting then it will
+indicate as being readable.
 <DT><B>Q4</B>
 
 <DD>
@@ -350,22 +417,34 @@ file descriptor is put into its own file descriptor set?
 <DT><B>A4</B>
 
 <DD>
-It will fail.
+The
+<B><A HREF="../man2/epoll_ctl.2.html">epoll_ctl</A></B>(2)
+
+call will fail
+(<B>EINVAL</B>).
+
 However, you can add an
 <B>epoll</B>
 
-file descriptor inside another epoll file descriptor set.
+file descriptor inside another
+<B>epoll</B>
+
+file descriptor set.
 <DT><B>Q5</B>
 
 <DD>
-Can I send the
+Can I send an
 <B>epoll</B>
 
-file descriptor over a unix-socket to another process?
+file descriptor over a Unix domain socket to another process?
 <DT><B>A5</B>
 
 <DD>
-No.
+Yes, but it does not make sense to do this, since the receiving process
+would not have copies of the file descriptors in the
+<B>epoll</B>
+
+set.
 <DT><B>Q6</B>
 
 <DD>
@@ -376,7 +455,42 @@ sets automatically?
 <DT><B>A6</B>
 
 <DD>
-Yes.
+Yes, but be aware of the following point.
+A file descriptor is a reference to an open file description (see
+<B><A HREF="../man2/open.2.html">open</A></B>(2)).
+
+Whenever a descriptor is duplicated via
+<B><A HREF="../man2/dup.2.html">dup</A></B>(2),
+
+<B><A HREF="../man2/dup2.2.html">dup2</A></B>(2),
+
+<B><A HREF="../man2/fcntl.2.html">fcntl</A></B>(2)
+
+<B>F_DUPFD</B>,
+
+or
+<B><A HREF="../man2/fork.2.html">fork</A></B>(2),
+
+a new file descriptor referring to the same open file description is
+created.
+An open file description continues to exist until all
+file descriptors referring to it have been closed.
+A file descriptor is removed from an
+<B>epoll</B>
+
+set only after all the file descriptors referring to the underlying
+open file description have been closed
+(or after if the descriptor is explicitly removed using
+<B>epoll_ctl</B>()
+
+<B>EPOLL_CTL_DEL</B>).
+
+This means that even after a file descriptor that is part of an
+<B>epoll</B>
+
+set has been closed,
+events may be reported for that file descriptor if other file
+descriptors referring to the same underlying file description remain open.
 <DT><B>Q7</B>
 
 <DD>
@@ -414,33 +528,42 @@ flag (edge-triggered behavior) ?
 <DT><B>A9</B>
 
 <DD>
-No you don't.
 Receiving an event from
 <B><A HREF="../man2/epoll_wait.2.html">epoll_wait</A></B>(2)
 
-should suggest to you that such file descriptor is ready
-for the requested I/O operation.
-You have simply to consider it ready until you will receive the
-next
+should suggest to you that such
+file descriptor is ready for the requested I/O operation.
+You must consider it ready until the next (non-blocking)
+read/write yields
 <B>EAGAIN</B>.
 
-When and how you will use such file descriptor is entirely up
-to you.
-Also, the condition that the read/write I/O space is exhausted can
-be detected by checking the amount of data read from / written to the target
-file descriptor.
+When and how you will use the file descriptor is entirely up to you.
+<P>
+For packet/token-oriented files (e.g., datagram socket,
+terminal in canonical mode),
+the only way to detect the end of the read/write I/O space
+is to continue to read/write until
+<B>EAGAIN</B>.
+
+<P>
+For stream-oriented files (e.g., pipe, FIFO, stream socket), the
+condition that the read/write I/O space is exhausted can also be detected by
+checking the amount of data read from / written to the target file
+descriptor.
 For example, if you call
 <B><A HREF="../man2/read.2.html">read</A></B>(2)
 
 by asking to read a certain amount of data and
 <B><A HREF="../man2/read.2.html">read</A></B>(2)
 
-returns a lower number of bytes,
-you can be sure of having exhausted the read
-I/O space for such file descriptor.
+returns a lower number of bytes, you
+can be sure of having exhausted the read I/O space for the file
+descriptor.
 The same is true when writing using
 <B><A HREF="../man2/write.2.html">write</A></B>(2).
 
+(Avoid this latter technique if you cannot guarantee that
+the monitored file descriptor always refers to a stream-oriented file.)
 </DL>
 <A NAME="lbAH">&nbsp;</A>
 <H3>Possible Pitfalls and Ways to Avoid Them</H3>
@@ -515,7 +638,10 @@ Its interface should be finalized in Linux kernel 2.5.66.
 <A NAME="lbAJ">&nbsp;</A>
 <H2>CONFORMING TO</H2>
 
-The epoll API is Linux-specific.
+The
+<B>epoll</B>
+
+API is Linux-specific.
 Some other systems provide similar
 mechanisms, for example, FreeBSD has
 <I>kqueue</I>,
@@ -556,6 +682,6 @@ and Solaris has
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 02:51:42 GMT, April 20, 2020
+Time: 02:52:10 GMT, April 20, 2020
 </BODY>
 </HTML>
