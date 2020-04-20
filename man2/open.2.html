@@ -25,7 +25,7 @@ the source, must acknowledge the copyright and authors of this work.
 <HTML><HEAD><TITLE>Man page of OPEN</TITLE>
 </HEAD><BODY>
 <H1>OPEN</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2014-02-21<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2014-03-16<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -427,6 +427,30 @@ avoid denial-of-service problems if
 
 is called on a
 FIFO or tape device.
+<DT><B>O_DSYNC</B>
+
+<DD>
+Write operations on the file will complete according to the requirements of
+synchronized I/O
+<I>data</I>
+
+integrity completion.
+<P>
+By the time
+<B><A HREF="../man2/write.2.html">write</A></B>(2)
+
+(and similar)
+return, the output data
+has been transferred to the underlying hardware,
+along with any file metadata that would be required to retrieve that data
+(i.e., as though each
+<B><A HREF="../man2/write.2.html">write</A></B>(2)
+
+was followed by a call to
+<B><A HREF="../man2/fdatasync.2.html">fdatasync</A></B>(2)).
+
+<I>See NOTES below</I>.
+
 <DT><B>O_EXCL</B>
 
 <DD>
@@ -701,7 +725,10 @@ and
 
 are ignored.
 <P>
-If the
+If
+<I>pathname</I>
+
+is a symbolic link and the
 <B>O_NOFOLLOW</B>
 
 flag is also specified,
@@ -723,13 +750,33 @@ with an empty pathname to have the calls operate on the symbolic link.
 <DT><B>O_SYNC</B>
 
 <DD>
-The file is opened for synchronous I/O.
-Any
-<B><A HREF="../man2/write.2.html">write</A></B>(2)s
+Write operations on the file will complete according to the requirements of
+synchronized I/O
+<I>file</I>
 
-on the resulting file descriptor will block the calling process until
-the data has been physically written to the underlying hardware.
-<I>But see NOTES below</I>.
+integrity completion
+(by contrast with contrast with the
+synchronized I/O
+<I>data</I>
+
+integrity completion
+provided by
+<B>O_DSYNC</B>.)
+
+<P>
+By the time
+<B><A HREF="../man2/write.2.html">write</A></B>(2)
+
+(and similar)
+return, the output data and associated file metadata
+have been transferred to the underlying hardware
+(i.e., as though each
+<B><A HREF="../man2/write.2.html">write</A></B>(2)
+
+was followed by a call to
+<B><A HREF="../man2/fsync.2.html">fsync</A></B>(2)).
+
+<I>See NOTES below</I>.
 
 <DT><B>O_TMPFILE</B> (since Linux 3.11)
 
@@ -896,7 +943,7 @@ If the pathname given in
 <I>pathname</I>
 
 is relative, then it is interpreted relative to the directory
-referred to by the file descriptor
+relative to by the file descriptor
 <I>dirfd</I>
 
 (rather than relative to the current working directory of
@@ -1078,12 +1125,22 @@ functionality.
 
 <DD>
 Too many symbolic links were encountered in resolving
-<I>pathname</I>,
+<I>pathname</I>.
 
-or <B>O_NOFOLLOW</B> was specified but
+<DT><B>ELOOP</B>
+
+<DD>
 <I>pathname</I>
 
-was a symbolic link.
+was a symbolic link, and
+<I>flags</I>
+
+specified
+<B>O_NOFOLLOW</B>
+
+but not
+<B>O_PATH</B>.
+
 <DT><B>EMFILE</B>
 
 <DD>
@@ -1348,42 +1405,6 @@ for use with
 <B><A HREF="../man2/ioctl.2.html">ioctl</A></B>(2).
 
 <P>
-Unlike the other values that can be specified in
-<I>flags</I>,
-
-the
-<I>access mode</I>
-
-values
-<B>O_RDONLY</B>, <B>O_WRONLY</B>, and <B>O_RDWR</B>
-
-do not specify individual bits.
-Rather, they define the low order two bits of
-<I>flags</I>,
-
-and are defined respectively as 0, 1, and 2.
-In other words, the combination
-<B>O_RDONLY | O_WRONLY</B>
-
-is a logical error, and certainly does not have the same meaning as
-<B>O_RDWR</B>.
-
-Linux reserves the special, nonstandard access mode 3 (binary 11) in
-<I>flags</I>
-
-to mean:
-check for read and write permission on the file and return a descriptor
-that can't be used for reading or writing.
-This nonstandard access mode is used by some Linux drivers to return a
-descriptor that is to be used only for device-specific
-<B><A HREF="../man2/ioctl.2.html">ioctl</A></B>(2)
-
-operations.
-
-
-
-
-
 <P>
 
 The (undefined) effect of
@@ -1398,43 +1419,6 @@ On many systems the file is actually truncated.
 
 
 <P>
-
-There are many infelicities in the protocol underlying NFS, affecting
-amongst others
-<B>O_SYNC</B> and <B>O_NDELAY</B>.
-
-<P>
-POSIX provides for three different variants of synchronized I/O,
-corresponding to the flags
-<B>O_SYNC</B>,
-
-<B>O_DSYNC</B>,
-
-and
-<B>O_RSYNC</B>.
-
-Currently (2.6.31), Linux implements only
-<B>O_SYNC</B>,
-
-but glibc maps
-<B>O_DSYNC</B>
-
-and
-<B>O_RSYNC</B>
-
-to the same numerical value as
-<B>O_SYNC</B>.
-
-Most Linux filesystems don't actually implement the POSIX
-<B>O_SYNC</B>
-
-semantics, which require all metadata updates of a write
-to be on disk on returning to user space, but only the
-<B>O_DSYNC</B>
-
-semantics, which require only actual file data and metadata necessary
-to retrieve it to be on disk by the time the system call returns.
-<P>
 Note that
 <B>open</B>()
 
@@ -1445,23 +1429,6 @@ cannot create them; use
 <B><A HREF="../man2/mknod.2.html">mknod</A></B>(2)
 
 instead.
-<P>
-
-On NFS filesystems with UID mapping enabled,
-<B>open</B>()
-
-may
-return a file descriptor but, for example,
-<B><A HREF="../man2/read.2.html">read</A></B>(2)
-
-requests are denied
-with <B>EACCES</B>.
-This is because the client performs
-<B>open</B>()
-
-by checking the
-permissions, but UID mapping is performed by the server upon
-read and write requests.
 <P>
 If the file is newly created, its
 <I>st_atime</I>,
@@ -1491,13 +1458,205 @@ flag, its st_ctime and st_mtime fields are set to the current time.
 
 
 <A NAME="lbAL">&nbsp;</A>
-<H3>Rationale for openat() and the other *at() calls</H3>
+<H3>Synchronized I/O</H3>
+
+The POSIX.1-2008 &quot;synchronized I/O&quot; option
+specifies different variants of synchronized I/O,
+and specifies the
+<B>open</B>()
+
+flags
+<B>O_SYNC</B>,
+
+<B>O_DSYNC</B>,
+
+and
+<B>O_RSYNC</B>
+
+for controlling the behavior.
+Regardless of whether an implementation supports this option,
+it must at least support the use of
+<B>O_SYNC</B>
+
+for regular files.
+<P>
+Linux implements
+<B>O_SYNC</B>
+
+and
+<B>O_DSYNC</B>,
+
+but not
+<B>O_RSYNC</B>.
+
+(Somewhat incorrectly, glibc defines
+<B>O_RSYNC</B>
+
+to have the same value as
+<B>O_SYNC</B>.)
+
+<P>
+<B>O_SYNC</B>
+
+provides synchronized I/O
+<I>file</I>
+
+integrity completion,
+meaning write operations will flush data and all associated metadata
+to the underlying hardware.
+<B>O_DSYNC</B>
+
+provides synchronized I/O
+<I>data</I>
+
+integrity completion,
+meaning write operations will flush data
+to the underlying hardware,
+but will only flush metadata updates that are required
+to allow a subsequent read operation to complete successfully.
+Data integrity completion can reduce the number of disk operations
+that are required for applications that don't need the guarantees
+of file integrity completion.
+<P>
+To understand the difference between the the two types of completion,
+consider two pieces of file metadata:
+the file last modification timestamp
+(<I>st_mtime</I>)
+
+and the file length.
+All write operations will update the last file modification timestamp,
+but only writes that add data to the end of the
+file will change the file length.
+The last modification timestamp is not needed to ensure that
+a read completes successfully, but the file length is.
+Thus,
+<B>O_DSYNC</B>
+
+would only guarantee to flush updates to the file length metadata
+(whereas
+<B>O_SYNC</B>
+
+would also always flush the last modification timestamp metadata).
+<P>
+Before Linux 2.6.33, Linux implemented only the
+<B>O_SYNC</B>
+
+flag for
+<B>open</B>().
+
+However, when that flag was specified,
+most filesystems actually provided the equivalent of synchronized I/O
+<I>data</I>
+
+integrity completion (i.e.,
+<B>O_SYNC</B>
+
+was actually implemented as the equivalent of
+<B>O_DSYNC</B>).
+
+<P>
+Since Linux 2.6.33, proper
+<B>O_SYNC</B>
+
+support is provided.
+However, to ensure backward binary compatibility,
+<B>O_DSYNC</B>
+
+was defined with the same value as the historical
+<B>O_SYNC</B>,
+
+and
+<B>O_SYNC</B>
+
+was defined as a new (two-bit) flag value that includes the
+<B>O_DSYNC</B>
+
+flag value.
+This ensures that applications compiled against
+new headers get at least
+<B>O_DSYNC</B>
+
+semantics on pre-2.6.33 kernels.
+
+
+<A NAME="lbAM">&nbsp;</A>
+<H3>NFS</H3>
+
+There are many infelicities in the protocol underlying NFS, affecting
+amongst others
+<B>O_SYNC</B> and <B>O_NDELAY</B>.
+
+<P>
+On NFS filesystems with UID mapping enabled,
+<B>open</B>()
+
+may
+return a file descriptor but, for example,
+<B><A HREF="../man2/read.2.html">read</A></B>(2)
+
+requests are denied
+with <B>EACCES</B>.
+This is because the client performs
+<B>open</B>()
+
+by checking the
+permissions, but UID mapping is performed by the server upon
+read and write requests.
+
+
+<A NAME="lbAN">&nbsp;</A>
+<H3>File access mode</H3>
+
+Unlike the other values that can be specified in
+<I>flags</I>,
+
+the
+<I>access mode</I>
+
+values
+<B>O_RDONLY</B>, <B>O_WRONLY</B>, and <B>O_RDWR</B>
+
+do not specify individual bits.
+Rather, they define the low order two bits of
+<I>flags</I>,
+
+and are defined respectively as 0, 1, and 2.
+In other words, the combination
+<B>O_RDONLY | O_WRONLY</B>
+
+is a logical error, and certainly does not have the same meaning as
+<B>O_RDWR</B>.
+
+<P>
+Linux reserves the special, nonstandard access mode 3 (binary 11) in
+<I>flags</I>
+
+to mean:
+check for read and write permission on the file and return a descriptor
+that can't be used for reading or writing.
+This nonstandard access mode is used by some Linux drivers to return a
+descriptor that is to be used only for device-specific
+<B><A HREF="../man2/ioctl.2.html">ioctl</A></B>(2)
+
+operations.
+
+
+
+
+
+
+
+<A NAME="lbAO">&nbsp;</A>
+<H3>Rationale for openat() and other directory file descriptor APIs</H3>
 
 <B>openat</B>()
 
-and other similar system calls and library functions suffixed &quot;at&quot;
+and the other system calls and library functions that take
+a directory file descriptor argument
 (i.e.,
 <B><A HREF="../man2/faccessat.2.html">faccessat</A></B>(2),
+
+<B><A HREF="../man2/fanotify_mark.2.html">fanotify_mark</A></B>(2),
 
 <B><A HREF="../man2/fchmodat.2.html">fchmodat</A></B>(2),
 
@@ -1513,6 +1672,8 @@ and other similar system calls and library functions suffixed &quot;at&quot;
 
 <B><A HREF="../man2/mknodat.2.html">mknodat</A></B>(2),
 
+<B><A HREF="../man2/name_to_handle_at.2.html">name_to_handle_at</A></B>(2),
+
 <B><A HREF="../man2/readlinkat.2.html">readlinkat</A></B>(2),
 
 <B><A HREF="../man2/renameat.2.html">renameat</A></B>(2),
@@ -1523,15 +1684,17 @@ and other similar system calls and library functions suffixed &quot;at&quot;
 
 <B><A HREF="../man2/utimensat.2.html">utimensat</A></B>(2)
 
+<B><A HREF="../man3/mkfifoat.3.html">mkfifoat</A></B>(3),
+
 and
-<B><A HREF="../man3/mkfifoat.3.html">mkfifoat</A></B>(3))
+<B><A HREF="../man3/scandirat.3.html">scandirat</A></B>(3))
 
 are supported
 for two reasons.
 Here, the explanation is in terms of the
 <B>openat</B>()
 
-call, but the rationale is the analogous for the other interfaces.
+call, but the rationale is analogous for the other interfaces.
 <P>
 First,
 <B>openat</B>()
@@ -1569,7 +1732,7 @@ on the use of
 but less efficiently.)
 
 
-<A NAME="lbAM">&nbsp;</A>
+<A NAME="lbAP">&nbsp;</A>
 <H3>O_DIRECT</H3>
 
 <P>
@@ -1730,7 +1893,7 @@ interface is just stupid, and was probably designed by a deranged monkey
 on some serious mind-controlling substances.&quot;---Linus
 </DL>
 
-<A NAME="lbAN">&nbsp;</A>
+<A NAME="lbAQ">&nbsp;</A>
 <H2>BUGS</H2>
 
 Currently, it is not possible to enable signal-driven
@@ -1757,7 +1920,7 @@ when trying to determine whether the kernel supports
 <B>O_TMPFILE</B>
 
 functionality.
-<A NAME="lbAO">&nbsp;</A>
+<A NAME="lbAR">&nbsp;</A>
 <H2>SEE ALSO</H2>
 
 <B><A HREF="../man2/chmod.2.html">chmod</A></B>(2),
@@ -1818,16 +1981,19 @@ functionality.
 <DT><A HREF="#lbAJ">CONFORMING TO</A><DD>
 <DT><A HREF="#lbAK">NOTES</A><DD>
 <DL>
-<DT><A HREF="#lbAL">Rationale for openat() and the other *at() calls</A><DD>
-<DT><A HREF="#lbAM">O_DIRECT</A><DD>
+<DT><A HREF="#lbAL">Synchronized I/O</A><DD>
+<DT><A HREF="#lbAM">NFS</A><DD>
+<DT><A HREF="#lbAN">File access mode</A><DD>
+<DT><A HREF="#lbAO">Rationale for openat() and other directory file descriptor APIs</A><DD>
+<DT><A HREF="#lbAP">O_DIRECT</A><DD>
 </DL>
-<DT><A HREF="#lbAN">BUGS</A><DD>
-<DT><A HREF="#lbAO">SEE ALSO</A><DD>
+<DT><A HREF="#lbAQ">BUGS</A><DD>
+<DT><A HREF="#lbAR">SEE ALSO</A><DD>
 </DL>
 <HR>
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:26:41 GMT, April 20, 2020
+Time: 03:27:18 GMT, April 20, 2020
 </BODY>
 </HTML>

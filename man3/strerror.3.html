@@ -26,13 +26,13 @@ the source, must acknowledge the copyright and authors of this work.
 <HTML><HEAD><TITLE>Man page of STRERROR</TITLE>
 </HEAD><BODY>
 <H1>STRERROR</H1>
-Section: Linux Programmer's Manual (3)<BR>Updated: 2013-06-21<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2014-03-18<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
 <H2>NAME</H2>
 
-strerror, strerror_r - return string describing error number
+strerror, strerror_r, strerror_l - return string describing error number
 <A NAME="lbAC">&nbsp;</A>
 <H2>SYNOPSIS</H2>
 
@@ -46,6 +46,8 @@ strerror, strerror_r - return string describing error number
 
 <B>char *strerror_r(int </B><I>errnum</I><B>, char *</B><I>buf</I><B>, size_t </B><I>buflen</I><B>);</B>
             /* GNU-specific */
+
+<B>char *strerror_l(int </B><I>errnum</I><B>, locale_t </B><I>locale</I><B>);</B>
 </PRE>
 
 <P>
@@ -54,17 +56,21 @@ Feature Test Macro Requirements for glibc (see
 <B><A HREF="../man7/feature_test_macros.7.html">feature_test_macros</A></B>(7)):
 
 
-<P>
-The XSI-compliant version of
-<B>strerror_r</B>()
 
-is provided if:
+<P>
+<B>strerror_r</B>():
+
+<DL COMPACT><DT><DD>
+The XSI-compliant version is provided if:
 <BR>
 
 (_POSIX_C_SOURCE&nbsp;&gt;=&nbsp;200112L || _XOPEN_SOURCE&nbsp;&gt;=&nbsp;600) &amp;&amp; !&nbsp;_GNU_SOURCE
 <BR>
 
 Otherwise, the GNU-specific version is provided.
+</DL>
+
+
 <A NAME="lbAD">&nbsp;</A>
 <H2>DESCRIPTION</H2>
 
@@ -85,16 +91,22 @@ part of the current locale to select the appropriate language.
 is
 <B>EINVAL</B>,
 
-the returned description will &quot;Invalid argument&quot;.)
+the returned description will be &quot;Invalid argument&quot;.)
 This string must not be modified by the application, but may be
 modified by a subsequent call to
-<B>strerror</B>().
+<B>strerror</B>()
 
-No library function, including
+or
+<B>strerror_l</B>().
+
+No other library function, including
 <B><A HREF="../man3/perror.3.html">perror</A></B>(3),
 
 will modify this string.
-<P>
+
+<A NAME="lbAE">&nbsp;</A>
+<H3>strerror_r()</H3>
+
 The
 <B>strerror_r</B>()
 
@@ -157,11 +169,38 @@ is too small and
 
 is unknown).
 The string always includes a terminating null byte ('\0').
-<A NAME="lbAE">&nbsp;</A>
+
+<A NAME="lbAF">&nbsp;</A>
+<H3>strerror_l()</H3>
+
+<B>strerror_l</B>()
+
+is like
+<B>strerror</B>(),
+
+but maps
+<I>errnum</I>
+
+to a locale-dependent error message in the locale specified by
+<I>locale</I>.
+
+The behavior of
+<B>strerror_l</B>()
+
+is undefined if
+<I>locale</I>
+
+is the special locale object
+<B>LC_GLOBAL_LOCALE</B>
+
+or is not a valid locale object handle.
+<A NAME="lbAG">&nbsp;</A>
 <H2>RETURN VALUE</H2>
 
 The
-<B>strerror</B>()
+<B>strerror</B>(),
+
+<B>strerror_l</B>(),
 
 and the GNU-specific
 <B>strerror_r</B>()
@@ -170,8 +209,22 @@ functions return
 the appropriate error description string,
 or an &quot;Unknown error nnn&quot; message if the error number is unknown.
 <P>
+The XSI-compliant
+<B>strerror_r</B>()
+
+function returns 0 on success.
+On error,
+a (positive) error number is returned (since glibc 2.13),
+or -1 is returned and
+<I>errno</I>
+
+is set to indicate the error (glibc versions before 2.13).
+<P>
 POSIX.1-2001 and POSIX.1-2008 require that a successful call to
 <B>strerror</B>()
+
+or
+<B>strerror_l</B>()
 
 shall leave
 <I>errno</I>
@@ -186,18 +239,7 @@ and then check
 <I>errno</I>
 
 after the call.
-<P>
-The XSI-compliant
-<B>strerror_r</B>()
-
-function returns 0 on success.
-On error,
-a (positive) error number is returned (since glibc 2.13),
-or -1 is returned and
-<I>errno</I>
-
-is set to indicate the error (glibc versions before 2.13).
-<A NAME="lbAF">&nbsp;</A>
+<A NAME="lbAH">&nbsp;</A>
 <H2>ERRORS</H2>
 
 <DL COMPACT>
@@ -213,10 +255,10 @@ is not a valid error number.
 <DD>
 Insufficient storage was supplied to contain the error description string.
 </DL>
-<A NAME="lbAG">&nbsp;</A>
+<A NAME="lbAI">&nbsp;</A>
 <H2>ATTRIBUTES</H2>
 
-<A NAME="lbAH">&nbsp;</A>
+<A NAME="lbAJ">&nbsp;</A>
 <H3>Multithreading (see <A HREF="../man7/pthreads.7.html">pthreads</A>(7))</H3>
 
 The
@@ -229,15 +271,27 @@ The
 <B>strerror_r</B>()
 
 function is thread-safe.
-<A NAME="lbAI">&nbsp;</A>
+
+<A NAME="lbAK">&nbsp;</A>
+<H2>VERSIONS</H2>
+
+The
+<B>strerror_l</B>()
+
+function first appeared in glibc 2.6.
+<A NAME="lbAL">&nbsp;</A>
 <H2>CONFORMING TO</H2>
 
 <B>strerror</B>()
 
-is specified by POSIX.1-2001, C89, C99.
+is specified by POSIX.1-2001, POSIX.1-2008, C89, and C99.
 <B>strerror_r</B>()
 
-is specified by POSIX.1-2001.
+is specified by POSIX.1-2001 and POSIX.1-2008.
+<P>
+<B>strerror_l</B>()
+
+is specified in POSIX.1-2008.
 <P>
 The GNU-specific
 <B>strerror_r</B>()
@@ -269,7 +323,7 @@ to
 
 if the error number is unknown.
 C99 and POSIX.1-2008 require the return value to be non-NULL.
-<A NAME="lbAJ">&nbsp;</A>
+<A NAME="lbAM">&nbsp;</A>
 <H2>SEE ALSO</H2>
 
 <B><A HREF="../man3/err.3.html">err</A></B>(3),
@@ -280,7 +334,9 @@ C99 and POSIX.1-2008 require the return value to be non-NULL.
 
 <B><A HREF="../man3/perror.3.html">perror</A></B>(3),
 
-<B><A HREF="../man3/strsignal.3.html">strsignal</A></B>(3)
+<B><A HREF="../man3/strsignal.3.html">strsignal</A></B>(3),
+
+<B><A HREF="../man7/locale.7.html">locale</A></B>(7)
 
 <P>
 
@@ -290,19 +346,24 @@ C99 and POSIX.1-2008 require the return value to be non-NULL.
 <DT><A HREF="#lbAB">NAME</A><DD>
 <DT><A HREF="#lbAC">SYNOPSIS</A><DD>
 <DT><A HREF="#lbAD">DESCRIPTION</A><DD>
-<DT><A HREF="#lbAE">RETURN VALUE</A><DD>
-<DT><A HREF="#lbAF">ERRORS</A><DD>
-<DT><A HREF="#lbAG">ATTRIBUTES</A><DD>
 <DL>
-<DT><A HREF="#lbAH">Multithreading (see pthreads(7))</A><DD>
+<DT><A HREF="#lbAE">strerror_r()</A><DD>
+<DT><A HREF="#lbAF">strerror_l()</A><DD>
 </DL>
-<DT><A HREF="#lbAI">CONFORMING TO</A><DD>
-<DT><A HREF="#lbAJ">SEE ALSO</A><DD>
+<DT><A HREF="#lbAG">RETURN VALUE</A><DD>
+<DT><A HREF="#lbAH">ERRORS</A><DD>
+<DT><A HREF="#lbAI">ATTRIBUTES</A><DD>
+<DL>
+<DT><A HREF="#lbAJ">Multithreading (see pthreads(7))</A><DD>
+</DL>
+<DT><A HREF="#lbAK">VERSIONS</A><DD>
+<DT><A HREF="#lbAL">CONFORMING TO</A><DD>
+<DT><A HREF="#lbAM">SEE ALSO</A><DD>
 </DL>
 <HR>
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:26:50 GMT, April 20, 2020
+Time: 03:27:28 GMT, April 20, 2020
 </BODY>
 </HTML>

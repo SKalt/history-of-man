@@ -11,7 +11,7 @@ the License, or (at your option) any later version.
 <HTML><HEAD><TITLE>Man page of MBSTOWCS</TITLE>
 </HEAD><BODY>
 <H1>MBSTOWCS</H1>
-Section: Linux Programmer's Manual (3)<BR>Updated: 2011-09-28<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2014-03-18<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -146,9 +146,130 @@ The function
 provides a better interface to the same
 functionality.
 <A NAME="lbAH">&nbsp;</A>
+<H2>EXAMPLE</H2>
+
+The program below illustrates the use of
+<B>mbstowcs</B>(),
+
+as well as some of the wider character classification functions.
+An example run is the following:
+
+<PRE>
+
+$ ./t_mbstowcs de_DE.UTF-8 Grüße!
+Length of source string (excluding terminator):
+    8 bytes
+    6 multibyte characters
+
+Wide character string is: Grüße! (6 characters)
+    G alpha upper
+    r alpha lower
+    ü alpha lower
+    ß alpha lower
+    e alpha lower
+    ! !alpha
+</PRE>
+
+
+<A NAME="lbAI">&nbsp;</A>
+<H3>Program source</H3>
+
+<PRE>
+#include &lt;<A HREF="file:///usr/include/locale.h">locale.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/wchar.h">wchar.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/string.h">string.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/stdlib.h">stdlib.h</A>&gt;
+
+int
+main(int argc, char *argv[])
+{
+    size_t mbslen;      /* Number of multibyte characters in source */
+    wchar_t *wcs;       /* Pointer to converted wide character string */
+    wchar_t *wp;
+
+    if (argc &lt; 3) {
+        fprintf(stderr, &quot;Usage: %s &lt;locale&gt; &lt;string&gt;\n&quot;, argv[0]);
+        exit(EXIT_FAILURE);
+    }
+
+    /* Apply the specified locale */
+
+    if (setlocale(LC_ALL, argv[1]) == NULL) {
+        perror(&quot;setlocale&quot;);
+        exit(EXIT_FAILURE);
+    }
+
+    /* Calculate the length required to hold argv[2] converted to
+       a wide character string */
+
+    mbslen = mbstowcs(NULL, argv[2], 0);
+    if (mbslen == (size_t) -1) {
+        perror(&quot;mbstowcs&quot;);
+        exit(EXIT_FAILURE);
+    }
+
+    /* Describe the source string to the user */
+
+    printf(&quot;Length of source string (excluding terminator):\n&quot;);
+    printf(&quot;    %zu bytes\n&quot;, strlen(argv[2]));
+    printf(&quot;    %zu multibyte characters\n\n&quot;, mbslen);
+
+    /* Allocate wide character string of the desired size.  Add 1
+       to allow for terminating null wide character (L'\0'). */
+
+    wcs = calloc(mbslen + 1, sizeof(wchar_t));
+    if (wcs == NULL) {
+        perror(&quot;calloc&quot;);
+        exit(EXIT_FAILURE);
+    }
+
+    /* Convert the multibyte character string in argv[2] to a
+       wide character string */
+
+    if (mbstowcs(wcs, argv[2], mbslen + 1) == (size_t) -1) {
+        perror(&quot;mbstowcs&quot;);
+        exit(EXIT_FAILURE);
+    }
+
+    printf(&quot;Wide character string is: %ls (%zu characters)\n&quot;,
+            wcs, mbslen);
+
+    /* Now do some inspection of the classes of the characters in
+       the wide character string */
+
+    for (wp = wcs; *wp != 0; wp++) {
+        printf(&quot;    %lc &quot;, (wint_t) *wp);
+
+        if (!iswalpha(*wp))
+            printf(&quot;!&quot;);
+        printf(&quot;alpha &quot;);
+
+        if (iswalpha(*wp)) {
+            if (iswupper(*wp))
+                printf(&quot;upper &quot;);
+
+            if (iswlower(*wp))
+                printf(&quot;lower &quot;);
+        }
+
+        putchar('\n');
+    }
+
+    exit(EXIT_SUCCESS);
+}
+</PRE>
+
+<A NAME="lbAJ">&nbsp;</A>
 <H2>SEE ALSO</H2>
 
+<B><A HREF="../man3/mblen.3.html">mblen</A></B>(3),
+
 <B><A HREF="../man3/mbsrtowcs.3.html">mbsrtowcs</A></B>(3),
+
+<B><A HREF="../man3/mbtowc.3.html">mbtowc</A></B>(3),
+
+<B><A HREF="../man3/wctomb.3.html">wctomb</A></B>(3),
 
 <B><A HREF="../man3/wcstombs.3.html">wcstombs</A></B>(3)
 
@@ -163,12 +284,16 @@ functionality.
 <DT><A HREF="#lbAE">RETURN VALUE</A><DD>
 <DT><A HREF="#lbAF">CONFORMING TO</A><DD>
 <DT><A HREF="#lbAG">NOTES</A><DD>
-<DT><A HREF="#lbAH">SEE ALSO</A><DD>
+<DT><A HREF="#lbAH">EXAMPLE</A><DD>
+<DL>
+<DT><A HREF="#lbAI">Program source</A><DD>
+</DL>
+<DT><A HREF="#lbAJ">SEE ALSO</A><DD>
 </DL>
 <HR>
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:26:48 GMT, April 20, 2020
+Time: 03:27:26 GMT, April 20, 2020
 </BODY>
 </HTML>

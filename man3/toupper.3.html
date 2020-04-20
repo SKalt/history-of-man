@@ -26,13 +26,13 @@ the source, must acknowledge the copyright and authors of this work.
 <HTML><HEAD><TITLE>Man page of TOUPPER</TITLE>
 </HEAD><BODY>
 <H1>TOUPPER</H1>
-Section: Linux Programmer's Manual (3)<BR>Updated: 2014-01-22<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2014-03-18<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
 <H2>NAME</H2>
 
-toupper, tolower - convert letter to upper or lower case
+toupper, tolower, toupper_l, tolower_l - convert uppercase or lowercase
 <A NAME="lbAC">&nbsp;</A>
 <H2>SYNOPSIS</H2>
 
@@ -42,38 +42,105 @@ toupper, tolower - convert letter to upper or lower case
 <B>int toupper(int </B><I>c</I><B>);</B>
 <BR>
 <B>int tolower(int </B><I>c</I><B>);</B>
+
+<B>int toupper_l(int </B><I>c</I><B>, locale_t </B><I>locale</I><B>);</B>
+<B>int tolower_l(int </B><I>c</I><B>, locale_t </B><I>locale</I><B>);</B>
 </PRE>
+
+<P>
+
+Feature Test Macro Requirements for glibc (see
+<B><A HREF="../man7/feature_test_macros.7.html">feature_test_macros</A></B>(7)):
+
+
+<P>
+<B>toupper_l</B>(),
+
+<B>tolower_l</B>():
+
+
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT>Since glibc 2.10:<DD>
+_XOPEN_SOURCE&nbsp;&gt;=&nbsp;700
+<DT>Before glibc 2.10:<DD>
+_GNU_SOURCE
+</DL>
+</DL>
+
 
 <A NAME="lbAD">&nbsp;</A>
 <H2>DESCRIPTION</H2>
 
+These functions convert lowercase letters to uppercase, and vice versa.
+<P>
+If
+<I>c</I>
+
+is a lowercase letter,
 <B>toupper</B>()
 
-converts the letter
-<I>c</I>
+returns its uppercase equivalent,
+if an uppercase representation exists in the current locale.
+Otherwise, it returns
+<I>c</I>.
 
-to upper case, if possible.
+The
+<B>toupper_l</B>()
+
+function performs the same task,
+but uses the locale referred to by the locale handle
+<I>locale</I>.
+
 <P>
-
-<B>tolower</B>()
-
-converts the letter
+If
 <I>c</I>
 
-to lower case, if possible.
+is a uppercase letter,
+<B>toupper</B>()
+
+returns its lowercase equivalent,
+if a lowercase representation exists in the current locale.
+Otherwise, it returns
+<I>c</I>.
+
+The
+<B>tolower_l</B>()
+
+function performs the same task,
+but uses the locale referred to by the locale handle
+<I>locale</I>.
+
 <P>
 
 If
 <I>c</I>
 
-is not an
+is neither an
 <I>unsigned char</I>
 
-value, or
+value nor
 <B>EOF</B>,
 
 the behavior of these functions
 is undefined.
+<P>
+The behavior of
+<B>toupper_l</B>()
+
+and
+<B>tolower_l</B>()
+
+is undefined if
+<I>locale</I>
+
+is the special locale object
+<B>LC_GLOBAL_LOCALE</B>
+
+(see
+<B><A HREF="../man3/duplocale.3.html">duplocale</A></B>(3))
+
+or is not a valid locale object handle.
 <A NAME="lbAE">&nbsp;</A>
 <H2>RETURN VALUE</H2>
 
@@ -99,15 +166,26 @@ as long as
 <B><A HREF="../man3/setlocale.3.html">setlocale</A></B>(3)
 
 is not called to change the locale during their execution.
+
 <A NAME="lbAH">&nbsp;</A>
 <H2>CONFORMING TO</H2>
 
-C89, C99, 4.3BSD.
+<B>toupper</B>(),
+
+<B>tolower</B>():
+
+C89, C99, 4.3BSD, POSIX.1-2001, POSIX.1-2008.
+<P>
+<B>toupper_l</B>(),
+
+<B>tolower_l</B>():
+
+POSIX.1-2008.
 <A NAME="lbAI">&nbsp;</A>
-<H2>BUGS</H2>
+<H2>NOTES</H2>
 
 The details of what constitutes an uppercase or lowercase letter depend
-on the current locale.
+on the locale.
 For example, the default
 <B>C</B>
 
@@ -115,14 +193,21 @@ locale does not know about umlauts, so no conversion is done for them.
 <P>
 
 In some non-English locales, there are lowercase letters with no
-corresponding uppercase equivalent; the German sharp s is one
-example.
+corresponding uppercase equivalent;
+
+
+
+the German sharp s is one example.
 <A NAME="lbAJ">&nbsp;</A>
 <H2>SEE ALSO</H2>
 
 <B><A HREF="../man3/isalpha.3.html">isalpha</A></B>(3),
 
+<B><A HREF="../man3/newlocale.3.html">newlocale</A></B>(3),
+
 <B><A HREF="../man3/setlocale.3.html">setlocale</A></B>(3),
+
+<B><A HREF="../man3/uselocale.3.html">uselocale</A></B>(3),
 
 <B><A HREF="../man3/towlower.3.html">towlower</A></B>(3),
 
@@ -144,13 +229,13 @@ example.
 <DT><A HREF="#lbAG">Multithreading (see pthreads(7))</A><DD>
 </DL>
 <DT><A HREF="#lbAH">CONFORMING TO</A><DD>
-<DT><A HREF="#lbAI">BUGS</A><DD>
+<DT><A HREF="#lbAI">NOTES</A><DD>
 <DT><A HREF="#lbAJ">SEE ALSO</A><DD>
 </DL>
 <HR>
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:26:51 GMT, April 20, 2020
+Time: 03:27:28 GMT, April 20, 2020
 </BODY>
 </HTML>

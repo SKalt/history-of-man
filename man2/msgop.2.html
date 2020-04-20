@@ -26,7 +26,7 @@ the source, must acknowledge the copyright and authors of this work.
 <HTML><HEAD><TITLE>Man page of MSGOP</TITLE>
 </HEAD><BODY>
 <H1>MSGOP</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2014-01-23<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2014-03-17<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -321,14 +321,31 @@ in the queue specified by
 <I>msgtyp</I>
 
 (messages are considered to be numbered starting at 0).
-This flag should be specified in conjunction with
+<P>
+This flag must be specified in conjunction with
 <B>IPC_NOWAIT</B>,
 
-so that if there is no message available at the given position,
+with the result that, if there is no message available at the given position,
 the call fails immediately with the error
 <B>ENOMSG</B>.
 
-This flag was added for the implementation of
+Because they alter the meaning of
+<I>msgtyp</I>
+
+in orthogonal ways,
+<B>MSG_COPY</B>
+
+and
+<B>MSG_EXCEPT</B>
+
+may not both be specified in
+<I>msgflg</I>.
+
+<P>
+The
+<B>MSG_COPY</B>
+
+flag was added for the implementation of
 the kernel checkpoint-restore facility and
 is available only if the kernel was built with the
 <B>CONFIG_CHECKPOINT_RESTORE</B>
@@ -563,6 +580,28 @@ was invalid, or
 <I>msgsz</I>
 
 was less than 0.
+<DT><B>EINVAL</B> (since Linux 3.14)
+
+<DD>
+<I>msgflg</I>
+
+specified
+<B>MSG_COPY</B>,
+
+but not
+<B>IPC_NOWAIT</B>.
+
+<DT><B>EINVAL</B> (since Linux 3.14)
+
+<DD>
+<I>msgflg</I>
+
+specified both
+<B>MSG_COPY</B>
+
+and
+<B>MSG_EXCEPT</B>.
+
 <DT><B>ENOMSG</B>
 
 <DD>
@@ -681,27 +720,31 @@ and for the system wide maximum size in bytes of the message pool
 <A NAME="lbAK">&nbsp;</A>
 <H2>BUGS</H2>
 
-If
+In Linux 3.13 and earlier,
+if
 <B>msgrcv</B>()
 
-is called with the
+was called with the
 <B>MSG_COPY</B>
 
 flag, but without
 <B>IPC_NOWAIT</B>,
 
-and the message queue contains less than
+and the message queue contained less than
 <I>msgtyp</I>
 
-messages, then the call will block until the next message is written
+messages, then the call would block until the next message is written
 to the queue.
 
-At that point, the call will return a copy of the message,
+At that point, the call would return a copy of the message,
 <I>regardless</I>
 
-of whether that message is at the ordinal position
+of whether that message was at the ordinal position
 <I>msgtyp</I>.
 
+This bug is fixed
+
+in Linux 3.14.
 <P>
 Specifying both
 <B>MSG_COPY</B>
@@ -715,10 +758,14 @@ in
 is a logical error (since these flags impose different interpretations on
 <I>msgtyp</I>).
 
+In Linux 3.13 and earlier,
 
-However, as at Linux 3.13, this error is not diagnosed by
-<I>msgsrv</I>().
+this error was not diagnosed by
+<B>msgrcv</B>().
 
+This bug is fixed
+
+in Linux 3.14.
 <A NAME="lbAL">&nbsp;</A>
 <H2>SEE ALSO</H2>
 
@@ -755,6 +802,6 @@ However, as at Linux 3.13, this error is not diagnosed by
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:26:41 GMT, April 20, 2020
+Time: 03:27:18 GMT, April 20, 2020
 </BODY>
 </HTML>
