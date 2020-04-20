@@ -4,7 +4,7 @@
 <HTML><HEAD><TITLE>Man page of IP</TITLE>
 </HEAD><BODY>
 <H1>IP</H1>
-Section: Linux Programmer's Manual (7)<BR>Updated: 2011-09-22<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (7)<BR>Updated: 2013-02-12<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -349,6 +349,75 @@ Only valid as a
 <B><A HREF="../man2/setsockopt.2.html">setsockopt</A></B>(2).
 
 
+<DT><B>IP_ADD_SOURCE_MEMBERSHIP</B> (since Linux 2.4.22 / 2.5.68)
+
+<DD>
+Join a multicast group and allow receiving data only
+from a specified source.
+Argument is an
+<I>ip_mreq_source</I>
+
+structure.
+<P>
+
+<PRE>
+struct ip_mreq_source {
+    struct in_addr imr_multiaddr;  /* IP multicast group
+                                      address */
+    struct in_addr imr_interface;  /* IP address of local
+                                      interface */
+    struct in_addr imr_sourceaddr; /* IP address of
+                                      multicast source */
+};
+</PRE>
+
+
+<P>
+The
+<I>ip_mreq_source</I>
+
+structure is similar to
+<I>ip_mreqn</I>
+
+described under
+<B>IP_ADD_MEMBERSIP</B>.
+
+The
+<I>imr_multiaddr</I>
+
+field contains the address of the multicast group the application
+wants to join or leave.
+The
+<I>imr_interface</I>
+
+field is the address of the local interface with which
+the system should join the multicast group.
+Finally, the
+<I>imr_sourceaddr</I>
+
+field contains the address of the source the
+application wants to receive data from.
+<DT><DD>
+This option can be used multiple times to allow
+receiving data from more than one source.
+<DT><B>IP_BLOCK_SOURCE</B> (since Linux 2.4.22 / 2.5.68)
+
+<DD>
+Stop receiving multicast data from a specific source in a given
+group. This is valid only after the application has subscribed
+to the multicast group using either
+<B>IP_ADD_MEMBERSHIP</B>
+
+or
+<B>IP_ADD_SOURCE_MEMBERSHIP</B>.
+
+<DT><DD>
+Argument is an
+<I>ip_mreq_source</I>
+
+structure as described under
+<B>IP_ADD_SOURCE_MEMBERSHIP</B>.
+
 <DT><B>IP_DROP_MEMBERSHIP</B> (since Linux 1.2)
 
 <DD>
@@ -361,6 +430,23 @@ or
 
 structure similar to
 <B>IP_ADD_MEMBERSHIP</B>.
+
+<DT><B>IP_DROP_SOURCE_MEMBERSHIP</B> (since Linux 2.4.22 / 2.5.68)
+
+<DD>
+Leave a source-specific group---that is, stop receiving data from
+a given multicast group that come from a given source.
+If the application has subscribed to multiple sources within
+the same group, data from the remaining sources will still be
+delivered. To stop receiving data from all sources at once, use
+<B>IP_LEAVE_GROUP</B>.
+
+<DT><DD>
+Argument is an
+<I>ip_mreq_source</I>
+
+structure as described under
+<B>IP_ADD_SOURCE_MEMBERSHIP</B>.
 
 <DT><B>IP_FREEBIND</B> (since Linux 2.4)
 
@@ -400,6 +486,53 @@ and
 <B>IP_TOS</B>
 
 are ignored.
+<DT><B>IP_MSFILTER</B> (since Linux 2.4.22 / 2.5.68)
+
+<DD>
+This option provides access to the advanced full-state filtering API.
+Argument is an
+<I>ip_msfilter</I>
+
+structure.
+<P>
+
+<PRE>
+struct ip_msfilter {
+    struct in_addr imsf_multiaddr; /* IP multicast group
+                                      address */
+    struct in_addr imsf_interface; /* IP address of local
+                                      interface */
+    uint32_t       imsf_fmode;     /* Filter-mode */
+
+    uint32_t       imsf_numsrc;    /* Number of sources in
+                                      the following array */
+    struct in_addr imsf_slist[1];  /* Array of source
+                                      addresses */
+};
+</PRE>
+
+
+<P>
+There are two macros,
+<B>MCAST_INCLUDE</B>
+
+and
+<B>MCAST_EXCLUDE</B>,
+
+which can be used to specify the filtering mode.
+Additionally, the
+<B><A HREF="../mann/IP_MSFILTER_SIZE.n.html">IP_MSFILTER_SIZE</A></B>(n)
+
+macro exists to determine how much memory is needed to store
+<I>ip_msfilter</I>
+
+structure with
+<I>n</I>
+
+sources in the source list.
+<DT><DD>
+For the full description of multicast source filtering
+refer to RFC 3376.
 <DT><B>IP_MTU</B> (since Linux 2.2)
 
 <DD>
@@ -981,6 +1114,20 @@ this option be set on the redirected socket.
 <DD>
 Set or retrieve the current time-to-live field that is used in every packet
 sent from this socket.
+<DT><B>IP_UNBLOCK_SOURCE</B> (since Linux 2.4.22 / 2.5.68)
+
+<DD>
+Unblock previously blocked multicast source. Returns
+<B>EADDRNOTAVAIL</B>
+
+when given source is not being blocked.
+<DT><DD>
+Argument is an
+<I>ip_mreq_source</I>
+
+structure as described under
+<B>IP_ADD_SOURCE_MEMBERSHIP</B>.
+
 </DL>
 <A NAME="lbAG">&nbsp;</A>
 <H3>/proc interfaces</H3>
@@ -1285,6 +1432,8 @@ and
 
 <B>IP_FREEBIND</B>,
 
+<B>IP_MSFILTER</B>,
+
 <B>IP_MTU</B>,
 
 <B>IP_MTU_DISCOVER</B>,
@@ -1457,6 +1606,6 @@ RFC&nbsp;1812 for the IPv4 router requirements.
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:17:58 GMT, April 20, 2020
+Time: 03:18:33 GMT, April 20, 2020
 </BODY>
 </HTML>

@@ -5,7 +5,7 @@ Copyright (c) 1999, 2000 SuSE GmbH Nuernberg, Germany
 <HTML><HEAD><TITLE>Man page of NSCD.CONF</TITLE>
 </HEAD><BODY>
 <H1>NSCD.CONF</H1>
-Section: Linux Programmer's Manual (5)<BR>Updated: 1999-10-01<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (5)<BR>Updated: 2013-02-12<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -30,7 +30,8 @@ A '#' (number sign) indicates the beginning of a
 comment; following characters, up to the end of the line,
 are not interpreted by nscd.
 <P>
-Valid services are <I>passwd</I>, <I>group</I>, or <I>hosts</I>.
+Valid services are <I>passwd</I>, <I>group</I>, <I>hosts</I>, <I>services</I>
+or <I>netgroup</I>.
 <P>
 <B>logfile</B>
 
@@ -47,6 +48,7 @@ Specifies name of the file to which debug info should be written.
 
 <DL COMPACT><DT><DD>
 Sets the desired debug level.
+The default is 0.
 </DL>
 
 <P>
@@ -61,6 +63,16 @@ At least five threads will always be created.
 </DL>
 
 <P>
+<B>max-threads</B>
+
+<I>number</I>
+
+<DL COMPACT><DT><DD>
+Specifies the maximum number of threads.
+The default is 32.
+</DL>
+
+<P>
 <B>server-user</B>
 
 <I>user</I>
@@ -69,6 +81,54 @@ At least five threads will always be created.
 If this option is set, nscd will run as this user and not as root.
 If a separate cache for every user is used (-S parameter), this
 option is ignored.
+</DL>
+
+<P>
+<B>stat-user</B>
+
+<I>user</I>
+
+<DL COMPACT><DT><DD>
+Specifies the user who is allowed to request statistics.
+</DL>
+
+<P>
+<B>reload-count</B>
+
+unlimited |
+<I>number</I>
+
+<DL COMPACT><DT><DD>
+Limit on the number of times a cached entry gets reloaded without being used
+before it gets removed.
+The default is 5.
+</DL>
+
+<P>
+<B>paranoia</B>
+
+<I>&lt;yes|no&gt;</I>
+
+<DL COMPACT><DT><DD>
+Enabling paranoia mode causes nscd to restart itself periodically.
+The default is no.
+</DL>
+
+<P>
+<B>restart-interval</B>
+
+<I>time</I>
+
+<DL COMPACT><DT><DD>
+Sets the restart interval to
+<I>time</I>
+
+seconds
+if periodic restart is enabled by enabling
+<B>paranoia</B>
+
+mode.
+The default is 3600.
 </DL>
 
 <P>
@@ -83,6 +143,7 @@ Enables or disables the specified
 <I>service</I>
 
 cache.
+The default is no.
 </DL>
 
 <P>
@@ -137,6 +198,7 @@ This is the internal hash table size,
 <I>value</I>
 
 should remain a prime number for optimum efficiency.
+The default is 211.
 </DL>
 
 <P>
@@ -156,64 +218,14 @@ The files are
 
 <I>/etc/group</I>,
 
+<I>/etc/hosts</I>,
+
+<I>/etc/services</I>
+
 and
-<I>/etc/hosts</I>.
+<I>/etc/netgroup</I>.
 
-</DL>
-
-<P>
-<B>max-threads</B>
-
-<I>threads</I>
-
-<DL COMPACT><DT><DD>
-Specifies the maximum number of threads to be started.
-</DL>
-
-<P>
-<B>stat-user</B>
-
-<I>username</I>
-
-<DL COMPACT><DT><DD>
-Specifies the user who is allowed to request statistics.
-</DL>
-
-<P>
-<B>reload-count</B>
-
-unlimited |
-<I>number</I>
-
-<DL COMPACT><DT><DD>
-Limit on the number of times a cached entry gets reloaded without being used
-before it gets removed.
-The default is 5.
-</DL>
-
-<P>
-<B>paranoia</B>
-
-<I>&lt;yes|no&gt;</I>
-
-<DL COMPACT><DT><DD>
-Enabling paranoia mode causes nscd to restart itself periodically.
-</DL>
-
-<P>
-<B>restart-interval</B>
-
-<I>time</I>
-
-<DL COMPACT><DT><DD>
-Sets the restart interval to
-<I>time</I>
-
-seconds
-if periodic restart is enabled by enabling
-<B>paranoia</B>
-
-mode.
+The default is yes.
 </DL>
 
 <P>
@@ -231,6 +243,7 @@ over server restarts; useful when
 <B>paranoia</B>
 
 mode is set.
+The default is no.
 </DL>
 
 <P>
@@ -247,8 +260,64 @@ The memory mapping of the nscd databases for
 is shared with the clients so
 that they can directly search in them instead of having to ask the
 daemon over the socket each time a lookup is performed.
+The default is no.
 </DL>
 
+<P>
+<B>max-db-size</B>
+
+<I>service</I>
+
+<I>bytes</I>
+
+<DL COMPACT><DT><DD>
+The maximum allowable size, in bytes, of the database files for the
+<I>service</I>.
+
+The default is 33554432.
+</DL>
+
+<P>
+<B>auto-propagate</B>
+
+<I>service</I>
+
+<I>&lt;yes|no&gt;</I>
+
+<DL COMPACT><DT><DD>
+When set to
+<I>no</I>
+
+for
+<I>passwd</I>
+
+<I>or</I>
+
+<I>group</I>
+
+<I>service</I>,
+
+then the
+<I>.byname</I>
+
+requests are not added to
+<I>passwd.byuid</I>
+
+or
+<I>group.bygid</I>
+
+cache.
+This can help with tables containing multiple records for the same ID.
+The default is yes.
+This option is valid only for services
+<I>passwd</I>
+
+and
+<I>group</I>.
+
+</DL>
+
+<P>
 <A NAME="lbAD">&nbsp;</A>
 <H2>SEE ALSO</H2>
 
@@ -270,6 +339,6 @@ daemon over the socket each time a lookup is performed.
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:17:57 GMT, April 20, 2020
+Time: 03:18:33 GMT, April 20, 2020
 </BODY>
 </HTML>

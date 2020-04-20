@@ -5,7 +5,7 @@ Copyright (C) 1998 Andries Brouwer (aeb@cwi.nl)
 <HTML><HEAD><TITLE>Man page of PRCTL</TITLE>
 </HEAD><BODY>
 <H1>PRCTL</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2013-01-10<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2013-02-08<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -84,13 +84,54 @@ does not represent a valid capability; or
 
 if file capabilities are not enabled in the kernel,
 in which case bounding sets are not supported.
+<P>
+<DT><B>PR_SET_CHILD_SUBREAPER</B> (since Linux 3.4)
+
+<DD>
+
+If
+<I>arg2</I>
+
+is nonzero,
+set the &quot;child subreaper&quot; attribute of the calling process;
+if
+<I>arg2</I>
+
+is zero, unset the attribute.
+When a process is marked as a child subreaper,
+all of the children that it creates, and their descendants,
+will be marked as having a subreaper.
+In effect, a subreaper fulfills the role of
+<B><A HREF="../man1/init.1.html">init</A></B>(1)
+
+for its descendant processes.
+Upon termination of a process
+that is orphaned (i.e., its immediate parent has already terminated)
+and marked as having a subreaper,
+the nearest still living ancestor subreaper
+will receive a
+<B>SIGCHLD</B>
+
+signal and be able to
+<B><A HREF="../man2/wait.2.html">wait</A></B>(2)
+
+on the process to discover its termination status.
+<P>
+<DT><B>PR_GET_CHILD_SUBREAPER</B> (since Linux 3.4)
+
+<DD>
+Return the &quot;child subreaper&quot; setting of the caller,
+in the location pointed to by
+<I>(int&nbsp;*) arg2</I>.
+
+<P>
 <DT><B>PR_SET_DUMPABLE</B> (since Linux 2.3.20)
 
 <DD>
 Set the state of the flag determining whether core dumps are produced
-for this process upon delivery of a signal whose default behavior is
+for the calling process upon delivery of a signal whose default behavior is
 to produce a core dump.
-(Normally this flag is set for a process by default, but it is cleared
+(Normally, this flag is set for a process by default, but it is cleared
 when a set-user-ID or set-group-ID program is executed and also by
 various system calls that manipulate process UIDs and GIDs).
 In kernels up to and including 2.6.12,
@@ -416,7 +457,7 @@ is permitted, then the seccomp mode is preserved across
 <B><A HREF="../man2/execve.2.html">execve</A></B>(2).
 
 If the filters permit
-<B>prctl</B>(0
+<B>prctl</B>()
 
 calls, then additional filters can be added;
 they are run in order until the first non-allow result is seen.
@@ -974,7 +1015,7 @@ is
 <B>PR_SET_SECCOMP</B>
 
 or
-<B>PR_SET_SECCOMP</B>,
+<B>PR_GET_SECCOMP</B>,
 
 and the kernel was not configured with
 <B>CONFIG_SECCOMP</B>.
@@ -1055,9 +1096,9 @@ is not 0,
 <B>PR_SET_PTRACER_ANY</B>,
 
 or the PID of an existing process.
-<DT>TP<DD>
-<B>EPERM</B>
+<DT><B>EPERM</B>
 
+<DD>
 <I>option</I>
 
 is
@@ -1206,6 +1247,6 @@ get or set the maximum stack size, and so on.
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:17:45 GMT, April 20, 2020
+Time: 03:18:21 GMT, April 20, 2020
 </BODY>
 </HTML>

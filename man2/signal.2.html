@@ -5,7 +5,7 @@ Copyright (c) 2000 Andries Brouwer &lt;aeb@cwi.nl&gt;
 <HTML><HEAD><TITLE>Man page of SIGNAL</TITLE>
 </HEAD><BODY>
 <H1>SIGNAL</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2012-05-05<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2013-02-09<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -233,6 +233,13 @@ the disposition of the signal would be reset to
 <B>SIG_DFL</B>,
 
 and the system did not block delivery of further instances of the signal.
+This is equivalent to calling
+<B><A HREF="../man2/sigaction.2.html">sigaction</A></B>(2)
+
+with the following flags:
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;sa.sa_flags&nbsp;=&nbsp;SA_RESETHAND&nbsp;|&nbsp;SA_NODEFER;
+<P>
 System V also provides these semantics for
 <B>signal</B>().
 
@@ -241,16 +248,25 @@ before the handler had a chance to reestablish itself.
 Furthermore, rapid deliveries of the same signal could
 result in recursive invocations of the handler.
 <P>
-BSD improved on this situation by changing the semantics of
-signal handling
-(but, unfortunately, silently changed the semantics
-when establishing a handler with
-<B>signal</B>()).
+BSD improved on this situation, but unfortunately also
+changed the semantics of the existing
+<B>signal</B>()
 
+interface while doing so.
 On BSD, when a signal handler is invoked,
 the signal disposition is not reset,
 and further instances of the signal are blocked from
 being delivered while the handler is executing.
+Furthermore, certain blocking system calls are automatically
+restarted if interrupted by a signal handler (see
+<B><A HREF="../man7/signal.7.html">signal</A></B>(7)).
+
+The BSD semantics are equivalent to calling
+<B><A HREF="../man2/sigaction.2.html">sigaction</A></B>(2)
+
+with the following flags:
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;sa.sa_flags&nbsp;=&nbsp;SA_RESTART;
 <P>
 The situation on Linux is as follows:
 <DL COMPACT>
@@ -388,6 +404,6 @@ provides BSD semantics.
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:17:46 GMT, April 20, 2020
+Time: 03:18:22 GMT, April 20, 2020
 </BODY>
 </HTML>
