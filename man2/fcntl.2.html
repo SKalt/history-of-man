@@ -423,6 +423,13 @@ and SIGURG signals for events on file descriptor
 
 A process ID is specified as a positive value;
 a process group ID is specified as a negative value.
+Most commonly, the calling process specifies itself as the owner
+(that is,
+<I>arg</I>
+
+is specified as
+<I>getpid</I>()).
+
 <P>
 
 If you set the
@@ -443,6 +450,19 @@ on that file descriptor.
 <B>F_SETSIG</B>
 
 can be used to obtain delivery of a signal other than SIGIO.
+If this permission check fails, then the signal is
+silently discarded.
+<P>
+Sending a signal to the owner process (group) specified by
+<B>F_SETOWN</B>
+
+is subject to the same permissions checks as are described for
+<B><A HREF="../man2/kill.2.html">kill</A></B>(2),
+
+where the sending process is the one that employs
+<B>F_SETOWN</B>
+
+(but see BUGS below).
 <P>
 If the file descriptor
 <I>fd</I>
@@ -522,7 +542,7 @@ and
 
 and if this limit is reached, then the kernel reverts to 
 delivering SIGIO, and this signal is delivered to the entire
-process rather than to a specifc thread.
+process rather than to a specific thread.
 
 <DT><B>F_GETSIG</B>
 
@@ -544,7 +564,7 @@ Additionally, passing a non-zero value to
 
 changes the signal recipient from a whole process to a specific thread
 within a process.
-See the desciption of
+See the description of
 <B>F_SETOWN </B>
 
 for more details.
@@ -776,7 +796,7 @@ handler is established using SA_SIGINFO, then the handler will
 receive a
 <I>siginfo_t</I>
 
-sructure as its second argument, and the
+structure as its second argument, and the
 <I>si_fd</I>
 
 field of this argument will hold the descriptor of the leased file
@@ -866,7 +886,7 @@ on multiple directories).
 Especially when using
 <B>DN_MULTISHOT</B>,
 
-a POSIX.1b real time signal should be used for notication,
+a POSIX.1b real time signal should be used for notification,
 so that multiple notifications can be queued.
 </DL>
 <A NAME="lbAL">&nbsp;</A>
@@ -1050,6 +1070,27 @@ will contain the (positive) process group ID.
 
 
 
+<P>
+In Linux 2.4 and earlier, there is bug that can occur
+when an unprivileged process uses
+<B>F_SETOWN</B>
+
+to specify the owner
+of a socket file descriptor 
+as a process (group) other than the caller.
+In this case,
+<B>fcntl</B>()
+
+can return -1 with
+<I>errno</I>
+
+set to
+<B>EPERM</B>,
+
+even when the owner process (group) is one that the caller
+has permission to send signals to.
+Despite this error return, the file descriptor owner is set,
+and signals will be sent to the owner.
 <A NAME="lbAP">&nbsp;</A>
 <H2>CONFORMING TO</H2>
 
@@ -1116,6 +1157,6 @@ See also locks.txt, mandatory.txt, and dnotify.txt in
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 02:12:46 GMT, April 20, 2020
+Time: 02:13:09 GMT, April 20, 2020
 </BODY>
 </HTML>

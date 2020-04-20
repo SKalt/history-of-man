@@ -5,7 +5,7 @@ Copyright (c) 1992 Drew Eckhardt &lt;drew@cs.colorado.edu&gt;, March 28, 1992
 <HTML><HEAD><TITLE>Man page of CLONE</TITLE>
 </HEAD><BODY>
 <H1>CLONE</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2004-09-10<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2005-05-17<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -137,8 +137,11 @@ the child stack.
 The low byte of
 <I>flags</I>
 
-contains the number of the signal sent to the parent when the child
-dies.  If this signal is specified as anything other than
+contains the number of the
+<I>termination signal</I>
+
+sent to the parent when the child dies.
+If this signal is specified as anything other than
 <B>SIGCHLD</B>,
 
 then the parent process must specify the
@@ -155,10 +158,9 @@ when the child terminates.
 <P>
 <I>flags</I>
 
-may also be bitwise-or'ed with one or several of the following
-constants, in order to specify what is shared between the calling process
+may also be bitwise-or'ed with zero or more of the following constants,
+in order to specify what is shared between the calling process
 and the child process:
-<P>
 <DL COMPACT>
 <DT><B>CLONE_PARENT</B> (since Linux 2.3.12)
 
@@ -188,7 +190,6 @@ if
 
 is set, then the parent of the calling process, rather than the 
 calling process itself, will be signaled.
-<P>
 <DT><B>CLONE_FS</B>
 
 <DD>
@@ -224,7 +225,6 @@ Calls to
 <B><A HREF="../man2/umask.2.html">umask</A></B>(2)
 
 performed later by one of the processes do not affect the other process.
-<P>
 <DT><B>CLONE_FILES</B>
 
 <DD>
@@ -247,7 +247,6 @@ opened in the calling process at the time of
 
 Operations on file descriptors performed later by either the calling process or
 the child process do not affect the other process.
-<P>
 <DT><B>CLONE_NEWNS</B> (since Linux 2.4.19)
 
 <DD>
@@ -301,7 +300,6 @@ in the same
 <B>clone</B>
 
 call.
-<P>
 <DT><B>CLONE_SIGHAND</B>
 
 <DD>
@@ -332,17 +330,64 @@ is called.  Calls to
 
 performed later by one of the processes have no effect on the other
 process.
-<P>
 <DT><B>CLONE_PTRACE</B>
 
 <DD>
 If 
 <B>CLONE_PTRACE</B>
 
-is specified, and the calling process is being traced, then trace the child also (see
+is specified, and the calling process is being traced,
+then trace the child also (see
 <B><A HREF="../man2/ptrace.2.html">ptrace</A></B>(2)).
 
-<P>
+<DT><B>CLONE_UNTRACED</B> (since Linux 2.5.46)
+
+<DD>
+If 
+<B>CLONE_UNTRACED</B>
+
+is specified, then a tracing process cannot force
+<B>CLONE_PTRACE</B>
+
+on this child process.
+<DT><B>CLONE_STOPPED</B> (since Linux 2.6.0-test2)
+
+<DD>
+If
+<B>CLONE_STOPPED</B>
+
+is set, then the child is initially stopped (as though it was sent a
+<B>SIGSTOP</B>
+
+signal), and must be resumed by sending it a
+<B>SIGCONT</B>
+
+signal.
+<DT><B>CLONE_VFORK</B>
+
+<DD>
+If
+<B>CLONE_VFORK</B>
+
+is set, the execution of the calling process is suspended
+until the child releases its virtual memory
+resources via a call to
+<B><A HREF="../man2/execve.2.html">execve</A></B>(2)
+
+or
+<DT><B>CLONE_STOPPED</B> (since Linux 2.6.0-test2)
+
+<DD>
+If
+<B>CLONE_STOPPED</B>
+
+is set, then the child is initially stopped (as though it was sent a
+<B>SIGSTOP</B>
+
+signal), and must be resumed by sending it a
+<B>SIGCONT</B>
+
+signal.
 <DT><B>CLONE_VFORK</B>
 
 <DD>
@@ -367,7 +412,6 @@ If
 is not set then both the calling process and the child are schedulable
 after the call, and an application should not rely on execution occurring
 in any particular order.
-<P>
 <DT><B>CLONE_VM</B>
 
 <DD>
@@ -396,7 +440,6 @@ Memory writes or file mappings/unmappings performed by one of the
 processes do not affect the other, as with
 <B><A HREF="../man2/fork.2.html">fork</A></B>(2).
 
-<P>
 <DT><B>CLONE_PID</B> (obsolete)
 
 <DD>
@@ -408,7 +451,6 @@ the calling process. This is good for hacking the system, but otherwise
 of not much use. Since 2.3.21 this flag can be
 specified only by the system boot process (PID 0).
 It disappeared in Linux 2.5.16.
-<P>
 <DT><B>CLONE_THREAD</B> (since Linux 2.4.0-test8)
 
 <DD>
@@ -416,23 +458,166 @@ If
 <B>CLONE_THREAD</B>
 
 is set, the child is placed in the same thread group as the calling process.
-
-
-
-<P>
-If
+To make the remainder of the discussion of
 <B>CLONE_THREAD</B>
 
-is not set, then the child is placed in its own (new) 
-thread group, whose ID is the same as the process ID.
+more readable, the term &quot;thread&quot; is used to refer to the
+processes within a thread group.
+
+
+
 <P>
-(Thread groups are feature added in Linux 2.4 to support the
-POSIX threads notion of a set of threads sharing a single PID.  In Linux
-since 2.4, calls to 
+Thread groups were a feature added in Linux 2.4 to support the
+POSIX threads notion of a set of threads that share a single PID.
+Internally, this shared PID is the so-called
+thread group identifier (TGID) for the thread group.
+Since Linux 2.4, calls to 
 <B><A HREF="../man2/getpid.2.html">getpid</A></B>(2)
 
-return the thread group ID of the caller.)
+return the TGID of the caller.
 <P>
+The threads within a group can be distinguished by their (system-wide)
+unique thread IDs (TID).
+A new thread's TID is available as the function result
+returned to the caller of
+<B>clone</B>(),
+
+and a thread can obtain
+its own TID using
+<B><A HREF="../man2/gettid.2.html">gettid</A></B>(2).
+
+<P>
+When a call is made to 
+<B>clone</B>()
+
+without specifying
+<B>CLONE_THREAD</B>,
+
+then the resulting thread is placed in a new thread group
+whose TGID is the same as the thread's TID.
+This thread is the
+<I>leader</I>
+
+of the new thread group.
+<P>
+A new thread created with
+<B>CLONE_THREAD</B>
+
+has the same parent process as the caller of
+<B>clone</B>()
+
+(i.e., like 
+<B>CLONE_PARENT</B>),
+
+so that calls to
+<B><A HREF="../man2/getppid.2.html">getppid</A></B>(2)
+
+return the same value for all of the threads in a thread group.
+When a
+<B>CLONE_THREAD </B>
+
+thread terminates, the thread that created it using
+<B>clone</B>()
+
+is not sent a
+<B>SIGCHLD</B>
+
+(or other termination) signal;
+nor can the status of such a thread be obtained
+using
+<B><A HREF="../man2/wait.2.html">wait</A></B>(2).
+
+(The thread is said to be
+<I>detached</I>.)
+
+<P>
+After all of the threads in a thread group terminate
+the parent process of the thread group is sent a
+<B>SIGCHLD</B>
+
+(or other termination) signal.
+<P>
+If any of the threads in a thread group performs an
+<B><A HREF="../man2/execve.2.html">execve</A></B>(2),
+
+then all threads other than the thread group leader are terminated,
+and the new program is executed in the thread group leader.
+<P>
+If one of the threads in a thread group creates a child using
+<B><A HREF="../man2/fork.2.html">fork</A></B>(2),
+
+then any thread in the group can
+<B><A HREF="../man2/wait.2.html">wait</A></B>(2)
+
+for that child.
+<P>
+Since Linux 2.6,
+<I>flags</I>
+
+must also include
+<B>CLONE_SIGHAND</B>
+
+if
+<B>CLONE_THREAD</B>
+
+is specified.
+<P>
+Signals may be sent to a thread group as a whole (i.e., a TGID) using
+<B><A HREF="../man2/kill.2.html">kill</A></B>(2),
+
+or to a specific thread (i.e., TID) using
+<B><A HREF="../man2/tgkill.2.html">tgkill</A></B>(2).
+
+<P>
+Signal dispositions and actions are process-wide:
+if an unhandled signal is delivered to a thread, then
+it will affect (terminate, stop, continue, be ignored in)
+all members of the thread group.
+<P>
+Each thread has its own signal mask, as set by
+<B><A HREF="../man2/sigprocmask.2.html">sigprocmask</A></B>(2),
+
+but signals can be pending 
+either for the whole process
+(i.e., deliverable to any member of the thread group),
+when sent with
+<B><A HREF="../man2/kill.2.html">kill</A></B>(2)
+
+or for an individual thread, when sent with
+<B><A HREF="../man2/tgkill.2.html">tgkill</A></B>(2).
+
+A call to
+<B><A HREF="../man2/sigpending.2.html">sigpending</A></B>(2)
+
+returns a signal set that is the union of the signals pending for the
+whole process and the signals that are pending for the calling thread.
+<P>
+If 
+<B><A HREF="../man2/kill.2.html">kill</A></B>(2)
+
+is used to send a signal to a thread group,
+and the thread group has installed a handler for the signal, then
+the handler will be invoked in exactly one, arbitrarily selected
+member of the thread group that has not blocked the signal.
+If multiple threads in a group are waiting to accept the same signal using 
+<B><A HREF="../man2/sigwaitinfo.2.html">sigwaitinfo</A></B>(2),
+
+the kernel will arbitrarily select one of these threads
+to receive a signal sent using 
+<B><A HREF="../man2/kill.2.html">kill</A></B>(2).
+
+<DT><B>CLONE_SYSVSEM</B> (since Linux 2.5.10)
+
+<DD>
+If
+<B>CLONE_SYSVSEM</B>
+
+is set, then the child and the calling process share
+a single list of System V semaphore undo values (see
+<B><A HREF="../man2/semop.2.html">semop</A></B>(2)).
+
+If this flag is not set, then the child has a separate undo list,
+which is initially empty.
 <DT><B>CLONE_SETTLS</B> (since Linux 2.5.32)
 
 <DD>
@@ -443,7 +628,6 @@ parameter is the new TLS (Thread Local Storage) descriptor.
 (See
 <B><A HREF="../man2/set_thread_area.2.html">set_thread_area</A></B>(2).)
 
-<P>
 <DT><B>CLONE_PARENT_SETTID</B> (since Linux 2.5.49)
 
 <DD>
@@ -452,7 +636,6 @@ Store child thread ID at location
 
 in parent and child memory.
 (In Linux 2.5.32-2.5.48 there was a flag CLONE_SETTID that did this.)
-<P>
 <DT><B>CLONE_CHILD_SETTID</B> (since Linux 2.5.49)
 
 <DD>
@@ -460,7 +643,6 @@ Store child thread ID at location
 <I>child_tidptr</I>
 
 in child memory.
-<P>
 <DT><B>CLONE_CHILD_CLEARTID</B> (since Linux 2.5.49)
 
 <DD>
@@ -630,8 +812,18 @@ as described in this manual page.
 <A NAME="lbAI">&nbsp;</A>
 <H2>NOTES</H2>
 
-For kernel versions 2.4.7-2.4.18 the CLONE_THREAD flag implied the
-CLONE_PARENT flag.
+In the kernel 2.4.x series,
+<B>CLONE_THREAD</B>
+
+generally does not make the parent of the new thread the same
+as the parent of the calling process.
+However, for kernel versions 2.4.7 to 2.4.18 the
+<B>CLONE_THREAD</B>
+
+flag implied the
+<B>CLONE_PARENT </B>
+
+flag (as in kernel 2.6).
 <P>
 <A NAME="lbAJ">&nbsp;</A>
 <H2>CONFORMING TO</H2>
@@ -692,6 +884,7 @@ To get the truth, it may be necessary to use code such as the following
 
 <B><A HREF="../man7/capabilities.7.html">capabilities</A></B>(7)
 
+
 <P>
 
 <HR>
@@ -715,6 +908,6 @@ To get the truth, it may be necessary to use code such as the following
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 02:12:46 GMT, April 20, 2020
+Time: 02:13:09 GMT, April 20, 2020
 </BODY>
 </HTML>

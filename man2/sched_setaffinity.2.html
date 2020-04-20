@@ -5,14 +5,14 @@ Copyright (C) 2002 Robert Love
 <HTML><HEAD><TITLE>Man page of SCHED_SETAFFINITY</TITLE>
 </HEAD><BODY>
 <H1>SCHED_SETAFFINITY</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2004-04-22<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2005-05-03<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
 <H2>NAME</H2>
 
-sched_setaffinity, sched_getaffinity - set and get a process's CPU affinity
-mask
+sched_setaffinity, sched_getaffinity - set and get a process's CPU
+affinity mask
 <A NAME="lbAC">&nbsp;</A>
 <H2>SYNOPSIS</H2>
 
@@ -44,12 +44,24 @@ is zero, then the current process is used.
 The affinity mask is represented by the bitmask stored in
 <I>mask</I>.
 
-The least significant bit corresponds to the first logical processor number on
-the system, while the most significant bit corresponds to the last logical
-processor number on the system.  A set bit corresponds to a legally schedulable
-CPU while an unset bit corresponds to an illegally schedulable CPU.  In other
-words, a process is bound to and will only run on processors whose
-corresponding bit is set.  Usually, all bits in the mask are set.
+The least significant bit corresponds to the first logical processor
+number on the system, while the most significant bit corresponds to
+the last logical processor number on the system.
+A set bit corresponds to a legally schedulable CPU while an unset
+bit corresponds to an illegally schedulable CPU.
+In other words, a process is bound to and will only run on
+processors whose corresponding bit is set.
+Usually, all bits in the mask are set.
+<P>
+If the process specified by
+<I>pid</I>
+
+is not curently running on one of the CPUs specified in
+<I>mask</I>,
+
+then that process is migrated to one of the CPUs specified in
+<I>mask</I>.
+
 <P>
 The argument
 <I>len</I>
@@ -110,7 +122,7 @@ A supplied memory address was invalid.
 <DT><B>EINVAL</B>
 
 <DD>
-The affinity bitmask 
+The affinity bitmask
 <I>mask</I>
 
 contains no processors that are physically on the system, or the length
@@ -138,6 +150,17 @@ capability.
 The process whose ID is <I>pid</I> could not be found.
 </DL>
 <A NAME="lbAG">&nbsp;</A>
+<H2>NOTES</H2>
+
+The affinity mask is actually a per-thread attribute that can be
+adjusted independently for each of the threads in a thread group.
+The value returned from a call to
+<B><A HREF="../man2/gettid.2.html">gettid</A></B>(2)
+
+can be passed in the argument
+<I>pid</I>.
+
+<A NAME="lbAH">&nbsp;</A>
 <H2>HISTORY</H2>
 
 The affinity syscalls were introduced in Linux kernel 2.5.8.
@@ -158,10 +181,14 @@ extern int sched_getaffinity (pid_t pid, size_t cpusetsize,
                               cpu_set_t *cpuset);
 </PRE>
 
-<A NAME="lbAH">&nbsp;</A>
+<A NAME="lbAI">&nbsp;</A>
 <H2>SEE ALSO</H2>
 
+<B><A HREF="../man2/clone.2.html">clone</A></B>(2),
+
 <B><A HREF="../man2/getpriority.2.html">getpriority</A></B>(2),
+
+<B><A HREF="../man2/gettid.2.html">gettid</A></B>(2),
 
 <B><A HREF="../man2/nice.2.html">nice</A></B>(2),
 
@@ -192,13 +219,14 @@ has a description of the Linux scheduling scheme.
 <DT><A HREF="#lbAD">DESCRIPTION</A><DD>
 <DT><A HREF="#lbAE">RETURN VALUE</A><DD>
 <DT><A HREF="#lbAF">ERRORS</A><DD>
-<DT><A HREF="#lbAG">HISTORY</A><DD>
-<DT><A HREF="#lbAH">SEE ALSO</A><DD>
+<DT><A HREF="#lbAG">NOTES</A><DD>
+<DT><A HREF="#lbAH">HISTORY</A><DD>
+<DT><A HREF="#lbAI">SEE ALSO</A><DD>
 </DL>
 <HR>
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 02:10:04 GMT, April 20, 2020
+Time: 02:13:10 GMT, April 20, 2020
 </BODY>
 </HTML>

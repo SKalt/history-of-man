@@ -5,7 +5,7 @@ Copyright (c) 1993 Luigi P. Bai (lpb@softint.com) July 28, 1993
 <HTML><HEAD><TITLE>Man page of SHMCTL</TITLE>
 </HEAD><BODY>
 <H1>SHMCTL</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2004-11-10<BR><A HREF="#index">Index</A>
+Section: 2.6.11 Linux (2)<BR>Updated: 2005-05-30<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -51,7 +51,7 @@ struct shmid_ds {
     time_t          shm_dtime;   /* Last detach time */
     time_t          shm_ctime;   /* Last change time */
     pid_t           shm_cpid;    /* PID of creator */
-    pid_t           shm_lpid;    /* PID of last stmat()/shmdt() */
+    pid_t           shm_lpid;    /* PID of last shmat()/shmdt() */
     shmatt_t        shm_nattch;  /* No. of current attaches */
     ...
 };
@@ -120,8 +120,8 @@ updating also its
 
 member.
 The following fields can be changed:
-<I>shm_perms.uid</I>, <I>shm_perms.gid</I>,
-and (the least significant 9 bits of) <I>shm_perms.mode</I>.
+<I>shm_perm.uid</I>, <I>shm_perm.gid</I>,
+and (the least significant 9 bits of) <I>shm_perm.mode</I>.
 The effective UID of the calling process must match the owner
 (<I>shm_perm.uid</I>)
 
@@ -160,7 +160,21 @@ otherwise its pages that were faulted in will remain in memory or swap.
 <A NAME="lbAE">&nbsp;</A>
 <H3>Linux additions</H3>
 
-A privileged caller can prevent or allow swapping of a shared
+The
+<B>IPC_INFO</B>,
+
+<B>SHM_STAT</B>
+
+and
+<B>SHM_INFO</B>
+
+control calls are used by the
+<B><A HREF="../man8/ipcs.8.html">ipcs</A></B>(8)
+
+program to provide information on allocated resources.
+<P>
+
+The caller can prevent or allow swapping of a shared
 memory segment with the following <I>cmd</I> values:
 <BR>
 
@@ -187,18 +201,28 @@ Unlock the segment, allowing it to be swapped out.
 </DL>
 <P>
 
-The
-<B>IPC_INFO</B>,
-
-<B>SHM_STAT</B>
+In kernels before 2.6.10, only a privileged process
+could employ
+<B>SHM_LOCK</B>
 
 and
-<B>SHM_INFO</B>
+<B>SHM_UNLOCK</B>.
 
-control calls are used by the
-<B><A HREF="../man8/ipcs.8.html">ipcs</A></B>(8)
+Since kernel 2.6.10, an unprivileged process can employ these operations 
+if its effective UID matches the owner or creator UID of the segment, and
+(for
+<B>SHM_LOCK</B>)
 
-program to provide information on allocated resources.
+the amount of memory to be locked falls within the
+<B>RLIMIT_MEMLOCK</B>
+
+resource limit (see
+<B><A HREF="../man2/setrlimit.2.html">setrlimit</A></B>(2)).
+
+
+
+
+
 <A NAME="lbAF">&nbsp;</A>
 <H2>RETURN VALUE</H2>
 
@@ -215,7 +239,7 @@ is set appropriately.
 
 <DD>
 <B>IPC_STAT</B> or <B>SHM_STAT</B> is requested and
-<I>shm_perm.modes</I> does not allow read access for
+<I>shm_perm.mode</I> does not allow read access for
 <I>shmid</I>,
 
 and the calling process does not have the
@@ -303,8 +327,18 @@ capability).
 is 0 and the caller is not privileged.)
 </DL>
 <A NAME="lbAH">&nbsp;</A>
-<H2>NOTE</H2>
+<H2>NOTES</H2>
 
+Linux permits a process to attach 
+(<B>shmat</B>())
+
+a shared memory segment that has already been marked for deletion
+using
+<I>shmctl(IPC_RMID)</I>.
+
+This feature is not available on other Unix implementations;
+portable applications should avoid relying on it.
+<P>
 Various fields in a <I>struct shmid_ds</I> were shorts under Linux 2.2
 and have become longs under Linux 2.4. To take advantage of this,
 a recompilation under glibc-2.1.91 or later should suffice.
@@ -343,7 +377,7 @@ an EIDRM error condition.
 </DL>
 <DT><A HREF="#lbAF">RETURN VALUE</A><DD>
 <DT><A HREF="#lbAG">ERRORS</A><DD>
-<DT><A HREF="#lbAH">NOTE</A><DD>
+<DT><A HREF="#lbAH">NOTES</A><DD>
 <DT><A HREF="#lbAI">CONFORMING TO</A><DD>
 <DT><A HREF="#lbAJ">SEE ALSO</A><DD>
 </DL>
@@ -351,6 +385,6 @@ an EIDRM error condition.
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 02:12:48 GMT, April 20, 2020
+Time: 02:13:10 GMT, April 20, 2020
 </BODY>
 </HTML>

@@ -1,13 +1,13 @@
 <!--
 Copyright (C) 1993 Rickard E. Faith &lt;faith@cs.unc.edu&gt;
 Copyright (C) 1994 Andries E. Brouwer &lt;aeb@cwi.nl&gt;
-Copyright (C) 2002 Michael Kerrisk &lt;mtk-manpages@gmx.net&gt;
+Copyright (C) 2002, 2005 Michael Kerrisk &lt;mtk-manpages@gmx.net&gt;
 -->
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
 <HTML><HEAD><TITLE>Man page of MOUNT</TITLE>
 </HEAD><BODY>
 <H1>MOUNT</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2004-06-17<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2004-05-18<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -96,10 +96,9 @@ The
 
 arguments are ignored.
 
-<DT><B>MS_DIRSYNC</B>
+<DT><B>MS_DIRSYNC</B> (since Linux 2.5.19)
 
 <DD>
-(Since Linux 2.5.19.)
 Make directory changes on this file system synchronous.
 (This property can be obtained for individual directories
 or subtrees using
@@ -227,17 +226,43 @@ unmounts a target, but allows additional
 
 controlling the behaviour of the operation:
 <DL COMPACT>
-<DT><B>MNT_FORCE</B>
+<DT><B>MNT_FORCE</B> (since Linux 2.6.116)
 
 <DD>
 Force unmount even if busy.
-(Since 2.1.116. Only for NFS mounts.)
-<DT><B>MNT_DETACH</B>
+(Only for NFS mounts.)
+<DT><B>MNT_DETACH</B> (since Linux 2.4.11)
 
 <DD>
 Perform a lazy unmount: make the mount point unavailable for
 new accesses, and actually perform the unmount when the mount point
-ceases to be busy. (Since 2.4.11.)
+ceases to be busy.
+<DT><B>MNT_EXPIRE</B> (since Linux 2.6.8)
+
+<DD>
+Mark the mount point as expired.
+If a mount point is not currently in use, then an initial call to
+<B>umount2</B>()
+
+with this flag fails with the error
+<B>EAGAIN</B>,
+
+but marks the mount point as expired.
+The mount point remains expired as long as it isn't accessed
+by any process.
+A second
+<B>umount2</B>()
+
+call specifying
+<B>MNT_EXPIRE</B>
+
+unmounts an expired mount point.
+This flag cannot be specified with either 
+<B>MNT_FORCE</B>
+
+or
+<B>MNT_DETACH</B>.
+
 </DL>
 <A NAME="lbAE">&nbsp;</A>
 <H2>RETURN VALUE</H2>
@@ -260,18 +285,29 @@ own special behavior.  See the kernel source code for details.
 A component of a path was not searchable. (See also
 <B><A HREF="../man2/path_resolution.2.html">path_resolution</A></B>(2).)
 
-<BR>
-
 Or, mounting a read-only filesystem was attempted without giving the
-MS_RDONLY flag.
-<BR>
+<B>MS_RDONLY </B>
 
+flag.
 Or, the block device
 <I>source</I>
 
-is located on a filesystem mounted with the MS_NODEV option.
+is located on a filesystem mounted with the
+<B>MS_NODEV</B>
+
+option.
 
 
+<DT><B>EAGAIN</B>
+
+<DD>
+A call to
+<B>umount2</B>()
+
+specifying
+<B>MNT_EXPIRE</B>
+
+successfully marked an unbusy file system as expired.
 <DT><B>EBUSY</B>
 
 <DD>
@@ -298,20 +334,38 @@ One of the pointer arguments points outside the user address space.
 <I>source</I>
 
 had an invalid superblock.
-Or, a remount was attempted, while
+Or, a remount
+(<B>MS_REMOUNT</B>)
+
+was attempted, but
 <I>source</I>
 
 was not already mounted on
 <I>target</I>.
 
-Or, a move was attempted, while
+Or, a move 
+(<B>MS_MOVE</B>)
+
+was attempted, but
 <I>source</I>
 
 was not a mount point, or was '/'.
-Or, an umount was attempted, while
+Or, an unmount was attempted, but
 <I>target</I>
 
 was not a mount point.
+Or,
+<B>umount2</B>()
+
+was called with
+<B>MNT_FORCE</B>
+
+and either
+<B>MNT_DETACH</B>
+
+or
+<B>MNT_FORCE</B>.
+
 <DT><B>ELOOP</B>
 
 <DD>
@@ -429,6 +483,6 @@ in this case.
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 02:12:47 GMT, April 20, 2020
+Time: 02:13:09 GMT, April 20, 2020
 </BODY>
 </HTML>
