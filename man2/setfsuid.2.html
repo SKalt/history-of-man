@@ -26,7 +26,7 @@ the source, must acknowledge the copyright and authors of this work.
 <HTML><HEAD><TITLE>Man page of SETFSUID</TITLE>
 </HEAD><BODY>
 <H1>SETFSUID</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2017-09-15<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2019-05-09<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -45,19 +45,27 @@ setfsuid - set user identity used for filesystem checks
 <A NAME="lbAD">&nbsp;</A>
 <H2>DESCRIPTION</H2>
 
-The system call
+On Linux, a process has both a filesystem user ID and an effective user ID.
+The (Linux-specific) filesystem user ID is used
+for permissions checking when accessing filesystem objects,
+while the effective user ID is used for various other kinds
+of permissions checks (see
+<B><A HREF="../man7/credentials.7.html">credentials</A></B>(7)).
+
+<P>
+
+Normally, the value of the process's filesystem user ID
+is the same as the value of its effective user ID.
+This is so, because whenever a process's effective user ID is changed,
+the kernel also changes the filesystem user ID to be the same as
+the new value of the effective user ID.
+A process can cause the value of its filesystem user ID to diverge
+from its effective user ID by using
 <B>setfsuid</B>()
 
-changes the value of the caller's filesystem user ID---the
-user ID that the Linux kernel uses to check for all accesses
-to the filesystem.
-Normally, the value of
-the filesystem user ID
-will shadow the value of the effective user ID.
-In fact, whenever the
-effective user ID is changed,
-the filesystem user ID
-will also be changed to the new value of the effective user ID.
+to change its filesystem user ID to the value given in
+<I>fsuid</I>.
+
 <P>
 
 Explicit calls to
@@ -66,12 +74,12 @@ Explicit calls to
 and
 <B><A HREF="../man2/setfsgid.2.html">setfsgid</A></B>(2)
 
-are usually used only by programs such as the Linux NFS server that
+are (were) usually used only by programs such as the Linux NFS server that
 need to change what user and group ID is used for file access without a
 corresponding change in the real and effective user and group IDs.
 A change in the normal user IDs for a program such as the NFS server
-is a security hole that can expose it to unwanted signals.
-(But see below.)
+is (was) a security hole that can expose it to unwanted signals.
+(However, this issue is historical; see below.)
 <P>
 
 <B>setfsuid</B>()
@@ -114,7 +122,7 @@ at the same time becoming vulnerable to receiving unwanted signals.
 Since Linux 2.0, signal permission handling is different (see
 <B><A HREF="../man2/kill.2.html">kill</A></B>(2)),
 
-with the result that a process change can change its effective user ID
+with the result that a process can change its effective user ID
 without being vulnerable to receiving signals from unwanted processes.
 Thus,
 <B>setfsuid</B>()
@@ -205,6 +213,6 @@ capability).
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:49:41 GMT, April 20, 2020
+Time: 03:50:14 GMT, April 20, 2020
 </BODY>
 </HTML>

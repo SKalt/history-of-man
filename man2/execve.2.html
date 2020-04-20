@@ -26,7 +26,7 @@ the source, must acknowledge the copyright and authors of this work.
 <HTML><HEAD><TITLE>Man page of EXECVE</TITLE>
 </HEAD><BODY>
 <H1>EXECVE</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2018-04-30<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2019-05-09<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -40,7 +40,7 @@ execve - execute program
 
 <P>
 
-<B>int execve(const char *</B><I>filename</I><B>, char *const </B><I>argv</I><B>[], </B>
+<B>int execve(const char *</B><I>pathname</I><B>, char *const </B><I>argv</I><B>[], </B>
 
 <BR>
 
@@ -51,13 +51,13 @@ execve - execute program
 
 <B>execve</B>()
 
-executes the program pointed to by <I>filename</I>.
+executes the program referred to by <I>pathname</I>.
 This causes the program that is currently being run by the calling process
 to be replaced with a new program, with newly initialized stack, heap,
 and (initialized and uninitialized) data segments.
 <P>
 
-<I>filename</I> must be either a binary executable, or a script
+<I>pathname</I> must be either a binary executable, or a script
 starting with a line of the form:
 <P>
 
@@ -114,8 +114,8 @@ after a successful
 
 <P>
 
-If the set-user-ID bit is set on the program file pointed to by
-<I>filename</I>,
+If the set-user-ID bit is set on the program file referred to by
+<I>pathname</I>,
 then the effective user ID of the calling process is changed
 to that of the owner of the program file.
 Similarly, when the set-group-ID
@@ -406,7 +406,7 @@ The
 
 must be a valid pathname for an executable file.
 If the
-<I>filename</I>
+<I>pathname</I>
 
 argument of
 <B>execve</B>()
@@ -419,7 +419,7 @@ will be invoked with the following arguments:
 
 
 
-<I>interpreter</I> [optional-arg] <I>filename</I> arg...
+<I>interpreter</I> [optional-arg] <I>pathname</I> arg...
 
 
 <P>
@@ -509,8 +509,13 @@ stack size.
 ensures that the new program always has some stack space.)
 
 
+Additionally, the total size is limited to 3/4 of the value
+of the kernel constant
+<B>_STK_LIM</B>
+
+(8 Mibibytes).
 Since Linux 2.6.25,
-the kernel places a floor of 32 pages on this size limit,
+the kernel also places a floor of 32 pages on this size limit,
 so that, even when
 <B>RLIMIT_STACK</B>
 
@@ -550,7 +555,7 @@ is too large.
 
 <DD>
 Search permission is denied on a component of the path prefix of
-<I>filename</I>
+<I>pathname</I>
 
 or the name of a script interpreter.
 (See also
@@ -587,7 +592,7 @@ For a more detailed explanation of this error, see NOTES.
 <DT><B>EFAULT</B>
 
 <DD>
-<I>filename</I>
+<I>pathname</I>
 
 or one of the pointers in the vectors
 <I>argv</I>
@@ -617,7 +622,7 @@ An ELF interpreter was not in a recognized format.
 
 <DD>
 Too many symbolic links were encountered in resolving
-<I>filename</I>
+<I>pathname</I>
 
 or the name of a script or ELF interpreter.
 <DT><B>ELOOP</B>
@@ -637,7 +642,7 @@ The per-process limit on the number of open file descriptors has been reached.
 <DT><B>ENAMETOOLONG</B>
 
 <DD>
-<I>filename</I>
+<I>pathname</I>
 
 is too long.
 <DT><B>ENFILE</B>
@@ -648,7 +653,7 @@ The system-wide limit on the total number of open files has been reached.
 
 <DD>
 The file
-<I>filename</I>
+<I>pathname</I>
 
 or a script or ELF interpreter does not exist, or a shared library
 
@@ -667,7 +672,7 @@ Insufficient kernel memory was available.
 
 <DD>
 A component of the path prefix of
-<I>filename</I>
+<I>pathname</I>
 
 or a script or ELF interpreter is not a directory.
 <DT><B>EPERM</B>
@@ -741,7 +746,7 @@ The result of mounting a filesystem
 varies across Linux kernel versions:
 some will refuse execution of set-user-ID and set-group-ID
 executables when this would
-give the user powers she did not have already (and return
+give the user powers they did not have already (and return
 <B>EPERM</B>),
 
 some will just ignore the set-user-ID and set-group-ID bits and
@@ -1112,7 +1117,7 @@ argv[4]: world
 
 <B><A HREF="../man2/ptrace.2.html">ptrace</A></B>(2),
 
-<B><A HREF="../man3/execl.3.html">execl</A></B>(3),
+<B><A HREF="../man3/exec.3.html">exec</A></B>(3),
 
 <B><A HREF="../man3/fexecve.3.html">fexecve</A></B>(3),
 
@@ -1156,6 +1161,6 @@ argv[4]: world
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:49:39 GMT, April 20, 2020
+Time: 03:50:11 GMT, April 20, 2020
 </BODY>
 </HTML>

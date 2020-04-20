@@ -26,7 +26,7 @@ the source, must acknowledge the copyright and authors of this work.
 <HTML><HEAD><TITLE>Man page of TSEARCH</TITLE>
 </HEAD><BODY>
 <H1>TSEARCH</H1>
-Section: Linux Programmer's Manual (3)<BR>Updated: 2018-04-30<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2019-05-09<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -39,6 +39,8 @@ tsearch, tfind, tdelete, twalk, tdestroy - manage a binary search tree
 <PRE>
 <B>#include &lt;<A HREF="file:///usr/include/search.h">search.h</A>&gt;</B>
 
+<B>typedef enum { preorder, postorder, endorder, leaf } VISIT;</B>
+
 <B>void *tsearch(const void *</B><I>key</I><B>, void **</B><I>rootp</I><B>,</B>
 <B>                int (*</B><I>compar</I><B>)(const void *, const void *));</B>
 
@@ -48,12 +50,17 @@ tsearch, tfind, tdelete, twalk, tdestroy - manage a binary search tree
 <B>void *tdelete(const void *</B><I>key</I><B>, void **</B><I>rootp</I><B>,</B>
 <B>                int (*</B><I>compar</I><B>)(const void *, const void *));</B>
 
-<B>void twalk(const void *</B><I>root</I><B>, void (*</B><I>action</I><B>)(const void *</B><I>nodep</I><B>,</B>
-<B>                                   const VISIT </B><I>which</I><B>,</B>
-<B>                                   const int </B><I>depth</I><B>));</B>
+<B>void twalk(const void *</B><I>root</I><B>,</B>
+<B>                void (*</B><I>action</I><B>)(const void *</B><I>nodep</I><B>, VISIT </B><I>which</I><B>,</B>
+<B>                               int </B><I>depth</I><B>));</B>
 
 <B>#define _GNU_SOURCE</B>         /* See <A HREF="../man7/feature_test_macros.7.html">feature_test_macros</A>(7) */
 <B>#include &lt;<A HREF="file:///usr/include/search.h">search.h</A>&gt;</B>
+
+<B>void twalk_r(const void *</B><I>root</I><B>,</B>
+<B>                void (*</B><I>action</I><B>)(const void *</B><I>nodep</I><B>, VISIT </B><I>which</I><B>,</B>
+<B>                               void *</B><I>closure</I><B>),</B>
+<B>                void *</B><I>closure</I><B>);</B>
 
 <B>void tdestroy(void *</B><I>root</I><B>, void (*</B><I>free_node</I><B>)(void *</B><I>nodep</I><B>));</B>
 </PRE>
@@ -205,6 +212,24 @@ Thus, the choice of name
 is rather confusing.)
 <P>
 
+<B>twalk_r</B>()
+
+is similar to
+<B>twalk</B>(),
+
+but instead of the
+<I>depth</I>
+
+argument, the
+<I>closure</I>
+
+argument pointer is passed to each invocation of the action callback,
+unchanged.
+This pointer can be used to pass information to and from
+the callback function in a thread-safe fashion, without resorting
+to global variables.
+<P>
+
 <B>tdestroy</B>()
 
 removes the whole tree pointed to by
@@ -263,6 +288,12 @@ return NULL if
 
 was NULL on entry.
 <A NAME="lbAF">&nbsp;</A>
+<H2>VERSIONS</H2>
+
+<B>twalk_r</B>()
+
+is available in glibc since version 2.30.
+<A NAME="lbAG">&nbsp;</A>
 <H2>ATTRIBUTES</H2>
 
 For an explanation of the terms used in this section, see
@@ -285,20 +316,27 @@ For an explanation of the terms used in this section, see
 
 </TD><TD>Thread safety</TD><TD>MT-Safe race:root<BR></TD></TR>
 <TR VALIGN=top><TD>
+<B>twalk_r</B>()
+
+</TD><TD>Thread safety</TD><TD>MT-Safe race:root<BR></TD></TR>
+<TR VALIGN=top><TD>
 <B>tdestroy</B>()
 
 </TD><TD>Thread safety</TD><TD>MT-Safe<BR></TD></TR>
 </TABLE>
 
-<A NAME="lbAG">&nbsp;</A>
+<A NAME="lbAH">&nbsp;</A>
 <H2>CONFORMING TO</H2>
 
 POSIX.1-2001, POSIX.1-2008, SVr4.
-The function
+The functions
 <B>tdestroy</B>()
 
-is a GNU extension.
-<A NAME="lbAH">&nbsp;</A>
+and
+<B>twalk_r</B>()
+
+are GNU extensions.
+<A NAME="lbAI">&nbsp;</A>
 <H2>NOTES</H2>
 
 <B>twalk</B>()
@@ -322,7 +360,7 @@ further reference to a node after calling the user function with
 argument &quot;endorder&quot; or &quot;leaf&quot;.
 This works with the GNU library
 implementation, but is not in the System V documentation.
-<A NAME="lbAI">&nbsp;</A>
+<A NAME="lbAJ">&nbsp;</A>
 <H2>EXAMPLE</H2>
 
 The following program inserts twelve random numbers into a binary
@@ -361,7 +399,7 @@ compare(const void *pa, const void *pb)
 }
 <P>
 static void
-action(const void *nodep, const VISIT which, const int depth)
+action(const void *nodep, VISIT which, int depth)
 {
 <BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;*datap;
 <P>
@@ -402,7 +440,7 @@ main(void)
 <BR>&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_SUCCESS);
 }
 
-<A NAME="lbAJ">&nbsp;</A>
+<A NAME="lbAK">&nbsp;</A>
 <H2>SEE ALSO</H2>
 
 <B><A HREF="../man3/bsearch.3.html">bsearch</A></B>(3),
@@ -422,16 +460,17 @@ main(void)
 <DT><A HREF="#lbAC">SYNOPSIS</A><DD>
 <DT><A HREF="#lbAD">DESCRIPTION</A><DD>
 <DT><A HREF="#lbAE">RETURN VALUE</A><DD>
-<DT><A HREF="#lbAF">ATTRIBUTES</A><DD>
-<DT><A HREF="#lbAG">CONFORMING TO</A><DD>
-<DT><A HREF="#lbAH">NOTES</A><DD>
-<DT><A HREF="#lbAI">EXAMPLE</A><DD>
-<DT><A HREF="#lbAJ">SEE ALSO</A><DD>
+<DT><A HREF="#lbAF">VERSIONS</A><DD>
+<DT><A HREF="#lbAG">ATTRIBUTES</A><DD>
+<DT><A HREF="#lbAH">CONFORMING TO</A><DD>
+<DT><A HREF="#lbAI">NOTES</A><DD>
+<DT><A HREF="#lbAJ">EXAMPLE</A><DD>
+<DT><A HREF="#lbAK">SEE ALSO</A><DD>
 </DL>
 <HR>
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:49:51 GMT, April 20, 2020
+Time: 03:50:23 GMT, April 20, 2020
 </BODY>
 </HTML>

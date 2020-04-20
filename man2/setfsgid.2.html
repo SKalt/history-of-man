@@ -26,7 +26,7 @@ the source, must acknowledge the copyright and authors of this work.
 <HTML><HEAD><TITLE>Man page of SETFSGID</TITLE>
 </HEAD><BODY>
 <H1>SETFSGID</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2017-09-15<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2019-05-09<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -45,33 +45,27 @@ setfsgid - set group identity used for filesystem checks
 <A NAME="lbAD">&nbsp;</A>
 <H2>DESCRIPTION</H2>
 
-The system call
-<B>setfsgid</B>()
+On Linux, a process has both a filesystem group ID and an effective group ID.
+The (Linux-specific) filesystem group ID is used
+for permissions checking when accessing filesystem objects,
+while the effective group ID is used for some other kinds
+of permissions checks (see
+<B><A HREF="../man7/credentials.7.html">credentials</A></B>(7)).
 
-changes the value of the caller's filesystem group ID---the
-group ID that the Linux kernel uses to check for all accesses
-to the filesystem.
-Normally, the value of
-the filesystem group ID
-will shadow the value of the effective group ID.
-In fact, whenever the
-effective group ID is changed,
-the filesystem group ID
-will also be changed to the new value of the effective group ID.
 <P>
 
-Explicit calls to
-<B><A HREF="../man2/setfsuid.2.html">setfsuid</A></B>(2)
-
-and
+Normally, the value of the process's filesystem group ID
+is the same as the value of its effective group ID.
+This is so, because whenever a process's effective group ID is changed,
+the kernel also changes the filesystem group ID to be the same as
+the new value of the effective group ID.
+A process can cause the value of its filesystem group ID to diverge
+from its effective group ID by using
 <B>setfsgid</B>()
 
-are usually used only by programs such as the Linux NFS server that
-need to change what user and group ID is used for file access without a
-corresponding change in the real and effective user and group IDs.
-A change in the normal user IDs for a program such as the NFS server
-is a security hole that can expose it to unwanted signals.
-(But see below.)
+to change its filesystem group ID to the value given in
+<I>fsgid</I>.
+
 <P>
 
 <B>setfsgid</B>()
@@ -102,9 +96,11 @@ to be portable.
 <A NAME="lbAH">&nbsp;</A>
 <H2>NOTES</H2>
 
-Note that at the time this system call was introduced, a process
-could send a signal to a process with the same effective user ID.
-Today signal permission handling is slightly different.
+The filesystem group ID concept and the
+<B>setfsgid</B>()
+
+system call were invented for historical reasons that are
+no longer applicable on modern Linux kernels.
 See
 <B><A HREF="../man2/setfsuid.2.html">setfsuid</A></B>(2)
 
@@ -197,6 +193,6 @@ capability).
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:49:41 GMT, April 20, 2020
+Time: 03:50:14 GMT, April 20, 2020
 </BODY>
 </HTML>
