@@ -25,7 +25,7 @@ License along with this manual; if not, see
 <HTML><HEAD><TITLE>Man page of TTYNAME</TITLE>
 </HEAD><BODY>
 <H1>TTYNAME</H1>
-Section: Linux Programmer's Manual (3)<BR>Updated: 2016-12-12<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2017-05-03<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -98,6 +98,12 @@ File descriptor does not refer to a terminal device.
 <I>buflen</I>
 
 was too small to allow storing the pathname.
+<DT>
+<DD>
+<B>ENODEV</B>
+
+File descriptor refers to a slave pseudoterminal device
+but the corresponding pathname could not be found (see NOTES).
 </DL>
 <A NAME="lbAG">&nbsp;</A>
 <H2>ATTRIBUTES</H2>
@@ -122,6 +128,32 @@ For an explanation of the terms used in this section, see
 
 POSIX.1-2001, POSIX.1-2008, 4.2BSD.
 <A NAME="lbAI">&nbsp;</A>
+<H2>NOTES</H2>
+
+A process that keeps a file descriptor that refers to a
+<B><A HREF="../man4/pts.4.html">pts</A></B>(4)
+
+device open when switching to another mount namespace that uses a different
+<I>/dev/ptmx</I>
+
+instance may still accidentally find that a device path of the same name
+for that file descriptor exists.
+However, this device path refers to a different device and thus
+can't be used to access the device that the file descriptor refers to.
+Calling
+<B><A HREF="../man3/ttyname.3.html">ttyname</A></B>(3)
+
+or
+<B><A HREF="../man3/ttyname_r.3.html">ttyname_r</A></B>(3)
+
+on the file descriptor in the new mount namespace will cause these
+functions to return NULL and set
+<I>errno</I>
+
+to
+<B>ENODEV</B>.
+
+<A NAME="lbAJ">&nbsp;</A>
 <H2>SEE ALSO</H2>
 
 <B><A HREF="../man1/tty.1.html">tty</A></B>(1),
@@ -130,7 +162,9 @@ POSIX.1-2001, POSIX.1-2008, 4.2BSD.
 
 <B><A HREF="../man3/ctermid.3.html">ctermid</A></B>(3),
 
-<B><A HREF="../man3/isatty.3.html">isatty</A></B>(3)
+<B><A HREF="../man3/isatty.3.html">isatty</A></B>(3),
+
+<B><A HREF="../man4/pts.4.html">pts</A></B>(4)
 
 <P>
 
@@ -144,12 +178,13 @@ POSIX.1-2001, POSIX.1-2008, 4.2BSD.
 <DT><A HREF="#lbAF">ERRORS</A><DD>
 <DT><A HREF="#lbAG">ATTRIBUTES</A><DD>
 <DT><A HREF="#lbAH">CONFORMING TO</A><DD>
-<DT><A HREF="#lbAI">SEE ALSO</A><DD>
+<DT><A HREF="#lbAI">NOTES</A><DD>
+<DT><A HREF="#lbAJ">SEE ALSO</A><DD>
 </DL>
 <HR>
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:45:32 GMT, April 20, 2020
+Time: 03:46:11 GMT, April 20, 2020
 </BODY>
 </HTML>

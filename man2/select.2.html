@@ -25,7 +25,7 @@ the source, must acknowledge the copyright and authors of this work.
 <HTML><HEAD><TITLE>Man page of SELECT</TITLE>
 </HEAD><BODY>
 <H1>SELECT</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2017-03-13<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2017-05-03<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -155,22 +155,35 @@ called with NULL
 <P>
 
 Three independent sets of file descriptors are watched.
-Those listed in
+The file descriptors listed in
 <I>readfds</I>
 
 will be watched to see if characters become
 available for reading (more precisely, to see if a read will not
-block; in particular, a file descriptor is also ready on end-of-file),
-those in
+block; in particular, a file descriptor is also ready on end-of-file).
+The file descriptors in
 <I>writefds</I>
 
 will be watched to see if space is available for write (though a large
-write may still block), and those in
+write may still block).
+The file descriptors in
 <I>exceptfds</I>
 
-will be watched for exceptions.
-On exit, the sets are modified in place
+will be watched for exceptional conditions.
+(For examples of some exceptional conditions, see the discussion of
+<B>POLLPRI</B>
+
+in
+<B><A HREF="../man2/poll.2.html">poll</A></B>(2).)
+
+<P>
+On exit, each of the file descriptor sets is modified in place
 to indicate which file descriptors actually changed status.
+(Thus, if using
+<B>select</B>()
+
+within a loop, the sets must be reinitialized before each call.)
+<P>
 Each of the three file descriptor sets may be specified as NULL
 if no file descriptors are to be watched for the corresponding class
 of events.
@@ -197,7 +210,10 @@ returns.
 
 <I>nfds</I>
 
-is the highest-numbered file descriptor in any of the three sets, plus 1.
+should be set to the highest-numbered file descriptor in any
+of the three sets, plus 1.
+The indicated file descriptors in each set are checked, up to this limit
+(but see BUGS).
 <P>
 
 The
@@ -419,6 +435,7 @@ becomes undefined.
 An invalid file descriptor was given in one of the sets.
 (Perhaps a file descriptor that was already closed,
 or one on which an error has occurred.)
+However, see BUGS.
 <DT><B>EINTR</B>
 
 <DD>
@@ -529,6 +546,21 @@ and loop, just as with
 <B>EINTR</B>.
 
 <P>
+On systems that lack
+<B>pselect</B>(),
+
+reliable (and more portable) signal trapping can be achieved
+using the self-pipe trick.
+In this technique,
+a signal handler writes a byte to a pipe whose other end
+is monitored by
+<B>select</B>()
+
+in the main program.
+(To avoid possibly blocking when writing to a pipe that may be full
+or reading from a pipe that may be empty,
+nonblocking I/O is used when reading from and writing to the pipe.)
+<P>
 Concerning the types involved, the classical situation is that
 the two fields of a
 <I>timeval</I>
@@ -596,7 +628,35 @@ when
 
 is defined.
 Since glibc 2.2.2, the requirements are as shown in the SYNOPSIS.
+
 <A NAME="lbAK">&nbsp;</A>
+<H3>Correspondence between select() and poll() notifications</H3>
+
+Within the Linux kernel source,
+
+we find the following definitions which show the correspondence
+between the readable, writable, and exceptional condition notifications of
+<B>select</B>()
+
+and the event notifications provided by
+<B><A HREF="../man2/poll.2.html">poll</A></B>(2)
+
+(and
+<B><A HREF="../man7/epoll.7.html">epoll</A></B>(7)):
+
+<P>
+<PRE>
+#define POLLIN_SET (POLLRDNORM | POLLRDBAND | POLLIN | POLLHUP |
+                    POLLERR)
+                   /* Ready for reading */
+#define POLLOUT_SET (POLLWRBAND | POLLWRNORM | POLLOUT | POLLERR)
+                   /* Ready for writing */
+#define POLLEX_SET (POLLPRI)
+                   /* Exceptional condition */
+</PRE>
+
+
+<A NAME="lbAL">&nbsp;</A>
 <H3>Multithreaded applications</H3>
 
 If a file descriptor being monitored by
@@ -619,7 +679,7 @@ closing the file descriptor in another thread has no effect on
 In summary, any application that relies on a particular behavior
 in this scenario must be considered buggy.
 
-<A NAME="lbAL">&nbsp;</A>
+<A NAME="lbAM">&nbsp;</A>
 <H3>C library/kernel differences</H3>
 
 The Linux kernel allows file descriptor sets of arbitrary size,
@@ -672,9 +732,9 @@ pointer, but is instead a structure of the form:
 <PRE>
 
 struct {
-    const kernel_sigset_t *ss;     /* Pointer to signal set */
-    size_t                 ss_len; /* Size (in bytes) of object pointed
-                                      to by 'ss' */
+    const kernel_sigset_t *ss;   /* Pointer to signal set */
+    size_t ss_len;               /* Size (in bytes) of object
+                                    pointed to by 'ss' */
 };
 
 </PRE>
@@ -689,7 +749,7 @@ See
 
 for a discussion of the difference between the kernel and libc
 notion of the signal set.
-<A NAME="lbAM">&nbsp;</A>
+<A NAME="lbAN">&nbsp;</A>
 <H2>BUGS</H2>
 
 POSIX allows an implementation to define an upper limit,
@@ -712,6 +772,21 @@ To monitor file descriptors greater than 1023, use
 <B><A HREF="../man2/poll.2.html">poll</A></B>(2)
 
 instead.
+<P>
+According to POSIX,
+<B>select</B>()
+
+should check all specified file descriptors in the three file descriptor sets,
+up to the limit
+<I>nfds-1</I>.
+
+However, the current implementation ignores any file descriptor in
+these sets that is greater than the maximum file descriptor number
+that the process currently has open.
+According to POSIX, any such file descriptor that is specified in one
+of the sets should result in the error
+<B>EBADF</B>.
+
 <P>
 Glibc 2.0 provided a version of
 <B>pselect</B>()
@@ -738,21 +813,6 @@ Modern versions of glibc use the (race-free)
 <B>pselect</B>()
 
 system call on kernels where it is provided.
-<P>
-On systems that lack
-<B>pselect</B>(),
-
-reliable (and more portable) signal trapping can be achieved
-using the self-pipe trick.
-In this technique,
-a signal handler writes a byte to a pipe whose other end
-is monitored by
-<B>select</B>()
-
-in the main program.
-(To avoid possibly blocking when writing to a pipe that may be full
-or reading from a pipe that may be empty,
-nonblocking I/O is used when reading from and writing to the pipe.)
 <P>
 Under Linux,
 <B>select</B>()
@@ -791,7 +851,7 @@ but the glibc wrapper hides this behavior by internally copying the
 <I>timeout</I>
 
 to a local variable and passing that variable to the system call.
-<A NAME="lbAN">&nbsp;</A>
+<A NAME="lbAO">&nbsp;</A>
 <H2>EXAMPLE</H2>
 
 <PRE>
@@ -833,7 +893,7 @@ main(void)
 }
 </PRE>
 
-<A NAME="lbAO">&nbsp;</A>
+<A NAME="lbAP">&nbsp;</A>
 <H2>SEE ALSO</H2>
 
 <B><A HREF="../man2/accept.2.html">accept</A></B>(2),
@@ -879,17 +939,18 @@ For a tutorial with discussion and examples, see
 <DT><A HREF="#lbAI">CONFORMING TO</A><DD>
 <DT><A HREF="#lbAJ">NOTES</A><DD>
 <DL>
-<DT><A HREF="#lbAK">Multithreaded applications</A><DD>
-<DT><A HREF="#lbAL">C library/kernel differences</A><DD>
+<DT><A HREF="#lbAK">Correspondence between select() and poll() notifications</A><DD>
+<DT><A HREF="#lbAL">Multithreaded applications</A><DD>
+<DT><A HREF="#lbAM">C library/kernel differences</A><DD>
 </DL>
-<DT><A HREF="#lbAM">BUGS</A><DD>
-<DT><A HREF="#lbAN">EXAMPLE</A><DD>
-<DT><A HREF="#lbAO">SEE ALSO</A><DD>
+<DT><A HREF="#lbAN">BUGS</A><DD>
+<DT><A HREF="#lbAO">EXAMPLE</A><DD>
+<DT><A HREF="#lbAP">SEE ALSO</A><DD>
 </DL>
 <HR>
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:45:23 GMT, April 20, 2020
+Time: 03:46:01 GMT, April 20, 2020
 </BODY>
 </HTML>

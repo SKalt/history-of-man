@@ -25,7 +25,7 @@ the source, must acknowledge the copyright and authors of this work.
 <HTML><HEAD><TITLE>Man page of SYSLOG</TITLE>
 </HEAD><BODY>
 <H1>SYSLOG</H1>
-Section: Linux Programmer's Manual (3)<BR>Updated: 2016-03-15<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2017-05-03<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -67,17 +67,13 @@ Feature Test Macro Requirements for glibc (see
 <A NAME="lbAD">&nbsp;</A>
 <H2>DESCRIPTION</H2>
 
-<B>closelog</B>()
+<A NAME="lbAE">&nbsp;</A>
+<H3>openlog()</H3>
 
-closes the file descriptor being used to write to the system logger.
-The use of
-<B>closelog</B>()
-
-is optional.
-<P>
 <B>openlog</B>()
 
 opens a connection to the system logger for a program.
+<P>
 The string pointed to by
 <I>ident</I>
 
@@ -107,13 +103,14 @@ argument establishes a default to be used if
 none is specified in subsequent calls to
 <B>syslog</B>().
 
-Values for
+The values that may be specified for
 <I>option</I>
 
 and
 <I>facility</I>
 
-are given below.
+are described below.
+<P>
 The use of
 <B>openlog</B>()
 
@@ -124,40 +121,60 @@ if necessary, in which case
 <I>ident</I>
 
 will default to NULL.
-<P>
+
+<A NAME="lbAF">&nbsp;</A>
+<H3>syslog() and vsyslog()</H3>
+
 <B>syslog</B>()
 
 generates a log message, which will be distributed by
 <B><A HREF="../man8/syslogd.8.html">syslogd</A></B>(8).
 
+<P>
 The
 <I>priority</I>
 
-argument is formed by ORing the
+argument is formed by ORing together a
 <I>facility</I>
 
-and the
+value and a
 <I>level</I>
 
-values (explained below).
-The remaining arguments
-are a
+value (described below).
+If no
+<I>facility</I>
+
+value is ORed into
+<I>priority</I>,
+
+then the default value set by
+<B>openlog</B>()
+
+is used, or, if there was no preceding
+<B>openlog</B>()
+
+call, a default of
+<B>LOG_USER</B>
+
+is employed.
+<P>
+The remaining arguments are a
 <I>format</I>,
 
 as in
-<B><A HREF="../man3/printf.3.html">printf</A></B>(3)
+<B><A HREF="../man3/printf.3.html">printf</A></B>(3),
 
 and any arguments required by the
 <I>format</I>,
 
-except that the two character sequence
+except that the two-character sequence
 <B>%m</B>
 
 will be replaced by
 the error message string
 <I>strerror</I>(<I>errno</I>).
 
-A trailing newline may be added if needed.
+The format string need not include a terminating newline character.
 <P>
 The function
 <B>vsyslog</B>()
@@ -170,12 +187,20 @@ been obtained using the
 <B><A HREF="../man3/stdarg.3.html">stdarg</A></B>(3)
 
 variable argument list macros.
-<P>
-The subsections below list the parameters used to set the values of
-<I>option</I>,<I> facility</I>, and <I>priority</I>.
 
-<A NAME="lbAE">&nbsp;</A>
-<H3>option</H3>
+<A NAME="lbAG">&nbsp;</A>
+<H3>closelog()</H3>
+
+<B>closelog</B>()
+
+closes the file descriptor being used to write to the system logger.
+The use of
+<B>closelog</B>()
+
+is optional.
+
+<A NAME="lbAH">&nbsp;</A>
+<H3>Values for <I>option</I></H3>
 
 The
 <I>option</I>
@@ -183,18 +208,22 @@ The
 argument to
 <B>openlog</B>()
 
-is an OR of any of these:
+is a bit mask constructed by ORing together any of the following values:
 <DL COMPACT>
 <DT><B>LOG_CONS</B>
 
 <DD>
-Write directly to system console if there is an error while sending to
-system logger.
+Write directly to the system console if there is an error while sending to
+the system logger.
 <DT><B>LOG_NDELAY</B>
 
 <DD>
 Open the connection immediately (normally, the connection is opened when
 the first message is logged).
+This may be useful, for example, if a subsequent
+<B><A HREF="../man2/chroot.2.html">chroot</A></B>(2)
+
+would make the pathname used internally by the logging facility unreachable.
 <DT><B>LOG_NOWAIT</B>
 
 <DD>
@@ -217,14 +246,17 @@ is called.
 
 <DD>
 (Not in POSIX.1-2001 or POSIX.1-2008.)
-Print to <I>stderr</I> as well.
+Also log the message to
+<I>stderr</I>.
+
 <DT><B>LOG_PID</B>
 
 <DD>
-Include PID with each message.
+Include the caller's PID with each message.
+
 </DL>
-<A NAME="lbAF">&nbsp;</A>
-<H3>facility</H3>
+<A NAME="lbAI">&nbsp;</A>
+<H3>Values for <I>facility</I></H3>
 
 The
 <I>facility</I>
@@ -291,9 +323,10 @@ generic user-level messages
 
 <DD>
 UUCP subsystem
+
 </DL>
-<A NAME="lbAG">&nbsp;</A>
-<H3>level</H3>
+<A NAME="lbAJ">&nbsp;</A>
+<H3>Values for <I>level</I></H3>
 
 This determines the importance of the message.
 The levels are, in order of decreasing importance:
@@ -337,7 +370,7 @@ The function
 <B><A HREF="../man3/setlogmask.3.html">setlogmask</A></B>(3)
 
 can be used to restrict logging to specified levels only.
-<A NAME="lbAH">&nbsp;</A>
+<A NAME="lbAK">&nbsp;</A>
 <H2>ATTRIBUTES</H2>
 
 For an explanation of the terms used in this section, see
@@ -359,7 +392,7 @@ For an explanation of the terms used in this section, see
 </TD><TD>Thread safety</TD><TD>MT-Safe env locale<BR></TD></TR>
 </TABLE>
 
-<A NAME="lbAI">&nbsp;</A>
+<A NAME="lbAL">&nbsp;</A>
 <H2>CONFORMING TO</H2>
 
 The functions
@@ -374,6 +407,7 @@ and
 <B>vsyslog</B>())
 
 are specified in SUSv2, POSIX.1-2001, and POSIX.1-2008.
+<P>
 POSIX.1-2001 specifies only the
 <B>LOG_USER</B>
 
@@ -393,6 +427,7 @@ the other
 <I>facility</I>
 
 values appear on most UNIX systems.
+<P>
 The
 <B>LOG_PERROR</B>
 
@@ -417,7 +452,7 @@ in most versions of UNIX.
 
 
 
-<A NAME="lbAJ">&nbsp;</A>
+<A NAME="lbAM">&nbsp;</A>
 <H2>NOTES</H2>
 
 The argument
@@ -443,10 +478,12 @@ use the following instead:
     syslog(priority, &quot;%s&quot;, string);
 </PRE>
 
-<A NAME="lbAK">&nbsp;</A>
+<A NAME="lbAN">&nbsp;</A>
 <H2>SEE ALSO</H2>
 
 <B><A HREF="../man1/logger.1.html">logger</A></B>(1),
+
+<B><A HREF="../man1/journalctl.1.html">journalctl</A></B>(1),
 
 <B><A HREF="../man3/setlogmask.3.html">setlogmask</A></B>(3),
 
@@ -463,19 +500,22 @@ use the following instead:
 <DT><A HREF="#lbAC">SYNOPSIS</A><DD>
 <DT><A HREF="#lbAD">DESCRIPTION</A><DD>
 <DL>
-<DT><A HREF="#lbAE">option</A><DD>
-<DT><A HREF="#lbAF">facility</A><DD>
-<DT><A HREF="#lbAG">level</A><DD>
+<DT><A HREF="#lbAE">openlog()</A><DD>
+<DT><A HREF="#lbAF">syslog() and vsyslog()</A><DD>
+<DT><A HREF="#lbAG">closelog()</A><DD>
+<DT><A HREF="#lbAH">Values for <I>option</I></A><DD>
+<DT><A HREF="#lbAI">Values for <I>facility</I></A><DD>
+<DT><A HREF="#lbAJ">Values for <I>level</I></A><DD>
 </DL>
-<DT><A HREF="#lbAH">ATTRIBUTES</A><DD>
-<DT><A HREF="#lbAI">CONFORMING TO</A><DD>
-<DT><A HREF="#lbAJ">NOTES</A><DD>
-<DT><A HREF="#lbAK">SEE ALSO</A><DD>
+<DT><A HREF="#lbAK">ATTRIBUTES</A><DD>
+<DT><A HREF="#lbAL">CONFORMING TO</A><DD>
+<DT><A HREF="#lbAM">NOTES</A><DD>
+<DT><A HREF="#lbAN">SEE ALSO</A><DD>
 </DL>
 <HR>
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:45:32 GMT, April 20, 2020
+Time: 03:46:10 GMT, April 20, 2020
 </BODY>
 </HTML>

@@ -7,13 +7,13 @@ This is in the public domain
 <HTML><HEAD><TITLE>Man page of LD.SO</TITLE>
 </HEAD><BODY>
 <H1>LD.SO</H1>
-Section: Linux Programmer's Manual (8)<BR>Updated: 2017-03-13<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (8)<BR>Updated: 2017-05-03<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
 <H2>NAME</H2>
 
-ld.so, ld-linux.so* - dynamic linker/loader
+ld.so, ld-linux.so - dynamic linker/loader
 <A NAME="lbAC">&nbsp;</A>
 <H2>SYNOPSIS</H2>
 
@@ -137,7 +137,9 @@ linker option, this step is skipped.
 
 <B>ld.so</B>
 
-understands certain strings in an rpath specification (DT_RPATH or DT_RUNPATH); those strings are substituted as follows
+understands certain token strings in an rpath specification
+(DT_RPATH or DT_RUNPATH).
+Those strings are substituted as follows:
 <DL COMPACT>
 <DT><I>$ORIGIN</I> (or equivalently <I>${ORIGIN}</I>)
 
@@ -269,7 +271,8 @@ For security reasons,
 the effects of some environment variables are voided or modified if
 the dynamic linker determines that the binary should be
 run in secure-execution mode.
-This determination is made by checking whether the
+(For details, see the discussion of individual environment variables below.)
+A binary is executed in secure-execution mode if the
 <B>AT_SECURE</B>
 
 entry in the auxiliary vector (see
@@ -369,7 +372,7 @@ This variable is ignored in secure-execution mode.
 Within the pathnames specified in
 <B>LD_LIBRARY_PATH</B>,
 
-the dynamic linker expands the strings
+the dynamic linker expands the tokens
 <I>$ORIGIN</I>,
 
 <I>$LIB</I>,
@@ -393,10 +396,10 @@ subdirectory below the directory containing the program to be executed:
 <BR>&nbsp;&nbsp;&nbsp;&nbsp;$&nbsp;<B>LD_LIBRARY_PATH='$ORIGIN/$LIB'&nbsp;prog</B>
 <P>
 (Note the use of single quotes, which prevent expansion of
-<I>ORIGIN</I>
+<I>$ORIGIN</I>
 
 and
-<I>LIB</I>
+<I>$LIB</I>
 
 as shell variables!)
 <DT><B>LD_PRELOAD</B>
@@ -416,7 +419,7 @@ have the set-user-ID mode bit enabled are loaded.
 Within the names specified in the
 <B>LD_PRELOAD</B>
 
-list, the dynamic linker understands the strings
+list, the dynamic linker understands the tokens
 <I>$ORIGIN</I>,
 
 <I>$LIB</I>,
@@ -427,6 +430,9 @@ and
 (or the versions using curly braces around the names)
 as described above in
 <I>Rpath token expansion</I>.
+
+(See also the discussion of quoting under the description of
+<B>LD_LIBRARY_PATH</B>.)
 
 
 
@@ -479,7 +485,7 @@ in the chapter
 Within the names specified in the
 <B>LD_AUDIT</B>
 
-list, the dynamic linker understands the strings
+list, the dynamic linker understands the tokens
 <I>$ORIGIN</I>,
 
 <I>$LIB</I>,
@@ -490,6 +496,9 @@ and
 (or the versions using curly braces around the names)
 as described above in
 <I>Rpath token expansion</I>.
+
+(See also the discussion of quoting under the description of
+<B>LD_LIBRARY_PATH</B>.)
 
 <P>
 Since glibc 2.13,
@@ -770,11 +779,36 @@ ELF dynamic linker/loader
 <DD>
 File containing a compiled list of directories in which to search for
 shared objects and an ordered list of candidate shared objects.
+See
+<B><A HREF="../man8/ldconfig.8.html">ldconfig</A></B>(8).
+
 <DT><I>/etc/ld.so.preload</I>
 
 <DD>
 File containing a whitespace-separated list of ELF shared objects to
 be loaded before the program.
+See the discussion of
+<B>LD_PRELOAD</B>
+
+above.
+If both
+<B>LD_PRELOAD</B>
+
+and
+<I>/etc/ld.so.preload</I>
+
+are employed, the libraries specified by
+<B>LD_PRELOAD</B>
+
+are preloaded first.
+<I>/etc/ld.so.preload</I>
+
+has a system-wide effect,
+causing the specified libraries to be preloaded for
+all programs that are executed on the system.
+(This is usually undesirable,
+and is typically employed only as an emergency remedy, for example,
+as a temporary workaround to a library misconfiguration issue.)
 <DT><B>lib*.so*</B>
 
 <DD>
@@ -885,6 +919,6 @@ mtrr, pat, pbe, pge, pn, pse36, sep, ss, sse, sse2, tm
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:45:35 GMT, April 20, 2020
+Time: 03:46:14 GMT, April 20, 2020
 </BODY>
 </HTML>
