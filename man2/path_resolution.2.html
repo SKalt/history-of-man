@@ -198,42 +198,37 @@ with the same effective user ID. It is obsolete now. Nobody should use
 Similarly, Linux uses the fsgid instead of the effective group ID. See
 <B><A HREF="../man2/setfsgid.2.html">setfsgid</A></B>(2).
 
-<P>
 
 <P>
 <A NAME="lbAN">&nbsp;</A>
-<H3>Capabilities</H3>
+<H3>Bypassing permission checks: superuser and capabilities</H3>
 
-If the permission bits of the file deny whatever is asked, permission
-can still be granted by the appropriate capabilities.
+On a traditional Unix system, the superuser
+(<I>root</I>,
+
+user ID 0) is all-powerful, and bypasses all permissions restrictions 
+when accessing files.
+
+
+
+
+
+
 <P>
-Traditional systems do not use capabilities and root (user ID 0) is
-all-powerful. Such systems are presently (2.6.7) handled by giving root
-all capabilities except for CAP_SETPCAP. More precisely, 
-a process gets all capabilities except CAP_SETPCAP 
-and the five capabilities
-CAP_CHOWN, CAP_DAC_OVERRIDE, CAP_DAC_READ_SEARCH, CAP_FOWNER, CAP_FSETID,
-if its effective UID is 0, 
-and it gets these last five capabilities if its fsuid is 0 as well,
-while all other processes get no capabilities.
+On Linux, superuser privileges are divided into capabilities (see
+<B><A HREF="../man7/capabilities.7.html">capabilities</A></B>(7)).
+
+Two capabilities are relevant for file permissions checks:
+CAP_DAC_OVERRIDE and CAP_DAC_READ_SEARCH.
+(A process has these capabilities if its fsuid is 0.)
 <P>
 The CAP_DAC_OVERRIDE capability overrides all permission checking,
-but will only grant execute permission when at least one
-of the three execute permission bits is set.
+but only grants execute permission when at least one
+of the file's three execute permission bits is set.
 <P>
-The CAP_DAC_READ_SEARCH capability will grant read and search permission
+The CAP_DAC_READ_SEARCH capability grants read and search permission
 on directories, and read permission on ordinary files.
-<P>
 
-The CAP_SYS_ADMIN capability will (e.g.) allow a process to violate
-the limit (visible in
-<I>/proc/sys/fs/file-max</I>)
-
-on the maximum number of open files in the system, where a process
-lacking that capability would see an ENFILE error return.
-<P>
-
-<P>
 
 <P>
 <A NAME="lbAO">&nbsp;</A>
@@ -259,7 +254,7 @@ lacking that capability would see an ENFILE error return.
 <DT><A HREF="#lbAK">Length limit</A><DD>
 <DT><A HREF="#lbAL">Empty pathname</A><DD>
 <DT><A HREF="#lbAM">Permissions</A><DD>
-<DT><A HREF="#lbAN">Capabilities</A><DD>
+<DT><A HREF="#lbAN">Bypassing permission checks: superuser and capabilities</A><DD>
 </DL>
 <DT><A HREF="#lbAO">SEE ALSO</A><DD>
 </DL>
@@ -267,6 +262,6 @@ lacking that capability would see an ENFILE error return.
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 02:16:33 GMT, April 20, 2020
+Time: 02:17:02 GMT, April 20, 2020
 </BODY>
 </HTML>
