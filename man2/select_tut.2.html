@@ -15,45 +15,37 @@ synchronous I/O multiplexing
 <A NAME="lbAC">&nbsp;</A>
 <H2>SYNOPSIS</H2>
 
+<PRE>
+/* According to POSIX.1-2001 */
+<BR>
+<B>#include &lt;<A HREF="file:///usr/include/sys/select.h">sys/select.h</A>&gt;</B>
+
+/* According to earlier standards */
+<BR>
 <B>#include &lt;<A HREF="file:///usr/include/sys/time.h">sys/time.h</A>&gt;</B>
-
 <BR>
-
 <B>#include &lt;<A HREF="file:///usr/include/sys/types.h">sys/types.h</A>&gt;</B>
-
 <BR>
-
 <B>#include &lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;</B>
 
-<P>
-<B>int select(int </B><I>nfds</I><B>, fd_set *</B><I>readfds</I><B>,</B>
+<B>int select(int </B><I>nfds</I><B>, fd_set *</B><I>readfds</I><B>, fd_set *</B><I>writefds</I><B>, 
+           fd_set *</B><I>exceptfds</I><B>, struct timeval *</B><I>timeout</I><B>);
 
-<B>fd_set *</B><I>writefds</I><B>, fd_set *</B><I>exceptfds</I><B>,</B>
-
-<B>struct timeval *</B><I>utimeout</I><B>);</B>
-
-<P>
-<B>int pselect(int </B><I>nfds</I><B>, fd_set *</B><I>readfds</I><B>,</B>
-
-<B>fd_set *</B><I>writefds</I><B>, fd_set *</B><I>exceptfds</I><B>,</B>
-
-<B>const struct timespec *</B><I>ntimeout</I><B>, sigset_t *</B><I>sigmask</I><B>);</B>
-
-<P>
-<B>FD_CLR(int </B><I>fd</I><B>, fd_set *</B><I>set</I><B>);</B>
-
+void FD_CLR(int </B><I>fd</I><B>, fd_set *</B><I>set</I><B>);</B>
 <BR>
-
-<B>FD_ISSET(int </B><I>fd</I><B>, fd_set *</B><I>set</I><B>);</B>
-
+<B>int  FD_ISSET(int </B><I>fd</I><B>, fd_set *</B><I>set</I><B>);</B>
 <BR>
-
-<B>FD_SET(int </B><I>fd</I><B>, fd_set *</B><I>set</I><B>);</B>
-
+<B>void FD_SET(int </B><I>fd</I><B>, fd_set *</B><I>set</I><B>);</B>
 <BR>
+<B>void FD_ZERO(fd_set *</B><I>set</I><B>);</B>
 
-<B>FD_ZERO(fd_set *</B><I>set</I><B>);</B>
+<B>#define _XOPEN_SOURCE 600</B>
+<B>#include &lt;<A HREF="file:///usr/include/sys/select.h">sys/select.h</A>&gt;</B>
 
+<B>int pselect(int </B><I>nfds</I><B>, fd_set *</B><I>readfds</I><B>, fd_set *</B><I>writefds</I><B>, 
+            fd_set *</B><I>exceptfds</I><B>, const struct timespec *</B><I>timeout</I><B>, 
+            const sigset_t *</B><I>sigmask</I><B>);
+</B></PRE>
 
 <A NAME="lbAD">&nbsp;</A>
 <H2>DESCRIPTION</H2>
@@ -190,26 +182,29 @@ program would look like:
 <PRE>
 int child_events = 0;
 
-void child_sig_handler (int x) {
+void 
+child_sig_handler(int x) 
+{
     child_events++;
-    signal (SIGCHLD, child_sig_handler);
+    signal(SIGCHLD, child_sig_handler);
 }
 
-int main (int argc, char **argv) {
+int 
+main(int argc, char **argv) 
+{
     sigset_t sigmask, orig_sigmask;
 
-    sigemptyset (&amp;sigmask);
-    sigaddset (&amp;sigmask, SIGCHLD);
-    sigprocmask (SIG_BLOCK, &amp;sigmask,
-                                &amp;orig_sigmask);
+    sigemptyset(&amp;sigmask);
+    sigaddset(&amp;sigmask, SIGCHLD);
+    sigprocmask(SIG_BLOCK, &amp;sigmask, &amp;orig_sigmask);
 
-    signal (SIGCHLD, child_sig_handler);
+    signal(SIGCHLD, child_sig_handler);
 
     for (;;) { /* main loop */
         for (; child_events &gt; 0; child_events--) {
             /* do event work here */
         }
-        r = pselect (nfds, &amp;rd, &amp;wr, &amp;er, 0, &amp;orig_sigmask);
+        r = pselect(nfds, &amp;rd, &amp;wr, &amp;er, 0, &amp;orig_sigmask);
 
         /* main body of program */
     }
@@ -266,65 +261,61 @@ static int forward_port;
 #undef max
 #define max(x,y) ((x) &gt; (y) ? (x) : (y))
 
-static int listen_socket (int listen_port) {
+static int 
+listen_socket(int listen_port) 
+{
     struct sockaddr_in a;
     int s;
     int yes;
-    if ((s = socket (AF_INET, SOCK_STREAM, 0)) &lt; 0) {
-        perror (&quot;socket&quot;);
+    if ((s = socket(AF_INET, SOCK_STREAM, 0)) &lt; 0) {
+        perror(&quot;socket&quot;);
         return -1;
     }
     yes = 1;
-    if (setsockopt
-        (s, SOL_SOCKET, SO_REUSEADDR,
-         (char *) &amp;yes, sizeof (yes)) &lt; 0) {
-        perror (&quot;setsockopt&quot;);
-        close (s);
+    if (setsockopt(s, SOL_SOCKET, SO_REUSEADDR,
+            (char *) &amp;yes, sizeof(yes)) &lt; 0) {
+        perror(&quot;setsockopt&quot;);
+        close(s);
         return -1;
     }
-    memset (&amp;a, 0, sizeof (a));
-    a.sin_port = htons (listen_port);
+    memset(&amp;a, 0, sizeof(a));
+    a.sin_port = htons(listen_port);
     a.sin_family = AF_INET;
-    if (bind
-        (s, (struct sockaddr *) &amp;a, sizeof (a)) &lt; 0) {
-        perror (&quot;bind&quot;);
-        close (s);
+    if (bind(s, (struct sockaddr *) &amp;a, sizeof(a)) &lt; 0) {
+        perror(&quot;bind&quot;);
+        close(s);
         return -1;
     }
-    printf (&quot;accepting connections on port %d\n&quot;,
-            (int) listen_port);
-    listen (s, 10);
+    printf(&quot;accepting connections on port %d\n&quot;, listen_port);
+    listen(s, 10);
     return s;
 }
 
-static int connect_socket (int connect_port,
-                           char *address) {
+static int 
+connect_socket(int connect_port, char *address) 
+{
     struct sockaddr_in a;
     int s;
-    if ((s = socket (AF_INET, SOCK_STREAM, 0)) &lt; 0) {
-        perror (&quot;socket&quot;);
-        close (s);
+    if ((s = socket(AF_INET, SOCK_STREAM, 0)) &lt; 0) {
+        perror(&quot;socket&quot;);
+        close(s);
         return -1;
     }
 
-    memset (&amp;a, 0, sizeof (a));
-    a.sin_port = htons (connect_port);
+    memset(&amp;a, 0, sizeof(a));
+    a.sin_port = htons(connect_port);
     a.sin_family = AF_INET;
 
-    if (!inet_aton
-        (address,
-         (struct in_addr *) &amp;a.sin_addr.s_addr)) {
-        perror (&quot;bad IP address format&quot;);
-        close (s);
+    if (!inet_aton(address, (struct in_addr *) &amp;a.sin_addr.s_addr)) {
+        perror(&quot;bad IP address format&quot;);
+        close(s);
         return -1;
     }
 
-    if (connect
-        (s, (struct sockaddr *) &amp;a,
-         sizeof (a)) &lt; 0) {
-        perror (&quot;connect()&quot;);
-        shutdown (s, SHUT_RDWR);
-        close (s);
+    if (connect(s, (struct sockaddr *) &amp;a, sizeof(a)) &lt; 0) {
+        perror(&quot;connect()&quot;);
+        shutdown(s, SHUT_RDWR);
+        close(s);
         return -1;
     }
     return s;
@@ -332,23 +323,25 @@ static int connect_socket (int connect_port,
 
 #define SHUT_FD1 {                      \
         if (fd1 &gt;= 0) {                 \
-            shutdown (fd1, SHUT_RDWR);  \
-            close (fd1);                \
+            shutdown(fd1, SHUT_RDWR);   \
+            close(fd1);                 \
             fd1 = -1;                   \
         }                               \
     }
 
 #define SHUT_FD2 {                      \
         if (fd2 &gt;= 0) {                 \
-            shutdown (fd2, SHUT_RDWR);  \
-            close (fd2);                \
+            shutdown(fd2, SHUT_RDWR);   \
+            close(fd2);                 \
             fd2 = -1;                   \
         }                               \
     }
 
 #define BUF_SIZE 1024
 
-int main (int argc, char **argv) {
+int 
+main(int argc, char **argv) 
+{
     int h;
     int fd1 = -1, fd2 = -1;
     char buf1[BUF_SIZE], buf2[BUF_SIZE];
@@ -356,72 +349,70 @@ int main (int argc, char **argv) {
     int buf2_avail, buf2_written;
 
     if (argc != 4) {
-        fprintf (stderr,
-                 &quot;Usage\n\tfwd &lt;listen-port&gt; \
-&lt;forward-to-port&gt; &lt;forward-to-ip-address&gt;\n&quot;);
-        exit (1);
+        fprintf(stderr,
+                 &quot;Usage\n\tfwd &lt;listen-port&gt; &quot;
+                 &quot;&lt;forward-to-port&gt; &lt;forward-to-ip-address&gt;\n&quot;);
+        <A HREF="../man1/exit.1.html">exit</A>(1);
     }
 
-    signal (SIGPIPE, SIG_IGN);
+    signal(SIGPIPE, SIG_IGN);
 
-    forward_port = atoi (argv[2]);
+    forward_port = atoi(argv[2]);
 
-    h = listen_socket (atoi (argv[1]));
+    h = listen_socket(atoi(argv[1]));
     if (h &lt; 0)
-        exit (1);
+        <A HREF="../man1/exit.1.html">exit</A>(1);
 
     for (;;) {
         int r, nfds = 0;
         fd_set rd, wr, er;
-        FD_ZERO (&amp;rd);
-        FD_ZERO (&amp;wr);
-        FD_ZERO (&amp;er);
-        FD_SET (h, &amp;rd);
-        nfds = max (nfds, h);
+        FD_ZERO(&amp;rd);
+        FD_ZERO(&amp;wr);
+        FD_ZERO(&amp;er);
+        FD_SET(h, &amp;rd);
+        nfds = max(nfds, h);
         if (fd1 &gt; 0 &amp;&amp; buf1_avail &lt; BUF_SIZE) {
-            FD_SET (fd1, &amp;rd);
-            nfds = max (nfds, fd1);
+            FD_SET(fd1, &amp;rd);
+            nfds = max(nfds, fd1);
         }
         if (fd2 &gt; 0 &amp;&amp; buf2_avail &lt; BUF_SIZE) {
-            FD_SET (fd2, &amp;rd);
-            nfds = max (nfds, fd2);
+            FD_SET(fd2, &amp;rd);
+            nfds = max(nfds, fd2);
         }
         if (fd1 &gt; 0
             &amp;&amp; buf2_avail - buf2_written &gt; 0) {
-            FD_SET (fd1, &amp;wr);
-            nfds = max (nfds, fd1);
+            FD_SET(fd1, &amp;wr);
+            nfds = max(nfds, fd1);
         }
         if (fd2 &gt; 0
             &amp;&amp; buf1_avail - buf1_written &gt; 0) {
-            FD_SET (fd2, &amp;wr);
-            nfds = max (nfds, fd2);
+            FD_SET(fd2, &amp;wr);
+            nfds = max(nfds, fd2);
         }
         if (fd1 &gt; 0) {
-            FD_SET (fd1, &amp;er);
-            nfds = max (nfds, fd1);
+            FD_SET(fd1, &amp;er);
+            nfds = max(nfds, fd1);
         }
         if (fd2 &gt; 0) {
-            FD_SET (fd2, &amp;er);
-            nfds = max (nfds, fd2);
+            FD_SET(fd2, &amp;er);
+            nfds = max(nfds, fd2);
         }
 
-        r = select (nfds + 1, &amp;rd, &amp;wr, &amp;er, NULL);
+        r = select(nfds + 1, &amp;rd, &amp;wr, &amp;er, NULL);
 
         if (r == -1 &amp;&amp; errno == EINTR)
             continue;
         if (r &lt; 0) {
-            perror (&quot;select()&quot;);
-            exit (1);
+            perror(&quot;select()&quot;);
+            <A HREF="../man1/exit.1.html">exit</A>(1);
         }
-        if (FD_ISSET (h, &amp;rd)) {
+        if (FD_ISSET(h, &amp;rd)) {
             unsigned int l;
             struct sockaddr_in client_address;
-            memset (&amp;client_address, 0, l =
-                    sizeof (client_address));
-            r = accept (h, (struct sockaddr *)
-                        &amp;client_address, &amp;l);
+            memset(&amp;client_address, 0, l = sizeof(client_address));
+            r = accept(h, (struct sockaddr *) &amp;client_address, &amp;l);
             if (r &lt; 0) {
-                perror (&quot;accept()&quot;);
+                perror(&quot;accept()&quot;);
             } else {
                 SHUT_FD1;
                 SHUT_FD2;
@@ -429,41 +420,39 @@ int main (int argc, char **argv) {
                 buf2_avail = buf2_written = 0;
                 fd1 = r;
                 fd2 =
-                    connect_socket (forward_port,
-                                    argv[3]);
+                    connect_socket(forward_port, argv[3]);
                 if (fd2 &lt; 0) {
                     SHUT_FD1;
                 } else
-                    printf (&quot;connect from %s\n&quot;,
-                            inet_ntoa
-                            (client_address.sin_addr));
+                    printf(&quot;connect from %s\n&quot;,
+                            inet_ntoa(client_address.sin_addr));
             }
         }
 /* NB: read oob data before normal reads */
         if (fd1 &gt; 0)
-            if (FD_ISSET (fd1, &amp;er)) {
+            if (FD_ISSET(fd1, &amp;er)) {
                 char c;
                 errno = 0;
-                r = recv (fd1, &amp;c, 1, MSG_OOB);
+                r = recv(fd1, &amp;c, 1, MSG_OOB);
                 if (r &lt; 1) {
                     SHUT_FD1;
                 } else
-                    send (fd2, &amp;c, 1, MSG_OOB);
+                    send(fd2, &amp;c, 1, MSG_OOB);
             }
         if (fd2 &gt; 0)
-            if (FD_ISSET (fd2, &amp;er)) {
+            if (FD_ISSET(fd2, &amp;er)) {
                 char c;
                 errno = 0;
-                r = recv (fd2, &amp;c, 1, MSG_OOB);
+                r = recv(fd2, &amp;c, 1, MSG_OOB);
                 if (r &lt; 1) {
                     SHUT_FD1;
                 } else
-                    send (fd1, &amp;c, 1, MSG_OOB);
+                    send(fd1, &amp;c, 1, MSG_OOB);
             }
         if (fd1 &gt; 0)
-            if (FD_ISSET (fd1, &amp;rd)) {
+            if (FD_ISSET(fd1, &amp;rd)) {
                 r =
-                    read (fd1, buf1 + buf1_avail,
+                    read(fd1, buf1 + buf1_avail,
                           BUF_SIZE - buf1_avail);
                 if (r &lt; 1) {
                     SHUT_FD1;
@@ -471,9 +460,9 @@ int main (int argc, char **argv) {
                     buf1_avail += r;
             }
         if (fd2 &gt; 0)
-            if (FD_ISSET (fd2, &amp;rd)) {
+            if (FD_ISSET(fd2, &amp;rd)) {
                 r =
-                    read (fd2, buf2 + buf2_avail,
+                    read(fd2, buf2 + buf2_avail,
                           BUF_SIZE - buf2_avail);
                 if (r &lt; 1) {
                     SHUT_FD2;
@@ -481,24 +470,20 @@ int main (int argc, char **argv) {
                     buf2_avail += r;
             }
         if (fd1 &gt; 0)
-            if (FD_ISSET (fd1, &amp;wr)) {
+            if (FD_ISSET(fd1, &amp;wr)) {
                 r =
-                    write (fd1,
-                           buf2 + buf2_written,
-                           buf2_avail -
-                           buf2_written);
+                    write(fd1, buf2 + buf2_written,
+                           buf2_avail - buf2_written);
                 if (r &lt; 1) {
                     SHUT_FD1;
                 } else
                     buf2_written += r;
             }
         if (fd2 &gt; 0)
-            if (FD_ISSET (fd2, &amp;wr)) {
+            if (FD_ISSET(fd2, &amp;wr)) {
                 r =
-                    write (fd2,
-                           buf1 + buf1_written,
-                           buf1_avail -
-                           buf1_written);
+                    write(fd2, buf1 + buf1_written,
+                           buf1_avail - buf1_written);
                 if (r &lt; 1) {
                     SHUT_FD2;
                 } else
@@ -511,12 +496,10 @@ int main (int argc, char **argv) {
             buf2_written = buf2_avail = 0;
 /* one side has closed the connection, keep
    writing to the other side until empty */
-        if (fd1 &lt; 0
-            &amp;&amp; buf1_avail - buf1_written == 0) {
+        if (fd1 &lt; 0 &amp;&amp; buf1_avail - buf1_written == 0) {
             SHUT_FD2;
         }
-        if (fd2 &lt; 0
-            &amp;&amp; buf2_avail - buf2_written == 0) {
+        if (fd2 &lt; 0 &amp;&amp; buf2_avail - buf2_written == 0) {
             SHUT_FD1;
         }
     }
@@ -635,7 +618,7 @@ follows:
     struct timeval tv;
     tv.tv_sec = 0;
     tv.tv_usec = 200000;  /* 0.2 seconds */
-    select (0, NULL, NULL, NULL, &amp;tv);
+    select(0, NULL, NULL, NULL, &amp;tv);
 </PRE>
 
 <P>
@@ -750,6 +733,6 @@ when monitoring large numbers of file descriptors.
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 02:34:05 GMT, April 20, 2020
+Time: 02:34:33 GMT, April 20, 2020
 </BODY>
 </HTML>
