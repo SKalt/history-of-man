@@ -5,7 +5,7 @@ Copyright 1995 Yggdrasil Computing, Incorporated.
 <HTML><HEAD><TITLE>Man page of DLOPEN</TITLE>
 </HEAD><BODY>
 <H1>DLOPEN</H1>
-Section: Linux Programmer's Manual (3)<BR>Updated: 2008-10-27<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2008-12-05<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -538,6 +538,47 @@ but not
 <B>dlvsym</B>().
 
 <A NAME="lbAN">&nbsp;</A>
+<H2>BUGS</H2>
+
+Sometimes, the function pointers you pass to
+<B>dladdr</B>()
+
+may surprise you.
+On some architectures (notably i386 and x86_64),
+<I>dli_fname</I>
+
+and
+<I>dli_fbase</I>
+
+may end up pointing back at the object from which you called
+<B>dladdr</B>(),
+
+even if the function used as an argument should come from
+a dynamically linked library.
+<P>
+
+The problem is that the function pointer will still be resolved
+at compile time, but merely point to the
+<I>plt</I>
+
+(procedure linkage table)
+section of the original object (which dispatches the call after
+asking the dynamic linker to resolve the symbol).
+To work this around, you can try to compile the code to be
+position-independent
+(<I>cc -fPIC</I>):
+
+then, the compiler cannot prepare the pointer
+at compile time anymore and today's
+<B><A HREF="../man1/gcc.1.html">gcc</A></B>(1)
+
+will just load the final symbol address from the
+<I>GOT</I>
+
+(Global Offset Table) at run time before passing it to
+<B>dladdr</B>().
+
+<A NAME="lbAO">&nbsp;</A>
 <H2>EXAMPLE</H2>
 
 Load the math library, and print the cosine of 2.0:
@@ -589,7 +630,7 @@ with the following command:
 
 <P>
 
-gcc -rdynamic -o foo foo.c -ldl
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;gcc&nbsp;-rdynamic&nbsp;-o&nbsp;foo&nbsp;foo.c&nbsp;-ldl
 
 <P>
 
@@ -604,9 +645,9 @@ follows, using <I>bar.c</I> as the example name:
 
 <P>
 
-gcc -shared -nostartfiles -o bar bar.c
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;gcc&nbsp;-shared&nbsp;-nostartfiles&nbsp;-o&nbsp;bar&nbsp;bar.c
 
-<A NAME="lbAO">&nbsp;</A>
+<A NAME="lbAP">&nbsp;</A>
 <H2>SEE ALSO</H2>
 
 <B><A HREF="../man1/ld.1.html">ld</A></B>(1),
@@ -643,13 +684,14 @@ ld.so info pages, gcc info pages, ld info pages
 <DL>
 <DT><A HREF="#lbAM">History</A><DD>
 </DL>
-<DT><A HREF="#lbAN">EXAMPLE</A><DD>
-<DT><A HREF="#lbAO">SEE ALSO</A><DD>
+<DT><A HREF="#lbAN">BUGS</A><DD>
+<DT><A HREF="#lbAO">EXAMPLE</A><DD>
+<DT><A HREF="#lbAP">SEE ALSO</A><DD>
 </DL>
 <HR>
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:00:36 GMT, April 20, 2020
+Time: 03:01:11 GMT, April 20, 2020
 </BODY>
 </HTML>

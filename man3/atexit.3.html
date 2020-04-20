@@ -5,7 +5,7 @@ Copyright 1993 David Metcalfe (david@prism.demon.co.uk)
 <HTML><HEAD><TITLE>Man page of ATEXIT</TITLE>
 </HEAD><BODY>
 <H1>ATEXIT</H1>
-Section: Linux Programmer's Manual (3)<BR>Updated: 2003-11-01<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2008-12-05<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -34,6 +34,9 @@ called at normal process termination, either via
 or via return from the program's <I>main</I>().
 Functions so registered are called in
 the reverse order of their registration; no arguments are passed.
+<P>
+The same function may be registered multiple times:
+it is called once for each registration.
 <P>
 
 POSIX.1-2001 requires that an implementation allow at least
@@ -77,6 +80,56 @@ Functions registered using
 
 are not called if a process terminates abnormally because
 of the delivery of a signal.
+<P>
+If one of the functions registered functions calls
+<B><A HREF="../man2/_exit.2.html">_exit</A></B>(2),
+
+then any remaining functions are not invoked,
+and the other process termination steps performed by
+<B><A HREF="../man3/exit.3.html">exit</A></B>(3)
+
+are not performed.
+<P>
+POSIX.1-2001 says that the result of calling
+<B><A HREF="../man3/exit.3.html">exit</A></B>(3)
+
+more than once (i.e., calling
+<B><A HREF="../man3/exit.3.html">exit</A></B>(3)
+
+within a function registered using
+<B><A HREF="../man3/atexit.3.html">atexit</A></B>(3))
+
+is undefined.
+On some systems (but not Linux), this can result in an infinite recursion;
+
+
+
+
+portable programs should not invoke
+<B><A HREF="../man3/exit.3.html">exit</A></B>(3)
+
+inside a function registered using
+<B><A HREF="../man3/atexit.3.html">atexit</A></B>(3).
+
+<P>
+The
+<B>atexit</B>()
+
+and
+<B><A HREF="../man3/on_exit.3.html">on_exit</A></B>(3)
+
+functions register functions on the same list:
+at normal process termination,
+the registered functions are invoked in reverse order
+of their registration by these two functions.
+<P>
+POSIX.1-2001 says that the result is undefined if
+<B><A HREF="../man3/longjmp.3.html">longjmp</A></B>(3)
+
+is used to terminate execution of one of the functions registered
+<B>atexit</B>().
+
+
 <A NAME="lbAH">&nbsp;</A>
 <H3>Linux Notes</H3>
 
@@ -151,6 +204,6 @@ main(void)
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:00:33 GMT, April 20, 2020
+Time: 03:01:09 GMT, April 20, 2020
 </BODY>
 </HTML>

@@ -4,7 +4,7 @@
 <HTML><HEAD><TITLE>Man page of SELECT_TUT</TITLE>
 </HEAD><BODY>
 <H1>SELECT_TUT</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2007-12-18<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2008-12-05<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -736,21 +736,21 @@ connect_socket(int connect_port, char *address)
     return s;
 }
 
-#define SHUT_FD1 {                      \
-        if (fd1 &gt;= 0) {                 \
-            shutdown(fd1, SHUT_RDWR);   \
-            close(fd1);                 \
-            fd1 = -1;                   \
-        }                               \
-    }
+#define SHUT_FD1 do {                                \
+                     if (fd1 &gt;= 0) {                 \
+                         shutdown(fd1, SHUT_RDWR);   \
+                         close(fd1);                 \
+                         fd1 = -1;                   \
+                     }                               \
+                 } while (0)
 
-#define SHUT_FD2 {                      \
-        if (fd2 &gt;= 0) {                 \
-            shutdown(fd2, SHUT_RDWR);   \
-            close(fd2);                 \
-            fd2 = -1;                   \
-        }                               \
-    }
+#define SHUT_FD2 do {                                \
+                     if (fd2 &gt;= 0) {                 \
+                         shutdown(fd2, SHUT_RDWR);   \
+                         close(fd2);                 \
+                         fd2 = -1;                   \
+                     }                               \
+                 } while (0)
 
 #define BUF_SIZE 1024
 
@@ -764,8 +764,7 @@ main(int argc, char **argv)
     int buf2_avail, buf2_written;
 
     if (argc != 4) {
-        fprintf(stderr,
-                 &quot;Usage\n\tfwd &lt;listen-port&gt; &quot;
+        fprintf(stderr, &quot;Usage\n\tfwd &lt;listen-port&gt; &quot;
                  &quot;&lt;forward-to-port&gt; &lt;forward-to-ip-address&gt;\n&quot;);
         exit(EXIT_FAILURE);
     }
@@ -824,6 +823,7 @@ main(int argc, char **argv)
         if (FD_ISSET(h, &amp;rd)) {
             unsigned int l;
             struct sockaddr_in client_address;
+
             memset(&amp;client_address, 0, l = sizeof(client_address));
             r = accept(h, (struct sockaddr *) &amp;client_address, &amp;l);
             if (r &lt; 0) {
@@ -834,24 +834,25 @@ main(int argc, char **argv)
                 buf1_avail = buf1_written = 0;
                 buf2_avail = buf2_written = 0;
                 fd1 = r;
-                fd2 =
-                    connect_socket(forward_port, argv[3]);
-                if (fd2 &lt; 0) {
+                fd2 = connect_socket(forward_port, argv[3]);
+                if (fd2 &lt; 0)
                     SHUT_FD1;
-                } else
+                else
                     printf(&quot;connect from %s\n&quot;,
                             inet_ntoa(client_address.sin_addr));
             }
         }
-/* NB: read oob data before normal reads */
+
+        /* NB: read oob data before normal reads */
+
         if (fd1 &gt; 0)
             if (FD_ISSET(fd1, &amp;er)) {
                 char c;
                 errno = 0;
                 r = recv(fd1, &amp;c, 1, MSG_OOB);
-                if (r &lt; 1) {
+                if (r &lt; 1)
                     SHUT_FD1;
-                } else
+                else
                     send(fd2, &amp;c, 1, MSG_OOB);
             }
         if (fd2 &gt; 0)
@@ -859,64 +860,62 @@ main(int argc, char **argv)
                 char c;
                 errno = 0;
                 r = recv(fd2, &amp;c, 1, MSG_OOB);
-                if (r &lt; 1) {
+                if (r &lt; 1)
                     SHUT_FD1;
-                } else
+                else
                     send(fd1, &amp;c, 1, MSG_OOB);
             }
         if (fd1 &gt; 0)
             if (FD_ISSET(fd1, &amp;rd)) {
-                r =
-                    read(fd1, buf1 + buf1_avail,
+                r = read(fd1, buf1 + buf1_avail,
                           BUF_SIZE - buf1_avail);
-                if (r &lt; 1) {
+                if (r &lt; 1)
                     SHUT_FD1;
-                } else
+                else
                     buf1_avail += r;
             }
         if (fd2 &gt; 0)
             if (FD_ISSET(fd2, &amp;rd)) {
-                r =
-                    read(fd2, buf2 + buf2_avail,
+                r = read(fd2, buf2 + buf2_avail,
                           BUF_SIZE - buf2_avail);
-                if (r &lt; 1) {
+                if (r &lt; 1)
                     SHUT_FD2;
-                } else
+                else
                     buf2_avail += r;
             }
         if (fd1 &gt; 0)
             if (FD_ISSET(fd1, &amp;wr)) {
-                r =
-                    write(fd1, buf2 + buf2_written,
+                r = write(fd1, buf2 + buf2_written,
                            buf2_avail - buf2_written);
-                if (r &lt; 1) {
+                if (r &lt; 1)
                     SHUT_FD1;
-                } else
+                else
                     buf2_written += r;
             }
         if (fd2 &gt; 0)
             if (FD_ISSET(fd2, &amp;wr)) {
-                r =
-                    write(fd2, buf1 + buf1_written,
+                r = write(fd2, buf1 + buf1_written,
                            buf1_avail - buf1_written);
-                if (r &lt; 1) {
+                if (r &lt; 1)
                     SHUT_FD2;
-                } else
+                else
                     buf1_written += r;
             }
-/* check if write data has caught read data */
+
+        /* check if write data has caught read data */
+
         if (buf1_written == buf1_avail)
             buf1_written = buf1_avail = 0;
         if (buf2_written == buf2_avail)
             buf2_written = buf2_avail = 0;
-/* one side has closed the connection, keep
-   writing to the other side until empty */
-        if (fd1 &lt; 0 &amp;&amp; buf1_avail - buf1_written == 0) {
+
+        /* one side has closed the connection, keep
+           writing to the other side until empty */
+
+        if (fd1 &lt; 0 &amp;&amp; buf1_avail - buf1_written == 0)
             SHUT_FD2;
-        }
-        if (fd2 &lt; 0 &amp;&amp; buf2_avail - buf2_written == 0) {
+        if (fd2 &lt; 0 &amp;&amp; buf2_avail - buf2_written == 0)
             SHUT_FD1;
-        }
     }
     exit(EXIT_SUCCESS);
 }
@@ -1008,6 +1007,6 @@ connections cause the current connection to be dropped.
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:00:31 GMT, April 20, 2020
+Time: 03:01:07 GMT, April 20, 2020
 </BODY>
 </HTML>

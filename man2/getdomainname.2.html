@@ -5,7 +5,7 @@ Copyright 1993 Rickard E. Faith (faith@cs.unc.edu)
 <HTML><HEAD><TITLE>Man page of GETDOMAINNAME</TITLE>
 </HEAD><BODY>
 <H1>GETDOMAINNAME</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2007-07-26<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2008-11-27<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -43,10 +43,36 @@ _BSD_SOURCE || (_XOPEN_SOURCE &amp;&amp; _XOPEN_SOURCE&nbsp;&lt;&nbsp;500)
 
 These functions are used to access or to change the domain name of the
 current processor.
+<P>
+<B>setdomainname</B>()
+
+sets the domain name to the value given in the character array
+<I>name</I>.
+
+The
+<I>len</I>
+
+argument specifies the number of bytes in
+<I>name</I>.
+
+(Thus,
+<I>name</I>
+
+does not require a terminating null byte.)
+<P>
+<B>getdomainname</B>()
+
+returns the null-terminated domain name in the character array
+<I>name</I>,
+
+which has a length of
+<I>len</I>
+
+bytes.
 If the null-terminated domain name requires more than <I>len</I> bytes,
 <B>getdomainname</B>()
 
-returns the first <I>len</I> bytes (glibc) or returns an error (libc).
+returns the first <I>len</I> bytes (glibc) or gives an error (libc).
 <A NAME="lbAE">&nbsp;</A>
 <H2>RETURN VALUE</H2>
 
@@ -58,16 +84,36 @@ is set appropriately.
 <A NAME="lbAF">&nbsp;</A>
 <H2>ERRORS</H2>
 
+<B>setdomainname</B>()
+
+can fail with the following errors:
 <DL COMPACT>
 <DT><B>EFAULT</B>
 
 <DD>
-For
-<B>setdomainname</B>():
-
 <I>name</I>
 
 pointed outside of user address space.
+<DT><B>EINVAL</B>
+
+<DD>
+<I>len</I>
+
+was negative or too large.
+<DT><B>EPERM</B>
+
+<DD>
+the caller is unprivileged (Linux: does not have the
+<B>CAP_SYS_ADMIN</B>
+
+capability).
+</DL>
+<P>
+
+<B>getdomainname</B>()
+
+can fail with the following errors:
+<DL COMPACT>
 <DT><B>EINVAL</B>
 
 <DD>
@@ -84,25 +130,6 @@ is longer than
 <I>len</I>
 
 bytes.
-<DT><B>EINVAL</B>
-
-<DD>
-For
-<B>setdomainname</B>():
-
-<I>len</I>
-
-was negative or too large.
-<DT><B>EPERM</B>
-
-<DD>
-For
-<B>setdomainname</B>():
-
-the caller is unprivileged (Linux: does not have the
-<B>CAP_SYS_ADMIN</B>
-
-capability).
 </DL>
 <A NAME="lbAG">&nbsp;</A>
 <H2>CONFORMING TO</H2>
@@ -110,6 +137,26 @@ capability).
 POSIX does not specify these calls.
 
 <A NAME="lbAH">&nbsp;</A>
+<H2>NOTES</H2>
+
+Since Linux 1.0, the limit on the length of a domain name,
+including the terminating null byte, is 64 bytes.
+In older kernels, it was 8 bytes.
+<P>
+On most Linux architectures (including x86),
+there is no
+<B>getdomainname</B>()
+
+system call; instead, glibc implements
+<B>getdomainname</B>()
+
+as a library function that returns a copy of the
+<I>domainname</I>
+
+field returned from a call to
+<B><A HREF="../man2/uname.2.html">uname</A></B>(2).
+
+<A NAME="lbAI">&nbsp;</A>
 <H2>SEE ALSO</H2>
 
 <B><A HREF="../man2/gethostname.2.html">gethostname</A></B>(2),
@@ -129,12 +176,13 @@ POSIX does not specify these calls.
 <DT><A HREF="#lbAE">RETURN VALUE</A><DD>
 <DT><A HREF="#lbAF">ERRORS</A><DD>
 <DT><A HREF="#lbAG">CONFORMING TO</A><DD>
-<DT><A HREF="#lbAH">SEE ALSO</A><DD>
+<DT><A HREF="#lbAH">NOTES</A><DD>
+<DT><A HREF="#lbAI">SEE ALSO</A><DD>
 </DL>
 <HR>
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:00:30 GMT, April 20, 2020
+Time: 03:01:05 GMT, April 20, 2020
 </BODY>
 </HTML>

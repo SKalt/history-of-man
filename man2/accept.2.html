@@ -5,7 +5,7 @@ Copyright (c) 1983, 1990, 1991 The Regents of the University of California.
 <HTML><HEAD><TITLE>Man page of ACCEPT</TITLE>
 </HEAD><BODY>
 <H1>ACCEPT</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2004-06-17<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2008-12-04<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -15,14 +15,18 @@ accept - accept a connection on a socket
 <A NAME="lbAC">&nbsp;</A>
 <H2>SYNOPSIS</H2>
 
+<PRE>
 <B>#include &lt;<A HREF="file:///usr/include/sys/types.h">sys/types.h</A>&gt;</B>          /* See NOTES */
-
-<BR>
-
 <B>#include &lt;<A HREF="file:///usr/include/sys/socket.h">sys/socket.h</A>&gt;</B>
 
-<P>
 <B>int accept(int </B><I>sockfd</I><B>, struct sockaddr *</B><I>addr</I><B>, socklen_t *</B><I>addrlen</I><B>);</B>
+
+<B>#define _GNU_SOURCE</B>
+<B>#include &lt;<A HREF="file:///usr/include/sys/socket.h">sys/socket.h</A>&gt;</B>
+
+<B>int accept4(int </B><I>sockfd</I><B>, struct sockaddr *</B><I>addr</I><B>,</B>
+<B>            socklen_t *</B><I>addrlen</I><B>, int </B><I>flags</I><B>);</B>
+</PRE>
 
 <A NAME="lbAD">&nbsp;</A>
 <H2>DESCRIPTION</H2>
@@ -77,19 +81,29 @@ is determined by the socket's address family (see
 <B><A HREF="../man2/socket.2.html">socket</A></B>(2)
 
 and the respective protocol man pages).
-The
-<I>addrlen</I>
-
-argument is a value-result argument: it should initially contain the
-size of the structure pointed to by
-<I>addr</I>;
-
-on return it will contain the actual length (in bytes) of the address
-returned.
 When
 <I>addr</I>
 
-is NULL nothing is filled in.
+is NULL, nothing is filled in; in this case,
+<I>addrlen</I>
+
+is not used, and should also be NULL.
+<P>
+The
+<I>addrlen</I>
+
+argument is a value-result argument:
+the caller must initialize it to contain the
+size (in bytes) of the structure pointed to by
+<I>addr</I>;
+
+on return it will contain the actual size of the peer address.
+<P>
+The returned address is truncated if the buffer provided is too small;
+in this case,
+<I>addrlen</I>
+
+will return a value greater than was supplied to the call.
 <P>
 
 If no pending
@@ -140,13 +154,52 @@ implied by closing the new socket.
 Currently only
 DECNet
 has these semantics on Linux.
+<P>
+If
+<I>flags</I>
+
+is 0, then
+<B>accept4</B>()
+
+is the same as
+<B>accept</B>().
+
+The following values can be bitwise ORed in
+<I>flags</I>
+
+to obtain different behavior:
+<DL COMPACT>
+<DT><B>SOCK_NONBLOCK</B>
+
+<DD>
+Set the
+<B>O_NONBLOCK</B>
+
+file status flag on the new open file description.
+Using this flag saves extra calls to
+<B><A HREF="../man2/fcntl.2.html">fcntl</A></B>(2)
+
+to achieve the same result.
+<DT><B>SOCK_CLOEXEC</B>
+
+<DD>
+Set the close-on-exec
+(<B>FD_CLOEXEC</B>)
+
+flag on the new file descriptor.
+See the description of the
+<B>O_CLOEXEC</B>
+
+flag in
+<B><A HREF="../man2/open.2.html">open</A></B>(2)
+
+for reasons why this may be useful.
+</DL>
 <A NAME="lbAE">&nbsp;</A>
 <H2>RETURN VALUE</H2>
 
 On success,
-<B>accept</B>()
-
-returns a non-negative integer that is a descriptor
+these system calls return a non-negative integer that is a descriptor
 for the accepted socket.
 On error, -1 is returned, and
 <I>errno</I>
@@ -157,6 +210,9 @@ is set appropriately.
 
 Linux
 <B>accept</B>()
+
+(and
+<B>accept4</B>())
 
 passes already-pending network errors on the new socket
 as an error code from
@@ -194,9 +250,6 @@ and
 <A NAME="lbAG">&nbsp;</A>
 <H2>ERRORS</H2>
 
-<B>accept</B>()
-
-shall fail if:
 <DL COMPACT>
 <DT><B>EAGAIN</B> or <B>EWOULDBLOCK</B>
 
@@ -211,6 +264,13 @@ The descriptor is invalid.
 
 <DD>
 A connection has been aborted.
+<DT><B>EFAULT</B>
+
+<DD>
+The
+<I>addr</I>
+
+argument is not in a writable part of the user address space.
 <DT><B>EINTR</B>
 
 <DD>
@@ -225,6 +285,14 @@ Socket is not listening for connections, or
 <I>addrlen</I>
 
 is invalid (e.g., is negative).
+<DT><B>EINVAL</B>
+
+<DD>
+(<B>accept4</B>())
+
+invalid value in
+<I>flags</I>.
+
 <DT><B>EMFILE</B>
 
 <DD>
@@ -233,6 +301,12 @@ The per-process limit of open file descriptors has been reached.
 
 <DD>
 The system limit on the total number of open files has been reached.
+<DT><B>ENOBUFS</B>, <B>ENOMEM</B>
+
+<DD>
+Not enough free memory.
+This often means that the memory allocation is limited by the socket buffer
+limits, not by the system memory.
 <DT><B>ENOTSOCK</B>
 
 <DD>
@@ -243,26 +317,6 @@ The descriptor references a file, not a socket.
 The referenced socket is not of type
 <B>SOCK_STREAM</B>.
 
-</DL>
-<P>
-
-<B>accept</B>()
-
-may fail if:
-<DL COMPACT>
-<DT><B>EFAULT</B>
-
-<DD>
-The
-<I>addr</I>
-
-argument is not in a writable part of the user address space.
-<DT><B>ENOBUFS, ENOMEM</B>
-
-<DD>
-Not enough free memory.
-This often means that the memory allocation is limited by the socket buffer
-limits, not by the system memory.
 <DT><B>EPROTO</B>
 
 <DD>
@@ -270,7 +324,7 @@ Protocol error.
 </DL>
 <P>
 
-Linux
+In addition, Linux
 <B>accept</B>()
 
 may fail if:
@@ -299,18 +353,34 @@ The value
 
 may be seen during a trace.
 <A NAME="lbAH">&nbsp;</A>
+<H2>VERSIONS</H2>
+
+
+The
+<B>accept4</B>()
+
+system call is available starting with Linux 2.6.28;
+support in glibc is available starting with version 2.10.
+<A NAME="lbAI">&nbsp;</A>
 <H2>CONFORMING TO</H2>
 
+<B>accept</B>():
+
+POSIX.1-2001,
 SVr4, 4.4BSD,
 (<B>accept</B>()
 
-first appeared in 4.2BSD), POSIX.1-2001.
+first appeared in 4.2BSD).
 
 
 
 
 
 
+<P>
+<B>accept4</B>()
+
+is a non-standard Linux extension.
 <P>
 
 On Linux, the new socket returned by
@@ -331,7 +401,7 @@ of file status flags and always explicitly set all required flags on
 the socket returned from
 <B>accept</B>().
 
-<A NAME="lbAI">&nbsp;</A>
+<A NAME="lbAJ">&nbsp;</A>
 <H2>NOTES</H2>
 
 POSIX.1-2001 does not require the inclusion of
@@ -369,7 +439,7 @@ needs to have the
 flag set (see
 <B><A HREF="../man7/socket.7.html">socket</A></B>(7)).
 
-<A NAME="lbAJ">&nbsp;</A>
+<A NAME="lbAK">&nbsp;</A>
 <H3>The socklen_t type</H3>
 
 The third argument of
@@ -399,13 +469,13 @@ They shouldn't have touched it in the first place, but once they did
 they felt it had to have a named type for some unfathomable reason
 (probably somebody didn't like losing face over having done the original
 stupid thing, so they silently just renamed their blunder).&quot;
-<A NAME="lbAK">&nbsp;</A>
+<A NAME="lbAL">&nbsp;</A>
 <H2>EXAMPLE</H2>
 
 See
 <B><A HREF="../man2/bind.2.html">bind</A></B>(2).
 
-<A NAME="lbAL">&nbsp;</A>
+<A NAME="lbAM">&nbsp;</A>
 <H2>SEE ALSO</H2>
 
 <B><A HREF="../man2/bind.2.html">bind</A></B>(2),
@@ -416,7 +486,9 @@ See
 
 <B><A HREF="../man2/select.2.html">select</A></B>(2),
 
-<B><A HREF="../man2/socket.2.html">socket</A></B>(2)
+<B><A HREF="../man2/socket.2.html">socket</A></B>(2),
+
+<B><A HREF="../man7/socket.7.html">socket</A></B>(7)
 
 <P>
 
@@ -431,18 +503,19 @@ See
 <DT><A HREF="#lbAF">Error Handling</A><DD>
 </DL>
 <DT><A HREF="#lbAG">ERRORS</A><DD>
-<DT><A HREF="#lbAH">CONFORMING TO</A><DD>
-<DT><A HREF="#lbAI">NOTES</A><DD>
+<DT><A HREF="#lbAH">VERSIONS</A><DD>
+<DT><A HREF="#lbAI">CONFORMING TO</A><DD>
+<DT><A HREF="#lbAJ">NOTES</A><DD>
 <DL>
-<DT><A HREF="#lbAJ">The socklen_t type</A><DD>
+<DT><A HREF="#lbAK">The socklen_t type</A><DD>
 </DL>
-<DT><A HREF="#lbAK">EXAMPLE</A><DD>
-<DT><A HREF="#lbAL">SEE ALSO</A><DD>
+<DT><A HREF="#lbAL">EXAMPLE</A><DD>
+<DT><A HREF="#lbAM">SEE ALSO</A><DD>
 </DL>
 <HR>
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:00:29 GMT, April 20, 2020
+Time: 03:01:05 GMT, April 20, 2020
 </BODY>
 </HTML>

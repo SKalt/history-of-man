@@ -5,7 +5,7 @@ Copyright (C) 2007, Michael Kerrisk &lt;mtk.manpages@gmail.com&gt;
 <HTML><HEAD><TITLE>Man page of BINDRESVPORT</TITLE>
 </HEAD><BODY>
 <H1>BINDRESVPORT</H1>
-Section: Linux Programmer's Manual (3)<BR>Updated: 2008-11-10<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2008-12-03<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -19,7 +19,7 @@ bindresvport - bind a socket to a privileged IP port
 <B>#include &lt;<A HREF="file:///usr/include/sys/types.h">sys/types.h</A>&gt;</B>
 <B>#include &lt;<A HREF="file:///usr/include/netinet/in.h">netinet/in.h</A>&gt;</B>
 
-<B>int bindresvport(int </B><I>sd</I><B>, struct sockaddr_in **</B><I>sin</I><B>);</B>
+<B>int bindresvport(int </B><I>sockfd</I><B>, struct sockaddr_in *</B><I>sin</I><B>);</B>
 </PRE>
 
 <A NAME="lbAD">&nbsp;</A>
@@ -29,23 +29,20 @@ bindresvport - bind a socket to a privileged IP port
 
 <B>bindresvport</B>()
 
-is used to bind a socket descriptor to a privileged
-IP
-port, that is, a
-port number in the range 0-1023.
-<P>
-If
-<I>in-&gt;sin_port</I>
+is used to bind a socket descriptor to a privileged anonymous IP port,
+that is, a port number arbitrarily selected from the range 512 to 1023.
 
-is 0 then an anonymous port in the range 600 to 1023
-be chosen.
+<P>
 If the
 <B><A HREF="../man2/bind.2.html">bind</A></B>(2)
 
 performed by
 <B>bindresvport</B>()
 
-is successful, then
+is successful, and
+<I>sin</I>
+
+is not NULL, then
 <I>sin-&gt;sin_port</I>
 
 returns the port number actually allocated.
@@ -56,19 +53,21 @@ can be NULL, in which case
 <I>sin-&gt;sin_family</I>
 
 is implicitly taken to be
-<B>AF_INET</B>,
+<B>AF_INET</B>.
 
-and an anonymous port is allocated (as above).
 However, in this case,
 <B>bindresvport</B>()
 
 has no way to return the port number actually allocated.
+(This information can later be obtained using
+<B><A HREF="../man2/getsockname.2.html">getsockname</A></B>(2).)
+
 <A NAME="lbAE">&nbsp;</A>
 <H2>RETURN VALUE</H2>
 
 <B>bindresvport</B>()
 
-returns 0 if it is successful, otherwise -1 is returned and
+returns 0 on success; otherwise -1 is returned and
 <I>errno</I>
 
 set to indicate the cause of the error.
@@ -80,20 +79,19 @@ set to indicate the cause of the error.
 can fail for any of the same reasons as
 <B><A HREF="../man2/bind.2.html">bind</A></B>(2).
 
-<A NAME="lbAG">&nbsp;</A>
-<H2>CONFORMING TO</H2>
-
-Not in POSIX.1-2001.
-Present on the BSDs, Solaris, and many other systems.
-<A NAME="lbAH">&nbsp;</A>
-<H2>NOTES</H2>
-
-<P>
-
-Only root can bind to a privileged port; this call will fail for any
-other users.
-In addition, the following error may occur:
+In addition, the following errors may occur:
 <DL COMPACT>
+<DT><B>EACCES</B>
+
+<DD>
+The caller did not have superuser privilege (to be precise: the
+<B>CAP_NET_BIND_SERVICE</B>
+
+capability is required).
+<DT><B>EADDRINUSE</B>
+
+<DD>
+All privileged ports are in use.
 <DT><B>EAFNOSUPPORT</B> (<B>EPFNOSUPPORT</B> in glibc 2.7 and earlier)
 
 <DD>
@@ -106,10 +104,27 @@ is not
 <B>AF_INET</B>.
 
 </DL>
+<A NAME="lbAG">&nbsp;</A>
+<H2>CONFORMING TO</H2>
+
+Not in POSIX.1-2001.
+Present on the BSDs, Solaris, and many other systems.
+<A NAME="lbAH">&nbsp;</A>
+<H2>NOTES</H2>
+
+Unlike some
+<B>bindresvport</B>()
+
+implementations,
+the glibc implementation ignores any value that the caller supplies in
+<I>sin-&gt;sin_port</I>.
+
 <A NAME="lbAI">&nbsp;</A>
 <H2>SEE ALSO</H2>
 
-<B><A HREF="../man2/bind.2.html">bind</A></B>(2)
+<B><A HREF="../man2/bind.2.html">bind</A></B>(2),
+
+<B><A HREF="../man2/getsockname.2.html">getsockname</A></B>(2)
 
 <P>
 
@@ -129,6 +144,6 @@ is not
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:00:34 GMT, April 20, 2020
+Time: 03:01:09 GMT, April 20, 2020
 </BODY>
 </HTML>

@@ -5,7 +5,7 @@ Copyright 1993 Rickard E. Faith (faith@cs.unc.edu)
 <HTML><HEAD><TITLE>Man page of GETHOSTNAME</TITLE>
 </HEAD><BODY>
 <H1>GETHOSTNAME</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2007-07-26<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2008-11-27<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -46,17 +46,37 @@ _BSD_SOURCE || (_XOPEN_SOURCE &amp;&amp; _XOPEN_SOURCE&nbsp;&lt;&nbsp;500)
 
 These system calls are used to access or to change the hostname of the
 current processor.
+<P>
+<B>sethostname</B>()
+
+sets the hostname to the value given in the character array
+<I>name</I>.
+
 The
+<I>len</I>
+
+argument specifies the number of bytes in
+<I>name</I>.
+
+(Thus,
+<I>name</I>
+
+does not require a terminating null byte.)
+<P>
 <B>gethostname</B>()
 
-system call returns a null-terminated hostname (set earlier by
-<B>sethostname</B>())
+returns the null-terminated hostname in the character array
+<I>name</I>,
 
-in the array <I>name</I> that has a length of <I>len</I> bytes.
-In case the null-terminated hostname does not fit, no error is
-returned, but the hostname is truncated.
-It is unspecified
-whether the truncated hostname will be null-terminated.
+which has a length of
+<I>len</I>
+
+bytes.
+If the null-terminated hostname is too large to fit,
+then the name is truncated, and no error is returned (but see NOTES below).
+POSIX.1-2001 says that if such truncation occurs,
+then it is unspecified whether the returned buffer
+includes a terminating null byte.
 <A NAME="lbAE">&nbsp;</A>
 <H2>RETURN VALUE</H2>
 
@@ -80,22 +100,27 @@ is an invalid address.
 <DD>
 <I>len</I>
 
-is negative or, for
+is negative
+
+
+or, for
 <B>sethostname</B>(),
 
 <I>len</I>
 
-is larger than the maximum allowed size,
-or, for
-<B>gethostname</B>()
+is larger than the maximum allowed size.
+<DT><B>ENAMETOOLONG</B>
 
-on Linux/i386,
+<DD>
+(glibc <B>gethostname</B>())
+
 <I>len</I>
 
 is smaller than the actual size.
-(In this last case glibc 2.1 uses
-<B>ENAMETOOLONG</B>.)
+(Before version 2.1, glibc uses
+<B>EINVAL</B>
 
+for this case.)
 <DT><B>EPERM</B>
 
 <DD>
@@ -126,10 +151,18 @@ the terminating null byte) are limited to
 <B>HOST_NAME_MAX</B>
 
 bytes&quot;.
+On Linux,
+<B>HOST_NAME_MAX</B>
+
+is defined with the value 64, which has been the limit since Linux 1.0
+(earlier kernels imposed a limit of 8 bytes).
 <A NAME="lbAI">&nbsp;</A>
 <H3>Glibc Notes</H3>
 
-The GNU C library implements
+The GNU C library does not employ the
+<B>gethostname</B>()
+
+system call; instead, it implements
 <B>gethostname</B>()
 
 as a library function that calls
@@ -154,8 +187,12 @@ and if it is, then the function returns -1 with
 <I>errno</I>
 
 set to
-<B>ENAMETOOLONG</B>.
+<B>ENAMETOOLONG</B>;
 
+in this case, no null-terminator is included in the returned
+<I>name</I>.
+
+<P>
 Versions of glibc before 2.2
 
 handle the case where the length of the
@@ -203,6 +240,6 @@ set to
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:00:30 GMT, April 20, 2020
+Time: 03:01:05 GMT, April 20, 2020
 </BODY>
 </HTML>
