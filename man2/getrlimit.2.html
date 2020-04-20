@@ -5,7 +5,7 @@ Copyright (c) 1992 Drew Eckhardt, March 28, 1992
 <HTML><HEAD><TITLE>Man page of GETRLIMIT</TITLE>
 </HEAD><BODY>
 <H1>GETRLIMIT</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2010-12-03<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2011-09-10<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -44,7 +44,7 @@ Feature Test Macro Requirements for glibc (see
 <P>
 <B>prlimit</B>():
 
-_GNU_SOURCE
+_GNU_SOURCE &amp;&amp; _FILE_OFFSET_BITS == 64
 <A NAME="lbAD">&nbsp;</A>
 <H2>DESCRIPTION</H2>
 
@@ -152,7 +152,7 @@ once per second until the hard limit is reached, at which time
 it is sent
 <B>SIGKILL</B>.
 
-(This latter point describes Linux 2.2 through 2.6 behavior.
+(This latter point describes Linux behavior.
 Implementations vary in how they treat processes which continue to
 consume CPU time after reaching the soft limit.
 Portable applications that need to catch this signal should
@@ -651,17 +651,21 @@ The program below demonstrates the use of
 
 <PRE>
 #define _GNU_SOURCE
+#define _FILE_OFFSET_BITS 64
 #include &lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/time.h">time.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/stdlib.h">stdlib.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/sys/resource.h">sys/resource.h</A>&gt;
 
+#define errExit(msg)    do { perror(msg); exit(EXIT_FAILURE); \
+                        } while (0)
+
 int
 main(int argc, char *argv[])
 {
-    struct rlimit64 old, new;
-    struct rlimit64 *newp;
+    struct rlimit old, new;
+    struct rlimit *newp;
     pid_t pid;
 
     if (!(argc == 2 || argc == 4)) {
@@ -679,7 +683,7 @@ main(int argc, char *argv[])
         newp = &amp;new;
     }
 
-    /* Set CPU time limit of target prcess; retrieve and display
+    /* Set CPU time limit of target process; retrieve and display
        previous limit */
 
     if (prlimit(pid, RLIMIT_CPU, newp, &amp;old) == -1)
@@ -816,6 +820,6 @@ was greater than
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:10:14 GMT, April 20, 2020
+Time: 03:10:43 GMT, April 20, 2020
 </BODY>
 </HTML>

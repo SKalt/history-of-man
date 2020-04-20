@@ -5,7 +5,7 @@ Copyright (c) 1993 Michael Haardt
 <HTML><HEAD><TITLE>Man page of TERMIOS</TITLE>
 </HEAD><BODY>
 <H1>TERMIOS</H1>
-Section: Linux Programmer's Manual (3)<BR>Updated: 2010-06-20<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2011-09-08<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -80,7 +80,7 @@ tcflag_t c_iflag;      /* input modes */
 tcflag_t c_oflag;      /* output modes */
 tcflag_t c_cflag;      /* control modes */
 tcflag_t c_lflag;      /* local modes */
-cc_t     c_cc[NCCS];   /* control chars */
+cc_t     c_cc[NCCS];   /* special characters */
 </PRE>
 
 
@@ -484,10 +484,11 @@ If <B>ICANON</B> is also set, echo the NL character even if ECHO is not set.
 <DT><B>ECHOCTL</B>
 
 <DD>
-(not in POSIX) If <B>ECHO</B> is also set, ASCII control signals other than
+(not in POSIX) If <B>ECHO</B> is also set,
+terminal special characters other than
 TAB, NL, START, and STOP are echoed as <B>^X</B>,
 where X is the character with
-ASCII code 0x40 greater than the control signal.
+ASCII code 0x40 greater than the special character.
 For example, character
 0x08 (BS) is echoed as <B>^H</B>.
 [requires
@@ -575,141 +576,23 @@ and for the <B>IUCLC</B> flag to be effective.
 </DL>
 <P>
 
-The <I>c_cc</I> array defines the special control characters.
+The <I>c_cc</I> array defines the terminal special characters.
 The symbolic indices (initial values) and meaning are:
 <DL COMPACT>
-<DT><B>VINTR</B>
+<DT><B>VDISCARD</B>
 
 <DD>
-(003, ETX, Ctrl-C, or also 0177, DEL, rubout)
-Interrupt character.
-Send a
-<B>SIGINT</B>
-
-signal.
+(not in POSIX; not supported under Linux; 017, SI, Ctrl-O)
+Toggle: start/stop discarding pending output.
 Recognized when
-<B>ISIG</B>
-
-is set, and then not passed as input.
-<DT><B>VQUIT</B>
-
-<DD>
-(034, FS, Ctrl-\)
-Quit character.
-Send
-<B>SIGQUIT</B>
-
-signal.
-Recognized when
-<B>ISIG</B>
-
-is set, and then not passed as input.
-<DT><B>VERASE</B>
-
-<DD>
-(0177, DEL, rubout, or 010, BS, Ctrl-H, or also #)
-Erase character.
-This erases the previous not-yet-erased character,
-but does not erase past EOF or beginning-of-line.
-Recognized when
-<B>ICANON</B>
-
-is set, and then not passed as input.
-<DT><B>VKILL</B>
-
-<DD>
-(025, NAK, Ctrl-U, or Ctrl-X, or also @)
-Kill character.
-This erases the input since the last EOF or beginning-of-line.
-Recognized when
-<B>ICANON</B>
-
-is set, and then not passed as input.
-<DT><B>VEOF</B>
-
-<DD>
-(004, EOT, Ctrl-D)
-End-of-file character.
-More precisely: this character causes the pending tty buffer to be sent
-to the waiting user program without waiting for end-of-line.
-If it is the first character of the line, the
-<B><A HREF="../man2/read.2.html">read</A></B>(2)
-
-in the user program returns 0, which signifies end-of-file.
-Recognized when
-<B>ICANON</B>
-
-is set, and then not passed as input.
-<DT><B>VMIN</B>
-
-<DD>
-Minimum number of characters for noncanonical read.
-<DT><B>VEOL</B>
-
-<DD>
-(0, NUL)
-Additional end-of-line character.
-Recognized when
-<B>ICANON</B>
-
-is set.
-<DT><B>VTIME</B>
-
-<DD>
-Timeout in deciseconds for noncanonical read.
-<DT><B>VEOL2</B>
-
-<DD>
-(not in POSIX; 0, NUL)
-Yet another end-of-line character.
-Recognized when
-<B>ICANON</B>
-
-is set.
-<DT><B>VSWTCH</B>
-
-<DD>
-(not in POSIX; not supported under Linux; 0, NUL)
-Switch character.
-(Used by <B>shl</B> only.)
-<DT><B>VSTART</B>
-
-<DD>
-(021, DC1, Ctrl-Q)
-Start character.
-Restarts output stopped by the Stop character.
-Recognized when
-<B>IXON</B>
-
-is set, and then not passed as input.
-<DT><B>VSTOP</B>
-
-<DD>
-(023, DC3, Ctrl-S)
-Stop character.
-Stop output until Start character typed.
-Recognized when
-<B>IXON</B>
-
-is set, and then not passed as input.
-<DT><B>VSUSP</B>
-
-<DD>
-(032, SUB, Ctrl-Z)
-Suspend character.
-Send
-<B>SIGTSTP</B>
-
-signal.
-Recognized when
-<B>ISIG</B>
+<B>IEXTEN</B>
 
 is set, and then not passed as input.
 <DT><B>VDSUSP</B>
 
 <DD>
 (not in POSIX; not supported under Linux; 031, EM, Ctrl-Y)
-Delayed suspend character:
+Delayed suspend character (DSUSP):
 send
 <B>SIGTSTP</B>
 
@@ -722,34 +605,106 @@ and
 
 are set, and the system supports
 job control, and then not passed as input.
+<DT><B>VEOF</B>
+
+<DD>
+(004, EOT, Ctrl-D)
+End-of-file character (EOF).
+More precisely: this character causes the pending tty buffer to be sent
+to the waiting user program without waiting for end-of-line.
+If it is the first character of the line, the
+<B><A HREF="../man2/read.2.html">read</A></B>(2)
+
+in the user program returns 0, which signifies end-of-file.
+Recognized when
+<B>ICANON</B>
+
+is set, and then not passed as input.
+<DT><B>VEOL</B>
+
+<DD>
+(0, NUL)
+Additional end-of-line character (EOL).
+Recognized when
+<B>ICANON</B>
+
+is set.
+<DT><B>VEOL2</B>
+
+<DD>
+(not in POSIX; 0, NUL)
+Yet another end-of-line character (EOL2).
+Recognized when
+<B>ICANON</B>
+
+is set.
+<DT><B>VERASE</B>
+
+<DD>
+(0177, DEL, rubout, or 010, BS, Ctrl-H, or also #)
+Erase character (ERASE).
+This erases the previous not-yet-erased character,
+but does not erase past EOF or beginning-of-line.
+Recognized when
+<B>ICANON</B>
+
+is set, and then not passed as input.
+<DT><B>VINTR</B>
+
+<DD>
+(003, ETX, Ctrl-C, or also 0177, DEL, rubout)
+Interrupt character (INTR).
+Send a
+<B>SIGINT</B>
+
+signal.
+Recognized when
+<B>ISIG</B>
+
+is set, and then not passed as input.
+<DT><B>VKILL</B>
+
+<DD>
+(025, NAK, Ctrl-U, or Ctrl-X, or also @)
+Kill character (KILL).
+This erases the input since the last EOF or beginning-of-line.
+Recognized when
+<B>ICANON</B>
+
+is set, and then not passed as input.
 <DT><B>VLNEXT</B>
 
 <DD>
 (not in POSIX; 026, SYN, Ctrl-V)
-Literal next.
+Literal next (LNEXT).
 Quotes the next input character, depriving it of
 a possible special meaning.
 Recognized when
 <B>IEXTEN</B>
 
 is set, and then not passed as input.
-<DT><B>VWERASE</B>
+<DT><B>VMIN</B>
 
 <DD>
-(not in POSIX; 027, ETB, Ctrl-W)
-Word erase.
+Minimum number of characters for noncanonical read (MIN).
+<DT><B>VQUIT</B>
+
+<DD>
+(034, FS, Ctrl-\)
+Quit character (QUIT).
+Send
+<B>SIGQUIT</B>
+
+signal.
 Recognized when
-<B>ICANON</B>
+<B>ISIG</B>
 
-and
-<B>IEXTEN</B>
-
-are set, and then not passed as input.
+is set, and then not passed as input.
 <DT><B>VREPRINT</B>
 
 <DD>
 (not in POSIX; 022, DC2, Ctrl-R)
-Reprint unread characters.
+Reprint unread characters (REPRINT).
 Recognized when
 <B>ICANON</B>
 
@@ -757,13 +712,14 @@ and
 <B>IEXTEN</B>
 
 are set, and then not passed as input.
-<DT><B>VDISCARD</B>
+<DT><B>VSTART</B>
 
 <DD>
-(not in POSIX; not supported under Linux; 017, SI, Ctrl-O)
-Toggle: start/stop discarding pending output.
+(021, DC1, Ctrl-Q)
+Start character (START).
+Restarts output stopped by the Stop character.
 Recognized when
-<B>IEXTEN</B>
+<B>IXON</B>
 
 is set, and then not passed as input.
 <DT><B>VSTATUS</B>
@@ -771,10 +727,74 @@ is set, and then not passed as input.
 <DD>
 (not in POSIX; not supported under Linux;
 status request: 024, DC4, Ctrl-T).
+Status character (STATUS).
+Display status information at terminal,
+including state of foreground process and amount of CPU time it has consumed.
+Also sends a
+<B>SIGINFO</B>
+
+signal (not supported on Linux) to the foreground process group.
+<DT><B>VSTOP</B>
+
+<DD>
+(023, DC3, Ctrl-S)
+Stop character (STOP).
+Stop output until Start character typed.
+Recognized when
+<B>IXON</B>
+
+is set, and then not passed as input.
+<DT><B>VSUSP</B>
+
+<DD>
+(032, SUB, Ctrl-Z)
+Suspend character (SUSP).
+Send
+<B>SIGTSTP</B>
+
+signal.
+Recognized when
+<B>ISIG</B>
+
+is set, and then not passed as input.
+<DT><B>VSWTCH</B>
+
+<DD>
+(not in POSIX; not supported under Linux; 0, NUL)
+Switch character (SWTCH).
+Used in System V to switch shells in
+<I>shell layers</I>,
+
+a precedessor to shell job control.
+<DT><B>VTIME</B>
+
+<DD>
+Timeout in deciseconds for noncanonical read (TIME).
+<DT><B>VWERASE</B>
+
+<DD>
+(not in POSIX; 027, ETB, Ctrl-W)
+Word erase (WERASE).
+Recognized when
+<B>ICANON</B>
+
+and
+<B>IEXTEN</B>
+
+are set, and then not passed as input.
 </DL>
 <P>
 
-These symbolic subscript values are all different, except that
+An individual terminal special character can be disabled by setting
+the value of the corresponding
+<I>c_cc</I>
+
+element to
+<B>_POSIX_VDISABLE</B>.
+
+<P>
+
+The above symbolic subscript values are all different, except that
 <B>VTIME</B>,
 
 <B>VMIN</B>
@@ -1275,6 +1295,6 @@ behaves like
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:10:25 GMT, April 20, 2020
+Time: 03:10:54 GMT, April 20, 2020
 </BODY>
 </HTML>
