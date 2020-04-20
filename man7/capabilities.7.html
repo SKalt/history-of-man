@@ -548,13 +548,6 @@ and
 
 operations;
 <DT>*<DD>
-use
-<B><A HREF="../man2/ptrace.2.html">ptrace</A></B>(2)
-
-<B>PTRACE_SECCOMP_GET_FILTER</B>
-
-to dump a tracees seccomp filters;
-<DT>*<DD>
 perform
 <B><A HREF="../man2/madvise.2.html">madvise</A></B>(2)
 
@@ -625,7 +618,7 @@ employ the
 operation to suspend the tracee's seccomp protections (i.e., the
 <B>PTRACE_O_SUSPEND_SECCOMP</B>
 
-flag).
+flag);
 <DT>*<DD>
 perform administrative operations on many device drivers.
 </DL>
@@ -1244,6 +1237,137 @@ inheritable flags is enabled.
 
 </DL>
 <A NAME="lbAI">&nbsp;</A>
+<H3>File capability mask versioning</H3>
+
+To allow extensibility,
+the kernel supports a scheme to encode a version number inside the
+<I>security.capability</I>
+
+extended attribute that is used to implement file capabilities.
+These version numbers are internal to the implementation,
+and not directly visible to user-space applications.
+To date, the following versions are supported:
+<DL COMPACT>
+<DT><B>VFS_CAP_REVISION_1</B>
+
+<DD>
+This was the original file capability implementation,
+which supported 32-bit masks for file capabilities.
+<DT><B>VFS_CAP_REVISION_2</B> (since Linux 2.6.25)
+
+<DD>
+
+This version allows for file capability masks that are 64 bits in size,
+and was necessary as the number of supported capabilities grew beyond 32.
+The kernel transparently continues to support the execution of files
+that have 32-bit version 1 capability masks,
+but when adding capabilities to files that did not previously
+have capabilities, or modifying the capabilities of existing files,
+it automatically uses the version 2 scheme
+(or possibly the version 3 scheme, as described below).
+<DT><B>VFS_CAP_REVISION_3</B> (since Linux 4.14)
+
+<DD>
+
+Version 3 file capabilities are provided
+to support namespaced file capabilities (described below).
+<DT><DD>
+As with version 2 file capabilities,
+version 3 capability masks are 64 bits in size.
+But in addition, the root user ID of namespace is encoded in the
+<I>security.capability</I>
+
+extended attribute.
+(A namespace's root user ID is the value that user ID 0
+inside that namespace maps to in the initial user namespace.)
+<DT><DD>
+Version 3 file capabilities are designed to coexist
+with version 2 capabilities;
+that is, on a modern Linux system,
+there may be some files with version 2 capabilities
+while others have version 3 capabilities.
+</DL>
+<P>
+
+Before Linux 4.14,
+the only kind of capability mask that could be attached to a file was a
+<B>VFS_CAP_REVISION_2</B>
+
+mask.
+Since Linux 4.14,
+the version of the capability mask that is attached to a file
+depends on the circumstances in which the
+<I>security.capability</I>
+
+extended attribute was created.
+<P>
+
+Starting with Linux 4.14, a
+<I>security.capability</I>
+
+extended attribute is automatically created as (or converted to)
+a version 3
+(<B>VFS_CAP_REVISION_3</B>)
+
+attribute if both of the following are true:
+<DL COMPACT>
+<DT>(1)<DD>
+The thread writing the attribute resides in a noninitial namespace.
+(More precisely: the thread resides in a user namespace other
+than the one from which the underlying filesystem was mounted.)
+<DT>(2)<DD>
+The thread has the
+<B>CAP_SETFCAP</B>
+
+capability over the file inode,
+meaning that (a) the thread has the
+<B>CAP_SETFCAP</B>
+
+capability in its own user namespace;
+and (b) the UID and GID of the file inode have mappings in
+the writer's user namespace.
+
+
+
+</DL>
+<P>
+
+When a
+<B>VFS_CAP_REVISION_3</B>
+
+<I>security.capability</I>
+
+extended attribute is created, the root user ID of the creating thread's
+user namespace is saved in the extended attribute.
+<P>
+
+By contrast, creating a
+<I>security.capability</I>
+
+extended attribute from a privileged
+(<B>CAP_SETFCAP</B>)
+
+thread that resides in the
+namespace where the underlying filesystem was mounted
+(this normally means the initial user namespace)
+automatically results in a version 2
+(<B>VFS_CAP_REVISION_2</B>)
+
+attribute.
+<P>
+
+Note that a file can have either a version 2 or a version 3
+<I>security.capability</I>
+
+extended attribute associated with it, but not both:
+creation or modification of the
+<I>security.capability</I>
+
+extended attribute will automatically modify the version
+according to the circumstances in which the extended attribute is
+created or modified.
+
+<A NAME="lbAJ">&nbsp;</A>
 <H3>Transformation of capabilities during execve()</H3>
 
 <P>
@@ -1320,7 +1444,7 @@ see below under
 <I>Capabilities and execution of programs by root</I>.
 
 
-<A NAME="lbAJ">&nbsp;</A>
+<A NAME="lbAK">&nbsp;</A>
 <H3>Safety checking for capability-dumb binaries</H3>
 
 A capability-dumb binary is an application that has been
@@ -1364,7 +1488,7 @@ since it does not employ the
 
 API.
 
-<A NAME="lbAK">&nbsp;</A>
+<A NAME="lbAL">&nbsp;</A>
 <H3>Capabilities and execution of programs by root</H3>
 
 In order to provide an all-powerful
@@ -1414,7 +1538,7 @@ except those masked out by the capability bounding set.
 The above steps yield semantics that are the same as those provided by
 traditional UNIX systems.
 
-<A NAME="lbAL">&nbsp;</A>
+<A NAME="lbAM">&nbsp;</A>
 <H3>Set-user-ID-root programs that have file capabilities</H3>
 
 Executing a program that is both set-user-ID root and has
@@ -1429,7 +1553,7 @@ changes the effective and saved set-user-ID of the process
 that executes the program to 0,
 but confers no capabilities to that process.
 
-<A NAME="lbAM">&nbsp;</A>
+<A NAME="lbAN">&nbsp;</A>
 <H3>Capability bounding set</H3>
 
 The capability bounding set is a security mechanism that can be used
@@ -1588,7 +1712,7 @@ However it does prevent the capability from being added
 back into the thread's inheritable set in the future.
 
 
-<A NAME="lbAN">&nbsp;</A>
+<A NAME="lbAO">&nbsp;</A>
 <H3>Effect of user ID changes on capabilities</H3>
 
 To preserve the traditional semantics for transitions between
@@ -1651,7 +1775,7 @@ all of its user IDs to nonzero values, it can do so using the
 
 securebits flag described below.
 
-<A NAME="lbAO">&nbsp;</A>
+<A NAME="lbAP">&nbsp;</A>
 <H3>Programmatically adjusting capability sets</H3>
 
 A thread can retrieve and change its capability sets using the
@@ -1692,7 +1816,7 @@ that the thread does not currently have).
 <DT>4.<DD>
 The new effective set must be a subset of the new permitted set.
 </DL>
-<A NAME="lbAP">&nbsp;</A>
+<A NAME="lbAQ">&nbsp;</A>
 <H3>The securebits flags: establishing a capabilities-only environment</H3>
 
 
@@ -1835,13 +1959,77 @@ prctl(PR_SET_SECUREBITS,
 <BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;is&nbsp;not&nbsp;required&nbsp;*/
 
 
-<A NAME="lbAQ">&nbsp;</A>
+<A NAME="lbAR">&nbsp;</A>
 <H3>Interaction with user namespaces</H3>
 
 For a discussion of the interaction of capabilities and user namespaces, see
 <B><A HREF="../man7/user_namespaces.7.html">user_namespaces</A></B>(7).
 
-<A NAME="lbAR">&nbsp;</A>
+
+<A NAME="lbAS">&nbsp;</A>
+<H3>Namespaced file capabilities</H3>
+
+
+Traditional (i.e., version 2) file capabilities associate
+only a set of capability masks with a binary executable file.
+When a process executes a binary with such capabilities,
+it gains the associated capabilities (within its user namespace)
+as per the rules described above in
+&quot;Transformation of capabilities during execve()&quot;.
+<P>
+
+Because version 2 file capabilities confer capabilities to
+the executing process regardless of which user namespace it resides in,
+only privileged processes are permitted to associate capabilities with a file.
+Here, &quot;privileged&quot; means a process that has the
+<B>CAP_SETFCAP</B>
+
+capability in the user namespace where the filesystem was mounted
+(normally the initial user namespace).
+This limitation renders file capabilities useless for certain use cases.
+For example, in user-namespaced containers,
+it can be desirable to be able to create a binary that
+confers capabilities only to processes executed inside that container,
+but not to processes that are executed outside the container.
+<P>
+
+Linux 4.14 added so-called namespaced file capabilities
+to support such use cases.
+Namespaced file capabilities are recorded as version 3 (i.e.,
+<B>VFS_CAP_REVISION_3</B>)
+
+<I>security.capability</I>
+
+extended attributes.
+Such an attribute is automatically created when a process that resides
+in a noninitial user namespace associates
+(<B><A HREF="../man2/setxattr.2.html">setxattr</A></B>(2))
+
+file capabilities with a file whose user ID matches
+the user ID of the creator of the namespace.
+In this case,
+the kernel records not just the capability masks in the extended attribute,
+but also the namespace root user ID.
+For further details, see
+<I>File capability mask versioning</I>,
+
+above.
+<P>
+
+As with a binary that has
+<B>VFS_CAP_REVISION_2</B>
+
+file capabilities, a binary with
+<B>VFS_CAP_REVISION_3</B>
+
+file capabilities confers capabilities to a process during
+<B>execve</B>().
+
+However, capabilities are conferred only if the binary is executed by
+a process that resides in a user namespace whose
+UID 0 maps to the root user ID that is saved in the extended attribute,
+or when executed by a process that resides in descendant of such a namespace.
+<A NAME="lbAT">&nbsp;</A>
 <H2>CONFORMING TO</H2>
 
 <P>
@@ -1850,7 +2038,7 @@ No standards govern capabilities, but the Linux capability implementation
 is based on the withdrawn POSIX.1e draft standard; see
 
 
-<A NAME="lbAS">&nbsp;</A>
+<A NAME="lbAU">&nbsp;</A>
 <H2>NOTES</H2>
 
 From kernel 2.5.27 to kernel 2.6.26,
@@ -1931,7 +2119,7 @@ starts out with this capability removed from its per-process bounding
 set, and that bounding set is inherited by all other processes
 created on the system.
 </DL>
-<A NAME="lbAT">&nbsp;</A>
+<A NAME="lbAV">&nbsp;</A>
 <H2>SEE ALSO</H2>
 
 <B><A HREF="../man1/capsh.1.html">capsh</A></B>(1),
@@ -1998,24 +2186,26 @@ in the Linux kernel source tree
 <DT><A HREF="#lbAF">Notes to kernel developers</A><DD>
 <DT><A HREF="#lbAG">Thread capability sets</A><DD>
 <DT><A HREF="#lbAH">File capabilities</A><DD>
-<DT><A HREF="#lbAI">Transformation of capabilities during execve()</A><DD>
-<DT><A HREF="#lbAJ">Safety checking for capability-dumb binaries</A><DD>
-<DT><A HREF="#lbAK">Capabilities and execution of programs by root</A><DD>
-<DT><A HREF="#lbAL">Set-user-ID-root programs that have file capabilities</A><DD>
-<DT><A HREF="#lbAM">Capability bounding set</A><DD>
-<DT><A HREF="#lbAN">Effect of user ID changes on capabilities</A><DD>
-<DT><A HREF="#lbAO">Programmatically adjusting capability sets</A><DD>
-<DT><A HREF="#lbAP">The securebits flags: establishing a capabilities-only environment</A><DD>
-<DT><A HREF="#lbAQ">Interaction with user namespaces</A><DD>
+<DT><A HREF="#lbAI">File capability mask versioning</A><DD>
+<DT><A HREF="#lbAJ">Transformation of capabilities during execve()</A><DD>
+<DT><A HREF="#lbAK">Safety checking for capability-dumb binaries</A><DD>
+<DT><A HREF="#lbAL">Capabilities and execution of programs by root</A><DD>
+<DT><A HREF="#lbAM">Set-user-ID-root programs that have file capabilities</A><DD>
+<DT><A HREF="#lbAN">Capability bounding set</A><DD>
+<DT><A HREF="#lbAO">Effect of user ID changes on capabilities</A><DD>
+<DT><A HREF="#lbAP">Programmatically adjusting capability sets</A><DD>
+<DT><A HREF="#lbAQ">The securebits flags: establishing a capabilities-only environment</A><DD>
+<DT><A HREF="#lbAR">Interaction with user namespaces</A><DD>
+<DT><A HREF="#lbAS">Namespaced file capabilities</A><DD>
 </DL>
-<DT><A HREF="#lbAR">CONFORMING TO</A><DD>
-<DT><A HREF="#lbAS">NOTES</A><DD>
-<DT><A HREF="#lbAT">SEE ALSO</A><DD>
+<DT><A HREF="#lbAT">CONFORMING TO</A><DD>
+<DT><A HREF="#lbAU">NOTES</A><DD>
+<DT><A HREF="#lbAV">SEE ALSO</A><DD>
 </DL>
 <HR>
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:48:38 GMT, April 20, 2020
+Time: 03:49:16 GMT, April 20, 2020
 </BODY>
 </HTML>

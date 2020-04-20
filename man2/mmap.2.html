@@ -26,7 +26,7 @@ the source, must acknowledge the copyright and authors of this work.
 <HTML><HEAD><TITLE>Man page of MMAP</TITLE>
 </HEAD><BODY>
 <H1>MMAP</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2017-12-18<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2018-04-30<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -67,7 +67,8 @@ If
 <I>addr</I>
 
 is NULL,
-then the kernel chooses the address at which to create the mapping;
+then the kernel chooses the (page-aligned) address
+at which to create the mapping;
 this is the most portable method of creating a new mapping.
 If
 <I>addr</I>
@@ -150,6 +151,30 @@ are carried through to the underlying file.
 to the underlying file requires the use of
 <B><A HREF="../man2/msync.2.html">msync</A></B>(2).)
 
+<DT><B>MAP_SHARED_VALIDATE</B> (since Linux 4.15)
+
+<DD>
+This flag provides the same behavior as
+<B>MAP_SHARED</B>
+
+except that
+<B>MAP_SHARED</B>
+
+mappings ignore unknown flags in
+<I>flags</I>.
+
+By contrast, when creating a mapping using
+<B>MAP_SHARED_VALIDATE</B>,
+
+the kernel verifies all passed flags are known and fails the
+mapping with the error
+<B>EOPNOTSUPP</B>
+
+for unknown flags.
+This mapping type is also required to be able to use some mapping flags
+(e.g.,
+<B>MAP_SYNC</B>).
+
 <DT><B>MAP_PRIVATE</B>
 
 <DD>
@@ -164,7 +189,16 @@ call are visible in the mapped region.
 </DL>
 <P>
 
-Both of these flags are described in POSIX.1-2001 and POSIX.1-2008.
+Both
+<B>MAP_SHARED</B>
+
+and
+<B>MAP_PRIVATE</B>
+
+are described in POSIX.1-2001 and POSIX.1-2008.
+<B>MAP_SHARED_VALIDATE</B>
+
+is a Linux extension.
 <P>
 
 In addition, zero or more of the following values can be ORed in
@@ -235,8 +269,8 @@ is supported on Linux only since kernel 2.4.
 <DD>
 This flag is ignored.
 
-(Long ago, it signaled that attempts to write to the underlying file
-should fail with
+(Long ago---Linux 2.0 and earlier---it signaled
+that attempts to write to the underlying file should fail with
 <B>ETXTBUSY</B>.
 
 But this was a source of denial-of-service attacks.)
@@ -280,49 +314,46 @@ If the specified address cannot be used,
 <B>mmap</B>()
 
 will fail.
-Software that aspires to be portable should use this option with care,
+<DT><DD>
+Software that aspires to be portable should use the
+<B>MAP_FIXED</B>
+
+flag with care,
 keeping in mind that the exact layout of a process's memory mappings
 is allowed to change significantly between kernel versions,
 C library versions, and operating system releases.
+<I>Carefully read the discussion of this flag in NOTES!</I>
+
+<DT><B>MAP_FIXED_NOREPLACE</B> (since Linux 4.17)
+
+<DD>
+
+This flag provides behavior that is similar to
+<B>MAP_FIXED</B>
+
+with respect to the
+<I>addr</I>
+
+enforcement, but differs in that
+<B>MAP_FIXED_NOREPLACE</B>
+
+never clobbers a preexisting mapped range.
+If the requested range would collide with an existing mapping,
+then this call fails with the error
+<B>EEXIST.</B>
+
+This flag can therefore be used as a way to atomically
+(with respect to other threads) attempt to map an address range:
+one thread will succeed; all others will report failure.
 <DT><DD>
-Furthermore, this option is extremely hazardous (when used on its own),
-because it forcibly removes preexisting mappings,
-making it easy for a multithreaded process to corrupt its own address space.
-<DT><DD>
-For example, thread A looks through
-<I>/proc/&lt;pid&gt;/maps</I>
+Note that older kernels which do not recognize the
+<B>MAP_FIXED_NOREPLACE</B>
 
-and locates an available address range,
-while thread B simultaneously acquires part or all of that same
-address range.
-Thread A then calls
-<B>mmap(MAP_FIXED)</B>,
-
-effectively overwriting the mapping that thread B created.
-<DT><DD>
-Thread B need not create a mapping directly; simply making a library call
-that, internally, uses
-<B><A HREF="../man3/dlopen.3.html">dlopen</A></B>(3)
-
-to load some other shared library, will
-suffice.
-The
-<B><A HREF="../man3/dlopen.3.html">dlopen</A></B>(3)
-
-call will map the library into the process's address space.
-Furthermore, almost any library call may be implemented in a way that
-adds memory mappings to the address space, either with this technique,
-or by simply allocating memory.
-Examples include
-<B><A HREF="../man2/brk.2.html">brk</A></B>(2),
-
-<B><A HREF="../man3/malloc.3.html">malloc</A></B>(3),
-
-<B><A HREF="../man3/pthread_create.3.html">pthread_create</A></B>(3),
-
-and the PAM libraries
-
-
+flag will typically (upon detecting a collision with a preexisting mapping)
+fall back to a &quot;non-<B>MAP_FIXED</B>&quot; type of behavior:
+they will return an address that is different from the requested address.
+Therefore, backward-compatible software
+should check the returned address against the requested address.
 <DT><B>MAP_GROWSDOWN</B>
 
 <DD>
@@ -362,7 +393,7 @@ the base-2 logarithm of the desired page size in the six bits at the offset
 <B>MAP_HUGE_SHIFT</B>.
 
 (A value of zero in this bit field provides the default huge page size;
-the default huge page size can be discovered vie the
+the default huge page size can be discovered via the
 <I>Hugepagesize</I>
 
 field exposed by
@@ -472,6 +503,31 @@ support can later be transparently implemented for glibc.
 
 
 
+<DT><B>MAP_SYNC</B> (since Linux 4.15)
+
+<DD>
+This flag is available only with the
+<B>MAP_SHARED_VALIDATE</B>
+
+mapping type;
+mappings of type
+<B>MAP_SHARED</B>
+
+will silently ignore this flag.
+This flag is supported only for files supporting DAX
+(direct mapping of persistent memory).
+For other files, creating a mapping with this flag results in an
+<B>EOPNOTSUPP</B>
+
+error.
+<DT><DD>
+Shared file mappings with this flag provide the guarantee that while
+some memory is writably mapped in the address space of the process,
+it will be visible in the same file at the same offset even after
+the system crashes or is rebooted.
+In conjunction with the use of appropriate CPU instructions,
+this provides users of such mappings with a more efficient way
+of making data modifications persistent.
 <DT><B>MAP_UNINITIALIZED</B> (since Linux 2.6.33)
 
 <DD>
@@ -621,6 +677,21 @@ is not a valid file descriptor (and
 <B>MAP_ANONYMOUS</B>
 
 was not set).
+<DT><B>EEXIST</B>
+
+<DD>
+<B>MAP_FIXED_NOREPLACE</B>
+
+was specified in
+<I>flags</I>,
+
+and the range covered by
+<I>addr</I>
+
+and
+<I>length</I>
+
+is clashes with an existing mapping.
 <DT><B>EINVAL</B>
 
 <DD>
@@ -895,6 +966,70 @@ currently resident in the buffer/page cache using
 
 
 <A NAME="lbAL">&nbsp;</A>
+<H3>Using MAP_FIXED safely</H3>
+
+The only safe use for
+<B>MAP_FIXED</B>
+
+is where the address range specified by
+<I>addr</I>
+
+and
+<I>length</I>
+
+was previously reserved using another mapping;
+otherwise, the use of
+<B>MAP_FIXED</B>
+
+is hazardous because it forcibly removes preexisting mappings,
+making it easy for a multithreaded process to corrupt its own address space.
+<P>
+
+For example, suppose that thread A looks through
+<I>/proc/&lt;pid&gt;/maps</I>
+
+and in order to locate an unused address range that it can map using
+<B>MAP_FIXED</B>,
+
+while thread B simultaneously acquires part or all of that same
+address range.
+When thread A subsequently employs
+<B>mmap(MAP_FIXED)</B>,
+
+it will effectively clobber the mapping that thread B created.
+In this scenario,
+thread B need not create a mapping directly; simply making a library call
+that, internally, uses
+<B><A HREF="../man3/dlopen.3.html">dlopen</A></B>(3)
+
+to load some other shared library, will suffice.
+The
+<B><A HREF="../man3/dlopen.3.html">dlopen</A></B>(3)
+
+call will map the library into the process's address space.
+Furthermore, almost any library call may be implemented in a way that
+adds memory mappings to the address space, either with this technique,
+or by simply allocating memory.
+Examples include
+<B><A HREF="../man2/brk.2.html">brk</A></B>(2),
+
+<B><A HREF="../man3/malloc.3.html">malloc</A></B>(3),
+
+<B><A HREF="../man3/pthread_create.3.html">pthread_create</A></B>(3),
+
+and the PAM libraries
+
+
+<P>
+
+Since Linux 4.17, a multithreaded program can use the
+<B>MAP_FIXED_NOREPLACE</B>
+
+flag to avoid the hazard described above
+when attempting to create a mapping at a fixed address
+that has not been reserved by a preexisting mapping.
+
+<A NAME="lbAM">&nbsp;</A>
 <H3>Timestamps changes for file-backed mappings</H3>
 
 For file-backed mappings, the
@@ -931,7 +1066,7 @@ or
 
 flag, if one occurs.
 
-<A NAME="lbAM">&nbsp;</A>
+<A NAME="lbAN">&nbsp;</A>
 <H3>Huge page (Huge TLB) mappings</H3>
 
 For mappings that employ huge pages, the requirements for the arguments of
@@ -966,7 +1101,7 @@ and
 
 must both be a multiple of the underlying huge page size.
 
-<A NAME="lbAN">&nbsp;</A>
+<A NAME="lbAO">&nbsp;</A>
 <H3>C library/kernel differences</H3>
 
 This page describes the interface provided by the glibc
@@ -988,7 +1123,7 @@ wrapper function invokes
 with a suitably adjusted value for
 <I>offset</I>.
 
-<A NAME="lbAO">&nbsp;</A>
+<A NAME="lbAP">&nbsp;</A>
 <H2>BUGS</H2>
 
 On Linux, there are no guarantees like those suggested above under
@@ -1050,7 +1185,7 @@ however, this doesn't work on
 (for example, when using the POSIX shared memory interface documented in
 <B><A HREF="../man7/shm_overview.7.html">shm_overview</A></B>(7)).
 
-<A NAME="lbAP">&nbsp;</A>
+<A NAME="lbAQ">&nbsp;</A>
 <H2>EXAMPLE</H2>
 
 
@@ -1066,7 +1201,7 @@ pages of the file and then uses
 <B><A HREF="../man2/write.2.html">write</A></B>(2)
 
 to output the desired bytes.
-<A NAME="lbAQ">&nbsp;</A>
+<A NAME="lbAR">&nbsp;</A>
 <H3>Program source</H3>
 
 
@@ -1141,7 +1276,7 @@ main(int argc, char *argv[])
 <BR>&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_SUCCESS);
 }
 
-<A NAME="lbAR">&nbsp;</A>
+<A NAME="lbAS">&nbsp;</A>
 <H2>SEE ALSO</H2>
 
 <B><A HREF="../man2/ftruncate.2.html">ftruncate</A></B>(2),
@@ -1210,21 +1345,22 @@ B.O. Gallmeister, POSIX.4, O'Reilly, pp. 128-129 and 389-391.
 <DT><A HREF="#lbAJ">AVAILABILITY</A><DD>
 <DT><A HREF="#lbAK">NOTES</A><DD>
 <DL>
-<DT><A HREF="#lbAL">Timestamps changes for file-backed mappings</A><DD>
-<DT><A HREF="#lbAM">Huge page (Huge TLB) mappings</A><DD>
-<DT><A HREF="#lbAN">C library/kernel differences</A><DD>
+<DT><A HREF="#lbAL">Using MAP_FIXED safely</A><DD>
+<DT><A HREF="#lbAM">Timestamps changes for file-backed mappings</A><DD>
+<DT><A HREF="#lbAN">Huge page (Huge TLB) mappings</A><DD>
+<DT><A HREF="#lbAO">C library/kernel differences</A><DD>
 </DL>
-<DT><A HREF="#lbAO">BUGS</A><DD>
-<DT><A HREF="#lbAP">EXAMPLE</A><DD>
+<DT><A HREF="#lbAP">BUGS</A><DD>
+<DT><A HREF="#lbAQ">EXAMPLE</A><DD>
 <DL>
-<DT><A HREF="#lbAQ">Program source</A><DD>
+<DT><A HREF="#lbAR">Program source</A><DD>
 </DL>
-<DT><A HREF="#lbAR">SEE ALSO</A><DD>
+<DT><A HREF="#lbAS">SEE ALSO</A><DD>
 </DL>
 <HR>
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:48:25 GMT, April 20, 2020
+Time: 03:49:03 GMT, April 20, 2020
 </BODY>
 </HTML>
