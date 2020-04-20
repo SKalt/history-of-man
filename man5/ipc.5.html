@@ -27,7 +27,7 @@ This manual page refers to the Linux implementation of the System V
 interprocess communication mechanisms:
 message queues, semaphore sets, and shared memory segments.
 In the following, the word
-<B>resource</B>
+<I>resource</I>
 
 means an instantiation of one among such mechanisms.
 <A NAME="lbAE">&nbsp;</A>
@@ -39,57 +39,46 @@ For each resource, the system uses a common structure of type
 to store information needed in determining permissions to perform an
 ipc operation.
 The
-<B>ipc_perm</B>
+<I>ipc_perm</I>
 
 structure, defined by the
 <I>&lt;<A HREF="file:///usr/include/sys/ipc.h">sys/ipc.h</A>&gt;</I>
 
 system header file, includes the following members:
-<P>
-<B><TT>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT>uid_t cuid;<TT>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT></B>
 
-/* creator user ID */<BR>
-<BR>
+<PRE>
 
-<B><TT>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT>gid_t cgid;<TT>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT></B>
+struct ipc_perm {
+    uid_t cuid;   /* creator user ID */
+    gid_t cgid;   /* creator group ID */
+    uid_t uid;    /* owner user ID */
+    gid_t gid;    /* owner group ID */
+    ushort mode;  /* r/w permissions */
+};
+</PRE>
 
-/* creator group ID */<BR>
-<BR>
 
-<B><TT>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT>uid_t uid;<TT>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT></B>
-
-/* owner user ID */<BR>
-<BR>
-
-<B><TT>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT>gid_t gid;<TT>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT></B>
-
-/* owner group ID */<BR>
-<BR>
-
-<B><TT>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT>ushort mode;<TT>&nbsp;&nbsp;&nbsp;&nbsp;</TT></B>
-
-/* r/w permissions */<BR>
 <P>
 
 The
-<B>mode</B>
+<I>mode</I>
 
 member of the
-<B>ipc_perm</B>
+<I>ipc_perm</I>
 
 structure defines, with its lower 9 bits, the access permissions to the
 resource for a process executing an ipc system call.
 The permissions are interpreted as follows:
 <P>
 <PRE>
-        0400    Read by user.
-        0200    Write by user.
+    0400    Read by user.
+    0200    Write by user.
 
-        0040    Read by group.
-        0020    Write by group.
+    0040    Read by group.
+    0020    Write by group.
 
-        0004    Read by others.
-        0002    Write by others.
+    0004    Read by others.
+    0002    Write by others.
 </PRE>
 
 <P>
@@ -140,7 +129,7 @@ Note that
 <B>IPC_PRIVATE</B>
 
 is a
-<B>key_t</B>
+<I>key_t</I>
 
 type, while all the other symbolic constants are flag fields and can
 be OR'ed into an
@@ -160,95 +149,73 @@ defined in
 <I>&lt;<A HREF="file:///usr/include/sys/msg.h">sys/msg.h</A>&gt;</I>,
 
 containing the following members:
-<P>
-<B><TT>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT>struct ipc_perm msg_perm;</B>
 
-<BR>
+<PRE>
 
-<B><TT>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT>msgqnum_t msg_qnum;<TT>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT></B>
+struct msqid_ds {
+    struct ipc_perm msg_perm;
+    msgqnum_t msg_qnum;    /* no of messages on queue */
+    msglen_t  msg_qbytes;  /* bytes max on a queue */
+    pid_t     msg_lspid;   /* PID of last <A HREF="../man2/msgsnd.2.html">msgsnd</A>(2) call */
+    pid_t     msg_lrpid;   /* PID of last <A HREF="../man2/msgrcv.2.html">msgrcv</A>(2) call */
+    time_t    msg_stime;   /* last <A HREF="../man2/msgsnd.2.html">msgsnd</A>(2) time */
+    time_t    msg_rtime;   /* last <A HREF="../man2/msgrcv.2.html">msgrcv</A>(2) time */
+    time_t    msg_ctime;   /* last change time */
+};
+</PRE>
 
-/* no of messages on queue */<BR>
-<BR>
 
-<B><TT>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT>msglen_t msg_qbytes;<TT>&nbsp;&nbsp;&nbsp;&nbsp;</TT></B>
-
-/* bytes max on a queue */<BR>
-<BR>
-
-<B><TT>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT>pid_t msg_lspid;<TT>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT></B>
-
-/* PID of last <A HREF="../man2/msgsnd.2.html">msgsnd</A>(2) call */<BR>
-<BR>
-
-<B><TT>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT>pid_t msg_lrpid;<TT>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT></B>
-
-/* PID of last <A HREF="../man2/msgrcv.2.html">msgrcv</A>(2) call */<BR>
-<BR>
-
-<B><TT>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT>time_t msg_stime;<TT>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT></B>
-
-/* last <A HREF="../man2/msgsnd.2.html">msgsnd</A>(2) time */<BR>
-<BR>
-
-<B><TT>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT>time_t msg_rtime;<TT>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT></B>
-
-/* last <A HREF="../man2/msgrcv.2.html">msgrcv</A>(2) time */<BR>
-<BR>
-
-<B><TT>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT>time_t msg_ctime;<TT>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT></B>
-
-/* last change time */<BR>
 <DL COMPACT>
-<DT><B>msg_perm</B>
+<DT><I>msg_perm</I>
 
 <DD>
-<B>ipc_perm</B>
+<I>ipc_perm</I>
 
 structure that specifies the access permissions on the message
 queue.
-<DT><B>msg_qnum</B>
+<DT><I>msg_qnum</I>
 
 <DD>
 Number of messages currently on the message queue.
-<DT><B>msg_qbytes</B>
+<DT><I>msg_qbytes</I>
 
 <DD>
 Maximum number of bytes of message text allowed on the message
 queue.
-<DT><B>msg_lspid</B>
+<DT><I>msg_lspid</I>
 
 <DD>
 ID of the process that performed the last
 <B><A HREF="../man2/msgsnd.2.html">msgsnd</A></B>(2)
 
 system call.
-<DT><B>msg_lrpid</B>
+<DT><I>msg_lrpid</I>
 
 <DD>
 ID of the process that performed the last
 <B><A HREF="../man2/msgrcv.2.html">msgrcv</A></B>(2)
 
 system call.
-<DT><B>msg_stime</B>
+<DT><I>msg_stime</I>
 
 <DD>
 Time of the last
 <B><A HREF="../man2/msgsnd.2.html">msgsnd</A></B>(2)
 
 system call.
-<DT><B>msg_rtime</B>
+<DT><I>msg_rtime</I>
 
 <DD>
 Time of the last
 <B><A HREF="../man2/msgrcv.2.html">msgrcv</A></B>(2)
 
 system call.
-<DT><B>msg_ctime</B>
+<DT><I>msg_ctime</I>
 
 <DD>
 Time of the last
 system call that changed a member of the
-<B>msqid_ds</B>
+<I>msqid_ds</I>
 
 structure.
 </DL>
@@ -265,40 +232,33 @@ defined in
 <I>&lt;<A HREF="file:///usr/include/sys/sem.h">sys/sem.h</A>&gt;</I>,
 
 containing the following members:
-<P>
-<B><TT>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT>struct ipc_perm sem_perm;</B>
+<PRE>
 
-<BR>
+struct semid_ds {
+    struct ipc_perm sem_perm;
+    time_t          sem_otime;   /* last operation time */
+    time_t          sem_ctime;   /* last change time */
+    ulong           sem_nsems;   /* count of sems in set */
+};
+</PRE>
 
-<B><TT>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT>time_t sem_otime;<TT>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT></B>
 
-/* last operation time */<BR>
-<BR>
-
-<B><TT>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT>time_t sem_ctime;<TT>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT></B>
-
-/* last change time */<BR>
-<BR>
-
-<B><TT>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT>ulong sem_nsems;<TT>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT></B>
-
-/* count of sems in set */<BR>
 <DL COMPACT>
-<DT><B>sem_perm</B>
+<DT><I>sem_perm</I>
 
 <DD>
-<B>ipc_perm</B>
+<I>ipc_perm</I>
 
 structure that specifies the access permissions on the semaphore
 set.
-<DT><B>sem_otime</B>
+<DT><I>sem_otime</I>
 
 <DD>
 Time of last
 <B><A HREF="../man2/semop.2.html">semop</A></B>(2)
 
 system call.
-<DT><B>sem_ctime</B>
+<DT><I>sem_ctime</I>
 
 <DD>
 Time of last
@@ -306,7 +266,7 @@ Time of last
 
 system call that changed a member of the above structure or of one
 semaphore belonging to the set.
-<DT><B>sem_nsems</B>
+<DT><I>sem_nsems</I>
 
 <DD>
 Number of semaphores in the set.
@@ -315,7 +275,7 @@ ranging from
 <B>0</B>
 
 to
-<B>sem_nsems-1</B>.
+<I>sem_nsems-1</I>.
 
 </DL>
 <P>
@@ -324,29 +284,21 @@ A semaphore is a data structure of type
 <I>struct sem</I>
 
 containing the following members:
-<P>
-<B><TT>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT>int semval;<TT>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT></B>
 
-/* semaphore value */<BR>
-<BR>
-
-<B><TT>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT>int sempid;<TT>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT></B>
-
-/* PID for last operation */<BR>
-
-
-
-
-
-
+<PRE>
+struct sem {
+    int semval;  /* semaphore value */
+    int sempid;  /* PID for last operation */
+}
+</PRE>
 
 
 <DL COMPACT>
-<DT><B>semval</B>
+<DT><I>semval</I>
 
 <DD>
 Semaphore value: a non-negative integer.
-<DT><B>sempid</B>
+<DT><I>sempid</I>
 
 <DD>
 ID of the last process that performed a semaphore operation
@@ -375,61 +327,39 @@ defined in
 <I>&lt;<A HREF="file:///usr/include/sys/shm.h">sys/shm.h</A>&gt;</I>,
 
 containing the following members:
-<P>
-<B><TT>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT>struct ipc_perm shm_perm;</B>
 
-<BR>
+<PRE>
 
-<B><TT>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT>size_t shm_segsz; <TT>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT></B>
+struct shmid_ds {
+    struct ipc_perm shm_perm;
+    size_t shm_segsz;     /* size of segment */
+    pid_t shm_cpid;       /* PID of creator */
+    pid_t shm_lpid;       /* PID, last operation */
+    shmatt_t shm_nattch;  /* no. of current attaches */
+    time_t shm_atime;     /* time of last attach */
+    time_t shm_dtime;     /* time of last detach */
+    time_t shm_ctime;     /* time of last change */
+};
+</PRE>
 
-/* size of segment */<BR>
-<BR>
 
-<B><TT>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT>pid_t shm_cpid;<TT>&nbsp;</TT></B>
-
-/* PID of creator */<BR>
-<BR>
-
-<B><TT>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT>pid_t shm_lpid;<TT>&nbsp;</TT></B>
-
-/* PID, last operation */<BR>
-<BR>
-
-<B><TT>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT>shmatt_t shm_nattch;<TT>&nbsp;&nbsp;&nbsp;&nbsp;</TT></B>
-
-/* no. of current attaches */<BR>
-<BR>
-
-<B><TT>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT>time_t shm_atime;<TT>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT></B>
-
-/* time of last attach */<BR>
-<BR>
-
-<B><TT>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT>time_t shm_dtime;<TT>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT></B>
-
-/* time of last detach */<BR>
-<BR>
-
-<B><TT>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT>time_t shm_ctime;<TT>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT></B>
-
-/* time of last change */<BR>
 <DL COMPACT>
-<DT><B>shm_perm</B>
+<DT><I>shm_perm</I>
 
 <DD>
-<B>ipc_perm</B>
+<I>ipc_perm</I>
 
 structure that specifies the access permissions on the shared memory
 segment.
-<DT><B>shm_segsz</B>
+<DT><I>shm_segsz</I>
 
 <DD>
 Size in bytes of the shared memory segment.
-<DT><B>shm_cpid</B>
+<DT><I>shm_cpid</I>
 
 <DD>
 ID of the process that created the shared memory segment.
-<DT><B>shm_lpid</B>
+<DT><I>shm_lpid</I>
 
 <DD>
 ID of the last process that executed a
@@ -439,32 +369,32 @@ or
 <B><A HREF="../man2/shmdt.2.html">shmdt</A></B>(2)
 
 system call.
-<DT><B>shm_nattch</B>
+<DT><I>shm_nattch</I>
 
 <DD>
 Number of current alive attaches for this shared memory segment.
-<DT><B>shm_atime</B>
+<DT><I>shm_atime</I>
 
 <DD>
 Time of the last
 <B><A HREF="../man2/shmat.2.html">shmat</A></B>(2)
 
 system call.
-<DT><B>shm_dtime</B>
+<DT><I>shm_dtime</I>
 
 <DD>
 Time of the last
 <B><A HREF="../man2/shmdt.2.html">shmdt</A></B>(2)
 
 system call.
-<DT><B>shm_ctime</B>
+<DT><I>shm_ctime</I>
 
 <DD>
 Time of the last
 <B><A HREF="../man2/shmctl.2.html">shmctl</A></B>(2)
 
 system call that changed
-<B>shmid_ds</B>.
+<I>shmid_ds</I>.
 
 </DL>
 <A NAME="lbAI">&nbsp;</A>
@@ -515,6 +445,6 @@ system call that changed
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 02:42:53 GMT, April 20, 2020
+Time: 02:43:21 GMT, April 20, 2020
 </BODY>
 </HTML>

@@ -79,16 +79,16 @@ The
 structure used by this function contains the following members:
 <P>
 <PRE>
-<B>struct addrinfo {</B>
-<B>    int     </B><I>ai_flags</I><B>;</B>
-<B>    int     </B><I>ai_family</I><B>;</B>
-<B>    int     </B><I>ai_socktype</I><B>;</B>
-<B>    int     </B><I>ai_protocol</I><B>;</B>
-<B>    size_t  </B><I>ai_addrlen</I><B>;</B>
-<B>    struct sockaddr *</B><I>ai_addr</I><B>;</B>
-<B>    char   *</B><I>ai_canonname</I><B>;</B>
-<B>    struct addrinfo *</B><I>ai_next</I><B>;</B>
-<B>};</B>
+struct addrinfo {
+    int              ai_flags;
+    int              ai_family;
+    int              ai_socktype;
+    int              ai_protocol;
+    size_t           ai_addrlen;
+    struct sockaddr *ai_addr;
+    char            *ai_canonname;
+    struct addrinfo *ai_next;
+};
 </PRE>
 
 <P>
@@ -600,12 +600,12 @@ This is the server:
 
 <PRE>
 
-#include &lt;<A HREF="file:///usr/include/sys/types.h">sys/types.h</A>&gt;  
+#include &lt;<A HREF="file:///usr/include/sys/types.h">sys/types.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;
-#include &lt;<A HREF="file:///usr/include/stdlib.h">stdlib.h</A>&gt;     
-#include &lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;     
-#include &lt;<A HREF="file:///usr/include/string.h">string.h</A>&gt;     
-#include &lt;<A HREF="file:///usr/include/sys/socket.h">sys/socket.h</A>&gt; 
+#include &lt;<A HREF="file:///usr/include/stdlib.h">stdlib.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/string.h">string.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/sys/socket.h">sys/socket.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/netdb.h">netdb.h</A>&gt;
 
 #define BUF_SIZE 500
@@ -639,12 +639,12 @@ main(int argc, char *argv[])
     }
 
     /* getaddrinfo() returns a list of address structures.
-       Try each address until we successfully bind(). 
-       If <A HREF="../man2/socket.2.html">socket</A>(2) (or <A HREF="../man2/bind.2.html">bind</A>(2)) fails, we (close the socket 
+       Try each address until we successfully bind().
+       If <A HREF="../man2/socket.2.html">socket</A>(2) (or <A HREF="../man2/bind.2.html">bind</A>(2)) fails, we (close the socket
        and) try the next address. */
 
     for (rp = result; rp != NULL; rp = rp-&gt;ai_next) {
-        sfd = socket(rp-&gt;ai_family, rp-&gt;ai_socktype, 
+        sfd = socket(rp-&gt;ai_family, rp-&gt;ai_socktype,
                 rp-&gt;ai_protocol);
         if (sfd == -1)
             continue;
@@ -666,26 +666,26 @@ main(int argc, char *argv[])
 
     for (;;) {
         peer_addr_len = sizeof(struct sockaddr_storage);
-        nread = recvfrom(sfd, buf, BUF_SIZE, 0, 
+        nread = recvfrom(sfd, buf, BUF_SIZE, 0,
                 (struct sockaddr *) &amp;peer_addr, &amp;peer_addr_len);
         if (nread == -1)
             continue;               /* Ignore failed request */
 
         char host[NI_MAXHOST], service[NI_MAXSERV];
-    
-        s = getnameinfo((struct sockaddr *) &amp;peer_addr, 
+
+        s = getnameinfo((struct sockaddr *) &amp;peer_addr,
                         peer_addr_len, host, NI_MAXHOST,
                         service, NI_MAXSERV, NI_NUMERICSERV);
-       if (s == 0) 
+       if (s == 0)
             printf(&quot;Received %ld bytes from %s:%s\n&quot;,
                     (long) nread, host, service);
         else
             fprintf(stderr, &quot;getnameinfo: %s\n&quot;, gai_strerror(s));
 
 
-        if (sendto(sfd, buf, nread, 0, 
+        if (sendto(sfd, buf, nread, 0,
                     (struct sockaddr *) &amp;peer_addr,
-                    peer_addr_len) != nread) 
+                    peer_addr_len) != nread)
             fprintf(stderr, &quot;Error sending response\n&quot;);
     }
 }
@@ -697,13 +697,13 @@ This is the client:
 
 <PRE>
 
-#include &lt;<A HREF="file:///usr/include/sys/types.h">sys/types.h</A>&gt;  
+#include &lt;<A HREF="file:///usr/include/sys/types.h">sys/types.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/sys/socket.h">sys/socket.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/netdb.h">netdb.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;
-#include &lt;<A HREF="file:///usr/include/stdlib.h">stdlib.h</A>&gt;     
-#include &lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;     
-#include &lt;<A HREF="file:///usr/include/string.h">string.h</A>&gt;     
+#include &lt;<A HREF="file:///usr/include/stdlib.h">stdlib.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/string.h">string.h</A>&gt;
 
 #define BUF_SIZE 500
 
@@ -738,15 +738,15 @@ main(int argc, char *argv[])
 
     /* getaddrinfo() returns a list of address structures.
        Try each address until we successfully connect().
-       If socket() (or connect()) fails, we (close the socket 
+       If socket() (or connect()) fails, we (close the socket
        and) try the next address. */
 
     for (rp = result; rp != NULL; rp = rp-&gt;ai_next) {
-        sfd = socket(rp-&gt;ai_family, rp-&gt;ai_socktype, 
+        sfd = socket(rp-&gt;ai_family, rp-&gt;ai_socktype,
                      rp-&gt;ai_protocol);
         if (sfd == -1)
             continue;
-        
+
         if (connect(sfd, rp-&gt;ai_addr, rp-&gt;ai_addrlen) != -1)
             break;                  /* Success */
 
@@ -760,15 +760,15 @@ main(int argc, char *argv[])
 
     freeaddrinfo(result);           /* No longer needed */
 
-    /* Send remaining command-line arguments as separate 
+    /* Send remaining command-line arguments as separate
        datagrams, and read responses from server */
 
     for (j = 3; j &lt; argc; j++) {
-        len = strlen(argv[j]) + 1;  
+        len = strlen(argv[j]) + 1;
                 /* +1 for terminating null byte */
 
         if (len + 1 &gt; BUF_SIZE) {
-            fprintf(stderr, 
+            fprintf(stderr,
                     &quot;Ignoring long message in argument %d\n&quot;, j);
             continue;
         }
@@ -777,7 +777,7 @@ main(int argc, char *argv[])
             fprintf(stderr, &quot;partial/failed write\n&quot;);
             exit(EXIT_FAILURE);
         }
-        
+
         nread = read(sfd, buf, BUF_SIZE);
         if (nread == -1) {
             perror(&quot;read&quot;);
@@ -822,6 +822,6 @@ main(int argc, char *argv[])
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 02:42:47 GMT, April 20, 2020
+Time: 02:43:15 GMT, April 20, 2020
 </BODY>
 </HTML>
