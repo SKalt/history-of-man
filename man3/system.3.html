@@ -4,7 +4,7 @@
 <HTML><HEAD><TITLE>Man page of SYSTEM</TITLE>
 </HEAD><BODY>
 <H1>SYSTEM</H1>
-Section: Linux Programmer's Manual (3)<BR>Updated: 2001-09-23<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2004-12-20<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -17,21 +17,21 @@ system - execute a shell command
 <PRE>
 <B>#include &lt;<A HREF="file:///usr/include/stdlib.h">stdlib.h</A>&gt;</B>
 
-<B>int system(const char *</B><I>string</I><B>);</B>
+<B>int system(const char *</B><I>command</I><B>);</B>
 </PRE>
 
 <A NAME="lbAD">&nbsp;</A>
 <H2>DESCRIPTION</H2>
 
-<B>system()</B>
+<B>system</B>()
 
 executes a command specified in
-<I>string</I>
+<I>command</I>
 
 by calling
 <B>/bin/sh -c</B>
 
-<I>string</I>,
+<I>command</I>,
 
 and returns after the command has been completed.
 During execution of the command,
@@ -57,7 +57,7 @@ Thus, the exit code of the command will be
 <I>WEXITSTATUS(status)</I>.
 
 In case
-<B>/bin/sh</B>
+<I>/bin/sh</I>
 
 could not be executed, the exit status will be that of
 a command that does
@@ -66,17 +66,17 @@ a command that does
 <P>
 
 If the value of
-<I>string</I>
+<I>command</I>
 
 is 
 <B>NULL</B>,
 
-<B>system()</B>
+<B>system</B>()
 
 returns nonzero if the shell is available, and zero if not.
 <P>
 
-<B>system()</B>
+<B>system</B>()
 
 does not affect the wait status of any other children.
 <A NAME="lbAF">&nbsp;</A>
@@ -88,8 +88,21 @@ ANSI C, POSIX.2, BSD 4.3
 
 <P>
 
+If the
+<B>_XOPEN_SOURCE</B>
+
+feature test macro is defined, then the macros described in
+<B><A HREF="../man2/wait.2.html">wait</A></B>(2)
+
+(<B>WEXITSTATUS()</B>,
+
+etc.) are made available when including
+<I>&lt;<A HREF="file:///usr/include/stdlib.h">stdlib.h</A>&gt;</I>.
+
+<P>
+
 As mentioned,
-<B>system()</B>
+<B>system</B>()
 
 ignores SIGINT and SIGQUIT.  This may make programs that call it
 from a loop uninterruptable, unless they take care themselves
@@ -110,10 +123,11 @@ to check the exit status of the child. E.g.
 <P>
 
 Do not use
-<B>system()</B>
+<B>system</B>()
 
-from a program with suid or sgid privileges, because strange values for
-some environment variables might be used to subvert system integrity.
+from a program with set-UID or set-GID privileges,
+because strange values for some environment variables
+might be used to subvert system integrity.
 Use the
 <B><A HREF="../man3/exec.3.html">exec</A></B>(3)
 
@@ -123,11 +137,11 @@ family of functions instead, but not
 or
 <B><A HREF="../man3/execvp.3.html">execvp</A></B>(3).
 
-<B>system()</B>
+<B>system</B>()
 
-will not, in fact, work properly from programs with suid or sgid
+will not, in fact, work properly from programs with set-UID or set-GID
 privileges on systems on which
-<B>/bin/sh</B>
+<I>/bin/sh</I>
 
 is bash version 2, since bash 2 drops privileges on startup.
 (Debian uses a modified bash which does not do this when invoked as
@@ -135,18 +149,28 @@ is bash version 2, since bash 2 drops privileges on startup.
 
 <P>
 
-The check for the availability of
-<B>/bin/sh</B>
+In versions of glibc before 2.1.3, the check for the availability of
+<I>/bin/sh</I>
 
-is not actually performed; it is always assumed to be available.  ISO
-C specifies the check, but POSIX.2 specifies that the return shall
-always be non-zero, since a system without the shell is not
-conforming, and it is this that is implemented.
+was not actually performed if
+<I>command</I>
+
+was NULL; instead it was always assumed to be available, and
+<B>system</B>()
+
+always returned 1 in this case.
+Since glibc 2.1.3, this check is performed because, even though
+POSIX.1-2001 requires a conforming implementation to provide
+a shell, that shell may not be available or executable if
+the calling program has previously called
+<B><A HREF="../man2/chroot.2.html">chroot</A></B>(2)
+
+(which is not specified by POSIX.1-2001).
 <P>
 
 It is possible for the shell command to return 127, so that code is not
 a sure indication that the
-<B>execve()</B>
+<B>execve</B>()
 
 call failed.
 <A NAME="lbAH">&nbsp;</A>
@@ -177,6 +201,6 @@ call failed.
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 02:11:09 GMT, April 20, 2020
+Time: 02:12:18 GMT, April 20, 2020
 </BODY>
 </HTML>

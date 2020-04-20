@@ -5,7 +5,7 @@ Copyright (c) 1996 Andries Brouwer (aeb@cwi.nl)
 <HTML><HEAD><TITLE>Man page of ERRNO</TITLE>
 </HEAD><BODY>
 <H1>ERRNO</H1>
-Section: Library functions (3)<BR>Updated: 2002-10-05<BR><A HREF="#index">Index</A>
+Section: Library functions (3)<BR>Updated: 2004-12-17<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -17,23 +17,27 @@ errno - number of last error
 
 <B>#include &lt;<A HREF="file:///usr/include/errno.h">errno.h</A>&gt;</B>
 
-<P>
-<B>extern int </B><I>errno</I><B>;</B>
+
 
 <A NAME="lbAD">&nbsp;</A>
 <H2>DESCRIPTION</H2>
 
-The integer
-<B>errno</B>
+The 
+<I>&lt;<A HREF="file:///usr/include/errno.h">errno.h</A>&gt;</I>
 
-is set by system calls (and some library functions) to indicate
-what went wrong.  Its value is significant only when the call
-returned an error (usually -1), and a library function that does succeed
+header file defines the integer variable
+<B>errno ,</B>
+
+which is set by system calls and some library functions in the event
+of an error to indicate what went wrong.
+Its value is significant only when the call
+returned an error (usually -1), and a function that does succeed
 is allowed to change
 <B>errno</B>.
 
 <P>
-Sometimes, when -1 is also a legal return value one has to zero
+Sometimes, when -1 is also a valid successful return value
+one has to zero
 <B>errno</B>
 
 before the call in order to detect possible errors.
@@ -45,7 +49,13 @@ does not affect its value in any other thread.
 <P>
 Valid error numbers are all non-zero; <B>errno</B> is never set to zero
 by any library function.  All the error names specified by POSIX.1
-must have distinct values.
+must have distinct values, with the exception of
+<B>EAGAIN</B>
+
+and 
+<B>EWOULDBLOCK</B>,
+
+which may be the same.
 <P>
 
 POSIX.1 (2001 edition) lists the following symbolic error names.  Of
@@ -378,7 +388,7 @@ Operation would block (may be same value as
 Improper link
 </DL>
 <A NAME="lbAE">&nbsp;</A>
-<H2>NOTE</H2>
+<H2>NOTES</H2>
 
 A common mistake is to do
 <DL COMPACT><DT><DD>
@@ -397,7 +407,10 @@ where
 <I>errno</I>
 
 no longer needs to have the value it had upon return from
-<I>somecall()</I>.
+<I>somecall()</I>
+
+(i.e., it may have been changed by the
+<I>printf()</I>).
 
 If the value of
 <I>errno</I>
@@ -415,6 +428,25 @@ if (somecall() == -1) {
 
 </DL>
 
+<P>
+
+It was common in traditional C to declare
+<I>errno</I>
+
+manually
+(i.e., 
+<I>extern int errno</I>)
+
+instead of including
+<I>&lt;<A HREF="file:///usr/include/errno.h">errno.h</A>&gt;</I>.
+
+<B>Do not do this</B>.
+
+It will not work with modern versions of the C library.
+However, on (very) old Unix systems, there may be no
+<I>&lt;<A HREF="file:///usr/include/errno.h">errno.h</A>&gt;</I>
+
+and the declaration is needed.
 <A NAME="lbAF">&nbsp;</A>
 <H2>SEE ALSO</H2>
 
@@ -430,13 +462,13 @@ if (somecall() == -1) {
 <DT><A HREF="#lbAB">NAME</A><DD>
 <DT><A HREF="#lbAC">SYNOPSIS</A><DD>
 <DT><A HREF="#lbAD">DESCRIPTION</A><DD>
-<DT><A HREF="#lbAE">NOTE</A><DD>
+<DT><A HREF="#lbAE">NOTES</A><DD>
 <DT><A HREF="#lbAF">SEE ALSO</A><DD>
 </DL>
 <HR>
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 02:11:55 GMT, April 20, 2020
+Time: 02:12:17 GMT, April 20, 2020
 </BODY>
 </HTML>

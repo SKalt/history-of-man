@@ -4,7 +4,7 @@
 <HTML><HEAD><TITLE>Man page of SENDFILE</TITLE>
 </HEAD><BODY>
 <H1>SENDFILE</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 1998-12-01<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2004-12-17<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -41,59 +41,80 @@ sendfile - transfer data between file descriptors
 <A NAME="lbAD">&nbsp;</A>
 <H2>DESCRIPTION</H2>
 
-This call copies data between one file descriptor and another.
-Either or both of these file descriptors may refer to a socket (but see below).
+<B>sendfile</B>()
+
+copies data between one file descriptor and another.
+Because this copying is done within the kernel,
+<B>sendfile</B>()
+
+is more efficient than the combination of
+<B><A HREF="../man2/read.2.html">read</A></B>(2)
+
+and
+<B><A HREF="../man2/write.2.html">write</A></B>(2),
+
+which would require transferring data to and from user space.
+<P>
 <I>in_fd</I>
 
 should be a file descriptor opened for reading and
 <I>out_fd</I>
 
 should be a descriptor opened for writing.
+<P>
 <I>offset</I>
 
-is a pointer to a variable holding the input file pointer position from
+is a pointer to a variable holding the file offset from
 which
 <B>sendfile</B>()
 
-will start reading data.  When 
+will start reading data from
+<I>in_fd</I>.
+
+When 
 <B>sendfile</B>()
 
 returns, this variable
 will be set to the offset of the byte following the last byte that was read.
-<I>count</I>
-
-is the number of bytes to copy between file descriptors.
-<P>
-Because this copying is done within the kernel,
 <B>sendfile</B>()
 
-does not need to spend time transferring data
-to and from user space.
+does not modify the current file offset of 
+<I>in_fd</I>.
+
 <P>
+<I>count</I>
+
+is the number of bytes to copy between the file descriptors.
+<P>
+Presently (Linux 2.6.9):
+<I>in_fd</I>,
+
+must correspond to a file which supports mmap()-like operations
+(i.e., it cannot be a socket);
+and
+<I>out_fd</I>
+
+must refer to a socket.
 <A NAME="lbAE">&nbsp;</A>
 <H2>NOTES</H2>
 
-Sendfile does not modify the current file pointer of 
-<I>in_fd</I>,
-
-but does for
-<I>out_fd</I>.
-
-<P>
 If you plan to use sendfile for sending files to a TCP socket, but need
-to send some header data in front of the file contents, please see
-the 
+to send some header data in front of the file contents, you will find
+it useful to employ the
 <B>TCP_CORK </B>
 
-option in
-<B><A HREF="../man7/tcp.7.html">tcp</A></B>(7)
+option, described in
+<B><A HREF="../man7/tcp.7.html">tcp</A></B>(7),
 
 to minimize the number of packets and to tune performance.
 <P>
-Presently the descriptor from which data is read cannot
-correspond to a socket, it must correspond to a file
-which supports mmap()-like operations.
-<P>
+In Linux 2.4 and earlier,
+<I>out_fd</I>
+
+could refer to a regular file, and
+<B>sendfile</B>()
+
+changed the current offset of that file.
 <A NAME="lbAF">&nbsp;</A>
 <H2>RETURN VALUE</H2>
 
@@ -104,7 +125,6 @@ is returned.  On error, -1 is returned, and
 <I>errno</I>
 
 is set appropriately.
-<P>
 <A NAME="lbAG">&nbsp;</A>
 <H2>ERRORS</H2>
 
@@ -145,13 +165,13 @@ Insufficient memory to read from
 <A NAME="lbAH">&nbsp;</A>
 <H2>VERSIONS</H2>
 
-<B>sendfile</B>
+<B>sendfile</B>()
 
 is a new feature in Linux 2.2.
 The include file &lt;<A HREF="file:///usr/include/sys/sendfile.h">sys/sendfile.h</A>&gt; is present since glibc2.1.
 <P>
-Other Unixes often implement 
-<B>sendfile </B>
+Other Unixes implement 
+<B>sendfile</B>()
 
 with different semantics and prototypes. It should
 not be used in portable programs.
@@ -180,6 +200,6 @@ not be used in portable programs.
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 02:10:05 GMT, April 20, 2020
+Time: 02:12:16 GMT, April 20, 2020
 </BODY>
 </HTML>
