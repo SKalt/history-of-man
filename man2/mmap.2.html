@@ -26,7 +26,7 @@ the source, must acknowledge the copyright and authors of this work.
 <HTML><HEAD><TITLE>Man page of MMAP</TITLE>
 </HEAD><BODY>
 <H1>MMAP</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2017-05-03<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2017-09-15<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -45,6 +45,7 @@ mmap, munmap - map or unmap files or devices into memory
 </PRE>
 
 <P>
+
 See NOTES for information on feature test macro requirements.
 <A NAME="lbAD">&nbsp;</A>
 <H2>DESCRIPTION</H2>
@@ -61,6 +62,7 @@ The
 
 argument specifies the length of the mapping.
 <P>
+
 If
 <I>addr</I>
 
@@ -77,6 +79,7 @@ on Linux, the mapping will be created at a nearby page boundary.
 
 The address of the new mapping is returned as the result of the call.
 <P>
+
 The contents of a file mapping (as opposed to an anonymous mapping; see
 <B>MAP_ANONYMOUS</B>
 
@@ -163,6 +166,7 @@ call are visible in the mapped region.
 
 Both of these flags are described in POSIX.1-2001 and POSIX.1-2008.
 <P>
+
 In addition, zero or more of the following values can be ORed in
 <I>flags</I>:
 
@@ -173,7 +177,7 @@ In addition, zero or more of the following values can be ORed in
 Put the mapping into the first 2 Gigabytes of the process address space.
 This flag is supported only on x86-64, for 64-bit programs.
 It was added to allow thread stacks to be allocated somewhere
-in the first 2GB of memory,
+in the first 2&nbsp;GB of memory,
 so as to improve context-switch performance on some early
 64-bit processors.
 
@@ -307,9 +311,9 @@ for further information, as well as NOTES, below.
 Used in conjunction with
 <B>MAP_HUGETLB</B>
 
-to select alternative hugetlb page sizes (respectively, 2 MB and 1 GB)
+to select alternative hugetlb page sizes (respectively, 2&nbsp;MB and 1&nbsp;GB)
 on systems that support multiple hugetlb page sizes.
-<P>
+<DT><DD>
 More generally, the desired huge page size can be configured by encoding
 the base-2 logarithm of the desired page size in the six bits at the offset
 <B>MAP_HUGE_SHIFT</B>.
@@ -322,13 +326,14 @@ field exposed by
 <I>/proc/meminfo</I>.)
 
 Thus, the above two constants are defined as:
-<P>
-<PRE>
+<DT><DD>
+
+
 #define MAP_HUGE_2MB    (21 &lt;&lt; MAP_HUGE_SHIFT)
 #define MAP_HUGE_1GB    (30 &lt;&lt; MAP_HUGE_SHIFT)
-</PRE>
 
-<P>
+
+<DT><DD>
 The range of huge page sizes that are supported by the system
 can be discovered by listing the subdirectories in
 <I>/sys/kernel/mm/hugepages</I>.
@@ -516,6 +521,7 @@ is returned, and
 
 is set to indicate the cause of the error.
 <P>
+
 On success,
 <B>munmap</B>()
 
@@ -629,6 +635,17 @@ This error can also occur for
 when unmapping a region in the middle of an existing mapping,
 since this results in two smaller mappings on either side of
 the region being unmapped.
+<DT><B>ENOMEM</B>
+
+<DD>
+(since Linux 4.7)
+The process's
+<B>RLIMIT_DATA</B>
+
+limit, described in
+<B><A HREF="../man2/getrlimit.2.html">getrlimit</A></B>(2),
+
+would have been exceeded.
 <DT><B>EOVERFLOW</B>
 
 <DD>
@@ -753,6 +770,7 @@ Portable programs should always set
 
 if they intend to execute code in the new mapping.
 <P>
+
 The portable way to create a mapping is to specify
 <I>addr</I>
 
@@ -773,6 +791,7 @@ flag is specified, and
 
 is 0 (NULL), then the mapped address will be 0 (NULL).
 <P>
+
 Certain
 <I>flags</I>
 
@@ -824,6 +843,7 @@ and
 <B>MAP_STACK</B>.
 
 <P>
+
 An application can determine which pages of a mapping are
 currently resident in the buffer/page cache using
 <B><A HREF="../man2/mincore.2.html">mincore</A></B>(2).
@@ -878,6 +898,7 @@ and
 differ somewhat from the requirements for mappings
 that use the native system page size.
 <P>
+
 For
 <B>mmap</B>(),
 
@@ -889,6 +910,7 @@ The system automatically aligns
 
 to be a multiple of the underlying huge page size.
 <P>
+
 For
 <B>munmap</B>(),
 
@@ -930,6 +952,7 @@ On Linux, there are no guarantees like those suggested above under
 By default, any process can be killed
 at any moment when the system runs out of memory.
 <P>
+
 In kernels before 2.6.7, the
 <B>MAP_POPULATE</B>
 
@@ -940,6 +963,7 @@ is specified as
 <B>PROT_NONE</B>.
 
 <P>
+
 SUSv3 specifies that
 <B>mmap</B>()
 
@@ -961,6 +985,7 @@ fails with the error
 
 for this case.
 <P>
+
 POSIX specifies that the system shall always
 zero fill any partial page at the end
 of the object and that system will never write any modification of the
@@ -999,78 +1024,77 @@ to output the desired bytes.
 <A NAME="lbAQ">&nbsp;</A>
 <H3>Program source</H3>
 
-<PRE>
+
 #include &lt;<A HREF="file:///usr/include/sys/mman.h">sys/mman.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/sys/stat.h">sys/stat.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/fcntl.h">fcntl.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/stdlib.h">stdlib.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;
-
+<P>
 #define handle_error(msg) \
-    do { perror(msg); exit(EXIT_FAILURE); } while (0)
-
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;do&nbsp;{&nbsp;perror(msg);&nbsp;exit(EXIT_FAILURE);&nbsp;}&nbsp;while&nbsp;(0)
+<P>
 int
 main(int argc, char *argv[])
 {
-    char *addr;
-    int fd;
-    struct stat sb;
-    off_t offset, pa_offset;
-    size_t length;
-    ssize_t s;
-
-    if (argc &lt; 3 || argc &gt; 4) {
-        fprintf(stderr, &quot;%s file offset [length]\n&quot;, argv[0]);
-        exit(EXIT_FAILURE);
-    }
-
-    fd = open(argv[1], O_RDONLY);
-    if (fd == -1)
-        handle_error(&quot;open&quot;);
-
-    if (fstat(fd, &amp;sb) == -1)           /* To obtain file size */
-        handle_error(&quot;fstat&quot;);
-
-    offset = atoi(argv[2]);
-    pa_offset = offset &amp; ~(sysconf(_SC_PAGE_SIZE) - 1);
-        /* offset for mmap() must be page aligned */
-
-    if (offset &gt;= sb.st_size) {
-        fprintf(stderr, &quot;offset is past end of file\n&quot;);
-        exit(EXIT_FAILURE);
-    }
-
-    if (argc == 4) {
-        length = atoi(argv[3]);
-        if (offset + length &gt; sb.st_size)
-            length = sb.st_size - offset;
-                /* Can't display bytes past end of file */
-
-    } else {    /* No length arg ==&gt; display to end of file */
-        length = sb.st_size - offset;
-    }
-
-    addr = mmap(NULL, length + offset - pa_offset, PROT_READ,
-                MAP_PRIVATE, fd, pa_offset);
-    if (addr == MAP_FAILED)
-        handle_error(&quot;mmap&quot;);
-
-    s = write(STDOUT_FILENO, addr + offset - pa_offset, length);
-    if (s != length) {
-        if (s == -1)
-            handle_error(&quot;write&quot;);
-
-        fprintf(stderr, &quot;partial write&quot;);
-        exit(EXIT_FAILURE);
-    }
-
-    munmap(addr, length + offset - pa_offset);
-    close(fd);
-
-    exit(EXIT_SUCCESS);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;char&nbsp;*addr;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;fd;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;struct&nbsp;stat&nbsp;sb;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;off_t&nbsp;offset,&nbsp;pa_offset;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;size_t&nbsp;length;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;ssize_t&nbsp;s;
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(argc&nbsp;&lt;&nbsp;3&nbsp;||&nbsp;argc&nbsp;&gt;&nbsp;4)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fprintf(stderr,&nbsp;&quot;%s&nbsp;file&nbsp;offset&nbsp;[length]\n&quot;,&nbsp;argv[0]);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;fd&nbsp;=&nbsp;open(argv[1],&nbsp;O_RDONLY);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(fd&nbsp;==&nbsp;-1)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;handle_error(&quot;open&quot;);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(fstat(fd,&nbsp;&amp;sb)&nbsp;==&nbsp;-1)&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;To&nbsp;obtain&nbsp;file&nbsp;size&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;handle_error(&quot;fstat&quot;);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;offset&nbsp;=&nbsp;atoi(argv[2]);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;pa_offset&nbsp;=&nbsp;offset&nbsp;&amp;&nbsp;~(sysconf(_SC_PAGE_SIZE)&nbsp;-&nbsp;1);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;offset&nbsp;for&nbsp;mmap()&nbsp;must&nbsp;be&nbsp;page&nbsp;aligned&nbsp;*/
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(offset&nbsp;&gt;=&nbsp;sb.st_size)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fprintf(stderr,&nbsp;&quot;offset&nbsp;is&nbsp;past&nbsp;end&nbsp;of&nbsp;file\n&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(argc&nbsp;==&nbsp;4)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;length&nbsp;=&nbsp;atoi(argv[3]);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(offset&nbsp;+&nbsp;length&nbsp;&gt;&nbsp;sb.st_size)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;length&nbsp;=&nbsp;sb.st_size&nbsp;-&nbsp;offset;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Can't&nbsp;display&nbsp;bytes&nbsp;past&nbsp;end&nbsp;of&nbsp;file&nbsp;*/
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}&nbsp;else&nbsp;{&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;No&nbsp;length&nbsp;arg&nbsp;==&gt;&nbsp;display&nbsp;to&nbsp;end&nbsp;of&nbsp;file&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;length&nbsp;=&nbsp;sb.st_size&nbsp;-&nbsp;offset;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;addr&nbsp;=&nbsp;mmap(NULL,&nbsp;length&nbsp;+&nbsp;offset&nbsp;-&nbsp;pa_offset,&nbsp;PROT_READ,
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;MAP_PRIVATE,&nbsp;fd,&nbsp;pa_offset);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(addr&nbsp;==&nbsp;MAP_FAILED)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;handle_error(&quot;mmap&quot;);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;s&nbsp;=&nbsp;write(STDOUT_FILENO,&nbsp;addr&nbsp;+&nbsp;offset&nbsp;-&nbsp;pa_offset,&nbsp;length);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(s&nbsp;!=&nbsp;length)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(s&nbsp;==&nbsp;-1)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;handle_error(&quot;write&quot;);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fprintf(stderr,&nbsp;&quot;partial&nbsp;write&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;munmap(addr,&nbsp;length&nbsp;+&nbsp;offset&nbsp;-&nbsp;pa_offset);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;close(fd);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_SUCCESS);
 }
-</PRE>
 
 <A NAME="lbAR">&nbsp;</A>
 <H2>SEE ALSO</H2>
@@ -1104,6 +1128,7 @@ main(int argc, char *argv[])
 <B><A HREF="../man7/shm_overview.7.html">shm_overview</A></B>(7)
 
 <P>
+
 The descriptions of the following files in
 <B><A HREF="../man5/proc.5.html">proc</A></B>(5):
 
@@ -1115,6 +1140,7 @@ and
 <I>/proc/[pid]/smaps</I>.
 
 <P>
+
 B.O. Gallmeister, POSIX.4, O'Reilly, pp. 128-129 and 389-391.
 
 
@@ -1152,6 +1178,6 @@ B.O. Gallmeister, POSIX.4, O'Reilly, pp. 128-129 and 389-391.
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:46:38 GMT, April 20, 2020
+Time: 03:47:14 GMT, April 20, 2020
 </BODY>
 </HTML>

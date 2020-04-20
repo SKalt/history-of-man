@@ -34,7 +34,7 @@ SUCH DAMAGE.
 <HTML><HEAD><TITLE>Man page of READLINK</TITLE>
 </HEAD><BODY>
 <H1>READLINK</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2016-10-08<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2017-09-15<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -64,6 +64,7 @@ Feature Test Macro Requirements for glibc (see
 
 <P>
 
+
 <B>readlink</B>():
 
 <DL COMPACT><DT><DD>
@@ -73,6 +74,7 @@ _XOPEN_SOURCE&nbsp;&gt;=&nbsp;500 || _POSIX_C_SOURCE&nbsp;&gt;=&nbsp;200112L
 </DL>
 
 <P>
+
 <B>readlinkat</B>():
 
 
@@ -122,6 +124,7 @@ system call operates in exactly the same way as
 
 except for the differences described here.
 <P>
+
 If the pathname given in
 <I>pathname</I>
 
@@ -135,6 +138,7 @@ the calling process, as is done by
 
 for a relative pathname).
 <P>
+
 If
 <I>pathname</I>
 
@@ -152,6 +156,7 @@ directory of the calling process (like
 <B>readlink</B>()).
 
 <P>
+
 If
 <I>pathname</I>
 
@@ -160,6 +165,7 @@ is absolute, then
 
 is ignored.
 <P>
+
 Since Linux 2.6.39,
 
 <I>pathname</I>
@@ -300,6 +306,7 @@ library support was added to glibc in version 2.4.
 first appeared in 4.2BSD),
 POSIX.1-2001, POSIX.1-2008.
 <P>
+
 <B>readlinkat</B>():
 
 POSIX.1-2008.
@@ -317,6 +324,7 @@ Nowadays, the return type is declared as
 
 as (newly) required in POSIX.1-2001.
 <P>
+
 Using a statically sized buffer might not provide enough room for the
 symbolic link contents.
 The required size for the buffer can be obtained from the
@@ -382,7 +390,8 @@ in cases where
 <B><A HREF="../man2/lstat.2.html">lstat</A></B>(2)
 
 reports a size of zero.
-<PRE>
+<P>
+
 
 #include &lt;<A HREF="file:///usr/include/sys/types.h">sys/types.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/sys/stat.h">sys/stat.h</A>&gt;
@@ -390,58 +399,62 @@ reports a size of zero.
 #include &lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/stdlib.h">stdlib.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;
-
+<P>
 int
 main(int argc, char *argv[])
 {
-    struct stat sb;
-    char *linkname;
-    ssize_t r, bufsiz;
-
-    if (argc != 2) {
-        fprintf(stderr, &quot;Usage: %s &lt;pathname&gt;\n&quot;, argv[0]);
-        exit(EXIT_FAILURE);
-    }
-
-    if (lstat(argv[1], &amp;sb) == -1) {
-        perror(&quot;lstat&quot;);
-        exit(EXIT_FAILURE);
-    }
-
-    bufsiz = sb.st_size + 1;
-
-    /* Some magic symlinks under (for example) /proc and /sys
-       report 'st_size' as zero. In that case, take PATH_MAX as
-       a &quot;good enough&quot; estimate */
-
-    if (sb.st_size == 0)
-        bufsiz = PATH_MAX;
-
-    printf(&quot;%zd\n&quot;, bufsiz);
-
-    linkname = malloc(bufsiz);
-    if (linkname == NULL) {
-        perror(&quot;malloc&quot;);
-        exit(EXIT_FAILURE);
-    }
-
-    r = readlink(argv[1], linkname, bufsiz);
-    if (r == -1) {
-        perror(&quot;readlink&quot;);
-        exit(EXIT_FAILURE);
-    }
-
-    linkname[r] = '\0';
-
-    printf(&quot;'%s' points to '%s'\n&quot;, argv[1], linkname);
-
-    if (r == bufsiz)
-        printf(&quot;(Returned buffer may have been truncated)\n&quot;);
-
-    free(linkname);
-    exit(EXIT_SUCCESS);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;struct&nbsp;stat&nbsp;sb;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;char&nbsp;*buf;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;ssize_t&nbsp;nbytes,&nbsp;bufsiz;
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(argc&nbsp;!=&nbsp;2)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fprintf(stderr,&nbsp;&quot;Usage:&nbsp;%s&nbsp;&lt;pathname&gt;\n&quot;,&nbsp;argv[0]);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(lstat(argv[1],&nbsp;&amp;sb)&nbsp;==&nbsp;-1)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;perror(&quot;lstat&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Add&nbsp;one&nbsp;to&nbsp;the&nbsp;link&nbsp;size,&nbsp;so&nbsp;that&nbsp;we&nbsp;can&nbsp;determine&nbsp;whether
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;the&nbsp;buffer&nbsp;returned&nbsp;by&nbsp;readlink()&nbsp;was&nbsp;truncated.&nbsp;*/
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;bufsiz&nbsp;=&nbsp;sb.st_size&nbsp;+&nbsp;1;
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Some&nbsp;magic&nbsp;symlinks&nbsp;under&nbsp;(for&nbsp;example)&nbsp;/proc&nbsp;and&nbsp;/sys
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;report&nbsp;'st_size'&nbsp;as&nbsp;zero.&nbsp;In&nbsp;that&nbsp;case,&nbsp;take&nbsp;PATH_MAX&nbsp;as
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;a&nbsp;&quot;good&nbsp;enough&quot;&nbsp;estimate.&nbsp;*/
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(sb.st_size&nbsp;==&nbsp;0)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;bufsiz&nbsp;=&nbsp;PATH_MAX;
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;buf&nbsp;=&nbsp;malloc(bufsiz);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(buf&nbsp;==&nbsp;NULL)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;perror(&quot;malloc&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;nbytes&nbsp;=&nbsp;readlink(argv[1],&nbsp;buf,&nbsp;bufsiz);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(nbytes&nbsp;==&nbsp;-1)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;perror(&quot;readlink&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;'%s'&nbsp;points&nbsp;to&nbsp;'%.*s'\n&quot;,&nbsp;argv[1],&nbsp;(int)&nbsp;nbytes,&nbsp;buf);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;If&nbsp;the&nbsp;return&nbsp;value&nbsp;was&nbsp;equal&nbsp;to&nbsp;the&nbsp;buffer&nbsp;size,&nbsp;then&nbsp;the
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;the&nbsp;link&nbsp;target&nbsp;was&nbsp;larger&nbsp;than&nbsp;expected&nbsp;(perhaps&nbsp;because&nbsp;the
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;target&nbsp;was&nbsp;changed&nbsp;between&nbsp;the&nbsp;call&nbsp;to&nbsp;lstat()&nbsp;and&nbsp;the&nbsp;call&nbsp;to
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;readlink()).&nbsp;Warn&nbsp;the&nbsp;user&nbsp;that&nbsp;the&nbsp;returned&nbsp;target&nbsp;may&nbsp;have
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;been&nbsp;truncated.&nbsp;*/
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(nbytes&nbsp;==&nbsp;bufsiz)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;(Returned&nbsp;buffer&nbsp;may&nbsp;have&nbsp;been&nbsp;truncated)\n&quot;);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;free(buf);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_SUCCESS);
 }
-</PRE>
 
 <A NAME="lbAM">&nbsp;</A>
 <H2>SEE ALSO</H2>
@@ -486,6 +499,6 @@ main(int argc, char *argv[])
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:46:39 GMT, April 20, 2020
+Time: 03:47:15 GMT, April 20, 2020
 </BODY>
 </HTML>

@@ -11,7 +11,7 @@ the License, or (at your option) any later version.
 <HTML><HEAD><TITLE>Man page of RANDOM</TITLE>
 </HEAD><BODY>
 <H1>RANDOM</H1>
-Section: Linux Programmer's Manual (4)<BR>Updated: 2017-03-13<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (4)<BR>Updated: 2017-09-15<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -23,6 +23,7 @@ random, urandom - kernel random number source devices
 
 #include &lt;<A HREF="file:///usr/include/linux/random.h">linux/random.h</A>&gt;
 <P>
+
 <B>int ioctl(</B><I>fd</I><B>, RND</B><I>request</I><B>, </B><I>param</I><B>);</B>
 
 <A NAME="lbAD">&nbsp;</A>
@@ -57,6 +58,7 @@ see the
 
 manual page for details.
 <P>
+
 When read, the
 <I>/dev/urandom</I>
 
@@ -65,6 +67,7 @@ number generator seeded from the entropy pool.
 Reads from this device do not block (i.e., the CPU is not yielded),
 but can incur an appreciable delay when requesting large amounts of data.
 <P>
+
 When read during early boot time,
 <I>/dev/urandom</I>
 
@@ -76,6 +79,7 @@ If this is of concern in your application, use
 
 or <I>/dev/random</I> instead.
 <P>
+
 The <I>/dev/random</I> device is a legacy interface which dates back to
 a time where the cryptographic primitives used in the implementation
 of <I>/dev/urandom</I> were not widely trusted.
@@ -84,6 +88,7 @@ bits of fresh noise in the entropy pool, blocking if necessary.
 <I>/dev/random</I> is suitable for applications that need
 high quality randomness, and can afford indeterminate delays.
 <P>
+
 When the entropy pool is empty, reads from <I>/dev/random</I> will block
 until additional environmental noise is gathered.
 If
@@ -110,6 +115,7 @@ will be set to
 <B>EAGAIN</B>.
 
 <P>
+
 The
 <B>O_NONBLOCK</B>
 
@@ -130,6 +136,7 @@ requested number of bytes or fail with the error
 
 if interrupted by a signal handler.
 <P>
+
 Since Linux 3.16,
 
 a
@@ -138,7 +145,7 @@ a
 from
 <I>/dev/urandom</I>
 
-will return at most 32 MB.
+will return at most 32&nbsp;MB.
 A
 <B><A HREF="../man2/read.2.html">read</A></B>(2)
 
@@ -149,6 +156,7 @@ will return at most 512 bytes
 
 (340 bytes on Linux kernels before version 2.6.12).
 <P>
+
 Writing to <I>/dev/random</I> or <I>/dev/urandom</I> will update the
 entropy pool with the data written, but this will not result in a
 higher entropy count.
@@ -172,6 +180,7 @@ these applications,
 must be used instead,
 because it will block until the entropy pool is initialized.
 <P>
+
 If a seed file is saved across reboots as recommended below (all major
 Linux distributions have done this since 2000 at least), the output is
 cryptographically secure against attackers without local root access as
@@ -192,13 +201,16 @@ If your system does not have
 <I>/dev/random</I> and <I>/dev/urandom</I> created already, they
 can be created with the following commands:
 <P>
-<PRE>
-    mknod -m 666 /dev/random c 1 8
-    mknod -m 666 /dev/urandom c 1 9
-    chown root:root /dev/random /dev/urandom
-</PRE>
+
+
+
+mknod -m 666 /dev/random c 1 8
+mknod -m 666 /dev/urandom c 1 9
+chown root:root /dev/random /dev/urandom
+
 
 <P>
+
 When a Linux system starts up without much operator interaction,
 the entropy pool may be in a fairly predictable state.
 This reduces the actual amount of noise in the entropy pool
@@ -208,41 +220,47 @@ entropy pool information across shut-downs and start-ups.
 To do this, add the lines to an appropriate script
 which is run during the Linux system start-up sequence:
 <P>
-<PRE>
-    echo &quot;Initializing random number generator...&quot;
-    random_seed=/var/run/random-seed
-    # Carry a random seed from start-up to start-up
-    # Load and then save the whole entropy pool
-    if [ -f $random_seed ]; then
-        cat $random_seed &gt;/dev/urandom
-    else
-        touch $random_seed
-    fi
-    chmod 600 $random_seed
-    poolfile=/proc/sys/kernel/random/poolsize
-    [ -r $poolfile ] &amp;&amp; bits=$(cat $poolfile) || bits=4096
-    bytes=$(expr $bits / 8)
-    dd if=/dev/urandom of=$random_seed count=1 bs=$bytes
-</PRE>
+
+
+
+echo &quot;Initializing random number generator...&quot;
+random_seed=/var/run/random-seed
+# Carry a random seed from start-up to start-up
+# Load and then save the whole entropy pool
+if [ -f $random_seed ]; then
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;cat&nbsp;$random_seed&nbsp;&gt;/dev/urandom
+else
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;touch&nbsp;$random_seed
+fi
+chmod 600 $random_seed
+poolfile=/proc/sys/kernel/random/poolsize
+[ -r $poolfile ] &amp;&amp; bits=$(cat $poolfile) || bits=4096
+bytes=$(expr $bits / 8)
+dd if=/dev/urandom of=$random_seed count=1 bs=$bytes
+
 
 <P>
+
 Also, add the following lines in an appropriate script which is
 run during the Linux system shutdown:
 <P>
-<PRE>
-    # Carry a random seed from shut-down to start-up
-    # Save the whole entropy pool
-    echo &quot;Saving random seed...&quot;
-    random_seed=/var/run/random-seed
-    touch $random_seed
-    chmod 600 $random_seed
-    poolfile=/proc/sys/kernel/random/poolsize
-    [ -r $poolfile ] &amp;&amp; bits=$(cat $poolfile) || bits=4096
-    bytes=$(expr $bits / 8)
-    dd if=/dev/urandom of=$random_seed count=1 bs=$bytes
-</PRE>
+
+
+
+# Carry a random seed from shut-down to start-up
+# Save the whole entropy pool
+echo &quot;Saving random seed...&quot;
+random_seed=/var/run/random-seed
+touch $random_seed
+chmod 600 $random_seed
+poolfile=/proc/sys/kernel/random/poolsize
+[ -r $poolfile ] &amp;&amp; bits=$(cat $poolfile) || bits=4096
+bytes=$(expr $bits / 8)
+dd if=/dev/urandom of=$random_seed count=1 bs=$bytes
+
 
 <P>
+
 In the above examples, we assume Linux 2.6.0 or later, where
 <I>/proc/sys/kernel/random/poolsize</I>
 
@@ -365,13 +383,14 @@ which only adds some
 data but does not increment the entropy count.
 The following structure is used:
 <DT><DD>
-<PRE>
-    struct rand_pool_info {
-        int    entropy_count;
-        int    buf_size;
-        __u32  buf[0];
-    };
-</PRE>
+
+
+struct rand_pool_info {
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;&nbsp;&nbsp;&nbsp;entropy_count;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;&nbsp;&nbsp;&nbsp;buf_size;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;__u32&nbsp;&nbsp;buf[0];
+};
+
 
 <DT><DD>
 Here
@@ -391,26 +410,26 @@ Zero the entropy count of all pools and add some system data (such as
 wall clock) to the pools.
 </DL>
 <A NAME="lbAI">&nbsp;</A>
-<H2>NOTES</H2>
-
-For an overview and comparison of the various interfaces that
-can be used to obtain randomness, see
-<B><A HREF="../man7/random.7.html">random</A></B>(7).
-
-<A NAME="lbAJ">&nbsp;</A>
-<H2>BUGS</H2>
-
-During early boot time, reads from
-<I>/dev/urandom</I>
-
-may return data prior to the entropy pool being initialized.
-<A NAME="lbAK">&nbsp;</A>
 <H2>FILES</H2>
 
 /dev/random
 <BR>
 
 /dev/urandom
+<A NAME="lbAJ">&nbsp;</A>
+<H2>NOTES</H2>
+
+For an overview and comparison of the various interfaces that
+can be used to obtain randomness, see
+<B><A HREF="../man7/random.7.html">random</A></B>(7).
+
+<A NAME="lbAK">&nbsp;</A>
+<H2>BUGS</H2>
+
+During early boot time, reads from
+<I>/dev/urandom</I>
+
+may return data prior to the entropy pool being initialized.
 
 
 
@@ -424,6 +443,7 @@ may return data prior to the entropy pool being initialized.
 <B><A HREF="../man7/random.7.html">random</A></B>(7)
 
 <P>
+
 RFC&nbsp;1750, &quot;Randomness Recommendations for Security&quot;
 <P>
 
@@ -439,15 +459,15 @@ RFC&nbsp;1750, &quot;Randomness Recommendations for Security&quot;
 <DT><A HREF="#lbAG">/proc interfaces</A><DD>
 <DT><A HREF="#lbAH">ioctl(2) interface</A><DD>
 </DL>
-<DT><A HREF="#lbAI">NOTES</A><DD>
-<DT><A HREF="#lbAJ">BUGS</A><DD>
-<DT><A HREF="#lbAK">FILES</A><DD>
+<DT><A HREF="#lbAI">FILES</A><DD>
+<DT><A HREF="#lbAJ">NOTES</A><DD>
+<DT><A HREF="#lbAK">BUGS</A><DD>
 <DT><A HREF="#lbAL">SEE ALSO</A><DD>
 </DL>
 <HR>
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:46:50 GMT, April 20, 2020
+Time: 03:47:26 GMT, April 20, 2020
 </BODY>
 </HTML>

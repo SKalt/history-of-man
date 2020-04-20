@@ -26,7 +26,7 @@ the source, must acknowledge the copyright and authors of this work.
 <HTML><HEAD><TITLE>Man page of WAIT</TITLE>
 </HEAD><BODY>
 <H1>WAIT</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2017-05-03<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2017-09-15<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -43,23 +43,28 @@ wait, waitpid, waitid - wait for process to change state
 <B>#include &lt;<A HREF="file:///usr/include/sys/wait.h">sys/wait.h</A>&gt;</B>
 
 <P>
+
 <B>pid_t wait(int *</B><I>wstatus</I><B>);</B>
 
 <P>
+
 <B>pid_t waitpid(pid_t </B><I>pid</I><B>, int *</B><I>wstatus</I><B>, int </B><I>options</I><B>);</B>
 
 <P>
+
 <B>int waitid(idtype_t </B><I>idtype</I><B>, id_t </B><I>id</I><B>, siginfo_t *</B><I>infop</I><B>, int </B><I>options</I><B>);</B>
 
 <BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;This&nbsp;is&nbsp;the&nbsp;glibc&nbsp;and&nbsp;POSIX&nbsp;interface;&nbsp;see
 <BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;NOTES&nbsp;for&nbsp;information&nbsp;on&nbsp;the&nbsp;raw&nbsp;system&nbsp;call.&nbsp;*/
 <P>
 
+
 Feature Test Macro Requirements for glibc (see
 <B><A HREF="../man7/feature_test_macros.7.html">feature_test_macros</A></B>(7)):
 
 
 <P>
+
 
 
 <B>waitid</B>():
@@ -92,6 +97,7 @@ the system to release the resources associated with the child;
 if a wait is not performed, then the terminated child remains in
 a &quot;zombie&quot; state (see NOTES below).
 <P>
+
 If a child has already changed state, then these calls return immediately.
 Otherwise, they block until either a child changes state or
 a signal handler interrupts the call (assuming that system calls
@@ -118,12 +124,15 @@ The call
 <I>wait(&amp;wstatus)</I>
 
 is equivalent to:
-<PRE>
+<P>
 
-    waitpid(-1, &amp;wstatus, 0);
-</PRE>
+
+
+waitpid(-1, &amp;wstatus, 0);
+
 
 <P>
+
 The
 <B>waitpid</B>()
 
@@ -141,6 +150,7 @@ via the
 
 argument, as described below.
 <P>
+
 The value of
 <I>pid</I>
 
@@ -266,7 +276,7 @@ This macro should be employed only if
 <B>WIFSIGNALED</B>
 
 returned true.
-<P>
+<DT><DD>
 This macro is not specified in POSIX.1-2001 and is not available on
 some UNIX implementations (e.g., AIX, SunOS).
 Therefore, enclose its use inside
@@ -307,6 +317,7 @@ The
 system call (available since Linux 2.6.9) provides more precise
 control over which child state changes to wait for.
 <P>
+
 The
 <I>idtype</I>
 
@@ -446,17 +457,44 @@ the state of the
 structure pointed to by
 <I>infop</I>
 
-is unspecified.
-
-
-
-
-To distinguish this case from that where a child was in a
+depends on the implementation.
+To (portably) distinguish this case from that where a child was in a
 waitable state, zero out the
 <I>si_pid</I>
 
 field before the call and check for a nonzero value in this field
 after the call returns.
+<P>
+
+POSIX.1-2008 Technical Corrigendum 1 (2013) adds the requirement that when
+<B>WNOHANG</B>
+
+is specified in
+<I>options</I>
+
+and there were no children in a waitable state, then
+<B>waitid</B>()
+
+should zero out the
+<I>si_pid</I>
+
+and
+<I>si_signo</I>
+
+fields of the structure.
+On Linux and other implementations that adhere to this requirement,
+it is not necessary to zero out the
+<I>si_pid</I>
+
+field before calling
+<B>waitid</B>().
+
+However,
+not all implementations follow the POSIX.1 specification on this point.
+
+
+
+
 <A NAME="lbAG">&nbsp;</A>
 <H2>RETURN VALUE</H2>
 
@@ -465,6 +503,7 @@ after the call returns.
 on success, returns the process ID of the terminated child;
 on error, -1 is returned.
 <P>
+
 <B>waitpid</B>():
 
 on success, returns the process ID of the child whose state has changed;
@@ -477,6 +516,7 @@ was specified and one or more child(ren) specified by
 exist, but have not yet changed state, then 0 is returned.
 On error, -1 is returned.
 <P>
+
 <B>waitid</B>():
 
 returns 0 on success or
@@ -587,6 +627,7 @@ operation);
 
 automatically performs a wait to remove the zombies.
 <P>
+
 POSIX.1-2001 specifies that if the disposition of
 <B>SIGCHLD</B>
 
@@ -629,6 +670,7 @@ is &quot;ignore&quot;, explicitly setting the disposition to
 
 results in different treatment of zombie process children.)
 <P>
+
 Linux 2.6 conforms to the POSIX requirements.
 However, Linux 2.4 (and earlier) does not:
 if a
@@ -727,6 +769,7 @@ is actually a library function that (in glibc) is implemented as a call to
 <B><A HREF="../man2/wait4.2.html">wait4</A></B>(2).
 
 <P>
+
 On some architectures, there is no
 <B>waitpid</B>()
 
@@ -737,6 +780,7 @@ wrapper function that calls
 <B><A HREF="../man2/wait4.2.html">wait4</A></B>(2).
 
 <P>
+
 The raw
 <B>waitid</B>()
 
@@ -798,74 +842,78 @@ The parent process executes a loop that monitors the child using
 
 and uses the W*() macros described above to analyze the wait status value.
 <P>
-The following shell session demonstrates the use of the program:
 
-<PRE>
+The following shell session demonstrates the use of the program:
+<P>
+
+
 
 $<B> ./a.out &amp;</B>
+
 Child PID is 32360
 [1] 32359
 $<B> kill -STOP 32360</B>
+
 stopped by signal 19
 $<B> kill -CONT 32360</B>
+
 continued
 $<B> kill -TERM 32360</B>
+
 killed by signal 15
 [1]+  Done                    ./a.out
 $
-</PRE>
 
 
 <A NAME="lbAO">&nbsp;</A>
 <H3>Program source</H3>
 
 
-<PRE>
+
 #include &lt;<A HREF="file:///usr/include/sys/wait.h">sys/wait.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/stdlib.h">stdlib.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;
-
+<P>
 int
 main(int argc, char *argv[])
 {
-    pid_t cpid, w;
-    int wstatus;
-
-    cpid = fork();
-    if (cpid == -1) {
-        perror(&quot;fork&quot;);
-        exit(EXIT_FAILURE);
-    }
-
-    if (cpid == 0) {            /* Code executed by child */
-        printf(&quot;Child PID is %ld\n&quot;, (long) getpid());
-        if (argc == 1)
-            pause();                    /* Wait for signals */
-        _exit(atoi(argv[1]));
-
-    } else {                    /* Code executed by parent */
-        do {
-            w = waitpid(cpid, &amp;wstatus, WUNTRACED | WCONTINUED);
-            if (w == -1) {
-                perror(&quot;waitpid&quot;);
-                exit(EXIT_FAILURE);
-            }
-
-            if (WIFEXITED(wstatus)) {
-                printf(&quot;exited, status=%d\n&quot;, WEXITSTATUS(wstatus));
-            } else if (WIFSIGNALED(wstatus)) {
-                printf(&quot;killed by signal %d\n&quot;, WTERMSIG(wstatus));
-            } else if (WIFSTOPPED(wstatus)) {
-                printf(&quot;stopped by signal %d\n&quot;, WSTOPSIG(wstatus));
-            } else if (WIFCONTINUED(wstatus)) {
-                printf(&quot;continued\n&quot;);
-            }
-        } while (!WIFEXITED(wstatus) &amp;&amp; !WIFSIGNALED(wstatus));
-        exit(EXIT_SUCCESS);
-    }
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;pid_t&nbsp;cpid,&nbsp;w;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;wstatus;
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;cpid&nbsp;=&nbsp;fork();
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(cpid&nbsp;==&nbsp;-1)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;perror(&quot;fork&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(cpid&nbsp;==&nbsp;0)&nbsp;{&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Code&nbsp;executed&nbsp;by&nbsp;child&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;Child&nbsp;PID&nbsp;is&nbsp;%ld\n&quot;,&nbsp;(long)&nbsp;getpid());
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(argc&nbsp;==&nbsp;1)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;pause();&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Wait&nbsp;for&nbsp;signals&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;_exit(atoi(argv[1]));
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}&nbsp;else&nbsp;{&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Code&nbsp;executed&nbsp;by&nbsp;parent&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;do&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;w&nbsp;=&nbsp;waitpid(cpid,&nbsp;&amp;wstatus,&nbsp;WUNTRACED&nbsp;|&nbsp;WCONTINUED);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(w&nbsp;==&nbsp;-1)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;perror(&quot;waitpid&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(WIFEXITED(wstatus))&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;exited,&nbsp;status=%d\n&quot;,&nbsp;WEXITSTATUS(wstatus));
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}&nbsp;else&nbsp;if&nbsp;(WIFSIGNALED(wstatus))&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;killed&nbsp;by&nbsp;signal&nbsp;%d\n&quot;,&nbsp;WTERMSIG(wstatus));
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}&nbsp;else&nbsp;if&nbsp;(WIFSTOPPED(wstatus))&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;stopped&nbsp;by&nbsp;signal&nbsp;%d\n&quot;,&nbsp;WSTOPSIG(wstatus));
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}&nbsp;else&nbsp;if&nbsp;(WIFCONTINUED(wstatus))&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;continued\n&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}&nbsp;while&nbsp;(!WIFEXITED(wstatus)&nbsp;&amp;&amp;&nbsp;!WIFSIGNALED(wstatus));
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_SUCCESS);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
 }
-</PRE>
 
 <A NAME="lbAP">&nbsp;</A>
 <H2>SEE ALSO</H2>
@@ -923,6 +971,6 @@ main(int argc, char *argv[])
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:46:40 GMT, April 20, 2020
+Time: 03:47:17 GMT, April 20, 2020
 </BODY>
 </HTML>

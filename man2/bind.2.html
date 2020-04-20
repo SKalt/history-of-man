@@ -107,6 +107,7 @@ socket may receive connections (see
 <B><A HREF="../man2/accept.2.html">accept</A></B>(2)).
 
 <P>
+
 The rules used in name binding vary between address families.
 Consult the manual entries in Section 7 for detailed information.
 For
@@ -152,6 +153,7 @@ see
 <B><A HREF="../man7/netlink.7.html">netlink</A></B>(7).
 
 <P>
+
 The actual structure passed for the
 <I>addr</I>
 
@@ -160,16 +162,17 @@ The
 <I>sockaddr</I>
 
 structure is defined as something like:
+<P>
 
-<PRE>
+
 
 struct sockaddr {
-    sa_family_t sa_family;
-    char        sa_data[14];
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;sa_family_t&nbsp;sa_family;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;char&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;sa_data[14];
 }
 
-</PRE>
 
+<P>
 
 The only purpose of this structure is to cast the structure
 pointer passed in
@@ -319,6 +322,7 @@ and this header file is not required on Linux.
 However, some historical (BSD) implementations required this header
 file, and portable applications are probably wise to include it.
 <P>
+
 For background on the
 <I>socklen_t</I>
 
@@ -340,6 +344,7 @@ with Internet domain sockets can be found in
 <B><A HREF="../man3/getaddrinfo.3.html">getaddrinfo</A></B>(3).
 
 <P>
+
 The following example shows how to bind a stream socket in the UNIX
 (<B>AF_UNIX</B>)
 
@@ -348,58 +353,58 @@ domain, and accept connections:
 
 
 <P>
-<PRE>
+
+
 #include &lt;<A HREF="file:///usr/include/sys/socket.h">sys/socket.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/sys/un.h">sys/un.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/stdlib.h">stdlib.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/string.h">string.h</A>&gt;
-
+<P>
 #define MY_SOCK_PATH &quot;/somepath&quot;
 #define LISTEN_BACKLOG 50
-
+<P>
 #define handle_error(msg) \
-    do { perror(msg); exit(EXIT_FAILURE); } while (0)
-
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;do&nbsp;{&nbsp;perror(msg);&nbsp;exit(EXIT_FAILURE);&nbsp;}&nbsp;while&nbsp;(0)
+<P>
 int
 main(int argc, char *argv[])
 {
-    int sfd, cfd;
-    struct sockaddr_un my_addr, peer_addr;
-    socklen_t peer_addr_size;
-
-    sfd = socket(AF_UNIX, SOCK_STREAM, 0);
-    if (sfd == -1)
-        handle_error(&quot;socket&quot;);
-
-    memset(&amp;my_addr, 0, sizeof(struct sockaddr_un));
-                        /* Clear structure */
-    my_addr.sun_family = AF_UNIX;
-    strncpy(my_addr.sun_path, MY_SOCK_PATH,
-            sizeof(my_addr.sun_path) - 1);
-
-    if (bind(sfd, (struct sockaddr *) &amp;my_addr,
-            sizeof(struct sockaddr_un)) == -1)
-        handle_error(&quot;bind&quot;);
-
-    if (listen(sfd, LISTEN_BACKLOG) == -1)
-        handle_error(&quot;listen&quot;);
-
-    /* Now we can accept incoming connections one
-       at a time using <A HREF="../man2/accept.2.html">accept</A>(2) */
-
-    peer_addr_size = sizeof(struct sockaddr_un);
-    cfd = accept(sfd, (struct sockaddr *) &amp;peer_addr,
-                 &amp;peer_addr_size);
-    if (cfd == -1)
-        handle_error(&quot;accept&quot;);
-
-    /* Code to deal with incoming connection(s)... */
-
-    /* When no longer required, the socket pathname, MY_SOCK_PATH
-       should be deleted using <A HREF="../man2/unlink.2.html">unlink</A>(2) or <A HREF="../man3/remove.3.html">remove</A>(3) */
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;sfd,&nbsp;cfd;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;struct&nbsp;sockaddr_un&nbsp;my_addr,&nbsp;peer_addr;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;socklen_t&nbsp;peer_addr_size;
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;sfd&nbsp;=&nbsp;socket(AF_UNIX,&nbsp;SOCK_STREAM,&nbsp;0);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(sfd&nbsp;==&nbsp;-1)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;handle_error(&quot;socket&quot;);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;memset(&amp;my_addr,&nbsp;0,&nbsp;sizeof(struct&nbsp;sockaddr_un));
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Clear&nbsp;structure&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;my_addr.sun_family&nbsp;=&nbsp;AF_UNIX;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;strncpy(my_addr.sun_path,&nbsp;MY_SOCK_PATH,
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;sizeof(my_addr.sun_path)&nbsp;-&nbsp;1);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(bind(sfd,&nbsp;(struct&nbsp;sockaddr&nbsp;*)&nbsp;&amp;my_addr,
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;sizeof(struct&nbsp;sockaddr_un))&nbsp;==&nbsp;-1)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;handle_error(&quot;bind&quot;);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(listen(sfd,&nbsp;LISTEN_BACKLOG)&nbsp;==&nbsp;-1)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;handle_error(&quot;listen&quot;);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Now&nbsp;we&nbsp;can&nbsp;accept&nbsp;incoming&nbsp;connections&nbsp;one
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;at&nbsp;a&nbsp;time&nbsp;using&nbsp;<A HREF="../man2/accept.2.html">accept</A>(2)&nbsp;*/
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;peer_addr_size&nbsp;=&nbsp;sizeof(struct&nbsp;sockaddr_un);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;cfd&nbsp;=&nbsp;accept(sfd,&nbsp;(struct&nbsp;sockaddr&nbsp;*)&nbsp;&amp;peer_addr,
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&amp;peer_addr_size);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(cfd&nbsp;==&nbsp;-1)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;handle_error(&quot;accept&quot;);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Code&nbsp;to&nbsp;deal&nbsp;with&nbsp;incoming&nbsp;connection(s)...&nbsp;*/
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;When&nbsp;no&nbsp;longer&nbsp;required,&nbsp;the&nbsp;socket&nbsp;pathname,&nbsp;MY_SOCK_PATH
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;should&nbsp;be&nbsp;deleted&nbsp;using&nbsp;<A HREF="../man2/unlink.2.html">unlink</A>(2)&nbsp;or&nbsp;<A HREF="../man3/remove.3.html">remove</A>(3)&nbsp;*/
 }
-</PRE>
 
 <A NAME="lbAK">&nbsp;</A>
 <H2>SEE ALSO</H2>
@@ -448,6 +453,6 @@ main(int argc, char *argv[])
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:46:37 GMT, April 20, 2020
+Time: 03:47:13 GMT, April 20, 2020
 </BODY>
 </HTML>

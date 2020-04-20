@@ -4,7 +4,7 @@
 <HTML><HEAD><TITLE>Man page of IOCTL_TTY</TITLE>
 </HEAD><BODY>
 <H1>IOCTL_TTY</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2017-05-03<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2017-09-15<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -17,6 +17,7 @@ ioctl_tty - ioctls for terminals and serial lines
 <B>#include &lt;<A HREF="file:///usr/include/termios.h">termios.h</A>&gt;</B>
 
 <P>
+
 <B>int ioctl(int </B><I>fd</I><B>, int </B><I>cmd</I><B>, ...);</B>
 
 <A NAME="lbAD">&nbsp;</A>
@@ -156,6 +157,7 @@ Window sizes are kept in the kernel, but not used by the kernel
 update the window size when the size of the virtual console changes,
 for example, by loading a new font).
 <P>
+
 The following constants and structure are defined in
 <I>&lt;<A HREF="file:///usr/include/sys/ioctl.h">sys/ioctl.h</A>&gt;</I>.
 
@@ -174,17 +176,18 @@ Set window size.<BR>
 The struct used by these ioctls is defined as
 <P>
 
-<PRE>
+
+
 struct winsize {
-    unsigned short ws_row;
-    unsigned short ws_col;
-    unsigned short ws_xpixel;   /* unused */
-    unsigned short ws_ypixel;   /* unused */
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;unsigned&nbsp;short&nbsp;ws_row;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;unsigned&nbsp;short&nbsp;ws_col;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;unsigned&nbsp;short&nbsp;ws_xpixel;&nbsp;&nbsp;&nbsp;/*&nbsp;unused&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;unsigned&nbsp;short&nbsp;ws_ypixel;&nbsp;&nbsp;&nbsp;/*&nbsp;unused&nbsp;*/
 };
-</PRE>
 
 
 <P>
+
 When the window size changes, a
 <B>SIGWINCH</B>
 
@@ -214,7 +217,7 @@ When
 <I>arg</I>
 
 is nonzero, nobody knows what will happen.
-<P>
+<DT><DD>
 (SVr4, UnixWare, Solaris, Linux treat
 <I>tcsendbreak(fd,arg)</I>
 
@@ -380,7 +383,7 @@ For this case,
 <I>arg</I>
 
 should be specified as zero.
-<P>
+<DT><DD>
 If this terminal is already the controlling terminal
 of a different session group, then the ioctl fails with
 <B>EPERM</B>,
@@ -463,14 +466,14 @@ capability.)
 <DT><B>TIOCGEXCL<TT>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT>int *</B><I>argp</I>
 
 <DD>
-If the terminal is currently in exclusive mode,<BR>
+(since Linux 3.8)<BR>
+If the terminal is currently in exclusive mode,
 place a nonzero value in the location pointed to by
 <I>argp</I>;
 
 otherwise, place zero in
-<I>*argp</I>
+<I>*argp</I>.
 
-(since Linux 3.8).
 <DT><B>TIOCNXCL<TT>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT>void</B>
 
 <DD>
@@ -515,7 +518,7 @@ If the first byte is not
 
 (0), it is an OR of one
 or more of the following bits:
-<P>
+<DT><DD>
 <PRE>
 TIOCPKT_FLUSHREAD   The read queue for the terminal is flushed.
 TIOCPKT_FLUSHWRITE  The write queue for the terminal is flushed.
@@ -525,7 +528,7 @@ TIOCPKT_DOSTOP      The start and stop characters are <B>^S</B>/<B>^Q</B>.
 TIOCPKT_NOSTOP      The start and stop characters are not <B>^S</B>/<B>^Q</B>.
 </PRE>
 
-<P>
+<DT><DD>
 While this mode is in use, the presence
 of control status information to be read
 from the master side may be detected by a
@@ -538,7 +541,7 @@ for the
 <I>POLLPRI</I>
 
 event.
-<P>
+<DT><DD>
 This mode is used by
 <B><A HREF="../man1/rlogin.1.html">rlogin</A></B>(1)
 
@@ -550,11 +553,11 @@ locally <B>^S</B>/<B>^Q</B> flow-controlled remote login.
 <DT><B>TIOCGPKT<TT>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT>const int *</B><I>argp</I>
 
 <DD>
-Return the current packet mode setting in the integer pointed to by<BR>
-<I>argp</I>
+(since Linux 3.8)<BR>
+Return the current packet mode setting in the integer pointed to by
+<I>argp</I>.
 
-(since Linux 3.8).
-<DT><B>TIOCSPTLCK<TT>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT>int *</B><I>argp</I>
+<DT><B>TIOCSPTLCK<TT>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT>int *</B><I>argp</I>
 
 <DD>
 Set (if<BR>
@@ -570,11 +573,44 @@ is zero) the pseudoterminal slave device.
 <DT><B>TIOCGPTLCK<TT>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT>int *</B><I>argp</I>
 
 <DD>
-Place the current lock state of the pseudoterminal slave device<BR>
+(since Linux 3.8)<BR>
+Place the current lock state of the pseudoterminal slave device
 in the location pointed to by
-<I>argp</I>
+<I>argp</I>.
 
-(since Linux 3.8).
+<DT><B>TIOCGPTPEER<TT>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT>int </B><I>flags</I>
+
+<DD>
+
+(since Linux 4.13)<BR>
+Given a file descriptor in
+<I>fd</I>
+
+that refers to a pseudoterminal master,
+open (with the given
+<B><A HREF="../man2/open.2.html">open</A></B>(2)-style
+
+<I>flags</I>)
+
+and return a new file descriptor that refers to the peer
+pseudoterminal slave device.
+This operation can be performed
+regardless of whether the pathname of the slave device
+is accessible through the calling process's mount namespaces.
+<DT><DD>
+Security-conscious programs interacting with namespaces may wish to use this
+operation rather than
+<B><A HREF="../man2/open.2.html">open</A></B>(2)
+
+with the pathname returned by
+<B><A HREF="../man3/ptsname.3.html">ptsname</A></B>(3),
+
+and similar library functions that have insecure APIs.
+(For example, confusion can occur in some cases using
+<B><A HREF="../man3/ptsname.3.html">ptsname</A></B>(3)
+
+with a pathname where a devpts filesystem
+has been mounted in a different mount namespace.)
 </DL>
 <P>
 
@@ -613,6 +649,7 @@ Set the indicated modem bits.<BR>
 
 The following bits are used by the above ioctls:
 <P>
+
 <PRE>
 TIOCM_LE        DSR (data set ready/line enable)
 TIOCM_DTR       DTR (data terminal ready)
@@ -659,7 +696,7 @@ The counts are written to the
 structure pointed to by
 <I>argp</I>.
 
-<P>
+<DT><DD>
 Note: both 1-&gt;0 and 0-&gt;1 transitions are counted, except for
 RI, where only 0-&gt;1 transitions are counted.
 </DL>
@@ -790,25 +827,25 @@ Insufficient permission.
 
 Check the condition of DTR on the serial port.
 <P>
-<PRE>
+
+
 #include &lt;<A HREF="file:///usr/include/termios.h">termios.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/fcntl.h">fcntl.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/sys/ioctl.h">sys/ioctl.h</A>&gt;
-
+<P>
 int
 main(void)
 {
-    int fd, serial;
-
-    fd = open(&quot;/dev/ttyS0&quot;, O_RDONLY);
-    ioctl(fd, TIOCMGET, &amp;serial);
-    if (serial &amp; TIOCM_DTR)
-        puts(&quot;TIOCM_DTR is set&quot;);
-    else
-        puts(&quot;TIOCM_DTR is not set&quot;);
-    close(fd);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;fd,&nbsp;serial;
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;fd&nbsp;=&nbsp;open(&quot;/dev/ttyS0&quot;,&nbsp;O_RDONLY);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;ioctl(fd,&nbsp;TIOCMGET,&nbsp;&amp;serial);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(serial&nbsp;&amp;&nbsp;TIOCM_DTR)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;puts(&quot;TIOCM_DTR&nbsp;is&nbsp;set&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;else
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;puts(&quot;TIOCM_DTR&nbsp;is&nbsp;not&nbsp;set&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;close(fd);
 }
-</PRE>
 
 <A NAME="lbAY">&nbsp;</A>
 <H2>SEE ALSO</H2>
@@ -875,6 +912,6 @@ main(void)
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:46:50 GMT, April 20, 2020
+Time: 03:47:27 GMT, April 20, 2020
 </BODY>
 </HTML>

@@ -26,7 +26,7 @@ the source, must acknowledge the copyright and authors of this work.
 <HTML><HEAD><TITLE>Man page of EXIT</TITLE>
 </HEAD><BODY>
 <H1>EXIT</H1>
-Section: Linux Programmer's Manual (3)<BR>Updated: 2017-05-03<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2017-09-15<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -145,8 +145,7 @@ POSIX.1-2001, POSIX.1-2008, C89, C99, SVr4, 4.3BSD.
 
 <P>
 
-It is undefined what happens if one of the
-functions registered using
+The behavior is undefined if one of the functions registered using
 <B><A HREF="../man3/atexit.3.html">atexit</A></B>(3)
 
 and
@@ -233,9 +232,11 @@ it is undefined whether a
 <B>SIGCHLD</B>
 
 signal is sent.
-<P>
 
-If the process is a session leader and its controlling terminal
+<A NAME="lbAI">&nbsp;</A>
+<H3>Signals sent to other processes</H3>
+
+If the exiting process is a session leader and its controlling terminal
 is the controlling terminal of the session, then each process in
 the foreground process group of this controlling terminal
 is sent a
@@ -260,10 +261,26 @@ See
 <B><A HREF="../man2/setpgid.2.html">setpgid</A></B>(2)
 
 for an explanation of orphaned process groups.
-<A NAME="lbAI">&nbsp;</A>
+<P>
+
+Except in the above cases,
+where the signalled processes may be children of the terminating process,
+termination of a process does
+<I>not</I>
+
+in general cause a signal to be sent to children of that process.
+However, a process can use the
+<B><A HREF="../man2/prctl.2.html">prctl</A></B>(2)
+
+<B>PR_SET_PDEATHSIG</B>
+
+operation to arrange that it receives a signal if its parent terminates.
+<A NAME="lbAJ">&nbsp;</A>
 <H2>SEE ALSO</H2>
 
 <B><A HREF="../man2/_exit.2.html">_exit</A></B>(2),
+
+<B><A HREF="../man2/get_robust_list.2.html">get_robust_list</A></B>(2),
 
 <B><A HREF="../man2/setpgid.2.html">setpgid</A></B>(2),
 
@@ -287,12 +304,15 @@ for an explanation of orphaned process groups.
 <DT><A HREF="#lbAF">ATTRIBUTES</A><DD>
 <DT><A HREF="#lbAG">CONFORMING TO</A><DD>
 <DT><A HREF="#lbAH">NOTES</A><DD>
-<DT><A HREF="#lbAI">SEE ALSO</A><DD>
+<DL>
+<DT><A HREF="#lbAI">Signals sent to other processes</A><DD>
+</DL>
+<DT><A HREF="#lbAJ">SEE ALSO</A><DD>
 </DL>
 <HR>
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:46:43 GMT, April 20, 2020
+Time: 03:47:20 GMT, April 20, 2020
 </BODY>
 </HTML>

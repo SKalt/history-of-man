@@ -11,7 +11,7 @@ of the modification is added to the header.
 <HTML><HEAD><TITLE>Man page of UNIX</TITLE>
 </HEAD><BODY>
 <H1>UNIX</H1>
-Section: Linux Programmer's Manual (7)<BR>Updated: 2017-03-13<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (7)<BR>Updated: 2017-09-15<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -28,6 +28,7 @@ unix - sockets for local interprocess communication
 <B>#include &lt;<A HREF="file:///usr/include/sys/un.h">sys/un.h</A>&gt;</B>
 
 <P>
+
 <I>unix_socket</I><B> = socket(AF_UNIX, type, 0);</B>
 
 <BR>
@@ -50,6 +51,7 @@ or bound to a filesystem pathname (marked as being of type socket).
 Linux also supports an abstract namespace which is independent of the
 filesystem.
 <P>
+
 Valid socket types in the UNIX domain are:
 <B>SOCK_STREAM</B>,
 
@@ -66,20 +68,23 @@ for a sequenced-packet socket that is connection-oriented,
 preserves message boundaries,
 and delivers messages in the order that they were sent.
 <P>
+
 UNIX domain sockets support passing file descriptors or process credentials
 to other processes using ancillary data.
 <A NAME="lbAE">&nbsp;</A>
 <H3>Address format</H3>
 
 A UNIX domain socket address is represented in the following structure:
+<P>
 
-<PRE>
+
+
+
 
 struct sockaddr_un {
-    sa_family_t sun_family;               /* AF_UNIX */
-    char        sun_path[108];            /* pathname */
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;sa_family_t&nbsp;sun_family;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;AF_UNIX&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;char&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;sun_path[108];&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;pathname&nbsp;*/
 };
-</PRE>
 
 
 <P>
@@ -95,6 +100,7 @@ On Linux
 
 is 108 bytes in size; see also NOTES, below.
 <P>
+
 Various systems calls (for example,
 <B><A HREF="../man2/bind.2.html">bind</A></B>(2),
 
@@ -119,6 +125,7 @@ and
 
 return an argument of this type.
 <P>
+
 Three types of address are distinguished in the
 <I>sockaddr_un</I>
 
@@ -134,9 +141,9 @@ filesystem pathname using
 When the address of a pathname socket is returned
 (by one of the system calls noted above),
 its length is
-<P>
+<DT><DD>
 <BR>&nbsp;&nbsp;&nbsp;&nbsp;offsetof(struct&nbsp;sockaddr_un,&nbsp;sun_path)&nbsp;+&nbsp;strlen(sun_path)&nbsp;+&nbsp;1
-<P>
+<DT><DD>
 and
 <I>sun_path</I>
 
@@ -231,7 +238,7 @@ argument that describes the enclosing
 <I>sockaddr_un</I>
 
 structure should have a value of at least:
-<P>
+<DT><DD>
 <PRE>
     offsetof(struct sockaddr_un, sun_path)+strlen(addr.sun_path)+1
 </PRE>
@@ -255,6 +262,7 @@ append a null terminator if none is present in the supplied
 <I>sun_path</I>.
 
 <P>
+
 When coding portable applications,
 keep in mind that some implementations
 
@@ -265,6 +273,7 @@ as short as 92 bytes.
 
 
 <P>
+
 Various system calls
 (<B><A HREF="../man2/accept.2.html">accept</A></B>(2),
 
@@ -298,6 +307,7 @@ pathname sockets honor the permissions of the directory they are in.
 Creation of a new socket will fail if the process does not have write and
 search (execute) permission on the directory in which the socket is created.
 <P>
+
 On Linux,
 connecting to a stream socket object requires write permission on that socket;
 sending a datagram to a datagram socket likewise
@@ -308,6 +318,7 @@ the socket permissions are ignored.
 Portable programs should not rely on
 this feature for security.
 <P>
+
 When creating a new socket, the owner and group of the socket file
 are set according to the usual rules.
 The socket file has all permissions enabled,
@@ -315,6 +326,7 @@ other than those that are turned off by the process
 <B><A HREF="../man2/umask.2.html">umask</A></B>(2).
 
 <P>
+
 The owner, group, and permissions of a pathname socket can be changed (using
 <B><A HREF="../man2/chown.2.html">chown</A></B>(2)
 
@@ -339,9 +351,11 @@ and
 
 has no effect on the accessibility of the socket.
 <P>
+
 Abstract sockets automatically disappear when all open references
 to the socket are closed.
 <P>
+
 The abstract socket namespace is a nonportable Linux extension.
 
 <A NAME="lbAI">&nbsp;</A>
@@ -407,6 +421,7 @@ The change to 5 bytes came in Linux 2.3.15.)
 The following paragraphs describe domain-specific details and
 unsupported features of the sockets API for UNIX domain sockets on Linux.
 <P>
+
 UNIX domain sockets do not support the transmission of
 out-of-band data (the
 <B>MSG_OOB</B>
@@ -418,6 +433,7 @@ and
 <B><A HREF="../man2/recv.2.html">recv</A></B>(2)).
 
 <P>
+
 The
 <B><A HREF="../man2/send.2.html">send</A></B>(2)
 
@@ -425,6 +441,7 @@ The
 
 flag is not supported by UNIX domain sockets.
 <P>
+
 Before Linux 3.4,
 
 the use of
@@ -438,6 +455,7 @@ argument of
 
 was not supported by UNIX domain sockets.
 <P>
+
 The
 <B>SO_SNDBUF</B>
 
@@ -508,18 +526,17 @@ Thus structure is defined in
 <I>&lt;<A HREF="file:///usr/include/sys/socket.h">sys/socket.h</A>&gt;</I>
 
 as follows:
-<P>
+<DT><DD>
 
-<PRE>
+
 struct ucred {
-    pid_t pid;    /* process ID of the sending process */
-    uid_t uid;    /* user ID of the sending process */
-    gid_t gid;    /* group ID of the sending process */
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;pid_t&nbsp;pid;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;process&nbsp;ID&nbsp;of&nbsp;the&nbsp;sending&nbsp;process&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;uid_t&nbsp;uid;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;user&nbsp;ID&nbsp;of&nbsp;the&nbsp;sending&nbsp;process&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;gid_t&nbsp;gid;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;group&nbsp;ID&nbsp;of&nbsp;the&nbsp;sending&nbsp;process&nbsp;*/
 };
-</PRE>
 
 
-<P>
+<DT><DD>
 Since glibc 2.8, the
 <B>_GNU_SOURCE</B>
 
@@ -528,7 +545,7 @@ feature test macro must be defined (before including
 
 header files) in order to obtain the definition
 of this structure.
-<P>
+<DT><DD>
 The credentials which the sender specifies are checked by the kernel.
 A process with effective user ID 0 is allowed to specify values that do
 not match its own.
@@ -747,7 +764,7 @@ An in-flight file descriptor is one that has been sent using
 but has not yet been accepted in the recipient process using
 <B><A HREF="../man2/recvmsg.2.html">recvmsg</A></B>(2).
 
-<P>
+<DT><DD>
 This error is diagnosed since mainline Linux 4.5
 (and in some earlier kernel versions where the fix has been backported).
 
@@ -787,6 +804,7 @@ The usual UNIX close-behind semantics apply; the socket can be unlinked
 at any time and will be finally removed from the filesystem when the last
 reference to it is closed.
 <P>
+
 To pass file descriptors or credentials over a
 <B>SOCK_STREAM</B>,
 
@@ -799,6 +817,7 @@ or
 
 call.
 <P>
+
 UNIX domain stream sockets do not support the notion of out-of-band data.
 
 <A NAME="lbAQ">&nbsp;</A>
@@ -836,6 +855,7 @@ have a null terminator in
 <I>sun_path</I>.
 
 <P>
+
 In addition, some implementations
 
 don't require a null terminator when binding a socket (the
@@ -849,12 +869,14 @@ there is no null terminator in
 <I>sun_path</I>.
 
 <P>
+
 Applications that retrieve socket addresses can (portably) code
 to handle the possibility that there is no null terminator in
 <I>sun_path</I>
 
 by respecting the fact that the number of valid bytes in the pathname is:
 <P>
+
 <BR>&nbsp;&nbsp;&nbsp;&nbsp;strnlen(addr.sun_path,&nbsp;addrlen&nbsp;-&nbsp;offsetof(sockaddr_un,&nbsp;sun_path))
 
 
@@ -867,6 +889,7 @@ by respecting the fact that the number of valid bytes in the pathname is:
 
 
 <P>
+
 Alternatively, an application can retrieve
 the socket address by allocating a buffer of size
 <I>sizeof(struct sockaddr_un)+1</I>
@@ -883,22 +906,25 @@ a null terminator for the string returned in
 <I>sun_path</I>:
 
 <P>
-<PRE>
-void *addrp;
 
+
+
+void *addrp;
+<P>
 addrlen = sizeof(struct sockaddr_un);
 addrp = malloc(addrlen + 1);
 if (addrp == NULL)
-    /* Handle error */ ;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Handle&nbsp;error&nbsp;*/&nbsp;;
 memset(addrp, 0, addrlen + 1);
-
+<P>
 if (getsockname(sfd, (struct sockaddr *) addrp, &amp;addrlen)) == -1)
-    /* handle error */ ;
-
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;handle&nbsp;error&nbsp;*/&nbsp;;
+<P>
 printf(&quot;sun_path = %s\n&quot;, ((struct sockaddr_un *) addrp)-&gt;sun_path);
-</PRE>
+
 
 <P>
+
 This sort of messiness can be avoided if it is guaranteed
 that the applications that
 <I>create</I>
@@ -929,7 +955,7 @@ Execution of the server program ends when it receives the &quot;DOWN&quot; comma
 <H3>Example output</H3>
 
 
-<PRE>
+
 $ <B>./server &amp;</B>
 [1] 25887
 $ <B>./client 3 4</B>
@@ -940,24 +966,24 @@ $ <B>./client DOWN</B>
 Result = 0
 [1]+  Done                    ./server
 $
-</PRE>
 
 
 <A NAME="lbAT">&nbsp;</A>
 <H3>Program source</H3>
 
-<PRE>
-/*
- * File connection.h
- */
 
+
+/*
+<BR>&nbsp;*&nbsp;File&nbsp;connection.h
+<BR>&nbsp;*/
+<P>
 #define SOCKET_NAME &quot;/tmp/9Lq7BNBnBycd6nxy.socket&quot;
 #define BUFFER_SIZE 12
-
+<P>
 /*
- * File server.c
- */
-
+<BR>&nbsp;*&nbsp;File&nbsp;server.c
+<BR>&nbsp;*/
+<P>
 #include &lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/stdlib.h">stdlib.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/string.h">string.h</A>&gt;
@@ -965,142 +991,142 @@ $
 #include &lt;<A HREF="file:///usr/include/sys/un.h">sys/un.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;
 #include &quot;connection.h&quot;
-
+<P>
 int
 main(int argc, char *argv[])
 {
-    struct sockaddr_un name;
-    int down_flag = 0;
-    int ret;
-    int connection_socket;
-    int data_socket;
-    int result;
-    char buffer[BUFFER_SIZE];
-
-    /*
-     * In case the program exited inadvertently on the last run,
-     * remove the socket.
-     */
-
-    unlink(SOCKET_NAME);
-
-    /* Create local socket. */
-
-    connection_socket = socket(AF_UNIX, SOCK_SEQPACKET, 0);
-    if (connection_socket == -1) {
-        perror(&quot;socket&quot;);
-        exit(EXIT_FAILURE);
-    }
-
-    /*
-     * For portability clear the whole structure, since some
-     * implementations have additional (nonstandard) fields in
-     * the structure.
-     */
-
-    memset(&amp;name, 0, sizeof(struct sockaddr_un));
-
-    /* Bind socket to socket name. */
-
-    name.sun_family = AF_UNIX;
-    strncpy(name.sun_path, SOCKET_NAME, sizeof(name.sun_path) - 1);
-
-    ret = bind(connection_socket, (const struct sockaddr *) &amp;name,
-               sizeof(struct sockaddr_un));
-    if (ret == -1) {
-        perror(&quot;bind&quot;);
-        exit(EXIT_FAILURE);
-    }
-
-    /*
-     * Prepare for accepting connections. The backlog size is set
-     * to 20. So while one request is being processed other requests
-     * can be waiting.
-     */
-
-    ret = listen(connection_socket, 20);
-    if (ret == -1) {
-        perror(&quot;listen&quot;);
-        exit(EXIT_FAILURE);
-    }
-
-    /* This is the main loop for handling connections. */
-
-    for (;;) {
-
-        /* Wait for incoming connection. */
-
-        data_socket = accept(connection_socket, NULL, NULL);
-        if (data_socket == -1) {
-            perror(&quot;accept&quot;);
-            exit(EXIT_FAILURE);
-        }
-
-        result = 0;
-        for(;;) {
-
-            /* Wait for next data packet. */
-
-            ret = read(data_socket, buffer, BUFFER_SIZE);
-            if (ret == -1) {
-                perror(&quot;read&quot;);
-                exit(EXIT_FAILURE);
-            }
-
-            /* Ensure buffer is 0-terminated. */
-
-            buffer[BUFFER_SIZE - 1] = 0;
-
-            /* Handle commands. */
-
-            if (!strncmp(buffer, &quot;DOWN&quot;, BUFFER_SIZE)) {
-                down_flag = 1;
-                break;
-            }
-
-            if (!strncmp(buffer, &quot;END&quot;, BUFFER_SIZE)) {
-                break;
-            }
-
-            /* Add received summand. */
-
-            result += atoi(buffer);
-        }
-
-        /* Send result. */
-
-        sprintf(buffer, &quot;%d&quot;, result);
-        ret = write(data_socket, buffer, BUFFER_SIZE);
-
-        if (ret == -1) {
-            perror(&quot;write&quot;);
-            exit(EXIT_FAILURE);
-        }
-
-        /* Close socket. */
-
-        close(data_socket);
-
-        /* Quit on DOWN command. */
-
-        if (down_flag) {
-            break;
-        }
-    }
-
-    close(connection_socket);
-
-    /* Unlink the socket. */
-
-    unlink(SOCKET_NAME);
-
-    exit(EXIT_SUCCESS);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;struct&nbsp;sockaddr_un&nbsp;name;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;down_flag&nbsp;=&nbsp;0;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;ret;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;connection_socket;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;data_socket;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;result;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;char&nbsp;buffer[BUFFER_SIZE];
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*&nbsp;In&nbsp;case&nbsp;the&nbsp;program&nbsp;exited&nbsp;inadvertently&nbsp;on&nbsp;the&nbsp;last&nbsp;run,
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*&nbsp;remove&nbsp;the&nbsp;socket.
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*/
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;unlink(SOCKET_NAME);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Create&nbsp;local&nbsp;socket.&nbsp;*/
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;connection_socket&nbsp;=&nbsp;socket(AF_UNIX,&nbsp;SOCK_SEQPACKET,&nbsp;0);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(connection_socket&nbsp;==&nbsp;-1)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;perror(&quot;socket&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*&nbsp;For&nbsp;portability&nbsp;clear&nbsp;the&nbsp;whole&nbsp;structure,&nbsp;since&nbsp;some
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*&nbsp;implementations&nbsp;have&nbsp;additional&nbsp;(nonstandard)&nbsp;fields&nbsp;in
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*&nbsp;the&nbsp;structure.
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*/
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;memset(&amp;name,&nbsp;0,&nbsp;sizeof(struct&nbsp;sockaddr_un));
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Bind&nbsp;socket&nbsp;to&nbsp;socket&nbsp;name.&nbsp;*/
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;name.sun_family&nbsp;=&nbsp;AF_UNIX;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;strncpy(name.sun_path,&nbsp;SOCKET_NAME,&nbsp;sizeof(name.sun_path)&nbsp;-&nbsp;1);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;ret&nbsp;=&nbsp;bind(connection_socket,&nbsp;(const&nbsp;struct&nbsp;sockaddr&nbsp;*)&nbsp;&amp;name,
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;sizeof(struct&nbsp;sockaddr_un));
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(ret&nbsp;==&nbsp;-1)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;perror(&quot;bind&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*&nbsp;Prepare&nbsp;for&nbsp;accepting&nbsp;connections.&nbsp;The&nbsp;backlog&nbsp;size&nbsp;is&nbsp;set
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*&nbsp;to&nbsp;20.&nbsp;So&nbsp;while&nbsp;one&nbsp;request&nbsp;is&nbsp;being&nbsp;processed&nbsp;other&nbsp;requests
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*&nbsp;can&nbsp;be&nbsp;waiting.
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*/
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;ret&nbsp;=&nbsp;listen(connection_socket,&nbsp;20);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(ret&nbsp;==&nbsp;-1)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;perror(&quot;listen&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;This&nbsp;is&nbsp;the&nbsp;main&nbsp;loop&nbsp;for&nbsp;handling&nbsp;connections.&nbsp;*/
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;for&nbsp;(;;)&nbsp;{
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Wait&nbsp;for&nbsp;incoming&nbsp;connection.&nbsp;*/
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;data_socket&nbsp;=&nbsp;accept(connection_socket,&nbsp;NULL,&nbsp;NULL);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(data_socket&nbsp;==&nbsp;-1)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;perror(&quot;accept&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;result&nbsp;=&nbsp;0;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;for(;;)&nbsp;{
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Wait&nbsp;for&nbsp;next&nbsp;data&nbsp;packet.&nbsp;*/
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ret&nbsp;=&nbsp;read(data_socket,&nbsp;buffer,&nbsp;BUFFER_SIZE);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(ret&nbsp;==&nbsp;-1)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;perror(&quot;read&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Ensure&nbsp;buffer&nbsp;is&nbsp;0-terminated.&nbsp;*/
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;buffer[BUFFER_SIZE&nbsp;-&nbsp;1]&nbsp;=&nbsp;0;
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Handle&nbsp;commands.&nbsp;*/
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(!strncmp(buffer,&nbsp;&quot;DOWN&quot;,&nbsp;BUFFER_SIZE))&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;down_flag&nbsp;=&nbsp;1;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;break;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(!strncmp(buffer,&nbsp;&quot;END&quot;,&nbsp;BUFFER_SIZE))&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;break;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Add&nbsp;received&nbsp;summand.&nbsp;*/
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;result&nbsp;+=&nbsp;atoi(buffer);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Send&nbsp;result.&nbsp;*/
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;sprintf(buffer,&nbsp;&quot;%d&quot;,&nbsp;result);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ret&nbsp;=&nbsp;write(data_socket,&nbsp;buffer,&nbsp;BUFFER_SIZE);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(ret&nbsp;==&nbsp;-1)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;perror(&quot;write&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Close&nbsp;socket.&nbsp;*/
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;close(data_socket);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Quit&nbsp;on&nbsp;DOWN&nbsp;command.&nbsp;*/
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(down_flag)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;break;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;close(connection_socket);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Unlink&nbsp;the&nbsp;socket.&nbsp;*/
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;unlink(SOCKET_NAME);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_SUCCESS);
 }
-
+<P>
 /*
- * File client.c
- */
-
+<BR>&nbsp;*&nbsp;File&nbsp;client.c
+<BR>&nbsp;*/
+<P>
 #include &lt;<A HREF="file:///usr/include/errno.h">errno.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/stdlib.h">stdlib.h</A>&gt;
@@ -1109,84 +1135,83 @@ main(int argc, char *argv[])
 #include &lt;<A HREF="file:///usr/include/sys/un.h">sys/un.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;
 #include &quot;connection.h&quot;
-
+<P>
 int
 main(int argc, char *argv[])
 {
-    struct sockaddr_un addr;
-    int i;
-    int ret;
-    int data_socket;
-    char buffer[BUFFER_SIZE];
-
-    /* Create local socket. */
-
-    data_socket = socket(AF_UNIX, SOCK_SEQPACKET, 0);
-    if (data_socket == -1) {
-        perror(&quot;socket&quot;);
-        exit(EXIT_FAILURE);
-    }
-
-    /*
-     * For portability clear the whole structure, since some
-     * implementations have additional (nonstandard) fields in
-     * the structure.
-     */
-
-    memset(&amp;addr, 0, sizeof(struct sockaddr_un));
-
-    /* Connect socket to socket address */
-
-    addr.sun_family = AF_UNIX;
-    strncpy(addr.sun_path, SOCKET_NAME, sizeof(addr.sun_path) - 1);
-
-    ret = connect (data_socket, (const struct sockaddr *) &amp;addr,
-                   sizeof(struct sockaddr_un));
-    if (ret == -1) {
-        fprintf(stderr, &quot;The server is down.\n&quot;);
-        exit(EXIT_FAILURE);
-    }
-
-    /* Send arguments. */
-
-    for (i = 1; i &lt; argc; ++i) {
-        ret = write(data_socket, argv[i], strlen(argv[i]) + 1);
-        if (ret == -1) {
-            perror(&quot;write&quot;);
-            break;
-        }
-    }
-
-    /* Request result. */
-
-    strcpy (buffer, &quot;END&quot;);
-    ret = write(data_socket, buffer, strlen(buffer) + 1);
-    if (ret == -1) {
-        perror(&quot;write&quot;);
-        exit(EXIT_FAILURE);
-    }
-
-    /* Receive result. */
-
-    ret = read(data_socket, buffer, BUFFER_SIZE);
-    if (ret == -1) {
-        perror(&quot;read&quot;);
-        exit(EXIT_FAILURE);
-    }
-
-    /* Ensure buffer is 0-terminated. */
-
-    buffer[BUFFER_SIZE - 1] = 0;
-
-    printf(&quot;Result = %s\n&quot;, buffer);
-
-    /* Close socket. */
-
-    close(data_socket);
-
-    exit(EXIT_SUCCESS);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;struct&nbsp;sockaddr_un&nbsp;addr;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;i;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;ret;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;data_socket;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;char&nbsp;buffer[BUFFER_SIZE];
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Create&nbsp;local&nbsp;socket.&nbsp;*/
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;data_socket&nbsp;=&nbsp;socket(AF_UNIX,&nbsp;SOCK_SEQPACKET,&nbsp;0);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(data_socket&nbsp;==&nbsp;-1)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;perror(&quot;socket&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*&nbsp;For&nbsp;portability&nbsp;clear&nbsp;the&nbsp;whole&nbsp;structure,&nbsp;since&nbsp;some
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*&nbsp;implementations&nbsp;have&nbsp;additional&nbsp;(nonstandard)&nbsp;fields&nbsp;in
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*&nbsp;the&nbsp;structure.
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*/
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;memset(&amp;addr,&nbsp;0,&nbsp;sizeof(struct&nbsp;sockaddr_un));
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Connect&nbsp;socket&nbsp;to&nbsp;socket&nbsp;address&nbsp;*/
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;addr.sun_family&nbsp;=&nbsp;AF_UNIX;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;strncpy(addr.sun_path,&nbsp;SOCKET_NAME,&nbsp;sizeof(addr.sun_path)&nbsp;-&nbsp;1);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;ret&nbsp;=&nbsp;connect&nbsp;(data_socket,&nbsp;(const&nbsp;struct&nbsp;sockaddr&nbsp;*)&nbsp;&amp;addr,
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;sizeof(struct&nbsp;sockaddr_un));
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(ret&nbsp;==&nbsp;-1)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fprintf(stderr,&nbsp;&quot;The&nbsp;server&nbsp;is&nbsp;down.\n&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Send&nbsp;arguments.&nbsp;*/
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;for&nbsp;(i&nbsp;=&nbsp;1;&nbsp;i&nbsp;&lt;&nbsp;argc;&nbsp;++i)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ret&nbsp;=&nbsp;write(data_socket,&nbsp;argv[i],&nbsp;strlen(argv[i])&nbsp;+&nbsp;1);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(ret&nbsp;==&nbsp;-1)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;perror(&quot;write&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;break;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Request&nbsp;result.&nbsp;*/
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;strcpy&nbsp;(buffer,&nbsp;&quot;END&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;ret&nbsp;=&nbsp;write(data_socket,&nbsp;buffer,&nbsp;strlen(buffer)&nbsp;+&nbsp;1);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(ret&nbsp;==&nbsp;-1)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;perror(&quot;write&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Receive&nbsp;result.&nbsp;*/
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;ret&nbsp;=&nbsp;read(data_socket,&nbsp;buffer,&nbsp;BUFFER_SIZE);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(ret&nbsp;==&nbsp;-1)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;perror(&quot;read&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Ensure&nbsp;buffer&nbsp;is&nbsp;0-terminated.&nbsp;*/
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;buffer[BUFFER_SIZE&nbsp;-&nbsp;1]&nbsp;=&nbsp;0;
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;Result&nbsp;=&nbsp;%s\n&quot;,&nbsp;buffer);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Close&nbsp;socket.&nbsp;*/
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;close(data_socket);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_SUCCESS);
 }
-</PRE>
 
 <P>
 
@@ -1251,6 +1276,6 @@ see
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:46:51 GMT, April 20, 2020
+Time: 03:47:28 GMT, April 20, 2020
 </BODY>
 </HTML>

@@ -26,7 +26,7 @@ the source, must acknowledge the copyright and authors of this work.
 <HTML><HEAD><TITLE>Man page of GETRLIMIT</TITLE>
 </HEAD><BODY>
 <H1>GETRLIMIT</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2017-03-13<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2017-09-15<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -43,6 +43,7 @@ getrlimit, setrlimit, prlimit - get/set resource limits
 <B>#include &lt;<A HREF="file:///usr/include/sys/resource.h">sys/resource.h</A>&gt;</B>
 
 <P>
+
 <B>int getrlimit(int </B><I>resource</I><B>, struct rlimit *</B><I>rlim</I><B>);</B>
 
 <BR>
@@ -50,6 +51,7 @@ getrlimit, setrlimit, prlimit - get/set resource limits
 <B>int setrlimit(int </B><I>resource</I><B>, const struct rlimit *</B><I>rlim</I><B>);</B>
 
 <P>
+
 <B>int prlimit(pid_t </B><I>pid</I><B>, int </B><I>resource</I><B>, const struct rlimit *</B><I>new_limit</I><B>,</B>
 
 <BR>
@@ -58,11 +60,13 @@ getrlimit, setrlimit, prlimit - get/set resource limits
 
 <P>
 
+
 Feature Test Macro Requirements for glibc (see
 <B><A HREF="../man7/feature_test_macros.7.html">feature_test_macros</A></B>(7)):
 
 
 <P>
+
 <B>prlimit</B>():
 
 _GNU_SOURCE
@@ -83,14 +87,14 @@ structure:
 <P>
 
 
-<PRE>
+
 struct rlimit {
-    rlim_t rlim_cur;  /* Soft limit */
-    rlim_t rlim_max;  /* Hard limit (ceiling for rlim_cur) */
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;rlim_t&nbsp;rlim_cur;&nbsp;&nbsp;/*&nbsp;Soft&nbsp;limit&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;rlim_t&nbsp;rlim_max;&nbsp;&nbsp;/*&nbsp;Hard&nbsp;limit&nbsp;(ceiling&nbsp;for&nbsp;rlim_cur)&nbsp;*/
 };
 
-</PRE>
 
+<P>
 
 The soft limit is the value that the kernel enforces for the
 corresponding resource.
@@ -123,7 +127,8 @@ argument must be one of:
 
 <DD>
 This is the maximum size of the process's virtual memory
-(address space) in bytes.
+(address space).
+The limit is specified in bytes, and is rounded down to the system page size.
 
 This limit affects calls to
 <B><A HREF="../man2/brk.2.html">brk</A></B>(2),
@@ -146,7 +151,7 @@ has been made available via
 <B><A HREF="../man2/sigaltstack.2.html">sigaltstack</A></B>(2)).
 
 Since the value is a <I>long</I>, on machines with a 32-bit <I>long</I>
-either this limit is at most 2 GiB, or this resource is unlimited.
+either this limit is at most 2&nbsp;GiB, or this resource is unlimited.
 <DT><B>RLIMIT_CORE</B>
 
 <DD>
@@ -156,7 +161,7 @@ This is the maximum size of a
 file (see
 <B><A HREF="../man5/core.5.html">core</A></B>(5))
 
-that the process may dump.
+in bytes that the process may dump.
 When 0 no core dump files are created.
 When nonzero, larger dumps are truncated to this size.
 <DT><B>RLIMIT_CPU</B>
@@ -188,13 +193,21 @@ perform an orderly termination upon first receipt of
 <DT><B>RLIMIT_DATA</B>
 
 <DD>
-This is the maximum size of the process's data segment (initialized data,
+This is the maximum size
+of the process's data segment (initialized data,
 uninitialized data, and heap).
+The limit is specified in bytes, and is rounded down to the system page size.
 This limit affects calls to
-<B><A HREF="../man2/brk.2.html">brk</A></B>(2)
+<B><A HREF="../man2/brk.2.html">brk</A></B>(2),
 
-and
 <B><A HREF="../man2/sbrk.2.html">sbrk</A></B>(2),
+
+and (since Linux 4.7)
+<B><A HREF="../man2/mmap.2.html">mmap</A></B>(2),
+
+
+
+
 
 which fail with the error
 <B>ENOMEM</B>
@@ -203,7 +216,7 @@ upon encountering the soft limit of this resource.
 <DT><B>RLIMIT_FSIZE</B>
 
 <DD>
-This is the maximum size of files that the process may create.
+This is the maximum size in bytes of files that the process may create.
 Attempts to extend a file beyond this limit result in delivery of a
 <B>SIGXFSZ</B>
 
@@ -274,7 +287,7 @@ and
 
 a process can lock bytes up to this limit in each of these
 two categories.
-<P>
+<DT><DD>
 In Linux kernels before 2.6.9, this limit controlled the amount of
 memory that could be locked by a privileged process.
 Since Linux 2.6.9, no limits are placed on the amount of memory
@@ -290,26 +303,27 @@ This limit is enforced for
 
 Each message queue that the user creates counts (until it is removed)
 against this limit according to the formula:
-<PRE>
+<DT><DD>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;Since&nbsp;Linux&nbsp;3.5:
+<DT><DD>
 
-    Since Linux 3.5:
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;bytes&nbsp;=&nbsp;attr.mq_maxmsg&nbsp;*&nbsp;sizeof(struct&nbsp;msg_msg)&nbsp;+
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;min(attr.mq_maxmsg,&nbsp;MQ_PRIO_MAX)&nbsp;*
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;sizeof(struct&nbsp;posix_msg_tree_node)+
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;For&nbsp;overhead&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;attr.mq_maxmsg&nbsp;*&nbsp;attr.mq_msgsize;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;For&nbsp;message&nbsp;data&nbsp;*/
 
-        bytes = attr.mq_maxmsg * sizeof(struct msg_msg) +
-                min(attr.mq_maxmsg, MQ_PRIO_MAX) *
-                      sizeof(struct posix_msg_tree_node)+
-                                /* For overhead */
-                attr.mq_maxmsg * attr.mq_msgsize;
-                                /* For message data */
+<DT><DD>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;Linux&nbsp;3.4&nbsp;and&nbsp;earlier:
+<DT><DD>
 
-    Linux 3.4 and earlier:
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;bytes&nbsp;=&nbsp;attr.mq_maxmsg&nbsp;*&nbsp;sizeof(struct&nbsp;msg_msg&nbsp;*)&nbsp;+
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;For&nbsp;overhead&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;attr.mq_maxmsg&nbsp;*&nbsp;attr.mq_msgsize;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;For&nbsp;message&nbsp;data&nbsp;*/
 
-        bytes = attr.mq_maxmsg * sizeof(struct msg_msg *) +
-                                /* For overhead */
-                attr.mq_maxmsg * attr.mq_msgsize;
-                                /* For message data */
-
-</PRE>
-
+<DT><DD>
 where
 <I>attr</I>
 
@@ -326,7 +340,7 @@ and
 <I>posix_msg_tree_node</I>
 
 structures are kernel-internal structures.
-<P>
+<DT><DD>
 The &quot;overhead&quot; addend in the formula accounts for overhead
 bytes required by the implementation
 and ensures that the user cannot
@@ -377,7 +391,7 @@ to exceed this limit yield the error
 <B>RLIMIT_OFILE</B>
 
 on BSD.)
-<P>
+<DT><DD>
 Since Linux 4.5,
 this limit also defines the maximum number of file descriptors that
 an unprivileged process (one without the
@@ -436,7 +450,7 @@ this process using
 and
 <B><A HREF="../man2/sched_setparam.2.html">sched_setparam</A></B>(2).
 
-<P>
+<DT><DD>
 For further details on real-time scheduling policies, see
 <B><A HREF="../man7/sched.7.html">sched</A></B>(7)
 
@@ -454,7 +468,7 @@ The CPU time count is not reset if the process continues trying to
 use the CPU but is preempted, its time slice expires, or it calls
 <B><A HREF="../man2/sched_yield.2.html">sched_yield</A></B>(2).
 
-<P>
+<DT><DD>
 Upon reaching the soft limit, the process is sent a
 <B>SIGXCPU</B>
 
@@ -468,10 +482,10 @@ at which point the process is sent a
 <B>SIGKILL</B>
 
 signal.
-<P>
+<DT><DD>
 The intended use of this limit is to stop a runaway
 real-time process from locking up the system.
-<P>
+<DT><DD>
 For further details on real-time scheduling policies, see
 <B><A HREF="../man7/sched.7.html">sched</A></B>(7)
 
@@ -503,7 +517,7 @@ signal is generated.
 To handle this signal, a process must employ an alternate signal stack
 (<B><A HREF="../man2/sigaltstack.2.html">sigaltstack</A></B>(2)).
 
-<P>
+<DT><DD>
 Since Linux 2.6.23,
 this limit also determines the amount of space used for the process's
 command-line arguments and environment variables; for details, see
@@ -536,6 +550,7 @@ and
 
 It can be used to both set and get the resource limits of an arbitrary process.
 <P>
+
 The
 <I>resource</I>
 
@@ -546,6 +561,7 @@ and
 <B>getrlimit</B>().
 
 <P>
+
 If the
 <I>new_limit</I>
 
@@ -572,6 +588,7 @@ structure pointed to by
 <I>old_limit</I>.
 
 <P>
+
 The
 <I>pid</I>
 
@@ -700,12 +717,13 @@ For an explanation of the terms used in this section, see
 <B>setrlimit</B>():
 
 POSIX.1-2001, POSIX.1-2008, SVr4, 4.3BSD.
-<BR>
+<P>
 
 <B>prlimit</B>():
 
 Linux-specific.
 <P>
+
 <B>RLIMIT_MEMLOCK</B>
 
 and
@@ -740,11 +758,13 @@ Resource limits are preserved across
 <B><A HREF="../man2/execve.2.html">execve</A></B>(2).
 
 <P>
+
 Lowering the soft limit for a resource below the process's
 current consumption of that resource will succeed
 (but will prevent the process from further increasing
 its consumption of the resource).
 <P>
+
 One can set the resource limits of the shell using the built-in
 <I>ulimit</I>
 
@@ -757,6 +777,7 @@ in
 The shell's resource limits are inherited by the processes that
 it creates to execute commands.
 <P>
+
 Since Linux 2.6.24, the resource limits of any process can be inspected via
 <I>/proc/[pid]/limits</I>;
 
@@ -764,6 +785,7 @@ see
 <B><A HREF="../man5/proc.5.html">proc</A></B>(5).
 
 <P>
+
 Ancient systems provided a
 <B>vlimit</B>()
 
@@ -791,6 +813,7 @@ but instead employ
 
 for the reasons described in BUGS.
 <P>
+
 The name of the glibc wrapper function is
 <B>prlimit</B>();
 
@@ -812,6 +835,7 @@ signals delivered when a process encountered the soft and hard
 limits were delivered one (CPU) second later than they should have been.
 This was fixed in kernel 2.6.8.
 <P>
+
 In 2.6.x kernels before 2.6.17, a
 <B>RLIMIT_CPU</B>
 
@@ -822,12 +846,14 @@ Since Linux 2.6.17, setting a limit of 0 does have an effect,
 but is actually treated as a limit of 1 second.
 
 <P>
+
 A kernel bug means that
 
 <B>RLIMIT_RTPRIO</B>
 
 does not work in kernel 2.6.12; the problem is fixed in kernel 2.6.13.
 <P>
+
 In kernel 2.6.12, there was an off-by-one mismatch
 between the priority ranges returned by
 <B><A HREF="../man2/getpriority.2.html">getpriority</A></B>(2)
@@ -842,6 +868,7 @@ was calculated as
 This was fixed in kernel 2.6.13.
 
 <P>
+
 Since Linux 2.6.12,
 
 
@@ -873,6 +900,7 @@ The Linux-specific
 
 limit exhibits the same behavior when the soft limit is encountered.
 <P>
+
 Kernels before 2.4.22 did not diagnose the error
 <B>EINVAL</B>
 
@@ -931,6 +959,7 @@ represent file offsets---that is, as wide as a 64-bit
 <I>_FILE_OFFSET_BITS=64</I>).
 
 <P>
+
 To work around this kernel limitation,
 if a program tried to set a resource limit to a value larger than
 can be represented in a 32-bit
@@ -944,6 +973,7 @@ wrapper function silently converted the limit value to
 
 In other words, the requested resource limit setting was silently ignored.
 <P>
+
 This problem was addressed in Linux 2.6.36 with two principal changes:
 <DL COMPACT>
 <DT>*<DD>
@@ -982,7 +1012,7 @@ The program below demonstrates the use of
 
 <P>
 
-<PRE>
+
 #define _GNU_SOURCE
 #define _FILE_OFFSET_BITS 64
 #include &lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;
@@ -990,50 +1020,49 @@ The program below demonstrates the use of
 #include &lt;<A HREF="file:///usr/include/stdlib.h">stdlib.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/sys/resource.h">sys/resource.h</A>&gt;
-
-#define errExit(msg)    do { perror(msg); exit(EXIT_FAILURE); \
-                        } while (0)
-
+<P>
+#define errExit(msg) <TT>&nbsp;&nbsp;&nbsp;</TT>do { perror(msg); exit(EXIT_FAILURE); \<BR>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}&nbsp;while&nbsp;(0)
+<P>
 int
 main(int argc, char *argv[])
 {
-    struct rlimit old, new;
-    struct rlimit *newp;
-    pid_t pid;
-
-    if (!(argc == 2 || argc == 4)) {
-        fprintf(stderr, &quot;Usage: %s &lt;pid&gt; [&lt;new-soft-limit&gt; &quot;
-                &quot;&lt;new-hard-limit&gt;]\n&quot;, argv[0]);
-        exit(EXIT_FAILURE);
-    }
-
-    pid = atoi(argv[1]);        /* PID of target process */
-
-    newp = NULL;
-    if (argc == 4) {
-        new.rlim_cur = atoi(argv[2]);
-        new.rlim_max = atoi(argv[3]);
-        newp = &amp;new;
-    }
-
-    /* Set CPU time limit of target process; retrieve and display
-       previous limit */
-
-    if (prlimit(pid, RLIMIT_CPU, newp, &amp;old) == -1)
-        errExit(&quot;prlimit-1&quot;);
-    printf(&quot;Previous limits: soft=%lld; hard=%lld\n&quot;,
-            (long long) old.rlim_cur, (long long) old.rlim_max);
-
-    /* Retrieve and display new CPU time limit */
-
-    if (prlimit(pid, RLIMIT_CPU, NULL, &amp;old) == -1)
-        errExit(&quot;prlimit-2&quot;);
-    printf(&quot;New limits: soft=%lld; hard=%lld\n&quot;,
-            (long long) old.rlim_cur, (long long) old.rlim_max);
-
-    exit(EXIT_SUCCESS);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;struct&nbsp;rlimit&nbsp;old,&nbsp;new;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;struct&nbsp;rlimit&nbsp;*newp;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;pid_t&nbsp;pid;
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(!(argc&nbsp;==&nbsp;2&nbsp;||&nbsp;argc&nbsp;==&nbsp;4))&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fprintf(stderr,&nbsp;&quot;Usage:&nbsp;%s&nbsp;&lt;pid&gt;&nbsp;[&lt;new-soft-limit&gt;&nbsp;&quot;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&quot;&lt;new-hard-limit&gt;]\n&quot;,&nbsp;argv[0]);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;pid&nbsp;=&nbsp;atoi(argv[1]);&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;PID&nbsp;of&nbsp;target&nbsp;process&nbsp;*/
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;newp&nbsp;=&nbsp;NULL;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(argc&nbsp;==&nbsp;4)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;new.rlim_cur&nbsp;=&nbsp;atoi(argv[2]);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;new.rlim_max&nbsp;=&nbsp;atoi(argv[3]);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;newp&nbsp;=&nbsp;&amp;new;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Set&nbsp;CPU&nbsp;time&nbsp;limit&nbsp;of&nbsp;target&nbsp;process;&nbsp;retrieve&nbsp;and&nbsp;display
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;previous&nbsp;limit&nbsp;*/
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(prlimit(pid,&nbsp;RLIMIT_CPU,&nbsp;newp,&nbsp;&amp;old)&nbsp;==&nbsp;-1)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;errExit(&quot;prlimit-1&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;Previous&nbsp;limits:&nbsp;soft=%lld;&nbsp;hard=%lld\n&quot;,
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(long&nbsp;long)&nbsp;old.rlim_cur,&nbsp;(long&nbsp;long)&nbsp;old.rlim_max);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Retrieve&nbsp;and&nbsp;display&nbsp;new&nbsp;CPU&nbsp;time&nbsp;limit&nbsp;*/
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(prlimit(pid,&nbsp;RLIMIT_CPU,&nbsp;NULL,&nbsp;&amp;old)&nbsp;==&nbsp;-1)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;errExit(&quot;prlimit-2&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;New&nbsp;limits:&nbsp;soft=%lld;&nbsp;hard=%lld\n&quot;,
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(long&nbsp;long)&nbsp;old.rlim_cur,&nbsp;(long&nbsp;long)&nbsp;old.rlim_max);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_SUCCESS);
 }
-</PRE>
 
 <A NAME="lbAP">&nbsp;</A>
 <H2>SEE ALSO</H2>
@@ -1107,6 +1136,6 @@ main(int argc, char *argv[])
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:46:37 GMT, April 20, 2020
+Time: 03:47:14 GMT, April 20, 2020
 </BODY>
 </HTML>

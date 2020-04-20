@@ -71,6 +71,7 @@ For further details, see
 <B><A HREF="../man7/pipe.7.html">pipe</A></B>(7).
 
 <P>
+
 If
 <I>flags</I>
 
@@ -172,6 +173,7 @@ On error, -1 is returned, and
 
 is set appropriately.
 <P>
+
 On Linux (and other systems),
 <B>pipe</B>()
 
@@ -238,6 +240,7 @@ version 2.9.
 
 POSIX.1-2001, POSIX.1-2008.
 <P>
+
 <B>pipe2</B>()
 
 is Linux-specific.
@@ -265,56 +268,55 @@ and echoes it on standard output.
 <A NAME="lbAJ">&nbsp;</A>
 <H3>Program source</H3>
 
-<PRE>
+
 #include &lt;<A HREF="file:///usr/include/sys/types.h">sys/types.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/sys/wait.h">sys/wait.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/stdlib.h">stdlib.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/string.h">string.h</A>&gt;
-
+<P>
 int
 main(int argc, char *argv[])
 {
-    int pipefd[2];
-    pid_t cpid;
-    char buf;
-
-    if (argc != 2) {
-        fprintf(stderr, &quot;Usage: %s &lt;string&gt;\n&quot;, argv[0]);
-        exit(EXIT_FAILURE);
-    }
-
-    if (pipe(pipefd) == -1) {
-        perror(&quot;pipe&quot;);
-        exit(EXIT_FAILURE);
-    }
-
-    cpid = fork();
-    if (cpid == -1) {
-        perror(&quot;fork&quot;);
-        exit(EXIT_FAILURE);
-    }
-
-    if (cpid == 0) {    /* Child reads from pipe */
-        close(pipefd[1]);          /* Close unused write end */
-
-        while (read(pipefd[0], &amp;buf, 1) &gt; 0)
-            write(STDOUT_FILENO, &amp;buf, 1);
-
-        write(STDOUT_FILENO, &quot;\n&quot;, 1);
-        close(pipefd[0]);
-        _exit(EXIT_SUCCESS);
-
-    } else {            /* Parent writes argv[1] to pipe */
-        close(pipefd[0]);          /* Close unused read end */
-        write(pipefd[1], argv[1], strlen(argv[1]));
-        close(pipefd[1]);          /* Reader will see EOF */
-        wait(NULL);                /* Wait for child */
-        exit(EXIT_SUCCESS);
-    }
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;pipefd[2];
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;pid_t&nbsp;cpid;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;char&nbsp;buf;
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(argc&nbsp;!=&nbsp;2)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fprintf(stderr,&nbsp;&quot;Usage:&nbsp;%s&nbsp;&lt;string&gt;\n&quot;,&nbsp;argv[0]);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(pipe(pipefd)&nbsp;==&nbsp;-1)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;perror(&quot;pipe&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;cpid&nbsp;=&nbsp;fork();
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(cpid&nbsp;==&nbsp;-1)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;perror(&quot;fork&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(cpid&nbsp;==&nbsp;0)&nbsp;{&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Child&nbsp;reads&nbsp;from&nbsp;pipe&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;close(pipefd[1]);&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Close&nbsp;unused&nbsp;write&nbsp;end&nbsp;*/
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;while&nbsp;(read(pipefd[0],&nbsp;&amp;buf,&nbsp;1)&nbsp;&gt;&nbsp;0)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;write(STDOUT_FILENO,&nbsp;&amp;buf,&nbsp;1);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;write(STDOUT_FILENO,&nbsp;&quot;\n&quot;,&nbsp;1);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;close(pipefd[0]);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;_exit(EXIT_SUCCESS);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}&nbsp;else&nbsp;{&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Parent&nbsp;writes&nbsp;argv[1]&nbsp;to&nbsp;pipe&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;close(pipefd[0]);&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Close&nbsp;unused&nbsp;read&nbsp;end&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;write(pipefd[1],&nbsp;argv[1],&nbsp;strlen(argv[1]));
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;close(pipefd[1]);&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Reader&nbsp;will&nbsp;see&nbsp;EOF&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;wait(NULL);&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Wait&nbsp;for&nbsp;child&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_SUCCESS);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
 }
-</PRE>
 
 <A NAME="lbAK">&nbsp;</A>
 <H2>SEE ALSO</H2>
@@ -359,6 +361,6 @@ main(int argc, char *argv[])
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:46:38 GMT, April 20, 2020
+Time: 03:47:15 GMT, April 20, 2020
 </BODY>
 </HTML>

@@ -26,7 +26,7 @@ the source, must acknowledge the copyright and author of this work.
 <HTML><HEAD><TITLE>Man page of MPROTECT</TITLE>
 </HEAD><BODY>
 <H1>MPROTECT</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2016-12-12<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2017-09-15<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -55,6 +55,7 @@ interval [<I>addr</I>,&nbsp;<I>addr</I>+<I>len</I>-1].
 
 must be aligned to a page boundary.
 <P>
+
 If the calling process tries to access memory in a manner
 that violates the protections, then the kernel generates a
 <B>SIGSEGV</B>
@@ -299,6 +300,7 @@ was not obtained via
 <B><A HREF="../man2/mmap.2.html">mmap</A></B>(2).
 
 <P>
+
 <B>pkey_mprotect</B>()
 
 is a nonportable Linux extension.
@@ -313,6 +315,7 @@ kernel vsyscall area).
 In particular, it can be used
 to change existing code mappings to be writable.
 <P>
+
 Whether
 <B>PROT_EXEC</B>
 
@@ -333,6 +336,7 @@ will implicitly add
 <B>PROT_EXEC.</B>
 
 <P>
+
 On some hardware architectures (e.g., i386),
 <B>PROT_WRITE</B>
 
@@ -340,6 +344,7 @@ implies
 <B>PROT_READ</B>.
 
 <P>
+
 POSIX.1 says that an implementation may permit access
 other than that specified in
 <I>prot</I>,
@@ -352,6 +357,7 @@ has been set, and must not allow any access if
 
 has been set.
 <P>
+
 Applications should be careful when mixing use of
 <B>mprotect</B>()
 
@@ -370,6 +376,7 @@ set to
 a pkey is may be allocated and set on the memory implicitly
 by the kernel, but only when the pkey was 0 previously.
 <P>
+
 On systems that do not support protection keys in hardware,
 <B>pkey_mprotect</B>()
 
@@ -396,22 +403,24 @@ The program allocates four pages of memory, makes the third
 of these pages read-only, and then executes a loop that walks upward
 through the allocated region modifying bytes.
 <P>
+
 An example of what we might see when running the program is the
 following:
 <P>
 
-<PRE>
+
+
 $<B> ./a.out</B>
+
 Start of region:        0x804c000
 Got SIGSEGV at address: 0x804e000
-</PRE>
 
 
 <A NAME="lbAK">&nbsp;</A>
 <H3>Program source</H3>
 
 
-<PRE>
+
 #include &lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/signal.h">signal.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;
@@ -419,57 +428,62 @@ Got SIGSEGV at address: 0x804e000
 #include &lt;<A HREF="file:///usr/include/stdlib.h">stdlib.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/errno.h">errno.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/sys/mman.h">sys/mman.h</A>&gt;
-
+<P>
 #define handle_error(msg) \
-    do { perror(msg); exit(EXIT_FAILURE); } while (0)
-
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;do&nbsp;{&nbsp;perror(msg);&nbsp;exit(EXIT_FAILURE);&nbsp;}&nbsp;while&nbsp;(0)
+<P>
 static char *buffer;
-
+<P>
 static void
 handler(int sig, siginfo_t *si, void *unused)
 {
-    printf(&quot;Got SIGSEGV at address: 0x%lx\n&quot;,
-            (long) si-&gt;si_addr);
-    exit(EXIT_FAILURE);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Note:&nbsp;calling&nbsp;printf()&nbsp;from&nbsp;a&nbsp;signal&nbsp;handler&nbsp;is&nbsp;not&nbsp;safe
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(and&nbsp;should&nbsp;not&nbsp;be&nbsp;done&nbsp;in&nbsp;production&nbsp;programs),&nbsp;since
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;printf()&nbsp;is&nbsp;not&nbsp;async-signal-safe;&nbsp;see&nbsp;<A HREF="../man7/signal-safety.7.html">signal-safety</A>(7).
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Nevertheless,&nbsp;we&nbsp;use&nbsp;printf()&nbsp;here&nbsp;as&nbsp;a&nbsp;simple&nbsp;way&nbsp;of
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;showing&nbsp;that&nbsp;the&nbsp;handler&nbsp;was&nbsp;called.&nbsp;*/
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;Got&nbsp;SIGSEGV&nbsp;at&nbsp;address:&nbsp;0x%lx\n&quot;,
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(long)&nbsp;si-&gt;si_addr);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
 }
-
+<P>
 int
 main(int argc, char *argv[])
 {
-    char *p;
-    int pagesize;
-    struct sigaction sa;
-
-    sa.sa_flags = SA_SIGINFO;
-    sigemptyset(&amp;sa.sa_mask);
-    sa.sa_sigaction = handler;
-    if (sigaction(SIGSEGV, &amp;sa, NULL) == -1)
-        handle_error(&quot;sigaction&quot;);
-
-    pagesize = sysconf(_SC_PAGE_SIZE);
-    if (pagesize == -1)
-        handle_error(&quot;sysconf&quot;);
-
-    /* Allocate a buffer aligned on a page boundary;
-       initial protection is PROT_READ | PROT_WRITE */
-
-    buffer = memalign(pagesize, 4 * pagesize);
-    if (buffer == NULL)
-        handle_error(&quot;memalign&quot;);
-
-    printf(&quot;Start of region:        0x%lx\n&quot;, (long) buffer);
-
-    if (mprotect(buffer + pagesize * 2, pagesize,
-                PROT_READ) == -1)
-        handle_error(&quot;mprotect&quot;);
-
-    for (p = buffer ; ; )
-        *(p++) = 'a';
-
-    printf(&quot;Loop completed\n&quot;);     /* Should never happen */
-    exit(EXIT_SUCCESS);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;char&nbsp;*p;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;pagesize;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;struct&nbsp;sigaction&nbsp;sa;
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;sa.sa_flags&nbsp;=&nbsp;SA_SIGINFO;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;sigemptyset(&amp;sa.sa_mask);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;sa.sa_sigaction&nbsp;=&nbsp;handler;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(sigaction(SIGSEGV,&nbsp;&amp;sa,&nbsp;NULL)&nbsp;==&nbsp;-1)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;handle_error(&quot;sigaction&quot;);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;pagesize&nbsp;=&nbsp;sysconf(_SC_PAGE_SIZE);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(pagesize&nbsp;==&nbsp;-1)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;handle_error(&quot;sysconf&quot;);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Allocate&nbsp;a&nbsp;buffer&nbsp;aligned&nbsp;on&nbsp;a&nbsp;page&nbsp;boundary;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;initial&nbsp;protection&nbsp;is&nbsp;PROT_READ&nbsp;|&nbsp;PROT_WRITE&nbsp;*/
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;buffer&nbsp;=&nbsp;memalign(pagesize,&nbsp;4&nbsp;*&nbsp;pagesize);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(buffer&nbsp;==&nbsp;NULL)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;handle_error(&quot;memalign&quot;);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;Start&nbsp;of&nbsp;region:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;0x%lx\n&quot;,&nbsp;(long)&nbsp;buffer);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(mprotect(buffer&nbsp;+&nbsp;pagesize&nbsp;*&nbsp;2,&nbsp;pagesize,
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;PROT_READ)&nbsp;==&nbsp;-1)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;handle_error(&quot;mprotect&quot;);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;for&nbsp;(p&nbsp;=&nbsp;buffer&nbsp;;&nbsp;;&nbsp;)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*(p++)&nbsp;=&nbsp;'a';
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;Loop&nbsp;completed\n&quot;);&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Should&nbsp;never&nbsp;happen&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_SUCCESS);
 }
-</PRE>
 
 <A NAME="lbAL">&nbsp;</A>
 <H2>SEE ALSO</H2>
@@ -503,6 +517,6 @@ main(int argc, char *argv[])
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:46:38 GMT, April 20, 2020
+Time: 03:47:15 GMT, April 20, 2020
 </BODY>
 </HTML>

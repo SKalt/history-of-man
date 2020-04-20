@@ -8,7 +8,7 @@ This file is in the public domain, so clarified as of
 <HTML><HEAD><TITLE>Man page of TZFILE</TITLE>
 </HEAD><BODY>
 <H1>TZFILE</H1>
-Section: Linux Programmer's Manual (5)<BR>Updated: 2015-05-07<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (5)<BR>Updated: 2017-08-04<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -18,32 +18,34 @@ tzfile - timezone information
 <A NAME="lbAC">&nbsp;</A>
 <H2>DESCRIPTION</H2>
 
-This page describes the structure of the timezone files used by
-<B><A HREF="../man3/tzset.3.html">tzset</A></B>(3).
 
-These files are typically found under one of the directories
-<I>/usr/lib/zoneinfo</I>
 
-or
+
+
+
+The timezone information files used by
+<B><A HREF="../man3/tzset.3.html">tzset</A></B>(3)
+
+are typically found under a directory with a name like
 <I>/usr/share/zoneinfo</I>.
 
-<P>
-Timezone information files begin with a 44-byte header structured as follows:
+These files begin with a 44-byte header containing the following fields:
 <DL COMPACT>
 <DT>*<DD>
-The magic four-byte sequence
-&quot;TZif&quot; identifying this as a
-timezone information file.
+The magic four-byte ASCII sequence
+
+identifies the file as a timezone information file.
 <DT>*<DD>
-A single character identifying the version of the file's format:
-either an ASCII NUL ('\0') or a '2' (<B>0x32</B>).
+A byte identifying the version of the file's format
+(as of 2017, either an ASCII NUL, or
+
+or
+
 <DT>*<DD>
 Fifteen bytes containing zeros reserved for future use.
 <DT>*<DD>
-Six four-byte values of type
-<I>long</I>,
-
-written in a &quot;standard&quot; byte order
+Six four-byte integer values
+written in a standard byte order
 (the high-order byte of the value is written first).
 These values are,
 in order:
@@ -52,7 +54,7 @@ in order:
 <DT><I>tzh_ttisgmtcnt</I>
 
 <DD>
-The number of UTC/local indicators stored in the file.
+The number of UT/local indicators stored in the file.
 <DT><I>tzh_ttisstdcnt</I>
 
 <DD>
@@ -60,21 +62,21 @@ The number of standard/wall indicators stored in the file.
 <DT><I>tzh_leapcnt</I>
 
 <DD>
-The number of leap seconds for which data is stored in the file.
+The number of leap seconds for which data entries are stored in the file.
 <DT><I>tzh_timecnt</I>
 
 <DD>
-The number of &quot;transition times&quot; for which data is stored
+The number of transition times for which data entries are stored
 in the file.
 <DT><I>tzh_typecnt</I>
 
 <DD>
-The number of &quot;local time types&quot; for which data is stored
+The number of local time types for which data entries are stored
 in the file (must not be zero).
 <DT><I>tzh_charcnt</I>
 
 <DD>
-The number of characters of &quot;timezone abbreviation strings&quot;
+The number of bytes of timezone abbreviation strings
 stored in the file.
 </DL>
 </DL>
@@ -82,50 +84,48 @@ stored in the file.
 </DL>
 <P>
 
-The above header is followed by
+The above header is followed by the following fields, whose lengths
+vary depend on the contents of the header:
+<DL COMPACT>
+<DT>*<DD>
 <I>tzh_timecnt</I>
 
-four-byte values of type
-<I>long</I>,
-
-sorted in ascending order.
-These values are written in &quot;standard&quot; byte order.
+four-byte signed integer values sorted in ascending order.
+These values are written in standard byte order.
 Each is used as a transition time (as returned by
 <B><A HREF="../man2/time.2.html">time</A></B>(2))
 
 at which the rules for computing local time change.
-Next come
+<DT>*<DD>
 <I>tzh_timecnt</I>
 
-one-byte values of type
-<I>unsigned char</I>;
-
-each one tells which of the different types of &quot;local time&quot; types
-described in the file is associated with the same-indexed transition time.
-These values serve as indices into an array of
-<I>ttinfo</I>
-
-structures (with
+one-byte unsigned integer values;
+each one tells which of the different types of local time types
+described in the file is associated with the time period
+starting with the same-indexed transition time.
+These values serve as indices into the next field.
+<DT>*<DD>
 <I>tzh_typecnt</I>
 
-entries) that appear next in the file;
-these structures are defined as follows:
+<I>ttinfo</I>
 
+entries, each defined as follows:
+</DL>
 <P>
-<PRE>
+
+
+
 struct ttinfo {
-    long         tt_gmtoff;
-    int          tt_isdst;
-    unsigned int tt_abbrind;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;int32_t&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;tt_gmtoff;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;unsigned&nbsp;char&nbsp;tt_isdst;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;unsigned&nbsp;char&nbsp;tt_abbrind;
 };
-</PRE>
+
 
 <P>
-Each structure is written as a four-byte value for
-<I>tt_gmtoff</I>
 
-of type
-<I>long</I>,
+Each structure is written as a four-byte signed integer value for
+<I>tt_gmtoff</I>,
 
 in a standard byte order, followed by a one-byte value for
 <I>tt_isdst</I>
@@ -136,30 +136,29 @@ and a one-byte value for
 In each structure,
 <I>tt_gmtoff</I>
 
-gives the number of seconds to be added to UTC,
+gives the number of seconds to be added to UT,
 <I>tt_isdst</I>
 
 tells whether
 <I>tm_isdst</I>
 
 should be set by
-<B><A HREF="../man3/localtime.3.html">localtime</A></B>(3),
+<B><A HREF="../man3/localtime.3.html">localtime</A></B>(3)
 
 and
 <I>tt_abbrind</I>
 
-serves as an index into the array of timezone abbreviation characters
+serves as an index into the array of timezone abbreviation bytes
 that follow the
 <I>ttinfo</I>
 
 structure(s) in the file.
-<P>
-
-Then there are
+<DL COMPACT>
+<DT>*<DD>
 <I>tzh_leapcnt</I>
 
 pairs of four-byte values, written in standard byte order;
-the first value of each pair gives the time
+the first value of each pair gives the nonnegative time
 (as returned by
 <B><A HREF="../man2/time.2.html">time</A></B>(2))
 
@@ -167,11 +166,12 @@ at which a leap second occurs;
 the second gives the
 <I>total</I>
 
-number of leap seconds to be applied after the given time.
+number of leap seconds to be applied during the time period
+starting at the given time.
 The pairs of values are sorted in ascending order by time.
-<P>
-
-Then there are
+Each transition is for one leap second, either positive or negative;
+transitions always separated by at least 28 days minus 1 second.
+<DT>*<DD>
 <I>tzh_ttisstdcnt</I>
 
 standard/wall indicators, each stored as a one-byte value;
@@ -179,20 +179,21 @@ they tell whether the transition times associated with local time types
 were specified as standard time or wall clock time,
 and are used when a timezone file is used in handling POSIX-style
 timezone environment variables.
-<P>
-
-Finally, there are
+<DT>*<DD>
 <I>tzh_ttisgmtcnt</I>
 
-UTC/local indicators, each stored as a one-byte value;
+UT/local indicators, each stored as a one-byte value;
 they tell whether the transition times associated with local time types
-were specified as UTC or local time,
+were specified as UT or local time,
 and are used when a timezone file is used in handling POSIX-style
 timezone environment variables.
+</DL>
 <P>
 
+The
 <B><A HREF="../man3/localtime.3.html">localtime</A></B>(3)
 
+function
 uses the first standard-time
 <I>ttinfo</I>
 
@@ -210,104 +211,55 @@ in the file.
 <H3>Version 2 format</H3>
 
 For version-2-format timezone files,
-the above header and data is followed by a second header and data,
+the above header and data are followed by a second header and data,
 identical in format except that
-eight bytes are used for each transition time or leap-second time
-(and that the version byte in the header record is
-<B>0x32</B> rather than <B>0x00</B>).
+eight bytes are used for each transition time or leap second time.
+(Leap second counts remain four bytes.)
 After the second header and data comes a newline-enclosed,
 POSIX-TZ-environment-variable-style string for use in handling instants
 after the last transition time stored in the file
 (with nothing between the newlines if there is no POSIX representation for
 such instants).
-<P>
+The POSIX-style string must agree with the local time type after
+both data's last transition times; for example, given the string
 
-The second section of the timezone file consists of another 44-byte header
-record, identical in structure to the one at the beginning of the file,
-except that it applies to the data that follows,
-which is also identical in structure
-to the first section of the timezone file, with the following differences:
-<DL COMPACT>
-<DT>*<DD>
-The transition time values, after the header, are eight-byte values.
-<DT>*<DD>
-In each leap second record, the leap second value is an eight-byte value.
-The accumulated leap second count is still a four-byte value.
-</DL>
-<P>
+then if a last transition time is in July, the transition's local time
+type must specify a daylight-saving time abbreviated
 
-In all cases, the eight-byte time values are given in
-the &quot;standard&quot; byte order,
-the high-order byte first.
+that is one hour east of UT.
 <A NAME="lbAE">&nbsp;</A>
-<H3>POSIX timezone string</H3>
+<H3>Version 3 format</H3>
 
-The second eight-byte time value section is followed by an optional
-third section:
-a single ASCII newline character ('\n'),
-then a text string followed by a second
-newline character.
-The text string is a POSIX timezone string, whose format is described in the
-<B><A HREF="../man3/tzset.3.html">tzset</A></B>(3)
+For version-3-format timezone files, the POSIX-TZ-style string may
+use two minor extensions to the POSIX TZ format, as described in
+<B><A HREF="../man3/newtzset.3.html">newtzset</A></B>(3).
 
-manual page.
+First, the hours part of its transition times may be signed and range from
+-167 through 167 instead of the POSIX-required unsigned values
+from 0 through 24.
+Second, DST is in effect all year if it starts
+January 1 at 00:00 and ends December 31 at 24:00 plus the difference
+between daylight saving and standard time.
 <P>
 
-The POSIX timezone string defines a rule for computing transition times
-that follow the last transition time explicitly specified in the timezone
-information file.
+Future changes to the format may append more data.
 <A NAME="lbAF">&nbsp;</A>
-<H3>Summary of the timezone information file format</H3>
-
-
-<DL COMPACT><DT><DD>
-<PRE>
-Four-byte value section
-(header version <B>0x00</B> or <B>0x32</B>)
-        Header record
-        Four-byte transition times
-        Transition time index
-        <B>ttinfo</B> structures
-        Timezone abbreviation array
-        Leap second records
-        Standard/Wall array
-        UTC/Local array
-
-Eight-byte value section
-(only if first header version is <B>0x32</B>,
-the second header's version is also <B>0x32</B>)
-        Header record
-        Eight-byte transition times
-        Transition time index
-        <B>ttinfo</B> structures
-        Timezone abbreviation array
-        Leap second records
-        Standard/Wall array
-        UTC/Local array
-
-Third section
-(optional, only in <B>0x32</B> version files)
-        Newline character
-        Timezone string
-        Newline character
-</PRE>
-
-</DL>
-
-
-<A NAME="lbAG">&nbsp;</A>
 <H2>SEE ALSO</H2>
 
-<B><A HREF="../man3/ctime.3.html">ctime</A></B>(3),
+<B><A HREF="../man2/time.2.html">time</A></B>(2),
+
+<B><A HREF="../man3/localtime.3.html">localtime</A></B>(3),
 
 <B><A HREF="../man3/tzset.3.html">tzset</A></B>(3),
 
 <B><A HREF="../man8/tzselect.8.html">tzselect</A></B>(8),
 
-<P>
-<I>timezone/tzfile.h</I>
+<B><A HREF="../man8/zdump.8.html">zdump</A></B>(8),
 
-in the glibc source tree
+<B><A HREF="../man8/zic.8.html">zic</A></B>(8)
+
+
+
 <P>
 
 <HR>
@@ -317,15 +269,14 @@ in the glibc source tree
 <DT><A HREF="#lbAC">DESCRIPTION</A><DD>
 <DL>
 <DT><A HREF="#lbAD">Version 2 format</A><DD>
-<DT><A HREF="#lbAE">POSIX timezone string</A><DD>
-<DT><A HREF="#lbAF">Summary of the timezone information file format</A><DD>
+<DT><A HREF="#lbAE">Version 3 format</A><DD>
 </DL>
-<DT><A HREF="#lbAG">SEE ALSO</A><DD>
+<DT><A HREF="#lbAF">SEE ALSO</A><DD>
 </DL>
 <HR>
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:46:51 GMT, April 20, 2020
+Time: 03:47:27 GMT, April 20, 2020
 </BODY>
 </HTML>

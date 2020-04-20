@@ -26,7 +26,7 @@ the source, must acknowledge the copyright and authors of this work.
 <HTML><HEAD><TITLE>Man page of SYSCTL</TITLE>
 </HEAD><BODY>
 <H1>SYSCTL</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2016-10-08<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2017-09-15<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -38,13 +38,13 @@ sysctl - read/write system parameters
 
 <PRE>
 <B>#include &lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;</B>
-<BR>
 <B>#include &lt;<A HREF="file:///usr/include/linux/sysctl.h">linux/sysctl.h</A>&gt;</B>
 
 <B>int _sysctl(struct __sysctl_args *</B><I>args</I><B>);</B>
 </PRE>
 
 <P>
+
 <I>Note</I>:
 
 There is no glibc wrapper for this system call; see NOTES.
@@ -55,6 +55,7 @@ There is no glibc wrapper for this system call; see NOTES.
 
 See NOTES.
 <P>
+
 The
 <B>_sysctl</B>()
 
@@ -65,17 +66,16 @@ The argument has the form
 <P>
 
 
-<PRE>
+
 struct __sysctl_args {
-    int    *name;    /* integer vector describing variable */
-    int     nlen;    /* length of this vector */
-    void   *oldval;  /* 0 or address where to store old value */
-    size_t *oldlenp; /* available room for old value,
-                        overwritten by actual size of old value */
-    void   *newval;  /* 0 or address of new value */
-    size_t  newlen;  /* size of new value */
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;&nbsp;&nbsp;&nbsp;*name;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;integer&nbsp;vector&nbsp;describing&nbsp;variable&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;nlen;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;length&nbsp;of&nbsp;this&nbsp;vector&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;void&nbsp;&nbsp;&nbsp;*oldval;&nbsp;&nbsp;/*&nbsp;0&nbsp;or&nbsp;address&nbsp;where&nbsp;to&nbsp;store&nbsp;old&nbsp;value&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;size_t&nbsp;*oldlenp;&nbsp;/*&nbsp;available&nbsp;room&nbsp;for&nbsp;old&nbsp;value,
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;overwritten&nbsp;by&nbsp;actual&nbsp;size&nbsp;of&nbsp;old&nbsp;value&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;void&nbsp;&nbsp;&nbsp;*newval;&nbsp;&nbsp;/*&nbsp;0&nbsp;or&nbsp;address&nbsp;of&nbsp;new&nbsp;value&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;size_t&nbsp;&nbsp;newlen;&nbsp;&nbsp;/*&nbsp;size&nbsp;of&nbsp;new&nbsp;value&nbsp;*/
 };
-</PRE>
 
 
 <P>
@@ -170,6 +170,7 @@ Remove it from your programs now; use the
 
 interface instead.
 <P>
+
 This system call is available only if the kernel was configured with the
 <B>CONFIG_SYSCTL_SYSCALL</B>
 
@@ -190,7 +191,7 @@ It is not yet possible to change operating system by writing to
 <A NAME="lbAJ">&nbsp;</A>
 <H2>EXAMPLE</H2>
 
-<PRE>
+
 #define _GNU_SOURCE
 #include &lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/sys/syscall.h">sys/syscall.h</A>&gt;
@@ -198,35 +199,34 @@ It is not yet possible to change operating system by writing to
 #include &lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/stdlib.h">stdlib.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/linux/sysctl.h">linux/sysctl.h</A>&gt;
-
+<P>
 int _sysctl(struct __sysctl_args *args );
-
+<P>
 #define OSNAMESZ 100
-
+<P>
 int
 main(void)
 {
-    struct __sysctl_args args;
-    char osname[OSNAMESZ];
-    size_t osnamelth;
-    int name[] = { CTL_KERN, KERN_OSTYPE };
-
-    memset(&amp;args, 0, sizeof(struct __sysctl_args));
-    args.name = name;
-    args.nlen = sizeof(name)/sizeof(name[0]);
-    args.oldval = osname;
-    args.oldlenp = &amp;osnamelth;
-
-    osnamelth = sizeof(osname);
-
-    if (syscall(SYS__sysctl, &amp;args) == -1) {
-        perror(&quot;_sysctl&quot;);
-        exit(EXIT_FAILURE);
-    }
-    printf(&quot;This machine is running %*s\n&quot;, osnamelth, osname);
-    exit(EXIT_SUCCESS);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;struct&nbsp;__sysctl_args&nbsp;args;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;char&nbsp;osname[OSNAMESZ];
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;size_t&nbsp;osnamelth;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;name[]&nbsp;=&nbsp;{&nbsp;CTL_KERN,&nbsp;KERN_OSTYPE&nbsp;};
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;memset(&amp;args,&nbsp;0,&nbsp;sizeof(struct&nbsp;__sysctl_args));
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;args.name&nbsp;=&nbsp;name;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;args.nlen&nbsp;=&nbsp;sizeof(name)/sizeof(name[0]);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;args.oldval&nbsp;=&nbsp;osname;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;args.oldlenp&nbsp;=&nbsp;&amp;osnamelth;
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;osnamelth&nbsp;=&nbsp;sizeof(osname);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(syscall(SYS__sysctl,&nbsp;&amp;args)&nbsp;==&nbsp;-1)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;perror(&quot;_sysctl&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;This&nbsp;machine&nbsp;is&nbsp;running&nbsp;%*s\n&quot;,&nbsp;osnamelth,&nbsp;osname);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_SUCCESS);
 }
-</PRE>
 
 <A NAME="lbAK">&nbsp;</A>
 <H2>SEE ALSO</H2>
@@ -253,6 +253,6 @@ main(void)
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:46:40 GMT, April 20, 2020
+Time: 03:47:16 GMT, April 20, 2020
 </BODY>
 </HTML>

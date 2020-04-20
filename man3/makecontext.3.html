@@ -25,7 +25,7 @@ the source, must acknowledge the copyright and authors of this work.
 <HTML><HEAD><TITLE>Man page of MAKECONTEXT</TITLE>
 </HEAD><BODY>
 <H1>MAKECONTEXT</H1>
-Section: Linux Programmer's Manual (3)<BR>Updated: 2015-03-02<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2017-09-15<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -38,11 +38,13 @@ makecontext, swapcontext - manipulate user context
 <B>#include &lt;<A HREF="file:///usr/include/ucontext.h">ucontext.h</A>&gt;</B>
 
 <P>
+
 <B>void makecontext(ucontext_t *</B><I>ucp</I><B>, void (*</B><I>func</I><B>)(),</B>
 
 <B>int </B><I>argc</I><B>, ...);</B>
 
 <P>
+
 <B>int swapcontext(ucontext_t *</B><I>oucp</I><B>, const ucontext_t *</B><I>ucp</I><B>);</B>
 
 <A NAME="lbAD">&nbsp;</A>
@@ -85,6 +87,7 @@ for this context and assign its address to <I>ucp-&gt;uc_stack</I>,
 and define a successor context and
 assign its address to <I>ucp-&gt;uc_link</I>.
 <P>
+
 When this context is later activated (using
 <B><A HREF="../man3/setcontext.3.html">setcontext</A></B>(3)
 
@@ -188,6 +191,7 @@ the stack.
 Thus, it is not necessary for the user program to
 worry about this direction.
 <P>
+
 On architectures where
 <I>int</I>
 
@@ -222,10 +226,12 @@ and
 <B>swapcontext</B>().
 
 Running the program produces the following output:
+<P>
 
-<PRE>
+
 
 $<B> ./a.out</B>
+
 main: swapcontext(&amp;uctx_main, &amp;uctx_func2)
 func2: started
 func2: swapcontext(&amp;uctx_func2, &amp;uctx_func1)
@@ -234,72 +240,70 @@ func1: swapcontext(&amp;uctx_func1, &amp;uctx_func2)
 func2: returning
 func1: returning
 main: exiting
-</PRE>
 
 
 <A NAME="lbAL">&nbsp;</A>
 <H3>Program source</H3>
 
 
-<PRE>
+
 #include &lt;<A HREF="file:///usr/include/ucontext.h">ucontext.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/stdlib.h">stdlib.h</A>&gt;
-
+<P>
 static ucontext_t uctx_main, uctx_func1, uctx_func2;
-
+<P>
 #define handle_error(msg) \
-    do { perror(msg); exit(EXIT_FAILURE); } while (0)
-
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;do&nbsp;{&nbsp;perror(msg);&nbsp;exit(EXIT_FAILURE);&nbsp;}&nbsp;while&nbsp;(0)
+<P>
 static void
 func1(void)
 {
-    printf(&quot;func1: started\n&quot;);
-    printf(&quot;func1: swapcontext(&amp;uctx_func1, &amp;uctx_func2)\n&quot;);
-    if (swapcontext(&amp;uctx_func1, &amp;uctx_func2) == -1)
-        handle_error(&quot;swapcontext&quot;);
-    printf(&quot;func1: returning\n&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;func1:&nbsp;started\n&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;func1:&nbsp;swapcontext(&amp;uctx_func1,&nbsp;&amp;uctx_func2)\n&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(swapcontext(&amp;uctx_func1,&nbsp;&amp;uctx_func2)&nbsp;==&nbsp;-1)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;handle_error(&quot;swapcontext&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;func1:&nbsp;returning\n&quot;);
 }
-
+<P>
 static void
 func2(void)
 {
-    printf(&quot;func2: started\n&quot;);
-    printf(&quot;func2: swapcontext(&amp;uctx_func2, &amp;uctx_func1)\n&quot;);
-    if (swapcontext(&amp;uctx_func2, &amp;uctx_func1) == -1)
-        handle_error(&quot;swapcontext&quot;);
-    printf(&quot;func2: returning\n&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;func2:&nbsp;started\n&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;func2:&nbsp;swapcontext(&amp;uctx_func2,&nbsp;&amp;uctx_func1)\n&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(swapcontext(&amp;uctx_func2,&nbsp;&amp;uctx_func1)&nbsp;==&nbsp;-1)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;handle_error(&quot;swapcontext&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;func2:&nbsp;returning\n&quot;);
 }
-
+<P>
 int
 main(int argc, char *argv[])
 {
-    char func1_stack[16384];
-    char func2_stack[16384];
-
-    if (getcontext(&amp;uctx_func1) == -1)
-        handle_error(&quot;getcontext&quot;);
-    uctx_func1.uc_stack.ss_sp = func1_stack;
-    uctx_func1.uc_stack.ss_size = sizeof(func1_stack);
-    uctx_func1.uc_link = &amp;uctx_main;
-    makecontext(&amp;uctx_func1, func1, 0);
-
-    if (getcontext(&amp;uctx_func2) == -1)
-        handle_error(&quot;getcontext&quot;);
-    uctx_func2.uc_stack.ss_sp = func2_stack;
-    uctx_func2.uc_stack.ss_size = sizeof(func2_stack);
-    /* Successor context is f1(), unless argc &gt; 1 */
-    uctx_func2.uc_link = (argc &gt; 1) ? NULL : &amp;uctx_func1;
-    makecontext(&amp;uctx_func2, func2, 0);
-
-    printf(&quot;main: swapcontext(&amp;uctx_main, &amp;uctx_func2)\n&quot;);
-    if (swapcontext(&amp;uctx_main, &amp;uctx_func2) == -1)
-        handle_error(&quot;swapcontext&quot;);
-
-    printf(&quot;main: exiting\n&quot;);
-    exit(EXIT_SUCCESS);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;char&nbsp;func1_stack[16384];
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;char&nbsp;func2_stack[16384];
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(getcontext(&amp;uctx_func1)&nbsp;==&nbsp;-1)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;handle_error(&quot;getcontext&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;uctx_func1.uc_stack.ss_sp&nbsp;=&nbsp;func1_stack;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;uctx_func1.uc_stack.ss_size&nbsp;=&nbsp;sizeof(func1_stack);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;uctx_func1.uc_link&nbsp;=&nbsp;&amp;uctx_main;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;makecontext(&amp;uctx_func1,&nbsp;func1,&nbsp;0);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(getcontext(&amp;uctx_func2)&nbsp;==&nbsp;-1)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;handle_error(&quot;getcontext&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;uctx_func2.uc_stack.ss_sp&nbsp;=&nbsp;func2_stack;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;uctx_func2.uc_stack.ss_size&nbsp;=&nbsp;sizeof(func2_stack);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Successor&nbsp;context&nbsp;is&nbsp;f1(),&nbsp;unless&nbsp;argc&nbsp;&gt;&nbsp;1&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;uctx_func2.uc_link&nbsp;=&nbsp;(argc&nbsp;&gt;&nbsp;1)&nbsp;?&nbsp;NULL&nbsp;:&nbsp;&amp;uctx_func1;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;makecontext(&amp;uctx_func2,&nbsp;func2,&nbsp;0);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;main:&nbsp;swapcontext(&amp;uctx_main,&nbsp;&amp;uctx_func2)\n&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(swapcontext(&amp;uctx_main,&nbsp;&amp;uctx_func2)&nbsp;==&nbsp;-1)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;handle_error(&quot;swapcontext&quot;);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;main:&nbsp;exiting\n&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_SUCCESS);
 }
-</PRE>
 
 <A NAME="lbAM">&nbsp;</A>
 <H2>SEE ALSO</H2>
@@ -338,6 +342,6 @@ main(int argc, char *argv[])
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:46:46 GMT, April 20, 2020
+Time: 03:47:22 GMT, April 20, 2020
 </BODY>
 </HTML>

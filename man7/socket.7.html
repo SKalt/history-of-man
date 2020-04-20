@@ -10,7 +10,7 @@ of the modification is added to the header.
 <HTML><HEAD><TITLE>Man page of SOCKET</TITLE>
 </HEAD><BODY>
 <H1>SOCKET</H1>
-Section: Linux Programmer's Manual (7)<BR>Updated: 2017-05-03<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (7)<BR>Updated: 2017-09-15<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -23,6 +23,7 @@ socket - Linux socket interface
 <B>#include &lt;<A HREF="file:///usr/include/sys/socket.h">sys/socket.h</A>&gt;</B>
 
 <P>
+
 <I>sockfd</I><B> = socket(int </B><I>socket_family</I><B>, int </B><I>socket_type</I><B>, int </B><I>protocol</I><B>);</B>
 
 <A NAME="lbAD">&nbsp;</A>
@@ -59,6 +60,7 @@ These functions are used by the user process to send or receive packets
 and to do other socket operations.
 For more information see their respective manual pages.
 <P>
+
 <B><A HREF="../man2/socket.2.html">socket</A></B>(2)
 
 creates a socket,
@@ -274,6 +276,7 @@ the various system calls (e.g.,
 which are generic to all socket domains,
 to determine the domain of a particular socket address.
 <P>
+
 To allow any type of socket address to be passed to
 interfaces in the sockets API,
 the type
@@ -285,6 +288,7 @@ domain-specific socket address types to a &quot;generic&quot; type,
 so as to avoid compiler warnings about type mismatches in
 calls to the sockets API.
 <P>
+
 In addition, the sockets API provides the data type
 <I>struct sockaddr_storage.</I>
 
@@ -297,12 +301,13 @@ The structure includes the following field, which can be used to identify
 the type of socket address actually stored in the structure:
 <P>
 
-<PRE>
-    sa_family_t ss_family;
-</PRE>
+
+
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;sa_family_t&nbsp;ss_family;
 
 
 <P>
+
 The
 <I>sockaddr_storage</I>
 
@@ -361,7 +366,7 @@ non-zero value which is less than the packet's data length,
 the packet will be truncated to the length returned.
 If the value returned by the filter is greater than or equal to the
 packet's data length, the packet is allowed to proceed unmodified.
-<P>
+<DT><DD>
 The argument for
 <B>SO_ATTACH_FILTER</B>
 
@@ -371,14 +376,13 @@ is a
 structure, defined in
 <I>&lt;<A HREF="file:///usr/include/linux/filter.h">linux/filter.h</A>&gt;</I>:
 
-<P>
+<DT><DD>
 
-<PRE>
+
 struct sock_fprog {
-    unsigned short      len;
-    struct sock_filter *filter;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;unsigned&nbsp;short&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;len;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;struct&nbsp;sock_filter&nbsp;*filter;
 };
-</PRE>
 
 
 <DT><DD>
@@ -391,13 +395,13 @@ is a file descriptor returned by the
 system call and must refer to a program of type
 <B>BPF_PROG_TYPE_SOCKET_FILTER.</B>
 
-<P>
+<DT><DD>
 These options may be set multiple times for a given socket,
 each time replacing the previous filter program.
 The classic and extended versions may be called on the same socket,
 but the previous filter will always be replaced such that a socket
 never has more than one filter defined.
-<P>
+<DT><DD>
 Both classic and extended BPF are explained in the kernel source file
 <I>Documentation/networking/filter.txt</I>
 
@@ -418,7 +422,7 @@ the sockets in the reuseport group (that is, all sockets which have
 <B>SO_REUSEPORT</B>
 
 set and are using the same local address to receive packets).
-<P>
+<DT><DD>
 The BPF program must return an index between 0 and N-1 representing
 the socket which should receive the packet
 (where N is the number of sockets in the group).
@@ -427,7 +431,7 @@ socket selection will fall back to the plain
 <B>SO_REUSEPORT</B>
 
 mechanism.
-<P>
+<DT><DD>
 Sockets are numbered in the order in which they are added to the group
 (that is, the order of
 <B><A HREF="../man2/bind.2.html">bind</A></B>(2)
@@ -442,10 +446,10 @@ When a socket is removed from a reuseport group (via
 
 the last socket in the group will be moved into the closed socket's
 position.
-<P>
+<DT><DD>
 These options may be set repeatedly at any time on any socket in the group
 to replace the current BPF program used by all sockets in the group.
-<P>
+<DT><DD>
 <B>SO_ATTACH_REUSEPORT_CBPF</B>
 
 takes the same argument type as
@@ -457,7 +461,7 @@ and
 takes the same argument type as
 <B>SO_ATTACH_BPF.</B>
 
-<P>
+<DT><DD>
 UDP support for this feature is available since Linux 4.5;
 TCP support is available since Linux 4.6.
 <DT><B>SO_BINDTODEVICE</B>
@@ -483,7 +487,7 @@ It is not supported for packet sockets (use normal
 <B><A HREF="../man2/bind.2.html">bind</A></B>(2)
 
 there).
-<P>
+<DT><DD>
 Before Linux 3.8,
 this socket option could be set, but could not retrieved with
 <B><A HREF="../man2/getsockopt.2.html">getsockopt</A></B>(2).
@@ -577,16 +581,15 @@ Expects an integer boolean flag.
 
 Sets or gets the CPU affinity of a socket.
 Expects an integer flag.
-<P>
+<DT><DD>
 
-<PRE>
+
 int cpu = 1;
 socklen_t len = sizeof(cpu);
 setsockopt(fd, SOL_SOCKET, SO_INCOMING_CPU, &amp;cpu, &amp;len);
-</PRE>
 
 
-<P>
+<DT><DD>
 Because all of the packets for a single stream
 (i.e., all packets for the same 4-tuple)
 arrive on the single RX queue that is associated with a particular CPU,
@@ -628,14 +631,13 @@ The argument is a
 <I>linger</I>
 
 structure.
-<P>
+<DT><DD>
 
-<PRE>
+
 struct linger {
-    int l_onoff;    /* linger active */
-    int l_linger;   /* how many seconds to linger for */
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;l_onoff;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;linger&nbsp;active&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;l_linger;&nbsp;&nbsp;&nbsp;/*&nbsp;how&nbsp;many&nbsp;seconds&nbsp;to&nbsp;linger&nbsp;for&nbsp;*/
 };
-</PRE>
 
 
 <DT><DD>
@@ -669,7 +671,7 @@ These filters include any set using the socket options
 and
 <B>SO_ATTACH_REUSEPORT_EPBF</B>.
 
-<P>
+<DT><DD>
 The typical use case is for a privileged process to set up a raw socket
 (an operation that requires the
 <B>CAP_NET_RAW</B>
@@ -680,7 +682,7 @@ capability), apply a restrictive filter, set the
 option,
 and then either drop its privileges or pass the socket file descriptor
 to an unprivileged process via a UNIX domain socket.
-<P>
+<DT><DD>
 Once the
 <B>SO_LOCK_FILTER</B>
 
@@ -748,7 +750,7 @@ system call when used with
 <B>MSG_PEEK</B>
 
 flag.
-<P>
+<DT><DD>
 When this option is set to a negative value
 (it is set to -1 for all new sockets),
 traditional behavior is provided:
@@ -758,14 +760,14 @@ with the
 <B>MSG_PEEK</B>
 
 flag will peek data from the front of the queue.
-<P>
+<DT><DD>
 When the option is set to a value greater than or equal to zero,
 then the next peek at data queued in the socket will occur at
 the byte offset specified by the option value.
 At the same time, the &quot;peek offset&quot; will be
 incremented by the number of bytes that were peeked from the queue,
 so that a subsequent peek will return the next data in the queue.
-<P>
+<DT><DD>
 If data is removed from the front of the queue via a call to
 <B><A HREF="../man2/recv.2.html">recv</A></B>(2)
 
@@ -780,35 +782,34 @@ flag will cause the &quot;peek offset&quot; to be adjusted to maintain
 the correct relative position in the queued data,
 so that a subsequent peek will retrieve the data that would have been
 retrieved had the data not been removed.
-<P>
+<DT><DD>
 For datagram sockets, if the &quot;peek offset&quot; points to the middle of a packet,
 the data returned will be marked with the
 <B>MSG_TRUNC</B>
 
 flag.
-<P>
+<DT><DD>
 The following example serves to illustrate the use of
 <B>SO_PEEK_OFF</B>.
 
 Suppose a stream socket has the following queued input data:
-<P>
+<DT><DD>
 <BR>&nbsp;&nbsp;&nbsp;&nbsp;aabbccddeeff
 <DT><DD>
 The following sequence of
 <B><A HREF="../man2/recv.2.html">recv</A></B>(2)
 
 calls would have the effect noted in the comments:
-<P>
+<DT><DD>
 
-<PRE>
+
 int ov = 4;                  // Set peek offset to 4
 setsockopt(fd, SOL_SOCKET, SO_PEEK_OFF, &amp;ov, sizeof(ov));
-
+<P>
 recv(fd, buf, 2, MSG_PEEK);  // Peeks &quot;cc&quot;; offset set to 6
 recv(fd, buf, 2, MSG_PEEK);  // Peeks &quot;dd&quot;; offset set to 8
 recv(fd, buf, 2, 0);         // Reads &quot;aa&quot;; offset set to 6
 recv(fd, buf, 2, MSG_PEEK);  // Peeks &quot;ee&quot;; offset set to 8
-</PRE>
 
 
 <DT><B>SO_PEERCRED</B>
@@ -1036,7 +1037,7 @@ To prevent port hijacking,
 all of the processes binding to the same address must have the same
 effective UID.
 This option can be employed with both TCP and UDP sockets.
-<P>
+<DT><DD>
 For TCP sockets, this option allows
 <B><A HREF="../man2/accept.2.html">accept</A></B>(2)
 
@@ -1051,7 +1052,7 @@ or having multiple threads that compete to
 <B><A HREF="../man2/accept.2.html">accept</A></B>(2)
 
 from the same socket.
-<P>
+<DT><DD>
 For UDP sockets,
 the use of this option can provide better distribution
 of incoming datagrams to multiple processes (or threads) as compared
@@ -1140,7 +1141,7 @@ The default for this option is controlled by the
 <I>/proc/sys/net/core/busy_read</I>
 
 file.
-<P>
+<DT><DD>
 The value in the
 <I>/proc/sys/net/core/busy_poll</I>
 
@@ -1154,11 +1155,11 @@ will busy poll when they operate on sockets with
 <B>SO_BUSY_POLL</B>
 
 set and no events to report are found.
-<P>
+<DT><DD>
 In both cases,
 busy polling will only be done when the socket last received data
 from a network device that supports this option.
-<P>
+<DT><DD>
 While busy polling may improve latency of some applications,
 care must be taken when using it since this will increase
 both CPU utilization and power usage.
@@ -1283,9 +1284,10 @@ These operations can be accessed using
 
 <P>
 
-<PRE>
+
+
 <I>error</I><B> = ioctl(</B><I>ip_socket</I><B>, </B><I>ioctl_type</I><B>, </B><I>&amp;value_result</I><B>);</B>
-</PRE>
+
 
 
 <DL COMPACT>
@@ -1432,6 +1434,7 @@ kernel structures; thus the values in the corresponding
 
 files are twice what can be observed on the wire.
 <P>
+
 Linux will allow port reuse only with the
 <B>SO_REUSEADDR</B>
 
@@ -1506,6 +1509,6 @@ program is designed to always set this option.
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:46:51 GMT, April 20, 2020
+Time: 03:47:28 GMT, April 20, 2020
 </BODY>
 </HTML>

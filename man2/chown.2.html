@@ -26,7 +26,7 @@ the source, must acknowledge the copyright and authors of this work.
 <HTML><HEAD><TITLE>Man page of CHOWN</TITLE>
 </HEAD><BODY>
 <H1>CHOWN</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2017-07-13<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2017-09-15<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -40,9 +40,7 @@ chown, fchown, lchown, fchownat - change ownership of a file
 <B>#include &lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;</B>
 
 <B>int chown(const char *</B><I>pathname</I><B>, uid_t </B><I>owner</I><B>, gid_t </B><I>group</I><B>);</B>
-<BR>
 <B>int fchown(int </B><I>fd</I><B>, uid_t </B><I>owner</I><B>, gid_t </B><I>group</I><B>);</B>
-<BR>
 <B>int lchown(const char *</B><I>pathname</I><B>, uid_t </B><I>owner</I><B>, gid_t </B><I>group</I><B>);</B>
 
 <B>#include &lt;<A HREF="file:///usr/include/fcntl.h">fcntl.h</A>&gt;           </B>/* Definition of AT_* constants */
@@ -54,11 +52,13 @@ chown, fchown, lchown, fchownat - change ownership of a file
 
 <P>
 
+
 Feature Test Macro Requirements for glibc (see
 <B><A HREF="../man7/feature_test_macros.7.html">feature_test_macros</A></B>(7)):
 
 
 <P>
+
 <B>fchown</B>(),
 
 <B>lchown</B>():
@@ -73,6 +73,7 @@ Feature Test Macro Requirements for glibc (see
 </DL>
 
 <P>
+
 <B>fchownat</B>():
 
 
@@ -136,6 +137,7 @@ A privileged process (Linux: with
 
 may change the group arbitrarily.
 <P>
+
 If the
 <I>owner</I>
 
@@ -144,6 +146,7 @@ or
 
 is specified as -1, then that ID is not changed.
 <P>
+
 When the owner or group of an executable file is
 changed by an unprivileged user, the
 <B>S_ISUID</B>
@@ -171,6 +174,7 @@ bit indicates mandatory locking, and is not cleared by a
 <B>chown</B>().
 
 <P>
+
 When the owner or group of an executable file is changed (by any user),
 all capability sets for the file are cleared.
 
@@ -185,6 +189,7 @@ system call operates in exactly the same way as
 
 except for the differences described here.
 <P>
+
 If the pathname given in
 <I>pathname</I>
 
@@ -198,6 +203,7 @@ the calling process, as is done by
 
 for a relative pathname).
 <P>
+
 If
 <I>pathname</I>
 
@@ -215,6 +221,7 @@ directory of the calling process (like
 <B>chown</B>()).
 
 <P>
+
 If
 <I>pathname</I>
 
@@ -223,6 +230,7 @@ is absolute, then
 
 is ignored.
 <P>
+
 The
 <I>flags</I>
 
@@ -300,6 +308,7 @@ is set appropriately.
 Depending on the filesystem,
 errors other than those listed below can be returned.
 <P>
+
 The more general errors for
 <B>chown</B>()
 
@@ -441,6 +450,7 @@ library support was added to glibc in version 2.4.
 
 4.4BSD, SVr4, POSIX.1-2001, POSIX.1-2008.
 <P>
+
 The 4.4BSD version can be
 used only by the superuser (that is, ordinary users cannot give away files).
 
@@ -450,6 +460,7 @@ used only by the superuser (that is, ordinary users cannot give away files).
 
 
 <P>
+
 <B>fchownat</B>():
 
 POSIX.1-2008.
@@ -511,7 +522,7 @@ the same as that of the parent directory.
 </DL>
 <P>
 
-As at Linux 2.6.25,
+As at Linux 4.12,
 the
 <I>-o&nbsp;grpid</I>
 
@@ -594,6 +605,7 @@ and
 
 wrapper functions transparently deal with the variations across kernel versions.
 <P>
+
 In versions of Linux prior to 2.1.81 (and distinct from 2.1.46),
 <B>chown</B>()
 
@@ -629,44 +641,43 @@ to perform a lookup in the system password file).
 <A NAME="lbAP">&nbsp;</A>
 <H3>Program source</H3>
 
-<PRE>
+
 #include &lt;<A HREF="file:///usr/include/pwd.h">pwd.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/stdlib.h">stdlib.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;
-
+<P>
 int
 main(int argc, char *argv[])
 {
-    uid_t uid;
-    struct passwd *pwd;
-    char *endptr;
-
-    if (argc != 3 || argv[1][0] == '\0') {
-        fprintf(stderr, &quot;%s &lt;owner&gt; &lt;file&gt;\n&quot;, argv[0]);
-        exit(EXIT_FAILURE);
-    }
-
-    uid = strtol(argv[1], &amp;endptr, 10);  /* Allow a numeric string */
-
-    if (*endptr != '\0') {         /* Was not pure numeric string */
-        pwd = getpwnam(argv[1]);   /* Try getting UID for username */
-        if (pwd == NULL) {
-            perror(&quot;getpwnam&quot;);
-            exit(EXIT_FAILURE);
-        }
-
-        uid = pwd-&gt;pw_uid;
-    }
-
-    if (chown(argv[2], uid, -1) == -1) {
-        perror(&quot;chown&quot;);
-        exit(EXIT_FAILURE);
-    }
-
-    exit(EXIT_SUCCESS);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;uid_t&nbsp;uid;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;struct&nbsp;passwd&nbsp;*pwd;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;char&nbsp;*endptr;
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(argc&nbsp;!=&nbsp;3&nbsp;||&nbsp;argv[1][0]&nbsp;==&nbsp;'\0')&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fprintf(stderr,&nbsp;&quot;%s&nbsp;&lt;owner&gt;&nbsp;&lt;file&gt;\n&quot;,&nbsp;argv[0]);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;uid&nbsp;=&nbsp;strtol(argv[1],&nbsp;&amp;endptr,&nbsp;10);&nbsp;&nbsp;/*&nbsp;Allow&nbsp;a&nbsp;numeric&nbsp;string&nbsp;*/
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(*endptr&nbsp;!=&nbsp;'\0')&nbsp;{&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Was&nbsp;not&nbsp;pure&nbsp;numeric&nbsp;string&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;pwd&nbsp;=&nbsp;getpwnam(argv[1]);&nbsp;&nbsp;&nbsp;/*&nbsp;Try&nbsp;getting&nbsp;UID&nbsp;for&nbsp;username&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(pwd&nbsp;==&nbsp;NULL)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;perror(&quot;getpwnam&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;uid&nbsp;=&nbsp;pwd-&gt;pw_uid;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(chown(argv[2],&nbsp;uid,&nbsp;-1)&nbsp;==&nbsp;-1)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;perror(&quot;chown&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_SUCCESS);
 }
-</PRE>
 
 <A NAME="lbAQ">&nbsp;</A>
 <H2>SEE ALSO</H2>
@@ -715,6 +726,6 @@ main(int argc, char *argv[])
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:46:37 GMT, April 20, 2020
+Time: 03:47:13 GMT, April 20, 2020
 </BODY>
 </HTML>

@@ -26,7 +26,7 @@ the source, must acknowledge the copyright and authors of this work.
 <HTML><HEAD><TITLE>Man page of GETPWNAM</TITLE>
 </HEAD><BODY>
 <H1>GETPWNAM</H1>
-Section: Linux Programmer's Manual (3)<BR>Updated: 2016-03-15<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2017-09-15<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -45,21 +45,21 @@ getpwnam, getpwnam_r, getpwuid, getpwuid_r - get password file entry
 <B>struct passwd *getpwuid(uid_t </B><I>uid</I><B>);</B>
 
 <B>int getpwnam_r(const char *</B><I>name</I><B>, struct passwd *</B><I>pwd</I><B>,</B>
-<BR>
 <B>               char *</B><I>buf</I><B>, size_t </B><I>buflen</I><B>, struct passwd **</B><I>result</I><B>);</B>
 
 <B>int getpwuid_r(uid_t </B><I>uid</I><B>, struct passwd *</B><I>pwd</I><B>,</B>
-<BR>
 <B>               char *</B><I>buf</I><B>, size_t </B><I>buflen</I><B>, struct passwd **</B><I>result</I><B>);</B>
 </PRE>
 
 <P>
+
 
 Feature Test Macro Requirements for glibc (see
 <B><A HREF="../man7/feature_test_macros.7.html">feature_test_macros</A></B>(7)):
 
 
 <P>
+
 
 <B>getpwnam_r</B>(),
 
@@ -101,17 +101,17 @@ that matches the user ID
 The <I>passwd</I> structure is defined in <I>&lt;<A HREF="file:///usr/include/pwd.h">pwd.h</A>&gt;</I> as follows:
 <P>
 
-<PRE>
+
+
 struct passwd {
-    char   *pw_name;       /* username */
-    char   *pw_passwd;     /* user password */
-    uid_t   pw_uid;        /* user ID */
-    gid_t   pw_gid;        /* group ID */
-    char   *pw_gecos;      /* user information */
-    char   *pw_dir;        /* home directory */
-    char   *pw_shell;      /* shell program */
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;char&nbsp;&nbsp;&nbsp;*pw_name;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;username&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;char&nbsp;&nbsp;&nbsp;*pw_passwd;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;user&nbsp;password&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;uid_t&nbsp;&nbsp;&nbsp;pw_uid;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;user&nbsp;ID&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;gid_t&nbsp;&nbsp;&nbsp;pw_gid;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;group&nbsp;ID&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;char&nbsp;&nbsp;&nbsp;*pw_gecos;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;user&nbsp;information&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;char&nbsp;&nbsp;&nbsp;*pw_dir;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;home&nbsp;directory&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;char&nbsp;&nbsp;&nbsp;*pw_shell;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;shell&nbsp;program&nbsp;*/
 };
-</PRE>
 
 
 <P>
@@ -157,8 +157,10 @@ was found or an error occurred) is stored in
 
 The call
 <P>
+
 <BR>&nbsp;&nbsp;&nbsp;&nbsp;sysconf(_SC_GETPW_R_SIZE_MAX)
 <P>
+
 returns either -1, without changing
 <I>errno</I>,
 
@@ -342,6 +344,7 @@ situation: 0, ENOENT, EBADF, ESRCH, EWOULDBLOCK, EPERM, and probably others.
 
 
 <P>
+
 The
 <I>pw_dir</I>
 
@@ -373,52 +376,52 @@ The program below demonstrates the use of
 to find the full username and user ID for the username
 supplied as a command-line argument.
 <P>
-<PRE>
+
+
 #include &lt;<A HREF="file:///usr/include/pwd.h">pwd.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/stdlib.h">stdlib.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/errno.h">errno.h</A>&gt;
-
+<P>
 int
 main(int argc, char *argv[])
 {
-    struct passwd pwd;
-    struct passwd *result;
-    char *buf;
-    size_t bufsize;
-    int s;
-
-    if (argc != 2) {
-        fprintf(stderr, &quot;Usage: %s username\n&quot;, argv[0]);
-        exit(EXIT_FAILURE);
-    }
-
-    bufsize = sysconf(_SC_GETPW_R_SIZE_MAX);
-    if (bufsize == -1)          /* Value was indeterminate */
-        bufsize = 16384;        /* Should be more than enough */
-
-    buf = malloc(bufsize);
-    if (buf == NULL) {
-        perror(&quot;malloc&quot;);
-        exit(EXIT_FAILURE);
-    }
-
-    s = getpwnam_r(argv[1], &amp;pwd, buf, bufsize, &amp;result);
-    if (result == NULL) {
-        if (s == 0)
-            printf(&quot;Not found\n&quot;);
-        else {
-            errno = s;
-            perror(&quot;getpwnam_r&quot;);
-        }
-        exit(EXIT_FAILURE);
-    }
-
-    printf(&quot;Name: %s; UID: %ld\n&quot;, pwd.pw_gecos, (long) pwd.pw_uid);
-    exit(EXIT_SUCCESS);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;struct&nbsp;passwd&nbsp;pwd;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;struct&nbsp;passwd&nbsp;*result;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;char&nbsp;*buf;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;size_t&nbsp;bufsize;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;s;
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(argc&nbsp;!=&nbsp;2)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fprintf(stderr,&nbsp;&quot;Usage:&nbsp;%s&nbsp;username\n&quot;,&nbsp;argv[0]);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;bufsize&nbsp;=&nbsp;sysconf(_SC_GETPW_R_SIZE_MAX);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(bufsize&nbsp;==&nbsp;-1)&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Value&nbsp;was&nbsp;indeterminate&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;bufsize&nbsp;=&nbsp;16384;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Should&nbsp;be&nbsp;more&nbsp;than&nbsp;enough&nbsp;*/
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;buf&nbsp;=&nbsp;malloc(bufsize);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(buf&nbsp;==&nbsp;NULL)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;perror(&quot;malloc&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;s&nbsp;=&nbsp;getpwnam_r(argv[1],&nbsp;&amp;pwd,&nbsp;buf,&nbsp;bufsize,&nbsp;&amp;result);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(result&nbsp;==&nbsp;NULL)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(s&nbsp;==&nbsp;0)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;Not&nbsp;found\n&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;else&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;errno&nbsp;=&nbsp;s;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;perror(&quot;getpwnam_r&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;Name:&nbsp;%s;&nbsp;UID:&nbsp;%ld\n&quot;,&nbsp;pwd.pw_gecos,&nbsp;(long)&nbsp;pwd.pw_uid);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_SUCCESS);
 }
-</PRE>
 
 <A NAME="lbAL">&nbsp;</A>
 <H2>SEE ALSO</H2>
@@ -462,6 +465,6 @@ main(int argc, char *argv[])
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:46:45 GMT, April 20, 2020
+Time: 03:47:21 GMT, April 20, 2020
 </BODY>
 </HTML>

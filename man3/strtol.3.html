@@ -26,7 +26,7 @@ the source, must acknowledge the copyright and authors of this work.
 <HTML><HEAD><TITLE>Man page of STRTOL</TITLE>
 </HEAD><BODY>
 <H1>STRTOL</H1>
-Section: Linux Programmer's Manual (3)<BR>Updated: 2017-07-13<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2017-09-15<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -46,11 +46,13 @@ strtol, strtoll, strtoq - convert a string to a long integer
 
 <P>
 
+
 Feature Test Macro Requirements for glibc (see
 <B><A HREF="../man7/feature_test_macros.7.html">feature_test_macros</A></B>(7)):
 
 
 <P>
+
 
 <B>strtoll</B>():
 
@@ -234,6 +236,7 @@ For an explanation of the terms used in this section, see
 
 POSIX.1-2001, POSIX.1-2008, C89, C99 SVr4, 4.3BSD.
 <P>
+
 <B>strtoll</B>():
 
 POSIX.1-2001, POSIX.1-2008, C99.
@@ -266,6 +269,7 @@ and then determine if an error occurred by checking whether
 
 has a nonzero value after the call.
 <P>
+
 According to POSIX.1,
 in locales other than the &quot;C&quot; and &quot;POSIX&quot;,
 these functions may accept other,
@@ -275,10 +279,13 @@ implementation-defined numeric strings.
 BSD also has
 <P>
 
-<PRE>
+
+
 <B>quad_t strtoq(const char *</B><I>nptr</I><B>, char **</B><I>endptr</I><B>, int </B><I>base</I><B>);</B>
 
-</PRE>
+
+
+<P>
 
 with completely analogous definition.
 Depending on the wordsize of the current architecture, this
@@ -308,76 +315,81 @@ has a simpler interface than
 <B>strtol</B>().)
 
 Some examples of the results produced by this program are the following:
+<P>
 
-<PRE>
+
 
 $<B> ./a.out 123</B>
+
 strtol() returned 123
 $<B> ./a.out '    123'</B>
+
 strtol() returned 123
 $<B> ./a.out 123abc</B>
+
 strtol() returned 123
 Further characters after number: abc
 $<B> ./a.out 123abc 55</B>
+
 strtol: Invalid argument
 $<B> ./a.out ''</B>
+
 No digits were found
 $<B> ./a.out 4000000000</B>
+
 strtol: Numerical result out of range
-</PRE>
 
 
 <A NAME="lbAK">&nbsp;</A>
 <H3>Program source</H3>
 
 
-<PRE>
+
 #include &lt;<A HREF="file:///usr/include/stdlib.h">stdlib.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/limits.h">limits.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/errno.h">errno.h</A>&gt;
-
+<P>
 int
 main(int argc, char *argv[])
 {
-    int base;
-    char *endptr, *str;
-    long val;
-
-    if (argc &lt; 2) {
-        fprintf(stderr, &quot;Usage: %s str [base]\n&quot;, argv[0]);
-        exit(EXIT_FAILURE);
-    }
-
-    str = argv[1];
-    base = (argc &gt; 2) ? atoi(argv[2]) : 10;
-
-    errno = 0;    /* To distinguish success/failure after call */
-    val = strtol(str, &amp;endptr, base);
-
-    /* Check for various possible errors */
-
-    if ((errno == ERANGE &amp;&amp; (val == LONG_MAX || val == LONG_MIN))
-            || (errno != 0 &amp;&amp; val == 0)) {
-        perror(&quot;strtol&quot;);
-        exit(EXIT_FAILURE);
-    }
-
-    if (endptr == str) {
-        fprintf(stderr, &quot;No digits were found\n&quot;);
-        exit(EXIT_FAILURE);
-    }
-
-    /* If we got here, strtol() successfully parsed a number */
-
-    printf(&quot;strtol() returned %ld\n&quot;, val);
-
-    if (*endptr != '\0')        /* Not necessarily an error... */
-        printf(&quot;Further characters after number: %s\n&quot;, endptr);
-
-    exit(EXIT_SUCCESS);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;base;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;char&nbsp;*endptr,&nbsp;*str;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;long&nbsp;val;
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(argc&nbsp;&lt;&nbsp;2)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fprintf(stderr,&nbsp;&quot;Usage:&nbsp;%s&nbsp;str&nbsp;[base]\n&quot;,&nbsp;argv[0]);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;str&nbsp;=&nbsp;argv[1];
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;base&nbsp;=&nbsp;(argc&nbsp;&gt;&nbsp;2)&nbsp;?&nbsp;atoi(argv[2])&nbsp;:&nbsp;10;
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;errno&nbsp;=&nbsp;0;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;To&nbsp;distinguish&nbsp;success/failure&nbsp;after&nbsp;call&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;val&nbsp;=&nbsp;strtol(str,&nbsp;&amp;endptr,&nbsp;base);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Check&nbsp;for&nbsp;various&nbsp;possible&nbsp;errors&nbsp;*/
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;((errno&nbsp;==&nbsp;ERANGE&nbsp;&amp;&amp;&nbsp;(val&nbsp;==&nbsp;LONG_MAX&nbsp;||&nbsp;val&nbsp;==&nbsp;LONG_MIN))
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;||&nbsp;(errno&nbsp;!=&nbsp;0&nbsp;&amp;&amp;&nbsp;val&nbsp;==&nbsp;0))&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;perror(&quot;strtol&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(endptr&nbsp;==&nbsp;str)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fprintf(stderr,&nbsp;&quot;No&nbsp;digits&nbsp;were&nbsp;found\n&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;If&nbsp;we&nbsp;got&nbsp;here,&nbsp;strtol()&nbsp;successfully&nbsp;parsed&nbsp;a&nbsp;number&nbsp;*/
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;strtol()&nbsp;returned&nbsp;%ld\n&quot;,&nbsp;val);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(*endptr&nbsp;!=&nbsp;'\0')&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Not&nbsp;necessarily&nbsp;an&nbsp;error...&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;Further&nbsp;characters&nbsp;after&nbsp;number:&nbsp;%s\n&quot;,&nbsp;endptr);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_SUCCESS);
 }
-</PRE>
 
 <A NAME="lbAL">&nbsp;</A>
 <H2>SEE ALSO</H2>
@@ -415,6 +427,6 @@ main(int argc, char *argv[])
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:46:48 GMT, April 20, 2020
+Time: 03:47:25 GMT, April 20, 2020
 </BODY>
 </HTML>

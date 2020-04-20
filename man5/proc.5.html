@@ -25,7 +25,7 @@ License along with this manual; if not, see
 <HTML><HEAD><TITLE>Man page of PROC</TITLE>
 </HEAD><BODY>
 <H1>PROC</H1>
-Section: Linux Programmer's Manual (5)<BR>Updated: 2017-05-03<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (5)<BR>Updated: 2017-09-15<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -36,20 +36,35 @@ proc - process information pseudo-filesystem
 <H2>DESCRIPTION</H2>
 
 The
-<I>proc</I>
+<B>proc</B>
 
 filesystem is a pseudo-filesystem which provides an interface to
 kernel data structures.
 It is commonly mounted at
 <I>/proc</I>.
 
-Most of it is read-only, but some files allow kernel variables to be
-changed.
+Typically, it is mounted automatically by the system,
+but it can also be mounted manually using a command such as:
+<P>
+
+
+
+mount -t proc proc /proc
+
+
+<P>
+
+Most of the files in the
+<B>proc</B>
+
+filesystem are read-only,
+but some files are writable, allowing kernel variables to be changed.
+
 <A NAME="lbAD">&nbsp;</A>
 <H3>Mount options</H3>
 
 The
-<I>proc</I>
+<B>proc</B>
 
 filesystem supports the following mount options:
 <DL COMPACT>
@@ -151,14 +166,13 @@ The following list describes many of the files and directories under the
 <I>/proc</I>
 
 hierarchy.
-
 <DL COMPACT>
 <DT><I>/proc/[pid]</I>
 
 <DD>
 There is a numerical subdirectory for each running process; the
 subdirectory is named by the process ID.
-<P>
+<DT><DD>
 Each
 <I>/proc/[pid]</I>
 
@@ -214,7 +228,7 @@ but the intention was that the API be general enough to support
 other security modules.
 For the purpose of explanation,
 examples of how SELinux uses these files are provided below.
-<P>
+<DT><DD>
 This directory is present only if the kernel was configured with
 <B>CONFIG_SECURITY</B>.
 
@@ -223,7 +237,7 @@ This directory is present only if the kernel was configured with
 <DD>
 The contents of this file represent the current
 security attributes of the process.
-<P>
+<DT><DD>
 In SELinux, this file is used to get the security context of a process.
 Prior to Linux 2.6.11, this file could not be used to set the security
 context (a write was always denied), since SELinux limited process security
@@ -258,7 +272,7 @@ This file represents the attributes to assign to the
 process upon a subsequent
 <B><A HREF="../man2/execve.2.html">execve</A></B>(2).
 
-<P>
+<DT><DD>
 In SELinux,
 this is needed to support role/domain transitions, and
 <B><A HREF="../man2/execve.2.html">execve</A></B>(2)
@@ -292,7 +306,7 @@ created by subsequent calls to
 and
 <B><A HREF="../man2/mknod.2.html">mknod</A></B>(2)
 
-<P>
+<DT><DD>
 SELinux employs this file to support creation of a file
 (using the aforementioned system calls)
 in a secure state,
@@ -313,15 +327,23 @@ attribute.
 
 <DD>
 
-
 If a process writes a security context into this file,
 all subsequently created keys
 (<B><A HREF="../man2/add_key.2.html">add_key</A></B>(2))
 
 will be labeled with this context.
 For further information, see the kernel source file
-<I>Documentation/keys.txt</I>.
+<I>Documentation/security/keys/core.rst</I>
 
+(or file
+
+<I>Documentation/security/keys.txt</I>
+
+on Linux between 3.0 and 4.13, or
+
+<I>Documentation/keys.txt</I>
+
+before Linux 3.0).
 <DT><I>/proc/[pid]/attr/prev</I> (since Linux 2.6.0)
 
 <DD>
@@ -355,7 +377,7 @@ The last entry contains two zeros.
 See also
 <B><A HREF="../man3/getauxval.3.html">getauxval</A></B>(3).
 
-<P>
+<DT><DD>
 Permission to access this file is governed by a ptrace access mode
 <B>PTRACE_MODE_READ_FSCREDS</B>
 
@@ -377,9 +399,9 @@ See
 
 
 
-<P>
+<DT><DD>
 This is a write-only file, writable only by owner of the process.
-<P>
+<DT><DD>
 The following values may be written to the file:
 <DL COMPACT><DT><DD>
 <DL COMPACT>
@@ -416,7 +438,7 @@ to get an idea of the change in memory footprint of the
 process during the measured interval.
 If one is interested only in inspecting the selected mapping types,
 then the value 2 or 3 can be used instead of 1.
-<P>
+<DT><DD>
 Further values can be written to affect different properties:
 <DL COMPACT><DT><DD>
 <DL COMPACT>
@@ -443,7 +465,7 @@ Writing any value to
 <I>/proc/[pid]/clear_refs</I>
 
 other than those listed above has no effect.
-<P>
+<DT><DD>
 The
 <I>/proc/[pid]/clear_refs</I>
 
@@ -493,7 +515,7 @@ Strings longer than
 <B>TASK_COMM_LEN</B>
 
 (16) characters are silently truncated.
-<P>
+<DT><DD>
 This file provides a superset of the
 <B><A HREF="../man2/prctl.2.html">prctl</A></B>(2)
 
@@ -525,14 +547,14 @@ See
 This is a symbolic link to the current working directory of the process.
 To find out the current working directory of process 20,
 for instance, you can do this:
-<P>
+<DT><DD>
 
-<PRE>
+
 $<B> cd /proc/20/cwd; /bin/pwd</B>
-</PRE>
 
 
-<P>
+
+<DT><DD>
 Note that the
 <I>pwd</I>
 
@@ -544,14 +566,14 @@ In
 you may use
 <I>pwd&nbsp;-P</I>.
 
-<P>
+<DT><DD>
 
 In a multithreaded process, the contents of this symbolic link
 are not available if the main thread has already terminated
 (typically by calling
 <B><A HREF="../man3/pthread_exit.3.html">pthread_exit</A></B>(3)).
 
-<P>
+<DT><DD>
 Permission to dereference or read
 (<B><A HREF="../man2/readlink.2.html">readlink</A></B>(2))
 
@@ -571,14 +593,14 @@ when the currently executing program was started via
 The entries are separated by null bytes ('\0'),
 and there may be a null byte at the end.
 Thus, to print out the environment of process 1, you would do:
+<DT><DD>
 
-<PRE>
 
 $<B> strings /proc/1/environ</B>
-</PRE>
 
 
-<P>
+
+<DT><DD>
 If, after an
 <B><A HREF="../man2/execve.2.html">execve</A></B>(2),
 
@@ -594,14 +616,14 @@ this file will
 <I>not</I>
 
 reflect those changes.
-<P>
+<DT><DD>
 Furthermore, a process may change the memory location that this file refers via
 <B><A HREF="../man2/prctl.2.html">prctl</A></B>(2)
 
 operations such as
 <B>PR_SET_MM_ENV_START</B>.
 
-<P>
+<DT><DD>
 Permission to access this file is governed by a ptrace access mode
 <B>PTRACE_MODE_READ_FSCREDS</B>
 
@@ -628,7 +650,7 @@ are not available if the main thread has already terminated
 (typically by calling
 <B><A HREF="../man3/pthread_exit.3.html">pthread_exit</A></B>(3)).
 
-<P>
+<DT><DD>
 Permission to dereference or read
 (<B><A HREF="../man2/readlink.2.html">readlink</A></B>(2))
 
@@ -638,7 +660,7 @@ this symbolic link is governed by a ptrace access mode
 check; see
 <B><A HREF="../man2/ptrace.2.html">ptrace</A></B>(2).
 
-<P>
+<DT><DD>
 Under Linux 2.0 and earlier,
 <I>/proc/[pid]/exe</I>
 
@@ -648,12 +670,12 @@ A
 <B><A HREF="../man2/readlink.2.html">readlink</A></B>(2)
 
 call on this file under Linux 2.0 returns a string in the format:
-<P>
+<DT><DD>
 <BR>&nbsp;&nbsp;&nbsp;&nbsp;[device]:inode
-<P>
+<DT><DD>
 For example, [0301]:1502 would be inode 1502 on device major 03 (IDE,
 MFM, etc. drives) minor 01 (first partition on the first drive).
-<P>
+<DT><DD>
 <B><A HREF="../man1/find.1.html">find</A></B>(1)
 
 with the
@@ -667,7 +689,7 @@ This is a subdirectory containing one entry for each file which the
 process has open, named by its file descriptor, and which is a
 symbolic link to the actual file.
 Thus, 0 is standard input, 1 standard output, 2 standard error, and so on.
-<P>
+<DT><DD>
 For file descriptors for pipes and sockets,
 the entries will be symbolic links whose content is the
 file type with the inode.
@@ -675,9 +697,9 @@ A
 <B><A HREF="../man2/readlink.2.html">readlink</A></B>(2)
 
 call on this file returns a string in the format:
-<P>
+<DT><DD>
 <BR>&nbsp;&nbsp;&nbsp;&nbsp;type:[inode]
-<P>
+<DT><DD>
 For example,
 <I>socket:[2248868]</I>
 
@@ -686,7 +708,7 @@ For sockets, that inode can be used to find more information
 in one of the files under
 <I>/proc/net/</I>.
 
-<P>
+<DT><DD>
 For file descriptors that have no corresponding inode
 (e.g., file descriptors produced by
 <B><A HREF="../man2/bpf.2.html">bpf</A></B>(2),
@@ -707,26 +729,26 @@ and
 <B><A HREF="../man2/userfaultfd.2.html">userfaultfd</A></B>(2)),
 
 the entry will be a symbolic link with contents of the form
-<P>
+<DT><DD>
 <BR>&nbsp;&nbsp;&nbsp;&nbsp;anon_inode:&lt;file-type&gt;
-<P>
+<DT><DD>
 In many cases (but not all), the
 <I>file-type</I>
 
 is surrounded by square brackets.
-<P>
+<DT><DD>
 For example, an epoll file descriptor will have a symbolic link
 whose content is the string
 <I>anon_inode:[eventpoll]</I>.
 
-<P>
+<DT><DD>
 
 In a multithreaded process, the contents of this directory
 are not available if the main thread has already terminated
 (typically by calling
 <B><A HREF="../man3/pthread_exit.3.html">pthread_exit</A></B>(3)).
 
-<P>
+<DT><DD>
 Programs that take a filename as a command-line argument,
 but don't take input from standard input if no argument is supplied,
 and programs that write to a file named as a command-line argument,
@@ -743,20 +765,20 @@ is the flag designating an input file and
 <I>-o</I>
 
 is the flag designating an output file:
+<DT><DD>
 
-<PRE>
 
 $<B> foobar -i /proc/self/fd/0 -o /proc/self/fd/1 ...</B>
-</PRE>
 
 
-<P>
+
+<DT><DD>
 and you have a working filter.
 
 
 
 
-<P>
+<DT><DD>
 <I>/proc/self/fd/N</I>
 
 is approximately the same as
@@ -770,7 +792,7 @@ to
 <I>/proc/self/fd</I>,
 
 in fact.
-<P>
+<DT><DD>
 Most systems provide symbolic links
 <I>/dev/stdin</I>,
 
@@ -791,13 +813,16 @@ in
 <I>/proc/self/fd</I>.
 
 Thus the example command above could be written as:
+</DL>
+<P>
 
-<PRE>
+
 
 $<B> foobar -i /dev/stdin -o /dev/stdout ...</B>
-</PRE>
 
 
+
+<DL COMPACT>
 <DT><DD>
 Permission to dereference or read
 (<B><A HREF="../man2/readlink.2.html">readlink</A></B>(2))
@@ -818,19 +843,19 @@ The contents of each file can be read to obtain information
 about the corresponding file descriptor.
 The content depends on the type of file referred to by the
 corresponding file descriptor.
-<P>
+<DT><DD>
 For regular files and directories, we see something like:
+<DT><DD>
 
-<PRE>
 
 $<B> cat /proc/12015/fdinfo/4</B>
+
 pos:    1000
 flags:  01002002
 mnt_id: 21
-</PRE>
 
 
-<P>
+<DT><DD>
 The fields are as follows:
 <DL COMPACT><DT><DD>
 <DL COMPACT>
@@ -851,7 +876,7 @@ If the close-on-exec file descriptor flag is set, then
 will also include the value
 <B>O_CLOEXEC</B>.
 
-<P>
+<DT><DD>
 Before Linux 3.1,
 
 this field incorrectly displayed the setting of
@@ -880,39 +905,37 @@ For eventfd file descriptors (see
 we see (since Linux 3.8)
 
 the following fields:
-<P>
+<DT><DD>
 
-<PRE>
-pos:    0
-flags:  02
-mnt_id: 10
+
+pos:<TT>&nbsp;</TT>0<BR>
+flags:<TT>&nbsp;&nbsp;</TT>02<BR>
+mnt_id:<TT>&nbsp;</TT>10<BR>
 eventfd-count:               40
-</PRE>
 
 
-<P>
+<DT><DD>
 <I>eventfd-count</I>
 
 is the current value of the eventfd counter, in hexadecimal.
-<P>
+<DT><DD>
 For epoll file descriptors (see
 <B><A HREF="../man7/epoll.7.html">epoll</A></B>(7)),
 
 we see (since Linux 3.8)
 
 the following fields:
-<P>
+<DT><DD>
 
-<PRE>
-pos:    0
-flags:  02
-mnt_id: 10
+
+pos:<TT>&nbsp;</TT>0<BR>
+flags:<TT>&nbsp;&nbsp;</TT>02<BR>
+mnt_id:<TT>&nbsp;</TT>10<BR>
 tfd:        9 events:       19 data: 74253d2500000009
 tfd:        7 events:       19 data: 74253d2500000007
-</PRE>
 
 
-<P>
+<DT><DD>
 Each of the lines beginning
 <I>tfd</I>
 
@@ -934,24 +957,23 @@ The
 <I>data</I>
 
 field is the data value associated with this file descriptor.
-<P>
+<DT><DD>
 For signalfd file descriptors (see
 <B><A HREF="../man2/signalfd.2.html">signalfd</A></B>(2)),
 
 we see (since Linux 3.8)
 
 the following fields:
-<P>
-
-<PRE>
-pos:    0
-flags:  02
-mnt_id: 10
-sigmask:        0000000000000006
-</PRE>
+<DT><DD>
 
 
-<P>
+pos:<TT>&nbsp;</TT>0<BR>
+flags:<TT>&nbsp;&nbsp;</TT>02<BR>
+mnt_id:<TT>&nbsp;</TT>10<BR>
+sigmask:<TT>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT>0000000000000006<BR>
+
+
+<DT><DD>
 <I>sigmask</I>
 
 is the hexadecimal mask of signals that are accepted via this
@@ -965,24 +987,23 @@ and
 see
 <B><A HREF="../man7/signal.7.html">signal</A></B>(7).)
 
-<P>
+<DT><DD>
 For inotify file descriptors (see
 <B><A HREF="../man7/inotify.7.html">inotify</A></B>(7)),
 
 we see (since Linux 3.8)
 the following fields:
-<P>
+<DT><DD>
 
-<PRE>
-pos:    0
-flags:  00
-mnt_id: 11
+
+pos:<TT>&nbsp;</TT>0<BR>
+flags:<TT>&nbsp;&nbsp;</TT>00<BR>
+mnt_id:<TT>&nbsp;</TT>11<BR>
 inotify wd:2 ino:7ef82a sdev:800001 mask:800afff ignored_mask:0 fhandle-bytes:8 fhandle-type:1 f_handle:2af87e00220ffd73
 inotify wd:1 ino:192627 sdev:800001 mask:800afff ignored_mask:0 fhandle-bytes:8 fhandle-type:1 f_handle:27261900802dfd73
-</PRE>
 
 
-<P>
+<DT><DD>
 Each of the lines beginning with &quot;inotify&quot; displays information about
 one file or directory that is being monitored.
 The fields in this line are as follows:
@@ -1017,24 +1038,23 @@ file is exposed as a file handle, via three hexadecimal fields:
 and
 <I>f_handle</I>.
 
-<P>
+<DT><DD>
 For fanotify file descriptors (see
 <B><A HREF="../man7/fanotify.7.html">fanotify</A></B>(7)),
 
 we see (since Linux 3.8)
 the following fields:
-<P>
+<DT><DD>
 
-<PRE>
-pos:    0
-flags:  02
-mnt_id: 11
+
+pos:<TT>&nbsp;</TT>0<BR>
+flags:<TT>&nbsp;&nbsp;</TT>02<BR>
+mnt_id:<TT>&nbsp;</TT>11<BR>
 fanotify flags:0 event-flags:88002
 fanotify ino:19264f sdev:800001 mflags:0 mask:1 ignored_mask:0 fhandle-bytes:8 fhandle-type:1 f_handle:4f261900a82dfd73
-</PRE>
 
 
-<P>
+<DT><DD>
 The fourth line displays information defined when the fanotify group
 was created via
 <B><A HREF="../man2/fanotify_init.2.html">fanotify_init</A></B>(2):
@@ -1103,10 +1123,11 @@ See
 <DD>
 
 This file contains I/O statistics for the process, for example:
+<DT><DD>
 
-<PRE>
 
 #<B> cat /proc/3828/io</B>
+
 rchar: 323934931
 wchar: 323929600
 syscr: 632687
@@ -1114,10 +1135,9 @@ syscw: 632675
 read_bytes: 0
 write_bytes: 323932160
 cancelled_write_bytes: 0
-</PRE>
 
 
-<P>
+<DT><DD>
 The fields are as follows:
 <DL COMPACT><DT><DD>
 <DL COMPACT>
@@ -1200,7 +1220,7 @@ if process A reads process B's
 
 while process B is updating one of these 64-bit counters,
 process A could see an intermediate result.
-<P>
+<DT><DD>
 Permission to access this file is governed by a ptrace access mode
 <B>PTRACE_MODE_READ_FSCREDS</B>
 
@@ -1234,17 +1254,17 @@ Entries are named by memory region start and end
 address pair (expressed as hexadecimal numbers),
 and are symbolic links to the mapped files themselves.
 Here is an example, with the output wrapped and reformatted to fit on an 80-column display:
+<DT><DD>
 
-<PRE>
 
 #<B> ls -l /proc/self/map_files/</B>
+
 lr--------. 1 root root 64 Apr 16 21:31
-            3252e00000-3252e20000 -&gt; /usr/lib64/ld-2.15.so
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;3252e00000-3252e20000&nbsp;-&gt;&nbsp;/usr/lib64/ld-2.15.so
 ...
-</PRE>
 
 
-<P>
+<DT><DD>
 Although these entries are present for memory regions that were
 mapped with the
 <B>MAP_FILE</B>
@@ -1259,15 +1279,14 @@ Here is an example where the target file is the deleted
 <I>/dev/zero</I>
 
 one:
+<DT><DD>
 
-<PRE>
 
 lrw-------. 1 root root 64 Apr 16 21:33
-            7fc075d2f000-7fc075e6f000 -&gt; /dev/zero (deleted)
-</PRE>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;7fc075d2f000-7fc075e6f000&nbsp;-&gt;&nbsp;/dev/zero&nbsp;(deleted)
 
 
-<P>
+<DT><DD>
 This directory appears only if the
 <B>CONFIG_CHECKPOINT_RESTORE</B>
 
@@ -1289,19 +1308,20 @@ See
 <B><A HREF="../man2/mmap.2.html">mmap</A></B>(2)
 
 for some further information about memory mappings.
-<P>
+<DT><DD>
 Permission to access this file is governed by a ptrace access mode
 <B>PTRACE_MODE_READ_FSCREDS</B>
 
 check; see
 <B><A HREF="../man2/ptrace.2.html">ptrace</A></B>(2).
 
-<P>
+<DT><DD>
 The format of the file is:
-<P>
+<DT><DD>
 
-<PRE>
+
 <I>address           perms offset  dev   inode       pathname</I>
+
 00400000-00452000 r-xp 00000000 08:02 173521      /usr/bin/dbus-daemon
 00651000-00652000 r--p 00051000 08:02 173521      /usr/bin/dbus-daemon
 00652000-00655000 rw-p 00052000 08:02 173521      /usr/bin/dbus-daemon
@@ -1321,10 +1341,9 @@ f2c6ff8c000-7f2c7078c000 rw-p 00000000 00:00 0    [stack:986]
 ...
 7fffb2c0d000-7fffb2c2e000 rw-p 00000000 00:00 0   [stack]
 7fffb2d48000-7fffb2d49000 r-xp 00000000 00:00 0   [vdso]
-</PRE>
 
 
-<P>
+<DT><DD>
 The
 <I>address</I>
 
@@ -1333,17 +1352,17 @@ The
 <I>perms</I>
 
 field is a set of permissions:
-<P>
-<PRE>
+<DT><DD>
+
+
 r = read
 w = write
 x = execute
 s = shared
 p = private (copy on write)
-</PRE>
 
 
-<P>
+<DT><DD>
 The
 <I>offset</I>
 
@@ -1357,7 +1376,7 @@ is the device
 is the inode on that device.
 0 indicates that no inode is associated with the memory region,
 as would be the case with BSS (uninitialized data).
-<P>
+<DT><DD>
 The
 <I>pathname</I>
 
@@ -1370,7 +1389,7 @@ field by looking at the
 Offset field in the ELF program headers
 (<I>readelf&nbsp;-l</I>).
 
-<P>
+<DT><DD>
 There are additional helpful pseudo-paths:
 <DL COMPACT><DT><DD>
 <DL COMPACT>
@@ -1420,7 +1439,7 @@ short of running it through
 <B><A HREF="../man1/strace.1.html">strace</A></B>(1),
 
 or similar.
-<P>
+<DT><DD>
 Under Linux 2.0, there is no field giving pathname.
 <DT><I>/proc/[pid]/mem</I>
 
@@ -1433,7 +1452,7 @@ This file can be used to access the pages of a process's memory through
 and
 <B><A HREF="../man2/lseek.2.html">lseek</A></B>(2).
 
-<P>
+<DT><DD>
 Permission to access this file is governed by a ptrace access mode
 <B>PTRACE_MODE_ATTACH_FSCREDS</B>
 
@@ -1457,13 +1476,14 @@ identifier for each mount and its parent) that is missing from the (older)
 file, and fixes various other problems with that file
 (e.g., nonextensibility,
 failure to distinguish per-mount versus per-superblock options).
-<P>
+<DT><DD>
 The file contains lines of the form:
-<PRE>
+<DT><DD>
+
 
 36 35 98:0 /mnt1 /mnt2 rw,noatime master:1 - ext3 /dev/root rw,errors=continue
 (1)(2)(3)   (4)   (5)      (6)      (7)   (8) (9)   (10)         (11)
-</PRE>
+
 
 <DT><DD>
 The numbers in parentheses are labels for the descriptions below:
@@ -1535,7 +1555,7 @@ process's mount namespace (see
 The format of this file is documented in
 <B><A HREF="../man5/fstab.5.html">fstab</A></B>(5).
 
-<P>
+<DT><DD>
 Since kernel version 2.6.15, this file is pollable:
 after opening the file for reading, a change in this file
 (i.e., a filesystem mount or unmount) causes
@@ -1569,11 +1589,12 @@ about the mount points in the process's mount namespace (see
 <B><A HREF="../man7/mount_namespaces.7.html">mount_namespaces</A></B>(7)).
 
 Lines in this file have the form:
-<PRE>
+<DT><DD>
+
 
 device /dev/sda7 mounted on /home with fstype ext3 [statistics]
 (       1      )            ( 2 )             (3 ) (4)
-</PRE>
+
 
 <DT><DD>
 The fields in each line are:
@@ -1595,9 +1616,9 @@ information via this field.
 
 <DT><DD>
 This file is readable only by the owner of the process.
-<DT>
+<DT><I>/proc/[pid]/net</I> (since Linux 2.6.25)
+
 <DD>
-/proc/[pid]/net &quot; (since Linux 2.6.25)&quot;
 See the description of
 <I>/proc/net</I>.
 
@@ -1697,7 +1718,7 @@ setting for the process.
 
 This file can be used to adjust the badness heuristic used to select which
 process gets killed in out-of-memory conditions.
-<P>
+<DT><DD>
 The badness heuristic assigns a value to each candidate task ranging from 0
 (never kill) to 1000 (always kill) to determine which process is targeted.
 The units are roughly a proportion along that range of
@@ -1706,10 +1727,10 @@ based on an estimation of its current memory and swap use.
 For example, if a task is using all allowed memory,
 its badness score will be 1000.
 If it is using half of its allowed memory, its score will be 500.
-<P>
+<DT><DD>
 There is an additional factor included in the badness score: root
 processes are given 3% extra memory over other tasks.
-<P>
+<DT><DD>
 The amount of &quot;allowed&quot; memory depends on the context
 in which the OOM-killer was called.
 If it is due to the memory assigned to the allocating task's cpuset
@@ -1724,7 +1745,7 @@ If it is due to a memory limit (or swap limit) being reached,
 the allowed memory is that configured limit.
 Finally, if it is due to the entire system being out of memory, the
 allowed memory represents all allocatable resources.
-<P>
+<DT><DD>
 The value of
 <I>oom_score_adj</I>
 
@@ -1738,7 +1759,7 @@ task or completely disabling it from OOM killing.
 The lowest possible value, -1000, is
 equivalent to disabling OOM-killing entirely for that task,
 since it will always report a badness score of 0.
-<P>
+<DT><DD>
 Consequently, it is very simple for user space to define
 the amount of memory to consider for each task.
 Setting an
@@ -1751,7 +1772,7 @@ to use at least 50% more memory.
 A value of -500, on the other hand, would be roughly
 equivalent to discounting 50% of the task's
 allowed memory from being considered as scoring against the task.
-<P>
+<DT><DD>
 For backward compatibility with previous kernels,
 <I>/proc/[pid]/oom_adj</I>
 
@@ -1760,7 +1781,7 @@ Its value is
 scaled linearly with
 <I>oom_score_adj</I>.
 
-<P>
+<DT><DD>
 Writing to
 <I>/proc/[pid]/oom_score_adj</I>
 
@@ -1824,7 +1845,7 @@ file is present only if the
 <B>CONFIG_PROC_PAGE_MONITOR</B>
 
 kernel configuration option is enabled.
-<P>
+<DT><DD>
 Permission to access this file is governed by a ptrace access mode
 <B>PTRACE_MODE_READ_FSCREDS</B>
 
@@ -1839,7 +1860,7 @@ This read-only file exposes the process's execution domain, as set by
 <B><A HREF="../man2/personality.2.html">personality</A></B>(2).
 
 The value is displayed in hexadecimal notation.
-<P>
+<DT><DD>
 Permission to access this file is governed by a ptrace access mode
 <B>PTRACE_MODE_ATTACH_FSCREDS</B>
 
@@ -1861,28 +1882,30 @@ root directory, and behaves in the same way as
 and
 <I>fd/*</I>.
 
-<P>
+<DT><DD>
 Note however that this file is not merely a symbolic link.
 It provides the same view of the filesystem (including namespaces and the
 set of per-process mounts) as the process itself.
 An example illustrates this point.
 In one terminal, we start a shell in new user and mount namespaces,
 and in that shell we create some new mount points:
-<P>
-<PRE>
+<DT><DD>
+
+
 $ <B>PS1='sh1# ' unshare -Urnm</B>
 sh1# <B>mount -t tmpfs tmpfs /etc</B>  # Mount empty tmpfs at /etc
 sh1# <B>mount --bind /usr /dev</B>     # Mount /usr at /dev
 sh1# <B>echo $$</B>
 27123
-</PRE>
 
-<P>
+
+<DT><DD>
 In a second terminal window, in the initial mount namespace,
 we look at the contents of the corresponding mounts in
 the initial and new namespaces:
-<P>
-<PRE>
+<DT><DD>
+
+
 $ <B>PS1='sh2# ' sudo sh</B>
 sh2# <B>ls /etc | wc -l</B>                  # In initial NS
 309
@@ -1892,12 +1915,12 @@ sh2# <B>ls /dev | wc -l</B>                  # In initial NS
 205
 sh2# <B>ls /proc/27123/root/dev | wc -l</B>  # /dev in other NS
 11                                    # Actually bind
-                                      # mounted to /usr
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;#&nbsp;mounted&nbsp;to&nbsp;/usr
 sh2# <B>ls /usr | wc -l</B>                  # /usr in initial NS
 11
-</PRE>
 
-<P>
+
+<DT><DD>
 
 In a multithreaded process, the contents of the
 <I>/proc/[pid]/root</I>
@@ -1906,7 +1929,7 @@ symbolic link are not available if the main thread has already terminated
 (typically by calling
 <B><A HREF="../man3/pthread_exit.3.html">pthread_exit</A></B>(3)).
 
-<P>
+<DT><DD>
 Permission to dereference or read
 (<B><A HREF="../man2/readlink.2.html">readlink</A></B>(2))
 
@@ -1933,7 +1956,7 @@ Writing 1 to this file places the process irreversibly in strict seccomp mode.
 <B>EPERM</B>
 
 error.)
-<P>
+<DT><DD>
 In Linux 2.6.23,
 this file went away, to be replaced by the
 <B><A HREF="../man2/prctl.2.html">prctl</A></B>(2)
@@ -1986,8 +2009,8 @@ This file shows memory consumption for each of the process's mappings.
 command displays similar information,
 in a form that may be easier for parsing.)
 For each mapping there is a series of lines such as the following:
+<DT><DD>
 
-<PRE>
 
 00400000-0048a000 r-xp 00000000 fd:03 960637       /bin/bash
 Size:                552 kB
@@ -2011,9 +2034,8 @@ Locked:                0 kB
 ProtectionKey:         0
 VmFlags: rd ex mr mw me dw
 
-</PRE>
 
-
+<DT><DD>
 The first of these lines shows the same information as is displayed
 for the mapping in
 <I>/proc/[pid]/maps</I>.
@@ -2029,7 +2051,7 @@ referenced or accessed.
 that does not belong to any file.
 &quot;Swap&quot; shows how much
 would-be-anonymous memory is also used, but out on swap.
-<P>
+<DT><DD>
 The &quot;KernelPageSize&quot; line (available since Linux 2.6.29)
 is the page size used by the kernel to back the virtual memory area.
 This matches the size used by the MMU in the majority of cases.
@@ -2039,10 +2061,10 @@ pages for the MMU on older processors.
 To distinguish the two attributes, the &quot;MMUPageSize&quot; line
 (also available since Linux 2.6.29)
 reports the page size used by the MMU.
-<P>
+<DT><DD>
 The &quot;Locked&quot; indicates whether the mapping is locked in memory
 or not.
-<P>
+<DT><DD>
 The &quot;ProtectionKey&quot; line (available since Linux 4.9, on x86 only)
 contains the memory protection key (see
 <B><A HREF="../man7/pkeys.7.html">pkeys</A></B>(7))
@@ -2052,11 +2074,11 @@ This entry is present only if the kernel was built with the
 <B>CONFIG_X86_INTEL_MEMORY_PROTECTION_KEYS</B>
 
 configuration option.
-<P>
+<DT><DD>
 The &quot;VmFlags&quot; line (available since Linux 3.8)
 represents the kernel flags associated with the virtual memory area,
 encoded using the following two-letter codes:
-<P>
+<DT><DD>
 <BR>&nbsp;&nbsp;&nbsp;&nbsp;rd&nbsp;&nbsp;-&nbsp;readable
 <BR>&nbsp;&nbsp;&nbsp;&nbsp;wr&nbsp;&nbsp;-&nbsp;writable
 <BR>&nbsp;&nbsp;&nbsp;&nbsp;ex&nbsp;&nbsp;-&nbsp;executable
@@ -2085,7 +2107,7 @@ encoded using the following two-letter codes:
 <BR>&nbsp;&nbsp;&nbsp;&nbsp;hg&nbsp;&nbsp;-&nbsp;huge&nbsp;page&nbsp;advise&nbsp;flag
 <BR>&nbsp;&nbsp;&nbsp;&nbsp;nh&nbsp;&nbsp;-&nbsp;no-huge&nbsp;page&nbsp;advise&nbsp;flag
 <BR>&nbsp;&nbsp;&nbsp;&nbsp;mg&nbsp;&nbsp;-&nbsp;mergeable&nbsp;advise&nbsp;flag
-<P>
+<DT><DD>
 &quot;ProtectionKey&quot; field contains the memory protection key (see
 <B><A HREF="../man5/pkeys.5.html">pkeys</A></B>(5))
 
@@ -2094,7 +2116,7 @@ Present only if the kernel was built with the
 <B>CONFIG_X86_INTEL_MEMORY_PROTECTION_KEYS</B>
 
 configuration option. (since Linux 4.6)
-<P>
+<DT><DD>
 The
 <I>/proc/[pid]/smaps</I>
 
@@ -2112,7 +2134,7 @@ This file is provided only if the kernel was built with the
 <B>CONFIG_STACKTRACE</B>
 
 configuration option.
-<P>
+<DT><DD>
 Permission to access this file is governed by a ptrace access mode
 <B>PTRACE_MODE_ATTACH_FSCREDS</B>
 
@@ -2129,7 +2151,7 @@ This is used by
 It is defined in the kernel source file
 <I>fs/proc/array.c</I>.
 
-<P>
+<DT><DD>
 The fields, in order, with their proper
 <B><A HREF="../man3/scanf.3.html">scanf</A></B>(3)
 
@@ -2143,7 +2165,7 @@ check (refer to
 
 If the check denies access, then the field value is displayed as 0.
 The affected fields are indicated with the marking [PT].
-<P>
+<DT><DD>
 <DL COMPACT><DT><DD>
 <DL COMPACT>
 <DT>(1) <I>pid</I> &nbsp;%d<DD>
@@ -2220,7 +2242,7 @@ see the PF_* defines in the Linux kernel source file
 <I>include/linux/sched.h</I>.
 
 Details depend on the kernel version.
-<P>
+<DT><DD>
 The format for this field was %lu before Linux 2.6.
 <DT>(10) <I>minflt</I> &nbsp;%lu<DD>
 The number of minor faults the process has made which have not
@@ -2284,7 +2306,7 @@ as represented in the kernel.
 The kernel stores nice values as numbers
 in the range 0 (high) to 39 (low),
 corresponding to the user-visible nice range of -20 to 19.
-<P>
+<DT><DD>
 Before Linux 2.6, this was a scaled value based on
 the scheduler weighting given to this process.
 
@@ -2320,7 +2342,7 @@ In kernels before Linux 2.6, this value was expressed in jiffies.
 Since Linux 2.6, the value is expressed in clock ticks (divide by
 <I>sysconf(_SC_CLK_TCK)</I>).
 
-<P>
+<DT><DD>
 The format for this field was %lu before Linux 2.6.
 <DT>(23) <I>vsize</I> &nbsp;%lu<DD>
 Virtual memory size in bytes.
@@ -2402,7 +2424,7 @@ Scheduling policy (see
 Decode using the SCHED_* constants in
 <I>linux/sched.h</I>.
 
-<P>
+<DT><DD>
 The format for this field was %lu before Linux 2.6.22.
 <DT>(42) <I>delayacct_blkio_ticks</I> &nbsp;%llu &nbsp;(since Linux 2.6.18)<DD>
 Aggregated block I/O delays, measured in clock ticks (centiseconds).
@@ -2459,20 +2481,21 @@ The thread's exit status in the form reported by
 <DD>
 Provides information about memory usage, measured in pages.
 The columns are:
+<DT><DD>
 
-<PRE>
 
 size       (1) total program size
-           (same as VmSize in <I>/proc/[pid]/status</I>)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(same&nbsp;as&nbsp;VmSize&nbsp;in&nbsp;<I>/proc/[pid]/status</I>)
 resident   (2) resident set size
-           (same as VmRSS in <I>/proc/[pid]/status</I>)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(same&nbsp;as&nbsp;VmRSS&nbsp;in&nbsp;<I>/proc/[pid]/status</I>)
 shared     (3) number of resident shared pages (i.e., backed by a file)
-           (same as RssFile+RssShmem in <I>/proc/[pid]/status</I>)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(same&nbsp;as&nbsp;RssFile+RssShmem&nbsp;in&nbsp;<I>/proc/[pid]/status</I>)
 text       (4) text (code)
+
 lib        (5) library (unused since Linux 2.6; always 0)
 data       (6) data + stack
+
 dt         (7) dirty pages (unused since Linux 2.6; always 0)
-</PRE>
 
 
 <DT><I>/proc/[pid]/status</I>
@@ -2486,10 +2509,11 @@ and
 
 in a format that's easier for humans to parse.
 Here's an example:
+<DT><DD>
 
-<PRE>
 
 $<B> cat /proc/$$/status</B>
+
 Name:   bash
 Umask:  0022
 State:  S (sleeping)
@@ -2506,23 +2530,23 @@ NStgid: 17248
 NSpid:  17248
 NSpgid: 17248
 NSsid:  17200
-VmPeak:   131168 kB
-VmSize:   131168 kB
-VmLck:         0 kB
-VmPin:         0 kB
-VmHWM:     13484 kB
-VmRSS:     13484 kB
-RssAnon:           10264 kB
-RssFile:            3220 kB
-RssShmem:              0 kB
-VmData:    10332 kB
-VmStk:       136 kB
-VmExe:       992 kB
-VmLib:      2104 kB
-VmPTE:        76 kB
-VmPMD:        12 kB
-VmSwap:        0 kB
-HugetlbPages:          0 kB             # 4.4
+VmPeak:<TT>&nbsp;</TT>  131168 kB<BR>
+VmSize:<TT>&nbsp;</TT>  131168 kB<BR>
+VmLck:<TT>&nbsp;&nbsp;</TT>       0 kB<BR>
+VmPin:<TT>&nbsp;&nbsp;</TT>       0 kB<BR>
+VmHWM:<TT>&nbsp;&nbsp;</TT>   13484 kB<BR>
+VmRSS:<TT>&nbsp;&nbsp;</TT>   13484 kB<BR>
+RssAnon:<TT>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT>   10264 kB<BR>
+RssFile:<TT>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT>    3220 kB<BR>
+RssShmem:<TT>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT>       0 kB<BR>
+VmData:<TT>&nbsp;</TT>   10332 kB<BR>
+VmStk:<TT>&nbsp;&nbsp;</TT>     136 kB<BR>
+VmExe:<TT>&nbsp;&nbsp;</TT>     992 kB<BR>
+VmLib:<TT>&nbsp;&nbsp;</TT>    2104 kB<BR>
+VmPTE:<TT>&nbsp;&nbsp;</TT>      76 kB<BR>
+VmPMD:<TT>&nbsp;&nbsp;</TT>      12 kB<BR>
+VmSwap:<TT>&nbsp;</TT>       0 kB<BR>
+HugetlbPages:          0 kB<TT>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT><TT>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT># 4.4<BR>
 Threads:        1
 SigQ:   0/3067
 SigPnd: 0000000000000000
@@ -2534,7 +2558,7 @@ CapInh: 0000000000000000
 CapPrm: 0000000000000000
 CapEff: 0000000000000000
 CapBnd: ffffffffffffffff
-CapAmb: 0000000000000000
+CapAmb:<TT>&nbsp;</TT>0000000000000000<BR>
 NoNewPrivs:     0
 Seccomp:        0
 Cpus_allowed:   00000001
@@ -2543,7 +2567,6 @@ Mems_allowed:   1
 Mems_allowed_list:      0
 voluntary_ctxt_switches:        150
 nonvoluntary_ctxt_switches:     545
-</PRE>
 
 
 <DT><DD>
@@ -2873,16 +2896,16 @@ system call currently being executed by the process,
 followed by the values of the stack pointer and program counter registers.
 The values of all six argument registers are exposed,
 although most system calls use fewer registers.
-<P>
+<DT><DD>
 If the process is blocked, but not in a system call,
 then the file displays -1 in place of the system call number,
 followed by just the values of the stack pointer and program counter.
 If process is not blocked, then the file contains just the string &quot;running&quot;.
-<P>
+<DT><DD>
 This file is present only if the kernel was configured with
 <B>CONFIG_HAVE_ARCH_TRACEHOOK</B>.
 
-<P>
+<DT><DD>
 Permission to access this file is governed by a ptrace access mode
 <B>PTRACE_MODE_ATTACH_FSCREDS</B>
 
@@ -2943,14 +2966,14 @@ directory are not available if the main thread has already terminated
 (typically by calling
 <B><A HREF="../man3/pthread_exit.3.html">pthread_exit</A></B>(3)).
 
-<P>
+<DT><DD>
 <DT><I>/proc/[pid]/task/[tid]/children</I> (since Linux 3.5)
 
 <DD>
 
 A space-separated list of child tasks of this task.
 Each child task is represented by its TID.
-<P>
+<DT><DD>
 
 This option is intended for use by the checkpoint-restore (CRIU) system,
 and reliably provides a list of children only if all of the child processes
@@ -2961,7 +2984,7 @@ Exiting children may cause non-exiting children to be omitted from the list.
 This makes this interface even more unreliable than classic PID-based
 approaches if the inspected task and its children aren't frozen,
 and most code should probably not use this interface.
-<P>
+<DT><DD>
 Until Linux 4.2, the presence of this file was governed by the
 <B>CONFIG_CHECKPOINT_RESTORE</B>
 
@@ -2980,9 +3003,9 @@ option.
 A list of the POSIX timers for this process.
 Each timer is listed with a line that starts with the string &quot;ID:&quot;.
 For example:
-<P>
+<DT><DD>
 
-<PRE>
+
 ID: 1
 signal: 60/00007fff86e452a8
 notify: signal/pid.2634
@@ -2991,10 +3014,9 @@ ID: 0
 signal: 60/00007fff86e452a8
 notify: signal/pid.2634
 ClockID: 1
-</PRE>
 
 
-<P>
+<DT><DD>
 The lines shown for each timer have the following meanings:
 <DL COMPACT><DT><DD>
 <DL COMPACT>
@@ -3079,13 +3101,25 @@ For further details, see the discussion of
 in
 <B><A HREF="../man2/prctl.2.html">prctl</A></B>(2).
 
-<P>
-Permission to access this file is governed by a ptrace access mode
+<DT><DD>
+Initially,
+permission to access this file was governed by a ptrace access mode
 <B>PTRACE_MODE_ATTACH_FSCREDS</B>
 
-check; see
-<B><A HREF="../man2/ptrace.2.html">ptrace</A></B>(2).
+check (see
+<B><A HREF="../man2/ptrace.2.html">ptrace</A></B>(2)).
 
+However, this was subsequently deemed too strict a requirement
+(and had the side effect that requiring a process to have the
+<B>CAP_SYS_PTRACE</B>
+
+capability would also allow it to view and change any process's memory).
+Therefore, since Linux 4.9,
+
+only the (weaker)
+<B>CAP_SYS_NICE</B>
+
+capability is required to access this file.
 <DT><I>/proc/[pid]/uid_map</I>, <I>/proc/[pid]/gid_map</I> (since Linux 3.5)
 
 <DD>
@@ -3097,7 +3131,7 @@ See
 <DD>
 The symbolic name corresponding to the location
 in the kernel where the process is sleeping.
-<P>
+<DT><DD>
 Permission to access this file is governed by a ptrace access mode
 <B>PTRACE_MODE_READ_FSCREDS</B>
 
@@ -3122,27 +3156,26 @@ This is then
 followed by the count of available chunks of a certain order in
 which these zones are split.
 The size in bytes of a certain order is given by the formula:
-<P>
+<DT><DD>
 <BR>&nbsp;&nbsp;&nbsp;&nbsp;(2^order)&nbsp;*&nbsp;PAGE_SIZE
-<P>
+<DT><DD>
 The binary buddy allocator algorithm inside the kernel will split
 one chunk into two chunks of a smaller order (thus with half the
 size) or combine two contiguous chunks into one larger chunk of
 a higher order (thus with double the size) to satisfy allocation
 requests and to counter memory fragmentation.
 The order matches the column number, when starting to count at zero.
-<P>
+<DT><DD>
 For example on a x86_64 system:
-<P>
+<DT><DD>
 
-<PRE>
+
 Node 0, zone     DMA     1    1    1    0    2    1    1    0    1    1    3
 Node 0, zone   DMA32    65   47    4   81   52   28   13   10    5    1  404
 Node 0, zone  Normal   216   55  189  101   84   38   37   27    5    3  587
-</PRE>
 
 
-<P>
+<DT><DD>
 In this example, there is one node containing three zones and there
 are 11 different chunk sizes.
 If the page size is 4 kilobytes, then the first zone called
@@ -3150,11 +3183,11 @@ If the page size is 4 kilobytes, then the first zone called
 
 (on x86 the first 16 megabyte of memory) has 1 chunk of 4 kilobytes
 (order 0) available and has 3 chunks of 4 megabytes (order 10) available.
-<P>
+<DT><DD>
 If the memory is heavily fragmented, the counters for higher
 order chunks will be zero and allocation of large contiguous areas
 will fail.
-<P>
+<DT><DD>
 Further information about the zones can be found in
 <I>/proc/zoneinfo</I>.
 
@@ -3229,12 +3262,11 @@ As long as no changes have been made to the following file,
 the contents of
 <I>/proc/config.gz</I>
 
-are the same as those provided by :
+are the same as those provided by:
+<DT><DD>
 
-<PRE>
 
 cat /lib/modules/$(uname -r)/build/.config
-</PRE>
 
 
 <DT><DD>
@@ -3251,12 +3283,17 @@ For details, see the kernel
 <I>Linux Kernel Crypto API</I>
 
 documentation available under the kernel source directory
-<I>Documentation/DocBook</I>.
+<I>Documentation/crypto/</I>
 
-(That documentation can be built using a command such as
+
+(or
+<I>Documentation/DocBook</I>
+
+before 4.10;
+the documentation can be built using a command such as
 <I>make htmldocs</I>
 
-in the root directory of the kernel source tree.)
+in the root directory of the kernel source tree).
 <DT><I>/proc/cpuinfo</I>
 
 <DD>
@@ -3316,7 +3353,7 @@ modules are currently loaded.
 If a filesystem is marked with &quot;nodev&quot;,
 this means that it does not require a block device to be mounted
 (e.g., virtual filesystem, network filesystem).
-<P>
+<DT><DD>
 Incidentally, this file may be used by
 <B><A HREF="../man8/mount.8.html">mount</A></B>(8)
 
@@ -3338,9 +3375,9 @@ This directory
 exists on systems with the IDE bus.
 There are directories for each IDE channel and attached device.
 Files include:
-<P>
+<DT><DD>
 
-<PRE>
+
 cache              buffer size in KB
 capacity           number of sectors
 driver             driver version
@@ -3351,10 +3388,9 @@ model              manufacturer's model number
 settings           drive settings
 smart_thresholds   in hexadecimal
 smart_values       in hexadecimal
-</PRE>
 
 
-<P>
+<DT><DD>
 The
 <B><A HREF="../man8/hdparm.8.html">hdparm</A></B>(8)
 
@@ -3401,9 +3437,9 @@ kernel
 
 binary, GDB can be used to
 examine the current state of any kernel data structures.
-<P>
+<DT><DD>
 The total length of the file is the size of physical memory (RAM) plus
-4KB.
+4&nbsp;KiB.
 <DT><I>/proc/keys</I> (since Linux 2.6.10)
 
 <DD>
@@ -3431,7 +3467,7 @@ which uses the
 <B><A HREF="../man2/syslog.2.html">syslog</A></B>(2)
 
 system call facility to log kernel messages.
-<P>
+<DT><DD>
 Information in this file is retrieved with the
 <B><A HREF="../man1/dmesg.1.html">dmesg</A></B>(1)
 
@@ -3460,7 +3496,7 @@ it is indexed by page frame number (see the discussion of
 <I>/proc/[pid]/pagemap</I>).
 
 The bits are as follows:
-<P>
+<DT><DD>
 <BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;0&nbsp;-&nbsp;KPF_LOCKED
 <BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;1&nbsp;-&nbsp;KPF_ERROR
 <BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;2&nbsp;-&nbsp;KPF_REFERENCED
@@ -3484,7 +3520,7 @@ The bits are as follows:
 <BR>&nbsp;&nbsp;&nbsp;&nbsp;20&nbsp;-&nbsp;KPF_NOPAGE&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(since&nbsp;Linux&nbsp;2.6.31)
 <BR>&nbsp;&nbsp;&nbsp;&nbsp;21&nbsp;-&nbsp;KPF_KSM&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(since&nbsp;Linux&nbsp;2.6.32)
 <BR>&nbsp;&nbsp;&nbsp;&nbsp;22&nbsp;-&nbsp;KPF_THP&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(since&nbsp;Linux&nbsp;3.4)
-<P>
+<DT><DD>
 For further details on the meanings of these bits,
 see the kernel source file
 <I>Documentation/vm/pagemap.txt</I>.
@@ -3798,7 +3834,7 @@ A process which allocates 1GB of memory (using
 or similar), but touches only 300MB of that memory will show up
 as using only 300MB of memory even if it has the address space
 allocated for the entire 1GB.
-<P>
+<DT><DD>
 This 1GB is memory which has been &quot;committed&quot; to by the VM
 and can be used at any time by the allocating application.
 With strict overcommit enabled on the system (mode 2 in
@@ -3958,8 +3994,13 @@ The format of this file is documented in
 <DD>
 Memory Type Range Registers.
 See the Linux kernel source file
+<I>Documentation/x86/mtrr.txt</I>
+
+
+(or
 <I>Documentation/mtrr.txt</I>
 
+before Linux 2.6.28)
 for details.
 <DT><I>/proc/net</I>
 
@@ -3974,7 +4015,7 @@ However, the standard
 <B><A HREF="../man8/netstat.8.html">netstat</A></B>(8)
 
 suite provides much cleaner access to these files.
-<P>
+<DT><DD>
 With the advent of network namespaces,
 various information relating to the network stack is virtualized (see
 <B><A HREF="../man7/namespaces.7.html">namespaces</A></B>(7)).
@@ -3996,15 +4037,15 @@ This holds an ASCII readable dump of the kernel ARP table used for
 address resolutions.
 It will show both dynamically learned and preprogrammed ARP entries.
 The format is:
-<P>
-<PRE>
+<DT><DD>
+
+
 IP address     HW type   Flags     HW address          Mask   Device
 192.168.0.50   0x1       0x2       00:50:BF:25:68:F3   *      eth0
 192.168.0.250  0x1       0xc       00:00:00:00:00:00   *      eth0
-</PRE>
 
 
-<P>
+<DT><DD>
 Here &quot;IP address&quot; is the IPv4 address of the machine and the &quot;HW type&quot;
 is the hardware type of the address from RFC&nbsp;826.
 The flags are the internal
@@ -4027,15 +4068,16 @@ These are used by the
 
 program to report device status.
 The format is:
-<P>
-<PRE>
+<DT><DD>
+
+
 Inter-|   Receive                                                |  Transmit
- face |bytes    packets errs drop fifo frame compressed multicast|bytes    packets errs drop fifo colls carrier compressed
-    lo: 2776770   11307    0    0    0     0          0         0  2776770   11307    0    0    0     0       0          0
-  eth0: 1215645    2751    0    0    0     0          0         0  1782404    4324    0    0    0   427       0          0
-  ppp0: 1622270    5552    1    0    0     0          0         0   354130    5669    0    0    0     0       0          0
-  tap0:    7714      81    0    0    0     0          0         0     7714      81    0    0    0     0       0          0
-</PRE>
+<BR>&nbsp;face&nbsp;|bytes&nbsp;&nbsp;&nbsp;&nbsp;packets&nbsp;errs&nbsp;drop&nbsp;fifo&nbsp;frame&nbsp;compressed&nbsp;multicast|bytes&nbsp;&nbsp;&nbsp;&nbsp;packets&nbsp;errs&nbsp;drop&nbsp;fifo&nbsp;colls&nbsp;carrier&nbsp;compressed
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;lo:&nbsp;2776770&nbsp;&nbsp;&nbsp;11307&nbsp;&nbsp;&nbsp;&nbsp;0&nbsp;&nbsp;&nbsp;&nbsp;0&nbsp;&nbsp;&nbsp;&nbsp;0&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;0&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;0&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;0&nbsp;&nbsp;2776770&nbsp;&nbsp;&nbsp;11307&nbsp;&nbsp;&nbsp;&nbsp;0&nbsp;&nbsp;&nbsp;&nbsp;0&nbsp;&nbsp;&nbsp;&nbsp;0&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;0&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;0&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;0
+<BR>&nbsp;&nbsp;eth0:&nbsp;1215645&nbsp;&nbsp;&nbsp;&nbsp;2751&nbsp;&nbsp;&nbsp;&nbsp;0&nbsp;&nbsp;&nbsp;&nbsp;0&nbsp;&nbsp;&nbsp;&nbsp;0&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;0&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;0&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;0&nbsp;&nbsp;1782404&nbsp;&nbsp;&nbsp;&nbsp;4324&nbsp;&nbsp;&nbsp;&nbsp;0&nbsp;&nbsp;&nbsp;&nbsp;0&nbsp;&nbsp;&nbsp;&nbsp;0&nbsp;&nbsp;&nbsp;427&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;0&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;0
+<BR>&nbsp;&nbsp;ppp0:&nbsp;1622270&nbsp;&nbsp;&nbsp;&nbsp;5552&nbsp;&nbsp;&nbsp;&nbsp;1&nbsp;&nbsp;&nbsp;&nbsp;0&nbsp;&nbsp;&nbsp;&nbsp;0&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;0&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;0&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;0&nbsp;&nbsp;&nbsp;354130&nbsp;&nbsp;&nbsp;&nbsp;5669&nbsp;&nbsp;&nbsp;&nbsp;0&nbsp;&nbsp;&nbsp;&nbsp;0&nbsp;&nbsp;&nbsp;&nbsp;0&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;0&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;0&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;0
+<BR>&nbsp;&nbsp;tap0:&nbsp;&nbsp;&nbsp;&nbsp;7714&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;81&nbsp;&nbsp;&nbsp;&nbsp;0&nbsp;&nbsp;&nbsp;&nbsp;0&nbsp;&nbsp;&nbsp;&nbsp;0&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;0&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;0&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;0&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;7714&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;81&nbsp;&nbsp;&nbsp;&nbsp;0&nbsp;&nbsp;&nbsp;&nbsp;0&nbsp;&nbsp;&nbsp;&nbsp;0&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;0&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;0&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;0
+
 
 
 
@@ -4049,12 +4091,14 @@ Inter-|   Receive                                                |  Transmit
 Defined in
 <I>/usr/src/linux/net/core/dev_mcast.c</I>:
 
-<PRE>
+<DT><DD>
+
+
 indx interface_name  dmi_u dmi_g dmi_address
 2    eth0            1     0     01005e000001
 3    eth1            1     0     01005e000001
 4    eth2            1     0     01005e000001
-</PRE>
+
 
 <DT><I>/proc/net/igmp</I>
 
@@ -4138,29 +4182,31 @@ are not used by UDP.
 The &quot;uid&quot;
 field holds the effective UID of the creator of the socket.
 The format is:
-<P>
-<PRE>
-sl  local_address rem_address   st tx_queue rx_queue tr rexmits  tm-&gt;when uid
- 1: 01642C89:0201 0C642C89:03FF 01 00000000:00000001 01:000071BA 00000000 0
- 1: 00000000:0801 00000000:0000 0A 00000000:00000000 00:00000000 6F000100 0
- 1: 00000000:0201 00000000:0000 0A 00000000:00000000 00:00000000 00000000 0
-</PRE>
+<DT><DD>
 
+
+sl  local_address rem_address   st tx_queue rx_queue tr rexmits  tm-&gt;when uid
+<BR>&nbsp;1:&nbsp;01642C89:0201&nbsp;0C642C89:03FF&nbsp;01&nbsp;00000000:00000001&nbsp;01:000071BA&nbsp;00000000&nbsp;0
+<BR>&nbsp;1:&nbsp;00000000:0801&nbsp;00000000:0000&nbsp;0A&nbsp;00000000:00000000&nbsp;00:00000000&nbsp;6F000100&nbsp;0
+<BR>&nbsp;1:&nbsp;00000000:0201&nbsp;00000000:0000&nbsp;0A&nbsp;00000000:00000000&nbsp;00:00000000&nbsp;00000000&nbsp;0
+
+
+<DT><DD>
 <DT><I>/proc/net/unix</I>
 
 <DD>
 Lists the UNIX domain sockets present within the system and their
 status.
 The format is:
-<PRE>
+<DT><DD>
+
 
 Num RefCount Protocol Flags    Type St Path
- 0: 00000002 00000000 00000000 0001 03
- 1: 00000001 00000000 00010000 0001 01 /dev/printer
+<BR>&nbsp;0:&nbsp;00000002&nbsp;00000000&nbsp;00000000&nbsp;0001&nbsp;03
+<BR>&nbsp;1:&nbsp;00000001&nbsp;00000000&nbsp;00010000&nbsp;0001&nbsp;01&nbsp;/dev/printer
 
-</PRE>
 
-<P>
+<DT><DD>
 The fields are as follows:
 <DL COMPACT><DT><DD>
 <DL COMPACT>
@@ -4217,11 +4263,12 @@ This file contains information about netfilter user-space queueing, if used.
 Each line represents a queue.
 Queues that have not been subscribed to
 by user space are not shown.
-<PRE>
+<DT><DD>
 
-   1   4207     0  2 65535     0     0        0  1
-  (1)   (2)    (3)(4)  (5)    (6)   (7)      (8)
-</PRE>
+
+<BR>&nbsp;&nbsp;&nbsp;1&nbsp;&nbsp;&nbsp;4207&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;0&nbsp;&nbsp;2&nbsp;65535&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;0&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;0&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;0&nbsp;&nbsp;1
+<BR>&nbsp;&nbsp;(1)&nbsp;&nbsp;&nbsp;(2)&nbsp;&nbsp;&nbsp;&nbsp;(3)(4)&nbsp;&nbsp;(5)&nbsp;&nbsp;&nbsp;&nbsp;(6)&nbsp;&nbsp;&nbsp;(7)&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(8)
+
 
 <DT><DD>
 The fields in each line are:
@@ -4286,7 +4333,7 @@ of 1024-byte blocks and the partition name.
 <DD>
 This is a listing of all PCI devices found during kernel initialization
 and their configuration.
-<P>
+<DT><DD>
 This file has been deprecated in favor of a new
 <I>/proc</I>
 
@@ -4333,7 +4380,7 @@ which give the status of some part of the SCSI IO subsystem.
 These files contain ASCII structures and are, therefore, readable with
 <B><A HREF="../man1/cat.1.html">cat</A></B>(1).
 
-<P>
+<DT><DD>
 You can also write to some of the files to reconfigure the subsystem or
 switch certain features on or off.
 <DT><I>/proc/scsi/scsi</I>
@@ -4343,16 +4390,15 @@ This is a listing of all SCSI devices known to the kernel.
 The listing is similar to the one seen during bootup.
 scsi currently supports only the <I>add-single-device</I> command which
 allows root to add a hotplugged device to the list of known devices.
-<P>
+<DT><DD>
 The command
+<DT><DD>
 
-<PRE>
 
 echo 'scsi add-single-device 1 0 5 0' &gt; /proc/scsi/scsi
 
-</PRE>
 
-
+<DT><DD>
 will cause
 host scsi1 to scan on SCSI channel 0 for a device on ID 5 LUN 0.
 If there
@@ -4369,10 +4415,10 @@ SCSI HBA.
 Every directory contains one file per registered host.
 Every host-file is named after the number the host was assigned during
 initialization.
-<P>
+<DT><DD>
 Reading these files will usually show driver and host configuration,
 statistics, and so on.
-<P>
+<DT><DD>
 Writing to these files allows different things on different hosts.
 For example, with the <I>latency</I> and <I>nolatency</I> commands,
 root can switch on and off command latency measurement code in the
@@ -4407,14 +4453,20 @@ Common
 entries include:
 <DL COMPACT><DT><DD>
 <DL COMPACT>
-<DT><I>cpu  3357 0 4313 1362393</I><DD>
+<DT><I>cpu  10132153 290696 3084719 46828483 16683 0 25195 0 175628 0</I>
+
+<DD>
+
+<I>cpu0 1393280 32966 572056 13343292 6130 0 17875 0 23933 0</I>
+
 The amount of time, measured in units of
 USER_HZ (1/100ths of a second on most architectures, use
 <I>sysconf(_SC_CLK_TCK)</I>
 
 to obtain the right value),
 
-that the system spent in various states:
+that the system (&quot;cpu&quot; line) or the specific CPU (&quot;cpu<I>N</I>&quot; line)
+spent in various states:
 <DL COMPACT><DT><DD>
 <DL COMPACT>
 <DT><I>user</I>
@@ -4463,6 +4515,9 @@ The value in this field may
 <I>decrease</I>
 
 in certain conditions.
+</DL>
+</DL>
+
 <DT><I>irq</I> (since Linux 2.6.0-test4)
 
 <DD>
@@ -4523,6 +4578,14 @@ Number of processes in runnable state.
 <DT><I>procs_blocked 2</I><DD>
 Number of processes blocked waiting for I/O to complete.
 (Linux 2.5.45 onward.)
+<DT><I>softirq 229245889 94 60001584 13619 5175704 2471304 28 51212741 59130143 0 51240672</I>
+
+<DD>
+
+This line shows the number of softirq for all CPUs.
+The first column is the total of all softirqs and
+each subsequent column is the total for particular softirq.
+(Linux 2.6.31 onward.)
 </DL>
 </DL>
 
@@ -4543,9 +4606,9 @@ the <I>/proc</I> filesystem, and the (deprecated)
 <B><A HREF="../man2/sysctl.2.html">sysctl</A></B>(2)
 
 system call.
-<P>
+<DT><DD>
 String values may be terminated by either '\0' or '\n'.
-<P>
+<DT><DD>
 Integer and long values may be written either in decimal or in
 hexadecimal notation (e.g. 0x3FFF).
 When writing multiple integer or long values, these may be separated
@@ -4584,9 +4647,13 @@ related to filesystems.
 
 <DD>
 Documentation for files in this directory can be found
-in the Linux kernel sources in
-<I>Documentation/binfmt_misc.txt</I>.
+in the Linux kernel source in the file
+<I>Documentation/admin-guide/binfmt-misc.rst</I>
 
+(or in
+<I>Documentation/binfmt_misc.txt</I>
+
+on older kernels).
 <DT><I>/proc/sys/fs/dentry-state</I> (since Linux 2.2)
 
 <DD>
@@ -4682,9 +4749,9 @@ of error messages in the kernel log about running out of file handles
 (look for &quot;VFS: file-max limit &lt;number&gt; reached&quot;),
 try increasing this value:
 <DT><DD>
-<PRE>
-    echo 100000 &gt; /proc/sys/fs/file-max
-</PRE>
+
+
+echo 100000 &gt; /proc/sys/fs/file-max
 
 
 <DT><DD>
@@ -4727,7 +4794,7 @@ than the value in
 since <I>stdin</I>, <I>stdout</I>
 and network sockets also need an inode to handle them.
 When you regularly run out of inodes, you need to increase this value.
-<P>
+<DT><DD>
 Starting with Linux 2.4,
 there is no longer a static limit on the number of inodes,
 and this file is removed.
@@ -4749,7 +4816,7 @@ contains seven numbers:
 <I>preshrink</I>,
 
 and four dummy values (always zero).
-<P>
+<DT><DD>
 <I>nr_inodes</I>
 
 is the number of inodes the system has allocated.
@@ -4759,7 +4826,7 @@ is the number of inodes the system has allocated.
 <I>nr_free_inodes</I>
 
 represents the number of free inodes.
-<P>
+<DT><DD>
 <I>preshrink</I>
 
 is nonzero when the
@@ -4979,7 +5046,7 @@ The &quot;dumpable&quot; setting also affects the ownership of files in a proces
 <I>/proc/[pid]</I>
 
 directory, as described above.
-<P>
+<DT><DD>
 Three different integer values can be specified:
 <DL COMPACT><DT><DD>
 <DL COMPACT>
@@ -5116,7 +5183,7 @@ The default value in
 <I>auto_msgmni</I>
 
 was 1.
-<P>
+<DT><DD>
 Since Linux 3.19, the content of this file has no effect (because
 <I>msgmni</I>
 
@@ -5207,25 +5274,27 @@ and
 <B><A HREF="../man1/hostname.1.html">hostname</A></B>(1),
 
 that is:
-<P>
+<DT><DD>
 
-<PRE>
+
 #<B> echo 'darkstar' &gt; /proc/sys/kernel/hostname</B>
+
 #<B> echo 'mydomain' &gt; /proc/sys/kernel/domainname</B>
-</PRE>
 
 
-<P>
+
+<DT><DD>
 has the same effect as
-<P>
+<DT><DD>
 
-<PRE>
+
 #<B> hostname 'darkstar'</B>
+
 #<B> domainname 'mydomain'</B>
-</PRE>
 
 
-<P>
+
+<DT><DD>
 Note, however, that the classic darkstar.frop.org has the
 hostname &quot;darkstar&quot; and DNS (Internet Domain Name Server)
 domainname &quot;frop.org&quot;, not to be confused with the NIS (Network
@@ -5245,11 +5314,13 @@ contains the path for the hotplug policy agent.
 The default value in this file is
 <I>/sbin/hotplug</I>.
 
-<DT><I>/proc/sys/kernel/htab-reclaim</I>
-
+<DT>
 <DD>
+<I>/proc/sys/kernel/htab-reclaim</I> (before Linux 2.4.9.2)
+
 (PowerPC only) If this file is set to a nonzero value,
 the PowerPC htab
+
 (see kernel file
 <I>Documentation/powerpc/ppc_htab.txt</I>)
 
@@ -5520,8 +5591,13 @@ This value is the default if the kernel was not configured with
 
 <DD>
 This file is documented in the Linux kernel source file
-<I>Documentation/initrd.txt</I>.
+<I>Documentation/admin-guide/initrd.rst</I>
 
+
+(or
+<I>Documentation/initrd.txt</I>
+
+before Linux 4.10).
 <DT><I>/proc/sys/kernel/reboot-cmd</I> (Sparc only) 
 
 <DD>
@@ -5787,15 +5863,20 @@ This file is present only if the
 
 kernel configuration option is enabled.
 For further details see the Linux kernel source file
-<I>Documentation/sysrq.txt</I>.
+<I>Documentation/admin-guide/sysrq.rst</I>
 
+
+(or
+<I>Documentation/sysrq.txt</I>
+
+before Linux 4.10).
 <DT><I>/proc/sys/kernel/version</I>
 
 <DD>
 This file contains a string such as:
-<P>
+<DT><DD>
 <BR>&nbsp;&nbsp;&nbsp;&nbsp;#5&nbsp;Wed&nbsp;Feb&nbsp;25&nbsp;21:49:24&nbsp;MET&nbsp;1998
-<P>
+<DT><DD>
 The &quot;#5&quot; means that
 this is the fifth kernel built from this source base and the
 date following it indicates the time the kernel was built.
@@ -5805,7 +5886,7 @@ date following it indicates the time the kernel was built.
 
 This file specifies the system-wide limit on the number of
 threads (tasks) that can be created on the system.
-<P>
+<DT><DD>
 Since Linux 4.1,
 
 the value that can be written to
@@ -5825,7 +5906,7 @@ the error
 <B>EINVAL</B>
 
 occurs.
-<P>
+<DT><DD>
 The value written is checked against the available RAM pages.
 If the thread structures would occupy too much (more than 1/8th)
 of the available RAM pages,
@@ -5855,7 +5936,7 @@ Explanations for some of the files under this directory can be found in
 and
 <B><A HREF="../man7/ip.7.html">ip</A></B>(7).
 
-<DT><B>/proc/sys/net/core/bpf_jit_enable</B>
+<DT><I>/proc/sys/net/core/bpf_jit_enable</I>
 
 <DD>
 See
@@ -5903,7 +5984,7 @@ This file defines the amount of free memory (in KiB) on the system that
 that should be reserved for users with the capability
 <B>CAP_SYS_ADMIN</B>.
 
-<P>
+<DT><DD>
 The default value in this file is the minimum of [3% of free pages, 8MiB]
 expressed as KiB.
 The default is intended to provide enough for the superuser
@@ -5911,7 +5992,7 @@ to log in and kill a process, if necessary,
 under the default overcommit 'guess' mode (i.e., 0 in
 <I>/proc/sys/vm/overcommit_memory</I>).
 
-<P>
+<DT><DD>
 Systems running in &quot;overcommit never&quot; mode (i.e., 2 in
 <I>/proc/sys/vm/overcommit_memory</I>)
 
@@ -5926,7 +6007,7 @@ and
 
 Otherwise, the superuser may not be able to log in to recover the system.
 For example, on x86_64 a suitable value is 131072 (128MiB reserved).
-<P>
+<DT><DD>
 Changing the value in this file takes effect whenever
 an application requests memory.
 <DT><I>/proc/sys/vm/compact_memory</I> (since Linux 2.6.35)
@@ -5950,19 +6031,19 @@ This can be useful for memory management testing and
 performing reproducible filesystem benchmarks.
 Because writing to this file causes the benefits of caching to be lost,
 it can degrade overall system performance.
-<P>
+<DT><DD>
 To free pagecache, use:
-<P>
+<DT><DD>
 <BR>&nbsp;&nbsp;&nbsp;&nbsp;echo&nbsp;1&nbsp;&gt;&nbsp;/proc/sys/vm/drop_caches
-<P>
+<DT><DD>
 To free dentries and inodes, use:
-<P>
+<DT><DD>
 <BR>&nbsp;&nbsp;&nbsp;&nbsp;echo&nbsp;2&nbsp;&gt;&nbsp;/proc/sys/vm/drop_caches
-<P>
+<DT><DD>
 To free pagecache, dentries and inodes, use:
-<P>
+<DT><DD>
 <BR>&nbsp;&nbsp;&nbsp;&nbsp;echo&nbsp;3&nbsp;&gt;&nbsp;/proc/sys/vm/drop_caches
-<P>
+<DT><DD>
 Because writing to this file is a nondestructive operation and dirty objects
 are not freeable, the
 user should run
@@ -5988,7 +6069,7 @@ the kernel will handle the failure
 transparently without affecting any applications.
 But if there is no other up-to-date copy of the data,
 it will kill processes to prevent any data corruptions from propagating.
-<P>
+<DT><DD>
 The file has one of the following values:
 <DL COMPACT><DT><DD>
 <DL COMPACT>
@@ -6018,10 +6099,10 @@ Processes can handle this if they want to; see
 <B><A HREF="../man2/sigaction.2.html">sigaction</A></B>(2)
 
 for more details.
-<P>
+<DT><DD>
 This feature is active only on architectures/platforms with advanced machine
 check handling and depends on the hardware capabilities.
-<P>
+<DT><DD>
 Applications can override the
 <I>memory_failure_early_kill</I>
 
@@ -6070,16 +6151,16 @@ oom_adj score (see the description of
 and command name.
 This is helpful to determine why the OOM-killer was invoked
 and to identify the rogue task that caused it.
-<P>
+<DT><DD>
 If this contains the value zero, this information is suppressed.
 On very large systems with thousands of tasks,
 it may not be feasible to dump the memory state information for each one.
 Such systems should not be forced to incur a performance penalty in
 OOM situations when the information may not be desired.
-<P>
+<DT><DD>
 If this is set to nonzero, this information is shown whenever the
 OOM-killer actually kills a memory-hogging task.
-<P>
+<DT><DD>
 The default value is 0.
 <DT><I>/proc/sys/vm/oom_kill_allocating_task</I> (since Linux 2.6.24)
 
@@ -6087,23 +6168,23 @@ The default value is 0.
 
 This enables or disables killing the OOM-triggering task in
 out-of-memory situations.
-<P>
+<DT><DD>
 If this is set to zero, the OOM-killer will scan through the entire
 tasklist and select a task based on heuristics to kill.
 This normally selects a rogue memory-hogging task that
 frees up a large amount of memory when killed.
-<P>
+<DT><DD>
 If this is set to nonzero, the OOM-killer simply kills the task that
 triggered the out-of-memory condition.
 This avoids a possibly expensive tasklist scan.
-<P>
+<DT><DD>
 If
 <I>/proc/sys/vm/panic_on_oom</I>
 
 is nonzero, it takes precedence over whatever value is used in
 <I>/proc/sys/vm/oom_kill_allocating_task</I>.
 
-<P>
+<DT><DD>
 The default value is 0.
 <DT><I>/proc/sys/vm/overcommit_kbytes</I> (since Linux 3.14)
 
@@ -6128,7 +6209,7 @@ This allows for finer-grained control of
 <I>CommitLimit</I>
 
 on systems with extremely large memory sizes.
-<P>
+<DT><DD>
 Only one of
 <I>overcommit_kbytes</I>
 
@@ -6175,13 +6256,13 @@ with
 
 are not checked, and the default check is very weak,
 leading to the risk of getting a process &quot;OOM-killed&quot;.
-<P>
+<DT><DD>
 In mode 1, the kernel pretends there is always enough memory,
 until memory actually runs out.
 One use case for this mode is scientific computing applications
 that employ large sparse arrays.
 In Linux kernel versions before 2.6.0, any nonzero value implies mode 1.
-<P>
+<DT><DD>
 In mode 2 (available since Linux 2.6), the total virtual address space
 that can be allocated
 (<I>CommitLimit</I>
@@ -6190,10 +6271,10 @@ in
 <I>/proc/meminfo</I>)
 
 is calculated as
-<P>
+<DT><DD>
 <BR>&nbsp;&nbsp;&nbsp;&nbsp;CommitLimit&nbsp;=&nbsp;(total_RAM&nbsp;-&nbsp;total_huge_TLB)&nbsp;*
 <BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;overcommit_ratio&nbsp;/&nbsp;100&nbsp;+&nbsp;total_swap
-<P>
+<DT><DD>
 where:
 <DL COMPACT><DT><DD>
 <DL COMPACT>
@@ -6228,7 +6309,7 @@ of 50, this formula yields a
 <I>CommitLimit</I>
 
 of 24GB.
-<P>
+<DT><DD>
 Since Linux 3.14, if the value in
 <I>/proc/sys/vm/overcommit_kbytes</I>
 
@@ -6236,9 +6317,9 @@ is nonzero, then
 <I>CommitLimit</I>
 
 is instead calculated as:
-<P>
+<DT><DD>
 <BR>&nbsp;&nbsp;&nbsp;&nbsp;CommitLimit&nbsp;=&nbsp;overcommit_kbytes&nbsp;+&nbsp;total_swap
-<P>
+<DT><DD>
 See also the description of
 <I>/proc/sys/vm/admiin_reserve_kbytes</I>
 
@@ -6260,12 +6341,12 @@ See the description of
 
 This enables or disables a kernel panic in
 an out-of-memory situation.
-<P>
+<DT><DD>
 If this file is set to the value 0,
 the kernel's OOM-killer will kill some rogue process.
 Usually, the OOM-killer is able to kill a rogue process and the
 system will survive.
-<P>
+<DT><DD>
 If this file is set to the value 1,
 then the kernel normally panics when out-of-memory happens.
 However, if a process limits allocations to certain nodes
@@ -6283,10 +6364,10 @@ No panic occurs in this case:
 because other nodes' memory may be free,
 this means the system as a whole may not have reached
 an out-of-memory situation yet.
-<P>
+<DT><DD>
 If this file is set to the value 2,
 the kernel always panics when an out-of-memory condition occurs.
-<P>
+<DT><DD>
 The default value is 0.
 1 and 2 are for failover of clustering.
 Select either according to your policy of failover.
@@ -6314,10 +6395,10 @@ In this case, the system reserves an amount of memory that is the minimum
 of [3% of current process size,
 <I>user_reserve_kbytes</I>].
 
-<P>
+<DT><DD>
 The default value in this file is the minimum of [3% of free pages, 128MiB]
 expressed as KiB.
-<P>
+<DT><DD>
 If the value in this file is set to zero,
 then a user will be allowed to allocate all free memory with a single process
 (minus the amount reserved by
@@ -6325,7 +6406,7 @@ then a user will be allowed to allocate all free memory with a single process
 
 Any subsequent attempts to execute a command will result in
 &quot;fork: Cannot allocate memory&quot;.
-<P>
+<DT><DD>
 Changing the value in this file takes effect whenever
 an application requests memory.
 <DT><I>/proc/sysrq-trigger</I> (since Linux 2.4.21)
@@ -6339,8 +6420,13 @@ This file is normally writable only by
 <I>root</I>.
 
 For further details see the Linux kernel source file
-<I>Documentation/sysrq.txt</I>.
+<I>Documentation/admin-guide/sysrq.rst</I>
 
+
+(or
+<I>Documentation/sysrq.txt</I>
+
+before Linux 4.10).
 <DT><I>/proc/sysvipc</I>
 
 <DD>
@@ -6380,9 +6466,11 @@ of the same thread.
 This read-only file exposes a list of all currently pending
 (high-resolution) timers,
 all clock-event sources, and their parameters in a human-readable form.
-<DT><I>/proc/timer_stats</I> (since Linux 2.6.21)
+<DT><I>/proc/timer_stats</I> (from  Linux 2.6.21 until Linux 4.10)
 
 <DD>
+
+
 
 
 
@@ -6392,7 +6480,7 @@ It can be used by kernel and user-space developers to verify that
 their code does not make undue use of timers.
 The goal is to avoid unnecessary wakeups,
 thereby optimizing power consumption.
-<P>
+<DT><DD>
 If enabled in the kernel
 (<B>CONFIG_TIMER_STATS</B>),
 
@@ -6401,26 +6489,41 @@ it has almost zero runtime overhead and a relatively small
 data-structure overhead.
 Even if collection is enabled at runtime, overhead is low:
 all the locking is per-CPU and lookup is hashed.
-<P>
+<DT><DD>
 The
 <I>/proc/timer_stats</I>
 
 file is used both to control sampling facility and to read out the
 sampled information.
-<P>
-The timer_stats functionality is inactive on bootup.
+<DT><DD>
+The
+<I>timer_stats</I>
+
+functionality is inactive on bootup.
 A sampling period can be started using the following command:
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;#&nbsp;echo&nbsp;1&nbsp;&gt;&nbsp;/proc/timer_stats
-<P>
+<DT><DD>
+
+
+# echo 1 &gt; /proc/timer_stats
+
+
+<DT><DD>
 The following command stops a sampling period:
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;#&nbsp;echo&nbsp;0&nbsp;&gt;&nbsp;/proc/timer_stats
-<P>
+<DT><DD>
+
+
+# echo 0 &gt; /proc/timer_stats
+
+
+<DT><DD>
 The statistics can be retrieved by:
-<P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;$&nbsp;cat&nbsp;/proc/timer_stats
-<P>
+<DT><DD>
+
+
+$ cat /proc/timer_stats
+
+
+<DT><DD>
 While sampling is enabled, each readout from
 <I>/proc/timer_stats</I>
 
@@ -6429,28 +6532,27 @@ newly updated statistics.
 Once sampling is disabled, the sampled information
 is kept until a new sample period is started.
 This allows multiple readouts.
-<P>
+<DT><DD>
 Sample output from
 <I>/proc/timer_stats</I>:
 
-<P>
-<PRE>
-</DL>
-</DL>
+<DT><DD>
+
+
 $<B> cat /proc/timer_stats</B>
+
 Timer Stats Version: v0.3
 Sample period: 1.764 s
 Collection: active
-  255,     0 swapper/3        hrtimer_start_range_ns (tick_sched_timer)
-   71,     0 swapper/1        hrtimer_start_range_ns (tick_sched_timer)
-   58,     0 swapper/0        hrtimer_start_range_ns (tick_sched_timer)
-    4,  1694 gnome-shell      mod_delayed_work_on (delayed_work_timer_fn)
-   17,     7 rcu_sched        rcu_gp_kthread (process_timeout)
+<BR>&nbsp;&nbsp;255,&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;0&nbsp;swapper/3&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;hrtimer_start_range_ns&nbsp;(tick_sched_timer)
+<BR>&nbsp;&nbsp;&nbsp;71,&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;0&nbsp;swapper/1&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;hrtimer_start_range_ns&nbsp;(tick_sched_timer)
+<BR>&nbsp;&nbsp;&nbsp;58,&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;0&nbsp;swapper/0&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;hrtimer_start_range_ns&nbsp;(tick_sched_timer)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;4,&nbsp;&nbsp;1694&nbsp;gnome-shell&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;mod_delayed_work_on&nbsp;(delayed_work_timer_fn)
+<BR>&nbsp;&nbsp;&nbsp;17,&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;7&nbsp;rcu_sched&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;rcu_gp_kthread&nbsp;(process_timeout)
 ...
-    1,  4911 kworker/u16:0    mod_delayed_work_on (delayed_work_timer_fn)
-   1D,  2522 kworker/0:0      queue_delayed_work_on (delayed_work_timer_fn)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;1,&nbsp;&nbsp;4911&nbsp;kworker/u16:0&nbsp;&nbsp;&nbsp;&nbsp;mod_delayed_work_on&nbsp;(delayed_work_timer_fn)
+<BR>&nbsp;&nbsp;&nbsp;1D,&nbsp;&nbsp;2522&nbsp;kworker/0:0&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;queue_delayed_work_on&nbsp;(delayed_work_timer_fn)
 1029 total events, 583.333 events/sec
-</PRE>
 
 
 <DT><DD>
@@ -6474,6 +6576,12 @@ the callback function that is associated with the timer.
 </DL>
 </DL>
 
+<DT><DD>
+During the Linux 4.11 development cycle,
+this file  was removed because of security concerns,
+as it exposes information across namespaces.
+Furthermore, it is possibile to obtain
+the same information via in-kernel tracing facilities such as ftrace.
 <DT><I>/proc/tty</I>
 
 <DD>
@@ -6497,9 +6605,11 @@ and
 <I>/proc/sys/kernel/version</I>.
 
 For example:
-<PRE>
+<DT><DD>
+
+
 Linux version 1.0.9 (<A HREF="mailto:quinlan@phaze">quinlan@phaze</A>) #1 Sat May 14 01:51:54 EDT 1994
-</PRE>
+
 
 
 
@@ -7359,6 +7469,7 @@ may find that things are more readable if you use <I>od -c</I> or <I>tr
 &quot;\000&quot; &quot;\n&quot;</I> to read them.
 Alternatively, <I>echo `cat &lt;file&gt;`</I> works well.
 <P>
+
 This manual page is incomplete, possibly inaccurate, and is the kind
 of thing that needs to be updated very often.
 
@@ -7393,6 +7504,8 @@ of thing that needs to be updated very often.
 
 <B><A HREF="../man5/slabinfo.5.html">slabinfo</A></B>(5),
 
+<B><A HREF="../man5/sysfs.5.html">sysfs</A></B>(5),
+
 <B><A HREF="../man7/hier.7.html">hier</A></B>(7),
 
 <B><A HREF="../man7/namespaces.7.html">namespaces</A></B>(7),
@@ -7420,6 +7533,7 @@ of thing that needs to be updated very often.
 <B><A HREF="../man8/sysctl.8.html">sysctl</A></B>(8)
 
 <P>
+
 The Linux kernel source files:
 <I>Documentation/filesystems/proc.txt</I>
 
@@ -7450,6 +7564,6 @@ and
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:46:50 GMT, April 20, 2020
+Time: 03:47:27 GMT, April 20, 2020
 </BODY>
 </HTML>

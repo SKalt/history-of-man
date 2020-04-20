@@ -26,7 +26,7 @@ the source, must acknowledge the copyright and authors of this work.
 <HTML><HEAD><TITLE>Man page of CAPABILITIES</TITLE>
 </HEAD><BODY>
 <H1>CAPABILITIES</H1>
-Section: Linux Programmer's Manual (7)<BR>Updated: 2017-07-13<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (7)<BR>Updated: 2017-09-15<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -50,6 +50,7 @@ while unprivileged processes are subject to full permission
 checking based on the process's credentials
 (usually: effective UID, effective GID, and supplementary group list).
 <P>
+
 Starting with kernel 2.2, Linux divides the privileges traditionally
 associated with superuser into distinct units, known as
 <I>capabilities</I>,
@@ -355,7 +356,7 @@ file capabilities, since
 <B>CAP_SETPCAP</B>
 
 has entirely different semantics for such kernels.)
-<P>
+<DT><DD>
 If file capabilities are supported:
 add any capability from the calling thread's bounding set
 to its inheritable set;
@@ -404,7 +405,7 @@ this capability is overloaded; see
 <I>Notes to kernel developers</I>,
 
 below.
-<P>
+<DT><DD>
 
 <DL COMPACT><DT><DD>
 <DL COMPACT>
@@ -1083,7 +1084,7 @@ may be added to the inheritable set by a thread that does not have the
 <B>CAP_SETPCAP</B>
 
 capability in its effective set.
-<P>
+<DT><DD>
 If a thread drops a capability from its permitted set,
 it can never reacquire that capability (unless it
 <B><A HREF="../man2/execve.2.html">execve</A></B>(2)s
@@ -1121,13 +1122,13 @@ This is a set of capabilities that are preserved across an
 of a program that is not privileged.
 The ambient capability set obeys the invariant that no capability
 can ever be ambient if it is not both permitted and inheritable.
-<P>
+<DT><DD>
 The ambient capability set can be directly modified using
 <B><A HREF="../man2/prctl.2.html">prctl</A></B>(2).
 
 Ambient capabilities are automatically lowered if either of
 the corresponding permitted or inheritable capabilities is lowered.
-<P>
+<DT><DD>
 Executing a program that changes UID or GID due to the
 set-user-ID or set-group-ID bits or executing a program that has
 any file capabilities set will clear the ambient set.
@@ -1186,6 +1187,7 @@ determine the capabilities of a thread after an
 <B><A HREF="../man2/execve.2.html">execve</A></B>(2).
 
 <P>
+
 The three file capability sets are:
 <DL COMPACT>
 <DT><I>Permitted</I> (formerly known as <I>forced</I>):
@@ -1214,7 +1216,7 @@ If this bit is not set, then after an
 <B><A HREF="../man2/execve.2.html">execve</A></B>(2),
 
 none of the new permitted capabilities is in the new effective set.
-<P>
+<DT><DD>
 Enabling the file effective capability bit implies
 that any file permitted or inheritable capability that causes a
 thread to acquire the corresponding permitted capability during an
@@ -1234,7 +1236,6 @@ then the effective flag must also be specified as enabled
 for all other capabilities for which the corresponding permitted or
 inheritable flags is enabled.
 
-
 </DL>
 <A NAME="lbAI">&nbsp;</A>
 <H3>Transformation of capabilities during execve()</H3>
@@ -1246,20 +1247,21 @@ During an
 
 the kernel calculates the new capabilities of
 the process using the following algorithm:
+<P>
 
-<PRE>
+
 
 P'(ambient)     = (file is privileged) ? 0 : P(ambient)
-
+<P>
 P'(permitted)   = (P(inheritable) &amp; F(inheritable)) |
-                  (F(permitted) &amp; cap_bset) | P'(ambient)
-
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(F(permitted)&nbsp;&amp;&nbsp;cap_bset)&nbsp;|&nbsp;P'(ambient)
+<P>
 P'(effective)   = F(effective) ? P'(permitted) : P'(ambient)
-
+<P>
 P'(inheritable) = P(inheritable)    [i.e., unchanged]
 
-</PRE>
 
+<P>
 
 where:
 <DL COMPACT><DT><DD>
@@ -1284,6 +1286,7 @@ is the value of the capability bounding set (described below).
 A privileged file is one that has capabilities or
 has the set-user-ID or set-group-ID bit set.
 <P>
+
 <I>Note</I>:
 
 the capability transitions described above may
@@ -1294,6 +1297,7 @@ that the set-user-ID and set-group-ID bits are ignored; see
 <B><A HREF="../man2/execve.2.html">execve</A></B>(2).
 
 <P>
+
 <I>Note</I>:
 
 according to the rules above,
@@ -1328,6 +1332,7 @@ enabled in the process effective set when executing the file.
 The kernel recognizes a file which has the effective capability bit set
 as capability-dumb for the purpose of the check described here.
 <P>
+
 When executing a capability-dumb binary,
 the kernel checks if the process obtained all permitted capabilities
 that were specified in the file permitted set,
@@ -1402,7 +1407,23 @@ except those masked out by the capability bounding set.
 
 The above steps yield semantics that are the same as those provided by
 traditional UNIX systems.
+
 <A NAME="lbAL">&nbsp;</A>
+<H3>Set-user-ID-root programs that have file capabilities</H3>
+
+Executing a program that is both set-user-ID root and has
+file capabilities will cause the process to gain just the
+capabilities granted by the program
+(i.e., not all capabilities,
+as would occur when executing a set-user-ID-root program
+that does not have any associated file capabilities).
+Note that one can assign empty capability sets to a program file,
+and thus it is possible to create a set-user-ID-root program that
+changes the effective and saved set-user-ID of the process
+that executes the program to 0,
+but confers no capabilities to that process.
+
+<A NAME="lbAM">&nbsp;</A>
 <H3>Capability bounding set</H3>
 
 The capability bounding set is a security mechanism that can be used
@@ -1463,6 +1484,7 @@ signed decimal number in
 <I>/proc/sys/kernel/cap-bound</I>.)
 
 <P>
+
 Only the
 <B>init</B>
 
@@ -1472,6 +1494,7 @@ other than that, the superuser (more precisely: programs with the
 
 capability) may only clear capabilities from this set.
 <P>
+
 On a standard system the capability bounding set always masks out the
 <B>CAP_SETPCAP</B>
 
@@ -1484,6 +1507,7 @@ in
 
 and rebuild the kernel.
 <P>
+
 The system-wide capability bounding set feature was added
 to Linux starting with kernel version 2.2.11.
 
@@ -1499,6 +1523,7 @@ From Linux 2.6.25, the
 is a per-thread attribute.
 (There is no longer a system-wide capability bounding set.)
 <P>
+
 The bounding set is inherited at
 <B><A HREF="../man2/fork.2.html">fork</A></B>(2)
 
@@ -1506,6 +1531,7 @@ from the thread's parent, and is preserved across an
 <B><A HREF="../man2/execve.2.html">execve</A></B>(2).
 
 <P>
+
 A thread may remove capabilities from its capability bounding set using the
 <B><A HREF="../man2/prctl.2.html">prctl</A></B>(2)
 
@@ -1524,6 +1550,7 @@ A thread can determine if a capability is in its bounding set using the
 
 operation.
 <P>
+
 Removing capabilities from the bounding set is supported only if file
 capabilities are compiled into the kernel.
 In kernels before Linux 2.6.33,
@@ -1548,13 +1575,14 @@ begins with a full bounding set minus
 because this capability has a different meaning when there are
 no file capabilities.
 <P>
+
 Removing a capability from the bounding set does not remove it
 from the thread's inherited set.
 However it does prevent the capability from being added
 back into the thread's inherited set in the future.
 
 
-<A NAME="lbAM">&nbsp;</A>
+<A NAME="lbAN">&nbsp;</A>
 <H3>Effect of user ID changes on capabilities</H3>
 
 To preserve the traditional semantics for transitions between
@@ -1622,7 +1650,7 @@ operation or the
 
 securebits flag described below.
 
-<A NAME="lbAN">&nbsp;</A>
+<A NAME="lbAO">&nbsp;</A>
 <H3>Programmatically adjusting capability sets</H3>
 
 A thread can retrieve and change its capability sets using the
@@ -1663,7 +1691,7 @@ that the thread does not currently have).
 <DT>4.<DD>
 The new effective set must be a subset of the new permitted set.
 </DL>
-<A NAME="lbAO">&nbsp;</A>
+<A NAME="lbAP">&nbsp;</A>
 <H3>The securebits flags: establishing a capabilities-only environment</H3>
 
 
@@ -1760,6 +1788,7 @@ The
 
 capability is required to modify the flags.
 <P>
+
 The
 <I>securebits</I>
 
@@ -1772,32 +1801,33 @@ all of the flags are preserved, except
 
 which is always cleared.
 <P>
+
 An application can use the following call to lock itself,
 and all of its descendants,
 into an environment where the only way of gaining capabilities
 is by executing a program with associated file capabilities:
+<P>
 
-<PRE>
+
 
 prctl(PR_SET_SECUREBITS,
-        /* SECBIT_KEEP_CAPS off */
-        SECBIT_KEEP_CAPS_LOCKED |
-        SECBIT_NO_SETUID_FIXUP |
-        SECBIT_NO_SETUID_FIXUP_LOCKED |
-        SECBIT_NOROOT |
-        SECBIT_NOROOT_LOCKED);
-        /* Setting/locking SECURE_NO_CAP_AMBIENT_RAISE
-           is not required */
-</PRE>
+<TT>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT>/* SECBIT_KEEP_CAPS off */<BR>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;SECBIT_KEEP_CAPS_LOCKED&nbsp;|
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;SECBIT_NO_SETUID_FIXUP&nbsp;|
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;SECBIT_NO_SETUID_FIXUP_LOCKED&nbsp;|
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;SECBIT_NOROOT&nbsp;|
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;SECBIT_NOROOT_LOCKED);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Setting/locking&nbsp;SECURE_NO_CAP_AMBIENT_RAISE
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;is&nbsp;not&nbsp;required&nbsp;*/
 
 
-<A NAME="lbAP">&nbsp;</A>
+<A NAME="lbAQ">&nbsp;</A>
 <H3>Interaction with user namespaces</H3>
 
 For a discussion of the interaction of capabilities and user namespaces, see
 <B><A HREF="../man7/user_namespaces.7.html">user_namespaces</A></B>(7).
 
-<A NAME="lbAQ">&nbsp;</A>
+<A NAME="lbAR">&nbsp;</A>
 <H2>CONFORMING TO</H2>
 
 <P>
@@ -1806,7 +1836,7 @@ No standards govern capabilities, but the Linux capability implementation
 is based on the withdrawn POSIX.1e draft standard; see
 
 
-<A NAME="lbAR">&nbsp;</A>
+<A NAME="lbAS">&nbsp;</A>
 <H2>NOTES</H2>
 
 From kernel 2.5.27 to kernel 2.6.26,
@@ -1818,6 +1848,7 @@ and could be enabled/disabled via the
 
 kernel configuration option.
 <P>
+
 The
 <I>/proc/[pid]/task/TID/status</I>
 
@@ -1835,6 +1866,7 @@ all nonexistent capabilities (above
 
 are shown as disabled (0).
 <P>
+
 The
 <I>libcap</I>
 
@@ -1859,6 +1891,7 @@ It can be found at
 
 
 <P>
+
 Before kernel 2.6.24, and from kernel 2.6.24 to kernel 2.6.32 if
 file capabilities are not enabled, a thread with the
 <B>CAP_SETPCAP</B>
@@ -1884,7 +1917,7 @@ starts out with this capability removed from its per-process bounding
 set, and that bounding set is inherited by all other processes
 created on the system.
 </DL>
-<A NAME="lbAS">&nbsp;</A>
+<A NAME="lbAT">&nbsp;</A>
 <H2>SEE ALSO</H2>
 
 <B><A HREF="../man1/capsh.1.html">capsh</A></B>(1),
@@ -1952,20 +1985,21 @@ in the Linux kernel source tree
 <DT><A HREF="#lbAI">Transformation of capabilities during execve()</A><DD>
 <DT><A HREF="#lbAJ">Safety checking for capability-dumb binaries</A><DD>
 <DT><A HREF="#lbAK">Capabilities and execution of programs by root</A><DD>
-<DT><A HREF="#lbAL">Capability bounding set</A><DD>
-<DT><A HREF="#lbAM">Effect of user ID changes on capabilities</A><DD>
-<DT><A HREF="#lbAN">Programmatically adjusting capability sets</A><DD>
-<DT><A HREF="#lbAO">The securebits flags: establishing a capabilities-only environment</A><DD>
-<DT><A HREF="#lbAP">Interaction with user namespaces</A><DD>
+<DT><A HREF="#lbAL">Set-user-ID-root programs that have file capabilities</A><DD>
+<DT><A HREF="#lbAM">Capability bounding set</A><DD>
+<DT><A HREF="#lbAN">Effect of user ID changes on capabilities</A><DD>
+<DT><A HREF="#lbAO">Programmatically adjusting capability sets</A><DD>
+<DT><A HREF="#lbAP">The securebits flags: establishing a capabilities-only environment</A><DD>
+<DT><A HREF="#lbAQ">Interaction with user namespaces</A><DD>
 </DL>
-<DT><A HREF="#lbAQ">CONFORMING TO</A><DD>
-<DT><A HREF="#lbAR">NOTES</A><DD>
-<DT><A HREF="#lbAS">SEE ALSO</A><DD>
+<DT><A HREF="#lbAR">CONFORMING TO</A><DD>
+<DT><A HREF="#lbAS">NOTES</A><DD>
+<DT><A HREF="#lbAT">SEE ALSO</A><DD>
 </DL>
 <HR>
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:46:51 GMT, April 20, 2020
+Time: 03:47:27 GMT, April 20, 2020
 </BODY>
 </HTML>

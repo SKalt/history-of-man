@@ -25,7 +25,7 @@ License along with this manual; if not, see
 <HTML><HEAD><TITLE>Man page of FTW</TITLE>
 </HEAD><BODY>
 <H1>FTW</H1>
-Section: Linux Programmer's Manual (3)<BR>Updated: 2017-07-13<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2017-09-15<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -53,11 +53,13 @@ ftw, nftw - file tree walk
 
 <P>
 
+
 Feature Test Macro Requirements for glibc (see
 <B><A HREF="../man7/feature_test_macros.7.html">feature_test_macros</A></B>(7)):
 
 
 <P>
+
 <B>nftw</B>():
 
 _XOPEN_SOURCE &gt;= 500
@@ -72,6 +74,7 @@ and calls <I>fn</I>() once for each entry in the tree.
 By default, directories are handled before the files and
 subdirectories they contain (preorder traversal).
 <P>
+
 To avoid using up all of the calling process's file descriptors,
 <I>nopenfd</I> specifies the maximum number of directories that
 <B>nftw</B>()
@@ -88,6 +91,7 @@ directories have to be closed and reopened.
 uses at most
 one file descriptor for each level in the directory tree.
 <P>
+
 For each entry found in the tree,
 <B>nftw</B>()
 
@@ -129,6 +133,7 @@ for
 <I>fpath</I>.
 
 <P>
+
 The
 <I>typeflag</I>
 
@@ -241,16 +246,17 @@ that
 supplies when calling
 <I>fn</I>()
 is a pointer to a structure of type <I>FTW</I>:
+<P>
 
-<PRE>
+
 
 struct FTW {
-    int base;
-    int level;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;base;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;level;
 };
 
-</PRE>
 
+<P>
 
 <I>base</I>
 
@@ -296,6 +302,7 @@ have the handler set a global flag that is checked by <I>fn</I>().
 
 unless the program is going to terminate.
 <P>
+
 The <I>flags</I> argument of
 <B>nftw</B>()
 
@@ -357,6 +364,7 @@ to return immediately with the return value
 Other return values could be associated with new actions in the future;
 <I>fn</I>() should not return values other than those listed above.
 <P>
+
 The feature test macro
 <B>_GNU_SOURCE</B>
 
@@ -402,7 +410,7 @@ If set, stay within the same filesystem
 If set, do not follow symbolic links.
 (This is what you want.)
 If not set, symbolic links are followed, but no file is reported twice.
-<P>
+<DT><DD>
 If <B>FTW_PHYS</B> is not set, but <B>FTW_DEPTH</B> is set,
 then the function
 <I>fn</I>()
@@ -463,6 +471,7 @@ and (possibly)
 
 These functions return 0 on success, and -1 if an error occurs.
 <P>
+
 If <I>fn</I>() returns nonzero,
 then the tree walk is terminated and the value returned by <I>fn</I>()
 is returned as the result of
@@ -472,6 +481,7 @@ or
 <B>nftw</B>().
 
 <P>
+
 If
 <B>nftw</B>()
 
@@ -556,71 +566,6 @@ For predictable results, use
 <B>nftw</B>().
 
 <A NAME="lbAK">&nbsp;</A>
-<H2>EXAMPLE</H2>
-
-The following program traverses the directory tree under the path named
-in its first command-line argument, or under the current directory
-if no argument is supplied.
-It displays various information about each file.
-The second command-line argument can be used to specify characters that
-control the value assigned to the <I>flags</I>
-argument when calling
-<B>nftw</B>().
-
-<A NAME="lbAL">&nbsp;</A>
-<H3>Program source</H3>
-
-<PRE>
-#define _XOPEN_SOURCE 500
-#include &lt;<A HREF="file:///usr/include/ftw.h">ftw.h</A>&gt;
-#include &lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;
-#include &lt;<A HREF="file:///usr/include/stdlib.h">stdlib.h</A>&gt;
-#include &lt;<A HREF="file:///usr/include/string.h">string.h</A>&gt;
-#include &lt;<A HREF="file:///usr/include/stdint.h">stdint.h</A>&gt;
-
-static int
-display_info(const char *fpath, const struct stat *sb,
-             int tflag, struct FTW *ftwbuf)
-{
-    printf(&quot;%-3s %2d &quot;,
-            (tflag == FTW_D) ?   &quot;d&quot;   : (tflag == FTW_DNR) ? &quot;dnr&quot; :
-            (tflag == FTW_DP) ?  &quot;dp&quot;  : (tflag == FTW_F) ?   &quot;f&quot; :
-            (tflag == FTW_NS) ?  &quot;ns&quot;  : (tflag == FTW_SL) ?  &quot;sl&quot; :
-            (tflag == FTW_SLN) ? &quot;sln&quot; : &quot;???&quot;,
-            ftwbuf-&gt;level);
-
-    if (tflag == FTW_NS)
-        printf(&quot;-------&quot;);
-    else
-        printf(&quot;%7jd&quot;, (intmax_t) sb-&gt;st_size);
-
-    printf(&quot;   %-40s %d %s\n&quot;,
-            fpath, ftwbuf-&gt;base, fpath + ftwbuf-&gt;base);
-
-    return 0;           /* To tell nftw() to continue */
-}
-
-int
-main(int argc, char *argv[])
-{
-    int flags = 0;
-
-    if (argc &gt; 2 &amp;&amp; strchr(argv[2], 'd') != NULL)
-        flags |= FTW_DEPTH;
-    if (argc &gt; 2 &amp;&amp; strchr(argv[2], 'p') != NULL)
-        flags |= FTW_PHYS;
-
-    if (nftw((argc &lt; 2) ? &quot;.&quot; : argv[1], display_info, 20, flags)
-            == -1) {
-        perror(&quot;nftw&quot;);
-        exit(EXIT_FAILURE);
-    }
-
-    exit(EXIT_SUCCESS);
-}
-</PRE>
-
-<A NAME="lbAM">&nbsp;</A>
 <H2>BUGS</H2>
 
 In the specification of
@@ -675,6 +620,71 @@ provided in the original glibc implementation (and on other implementations).
 
 
 
+<A NAME="lbAL">&nbsp;</A>
+<H2>EXAMPLE</H2>
+
+The following program traverses the directory tree under the path named
+in its first command-line argument, or under the current directory
+if no argument is supplied.
+It displays various information about each file.
+The second command-line argument can be used to specify characters that
+control the value assigned to the <I>flags</I>
+argument when calling
+<B>nftw</B>().
+
+<A NAME="lbAM">&nbsp;</A>
+<H3>Program source</H3>
+
+
+
+#define _XOPEN_SOURCE 500
+#include &lt;<A HREF="file:///usr/include/ftw.h">ftw.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/stdlib.h">stdlib.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/string.h">string.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/stdint.h">stdint.h</A>&gt;
+<P>
+static int
+display_info(const char *fpath, const struct stat *sb,
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;tflag,&nbsp;struct&nbsp;FTW&nbsp;*ftwbuf)
+{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;%-3s&nbsp;%2d&nbsp;&quot;,
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(tflag&nbsp;==&nbsp;FTW_D)&nbsp;?&nbsp;&nbsp;&nbsp;&quot;d&quot;&nbsp;&nbsp;&nbsp;:&nbsp;(tflag&nbsp;==&nbsp;FTW_DNR)&nbsp;?&nbsp;&quot;dnr&quot;&nbsp;:
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(tflag&nbsp;==&nbsp;FTW_DP)&nbsp;?&nbsp;&nbsp;&quot;dp&quot;&nbsp;&nbsp;:&nbsp;(tflag&nbsp;==&nbsp;FTW_F)&nbsp;?&nbsp;&nbsp;&nbsp;&quot;f&quot;&nbsp;:
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(tflag&nbsp;==&nbsp;FTW_NS)&nbsp;?&nbsp;&nbsp;&quot;ns&quot;&nbsp;&nbsp;:&nbsp;(tflag&nbsp;==&nbsp;FTW_SL)&nbsp;?&nbsp;&nbsp;&quot;sl&quot;&nbsp;:
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(tflag&nbsp;==&nbsp;FTW_SLN)&nbsp;?&nbsp;&quot;sln&quot;&nbsp;:&nbsp;&quot;???&quot;,
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ftwbuf-&gt;level);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(tflag&nbsp;==&nbsp;FTW_NS)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;-------&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;else
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;%7jd&quot;,&nbsp;(intmax_t)&nbsp;sb-&gt;st_size);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;&nbsp;&nbsp;&nbsp;%-40s&nbsp;%d&nbsp;%s\n&quot;,
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fpath,&nbsp;ftwbuf-&gt;base,&nbsp;fpath&nbsp;+&nbsp;ftwbuf-&gt;base);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;return&nbsp;0;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;To&nbsp;tell&nbsp;nftw()&nbsp;to&nbsp;continue&nbsp;*/
+}
+<P>
+int
+main(int argc, char *argv[])
+{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;flags&nbsp;=&nbsp;0;
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(argc&nbsp;&gt;&nbsp;2&nbsp;&amp;&amp;&nbsp;strchr(argv[2],&nbsp;'d')&nbsp;!=&nbsp;NULL)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;flags&nbsp;|=&nbsp;FTW_DEPTH;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(argc&nbsp;&gt;&nbsp;2&nbsp;&amp;&amp;&nbsp;strchr(argv[2],&nbsp;'p')&nbsp;!=&nbsp;NULL)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;flags&nbsp;|=&nbsp;FTW_PHYS;
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(nftw((argc&nbsp;&lt;&nbsp;2)&nbsp;?&nbsp;&quot;.&quot;&nbsp;:&nbsp;argv[1],&nbsp;display_info,&nbsp;20,&nbsp;flags)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;==&nbsp;-1)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;perror(&quot;nftw&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_SUCCESS);
+}
+
 <A NAME="lbAN">&nbsp;</A>
 <H2>SEE ALSO</H2>
 
@@ -700,17 +710,17 @@ provided in the original glibc implementation (and on other implementations).
 <DT><A HREF="#lbAH">ATTRIBUTES</A><DD>
 <DT><A HREF="#lbAI">CONFORMING TO</A><DD>
 <DT><A HREF="#lbAJ">NOTES</A><DD>
-<DT><A HREF="#lbAK">EXAMPLE</A><DD>
+<DT><A HREF="#lbAK">BUGS</A><DD>
+<DT><A HREF="#lbAL">EXAMPLE</A><DD>
 <DL>
-<DT><A HREF="#lbAL">Program source</A><DD>
+<DT><A HREF="#lbAM">Program source</A><DD>
 </DL>
-<DT><A HREF="#lbAM">BUGS</A><DD>
 <DT><A HREF="#lbAN">SEE ALSO</A><DD>
 </DL>
 <HR>
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:46:44 GMT, April 20, 2020
+Time: 03:47:20 GMT, April 20, 2020
 </BODY>
 </HTML>

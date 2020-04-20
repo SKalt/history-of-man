@@ -26,7 +26,7 @@ the source, must acknowledge the copyright and authors of this work.
 <HTML><HEAD><TITLE>Man page of GETGROUPLIST</TITLE>
 </HEAD><BODY>
 <H1>GETGROUPLIST</H1>
-Section: Linux Programmer's Manual (3)<BR>Updated: 2016-03-15<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2017-09-15<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -39,6 +39,7 @@ getgrouplist - get list of groups to which a user belongs
 <B>#include &lt;<A HREF="file:///usr/include/grp.h">grp.h</A>&gt;</B>
 
 <P>
+
 <B>int getgrouplist(const char *</B><I>user</I><B>, gid_t </B><I>group</I><B>,</B>
 
 <BR>
@@ -47,11 +48,13 @@ getgrouplist - get list of groups to which a user belongs
 
 <P>
 
+
 Feature Test Macro Requirements for glibc (see
 <B><A HREF="../man7/feature_test_macros.7.html">feature_test_macros</A></B>(7)):
 
 
 <P>
+
 <B>getgrouplist</B>():
 
 <BR>&nbsp;&nbsp;&nbsp;&nbsp;Since&nbsp;glibc&nbsp;2.19:
@@ -78,6 +81,7 @@ of these groups are returned in the array
 <I>groups</I>.
 
 <P>
+
 If it was not among the groups defined for
 <I>user</I>
 
@@ -92,6 +96,7 @@ the password record for
 <I>user</I>.
 
 <P>
+
 The
 <I>ngroups</I>
 
@@ -119,6 +124,7 @@ then the value
 
 is returned.
 <P>
+
 If the user is a member of more than
 <I>*ngroups</I>
 
@@ -182,80 +188,81 @@ value to be supplied to
 <B>getgrouplist</B>().
 
 The following shell session shows examples of the use of this program:
+<P>
 
-<PRE>
+
 
 $<B> ./a.out cecilia 0</B>
+
 getgrouplist() returned -1; ngroups = 3
 $<B> ./a.out cecilia 3</B>
+
 ngroups = 3
 16 (dialout)
 33 (video)
 100 (users)
-</PRE>
 
 
 <A NAME="lbAK">&nbsp;</A>
 <H3>Program source</H3>
 
 
-<PRE>
+
 #include &lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/stdlib.h">stdlib.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/grp.h">grp.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/pwd.h">pwd.h</A>&gt;
-
+<P>
 int
 main(int argc, char *argv[])
 {
-    int j, ngroups;
-    gid_t *groups;
-    struct passwd *pw;
-    struct group *gr;
-
-    if (argc != 3) {
-        fprintf(stderr, &quot;Usage: %s &lt;user&gt; &lt;ngroups&gt;\n&quot;, argv[0]);
-        exit(EXIT_FAILURE);
-    }
-
-    ngroups = atoi(argv[2]);
-
-    groups = malloc(ngroups * sizeof (gid_t));
-    if (groups == NULL) {
-        perror(&quot;malloc&quot;);
-        exit(EXIT_FAILURE);
-    }
-
-    /* Fetch passwd structure (contains first group ID for user) */
-
-    pw = getpwnam(argv[1]);
-    if (pw == NULL) {
-        perror(&quot;getpwnam&quot;);
-        exit(EXIT_SUCCESS);
-    }
-
-    /* Retrieve group list */
-
-    if (getgrouplist(argv[1], pw-&gt;pw_gid, groups, &amp;ngroups) == -1) {
-        fprintf(stderr, &quot;getgrouplist() returned -1; ngroups = %d\n&quot;,
-                ngroups);
-        exit(EXIT_FAILURE);
-    }
-
-    /* Display list of retrieved groups, along with group names */
-
-    fprintf(stderr, &quot;ngroups = %d\n&quot;, ngroups);
-    for (j = 0; j &lt; ngroups; j++) {
-        printf(&quot;%d&quot;, groups[j]);
-        gr = getgrgid(groups[j]);
-        if (gr != NULL)
-            printf(&quot; (%s)&quot;, gr-&gt;gr_name);
-        printf(&quot;\n&quot;);
-    }
-
-    exit(EXIT_SUCCESS);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;j,&nbsp;ngroups;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;gid_t&nbsp;*groups;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;struct&nbsp;passwd&nbsp;*pw;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;struct&nbsp;group&nbsp;*gr;
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(argc&nbsp;!=&nbsp;3)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fprintf(stderr,&nbsp;&quot;Usage:&nbsp;%s&nbsp;&lt;user&gt;&nbsp;&lt;ngroups&gt;\n&quot;,&nbsp;argv[0]);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;ngroups&nbsp;=&nbsp;atoi(argv[2]);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;groups&nbsp;=&nbsp;malloc(ngroups&nbsp;*&nbsp;sizeof&nbsp;(gid_t));
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(groups&nbsp;==&nbsp;NULL)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;perror(&quot;malloc&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Fetch&nbsp;passwd&nbsp;structure&nbsp;(contains&nbsp;first&nbsp;group&nbsp;ID&nbsp;for&nbsp;user)&nbsp;*/
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;pw&nbsp;=&nbsp;getpwnam(argv[1]);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(pw&nbsp;==&nbsp;NULL)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;perror(&quot;getpwnam&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_SUCCESS);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Retrieve&nbsp;group&nbsp;list&nbsp;*/
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(getgrouplist(argv[1],&nbsp;pw-&gt;pw_gid,&nbsp;groups,&nbsp;&amp;ngroups)&nbsp;==&nbsp;-1)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fprintf(stderr,&nbsp;&quot;getgrouplist()&nbsp;returned&nbsp;-1;&nbsp;ngroups&nbsp;=&nbsp;%d\n&quot;,
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ngroups);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Display&nbsp;list&nbsp;of&nbsp;retrieved&nbsp;groups,&nbsp;along&nbsp;with&nbsp;group&nbsp;names&nbsp;*/
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;fprintf(stderr,&nbsp;&quot;ngroups&nbsp;=&nbsp;%d\n&quot;,&nbsp;ngroups);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;for&nbsp;(j&nbsp;=&nbsp;0;&nbsp;j&nbsp;&lt;&nbsp;ngroups;&nbsp;j++)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;%d&quot;,&nbsp;groups[j]);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;gr&nbsp;=&nbsp;getgrgid(groups[j]);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(gr&nbsp;!=&nbsp;NULL)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;&nbsp;(%s)&quot;,&nbsp;gr-&gt;gr_name);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;\n&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_SUCCESS);
 }
-</PRE>
 
 <A NAME="lbAL">&nbsp;</A>
 <H2>SEE ALSO</H2>
@@ -295,6 +302,6 @@ main(int argc, char *argv[])
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:46:44 GMT, April 20, 2020
+Time: 03:47:21 GMT, April 20, 2020
 </BODY>
 </HTML>

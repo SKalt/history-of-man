@@ -25,7 +25,7 @@ the source, must acknowledge the copyright and authors of this work.
 <HTML><HEAD><TITLE>Man page of SELECT_TUT</TITLE>
 </HEAD><BODY>
 <H1>SELECT_TUT</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2017-05-03<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2017-09-15<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -38,26 +38,19 @@ synchronous I/O multiplexing
 
 <PRE>
 /* According to POSIX.1-2001, POSIX.1-2008 */
-<BR>
 <B>#include &lt;<A HREF="file:///usr/include/sys/select.h">sys/select.h</A>&gt;</B>
 
 /* According to earlier standards */
-<BR>
 <B>#include &lt;<A HREF="file:///usr/include/sys/time.h">sys/time.h</A>&gt;</B>
-<BR>
 <B>#include &lt;<A HREF="file:///usr/include/sys/types.h">sys/types.h</A>&gt;</B>
-<BR>
 <B>#include &lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;</B>
 
 <B>int select(int </B><I>nfds</I><B>, fd_set *</B><I>readfds</I><B>, fd_set *</B><I>writefds</I><B>,</B>
 <B>           fd_set *</B><I>exceptfds</I><B>, struct timeval *</B><I>utimeout</I><B>);</B>
 
 <B>void FD_CLR(int </B><I>fd</I><B>, fd_set *</B><I>set</I><B>);</B>
-<BR>
 <B>int  FD_ISSET(int </B><I>fd</I><B>, fd_set *</B><I>set</I><B>);</B>
-<BR>
 <B>void FD_SET(int </B><I>fd</I><B>, fd_set *</B><I>set</I><B>);</B>
-<BR>
 <B>void FD_ZERO(fd_set *</B><I>set</I><B>);</B>
 
 <B>#include &lt;<A HREF="file:///usr/include/sys/select.h">sys/select.h</A>&gt;</B>
@@ -69,11 +62,13 @@ synchronous I/O multiplexing
 
 <P>
 
+
 Feature Test Macro Requirements for glibc (see
 <B><A HREF="../man7/feature_test_macros.7.html">feature_test_macros</A></B>(7)):
 
 
 <P>
+
 <B>pselect</B>():
 
 _POSIX_C_SOURCE&nbsp;&gt;=&nbsp;200112L
@@ -90,6 +85,7 @@ to see if any of them is, or becomes, &quot;ready&quot;;
 that is, to see whether I/O becomes possible,
 or an &quot;exceptional condition&quot; has occurred on any of the file descriptors.
 <P>
+
 Its principal arguments are three &quot;sets&quot; of file descriptors:
 <I>readfds</I>, <I>writefds</I>, and <I>exceptfds</I>.
 Each set is declared as type
@@ -197,12 +193,11 @@ of file descriptors at the time of the call.
 The structure <I>struct timeval</I> is defined as:
 <DT><DD>
 
-<PRE>
+
 struct timeval {
-    time_t tv_sec;    /* seconds */
-    long tv_usec;     /* microseconds */
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;time_t&nbsp;tv_sec;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;seconds&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;long&nbsp;tv_usec;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;microseconds&nbsp;*/
 };
-</PRE>
 
 
 <DT><I>ntimeout</I><DD>
@@ -218,12 +213,11 @@ but
 has nanosecond precision as follows:
 <DT><DD>
 
-<PRE>
+
 struct timespec {
-    long tv_sec;    /* seconds */
-    long tv_nsec;   /* nanoseconds */
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;long&nbsp;tv_sec;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;seconds&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;long&nbsp;tv_nsec;&nbsp;&nbsp;&nbsp;/*&nbsp;nanoseconds&nbsp;*/
 };
-</PRE>
 
 
 <DT><I>sigmask</I><DD>
@@ -307,61 +301,60 @@ by using an empty signal mask.
 Our program would look like:
 <P>
 
-<PRE>
-static volatile sig_atomic_t got_SIGCHLD = 0;
 
+static volatile sig_atomic_t got_SIGCHLD = 0;
+<P>
 static void
 child_sig_handler(int sig)
 {
-    got_SIGCHLD = 1;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;got_SIGCHLD&nbsp;=&nbsp;1;
 }
-
+<P>
 int
 main(int argc, char *argv[])
 {
-    sigset_t sigmask, empty_mask;
-    struct sigaction sa;
-    fd_set readfds, writefds, exceptfds;
-    int r;
-
-    sigemptyset(&amp;sigmask);
-    sigaddset(&amp;sigmask, SIGCHLD);
-    if (sigprocmask(SIG_BLOCK, &amp;sigmask, NULL) == -1) {
-        perror(&quot;sigprocmask&quot;);
-        exit(EXIT_FAILURE);
-    }
-
-    sa.sa_flags = 0;
-    sa.sa_handler = child_sig_handler;
-    sigemptyset(&amp;sa.sa_mask);
-    if (sigaction(SIGCHLD, &amp;sa, NULL) == -1) {
-        perror(&quot;sigaction&quot;);
-        exit(EXIT_FAILURE);
-    }
-
-    sigemptyset(&amp;empty_mask);
-
-    for (;;) {          /* main loop */
-        /* Initialize readfds, writefds, and exceptfds
-           before the pselect() call. (Code omitted.) */
-
-        r = pselect(nfds, &amp;readfds, &amp;writefds, &amp;exceptfds,
-                    NULL, &amp;empty_mask);
-        if (r == -1 &amp;&amp; errno != EINTR) {
-            /* Handle error */
-        }
-
-        if (got_SIGCHLD) {
-            got_SIGCHLD = 0;
-
-            /* Handle signalled event here; e.g., wait() for all
-               terminated children. (Code omitted.) */
-        }
-
-        /* main body of program */
-    }
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;sigset_t&nbsp;sigmask,&nbsp;empty_mask;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;struct&nbsp;sigaction&nbsp;sa;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;fd_set&nbsp;readfds,&nbsp;writefds,&nbsp;exceptfds;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;r;
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;sigemptyset(&amp;sigmask);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;sigaddset(&amp;sigmask,&nbsp;SIGCHLD);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(sigprocmask(SIG_BLOCK,&nbsp;&amp;sigmask,&nbsp;NULL)&nbsp;==&nbsp;-1)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;perror(&quot;sigprocmask&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;sa.sa_flags&nbsp;=&nbsp;0;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;sa.sa_handler&nbsp;=&nbsp;child_sig_handler;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;sigemptyset(&amp;sa.sa_mask);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(sigaction(SIGCHLD,&nbsp;&amp;sa,&nbsp;NULL)&nbsp;==&nbsp;-1)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;perror(&quot;sigaction&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;sigemptyset(&amp;empty_mask);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;for&nbsp;(;;)&nbsp;{&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;main&nbsp;loop&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Initialize&nbsp;readfds,&nbsp;writefds,&nbsp;and&nbsp;exceptfds
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;before&nbsp;the&nbsp;pselect()&nbsp;call.&nbsp;(Code&nbsp;omitted.)&nbsp;*/
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;r&nbsp;=&nbsp;pselect(nfds,&nbsp;&amp;readfds,&nbsp;&amp;writefds,&nbsp;&amp;exceptfds,
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;NULL,&nbsp;&amp;empty_mask);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(r&nbsp;==&nbsp;-1&nbsp;&amp;&amp;&nbsp;errno&nbsp;!=&nbsp;EINTR)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Handle&nbsp;error&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(got_SIGCHLD)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;got_SIGCHLD&nbsp;=&nbsp;0;
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Handle&nbsp;signalled&nbsp;event&nbsp;here;&nbsp;e.g.,&nbsp;wait()&nbsp;for&nbsp;all
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;terminated&nbsp;children.&nbsp;(Code&nbsp;omitted.)&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;main&nbsp;body&nbsp;of&nbsp;program&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
 }
-</PRE>
 
 <A NAME="lbAG">&nbsp;</A>
 <H3>Practical</H3>
@@ -461,24 +454,31 @@ inefficient not to read/write as much data as you can buffer each time.
 The buffers in the example below are 1024 bytes although they could
 easily be made larger.
 <DT>7.<DD>
-The functions
+Calls to
 <B><A HREF="../man2/read.2.html">read</A></B>(2),
 
 <B><A HREF="../man2/recv.2.html">recv</A></B>(2),
 
 <B><A HREF="../man2/write.2.html">write</A></B>(2),
 
+<B><A HREF="../man2/send.2.html">send</A></B>(2),
+
+and
+<B>select</B>()
+
+can fail with the error
+<B>EINTR</B>,
+and calls to
+<B><A HREF="../man2/read.2.html">read</A></B>(2),
+
+<B><A HREF="../man2/recv.2.html">recv</A></B>(2)
+
+<B><A HREF="../man2/write.2.html">write</A></B>(2),
+
 and
 <B><A HREF="../man2/send.2.html">send</A></B>(2)
 
-as well as the
-<B>select</B>()
-
-call can return -1 with
-<I>errno</I>
-
-set to <B>EINTR</B>,
-or with
+can fail with
 <I>errno</I>
 
 set to <B>EAGAIN</B> (<B>EWOULDBLOCK</B>).
@@ -561,12 +561,13 @@ with a finite timeout and no file descriptors as
 follows:
 <P>
 
-<PRE>
-    struct timeval tv;
-    tv.tv_sec = 0;
-    tv.tv_usec = 200000;  /* 0.2 seconds */
-    select(0, NULL, NULL, NULL, &amp;tv);
-</PRE>
+
+
+struct timeval tv;
+tv.tv_sec = 0;
+tv.tv_usec = 200000;  /* 0.2 seconds */
+select(0, NULL, NULL, NULL, &amp;tv);
+
 
 <P>
 
@@ -580,6 +581,7 @@ On success,
 returns the total number of file descriptors
 still present in the file descriptor sets.
 <P>
+
 If
 <B>select</B>()
 
@@ -587,6 +589,7 @@ timed out, then the return value will be zero.
 The file descriptors set should be all
 empty (but may not be on some systems).
 <P>
+
 A return value of -1 indicates an error, with <I>errno</I> being
 set appropriately.
 In the case of an error, the contents of the returned sets and
@@ -642,7 +645,7 @@ The listing below is a TCP forwarding program that forwards
 from one TCP port to another.
 <P>
 
-<PRE>
+
 #include &lt;<A HREF="file:///usr/include/stdlib.h">stdlib.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;
@@ -654,260 +657,259 @@ from one TCP port to another.
 #include &lt;<A HREF="file:///usr/include/netinet/in.h">netinet/in.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/arpa/inet.h">arpa/inet.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/errno.h">errno.h</A>&gt;
-
+<P>
 static int forward_port;
-
+<P>
 #undef max
 #define max(x,y) ((x) &gt; (y) ? (x) : (y))
-
+<P>
 static int
 listen_socket(int listen_port)
 {
-    struct sockaddr_in addr;
-    int lfd;
-    int yes;
-
-    lfd = socket(AF_INET, SOCK_STREAM, 0);
-    if (lfd == -1) {
-        perror(&quot;socket&quot;);
-        return -1;
-    }
-
-    yes = 1;
-    if (setsockopt(lfd, SOL_SOCKET, SO_REUSEADDR,
-            &amp;yes, sizeof(yes)) == -1) {
-        perror(&quot;setsockopt&quot;);
-        close(lfd);
-        return -1;
-    }
-
-    memset(&amp;addr, 0, sizeof(addr));
-    addr.sin_port = htons(listen_port);
-    addr.sin_family = AF_INET;
-    if (bind(lfd, (struct sockaddr *) &amp;addr, sizeof(addr)) == -1) {
-        perror(&quot;bind&quot;);
-        close(lfd);
-        return -1;
-    }
-
-    printf(&quot;accepting connections on port %d\n&quot;, listen_port);
-    listen(lfd, 10);
-    return lfd;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;struct&nbsp;sockaddr_in&nbsp;addr;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;lfd;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;yes;
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;lfd&nbsp;=&nbsp;socket(AF_INET,&nbsp;SOCK_STREAM,&nbsp;0);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(lfd&nbsp;==&nbsp;-1)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;perror(&quot;socket&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;return&nbsp;-1;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;yes&nbsp;=&nbsp;1;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(setsockopt(lfd,&nbsp;SOL_SOCKET,&nbsp;SO_REUSEADDR,
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&amp;yes,&nbsp;sizeof(yes))&nbsp;==&nbsp;-1)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;perror(&quot;setsockopt&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;close(lfd);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;return&nbsp;-1;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;memset(&amp;addr,&nbsp;0,&nbsp;sizeof(addr));
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;addr.sin_port&nbsp;=&nbsp;htons(listen_port);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;addr.sin_family&nbsp;=&nbsp;AF_INET;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(bind(lfd,&nbsp;(struct&nbsp;sockaddr&nbsp;*)&nbsp;&amp;addr,&nbsp;sizeof(addr))&nbsp;==&nbsp;-1)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;perror(&quot;bind&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;close(lfd);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;return&nbsp;-1;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;accepting&nbsp;connections&nbsp;on&nbsp;port&nbsp;%d\n&quot;,&nbsp;listen_port);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;listen(lfd,&nbsp;10);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;return&nbsp;lfd;
 }
-
+<P>
 static int
 connect_socket(int connect_port, char *address)
 {
-    struct sockaddr_in addr;
-    int cfd;
-
-    cfd = socket(AF_INET, SOCK_STREAM, 0);
-    if (cfd == -1) {
-        perror(&quot;socket&quot;);
-        return -1;
-    }
-
-    memset(&amp;addr, 0, sizeof(addr));
-    addr.sin_port = htons(connect_port);
-    addr.sin_family = AF_INET;
-
-    if (!inet_aton(address, (struct in_addr *) &amp;addr.sin_addr.s_addr)) {
-        perror(&quot;bad IP address format&quot;);
-        close(cfd);
-        return -1;
-    }
-
-    if (connect(cfd, (struct sockaddr *) &amp;addr, sizeof(addr)) == -1) {
-        perror(&quot;connect()&quot;);
-        shutdown(cfd, SHUT_RDWR);
-        close(cfd);
-        return -1;
-    }
-    return cfd;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;struct&nbsp;sockaddr_in&nbsp;addr;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;cfd;
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;cfd&nbsp;=&nbsp;socket(AF_INET,&nbsp;SOCK_STREAM,&nbsp;0);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(cfd&nbsp;==&nbsp;-1)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;perror(&quot;socket&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;return&nbsp;-1;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;memset(&amp;addr,&nbsp;0,&nbsp;sizeof(addr));
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;addr.sin_port&nbsp;=&nbsp;htons(connect_port);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;addr.sin_family&nbsp;=&nbsp;AF_INET;
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(!inet_aton(address,&nbsp;(struct&nbsp;in_addr&nbsp;*)&nbsp;&amp;addr.sin_addr.s_addr))&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;perror(&quot;bad&nbsp;IP&nbsp;address&nbsp;format&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;close(cfd);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;return&nbsp;-1;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(connect(cfd,&nbsp;(struct&nbsp;sockaddr&nbsp;*)&nbsp;&amp;addr,&nbsp;sizeof(addr))&nbsp;==&nbsp;-1)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;perror(&quot;connect()&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;shutdown(cfd,&nbsp;SHUT_RDWR);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;close(cfd);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;return&nbsp;-1;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;return&nbsp;cfd;
 }
-
+<P>
 #define SHUT_FD1 do {                                \
-                     if (fd1 &gt;= 0) {                 \
-                         shutdown(fd1, SHUT_RDWR);   \
-                         close(fd1);                 \
-                         fd1 = -1;                   \
-                     }                               \
-                 } while (0)
-
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(fd1&nbsp;&gt;=&nbsp;0)&nbsp;{&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;\
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;shutdown(fd1,&nbsp;SHUT_RDWR);&nbsp;&nbsp;&nbsp;\
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;close(fd1);&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;\
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fd1&nbsp;=&nbsp;-1;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;\
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;\
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}&nbsp;while&nbsp;(0)
+<P>
 #define SHUT_FD2 do {                                \
-                     if (fd2 &gt;= 0) {                 \
-                         shutdown(fd2, SHUT_RDWR);   \
-                         close(fd2);                 \
-                         fd2 = -1;                   \
-                     }                               \
-                 } while (0)
-
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(fd2&nbsp;&gt;=&nbsp;0)&nbsp;{&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;\
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;shutdown(fd2,&nbsp;SHUT_RDWR);&nbsp;&nbsp;&nbsp;\
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;close(fd2);&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;\
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fd2&nbsp;=&nbsp;-1;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;\
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;\
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}&nbsp;while&nbsp;(0)
+<P>
 #define BUF_SIZE 1024
-
+<P>
 int
 main(int argc, char *argv[])
 {
-    int h;
-    int fd1 = -1, fd2 = -1;
-    char buf1[BUF_SIZE], buf2[BUF_SIZE];
-    int buf1_avail = 0, buf1_written = 0;
-    int buf2_avail = 0, buf2_written = 0;
-
-    if (argc != 4) {
-        fprintf(stderr, &quot;Usage\n\tfwd &lt;listen-port&gt; &quot;
-                 &quot;&lt;forward-to-port&gt; &lt;forward-to-ip-address&gt;\n&quot;);
-        exit(EXIT_FAILURE);
-    }
-
-    signal(SIGPIPE, SIG_IGN);
-
-    forward_port = atoi(argv[2]);
-
-    h = listen_socket(atoi(argv[1]));
-    if (h == -1)
-        exit(EXIT_FAILURE);
-
-    for (;;) {
-        int ready, nfds = 0;
-        ssize_t nbytes;
-        fd_set readfds, writefds, exceptfds;
-
-        FD_ZERO(&amp;readfds);
-        FD_ZERO(&amp;writefds);
-        FD_ZERO(&amp;exceptfds);
-        FD_SET(h, &amp;readfds);
-        nfds = max(nfds, h);
-
-        if (fd1 &gt; 0 &amp;&amp; buf1_avail &lt; BUF_SIZE)
-            FD_SET(fd1, &amp;readfds);
-            /* Note: nfds is updated below, when fd1 is added to
-               exceptfds. */
-        if (fd2 &gt; 0 &amp;&amp; buf2_avail &lt; BUF_SIZE)
-            FD_SET(fd2, &amp;readfds);
-
-        if (fd1 &gt; 0 &amp;&amp; buf2_avail - buf2_written &gt; 0)
-            FD_SET(fd1, &amp;writefds);
-        if (fd2 &gt; 0 &amp;&amp; buf1_avail - buf1_written &gt; 0)
-            FD_SET(fd2, &amp;writefds);
-
-        if (fd1 &gt; 0) {
-            FD_SET(fd1, &amp;exceptfds);
-            nfds = max(nfds, fd1);
-        }
-        if (fd2 &gt; 0) {
-            FD_SET(fd2, &amp;exceptfds);
-            nfds = max(nfds, fd2);
-        }
-
-        ready = select(nfds + 1, &amp;readfds, &amp;writefds, &amp;exceptfds, NULL);
-
-        if (ready == -1 &amp;&amp; errno == EINTR)
-            continue;
-
-        if (ready == -1) {
-            perror(&quot;select()&quot;);
-            exit(EXIT_FAILURE);
-        }
-
-        if (FD_ISSET(h, &amp;readfds)) {
-            socklen_t addrlen;
-            struct sockaddr_in client_addr;
-            int fd;
-
-            addrlen = sizeof(client_addr);
-            memset(&amp;client_addr, 0, addrlen);
-            fd = accept(h, (struct sockaddr *) &amp;client_addr, &amp;addrlen);
-            if (fd == -1) {
-                perror(&quot;accept()&quot;);
-            } else {
-                SHUT_FD1;
-                SHUT_FD2;
-                buf1_avail = buf1_written = 0;
-                buf2_avail = buf2_written = 0;
-                fd1 = fd;
-                fd2 = connect_socket(forward_port, argv[3]);
-                if (fd2 == -1)
-                    SHUT_FD1;
-                else
-                    printf(&quot;connect from %s\n&quot;,
-                            inet_ntoa(client_addr.sin_addr));
-
-                /* Skip any events on the old, closed file descriptors. */
-                continue;
-            }
-        }
-
-        /* NB: read OOB data before normal reads */
-
-        if (fd1 &gt; 0 &amp;&amp; FD_ISSET(fd1, &amp;exceptfds)) {
-            char c;
-
-            nbytes = recv(fd1, &amp;c, 1, MSG_OOB);
-            if (nbytes &lt; 1)
-                SHUT_FD1;
-            else
-                send(fd2, &amp;c, 1, MSG_OOB);
-        }
-        if (fd2 &gt; 0 &amp;&amp; FD_ISSET(fd2, &amp;exceptfds)) {
-            char c;
-
-            nbytes = recv(fd2, &amp;c, 1, MSG_OOB);
-            if (nbytes &lt; 1)
-                SHUT_FD2;
-            else
-                send(fd1, &amp;c, 1, MSG_OOB);
-        }
-        if (fd1 &gt; 0 &amp;&amp; FD_ISSET(fd1, &amp;readfds)) {
-            nbytes = read(fd1, buf1 + buf1_avail,
-                      BUF_SIZE - buf1_avail);
-            if (nbytes &lt; 1)
-                SHUT_FD1;
-            else
-                buf1_avail += nbytes;
-        }
-        if (fd2 &gt; 0 &amp;&amp; FD_ISSET(fd2, &amp;readfds)) {
-            nbytes = read(fd2, buf2 + buf2_avail,
-                      BUF_SIZE - buf2_avail);
-            if (nbytes &lt; 1)
-                SHUT_FD2;
-            else
-                buf2_avail += nbytes;
-        }
-        if (fd1 &gt; 0 &amp;&amp; FD_ISSET(fd1, &amp;writefds) &amp;&amp; buf2_avail &gt; 0) {
-            nbytes = write(fd1, buf2 + buf2_written,
-                       buf2_avail - buf2_written);
-            if (nbytes &lt; 1)
-                SHUT_FD1;
-            else
-                buf2_written += nbytes;
-        }
-        if (fd2 &gt; 0 &amp;&amp; FD_ISSET(fd2, &amp;writefds) &amp;&amp; buf1_avail &gt; 0) {
-            nbytes = write(fd2, buf1 + buf1_written,
-                       buf1_avail - buf1_written);
-            if (nbytes &lt; 1)
-                SHUT_FD2;
-            else
-                buf1_written += nbytes;
-        }
-
-        /* Check if write data has caught read data */
-
-        if (buf1_written == buf1_avail)
-            buf1_written = buf1_avail = 0;
-        if (buf2_written == buf2_avail)
-            buf2_written = buf2_avail = 0;
-
-        /* One side has closed the connection, keep
-           writing to the other side until empty */
-
-        if (fd1 &lt; 0 &amp;&amp; buf1_avail - buf1_written == 0)
-            SHUT_FD2;
-        if (fd2 &lt; 0 &amp;&amp; buf2_avail - buf2_written == 0)
-            SHUT_FD1;
-    }
-    exit(EXIT_SUCCESS);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;h;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;fd1&nbsp;=&nbsp;-1,&nbsp;fd2&nbsp;=&nbsp;-1;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;char&nbsp;buf1[BUF_SIZE],&nbsp;buf2[BUF_SIZE];
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;buf1_avail&nbsp;=&nbsp;0,&nbsp;buf1_written&nbsp;=&nbsp;0;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;buf2_avail&nbsp;=&nbsp;0,&nbsp;buf2_written&nbsp;=&nbsp;0;
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(argc&nbsp;!=&nbsp;4)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fprintf(stderr,&nbsp;&quot;Usage\n\tfwd&nbsp;&lt;listen-port&gt;&nbsp;&quot;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&quot;&lt;forward-to-port&gt;&nbsp;&lt;forward-to-ip-address&gt;\n&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;signal(SIGPIPE,&nbsp;SIG_IGN);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;forward_port&nbsp;=&nbsp;atoi(argv[2]);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;h&nbsp;=&nbsp;listen_socket(atoi(argv[1]));
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(h&nbsp;==&nbsp;-1)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;for&nbsp;(;;)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;ready,&nbsp;nfds&nbsp;=&nbsp;0;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ssize_t&nbsp;nbytes;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fd_set&nbsp;readfds,&nbsp;writefds,&nbsp;exceptfds;
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;FD_ZERO(&amp;readfds);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;FD_ZERO(&amp;writefds);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;FD_ZERO(&amp;exceptfds);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;FD_SET(h,&nbsp;&amp;readfds);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;nfds&nbsp;=&nbsp;max(nfds,&nbsp;h);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(fd1&nbsp;&gt;&nbsp;0&nbsp;&amp;&amp;&nbsp;buf1_avail&nbsp;&lt;&nbsp;BUF_SIZE)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;FD_SET(fd1,&nbsp;&amp;readfds);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Note:&nbsp;nfds&nbsp;is&nbsp;updated&nbsp;below,&nbsp;when&nbsp;fd1&nbsp;is&nbsp;added&nbsp;to
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exceptfds.&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(fd2&nbsp;&gt;&nbsp;0&nbsp;&amp;&amp;&nbsp;buf2_avail&nbsp;&lt;&nbsp;BUF_SIZE)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;FD_SET(fd2,&nbsp;&amp;readfds);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(fd1&nbsp;&gt;&nbsp;0&nbsp;&amp;&amp;&nbsp;buf2_avail&nbsp;-&nbsp;buf2_written&nbsp;&gt;&nbsp;0)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;FD_SET(fd1,&nbsp;&amp;writefds);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(fd2&nbsp;&gt;&nbsp;0&nbsp;&amp;&amp;&nbsp;buf1_avail&nbsp;-&nbsp;buf1_written&nbsp;&gt;&nbsp;0)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;FD_SET(fd2,&nbsp;&amp;writefds);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(fd1&nbsp;&gt;&nbsp;0)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;FD_SET(fd1,&nbsp;&amp;exceptfds);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;nfds&nbsp;=&nbsp;max(nfds,&nbsp;fd1);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(fd2&nbsp;&gt;&nbsp;0)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;FD_SET(fd2,&nbsp;&amp;exceptfds);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;nfds&nbsp;=&nbsp;max(nfds,&nbsp;fd2);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ready&nbsp;=&nbsp;select(nfds&nbsp;+&nbsp;1,&nbsp;&amp;readfds,&nbsp;&amp;writefds,&nbsp;&amp;exceptfds,&nbsp;NULL);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(ready&nbsp;==&nbsp;-1&nbsp;&amp;&amp;&nbsp;errno&nbsp;==&nbsp;EINTR)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;continue;
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(ready&nbsp;==&nbsp;-1)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;perror(&quot;select()&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(FD_ISSET(h,&nbsp;&amp;readfds))&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;socklen_t&nbsp;addrlen;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;struct&nbsp;sockaddr_in&nbsp;client_addr;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;fd;
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;addrlen&nbsp;=&nbsp;sizeof(client_addr);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;memset(&amp;client_addr,&nbsp;0,&nbsp;addrlen);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fd&nbsp;=&nbsp;accept(h,&nbsp;(struct&nbsp;sockaddr&nbsp;*)&nbsp;&amp;client_addr,&nbsp;&amp;addrlen);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(fd&nbsp;==&nbsp;-1)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;perror(&quot;accept()&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}&nbsp;else&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;SHUT_FD1;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;SHUT_FD2;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;buf1_avail&nbsp;=&nbsp;buf1_written&nbsp;=&nbsp;0;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;buf2_avail&nbsp;=&nbsp;buf2_written&nbsp;=&nbsp;0;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fd1&nbsp;=&nbsp;fd;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fd2&nbsp;=&nbsp;connect_socket(forward_port,&nbsp;argv[3]);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(fd2&nbsp;==&nbsp;-1)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;SHUT_FD1;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;else
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;connect&nbsp;from&nbsp;%s\n&quot;,
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;inet_ntoa(client_addr.sin_addr));
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Skip&nbsp;any&nbsp;events&nbsp;on&nbsp;the&nbsp;old,&nbsp;closed&nbsp;file&nbsp;descriptors.&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;continue;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;NB:&nbsp;read&nbsp;OOB&nbsp;data&nbsp;before&nbsp;normal&nbsp;reads&nbsp;*/
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(fd1&nbsp;&gt;&nbsp;0&nbsp;&amp;&amp;&nbsp;FD_ISSET(fd1,&nbsp;&amp;exceptfds))&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;char&nbsp;c;
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;nbytes&nbsp;=&nbsp;recv(fd1,&nbsp;&amp;c,&nbsp;1,&nbsp;MSG_OOB);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(nbytes&nbsp;&lt;&nbsp;1)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;SHUT_FD1;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;else
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;send(fd2,&nbsp;&amp;c,&nbsp;1,&nbsp;MSG_OOB);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(fd2&nbsp;&gt;&nbsp;0&nbsp;&amp;&amp;&nbsp;FD_ISSET(fd2,&nbsp;&amp;exceptfds))&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;char&nbsp;c;
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;nbytes&nbsp;=&nbsp;recv(fd2,&nbsp;&amp;c,&nbsp;1,&nbsp;MSG_OOB);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(nbytes&nbsp;&lt;&nbsp;1)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;SHUT_FD2;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;else
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;send(fd1,&nbsp;&amp;c,&nbsp;1,&nbsp;MSG_OOB);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(fd1&nbsp;&gt;&nbsp;0&nbsp;&amp;&amp;&nbsp;FD_ISSET(fd1,&nbsp;&amp;readfds))&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;nbytes&nbsp;=&nbsp;read(fd1,&nbsp;buf1&nbsp;+&nbsp;buf1_avail,
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;BUF_SIZE&nbsp;-&nbsp;buf1_avail);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(nbytes&nbsp;&lt;&nbsp;1)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;SHUT_FD1;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;else
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;buf1_avail&nbsp;+=&nbsp;nbytes;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(fd2&nbsp;&gt;&nbsp;0&nbsp;&amp;&amp;&nbsp;FD_ISSET(fd2,&nbsp;&amp;readfds))&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;nbytes&nbsp;=&nbsp;read(fd2,&nbsp;buf2&nbsp;+&nbsp;buf2_avail,
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;BUF_SIZE&nbsp;-&nbsp;buf2_avail);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(nbytes&nbsp;&lt;&nbsp;1)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;SHUT_FD2;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;else
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;buf2_avail&nbsp;+=&nbsp;nbytes;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(fd1&nbsp;&gt;&nbsp;0&nbsp;&amp;&amp;&nbsp;FD_ISSET(fd1,&nbsp;&amp;writefds)&nbsp;&amp;&amp;&nbsp;buf2_avail&nbsp;&gt;&nbsp;0)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;nbytes&nbsp;=&nbsp;write(fd1,&nbsp;buf2&nbsp;+&nbsp;buf2_written,
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;buf2_avail&nbsp;-&nbsp;buf2_written);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(nbytes&nbsp;&lt;&nbsp;1)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;SHUT_FD1;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;else
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;buf2_written&nbsp;+=&nbsp;nbytes;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(fd2&nbsp;&gt;&nbsp;0&nbsp;&amp;&amp;&nbsp;FD_ISSET(fd2,&nbsp;&amp;writefds)&nbsp;&amp;&amp;&nbsp;buf1_avail&nbsp;&gt;&nbsp;0)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;nbytes&nbsp;=&nbsp;write(fd2,&nbsp;buf1&nbsp;+&nbsp;buf1_written,
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;buf1_avail&nbsp;-&nbsp;buf1_written);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(nbytes&nbsp;&lt;&nbsp;1)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;SHUT_FD2;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;else
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;buf1_written&nbsp;+=&nbsp;nbytes;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Check&nbsp;if&nbsp;write&nbsp;data&nbsp;has&nbsp;caught&nbsp;read&nbsp;data&nbsp;*/
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(buf1_written&nbsp;==&nbsp;buf1_avail)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;buf1_written&nbsp;=&nbsp;buf1_avail&nbsp;=&nbsp;0;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(buf2_written&nbsp;==&nbsp;buf2_avail)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;buf2_written&nbsp;=&nbsp;buf2_avail&nbsp;=&nbsp;0;
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;One&nbsp;side&nbsp;has&nbsp;closed&nbsp;the&nbsp;connection,&nbsp;keep
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;writing&nbsp;to&nbsp;the&nbsp;other&nbsp;side&nbsp;until&nbsp;empty&nbsp;*/
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(fd1&nbsp;&lt;&nbsp;0&nbsp;&amp;&amp;&nbsp;buf1_avail&nbsp;-&nbsp;buf1_written&nbsp;==&nbsp;0)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;SHUT_FD2;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(fd2&nbsp;&lt;&nbsp;0&nbsp;&amp;&amp;&nbsp;buf2_avail&nbsp;-&nbsp;buf2_written&nbsp;==&nbsp;0)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;SHUT_FD1;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_SUCCESS);
 }
-</PRE>
 
 <P>
 
@@ -926,6 +928,7 @@ Another idea is to set nonblocking I/O using
 This also has its problems because you end up using
 inefficient timeouts.
 <P>
+
 The program does not handle more than one simultaneous connection at a
 time, although it could easily be extended to do this with a linked list
 of buffers---one for each connection.
@@ -992,6 +995,6 @@ connections cause the current connection to be dropped.
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:46:39 GMT, April 20, 2020
+Time: 03:47:15 GMT, April 20, 2020
 </BODY>
 </HTML>

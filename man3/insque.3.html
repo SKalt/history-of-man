@@ -25,7 +25,7 @@ the source, must acknowledge the copyright and authors of this work.
 <HTML><HEAD><TITLE>Man page of INSQUE</TITLE>
 </HEAD><BODY>
 <H1>INSQUE</H1>
-Section: Linux Programmer's Manual (3)<BR>Updated: 2017-05-03<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2017-09-15<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -45,11 +45,13 @@ insque, remque - insert/remove an item from a queue
 
 <P>
 
+
 Feature Test Macro Requirements for glibc (see
 <B><A HREF="../man7/feature_test_macros.7.html">feature_test_macros</A></B>(7)):
 
 
 <P>
+
 
 <B>insque</B>(),
 
@@ -80,12 +82,14 @@ The linked list may be linear (i.e., NULL forward pointer at
 the end of the list and NULL backward pointer at the start of the list)
 or circular.
 <P>
+
 The
 <B>insque</B>()
 
 function inserts the element pointed to by <I>elem</I>
 immediately after the element pointed to by <I>prev</I>.
 <P>
+
 If the list is linear, then the call
 <I>insque(elem, NULL)</I>
 
@@ -95,6 +99,7 @@ and the call sets the forward and backward pointers of
 
 to NULL.
 <P>
+
 If the list is circular,
 the caller should ensure that the forward and backward pointers of the
 first element are initialized to point to that element,
@@ -106,6 +111,7 @@ argument of the
 
 call should also point to the element.
 <P>
+
 The
 <B>remque</B>()
 
@@ -141,22 +147,24 @@ the arguments of these functions were of type <I>struct qelem *</I>,
 defined as:
 <P>
 
-<PRE>
+
+
 struct qelem {
-    struct qelem *q_forw;
-    struct qelem *q_back;
-    char          q_data[1];
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;struct&nbsp;qelem&nbsp;*q_forw;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;struct&nbsp;qelem&nbsp;*q_back;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;char&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;q_data[1];
 };
-</PRE>
 
 
 <P>
+
 This is still what you will get if
 <B>_GNU_SOURCE</B>
 
 is defined before
 including <I>&lt;<A HREF="file:///usr/include/search.h">search.h</A>&gt;</I>.
 <P>
+
 The location of the prototypes for these functions differs among several
 versions of UNIX.
 The above is the POSIX version.
@@ -180,115 +188,115 @@ The program below demonstrates the use of
 <B>insque</B>().
 
 Here is an example run of the program:
+<P>
 
-<PRE>
+
 
 $ <B>./a.out -c a b c</B>
+
 Traversing completed list:
-    a
-    b
-    c
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;a
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;b
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;c
 That was a circular list
-</PRE>
 
 
 <A NAME="lbAJ">&nbsp;</A>
 <H3>Program source</H3>
 
 
-<PRE>
+
 #include &lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/stdlib.h">stdlib.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/search.h">search.h</A>&gt;
-
+<P>
 struct element {
-    struct element *forward;
-    struct element *backward;
-    char *name;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;struct&nbsp;element&nbsp;*forward;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;struct&nbsp;element&nbsp;*backward;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;char&nbsp;*name;
 };
-
+<P>
 static struct element *
 new_element(void)
 {
-    struct element *e;
-
-    e = malloc(sizeof(struct element));
-    if (e == NULL) {
-        fprintf(stderr, &quot;malloc() failed\n&quot;);
-        exit(EXIT_FAILURE);
-    }
-
-    return e;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;struct&nbsp;element&nbsp;*e;
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;e&nbsp;=&nbsp;malloc(sizeof(struct&nbsp;element));
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(e&nbsp;==&nbsp;NULL)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fprintf(stderr,&nbsp;&quot;malloc()&nbsp;failed\n&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;return&nbsp;e;
 }
-
+<P>
 int
 main(int argc, char *argv[])
 {
-    struct element *first, *elem, *prev;
-    int circular, opt, errfnd;
-
-    /* The &quot;-c&quot; command-line option can be used to specify that the
-       list is circular */
-
-    errfnd = 0;
-    circular = 0;
-    while ((opt = getopt(argc, argv, &quot;c&quot;)) != -1) {
-        switch (opt) {
-        case 'c':
-            circular = 1;
-            break;
-        default:
-            errfnd = 1;
-            break;
-        }
-    }
-
-    if (errfnd || optind &gt;= argc) {
-        fprintf(stderr,  &quot;Usage: %s [-c] string...\n&quot;, argv[0]);
-        exit(EXIT_FAILURE);
-    }
-
-    /* Create first element and place it in the linked list */
-
-    elem = new_element();
-    first = elem;
-
-    elem-&gt;name = argv[optind];
-
-    if (circular) {
-        elem-&gt;forward = elem;
-        elem-&gt;backward = elem;
-        insque(elem, elem);
-    } else {
-        insque(elem, NULL);
-    }
-
-    /* Add remaining command-line arguments as list elements */
-
-    while (++optind &lt; argc) {
-        prev = elem;
-
-        elem = new_element();
-        elem-&gt;name = argv[optind];
-        insque(elem, prev);
-    }
-
-    /* Traverse the list from the start, printing element names */
-
-    printf(&quot;Traversing completed list:\n&quot;);
-    elem = first;
-    do {
-        printf(&quot;    %s\n&quot;, elem-&gt;name);
-        elem = elem-&gt;forward;
-    } while (elem != NULL &amp;&amp; elem != first);
-
-    if (elem == first)
-        printf(&quot;That was a circular list\n&quot;);
-
-    exit(EXIT_SUCCESS);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;struct&nbsp;element&nbsp;*first,&nbsp;*elem,&nbsp;*prev;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;circular,&nbsp;opt,&nbsp;errfnd;
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;The&nbsp;&quot;-c&quot;&nbsp;command-line&nbsp;option&nbsp;can&nbsp;be&nbsp;used&nbsp;to&nbsp;specify&nbsp;that&nbsp;the
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;list&nbsp;is&nbsp;circular&nbsp;*/
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;errfnd&nbsp;=&nbsp;0;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;circular&nbsp;=&nbsp;0;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;while&nbsp;((opt&nbsp;=&nbsp;getopt(argc,&nbsp;argv,&nbsp;&quot;c&quot;))&nbsp;!=&nbsp;-1)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;switch&nbsp;(opt)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;case&nbsp;'c':
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;circular&nbsp;=&nbsp;1;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;break;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;default:
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;errfnd&nbsp;=&nbsp;1;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;break;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(errfnd&nbsp;||&nbsp;optind&nbsp;&gt;=&nbsp;argc)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fprintf(stderr,&nbsp;&nbsp;&quot;Usage:&nbsp;%s&nbsp;[-c]&nbsp;string...\n&quot;,&nbsp;argv[0]);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Create&nbsp;first&nbsp;element&nbsp;and&nbsp;place&nbsp;it&nbsp;in&nbsp;the&nbsp;linked&nbsp;list&nbsp;*/
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;elem&nbsp;=&nbsp;new_element();
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;first&nbsp;=&nbsp;elem;
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;elem-&gt;name&nbsp;=&nbsp;argv[optind];
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(circular)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;elem-&gt;forward&nbsp;=&nbsp;elem;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;elem-&gt;backward&nbsp;=&nbsp;elem;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;insque(elem,&nbsp;elem);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}&nbsp;else&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;insque(elem,&nbsp;NULL);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Add&nbsp;remaining&nbsp;command-line&nbsp;arguments&nbsp;as&nbsp;list&nbsp;elements&nbsp;*/
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;while&nbsp;(++optind&nbsp;&lt;&nbsp;argc)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;prev&nbsp;=&nbsp;elem;
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;elem&nbsp;=&nbsp;new_element();
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;elem-&gt;name&nbsp;=&nbsp;argv[optind];
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;insque(elem,&nbsp;prev);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Traverse&nbsp;the&nbsp;list&nbsp;from&nbsp;the&nbsp;start,&nbsp;printing&nbsp;element&nbsp;names&nbsp;*/
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;Traversing&nbsp;completed&nbsp;list:\n&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;elem&nbsp;=&nbsp;first;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;do&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;&nbsp;&nbsp;&nbsp;&nbsp;%s\n&quot;,&nbsp;elem-&gt;name);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;elem&nbsp;=&nbsp;elem-&gt;forward;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}&nbsp;while&nbsp;(elem&nbsp;!=&nbsp;NULL&nbsp;&amp;&amp;&nbsp;elem&nbsp;!=&nbsp;first);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(elem&nbsp;==&nbsp;first)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;That&nbsp;was&nbsp;a&nbsp;circular&nbsp;list\n&quot;);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_SUCCESS);
 }
-</PRE>
 
 <A NAME="lbAK">&nbsp;</A>
 <H2>SEE ALSO</H2>
@@ -317,6 +325,6 @@ main(int argc, char *argv[])
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:46:45 GMT, April 20, 2020
+Time: 03:47:22 GMT, April 20, 2020
 </BODY>
 </HTML>

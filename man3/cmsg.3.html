@@ -10,7 +10,7 @@ of the modification is added to the header.
 <HTML><HEAD><TITLE>Man page of CMSG</TITLE>
 </HEAD><BODY>
 <H1>CMSG</H1>
-Section: Linux Programmer's Manual (3)<BR>Updated: 2016-03-15<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2017-09-15<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -23,6 +23,7 @@ CMSG_ALIGN, CMSG_SPACE, CMSG_NXTHDR, CMSG_FIRSTHDR - access ancillary data
 <B>#include &lt;<A HREF="file:///usr/include/sys/socket.h">sys/socket.h</A>&gt;</B>
 
 <P>
+
 <B>struct cmsghdr *CMSG_FIRSTHDR(struct msghdr *</B><I>msgh</I><B>);</B>
 
 <BR>
@@ -46,16 +47,6 @@ CMSG_ALIGN, CMSG_SPACE, CMSG_NXTHDR, CMSG_FIRSTHDR - access ancillary data
 <B>unsigned char *CMSG_DATA(struct cmsghdr *</B><I>cmsg</I><B>);</B>
 
 <P>
-<PRE>
-struct cmsghdr {
-    size_t cmsg_len;    /* Data byte count, including header
-                           (type is socklen_t in POSIX) */
-    int    cmsg_level;  /* Originating protocol */
-    int    cmsg_type;   /* Protocol-specific type */
-/* followed by
-   unsigned char cmsg_data[]; */
-};
-</PRE>
 
 <A NAME="lbAD">&nbsp;</A>
 <H2>DESCRIPTION</H2>
@@ -78,11 +69,9 @@ See their manual pages for more information.
 <P>
 
 Ancillary data is a sequence of
-<I>struct cmsghdr</I>
+<I>cmsghdr</I>
 
 structures with appended data.
-This sequence should be accessed
-using only the macros described in this manual page and never directly.
 See the specific protocol man pages for the available control message types.
 The maximum ancillary buffer size allowed per socket can be set using
 <I>/proc/sys/net/core/optmem_max</I>;
@@ -92,6 +81,33 @@ see
 
 <P>
 
+The
+<I>cmsghdr</I>
+
+structure is defined as follows:
+<P>
+
+
+
+struct cmsghdr {
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;size_t&nbsp;cmsg_len;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Data&nbsp;byte&nbsp;count,&nbsp;including&nbsp;header
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(type&nbsp;is&nbsp;socklen_t&nbsp;in&nbsp;POSIX)&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;&nbsp;&nbsp;&nbsp;cmsg_level;&nbsp;&nbsp;/*&nbsp;Originating&nbsp;protocol&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;&nbsp;&nbsp;&nbsp;cmsg_type;&nbsp;&nbsp;&nbsp;/*&nbsp;Protocol-specific&nbsp;type&nbsp;*/
+/* followed by
+<BR>&nbsp;&nbsp;&nbsp;unsigned&nbsp;char&nbsp;cmsg_data[];&nbsp;*/
+};
+
+
+<P>
+
+The sequence of
+<I>cmsghdr</I>
+
+structures should never be accessed directly.
+Instead, use only the following macros:
+<DL COMPACT>
+<DT>*<DD>
 <B>CMSG_FIRSTHDR</B>()
 
 returns a pointer to the first
@@ -101,8 +117,7 @@ in the ancillary
 data buffer associated with the passed
 <I>msghdr</I>.
 
-<P>
-
+<DT>*<DD>
 <B>CMSG_NXTHDR</B>()
 
 returns the next valid
@@ -112,29 +127,25 @@ after the passed
 <I>cmsghdr</I>.
 
 It returns NULL when there isn't enough space left in the buffer.
-<P>
-
+<DT>*<DD>
 <B>CMSG_ALIGN</B>(),
 
 given a length, returns it including the required alignment.
 This is a
 constant expression.
-<P>
-
+<DT>*<DD>
 <B>CMSG_SPACE</B>()
 
 returns the number of bytes an ancillary element with payload of the
 passed data length occupies.
 This is a constant expression.
-<P>
-
+<DT>*<DD>
 <B>CMSG_DATA</B>()
 
 returns a pointer to the data portion of a
 <I>cmsghdr</I>.
 
-<P>
-
+<DT>*<DD>
 <B>CMSG_LEN</B>()
 
 returns the value to store in the
@@ -148,6 +159,7 @@ alignment.
 It takes the data length as an argument.
 This is a constant
 expression.
+</DL>
 <P>
 
 To create ancillary data, first initialize the
@@ -247,28 +259,27 @@ option in a received ancillary buffer:
 <P>
 
 
-<PRE>
+
 struct msghdr msgh;
 struct cmsghdr *cmsg;
 int *ttlptr;
 int received_ttl;
-
+<P>
 /* Receive auxiliary data in msgh */
-
+<P>
 for (cmsg = CMSG_FIRSTHDR(&amp;msgh); cmsg != NULL;
-        cmsg = CMSG_NXTHDR(&amp;msgh, cmsg)) {
-    if (cmsg-&gt;cmsg_level == IPPROTO_IP
-            &amp;&amp; cmsg-&gt;cmsg_type == IP_TTL) {
-        ttlptr = (int *) CMSG_DATA(cmsg);
-        received_ttl = *ttlptr;
-        break;
-    }
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;cmsg&nbsp;=&nbsp;CMSG_NXTHDR(&amp;msgh,&nbsp;cmsg))&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(cmsg-&gt;cmsg_level&nbsp;==&nbsp;IPPROTO_IP
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&amp;&amp;&nbsp;cmsg-&gt;cmsg_type&nbsp;==&nbsp;IP_TTL)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ttlptr&nbsp;=&nbsp;(int&nbsp;*)&nbsp;CMSG_DATA(cmsg);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;received_ttl&nbsp;=&nbsp;*ttlptr;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;break;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
 }
-
+<P>
 if (cmsg == NULL) {
-    /* Error: IP_TTL not enabled or small buffer or I/O error */
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Error:&nbsp;IP_TTL&nbsp;not&nbsp;enabled&nbsp;or&nbsp;small&nbsp;buffer&nbsp;or&nbsp;I/O&nbsp;error&nbsp;*/
 }
-</PRE>
 
 
 <P>
@@ -280,17 +291,24 @@ UNIX domain socket using
 <P>
 
 
-<PRE>
+
 struct msghdr msg = { 0 };
 struct cmsghdr *cmsg;
 int myfds[NUM_FD];  /* Contains the file descriptors to pass */
 int *fdptr;
+char iobuf[1];
+struct iovec io = {
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;.iov_base&nbsp;=&nbsp;iobuf,
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;.iov_len&nbsp;=&nbsp;sizeof(iobuf)
+};
 union {         /* Ancillary data buffer, wrapped in a union
-                   in order to ensure it is suitably aligned */
-    char buf[CMSG_SPACE(sizeof(myfds))];
-    struct cmsghdr align;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;in&nbsp;order&nbsp;to&nbsp;ensure&nbsp;it&nbsp;is&nbsp;suitably&nbsp;aligned&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;char&nbsp;buf[CMSG_SPACE(sizeof(myfds))];
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;struct&nbsp;cmsghdr&nbsp;align;
 } u;
-
+<P>
+msg.msg_iov = &amp;io;
+msg.msg_iovlen = 1;
 msg.msg_control = u.buf;
 msg.msg_controllen = sizeof(u.buf);
 cmsg = CMSG_FIRSTHDR(&amp;msg);
@@ -299,7 +317,6 @@ cmsg-&gt;cmsg_type = SCM_RIGHTS;
 cmsg-&gt;cmsg_len = CMSG_LEN(sizeof(int) * NUM_FD);
 fdptr = (int *) CMSG_DATA(cmsg);    /* Initialize the payload */
 memcpy(fdptr, myfds, NUM_FD * sizeof(int));
-</PRE>
 
 
 <A NAME="lbAH">&nbsp;</A>
@@ -329,6 +346,6 @@ RFC&nbsp;2292
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:46:42 GMT, April 20, 2020
+Time: 03:47:19 GMT, April 20, 2020
 </BODY>
 </HTML>

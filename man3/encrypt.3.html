@@ -25,7 +25,7 @@ License along with this manual; if not, see
 <HTML><HEAD><TITLE>Man page of ENCRYPT</TITLE>
 </HEAD><BODY>
 <H1>ENCRYPT</H1>
-Section: Linux Programmer's Manual (3)<BR>Updated: 2015-08-08<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2017-09-15<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -35,40 +35,26 @@ encrypt, setkey, encrypt_r, setkey_r - encrypt 64-bit messages
 <A NAME="lbAC">&nbsp;</A>
 <H2>SYNOPSIS</H2>
 
+<PRE>
 <B>#define _XOPEN_SOURCE</B>       /* See <A HREF="../man7/feature_test_macros.7.html">feature_test_macros</A>(7) */
-
-<BR>
-
 <B>#include &lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;</B>
 
-<P>
 <B>void encrypt(char </B><I>block</I><B>[64], int </B><I>edflag</I><B>);</B>
 
-<P>
 <B>#define _XOPEN_SOURCE</B>       /* See <A HREF="../man7/feature_test_macros.7.html">feature_test_macros</A>(7) */
-
-<BR>
-
 <B>#include &lt;<A HREF="file:///usr/include/stdlib.h">stdlib.h</A>&gt;</B>
 
-<P>
 <B>void setkey(const char *</B><I>key</I><B>);</B>
 
-<P>
 <B>#define _GNU_SOURCE</B>         /* See <A HREF="../man7/feature_test_macros.7.html">feature_test_macros</A>(7) */
-
-<BR>
-
 <B>#include &lt;<A HREF="file:///usr/include/crypt.h">crypt.h</A>&gt;</B>
 
-<P>
 <B>void setkey_r(const char *</B><I>key</I><B>, struct crypt_data *</B><I>data</I><B>);</B>
-
-<BR>
-
 <B>void encrypt_r(char *</B><I>block</I><B>, int </B><I>edflag</I><B>, struct crypt_data *</B><I>data</I><B>);</B>
+</PRE>
 
 <P>
+
 Each of these requires linking with <I>-lcrypt</I>.
 <A NAME="lbAD">&nbsp;</A>
 <H2>DESCRIPTION</H2>
@@ -117,22 +103,22 @@ and
 are the reentrant versions.
 They use the following
 structure to hold the key data:
+<P>
 
-<PRE>
+
 
 struct crypt_data {
-    char     keysched[16 * 8];
-    char     sb0[32768];
-    char     sb1[32768];
-    char     sb2[32768];
-    char     sb3[32768];
-    char     crypt_3_buf[14];
-    char     current_salt[2];
-    long int current_saltbits;
-    int      direction;
-    int      initialized;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;char&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;keysched[16&nbsp;*&nbsp;8];
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;char&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;sb0[32768];
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;char&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;sb1[32768];
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;char&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;sb2[32768];
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;char&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;sb3[32768];
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;char&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;crypt_3_buf[14];
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;char&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;current_salt[2];
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;long&nbsp;int&nbsp;current_saltbits;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;direction;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;initialized;
 };
-</PRE>
 
 
 <P>
@@ -194,6 +180,7 @@ For an explanation of the terms used in this section, see
 
 POSIX.1-2001, POSIX.1-2008, SUS, SVr4.
 <P>
+
 The functions
 <B>encrypt_r</B>()
 
@@ -208,54 +195,53 @@ In glibc 2.2, these functions use the DES algorithm.
 <A NAME="lbAJ">&nbsp;</A>
 <H2>EXAMPLE</H2>
 
-<PRE>
+
 #define _XOPEN_SOURCE
 #include &lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/stdlib.h">stdlib.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/crypt.h">crypt.h</A>&gt;
-
+<P>
 int
 main(void)
 {
-    char key[64];
-    char orig[9] = &quot;eggplant&quot;;
-    char buf[64];
-    char txt[9];
-    int i, j;
-
-    for (i = 0; i &lt; 64; i++) {
-        key[i] = rand() &amp; 1;
-    }
-
-    for (i = 0; i &lt; 8; i++) {
-        for (j = 0; j &lt; 8; j++) {
-            buf[i * 8 + j] = orig[i] &gt;&gt; j &amp; 1;
-        }
-        setkey(key);
-    }
-    printf(&quot;Before encrypting: %s\n&quot;, orig);
-
-    encrypt(buf, 0);
-    for (i = 0; i &lt; 8; i++) {
-        for (j = 0, txt[i] = '\0'; j &lt; 8; j++) {
-            txt[i] |= buf[i * 8 + j] &lt;&lt; j;
-        }
-        txt[8] = '\0';
-    }
-    printf(&quot;After encrypting:  %s\n&quot;, txt);
-
-    encrypt(buf, 1);
-    for (i = 0; i &lt; 8; i++) {
-        for (j = 0, txt[i] = '\0'; j &lt; 8; j++) {
-            txt[i] |= buf[i * 8 + j] &lt;&lt; j;
-        }
-        txt[8] = '\0';
-    }
-    printf(&quot;After decrypting:  %s\n&quot;, txt);
-    exit(EXIT_SUCCESS);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;char&nbsp;key[64];
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;char&nbsp;orig[9]&nbsp;=&nbsp;&quot;eggplant&quot;;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;char&nbsp;buf[64];
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;char&nbsp;txt[9];
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;i,&nbsp;j;
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;for&nbsp;(i&nbsp;=&nbsp;0;&nbsp;i&nbsp;&lt;&nbsp;64;&nbsp;i++)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;key[i]&nbsp;=&nbsp;rand()&nbsp;&amp;&nbsp;1;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;for&nbsp;(i&nbsp;=&nbsp;0;&nbsp;i&nbsp;&lt;&nbsp;8;&nbsp;i++)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;for&nbsp;(j&nbsp;=&nbsp;0;&nbsp;j&nbsp;&lt;&nbsp;8;&nbsp;j++)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;buf[i&nbsp;*&nbsp;8&nbsp;+&nbsp;j]&nbsp;=&nbsp;orig[i]&nbsp;&gt;&gt;&nbsp;j&nbsp;&amp;&nbsp;1;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;setkey(key);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;Before&nbsp;encrypting:&nbsp;%s\n&quot;,&nbsp;orig);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;encrypt(buf,&nbsp;0);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;for&nbsp;(i&nbsp;=&nbsp;0;&nbsp;i&nbsp;&lt;&nbsp;8;&nbsp;i++)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;for&nbsp;(j&nbsp;=&nbsp;0,&nbsp;txt[i]&nbsp;=&nbsp;'\0';&nbsp;j&nbsp;&lt;&nbsp;8;&nbsp;j++)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;txt[i]&nbsp;|=&nbsp;buf[i&nbsp;*&nbsp;8&nbsp;+&nbsp;j]&nbsp;&lt;&lt;&nbsp;j;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;txt[8]&nbsp;=&nbsp;'\0';
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;After&nbsp;encrypting:&nbsp;&nbsp;%s\n&quot;,&nbsp;txt);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;encrypt(buf,&nbsp;1);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;for&nbsp;(i&nbsp;=&nbsp;0;&nbsp;i&nbsp;&lt;&nbsp;8;&nbsp;i++)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;for&nbsp;(j&nbsp;=&nbsp;0,&nbsp;txt[i]&nbsp;=&nbsp;'\0';&nbsp;j&nbsp;&lt;&nbsp;8;&nbsp;j++)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;txt[i]&nbsp;|=&nbsp;buf[i&nbsp;*&nbsp;8&nbsp;+&nbsp;j]&nbsp;&lt;&lt;&nbsp;j;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;txt[8]&nbsp;=&nbsp;'\0';
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;After&nbsp;decrypting:&nbsp;&nbsp;%s\n&quot;,&nbsp;txt);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_SUCCESS);
 }
-</PRE>
 
 <A NAME="lbAK">&nbsp;</A>
 <H2>SEE ALSO</H2>
@@ -287,6 +273,6 @@ main(void)
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:46:43 GMT, April 20, 2020
+Time: 03:47:20 GMT, April 20, 2020
 </BODY>
 </HTML>

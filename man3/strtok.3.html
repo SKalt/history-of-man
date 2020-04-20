@@ -26,7 +26,7 @@ the source, must acknowledge the copyright and authors of this work.
 <HTML><HEAD><TITLE>Man page of STRTOK</TITLE>
 </HEAD><BODY>
 <H1>STRTOK</H1>
-Section: Linux Programmer's Manual (3)<BR>Updated: 2016-03-15<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2017-09-15<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -46,11 +46,13 @@ strtok, strtok_r - extract tokens from strings
 
 <P>
 
+
 Feature Test Macro Requirements for glibc (see
 <B><A HREF="../man7/feature_test_macros.7.html">feature_test_macros</A></B>(7)):
 
 
 <P>
+
 
 <B>strtok_r</B>():
 
@@ -76,6 +78,7 @@ In each subsequent call that should parse the same string,
 
 must be NULL.
 <P>
+
 The
 <I>delim</I>
 
@@ -87,6 +90,7 @@ The caller may specify different strings in
 in successive
 calls that parse the same string.
 <P>
+
 Each call to
 <B>strtok</B>()
 
@@ -98,6 +102,7 @@ If no more tokens are found,
 
 returns NULL.
 <P>
+
 A sequence of calls to
 <B>strtok</B>()
 
@@ -123,6 +128,7 @@ will thus cause
 
 to return NULL on the first call.)
 <P>
+
 The end of each token is found by scanning forward until either
 the next delimiter byte is found or until the
 terminating null byte ('\0') is encountered.
@@ -138,6 +144,7 @@ In this case,
 
 returns a pointer to the start of the found token.
 <P>
+
 From the above description,
 it follows that a sequence of two or more contiguous delimiter bytes in
 the parsed string is considered to be a single delimiter, and that
@@ -154,6 +161,7 @@ that specify the delimiter string &quot;<I>;,</I>&quot;
 would return the strings &quot;<I>aaa</I>&quot; and &quot;<I>bbb</I>&quot;,
 and then a null pointer.
 <P>
+
 The
 <B>strtok_r</B>()
 
@@ -172,6 +180,7 @@ variable that is used internally by
 in order to maintain context between successive calls that parse the
 same string.
 <P>
+
 On the first call to
 <B>strtok_r</B>(),
 
@@ -189,6 +198,7 @@ should be NULL, and
 
 should be unchanged since the previous call.
 <P>
+
 Different strings may be parsed concurrently using sequences of calls to
 <B>strtok_r</B>()
 
@@ -278,58 +288,57 @@ An example of the output produced by this program is the following:
 <P>
 
 
-<PRE>
+
 $<B> ./a.out 'a/bbb///cc;xxx:yyy:' ':;' '/'</B>
+
 1: a/bbb///cc
-         --&gt; a
-         --&gt; bbb
-         --&gt; cc
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;--&gt;&nbsp;a
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;--&gt;&nbsp;bbb
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;--&gt;&nbsp;cc
 2: xxx
-         --&gt; xxx
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;--&gt;&nbsp;xxx
 3: yyy
-         --&gt; yyy
-</PRE>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;--&gt;&nbsp;yyy
 
 
 <A NAME="lbAJ">&nbsp;</A>
 <H3>Program source</H3>
 
 
-<PRE>
+
 #include &lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/stdlib.h">stdlib.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/string.h">string.h</A>&gt;
-
+<P>
 int
 main(int argc, char *argv[])
 {
-    char *str1, *str2, *token, *subtoken;
-    char *saveptr1, *saveptr2;
-    int j;
-
-    if (argc != 4) {
-        fprintf(stderr, &quot;Usage: %s string delim subdelim\n&quot;,
-                argv[0]);
-        exit(EXIT_FAILURE);
-    }
-
-    for (j = 1, str1 = argv[1]; ; j++, str1 = NULL) {
-        token = strtok_r(str1, argv[2], &amp;saveptr1);
-        if (token == NULL)
-            break;
-        printf(&quot;%d: %s\n&quot;, j, token);
-
-        for (str2 = token; ; str2 = NULL) {
-            subtoken = strtok_r(str2, argv[3], &amp;saveptr2);
-            if (subtoken == NULL)
-                break;
-            printf(&quot;	 --&gt; %s\n&quot;, subtoken);
-        }
-    }
-
-    exit(EXIT_SUCCESS);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;char&nbsp;*str1,&nbsp;*str2,&nbsp;*token,&nbsp;*subtoken;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;char&nbsp;*saveptr1,&nbsp;*saveptr2;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;j;
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(argc&nbsp;!=&nbsp;4)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fprintf(stderr,&nbsp;&quot;Usage:&nbsp;%s&nbsp;string&nbsp;delim&nbsp;subdelim\n&quot;,
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;argv[0]);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;for&nbsp;(j&nbsp;=&nbsp;1,&nbsp;str1&nbsp;=&nbsp;argv[1];&nbsp;;&nbsp;j++,&nbsp;str1&nbsp;=&nbsp;NULL)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;token&nbsp;=&nbsp;strtok_r(str1,&nbsp;argv[2],&nbsp;&amp;saveptr1);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(token&nbsp;==&nbsp;NULL)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;break;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;%d:&nbsp;%s\n&quot;,&nbsp;j,&nbsp;token);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;for&nbsp;(str2&nbsp;=&nbsp;token;&nbsp;;&nbsp;str2&nbsp;=&nbsp;NULL)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;subtoken&nbsp;=&nbsp;strtok_r(str2,&nbsp;argv[3],&nbsp;&amp;saveptr2);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(subtoken&nbsp;==&nbsp;NULL)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;break;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;	&nbsp;--&gt;&nbsp;%s\n&quot;,&nbsp;subtoken);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_SUCCESS);
 }
-</PRE>
 
 <P>
 
@@ -384,6 +393,6 @@ can be found in
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:46:48 GMT, April 20, 2020
+Time: 03:47:25 GMT, April 20, 2020
 </BODY>
 </HTML>

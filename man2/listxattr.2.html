@@ -27,7 +27,7 @@ License along with this manual; if not, see
 <HTML><HEAD><TITLE>Man page of LISTXATTR</TITLE>
 </HEAD><BODY>
 <H1>LISTXATTR</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2017-03-13<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2017-09-15<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -120,6 +120,7 @@ is a null-terminated string.
 The name includes a namespace prefix; there may be several, disjoint
 namespaces associated with an individual inode.
 <P>
+
 If
 <I>size</I>
 
@@ -142,10 +143,11 @@ The
 
 of names is returned as an unordered array of null-terminated character
 strings (attribute names are separated by null bytes ('\0')), like this:
+<P>
+
 
 <DL COMPACT><DT><DD>
 <PRE>
-
 user.name1\0system.name1\0user.name2\0
 </PRE>
 
@@ -159,10 +161,11 @@ extended attributes might return a
 <I>list</I>
 
 like this:
+<P>
+
 
 <DL COMPACT><DT><DD>
 <PRE>
-
 system.posix_acl_access\0system.posix_acl_default\0
 </PRE>
 
@@ -233,7 +236,7 @@ These system calls are Linux-specific.
 As noted in
 <B><A HREF="../man7/xattr.7.html">xattr</A></B>(7),
 
-the VFS imposes a limit of 64 kB on the size of the extended
+the VFS imposes a limit of 64&nbsp;kB on the size of the extended
 attribute name list returned by
 <B><A HREF="../man7/listxattr.7.html">listxattr</A></B>(7).
 
@@ -251,6 +254,7 @@ and
 For the file whose pathname is provided as a command-line argument,
 it lists all extended file attributes and their values.
 <P>
+
 To keep the code simple, the program assumes that attribute keys and
 values are constant during the execution of the program.
 A production program should expect and handle changes during
@@ -271,6 +275,7 @@ Calls to
 
 could be handled similarly.
 <P>
+
 The following output was recorded by first creating a file, setting
 some extended file attributes,
 and then listing the attributes with the example program.
@@ -278,7 +283,7 @@ and then listing the attributes with the example program.
 <H3>Example output</H3>
 
 
-<PRE>
+
 $ <B>touch /tmp/foo</B>
 $ <B>setfattr -n user.fred -v chocolate /tmp/foo</B>
 $ <B>setfattr -n user.frieda -v bar /tmp/foo</B>
@@ -287,126 +292,124 @@ $ <B>./listxattr /tmp/foo</B>
 user.fred: chocolate
 user.frieda: bar
 user.empty: &lt;no value&gt;
-</PRE>
 
 
 <A NAME="lbAM">&nbsp;</A>
 <H3>Program source (listxattr.c)</H3>
 
-<PRE>
+
 #include &lt;<A HREF="file:///usr/include/malloc.h">malloc.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/stdlib.h">stdlib.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/string.h">string.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/sys/types.h">sys/types.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/sys/xattr.h">sys/xattr.h</A>&gt;
-
+<P>
 int
 main(int argc, char *argv[])
 {
-    ssize_t buflen, keylen, vallen;
-    char *buf, *key, *val;
-
-    if (argc != 2) {
-        fprintf(stderr, &quot;Usage: %s path\n&quot;, argv[0]);
-        exit(EXIT_FAILURE);
-    }
-
-    /*
-     * Determine the length of the buffer needed.
-     */
-    buflen = listxattr(argv[1], NULL, 0);
-    if (buflen == -1) {
-        perror(&quot;listxattr&quot;);
-        exit(EXIT_FAILURE);
-    }
-    if (buflen == 0) {
-        printf(&quot;%s has no attributes.\n&quot;, argv[1]);
-        exit(EXIT_SUCCESS);
-    }
-
-    /*
-     * Allocate the buffer.
-     */
-    buf = malloc(buflen);
-    if (buf == NULL) {
-        perror(&quot;malloc&quot;);
-        exit(EXIT_FAILURE);
-    }
-
-    /*
-     * Copy the list of attribute keys to the buffer.
-     */
-    buflen = listxattr(argv[1], buf, buflen);
-    if (buflen == -1) {
-        perror(&quot;listxattr&quot;);
-        exit(EXIT_FAILURE);
-    }
-
-    /*
-     * Loop over the list of zero terminated strings with the
-     * attribute keys. Use the remaining buffer length to determine
-     * the end of the list.
-     */
-    key = buf;
-    while (buflen &gt; 0) {
-
-        /*
-         * Output attribute key.
-         */
-        printf(&quot;%s: &quot;, key);
-
-        /*
-         * Determine length of the value.
-         */
-        vallen = getxattr(argv[1], key, NULL, 0);
-        if (vallen == -1)
-            perror(&quot;getxattr&quot;);
-
-        if (vallen &gt; 0) {
-
-            /*
-             * Allocate value buffer.
-             * One extra byte is needed to append 0x00.
-             */
-            val = malloc(vallen + 1);
-            if (val == NULL) {
-                perror(&quot;malloc&quot;);
-                exit(EXIT_FAILURE);
-            }
-
-            /*
-             * Copy value to buffer.
-             */
-            vallen = getxattr(argv[1], key, val, vallen);
-            if (vallen == -1)
-                perror(&quot;getxattr&quot;);
-            else {
-                /*
-                 * Output attribute value.
-                 */
-                val[vallen] = 0;
-                printf(&quot;%s&quot;, val);
-            }
-
-            free(val);
-        } else if (vallen == 0)
-            printf(&quot;&lt;no value&gt;&quot;);
-
-        printf(&quot;\n&quot;);
-
-        /*
-         * Forward to next attribute key.
-         */
-        keylen = strlen(key) + 1;
-        buflen -= keylen;
-        key += keylen;
-    }
-
-    free(buf);
-    exit(EXIT_SUCCESS);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;ssize_t&nbsp;buflen,&nbsp;keylen,&nbsp;vallen;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;char&nbsp;*buf,&nbsp;*key,&nbsp;*val;
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(argc&nbsp;!=&nbsp;2)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fprintf(stderr,&nbsp;&quot;Usage:&nbsp;%s&nbsp;path\n&quot;,&nbsp;argv[0]);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*&nbsp;Determine&nbsp;the&nbsp;length&nbsp;of&nbsp;the&nbsp;buffer&nbsp;needed.
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;buflen&nbsp;=&nbsp;listxattr(argv[1],&nbsp;NULL,&nbsp;0);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(buflen&nbsp;==&nbsp;-1)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;perror(&quot;listxattr&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(buflen&nbsp;==&nbsp;0)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;%s&nbsp;has&nbsp;no&nbsp;attributes.\n&quot;,&nbsp;argv[1]);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_SUCCESS);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*&nbsp;Allocate&nbsp;the&nbsp;buffer.
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;buf&nbsp;=&nbsp;malloc(buflen);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(buf&nbsp;==&nbsp;NULL)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;perror(&quot;malloc&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*&nbsp;Copy&nbsp;the&nbsp;list&nbsp;of&nbsp;attribute&nbsp;keys&nbsp;to&nbsp;the&nbsp;buffer.
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;buflen&nbsp;=&nbsp;listxattr(argv[1],&nbsp;buf,&nbsp;buflen);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(buflen&nbsp;==&nbsp;-1)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;perror(&quot;listxattr&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*&nbsp;Loop&nbsp;over&nbsp;the&nbsp;list&nbsp;of&nbsp;zero&nbsp;terminated&nbsp;strings&nbsp;with&nbsp;the
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*&nbsp;attribute&nbsp;keys.&nbsp;Use&nbsp;the&nbsp;remaining&nbsp;buffer&nbsp;length&nbsp;to&nbsp;determine
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*&nbsp;the&nbsp;end&nbsp;of&nbsp;the&nbsp;list.
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;key&nbsp;=&nbsp;buf;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;while&nbsp;(buflen&nbsp;&gt;&nbsp;0)&nbsp;{
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*&nbsp;Output&nbsp;attribute&nbsp;key.
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;%s:&nbsp;&quot;,&nbsp;key);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*&nbsp;Determine&nbsp;length&nbsp;of&nbsp;the&nbsp;value.
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;vallen&nbsp;=&nbsp;getxattr(argv[1],&nbsp;key,&nbsp;NULL,&nbsp;0);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(vallen&nbsp;==&nbsp;-1)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;perror(&quot;getxattr&quot;);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(vallen&nbsp;&gt;&nbsp;0)&nbsp;{
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*&nbsp;Allocate&nbsp;value&nbsp;buffer.
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*&nbsp;One&nbsp;extra&nbsp;byte&nbsp;is&nbsp;needed&nbsp;to&nbsp;append&nbsp;0x00.
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;val&nbsp;=&nbsp;malloc(vallen&nbsp;+&nbsp;1);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(val&nbsp;==&nbsp;NULL)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;perror(&quot;malloc&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*&nbsp;Copy&nbsp;value&nbsp;to&nbsp;buffer.
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;vallen&nbsp;=&nbsp;getxattr(argv[1],&nbsp;key,&nbsp;val,&nbsp;vallen);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(vallen&nbsp;==&nbsp;-1)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;perror(&quot;getxattr&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;else&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*&nbsp;Output&nbsp;attribute&nbsp;value.
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;val[vallen]&nbsp;=&nbsp;0;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;%s&quot;,&nbsp;val);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;free(val);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}&nbsp;else&nbsp;if&nbsp;(vallen&nbsp;==&nbsp;0)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;&lt;no&nbsp;value&gt;&quot;);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;\n&quot;);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*&nbsp;Forward&nbsp;to&nbsp;next&nbsp;attribute&nbsp;key.
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;keylen&nbsp;=&nbsp;strlen(key)&nbsp;+&nbsp;1;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;buflen&nbsp;-=&nbsp;keylen;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;key&nbsp;+=&nbsp;keylen;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;free(buf);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_SUCCESS);
 }
-</PRE>
 
 <A NAME="lbAN">&nbsp;</A>
 <H2>SEE ALSO</H2>
@@ -456,6 +459,6 @@ main(int argc, char *argv[])
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:46:38 GMT, April 20, 2020
+Time: 03:47:14 GMT, April 20, 2020
 </BODY>
 </HTML>

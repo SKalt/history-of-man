@@ -26,7 +26,7 @@ the source, must acknowledge the copyright and authors of this work.
 <HTML><HEAD><TITLE>Man page of UMOUNT</TITLE>
 </HEAD><BODY>
 <H1>UMOUNT</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2016-07-17<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2017-09-15<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -59,11 +59,13 @@ remove the attachment of the (topmost) filesystem mounted on
 
 
 <P>
+
 Appropriate privilege (Linux: the
 <B>CAP_SYS_ADMIN</B>
 
 capability) is required to unmount filesystems.
 <P>
+
 Linux 2.1.116 added the
 <B>umount2</B>()
 
@@ -78,9 +80,23 @@ controlling the behavior of the operation:
 <DT><B>MNT_FORCE</B> (since Linux 2.1.116)
 
 <DD>
-Force unmount even if busy.
-This can cause data loss.
-(Only for NFS mounts.)
+Ask the filesystem to abort pending requests before attempting the
+unmount.
+This may allow the unmount to complete without waiting
+for an inaccessible server, but could cause data loss.
+If, after aborting requests,
+some processes still have active references to the filesystem,
+the unmount will still fail.
+As at Linux 4.12,
+<B>MNT_FORCE</B>
+
+is supported only on the following filesystems:
+9p (since Linux 2.6.16),
+ceph (since Linux 2.6.34),
+cifs (since Linux 2.6.12),
+fuse (since Linux 2.6.16),
+lustre (since Linux 3.11),
+and NFS (since Linux 2.1.116).
 <DT><B>MNT_DETACH</B> (since Linux 2.4.11)
 
 <DD>
@@ -243,6 +259,7 @@ This means that
 of any peer in a set of shared mounts will cause all of its
 peers to be unmounted and all of their slaves to be unmounted as well.
 <P>
+
 This propagation of unmount activity can be particularly surprising
 on systems where every mount point is shared by default.
 On such systems,
@@ -252,6 +269,7 @@ onto a subdirectory and then later unmounting that subdirectory with
 
 will cause every mount in the mount namespace to be lazily unmounted.
 <P>
+
 To ensure
 <B>umount</B>()
 
@@ -323,6 +341,6 @@ in more than one place, so specifying the device does not suffice).
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:46:40 GMT, April 20, 2020
+Time: 03:47:16 GMT, April 20, 2020
 </BODY>
 </HTML>

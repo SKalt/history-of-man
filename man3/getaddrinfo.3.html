@@ -27,7 +27,7 @@ the source, must acknowledge the copyright and authors of this work.
 <HTML><HEAD><TITLE>Man page of GETADDRINFO</TITLE>
 </HEAD><BODY>
 <H1>GETADDRINFO</H1>
-Section: Linux Programmer's Manual (3)<BR>Updated: 2017-07-13<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2017-09-15<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -54,12 +54,14 @@ service translation
 
 <P>
 
+
 Feature Test Macro Requirements for glibc (see
 <B><A HREF="../man7/feature_test_macros.7.html">feature_test_macros</A></B>(7)):
 
 
 
 <P>
+
 <B>getaddrinfo</B>(),
 
 <B>freeaddrinfo</B>(),
@@ -117,18 +119,18 @@ structure used by
 contains the following fields:
 <P>
 
-<PRE>
+
+
 struct addrinfo {
-    int              ai_flags;
-    int              ai_family;
-    int              ai_socktype;
-    int              ai_protocol;
-    socklen_t        ai_addrlen;
-    struct sockaddr *ai_addr;
-    char            *ai_canonname;
-    struct addrinfo *ai_next;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ai_flags;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ai_family;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ai_socktype;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ai_protocol;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;socklen_t&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ai_addrlen;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;struct&nbsp;sockaddr&nbsp;*ai_addr;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;char&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*ai_canonname;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;struct&nbsp;addrinfo&nbsp;*ai_next;
 };
-</PRE>
 
 
 <P>
@@ -398,6 +400,7 @@ The items in the linked list are linked by the
 
 field.
 <P>
+
 There are several reasons why
 the linked list may have more than one
 <I>addrinfo</I>
@@ -447,6 +450,7 @@ official name of the host.
 
 
 <P>
+
 The remaining fields of each returned
 <I>addrinfo</I>
 
@@ -591,7 +595,7 @@ If this flag is specified, then the node name given in
 
 is converted to IDN format if necessary.
 The source encoding is that of the current locale.
-<P>
+<DT><DD>
 If the input name contains non-ASCII characters, then the IDN encoding
 is used.
 Those parts of the node name (delimited by dots) that contain
@@ -619,7 +623,7 @@ node corresponding to the
 structure value passed back.
 The return value is an exact copy of the value returned by the name
 resolution function.
-<P>
+<DT><DD>
 If the name is encoded using ACE, then it will contain the
 <I>xn--</I>
 
@@ -837,6 +841,7 @@ supports the
 
 notation for specifying the IPv6 scope-ID.
 <P>
+
 <B>AI_ADDRCONFIG</B>,
 
 <B>AI_ALL</B>,
@@ -849,6 +854,7 @@ are available since glibc 2.3.3.
 
 is available since glibc 2.3.4.
 <P>
+
 According to POSIX.1, specifying
 
 <I>hints</I>
@@ -886,7 +892,7 @@ The programs are an echo server and client for UDP datagrams.
 <H3>Server program</H3>
 
 
-<PRE>
+
 #include &lt;<A HREF="file:///usr/include/sys/types.h">sys/types.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/stdlib.h">stdlib.h</A>&gt;
@@ -894,97 +900,96 @@ The programs are an echo server and client for UDP datagrams.
 #include &lt;<A HREF="file:///usr/include/string.h">string.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/sys/socket.h">sys/socket.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/netdb.h">netdb.h</A>&gt;
-
+<P>
 #define BUF_SIZE 500
-
+<P>
 int
 main(int argc, char *argv[])
 {
-    struct addrinfo hints;
-    struct addrinfo *result, *rp;
-    int sfd, s;
-    struct sockaddr_storage peer_addr;
-    socklen_t peer_addr_len;
-    ssize_t nread;
-    char buf[BUF_SIZE];
-
-    if (argc != 2) {
-        fprintf(stderr, &quot;Usage: %s port\n&quot;, argv[0]);
-        exit(EXIT_FAILURE);
-    }
-
-    memset(&amp;hints, 0, sizeof(struct addrinfo));
-    hints.ai_family = AF_UNSPEC;    /* Allow IPv4 or IPv6 */
-    hints.ai_socktype = SOCK_DGRAM; /* Datagram socket */
-    hints.ai_flags = AI_PASSIVE;    /* For wildcard IP address */
-    hints.ai_protocol = 0;          /* Any protocol */
-    hints.ai_canonname = NULL;
-    hints.ai_addr = NULL;
-    hints.ai_next = NULL;
-
-    s = getaddrinfo(NULL, argv[1], &amp;hints, &amp;result);
-    if (s != 0) {
-        fprintf(stderr, &quot;getaddrinfo: %s\n&quot;, gai_strerror(s));
-        exit(EXIT_FAILURE);
-    }
-
-    /* getaddrinfo() returns a list of address structures.
-       Try each address until we successfully <A HREF="../man2/bind.2.html">bind</A>(2).
-       If <A HREF="../man2/socket.2.html">socket</A>(2) (or <A HREF="../man2/bind.2.html">bind</A>(2)) fails, we (close the socket
-       and) try the next address. */
-
-    for (rp = result; rp != NULL; rp = rp-&gt;ai_next) {
-        sfd = socket(rp-&gt;ai_family, rp-&gt;ai_socktype,
-                rp-&gt;ai_protocol);
-        if (sfd == -1)
-            continue;
-
-        if (bind(sfd, rp-&gt;ai_addr, rp-&gt;ai_addrlen) == 0)
-            break;                  /* Success */
-
-        close(sfd);
-    }
-
-    if (rp == NULL) {               /* No address succeeded */
-        fprintf(stderr, &quot;Could not bind\n&quot;);
-        exit(EXIT_FAILURE);
-    }
-
-    freeaddrinfo(result);           /* No longer needed */
-
-    /* Read datagrams and echo them back to sender */
-
-    for (;;) {
-        peer_addr_len = sizeof(struct sockaddr_storage);
-        nread = recvfrom(sfd, buf, BUF_SIZE, 0,
-                (struct sockaddr *) &amp;peer_addr, &amp;peer_addr_len);
-        if (nread == -1)
-            continue;               /* Ignore failed request */
-
-        char host[NI_MAXHOST], service[NI_MAXSERV];
-
-        s = getnameinfo((struct sockaddr *) &amp;peer_addr,
-                        peer_addr_len, host, NI_MAXHOST,
-                        service, NI_MAXSERV, NI_NUMERICSERV);
-        if (s == 0)
-            printf(&quot;Received %zd bytes from %s:%s\n&quot;,
-                    nread, host, service);
-        else
-            fprintf(stderr, &quot;getnameinfo: %s\n&quot;, gai_strerror(s));
-
-        if (sendto(sfd, buf, nread, 0,
-                    (struct sockaddr *) &amp;peer_addr,
-                    peer_addr_len) != nread)
-            fprintf(stderr, &quot;Error sending response\n&quot;);
-    }
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;struct&nbsp;addrinfo&nbsp;hints;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;struct&nbsp;addrinfo&nbsp;*result,&nbsp;*rp;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;sfd,&nbsp;s;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;struct&nbsp;sockaddr_storage&nbsp;peer_addr;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;socklen_t&nbsp;peer_addr_len;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;ssize_t&nbsp;nread;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;char&nbsp;buf[BUF_SIZE];
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(argc&nbsp;!=&nbsp;2)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fprintf(stderr,&nbsp;&quot;Usage:&nbsp;%s&nbsp;port\n&quot;,&nbsp;argv[0]);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;memset(&amp;hints,&nbsp;0,&nbsp;sizeof(struct&nbsp;addrinfo));
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;hints.ai_family&nbsp;=&nbsp;AF_UNSPEC;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Allow&nbsp;IPv4&nbsp;or&nbsp;IPv6&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;hints.ai_socktype&nbsp;=&nbsp;SOCK_DGRAM;&nbsp;/*&nbsp;Datagram&nbsp;socket&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;hints.ai_flags&nbsp;=&nbsp;AI_PASSIVE;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;For&nbsp;wildcard&nbsp;IP&nbsp;address&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;hints.ai_protocol&nbsp;=&nbsp;0;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Any&nbsp;protocol&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;hints.ai_canonname&nbsp;=&nbsp;NULL;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;hints.ai_addr&nbsp;=&nbsp;NULL;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;hints.ai_next&nbsp;=&nbsp;NULL;
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;s&nbsp;=&nbsp;getaddrinfo(NULL,&nbsp;argv[1],&nbsp;&amp;hints,&nbsp;&amp;result);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(s&nbsp;!=&nbsp;0)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fprintf(stderr,&nbsp;&quot;getaddrinfo:&nbsp;%s\n&quot;,&nbsp;gai_strerror(s));
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;getaddrinfo()&nbsp;returns&nbsp;a&nbsp;list&nbsp;of&nbsp;address&nbsp;structures.
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Try&nbsp;each&nbsp;address&nbsp;until&nbsp;we&nbsp;successfully&nbsp;<A HREF="../man2/bind.2.html">bind</A>(2).
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;If&nbsp;<A HREF="../man2/socket.2.html">socket</A>(2)&nbsp;(or&nbsp;<A HREF="../man2/bind.2.html">bind</A>(2))&nbsp;fails,&nbsp;we&nbsp;(close&nbsp;the&nbsp;socket
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;and)&nbsp;try&nbsp;the&nbsp;next&nbsp;address.&nbsp;*/
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;for&nbsp;(rp&nbsp;=&nbsp;result;&nbsp;rp&nbsp;!=&nbsp;NULL;&nbsp;rp&nbsp;=&nbsp;rp-&gt;ai_next)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;sfd&nbsp;=&nbsp;socket(rp-&gt;ai_family,&nbsp;rp-&gt;ai_socktype,
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;rp-&gt;ai_protocol);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(sfd&nbsp;==&nbsp;-1)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;continue;
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(bind(sfd,&nbsp;rp-&gt;ai_addr,&nbsp;rp-&gt;ai_addrlen)&nbsp;==&nbsp;0)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;break;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Success&nbsp;*/
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;close(sfd);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(rp&nbsp;==&nbsp;NULL)&nbsp;{&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;No&nbsp;address&nbsp;succeeded&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fprintf(stderr,&nbsp;&quot;Could&nbsp;not&nbsp;bind\n&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;freeaddrinfo(result);&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;No&nbsp;longer&nbsp;needed&nbsp;*/
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Read&nbsp;datagrams&nbsp;and&nbsp;echo&nbsp;them&nbsp;back&nbsp;to&nbsp;sender&nbsp;*/
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;for&nbsp;(;;)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;peer_addr_len&nbsp;=&nbsp;sizeof(struct&nbsp;sockaddr_storage);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;nread&nbsp;=&nbsp;recvfrom(sfd,&nbsp;buf,&nbsp;BUF_SIZE,&nbsp;0,
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(struct&nbsp;sockaddr&nbsp;*)&nbsp;&amp;peer_addr,&nbsp;&amp;peer_addr_len);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(nread&nbsp;==&nbsp;-1)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;continue;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Ignore&nbsp;failed&nbsp;request&nbsp;*/
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;char&nbsp;host[NI_MAXHOST],&nbsp;service[NI_MAXSERV];
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;s&nbsp;=&nbsp;getnameinfo((struct&nbsp;sockaddr&nbsp;*)&nbsp;&amp;peer_addr,
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;peer_addr_len,&nbsp;host,&nbsp;NI_MAXHOST,
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;service,&nbsp;NI_MAXSERV,&nbsp;NI_NUMERICSERV);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(s&nbsp;==&nbsp;0)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;Received&nbsp;%zd&nbsp;bytes&nbsp;from&nbsp;%s:%s\n&quot;,
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;nread,&nbsp;host,&nbsp;service);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;else
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fprintf(stderr,&nbsp;&quot;getnameinfo:&nbsp;%s\n&quot;,&nbsp;gai_strerror(s));
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(sendto(sfd,&nbsp;buf,&nbsp;nread,&nbsp;0,
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(struct&nbsp;sockaddr&nbsp;*)&nbsp;&amp;peer_addr,
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;peer_addr_len)&nbsp;!=&nbsp;nread)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fprintf(stderr,&nbsp;&quot;Error&nbsp;sending&nbsp;response\n&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
 }
-</PRE>
 
 <A NAME="lbAM">&nbsp;</A>
 <H3>Client program</H3>
 
 
-<PRE>
+
 #include &lt;<A HREF="file:///usr/include/sys/types.h">sys/types.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/sys/socket.h">sys/socket.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/netdb.h">netdb.h</A>&gt;
@@ -992,92 +997,91 @@ main(int argc, char *argv[])
 #include &lt;<A HREF="file:///usr/include/stdlib.h">stdlib.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/string.h">string.h</A>&gt;
-
+<P>
 #define BUF_SIZE 500
-
+<P>
 int
 main(int argc, char *argv[])
 {
-    struct addrinfo hints;
-    struct addrinfo *result, *rp;
-    int sfd, s, j;
-    size_t len;
-    ssize_t nread;
-    char buf[BUF_SIZE];
-
-    if (argc &lt; 3) {
-        fprintf(stderr, &quot;Usage: %s host port msg...\n&quot;, argv[0]);
-        exit(EXIT_FAILURE);
-    }
-
-    /* Obtain address(es) matching host/port */
-
-    memset(&amp;hints, 0, sizeof(struct addrinfo));
-    hints.ai_family = AF_UNSPEC;    /* Allow IPv4 or IPv6 */
-    hints.ai_socktype = SOCK_DGRAM; /* Datagram socket */
-    hints.ai_flags = 0;
-    hints.ai_protocol = 0;          /* Any protocol */
-
-    s = getaddrinfo(argv[1], argv[2], &amp;hints, &amp;result);
-    if (s != 0) {
-        fprintf(stderr, &quot;getaddrinfo: %s\n&quot;, gai_strerror(s));
-        exit(EXIT_FAILURE);
-    }
-
-    /* getaddrinfo() returns a list of address structures.
-       Try each address until we successfully <A HREF="../man2/connect.2.html">connect</A>(2).
-       If <A HREF="../man2/socket.2.html">socket</A>(2) (or <A HREF="../man2/connect.2.html">connect</A>(2)) fails, we (close the socket
-       and) try the next address. */
-
-    for (rp = result; rp != NULL; rp = rp-&gt;ai_next) {
-        sfd = socket(rp-&gt;ai_family, rp-&gt;ai_socktype,
-                     rp-&gt;ai_protocol);
-        if (sfd == -1)
-            continue;
-
-        if (connect(sfd, rp-&gt;ai_addr, rp-&gt;ai_addrlen) != -1)
-            break;                  /* Success */
-
-        close(sfd);
-    }
-
-    if (rp == NULL) {               /* No address succeeded */
-        fprintf(stderr, &quot;Could not connect\n&quot;);
-        exit(EXIT_FAILURE);
-    }
-
-    freeaddrinfo(result);           /* No longer needed */
-
-    /* Send remaining command-line arguments as separate
-       datagrams, and read responses from server */
-
-    for (j = 3; j &lt; argc; j++) {
-        len = strlen(argv[j]) + 1;
-                /* +1 for terminating null byte */
-
-        if (len + 1 &gt; BUF_SIZE) {
-            fprintf(stderr,
-                    &quot;Ignoring long message in argument %d\n&quot;, j);
-            continue;
-        }
-
-        if (write(sfd, argv[j], len) != len) {
-            fprintf(stderr, &quot;partial/failed write\n&quot;);
-            exit(EXIT_FAILURE);
-        }
-
-        nread = read(sfd, buf, BUF_SIZE);
-        if (nread == -1) {
-            perror(&quot;read&quot;);
-            exit(EXIT_FAILURE);
-        }
-
-        printf(&quot;Received %zd bytes: %s\n&quot;, nread, buf);
-    }
-
-    exit(EXIT_SUCCESS);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;struct&nbsp;addrinfo&nbsp;hints;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;struct&nbsp;addrinfo&nbsp;*result,&nbsp;*rp;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;sfd,&nbsp;s,&nbsp;j;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;size_t&nbsp;len;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;ssize_t&nbsp;nread;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;char&nbsp;buf[BUF_SIZE];
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(argc&nbsp;&lt;&nbsp;3)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fprintf(stderr,&nbsp;&quot;Usage:&nbsp;%s&nbsp;host&nbsp;port&nbsp;msg...\n&quot;,&nbsp;argv[0]);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Obtain&nbsp;address(es)&nbsp;matching&nbsp;host/port&nbsp;*/
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;memset(&amp;hints,&nbsp;0,&nbsp;sizeof(struct&nbsp;addrinfo));
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;hints.ai_family&nbsp;=&nbsp;AF_UNSPEC;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Allow&nbsp;IPv4&nbsp;or&nbsp;IPv6&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;hints.ai_socktype&nbsp;=&nbsp;SOCK_DGRAM;&nbsp;/*&nbsp;Datagram&nbsp;socket&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;hints.ai_flags&nbsp;=&nbsp;0;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;hints.ai_protocol&nbsp;=&nbsp;0;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Any&nbsp;protocol&nbsp;*/
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;s&nbsp;=&nbsp;getaddrinfo(argv[1],&nbsp;argv[2],&nbsp;&amp;hints,&nbsp;&amp;result);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(s&nbsp;!=&nbsp;0)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fprintf(stderr,&nbsp;&quot;getaddrinfo:&nbsp;%s\n&quot;,&nbsp;gai_strerror(s));
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;getaddrinfo()&nbsp;returns&nbsp;a&nbsp;list&nbsp;of&nbsp;address&nbsp;structures.
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Try&nbsp;each&nbsp;address&nbsp;until&nbsp;we&nbsp;successfully&nbsp;<A HREF="../man2/connect.2.html">connect</A>(2).
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;If&nbsp;<A HREF="../man2/socket.2.html">socket</A>(2)&nbsp;(or&nbsp;<A HREF="../man2/connect.2.html">connect</A>(2))&nbsp;fails,&nbsp;we&nbsp;(close&nbsp;the&nbsp;socket
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;and)&nbsp;try&nbsp;the&nbsp;next&nbsp;address.&nbsp;*/
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;for&nbsp;(rp&nbsp;=&nbsp;result;&nbsp;rp&nbsp;!=&nbsp;NULL;&nbsp;rp&nbsp;=&nbsp;rp-&gt;ai_next)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;sfd&nbsp;=&nbsp;socket(rp-&gt;ai_family,&nbsp;rp-&gt;ai_socktype,
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;rp-&gt;ai_protocol);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(sfd&nbsp;==&nbsp;-1)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;continue;
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(connect(sfd,&nbsp;rp-&gt;ai_addr,&nbsp;rp-&gt;ai_addrlen)&nbsp;!=&nbsp;-1)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;break;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Success&nbsp;*/
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;close(sfd);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(rp&nbsp;==&nbsp;NULL)&nbsp;{&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;No&nbsp;address&nbsp;succeeded&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fprintf(stderr,&nbsp;&quot;Could&nbsp;not&nbsp;connect\n&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;freeaddrinfo(result);&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;No&nbsp;longer&nbsp;needed&nbsp;*/
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Send&nbsp;remaining&nbsp;command-line&nbsp;arguments&nbsp;as&nbsp;separate
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;datagrams,&nbsp;and&nbsp;read&nbsp;responses&nbsp;from&nbsp;server&nbsp;*/
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;for&nbsp;(j&nbsp;=&nbsp;3;&nbsp;j&nbsp;&lt;&nbsp;argc;&nbsp;j++)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;len&nbsp;=&nbsp;strlen(argv[j])&nbsp;+&nbsp;1;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;+1&nbsp;for&nbsp;terminating&nbsp;null&nbsp;byte&nbsp;*/
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(len&nbsp;+&nbsp;1&nbsp;&gt;&nbsp;BUF_SIZE)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fprintf(stderr,
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&quot;Ignoring&nbsp;long&nbsp;message&nbsp;in&nbsp;argument&nbsp;%d\n&quot;,&nbsp;j);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;continue;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(write(sfd,&nbsp;argv[j],&nbsp;len)&nbsp;!=&nbsp;len)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fprintf(stderr,&nbsp;&quot;partial/failed&nbsp;write\n&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;nread&nbsp;=&nbsp;read(sfd,&nbsp;buf,&nbsp;BUF_SIZE);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(nread&nbsp;==&nbsp;-1)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;perror(&quot;read&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;Received&nbsp;%zd&nbsp;bytes:&nbsp;%s\n&quot;,&nbsp;nread,&nbsp;buf);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_SUCCESS);
 }
-</PRE>
 
 <A NAME="lbAN">&nbsp;</A>
 <H2>SEE ALSO</H2>
@@ -1125,6 +1129,6 @@ main(int argc, char *argv[])
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:46:44 GMT, April 20, 2020
+Time: 03:47:21 GMT, April 20, 2020
 </BODY>
 </HTML>

@@ -72,6 +72,7 @@ dimensions and cursor position:
 
 = 0 at the top left corner of the screen.)
 <P>
+
 When a 512-character font is loaded,
 the 9th bit position can be fetched by applying the
 <B><A HREF="../man2/ioctl.2.html">ioctl</A></B>(2)
@@ -104,15 +105,18 @@ administrator can control access using filesystem permissions.
 
 The devices for the first eight virtual consoles may be created by:
 <P>
-<PRE>
-    for x in 0 1 2 3 4 5 6 7 8; do
-        mknod -m 644 /dev/vcs$x c 7 $x;
-        mknod -m 644 /dev/vcsa$x c 7 $[$x+128];
-    done
-    chown root:tty /dev/vcs*
-</PRE>
+
+
+
+for x in 0 1 2 3 4 5 6 7 8; do
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;mknod&nbsp;-m&nbsp;644&nbsp;/dev/vcs$x&nbsp;c&nbsp;7&nbsp;$x;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;mknod&nbsp;-m&nbsp;644&nbsp;/dev/vcsa$x&nbsp;c&nbsp;7&nbsp;$[$x+128];
+done
+chown root:tty /dev/vcs*
+
 
 <P>
+
 No
 <B><A HREF="../man2/ioctl.2.html">ioctl</A></B>(2)
 
@@ -135,75 +139,82 @@ Introduced with version 1.1.92 of the Linux kernel.
 
 You may do a screendump on vt3 by switching to vt1 and typing
 <P>
+
 <BR>&nbsp;&nbsp;&nbsp;&nbsp;cat&nbsp;/dev/vcs3&nbsp;&gt;foo
 <P>
+
 Note that the output does not contain
 newline characters, so some processing may be required, like
 in
 <P>
+
 <BR>&nbsp;&nbsp;&nbsp;&nbsp;fold&nbsp;-w&nbsp;81&nbsp;/dev/vcs3&nbsp;|&nbsp;lpr
 <P>
+
 or (horrors)
 <P>
+
 <BR>&nbsp;&nbsp;&nbsp;&nbsp;xetterm&nbsp;-dump&nbsp;3&nbsp;-file&nbsp;/proc/self/fd/1
 <P>
+
 The
 <I>/dev/vcsa0</I>
 
 device is used for Braille support.
 <P>
+
 This program displays the character and screen attributes under the
 cursor of the second virtual console, then changes the background color
 there:
 <P>
-<PRE>
+
+
 #include &lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/stdlib.h">stdlib.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/fcntl.h">fcntl.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/sys/ioctl.h">sys/ioctl.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/linux/vt.h">linux/vt.h</A>&gt;
-
+<P>
 int
 main(void)
 {
-    int fd;
-    char *device = &quot;/dev/vcsa2&quot;;
-    char *console = &quot;/dev/tty2&quot;;
-    struct {unsigned char lines, cols, x, y;} scrn;
-    unsigned short s;
-    unsigned short mask;
-    unsigned char ch, attrib;
-
-    fd = open(console, O_RDWR);
-    if (fd &lt; 0) {
-        perror(console);
-        exit(EXIT_FAILURE);
-    }
-    if (ioctl(fd, VT_GETHIFONTMASK, &amp;mask) &lt; 0) {
-        perror(&quot;VT_GETHIFONTMASK&quot;);
-        exit(EXIT_FAILURE);
-    }
-    (void) close(fd);
-    fd = open(device, O_RDWR);
-    if (fd &lt; 0) {
-        perror(device);
-        exit(EXIT_FAILURE);
-    }
-    (void) read(fd, &amp;scrn, 4);
-    (void) lseek(fd, 4 + 2*(scrn.y*scrn.cols + scrn.x), 0);
-    (void) read(fd, &amp;s, 2);
-    ch = s &amp; 0xff;
-    if (attrib &amp; mask)
-        ch |= 0x100;
-    attrib = ((s &amp; ~mask) &gt;&gt; 8);
-    printf(&quot;ch='%c' attrib=0x%02x\n&quot;, ch, attrib);
-    attrib ^= 0x10;
-    (void) lseek(fd, -1, 1);
-    (void) write(fd, &amp;attrib, 1);
-    exit(EXIT_SUCCESS);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;fd;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;char&nbsp;*device&nbsp;=&nbsp;&quot;/dev/vcsa2&quot;;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;char&nbsp;*console&nbsp;=&nbsp;&quot;/dev/tty2&quot;;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;struct&nbsp;{unsigned&nbsp;char&nbsp;lines,&nbsp;cols,&nbsp;x,&nbsp;y;}&nbsp;scrn;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;unsigned&nbsp;short&nbsp;s;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;unsigned&nbsp;short&nbsp;mask;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;unsigned&nbsp;char&nbsp;ch,&nbsp;attrib;
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;fd&nbsp;=&nbsp;open(console,&nbsp;O_RDWR);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(fd&nbsp;&lt;&nbsp;0)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;perror(console);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(ioctl(fd,&nbsp;VT_GETHIFONTMASK,&nbsp;&amp;mask)&nbsp;&lt;&nbsp;0)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;perror(&quot;VT_GETHIFONTMASK&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;(void)&nbsp;close(fd);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;fd&nbsp;=&nbsp;open(device,&nbsp;O_RDWR);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(fd&nbsp;&lt;&nbsp;0)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;perror(device);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;(void)&nbsp;read(fd,&nbsp;&amp;scrn,&nbsp;4);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;(void)&nbsp;lseek(fd,&nbsp;4&nbsp;+&nbsp;2*(scrn.y*scrn.cols&nbsp;+&nbsp;scrn.x),&nbsp;0);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;(void)&nbsp;read(fd,&nbsp;&amp;s,&nbsp;2);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;ch&nbsp;=&nbsp;s&nbsp;&amp;&nbsp;0xff;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(attrib&nbsp;&amp;&nbsp;mask)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ch&nbsp;|=&nbsp;0x100;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;attrib&nbsp;=&nbsp;((s&nbsp;&amp;&nbsp;~mask)&nbsp;&gt;&gt;&nbsp;8);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;ch='%c'&nbsp;attrib=0x%02x\n&quot;,&nbsp;ch,&nbsp;attrib);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;attrib&nbsp;^=&nbsp;0x10;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;(void)&nbsp;lseek(fd,&nbsp;-1,&nbsp;1);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;(void)&nbsp;write(fd,&nbsp;&amp;attrib,&nbsp;1);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_SUCCESS);
 }
-</PRE>
 
 <A NAME="lbAG">&nbsp;</A>
 <H2>SEE ALSO</H2>
@@ -232,6 +243,6 @@ main(void)
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:46:50 GMT, April 20, 2020
+Time: 03:47:27 GMT, April 20, 2020
 </BODY>
 </HTML>

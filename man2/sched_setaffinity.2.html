@@ -25,7 +25,7 @@ License along with this manual; if not, see
 <HTML><HEAD><TITLE>Man page of SCHED_SETAFFINITY</TITLE>
 </HEAD><BODY>
 <H1>SCHED_SETAFFINITY</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2017-05-03<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2017-09-15<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -63,6 +63,7 @@ the performance cost caused by the cache invalidation that occurs
 when a thread ceases to execute on one CPU and then
 recommences execution on a different CPU.
 <P>
+
 A CPU affinity mask is represented by the
 <I>cpu_set_t</I>
 
@@ -73,6 +74,7 @@ A set of macros for manipulating CPU sets is described in
 <B><A HREF="../man3/CPU_SET.3.html">CPU_SET</A></B>(3).
 
 <P>
+
 <B>sched_setaffinity</B>()
 
 sets the CPU affinity mask of the thread whose ID is
@@ -95,6 +97,7 @@ Normally this argument would be specified as
 <I>sizeof(cpu_set_t)</I>.
 
 <P>
+
 If the thread specified by
 <I>pid</I>
 
@@ -105,6 +108,7 @@ then that thread is migrated to one of the CPUs specified in
 <I>mask</I>.
 
 <P>
+
 <B>sched_getaffinity</B>()
 
 writes the affinity mask of the thread whose ID is
@@ -234,6 +238,7 @@ is being used.
 These restrictions on the actual set of CPUs on which the thread
 will run are silently imposed by the kernel.
 <P>
+
 There are various ways of determining the number of CPUs
 available on the system, including: inspecting the contents of
 <I>/proc/cpuinfo</I>;
@@ -251,6 +256,7 @@ parameters; and inspecting the list of CPU directories under
 <I>/sys/devices/system/cpu/</I>.
 
 <P>
+
 <B><A HREF="../man7/sched.7.html">sched</A></B>(7)
 
 has a description of the Linux scheduling scheme.
@@ -279,6 +285,7 @@ instead of
 <B>sched_setaffinity</B>().)
 
 <P>
+
 The
 <I>isolcpus</I>
 
@@ -302,6 +309,7 @@ is the preferred mechanism of isolating CPUs
 (versus the alternative of manually setting the CPU affinity
 of all processes on the system).
 <P>
+
 A child created via
 <B><A HREF="../man2/fork.2.html">fork</A></B>(2)
 
@@ -346,8 +354,10 @@ meaning that the maximum CPU number that can be represented is 1023.
 If the kernel CPU affinity mask is larger than 1024,
 then calls of the form:
 <P>
+
 <BR>&nbsp;&nbsp;&nbsp;&nbsp;sched_getaffinity(pid,&nbsp;sizeof(cpu_set_t),&nbsp;&amp;mask);
 <P>
+
 will fail with the error
 <B>EINVAL</B>,
 
@@ -377,6 +387,7 @@ calls with increasing mask sizes (until the call does not fail with the error
 <B>EINVAL</B>).
 
 <P>
+
 Be aware that
 <B><A HREF="../man3/CPU_ALLOC.3.html">CPU_ALLOC</A></B>(3)
 
@@ -407,10 +418,12 @@ the CPU number for the parent,
 the CPU number for the child,
 and the number of loop iterations that both processes should perform.
 <P>
+
 As the sample runs below demonstrate, the amount of real and CPU time
 consumed when running the program will depend on intra-core caching effects
 and whether the processes are using the same CPU.
 <P>
+
 We first employ
 <B><A HREF="../man1/lscpu.1.html">lscpu</A></B>(1)
 
@@ -418,22 +431,24 @@ to determine that this (x86)
 system has two cores, each with two CPUs:
 <P>
 
-<PRE>
+
+
 $ <B>lscpu | grep -i 'core.*:|socket'</B>
 Thread(s) per core:    2
 Core(s) per socket:    2
 Socket(s):             1
-</PRE>
 
 
 <P>
+
 We then time the operation of the example program for three cases:
 both processes running on the same CPU;
 both processes running on different CPUs on the same core;
 and both processes running on different CPUs on different cores.
 <P>
 
-<PRE>
+
+
 $ <B>time -p ./a.out 0 0 100000000</B>
 real 14.75
 user 3.02
@@ -446,72 +461,70 @@ $ <B>time -p ./a.out 0 3 100000000</B>
 real 7.89
 user 3.29
 sys 12.07
-</PRE>
 
 
 <A NAME="lbAM">&nbsp;</A>
 <H3>Program source</H3>
 
 
-<PRE>
+
 #define _GNU_SOURCE
 #include &lt;<A HREF="file:///usr/include/sched.h">sched.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/stdlib.h">stdlib.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/sys/wait.h">sys/wait.h</A>&gt;
-
+<P>
 #define errExit(msg)    do { perror(msg); exit(EXIT_FAILURE); \
-                        } while (0)
-
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}&nbsp;while&nbsp;(0)
+<P>
 int
 main(int argc, char *argv[])
 {
-    cpu_set_t set;
-    int parentCPU, childCPU;
-    int nloops, j;
-
-    if (argc != 4) {
-        fprintf(stderr, &quot;Usage: %s parent-cpu child-cpu num-loops\n&quot;,
-                argv[0]);
-        exit(EXIT_FAILURE);
-    }
-
-    parentCPU = atoi(argv[1]);
-    childCPU = atoi(argv[2]);
-    nloops = atoi(argv[3]);
-
-    CPU_ZERO(&amp;set);
-
-    switch (fork()) {
-    case -1:            /* Error */
-        errExit(&quot;fork&quot;);
-
-    case 0:             /* Child */
-        CPU_SET(childCPU, &amp;set);
-
-        if (sched_setaffinity(getpid(), sizeof(set), &amp;set) == -1)
-            errExit(&quot;sched_setaffinity&quot;);
-
-        for (j = 0; j &lt; nloops; j++)
-            getppid();
-
-        exit(EXIT_SUCCESS);
-
-    default:            /* Parent */
-        CPU_SET(parentCPU, &amp;set);
-
-        if (sched_setaffinity(getpid(), sizeof(set), &amp;set) == -1)
-            errExit(&quot;sched_setaffinity&quot;);
-
-        for (j = 0; j &lt; nloops; j++)
-            getppid();
-
-        wait(NULL);     /* Wait for child to terminate */
-        exit(EXIT_SUCCESS);
-    }
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;cpu_set_t&nbsp;set;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;parentCPU,&nbsp;childCPU;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;nloops,&nbsp;j;
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(argc&nbsp;!=&nbsp;4)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fprintf(stderr,&nbsp;&quot;Usage:&nbsp;%s&nbsp;parent-cpu&nbsp;child-cpu&nbsp;num-loops\n&quot;,
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;argv[0]);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;parentCPU&nbsp;=&nbsp;atoi(argv[1]);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;childCPU&nbsp;=&nbsp;atoi(argv[2]);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;nloops&nbsp;=&nbsp;atoi(argv[3]);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;CPU_ZERO(&amp;set);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;switch&nbsp;(fork())&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;case&nbsp;-1:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Error&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;errExit(&quot;fork&quot;);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;case&nbsp;0:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Child&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;CPU_SET(childCPU,&nbsp;&amp;set);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(sched_setaffinity(getpid(),&nbsp;sizeof(set),&nbsp;&amp;set)&nbsp;==&nbsp;-1)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;errExit(&quot;sched_setaffinity&quot;);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;for&nbsp;(j&nbsp;=&nbsp;0;&nbsp;j&nbsp;&lt;&nbsp;nloops;&nbsp;j++)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;getppid();
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_SUCCESS);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;default:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Parent&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;CPU_SET(parentCPU,&nbsp;&amp;set);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(sched_setaffinity(getpid(),&nbsp;sizeof(set),&nbsp;&amp;set)&nbsp;==&nbsp;-1)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;errExit(&quot;sched_setaffinity&quot;);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;for&nbsp;(j&nbsp;=&nbsp;0;&nbsp;j&nbsp;&lt;&nbsp;nloops;&nbsp;j++)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;getppid();
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;wait(NULL);&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Wait&nbsp;for&nbsp;child&nbsp;to&nbsp;terminate&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_SUCCESS);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
 }
-</PRE>
 
 <A NAME="lbAN">&nbsp;</A>
 <H2>SEE ALSO</H2>
@@ -585,6 +598,6 @@ main(int argc, char *argv[])
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:46:39 GMT, April 20, 2020
+Time: 03:47:15 GMT, April 20, 2020
 </BODY>
 </HTML>

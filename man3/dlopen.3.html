@@ -25,7 +25,7 @@ License along with this manual; if not, see
 <HTML><HEAD><TITLE>Man page of DLOPEN</TITLE>
 </HEAD><BODY>
 <H1>DLOPEN</H1>
-Section: Linux Programmer's Manual (3)<BR>Updated: 2016-10-08<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2017-09-15<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -39,12 +39,15 @@ open and close a shared object
 <B>#include &lt;<A HREF="file:///usr/include/dlfcn.h">dlfcn.h</A>&gt;</B>
 
 <P>
+
 <B>void *dlopen(const char *</B><I>filename</I><B>, int </B><I>flags</I><B>);</B>
 
 <P>
+
 <B>int dlclose(void *</B><I>handle</I><B>);</B>
 
 <P>
+
 <B>#define _GNU_SOURCE</B>
 
 <BR>
@@ -52,9 +55,11 @@ open and close a shared object
 <B>#include &lt;<A HREF="file:///usr/include/dlfcn.h">dlfcn.h</A>&gt;</B>
 
 <P>
+
 <B>void *dlmopen (Lmid_t </B><I>lmid</I><B>, const char *</B><I>filename</I><B>, int </B><I>flags</I><B>);</B>
 
 <P>
+
 Link with <I>-ldl</I>.
 <A NAME="lbAD">&nbsp;</A>
 <H2>DESCRIPTION</H2>
@@ -82,6 +87,7 @@ and
 <B>dlclose</B>().
 
 <P>
+
 If
 <I>filename</I>
 
@@ -317,6 +323,7 @@ and
 arguments, as well as the return value, are the same,
 except for the differences noted below.
 <P>
+
 The
 <B>dlmopen</B>()
 
@@ -343,6 +350,7 @@ The
 
 type is an opaque handle that refers to a namespace.
 <P>
+
 The
 <I>lmid</I>
 
@@ -399,6 +407,7 @@ was invoked on the object referred to by
 
 are recursively closed in the same manner.
 <P>
+
 A successful return from
 <B>dlclose</B>()
 
@@ -428,11 +437,13 @@ On error
 or caused errors during loading),
 these functions return NULL.
 <P>
+
 On success,
 <B>dlclose</B>()
 
 returns 0; on error, it returns a nonzero value.
 <P>
+
 Errors from these functions can be diagnosed using
 <B><A HREF="../man3/dlerror.3.html">dlerror</A></B>(3).
 
@@ -480,6 +491,7 @@ The
 
 function is a GNU extension.
 <P>
+
 The
 <B>RTLD_NOLOAD</B>,
 
@@ -504,6 +516,7 @@ and symbol references are likewise resolved according to the usual rules,
 but such resolution is confined to the definitions provided by the
 objects that have been (explicitly and implicitly) loaded into the namespace.
 <P>
+
 The
 <B>dlmopen</B>()
 
@@ -528,6 +541,7 @@ This can be achieved by using a separate namespace and the
 
 flag.
 <P>
+
 The
 <B>dlmopen</B>()
 
@@ -550,6 +564,7 @@ Thus,
 is insufficient to isolate a loaded shared object except in the (uncommon)
 case where one has explicit control over all shared object dependencies.
 <P>
+
 Possible uses of
 <B>dlmopen</B>()
 
@@ -568,6 +583,7 @@ Using
 this can be achieved by loading the same shared object file into
 different namespaces.
 <P>
+
 The glibc implementation supports a maximum of
 
 16 namespaces.
@@ -599,6 +615,7 @@ info pages (under &quot;Function attributes&quot;)
 
 for further information.
 <P>
+
 An older method of (partially) achieving the same result is via the use of
 two special symbols recognized by the linker:
 <B>_init</B>
@@ -650,6 +667,7 @@ permit multiple initialization and finalization functions to be defined.
 
 
 <P>
+
 Since glibc 2.2.3,
 <B><A HREF="../man3/atexit.3.html">atexit</A></B>(3)
 
@@ -692,67 +710,69 @@ function, and prints the cosine of 2.0.
 The following is an example of building and running the program:
 <P>
 
-<PRE>
+
+
 $ <B>cc dlopen_demo.c -ldl</B>
 $ <B>./a.out</B>
 -0.416147
-</PRE>
 
 
 <A NAME="lbAR">&nbsp;</A>
 <H3>Program source</H3>
 
-<PRE>
+
 
 #include &lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/stdlib.h">stdlib.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/dlfcn.h">dlfcn.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/gnu/lib-names.h">gnu/lib-names.h</A>&gt;  /* Defines LIBM_SO (which will be a
-                               string such as &quot;libm.so.6&quot;) */
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;string&nbsp;such&nbsp;as&nbsp;&quot;libm.so.6&quot;)&nbsp;*/
 int
 main(void)
 {
-    void *handle;
-    double (*cosine)(double);
-    char *error;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;void&nbsp;*handle;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;double&nbsp;(*cosine)(double);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;char&nbsp;*error;
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;handle&nbsp;=&nbsp;dlopen(LIBM_SO,&nbsp;RTLD_LAZY);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(!handle)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fprintf(stderr,&nbsp;&quot;%s\n&quot;,&nbsp;dlerror());
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;dlerror();&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Clear&nbsp;any&nbsp;existing&nbsp;error&nbsp;*/
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;cosine&nbsp;=&nbsp;(double&nbsp;(*)(double))&nbsp;dlsym(handle,&nbsp;&quot;cos&quot;);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;According&nbsp;to&nbsp;the&nbsp;ISO&nbsp;C&nbsp;standard,&nbsp;casting&nbsp;between&nbsp;function
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;pointers&nbsp;and&nbsp;'void&nbsp;*',&nbsp;as&nbsp;done&nbsp;above,&nbsp;produces&nbsp;undefined&nbsp;results.
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;POSIX.1-2003&nbsp;and&nbsp;POSIX.1-2008&nbsp;accepted&nbsp;this&nbsp;state&nbsp;of&nbsp;affairs&nbsp;and
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;proposed&nbsp;the&nbsp;following&nbsp;workaround:
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*(void&nbsp;**)&nbsp;(&amp;cosine)&nbsp;=&nbsp;dlsym(handle,&nbsp;&quot;cos&quot;);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;This&nbsp;(clumsy)&nbsp;cast&nbsp;conforms&nbsp;with&nbsp;the&nbsp;ISO&nbsp;C&nbsp;standard&nbsp;and&nbsp;will
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;avoid&nbsp;any&nbsp;compiler&nbsp;warnings.
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;The&nbsp;2013&nbsp;Technical&nbsp;Corrigendum&nbsp;to&nbsp;POSIX.1-2008&nbsp;(a.k.a.
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;POSIX.1-2013)&nbsp;improved&nbsp;matters&nbsp;by&nbsp;requiring&nbsp;that&nbsp;conforming
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;implementations&nbsp;support&nbsp;casting&nbsp;'void&nbsp;*'&nbsp;to&nbsp;a&nbsp;function&nbsp;pointer.
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Nevertheless,&nbsp;some&nbsp;compilers&nbsp;(e.g.,&nbsp;gcc&nbsp;with&nbsp;the&nbsp;'-pedantic'
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;option)&nbsp;may&nbsp;complain&nbsp;about&nbsp;the&nbsp;cast&nbsp;used&nbsp;in&nbsp;this&nbsp;program.&nbsp;*/
 
-    handle = dlopen(LIBM_SO, RTLD_LAZY);
-    if (!handle) {
-        fprintf(stderr, &quot;%s\n&quot;, dlerror());
-        exit(EXIT_FAILURE);
-    }
 
-    dlerror();    /* Clear any existing error */
 
-    cosine = (double (*)(double)) dlsym(handle, &quot;cos&quot;);
-
-    /* According to the ISO C standard, casting between function
-       pointers and 'void *', as done above, produces undefined results.
-       POSIX.1-2003 and POSIX.1-2008 accepted this state of affairs and
-       proposed the following workaround:
-
-           *(void **) (&amp;cosine) = dlsym(handle, &quot;cos&quot;);
-
-       This (clumsy) cast conforms with the ISO C standard and will
-       avoid any compiler warnings.
-
-       The 2013 Technical Corrigendum to POSIX.1-2008 (a.k.a.
-       POSIX.1-2013) improved matters by requiring that conforming
-       implementations support casting 'void *' to a function pointer.
-       Nevertheless, some compilers (e.g., gcc with the '-pedantic'
-       option) may complain about the cast used in this program. */
-
-    error = dlerror();
-    if (error != NULL) {
-        fprintf(stderr, &quot;%s\n&quot;, error);
-        exit(EXIT_FAILURE);
-    }
-
-    printf(&quot;%f\n&quot;, (*cosine)(2.0));
-    dlclose(handle);
-    exit(EXIT_SUCCESS);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;error&nbsp;=&nbsp;dlerror();
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(error&nbsp;!=&nbsp;NULL)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fprintf(stderr,&nbsp;&quot;%s\n&quot;,&nbsp;error);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;%f\n&quot;,&nbsp;(*cosine)(2.0));
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;dlclose(handle);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_SUCCESS);
 }
-</PRE>
 
 <A NAME="lbAS">&nbsp;</A>
 <H2>SEE ALSO</H2>
@@ -780,6 +800,7 @@ main(void)
 <B><A HREF="../man8/ldconfig.8.html">ldconfig</A></B>(8)
 
 <P>
+
 gcc info pages, ld info pages
 <P>
 
@@ -815,6 +836,6 @@ gcc info pages, ld info pages
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:46:43 GMT, April 20, 2020
+Time: 03:47:19 GMT, April 20, 2020
 </BODY>
 </HTML>

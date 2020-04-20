@@ -25,7 +25,7 @@ License along with this manual; if not, see
 <HTML><HEAD><TITLE>Man page of BOOTPARAM</TITLE>
 </HEAD><BODY>
 <H1>BOOTPARAM</H1>
-Section: Linux Programmer's Manual (7)<BR>Updated: 2017-05-03<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (7)<BR>Updated: 2017-09-15<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -42,6 +42,7 @@ supply the kernel with information about hardware parameters that
 the kernel would not be able to determine on its own, or to avoid/override
 the values that the kernel would otherwise detect.
 <P>
+
 When the kernel is booted directly by the BIOS,
 you have no opportunity to specify any parameters.
 So, in order to take advantage of this possibility you have to
@@ -54,9 +55,9 @@ The kernel command line is parsed into a list of strings
 Most of the boot arguments have the form:
 <P>
 
-<PRE>
+
+
 name[=value_1][,value_2]...[,value_10]
-</PRE>
 
 
 <P>
@@ -69,6 +70,7 @@ separated parameters per keyword.
 keyword with up to an additional 10 parameters in unusually
 complicated situations, assuming the setup function supports it.)
 <P>
+
 Most of the sorting is coded in the kernel source file
 <I>init/main.c</I>.
 
@@ -77,6 +79,7 @@ checks to see if the argument is any of the special arguments 'root=',
 'nfsroot=', 'nfsaddrs=', 'ro', 'rw', 'debug' or 'init'.
 The meaning of these special arguments is described below.
 <P>
+
 Then it walks a list of setup functions
 to see if the specified argument string (such as 'foo') has
 been associated with a setup function ('foo_setup()') for a particular
@@ -88,12 +91,14 @@ If it was, then it would call the setup
 function associated with 'foo' (foo_setup()) and hand it the arguments
 3, 4, 5, and 6 as given on the kernel command line.
 <P>
+
 Anything of the form 'foo=bar' that is not accepted as a setup function
 as described above is then interpreted as an environment variable to
 be set.
 A (useless?) example would be to use 'TERM=vt100' as a boot
 argument.
 <P>
+
 Any remaining arguments that were not picked up by the kernel and were
 not interpreted as environment variables are then passed onto PID 1,
 which is usually the
@@ -157,7 +162,7 @@ system that the kernel was built on.
 To override this value, and
 select the second floppy drive as the root device, one would
 use 'root=/dev/fd1'.
-<P>
+<DT><DD>
 The root device can be specified symbolically or numerically.
 A symbolic specification has the form
 <I>/dev/XXYN</I>,
@@ -167,11 +172,11 @@ the device type (e.g., 'hd' for ST-506 compatible hard disk, with Y in
 'a'-'d'; 'sd' for SCSI compatible disk, with Y in 'a'-'e'),
 Y the driver letter or
 number, and N the number (in decimal) of the partition on this device.
-<P>
+<DT><DD>
 Note that this has nothing to do with the designation of these
 devices on your filesystem.
 The '/dev/' part is purely conventional.
-<P>
+<DT><DD>
 The more awkward and less portable numeric specification of the above
 possible root devices in major/minor format is also accepted.
 (For example,
@@ -212,7 +217,7 @@ as read/write capable, for example, by 'mount -w -n -o remount /'.
 (See also
 <B><A HREF="../man8/mount.8.html">mount</A></B>(8).)
 
-<P>
+<DT><DD>
 The 'rw' option tells the kernel to mount the root filesystem read/write.
 This is the default.
 <DT><B>'resume=...'</B>
@@ -221,11 +226,10 @@ This is the default.
 This tells the kernel the location of the suspend-to-disk data that you want the machine to resume from after hibernation.
 Usually, it is the same as your swap partition or file.
 Example:
-<P>
+<DT><DD>
 
-<PRE>
+
 resume=/dev/hda2
-</PRE>
 
 
 <DT><B>'reserve=...'</B>
@@ -233,32 +237,31 @@ resume=/dev/hda2
 <DD>
 This is used to protect I/O port regions from probes.
 The form of the command is:
-<P>
+<DT><DD>
 
-<PRE>
+
 <B>reserve=</B><I>iobase,extent[,iobase,extent]...</I>
-</PRE>
 
 
-<P>
+
+<DT><DD>
 In some machines it may be necessary to prevent device drivers from
 checking for devices (auto-probing) in a specific region.
 This may be
 because of hardware that reacts badly to the probing, or hardware
 that would be mistakenly identified, or merely
 hardware you don't want the kernel to initialize.
-<P>
+<DT><DD>
 The reserve boot-time argument specifies an I/O port region that
 shouldn't be probed.
 A device driver will not probe a reserved region,
 unless another boot argument explicitly specifies that it do so.
-<P>
+<DT><DD>
 For example, the boot line
-<P>
+<DT><DD>
 
-<PRE>
+
 reserve=0x300,32  blah=0x300
-</PRE>
 
 
 <DT><DD>
@@ -270,11 +273,10 @@ keeps all device drivers except the driver for 'blah' from probing
 By default, the kernel will not reboot after a panic, but this option
 will cause a kernel reboot after N seconds (if N is greater than zero).
 This panic timeout can also be set by
-<P>
+<DT><DD>
 
-<PRE>
+
 echo N &gt; /proc/sys/kernel/panic
-</PRE>
 
 
 <DT><B>'reboot=[warm|cold][,[bios|hard]]'</B>
@@ -363,14 +365,13 @@ when that is given, or 2, the default.
 The significance of this variable is that it
 gives the granularity of the profiling: each clock tick, if the
 system was executing kernel code, a counter is incremented:
-<P>
+<DT><DD>
 
-<PRE>
+
 profile[address &gt;&gt; prof_shift]++;
-</PRE>
 
 
-<P>
+<DT><DD>
 The raw profiling information can be read from
 <I>/proc/profile</I>.
 
@@ -394,7 +395,8 @@ ramdisk.
 One might also have a system in which first
 some modules (for filesystem or hardware) must be loaded
 before the main disk can be accessed.
-<P>
+<DL COMPACT>
+<DT><DD>
 In Linux 1.3.48, ramdisk handling was changed drastically.
 Earlier, the memory was allocated statically, and there was
 a 'ramdisk=N' parameter to tell its size.
@@ -407,9 +409,8 @@ setup, see the kernel source file
 (<I>Documentation/ramdisk.txt</I>
 
 in older kernels).
-<P>
+<DT><DD>
 There are four parameters, two boolean and two integral.
-<DL COMPACT>
 <DT><B>'load_ramdisk=N'</B>
 
 <DD>
@@ -427,7 +428,7 @@ If N=0, do not prompt.
 
 <DD>
 Set the maximal size of the ramdisk(s) to N kB.
-The default is 4096 (4 MB).
+The default is 4096 (4&nbsp;MB).
 <DT><B>'ramdisk_start=N'</B>
 
 <DD>
@@ -459,11 +460,16 @@ the usual boot sequence (e.g., invocation of
 <I>/sbin/init</I>)
 
 is performed.
-<P>
+<DT><DD>
 For a detailed description of the initrd feature, see the kernel source file
-<I>Documentation/initrd.txt</I>.
+<I>Documentation/admin-guide/initrd.rst</I>
 
-<P>
+
+(or
+<I>Documentation/initrd.txt</I>
+
+before Linux 4.10).
+<DT><DD>
 The 'noinitrd' option tells the kernel that although it was compiled for
 operation with initrd, it should not go through the above steps, but
 leave the initrd data under
@@ -479,12 +485,14 @@ the last process that used it has closed
 
 General notation for this section:
 <P>
+
 <I>iobase</I>
 
 -- the first I/O port that the SCSI host occupies.
 These are specified in hexadecimal notation,
 and usually lie in the range from 0x200 to 0x3ff.
 <P>
+
 <I>irq</I>
 
 -- the hardware interrupt that the card is configured to use.
@@ -494,6 +502,7 @@ The other values are usually
 used for common peripherals like IDE hard disks, floppies, serial
 ports, and so on.
 <P>
+
 <I>scsi-id</I>
 
 -- the ID that the host adapter uses to identify itself on the
@@ -503,6 +512,7 @@ most have it permanently specified internally.
 The usual default value
 is 7, but the Seagate and Future Domain TMC-950 boards use 6.
 <P>
+
 <I>parity</I>
 
 -- whether the SCSI host adapter expects the attached devices
@@ -524,14 +534,14 @@ Each CD is addressed as a
 But most
 devices, such as hard disks, tape drives and such are only one device,
 and will be assigned to LUN zero.
-<P>
+<DT><DD>
 Some poorly designed SCSI devices cannot handle being probed for
 LUNs not equal to zero.
 Therefore, if the compile-time flag
 <B>CONFIG_SCSI_MULTI_LUN</B>
 
 is not set, newer kernels will by default probe only LUN zero.
-<P>
+<DT><DD>
 To specify the number of probed LUNs at boot, one enters
 'max_scsi_luns=n' as a boot arg, where n is a number between one and
 eight.
@@ -542,33 +552,32 @@ avoid upsetting such broken devices.
 <DD>
 Some boot time configuration of the SCSI tape driver can be achieved
 by using the following:
-<P>
+<DT><DD>
 
-<PRE>
+
 <B>st=</B><I>buf_size[,write_threshold[,max_bufs]]</I>
-</PRE>
 
 
-<P>
+
+<DT><DD>
 The first two numbers are specified in units of kB.
 The default
 <I>buf_size</I>
 
-is 32kB, and the maximum size that can be specified is a
-ridiculous 16384kB.
+is 32k&nbsp;B, and the maximum size that can be specified is a
+ridiculous 16384&nbsp;kB.
 The
 <I>write_threshold</I>
 
 is the value at which the buffer is committed to tape, with a
-default value of 30kB.
+default value of 30&nbsp;kB.
 The maximum number of buffers varies
 with the number of drives detected, and has a default of two.
 An example usage would be:
-<P>
+<DT><DD>
 
-<PRE>
+
 st=32,30,2
-</PRE>
 
 
 <DT><DD>
@@ -590,11 +599,11 @@ for older kernels) in the Linux kernel source.
 The IDE driver accepts a number of parameters, which range from disk
 geometry specifications, to support for broken controller chips.
 Drive-specific options are specified by using 'hdX=' with X in 'a'-'h'.
-<P>
+<DT><DD>
 Non-drive-specific options are specified with the prefix 'hd='.
 Note that using a drive-specific prefix for a non-drive-specific option
 will still work, and the option will just be applied as expected.
-<P>
+<DT><DD>
 Also note that 'hd=' can be used to refer to the next unspecified
 drive in the (a, ..., h) sequence.
 For the following discussions,
@@ -636,11 +645,10 @@ used at the same time.
 <DD>
 Do not probe for this drive.
 For example,
-<P>
+<DT><DD>
 
-<PRE>
+
 hdb=noprobe hdb=1166,7,17
-</PRE>
 
 
 <DT><DD>
@@ -672,11 +680,10 @@ values (C/H/S); any more or any less and it will silently ignore you.
 Also, it accepts only 'hd=' as an argument, that is, 'hda='
 and so on are not valid here.
 The format is as follows:
-<P>
+<DT><DD>
 
-<PRE>
+
 hd=cyls,heads,sects
-</PRE>
 
 
 <DT><DD>
@@ -691,12 +698,13 @@ least share having an IRQ, an I/O port base value, and a name.
 In its most generic form, it looks something like this:
 <P>
 
-<PRE>
+
+
 ether=irq,iobase[,param_1[,...param_8]],name
-</PRE>
 
 
 <P>
+
 The first nonnumeric argument is taken as the name.
 The param_n values (if applicable) usually have different meanings for each
 different card/driver.
@@ -704,20 +712,23 @@ Typical param_n values are used to specify
 things like shared memory address, interface selection, DMA channel
 and the like.
 <P>
+
 The most common use of this parameter is to force probing for a second
 ethercard, as the default is to probe only for one.
 This can be accomplished with a simple:
 <P>
 
-<PRE>
+
+
 ether=0,0,eth1
-</PRE>
 
 
 <P>
+
 Note that the values of zero for the IRQ and I/O base in the above
 example tell the driver(s) to autoprobe.
 <P>
+
 The Ethernet-HowTo has extensive documentation on using multiple
 cards and on the card/driver-specific implementation
 of the param_n values where used.
@@ -753,30 +764,34 @@ It accepts
 a boot argument of the form:
 <P>
 
-<PRE>
+
+
 sound=device1[,device2[,device3...[,device10]]]
-</PRE>
 
 
-<DL COMPACT>
-<DT><DD>
+<P>
+
 where each deviceN value is of the following format 0xTaaaId and the
 bytes are used as follows:
 <P>
+
 T - device type: 1=FM, 2=SB, 3=PAS, 4=GUS, 5=MPU401, 6=SB16,
 7=SB16-MPU401
 <P>
+
 aaa - I/O address in hex.
 <P>
+
 I - interrupt line in hex (i.e., 10=a, 11=b, ...)
 <P>
+
 d - DMA channel.
 <P>
+
 As you can see, it gets pretty messy, and you are better off to compile
 in your own personal values as recommended.
 Using a boot argument of
 'sound=0' will disable the sound driver entirely.
-</DL>
 <A NAME="lbAM">&nbsp;</A>
 <H3>The line printer driver</H3>
 
@@ -787,14 +802,13 @@ Using a boot argument of
 <BR>
 
 Syntax:
-<P>
+<DT><DD>
 
-<PRE>
+
 lp=0
 lp=auto
 lp=reset
 lp=port[,port...]
-</PRE>
 
 
 <DT><DD>
@@ -803,7 +817,7 @@ to use.
 The latter comes in handy if you don't want the printer driver
 to claim all available parallel ports, so that other drivers
 (e.g., PLIP, PPA) can use them instead.
-<P>
+<DT><DD>
 The format of the argument is multiple port names.
 For example,
 lp=none,parport0 would use the first parallel port for lp1, and
@@ -821,6 +835,7 @@ lp=0.
 <B><A HREF="../man8/mount.8.html">mount</A></B>(8)
 
 <P>
+
 For up-to-date information, see the kernel source file
 <I>Documentation/admin-guide/kernel-parameters.txt</I>.
 
@@ -849,6 +864,6 @@ For up-to-date information, see the kernel source file
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:46:51 GMT, April 20, 2020
+Time: 03:47:27 GMT, April 20, 2020
 </BODY>
 </HTML>

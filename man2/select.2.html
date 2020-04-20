@@ -25,7 +25,7 @@ the source, must acknowledge the copyright and authors of this work.
 <HTML><HEAD><TITLE>Man page of SELECT</TITLE>
 </HEAD><BODY>
 <H1>SELECT</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2017-05-03<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2017-09-15<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -38,26 +38,19 @@ synchronous I/O multiplexing
 
 <PRE>
 /* According to POSIX.1-2001, POSIX.1-2008 */
-<BR>
 <B>#include &lt;<A HREF="file:///usr/include/sys/select.h">sys/select.h</A>&gt;</B>
 
 /* According to earlier standards */
-<BR>
 <B>#include &lt;<A HREF="file:///usr/include/sys/time.h">sys/time.h</A>&gt;</B>
-<BR>
 <B>#include &lt;<A HREF="file:///usr/include/sys/types.h">sys/types.h</A>&gt;</B>
-<BR>
 <B>#include &lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;</B>
 
 <B>int select(int </B><I>nfds</I><B>, fd_set *</B><I>readfds</I><B>, fd_set *</B><I>writefds</I><B>,</B>
 <B>           fd_set *</B><I>exceptfds</I><B>, struct timeval *</B><I>timeout</I><B>);</B>
 
 <B>void FD_CLR(int </B><I>fd</I><B>, fd_set *</B><I>set</I><B>);</B>
-<BR>
 <B>int  FD_ISSET(int </B><I>fd</I><B>, fd_set *</B><I>set</I><B>);</B>
-<BR>
 <B>void FD_SET(int </B><I>fd</I><B>, fd_set *</B><I>set</I><B>);</B>
-<BR>
 <B>void FD_ZERO(fd_set *</B><I>set</I><B>);</B>
 
 <B>#include &lt;<A HREF="file:///usr/include/sys/select.h">sys/select.h</A>&gt;</B>
@@ -69,11 +62,13 @@ synchronous I/O multiplexing
 
 <P>
 
+
 Feature Test Macro Requirements for glibc (see
 <B><A HREF="../man7/feature_test_macros.7.html">feature_test_macros</A></B>(7)):
 
 
 <P>
+
 <B>pselect</B>():
 
 _POSIX_C_SOURCE&nbsp;&gt;=&nbsp;200112L
@@ -177,6 +172,7 @@ in
 <B><A HREF="../man2/poll.2.html">poll</A></B>(2).)
 
 <P>
+
 On exit, each of the file descriptor sets is modified in place
 to indicate which file descriptors actually changed status.
 (Thus, if using
@@ -184,6 +180,7 @@ to indicate which file descriptors actually changed status.
 
 within a loop, the sets must be reinitialized before each call.)
 <P>
+
 Each of the three file descriptor sets may be specified as NULL
 if no file descriptors are to be watched for the corresponding class
 of events.
@@ -279,25 +276,32 @@ argument, the following
 <B>pselect</B>()
 
 call:
-<PRE>
+<P>
 
-    ready = pselect(nfds, &amp;readfds, &amp;writefds, &amp;exceptfds,
-                    timeout, &amp;sigmask);
 
-</PRE>
+
+ready = pselect(nfds, &amp;readfds, &amp;writefds, &amp;exceptfds,
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;timeout,&nbsp;&amp;sigmask);
+
+
+<P>
 
 is equivalent to
 <I>atomically</I>
 
 executing the following calls:
-<PRE>
+<P>
 
-    sigset_t origmask;
 
-    pthread_sigmask(SIG_SETMASK, &amp;sigmask, &amp;origmask);
-    ready = select(nfds, &amp;readfds, &amp;writefds, &amp;exceptfds, timeout);
-    pthread_sigmask(SIG_SETMASK, &amp;origmask, NULL);
-</PRE>
+
+sigset_t origmask;
+<P>
+pthread_sigmask(SIG_SETMASK, &amp;sigmask, &amp;origmask);
+ready = select(nfds, &amp;readfds, &amp;writefds, &amp;exceptfds, timeout);
+pthread_sigmask(SIG_SETMASK, &amp;origmask, NULL);
+
+
+<P>
 
 <P>
 
@@ -334,27 +338,29 @@ The time structures involved are defined in
 and look like
 <P>
 
-<PRE>
+
+
 struct timeval {
-    long    tv_sec;         /* seconds */
-    long    tv_usec;        /* microseconds */
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;long&nbsp;&nbsp;&nbsp;&nbsp;tv_sec;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;seconds&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;long&nbsp;&nbsp;&nbsp;&nbsp;tv_usec;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;microseconds&nbsp;*/
 };
-</PRE>
 
 
 <P>
+
 and
 <P>
 
-<PRE>
+
+
 struct timespec {
-    long    tv_sec;         /* seconds */
-    long    tv_nsec;        /* nanoseconds */
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;long&nbsp;&nbsp;&nbsp;&nbsp;tv_sec;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;seconds&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;long&nbsp;&nbsp;&nbsp;&nbsp;tv_nsec;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;nanoseconds&nbsp;*/
 };
-</PRE>
 
 
 <P>
+
 (However, see below on the POSIX.1 versions.)
 <P>
 
@@ -522,6 +528,7 @@ Moreover, POSIX requires
 
 to be a valid file descriptor.
 <P>
+
 On some other UNIX systems,
 
 <B>select</B>()
@@ -546,6 +553,7 @@ and loop, just as with
 <B>EINTR</B>.
 
 <P>
+
 On systems that lack
 <B>pselect</B>(),
 
@@ -561,6 +569,7 @@ in the main program.
 or reading from a pipe that may be empty,
 nonblocking I/O is used when reading from and writing to the pipe.)
 <P>
+
 Concerning the types involved, the classical situation is that
 the two fields of a
 <I>timeval</I>
@@ -574,15 +583,16 @@ structure are typed as
 The POSIX.1 situation is
 <P>
 
-<PRE>
+
+
 struct timeval {
-    time_t         tv_sec;     /* seconds */
-    suseconds_t    tv_usec;    /* microseconds */
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;time_t&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;tv_sec;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;seconds&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;suseconds_t&nbsp;&nbsp;&nbsp;&nbsp;tv_usec;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;microseconds&nbsp;*/
 };
-</PRE>
 
 
 <P>
+
 where the structure is defined in
 <I>&lt;<A HREF="file:///usr/include/sys/select.h">sys/select.h</A>&gt;</I>
 
@@ -614,6 +624,7 @@ and
 <B>pselect</B>().
 
 <P>
+
 Under glibc 2.0,
 <I>&lt;<A HREF="file:///usr/include/sys/select.h">sys/select.h</A>&gt;</I>
 
@@ -645,15 +656,17 @@ and the event notifications provided by
 <B><A HREF="../man7/epoll.7.html">epoll</A></B>(7)):
 
 <P>
-<PRE>
+
+
+
 #define POLLIN_SET (POLLRDNORM | POLLRDBAND | POLLIN | POLLHUP |
-                    POLLERR)
-                   /* Ready for reading */
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;POLLERR)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Ready&nbsp;for&nbsp;reading&nbsp;*/
 #define POLLOUT_SET (POLLWRBAND | POLLWRNORM | POLLOUT | POLLERR)
-                   /* Ready for writing */
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Ready&nbsp;for&nbsp;writing&nbsp;*/
 #define POLLEX_SET (POLLPRI)
-                   /* Exceptional condition */
-</PRE>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Exceptional&nbsp;condition&nbsp;*/
+
 
 
 <A NAME="lbAL">&nbsp;</A>
@@ -692,6 +705,7 @@ However, in the glibc implementation, the
 type is fixed in size.
 See also BUGS.
 <P>
+
 The
 <B>pselect</B>()
 
@@ -702,6 +716,7 @@ The underlying Linux system call is named
 This system call has somewhat different behavior from the glibc
 wrapper function.
 <P>
+
 The Linux
 <B>pselect6</B>()
 
@@ -721,6 +736,7 @@ function does not modify its
 argument;
 this is the behavior required by POSIX.1-2001.
 <P>
+
 The final argument of the
 <B>pselect6</B>()
 
@@ -728,17 +744,18 @@ system call is not a
 <I>sigset_t&nbsp;*</I>
 
 pointer, but is instead a structure of the form:
+<P>
 
-<PRE>
+
 
 struct {
-    const kernel_sigset_t *ss;   /* Pointer to signal set */
-    size_t ss_len;               /* Size (in bytes) of object
-                                    pointed to by 'ss' */
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;const&nbsp;kernel_sigset_t&nbsp;*ss;&nbsp;&nbsp;&nbsp;/*&nbsp;Pointer&nbsp;to&nbsp;signal&nbsp;set&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;size_t&nbsp;ss_len;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Size&nbsp;(in&nbsp;bytes)&nbsp;of&nbsp;object
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;pointed&nbsp;to&nbsp;by&nbsp;'ss'&nbsp;*/
 };
 
-</PRE>
 
+<P>
 
 This allows the system call to obtain both
 a pointer to the signal set and its size,
@@ -773,6 +790,7 @@ To monitor file descriptors greater than 1023, use
 
 instead.
 <P>
+
 According to POSIX,
 <B>select</B>()
 
@@ -788,6 +806,7 @@ of the sets should result in the error
 <B>EBADF</B>.
 
 <P>
+
 Glibc 2.0 provided a version of
 <B>pselect</B>()
 
@@ -796,6 +815,7 @@ that did not take a
 
 argument.
 <P>
+
 Starting with version 2.1, glibc provided an emulation of
 <B>pselect</B>()
 
@@ -814,6 +834,7 @@ Modern versions of glibc use the (race-free)
 
 system call on kernels where it is provided.
 <P>
+
 Under Linux,
 <B>select</B>()
 
@@ -832,6 +853,7 @@ Thus it may be safer to use
 on sockets that should not block.
 
 <P>
+
 On Linux,
 <B>select</B>()
 
@@ -854,44 +876,43 @@ to a local variable and passing that variable to the system call.
 <A NAME="lbAO">&nbsp;</A>
 <H2>EXAMPLE</H2>
 
-<PRE>
+
 #include &lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/stdlib.h">stdlib.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/sys/time.h">sys/time.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/sys/types.h">sys/types.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;
-
+<P>
 int
 main(void)
 {
-    fd_set rfds;
-    struct timeval tv;
-    int retval;
-
-    /* Watch stdin (fd 0) to see when it has input. */
-
-    FD_ZERO(&amp;rfds);
-    FD_SET(0, &amp;rfds);
-
-    /* Wait up to five seconds. */
-
-    tv.tv_sec = 5;
-    tv.tv_usec = 0;
-
-    retval = select(1, &amp;rfds, NULL, NULL, &amp;tv);
-    /* Don't rely on the value of tv now! */
-
-    if (retval == -1)
-        perror(&quot;select()&quot;);
-    else if (retval)
-        printf(&quot;Data is available now.\n&quot;);
-        /* FD_ISSET(0, &amp;rfds) will be true. */
-    else
-        printf(&quot;No data within five seconds.\n&quot;);
-
-    exit(EXIT_SUCCESS);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;fd_set&nbsp;rfds;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;struct&nbsp;timeval&nbsp;tv;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;retval;
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Watch&nbsp;stdin&nbsp;(fd&nbsp;0)&nbsp;to&nbsp;see&nbsp;when&nbsp;it&nbsp;has&nbsp;input.&nbsp;*/
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;FD_ZERO(&amp;rfds);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;FD_SET(0,&nbsp;&amp;rfds);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Wait&nbsp;up&nbsp;to&nbsp;five&nbsp;seconds.&nbsp;*/
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;tv.tv_sec&nbsp;=&nbsp;5;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;tv.tv_usec&nbsp;=&nbsp;0;
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;retval&nbsp;=&nbsp;select(1,&nbsp;&amp;rfds,&nbsp;NULL,&nbsp;NULL,&nbsp;&amp;tv);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Don't&nbsp;rely&nbsp;on&nbsp;the&nbsp;value&nbsp;of&nbsp;tv&nbsp;now!&nbsp;*/
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(retval&nbsp;==&nbsp;-1)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;perror(&quot;select()&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;else&nbsp;if&nbsp;(retval)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;Data&nbsp;is&nbsp;available&nbsp;now.\n&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;FD_ISSET(0,&nbsp;&amp;rfds)&nbsp;will&nbsp;be&nbsp;true.&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;else
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;No&nbsp;data&nbsp;within&nbsp;five&nbsp;seconds.\n&quot;);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_SUCCESS);
 }
-</PRE>
 
 <A NAME="lbAP">&nbsp;</A>
 <H2>SEE ALSO</H2>
@@ -919,6 +940,7 @@ main(void)
 <B><A HREF="../man7/time.7.html">time</A></B>(7)
 
 <P>
+
 For a tutorial with discussion and examples, see
 <B><A HREF="../man2/select_tut.2.html">select_tut</A></B>(2).
 
@@ -951,6 +973,6 @@ For a tutorial with discussion and examples, see
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:46:39 GMT, April 20, 2020
+Time: 03:47:15 GMT, April 20, 2020
 </BODY>
 </HTML>
