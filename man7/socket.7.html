@@ -276,19 +276,6 @@ Can only be read
 with 
 <B>getsockopt</B>().
 
-<DT><B>SO_BSDCOMPAT</B>
-
-<DD>
-Enable BSD bug-to-bug compatibility. 
-This is used by the UDP protocol module in Linux 2.0 and 2.2.
-If enabled ICMP errors received for a UDP socket will not be passed
-to the user program. 
-In later kernel versions, support for this option has been phased out:
-Linux 2.4 silently ignores it, and Linux 2.6 generates a kernel warning
-(printk()) if a program uses this option.
-Linux 2.0 also enabled BSD bug-to-bug compatibility 
-options (random header changing, skipping of the broadcast flag) for raw
-sockets with this option, but that was removed in Linux 2.2. 
 <DT><B>SO_BINDTODEVICE</B>
 
 <DD>
@@ -315,6 +302,19 @@ Set or get the broadcast flag. When enabled, datagram sockets
 receive packets sent to a broadcast address and they are allowed to send 
 packets to a broadcast address.
 This option has no effect on stream-oriented sockets.
+<DT><B>SO_BSDCOMPAT</B>
+
+<DD>
+Enable BSD bug-to-bug compatibility. 
+This is used by the UDP protocol module in Linux 2.0 and 2.2.
+If enabled ICMP errors received for a UDP socket will not be passed
+to the user program. 
+In later kernel versions, support for this option has been phased out:
+Linux 2.4 silently ignores it, and Linux 2.6 generates a kernel warning
+(printk()) if a program uses this option.
+Linux 2.0 also enabled BSD bug-to-bug compatibility 
+options (random header changing, skipping of the broadcast flag) for raw
+sockets with this option, but that was removed in Linux 2.2. 
 <DT><B>SO_DEBUG </B>
 
 <DD>
@@ -445,6 +445,39 @@ Setting a priority outside the range 0 to 6 requires the
 <B>CAP_NET_ADMIN</B>
 
 capability.
+<DT><B>SO_RCVBUF</B>
+
+<DD>
+Sets or gets the maximum socket receive buffer in bytes. 
+The kernel doubles this value (to allow space for bookkeeping overhead) 
+when it is set using
+
+<B>setsockopt</B>(),
+
+and this doubled value is returned by
+<B>getsockopt</B>().
+
+The default value is set by the 
+<B>rmem_default </B>
+
+sysctl and the maximum allowed value is set by the 
+<B>rmem_max</B>
+
+sysctl.   
+The minimum (doubled) value for this option is 256.
+<DT><B>SO_RCVBUFFORCE</B> (since Linux 2.6.14)
+
+<DD>
+Using this socket option, a privileged
+(<B>CAP_NET_ADMIN</B>)
+
+process can perform the same task as 
+<B>SO_RCVBUF</B>,
+
+but the 
+<B>rmem_max</B>
+
+limit can be overridden.
 <DT><B>SO_RCVLOWAT</B> and <B>SO_SNDLOWAT</B>
 
 <DD>
@@ -506,39 +539,6 @@ set to EAGAIN or EWOULDBLOCK
 just as if the socket was specified to be nonblocking.
 If the timeout is set to zero (the default)
 then the operation will never timeout.
-<DT><B>SO_RCVBUF</B>
-
-<DD>
-Sets or gets the maximum socket receive buffer in bytes. 
-The kernel doubles this value (to allow space for bookkeeping overhead) 
-when it is set using
-
-<B>setsockopt</B>(),
-
-and this doubled value is returned by
-<B>getsockopt</B>().
-
-The default value is set by the 
-<B>rmem_default </B>
-
-sysctl and the maximum allowed value is set by the 
-<B>rmem_max</B>
-
-sysctl.   
-The minimum (doubled) value for this option is 256.
-<DT><B>SO_RCVBUFFORCE</B> (since Linux 2.6.14)
-
-<DD>
-Using this socket option, a privileged
-(<B>CAP_NET_ADMIN</B>)
-
-process can perform the same task as 
-<B>SO_RCVBUF</B>,
-
-but the 
-<B>rmem_max</B>
-
-limit can be overridden.
 <DT><B>SO_REUSEADDR</B>
 
 <DD>
@@ -946,6 +946,6 @@ a protocol specific setting, and could not be read or written.
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 02:31:28 GMT, April 20, 2020
+Time: 02:32:04 GMT, April 20, 2020
 </BODY>
 </HTML>

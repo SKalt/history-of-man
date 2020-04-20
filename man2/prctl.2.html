@@ -5,7 +5,7 @@ Copyright (C) 1998 Andries Brouwer (aeb@cwi.nl)
 <HTML><HEAD><TITLE>Man page of PRCTL</TITLE>
 </HEAD><BODY>
 <H1>PRCTL</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2002-06-27<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2006-08-30<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -37,9 +37,9 @@ The first argument can be:
 <DD>
 (since Linux 2.1.57)
 Set the parent process death signal
-of the current process to <I>arg2</I> (either a signal value
+of the calling process to <I>arg2</I> (either a signal value
 in the range 1..maxsig, or 0 to clear).
-This is the signal that the current process will get when its
+This is the signal that the calling process will get when its
 parent dies. 
 This value is cleared upon a 
 <B>fork</B>().
@@ -47,13 +47,13 @@ This value is cleared upon a
 <DT><B>PR_GET_PDEATHSIG</B>
 
 <DD>
-(since Linux 2.3.15)
+(Since Linux 2.3.15)
 Read the current value of the parent process death signal
 into the (int *) <I>arg2</I>.
 <DT><B>PR_SET_DUMPABLE</B>
 
 <DD>
-(Since Linux 2.4)
+(Since Linux 2.3.20)
 Set the state of the flag determining whether core dumps are produced
 for this process upon delivery of a signal whose default behaviour is
 to produce a core dump.
@@ -64,9 +64,14 @@ In kernels up to and including 2.6.12,
 <I>arg2</I>
 
 must be either 0 (process is not dumpable) or 1 (process is dumpable).
-Since kernel 2.6.13, the value 2 is also permitted;
-this causes any binary which normally would not be dumped 
-to be dumped readable by root only. 
+Between kernels 2.6.13 and 2.6.17, the value 2 was also permitted,
+which caused any binary which normally would not be dumped 
+to be dumped readable by root only; 
+for security reasons, this feature has been removed.
+
+
+
+
 (See also the description of 
 <I>/proc/sys/fs/suid_dumpable</I>
 
@@ -76,7 +81,7 @@ in
 <DT><B>PR_GET_DUMPABLE</B>
 
 <DD>
-(Since Linux 2.4)
+(Since Linux 2.3.20)
 Return (as the function result) the current state of the calling
 process's dumpable flag.
 
@@ -85,6 +90,7 @@ process's dumpable flag.
 <DT><B>PR_SET_KEEPCAPS</B>
 
 <DD>
+(Since Linux 2.2.18)
 Set the state of the process's &quot;keep capabilities&quot; flag,
 which determines whether the process's effective and permitted
 capability sets are cleared when a change is made to the process's user IDs
@@ -97,8 +103,95 @@ must be either 0 (capabilities are cleared) or 1 (capabilities are kept).
 <DT><B>PR_GET_KEEPCAPS</B>
 
 <DD>
+(Since Linux 2.2.18)
 Return (as the function result) the current state of the calling process's
 &quot;keep capabilities&quot; flag.
+<DT><B>PR_SET_TIMING</B>
+
+<DD>
+(Since Linux 2.6.0-test4)
+Set whether to use (normal, traditional) statistical process timing or
+accurate timestamp based process timing, by passing <B>PR_TIMING_STATISTICAL</B>
+or <B>PR_TIMING_TIMESTAMP</B> to <I>arg2</I>.
+<DT><B>PR_GET_TIMING</B>
+
+<DD>
+(Since Linux 2.6.0-test4)
+Return (as the function result) which process timing method is currently
+in use.
+<DT><B>PR_SET_NAME</B>
+
+<DD>
+(Since Linux 2.6.9)
+Set the process name for the calling process to <I>arg2</I>.
+<DT><B>PR_GET_NAME</B>
+
+<DD>
+(Since Linux 2.6.11)
+Get the process name for the calling process from <I>arg2</I>.
+<DT><B>PR_GET_ENDIAN</B>
+
+<DD>
+(Since Linux 2.6.18, PowerPC only)
+Return the endian-ness of the calling process.
+<DT><B>PR_SET_ENDIAN</B>
+
+<DD>
+(Since Linux 2.6.18, PowerPC only)
+Set the endian-ness of the calling process to the value given 
+in <I>arg2</I>, which should be one of the following:
+<B>PR_ENDIAN_BIG</B>,
+
+<B>PR_ENDIAN_LITTLE</B>,
+
+or
+<B>PR_ENDIAN_PPC_LITTLE</B>
+
+(PowerPC pseudo little endian).
+<DT><B>PR_SET_UNALIGN</B>
+
+<DD>
+(Since Linux 2.3.48, only on parisc and ia64)
+Set unaligned access control bits to <I>arg2</I>. Pass
+<B>PR_UNALIGN_NOPRINT</B> to silently fix up unaligned user accesses, or
+<B>PR_UNALIGN_SIGBUS</B> to generate SIGBUS on unaligned user access.
+<DT><B>PR_GET_UNALIGN</B>
+
+<DD>
+(Since Linux 2.3.48, only on parisc and ia64)
+Get unaligned access control bits from <I>arg2</I>.
+<DT><B>PR_SET_FPEMU</B>
+
+<DD>
+(Since Linux 2.4.18, 2.5.9, only on ia64)
+Set floating-point emulation control bits to <I>arg2</I>.
+Pass <B>PR_FPEMU_NOPRINT</B> to silently emulate fp operations accesses, or
+<B>PR_FPEMU_SIGFPE</B> to not emulate fp operations and send SIGFPE instead.
+<DT><B>PR_GET_FPEMU</B>
+
+<DD>
+(Since Linux 2.4.18, 2.5.9, only on ia64)
+Get floating-point emulation control bits from <I>arg2</I>.
+<DT><B>PR_SET_FPEXC</B>
+
+<DD>
+(Since Linux 2.4.21, 2.5.32, only on PowerPC)
+Set floating-point exception mode to <I>arg2</I>. Pass
+<B>PR_FP_EXC_SW_ENABLE</B> to use FPEXC for FP exception enables,
+<B>PR_FP_EXC_DIV</B> for floating point divide by zero,
+<B>PR_FP_EXC_OVF</B> for floating point overflow,
+<B>PR_FP_EXC_UND</B> for floating point underflow,
+<B>PR_FP_EXC_RES</B> for floating point inexact result,
+<B>PR_FP_EXC_INV</B> for floating point invalid operation,
+<B>PR_FP_EXC_DISABLED</B> for FP exceptions disabled,
+<B>PR_FP_EXC_NONRECOV</B> for async non-recoverable exception mode,
+<B>PR_FP_EXC_ASYNC</B> for async recoverable exception mode,
+<B>PR_FP_EXC_PRECISE</B> for precise exception mode.
+<DT><B>PR_GET_FPEXC</B>
+
+<DD>
+(Since Linux 2.4.21, 2.5.32, only on PowerPC)
+Get floating-point exception mode from <I>arg2</I>.
 </DL>
 <A NAME="lbAE">&nbsp;</A>
 <H2>RETURN VALUE</H2>
@@ -186,6 +279,6 @@ system call was introduced in Linux 2.1.57.
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 02:31:17 GMT, April 20, 2020
+Time: 02:31:53 GMT, April 20, 2020
 </BODY>
 </HTML>
