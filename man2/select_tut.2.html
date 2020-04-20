@@ -25,224 +25,51 @@ the source, must acknowledge the copyright and authors of this work.
 <HTML><HEAD><TITLE>Man page of SELECT_TUT</TITLE>
 </HEAD><BODY>
 <H1>SELECT_TUT</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2019-03-06<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2020-04-11<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
 <H2>NAME</H2>
 
-select, pselect, FD_CLR, FD_ISSET, FD_SET, FD_ZERO -
-synchronous I/O multiplexing
+select, pselect - synchronous I/O multiplexing
 <A NAME="lbAC">&nbsp;</A>
 <H2>SYNOPSIS</H2>
 
-<PRE>
-/* According to POSIX.1-2001, POSIX.1-2008 */
-<B>#include &lt;<A HREF="file:///usr/include/sys/select.h">sys/select.h</A>&gt;</B>
-
-/* According to earlier standards */
-<B>#include &lt;<A HREF="file:///usr/include/sys/time.h">sys/time.h</A>&gt;</B>
-<B>#include &lt;<A HREF="file:///usr/include/sys/types.h">sys/types.h</A>&gt;</B>
-<B>#include &lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;</B>
-
-<B>int select(int </B><I>nfds</I><B>, fd_set *</B><I>readfds</I><B>, fd_set *</B><I>writefds</I><B>,</B>
-<B>           fd_set *</B><I>exceptfds</I><B>, struct timeval *</B><I>utimeout</I><B>);</B>
-
-<B>void FD_CLR(int </B><I>fd</I><B>, fd_set *</B><I>set</I><B>);</B>
-<B>int  FD_ISSET(int </B><I>fd</I><B>, fd_set *</B><I>set</I><B>);</B>
-<B>void FD_SET(int </B><I>fd</I><B>, fd_set *</B><I>set</I><B>);</B>
-<B>void FD_ZERO(fd_set *</B><I>set</I><B>);</B>
-
-<B>#include &lt;<A HREF="file:///usr/include/sys/select.h">sys/select.h</A>&gt;</B>
-
-<B>int pselect(int </B><I>nfds</I><B>, fd_set *</B><I>readfds</I><B>, fd_set *</B><I>writefds</I><B>,</B>
-<B>            fd_set *</B><I>exceptfds</I><B>, const struct timespec *</B><I>ntimeout</I><B>,</B>
-<B>            const sigset_t *</B><I>sigmask</I><B>);</B>
-</PRE>
-
 <P>
 
+See
+<B><A HREF="../man2/select.2.html">select</A></B>(2)
 
-Feature Test Macro Requirements for glibc (see
-<B><A HREF="../man7/feature_test_macros.7.html">feature_test_macros</A></B>(7)):
-
-
-<P>
-
-<B>pselect</B>():
-
-_POSIX_C_SOURCE&nbsp;&gt;=&nbsp;200112L
 <A NAME="lbAD">&nbsp;</A>
 <H2>DESCRIPTION</H2>
 
+The
 <B>select</B>()
 
-(or
-<B>pselect</B>())
+and
+<B>pselect</B>()
 
-is used to efficiently monitor multiple file descriptors,
+system calls are used to efficiently monitor multiple file descriptors,
 to see if any of them is, or becomes, &quot;ready&quot;;
 that is, to see whether I/O becomes possible,
 or an &quot;exceptional condition&quot; has occurred on any of the file descriptors.
 <P>
 
-Its principal arguments are three &quot;sets&quot; of file descriptors:
-<I>readfds</I>, <I>writefds</I>, and <I>exceptfds</I>.
-Each set is declared as type
-<I>fd_set</I>,
-
-and its contents can be manipulated with the macros
-<B>FD_CLR</B>(),
-
-<B>FD_ISSET</B>(),
-
-<B>FD_SET</B>(),
+This page provides background and tutorial information
+on the use of these system calls.
+For details of the arguments and semantics of
+<B>select</B>()
 
 and
-<B>FD_ZERO</B>().
+<B>pselect</B>(),
 
-A newly declared set should first be cleared using
-<B>FD_ZERO</B>().
+see
+<B><A HREF="../man2/select.2.html">select</A></B>(2).
 
-<B>select</B>()
+<P>
 
-modifies the contents of the sets according to the rules
-described below; after calling
-<B>select</B>()
 
-you can test if a file descriptor is still present in a set with the
-<B>FD_ISSET</B>()
-
-macro.
-<B>FD_ISSET</B>()
-
-returns nonzero if a specified file descriptor is present in a set
-and zero if it is not.
-<B>FD_CLR</B>()
-
-removes a file descriptor from a set.
 <A NAME="lbAE">&nbsp;</A>
-<H3>Arguments</H3>
-
-<DL COMPACT>
-<DT><I>readfds</I><DD>
-This set is watched to see if data is available for reading from any of
-its file descriptors.
-After
-<B>select</B>()
-
-has returned, <I>readfds</I> will be
-cleared of all file descriptors except for those that
-are immediately available for reading.
-<DT><I>writefds</I><DD>
-This set is watched to see if there is space to write data to any of
-its file descriptors.
-After
-<B>select</B>()
-
-has returned, <I>writefds</I> will be
-cleared of all file descriptors except for those that
-are immediately available for writing.
-<DT><I>exceptfds</I><DD>
-This set is watched for &quot;exceptional conditions&quot;.
-In practice, only one such exceptional condition is common:
-the availability of <I>out-of-band</I> (OOB) data for reading
-from a TCP socket.
-See
-<B><A HREF="../man2/recv.2.html">recv</A></B>(2),
-
-<B><A HREF="../man2/send.2.html">send</A></B>(2),
-
-and
-<B><A HREF="../man7/tcp.7.html">tcp</A></B>(7)
-
-for more details about OOB data.
-(One other less common case where
-<B><A HREF="../man2/select.2.html">select</A></B>(2)
-
-indicates an exceptional condition occurs with pseudoterminals
-in packet mode; see
-<B><A HREF="../man2/ioctl_tty.2.html">ioctl_tty</A></B>(2).)
-
-After
-<B>select</B>()
-
-has returned,
-<I>exceptfds</I> will be cleared of all file descriptors except for those
-for which an exceptional condition has occurred.
-<DT><I>nfds</I><DD>
-This is an integer one more than the maximum of any file descriptor in
-any of the sets.
-In other words, while adding file descriptors to each of the sets,
-you must calculate the maximum integer value of all of them,
-then increment this value by one, and then pass this as <I>nfds</I>.
-<DT><I>utimeout</I><DD>
-This is the longest time
-<B>select</B>()
-
-may wait before returning, even if nothing interesting happened.
-If this value is passed as NULL, then
-<B>select</B>()
-
-blocks indefinitely waiting for a file descriptor to become ready.
-<I>utimeout</I> can be set to zero seconds, which causes
-<B>select</B>()
-
-to return immediately, with information about the readiness
-of file descriptors at the time of the call.
-The structure <I>struct timeval</I> is defined as:
-<DT><DD>
-
-
-struct timeval {
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;time_t&nbsp;tv_sec;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;seconds&nbsp;*/
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;long&nbsp;tv_usec;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;microseconds&nbsp;*/
-};
-
-
-<DT><I>ntimeout</I><DD>
-This argument for
-<B>pselect</B>()
-
-has the same meaning as
-<I>utimeout</I>,
-
-but
-<I>struct timespec</I>
-
-has nanosecond precision as follows:
-<DT><DD>
-
-
-struct timespec {
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;long&nbsp;tv_sec;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;seconds&nbsp;*/
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;long&nbsp;tv_nsec;&nbsp;&nbsp;&nbsp;/*&nbsp;nanoseconds&nbsp;*/
-};
-
-
-<DT><I>sigmask</I><DD>
-This argument holds a set of signals that the kernel should unblock
-(i.e., remove from the signal mask of the calling thread),
-while the caller is blocked inside the
-<B>pselect</B>()
-
-call (see
-<B><A HREF="../man3/sigaddset.3.html">sigaddset</A></B>(3)
-
-and
-<B><A HREF="../man2/sigprocmask.2.html">sigprocmask</A></B>(2)).
-
-It may be NULL,
-in which case the call does not modify the signal mask on
-entry and exit to the function.
-In this case,
-<B>pselect</B>()
-
-will then behave just like
-<B>select</B>().
-
-</DL>
-<A NAME="lbAF">&nbsp;</A>
 <H3>Combining signal and data events</H3>
 
 <B>pselect</B>()
@@ -265,6 +92,8 @@ in the main loop of the program, otherwise
 <B>select</B>()
 
 would block indefinitely.
+<P>
+
 Now, somewhere
 in the main loop will be a conditional to check the global flag.
 So we must ask:
@@ -356,7 +185,7 @@ main(int argc, char *argv[])
 <BR>&nbsp;&nbsp;&nbsp;&nbsp;}
 }
 
-<A NAME="lbAG">&nbsp;</A>
+<A NAME="lbAF">&nbsp;</A>
 <H3>Practical</H3>
 
 So what is the point of
@@ -384,7 +213,7 @@ descriptor, while another file descriptor is unused though ready for I/O.
 <B>select</B>()
 
 efficiently copes with this situation.
-<A NAME="lbAH">&nbsp;</A>
+<A NAME="lbAG">&nbsp;</A>
 <H3>Select law</H3>
 
 Many people who try to use
@@ -548,56 +377,13 @@ then the sets must be reinitialized before each call.
 
 
 </DL>
-<A NAME="lbAI">&nbsp;</A>
-<H3>Usleep emulation</H3>
-
-On systems that do not have a
-<B><A HREF="../man3/usleep.3.html">usleep</A></B>(3)
-
-function, you can call
-<B>select</B>()
-
-with a finite timeout and no file descriptors as
-follows:
-<P>
-
-
-
-struct timeval tv;
-tv.tv_sec = 0;
-tv.tv_usec = 200000;  /* 0.2 seconds */
-select(0, NULL, NULL, NULL, &amp;tv);
-
-
-<P>
-
-This is guaranteed to work only on UNIX systems, however.
-<A NAME="lbAJ">&nbsp;</A>
+<A NAME="lbAH">&nbsp;</A>
 <H2>RETURN VALUE</H2>
 
-On success,
-<B>select</B>()
+See
+<B><A HREF="../man2/select.2.html">select</A></B>(2).
 
-returns the total number of file descriptors
-still present in the file descriptor sets.
-<P>
-
-If
-<B>select</B>()
-
-timed out, then the return value will be zero.
-The file descriptors set should be all
-empty (but may not be on some systems).
-<P>
-
-A return value of -1 indicates an error, with <I>errno</I> being
-set appropriately.
-In the case of an error, the contents of the returned sets and
-the <I>struct timeout</I> contents are undefined and should not be used.
-<B>pselect</B>()
-
-however never modifies <I>ntimeout</I>.
-<A NAME="lbAK">&nbsp;</A>
+<A NAME="lbAI">&nbsp;</A>
 <H2>NOTES</H2>
 
 Generally speaking,
@@ -635,7 +421,7 @@ and
 <B><A HREF="../man2/poll.2.html">poll</A></B>(2)
 
 when monitoring large numbers of file descriptors.
-<A NAME="lbAL">&nbsp;</A>
+<A NAME="lbAJ">&nbsp;</A>
 <H2>EXAMPLE</H2>
 
 Here is an example that better demonstrates the true utility of
@@ -649,8 +435,7 @@ from one TCP port to another.
 #include &lt;<A HREF="file:///usr/include/stdlib.h">stdlib.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;
-#include &lt;<A HREF="file:///usr/include/sys/time.h">sys/time.h</A>&gt;
-#include &lt;<A HREF="file:///usr/include/sys/types.h">sys/types.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/sys/select.h">sys/select.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/string.h">string.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/signal.h">signal.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/sys/socket.h">sys/socket.h</A>&gt;
@@ -835,7 +620,9 @@ main(int argc, char *argv[])
 <BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;connect&nbsp;from&nbsp;%s\n&quot;,
 <BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;inet_ntoa(client_addr.sin_addr));
 <P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Skip&nbsp;any&nbsp;events&nbsp;on&nbsp;the&nbsp;old,&nbsp;closed&nbsp;file&nbsp;descriptors.&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Skip&nbsp;any&nbsp;events&nbsp;on&nbsp;the&nbsp;old,&nbsp;closed&nbsp;file
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;descriptors.&nbsp;*/
+<P>
 <BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;continue;
 <BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
 <BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
@@ -934,14 +721,12 @@ time, although it could easily be extended to do this with a linked list
 of buffers---one for each connection.
 At the moment, new
 connections cause the current connection to be dropped.
-<A NAME="lbAM">&nbsp;</A>
+<A NAME="lbAK">&nbsp;</A>
 <H2>SEE ALSO</H2>
 
 <B><A HREF="../man2/accept.2.html">accept</A></B>(2),
 
 <B><A HREF="../man2/connect.2.html">connect</A></B>(2),
-
-<B><A HREF="../man2/ioctl.2.html">ioctl</A></B>(2),
 
 <B><A HREF="../man2/poll.2.html">poll</A></B>(2),
 
@@ -957,16 +742,6 @@ connections cause the current connection to be dropped.
 
 <B><A HREF="../man2/write.2.html">write</A></B>(2),
 
-<B><A HREF="../man3/sigaddset.3.html">sigaddset</A></B>(3),
-
-<B><A HREF="../man3/sigdelset.3.html">sigdelset</A></B>(3),
-
-<B><A HREF="../man3/sigemptyset.3.html">sigemptyset</A></B>(3),
-
-<B><A HREF="../man3/sigfillset.3.html">sigfillset</A></B>(3),
-
-<B><A HREF="../man3/sigismember.3.html">sigismember</A></B>(3),
-
 <B><A HREF="../man7/epoll.7.html">epoll</A></B>(7)
 
 
@@ -980,21 +755,19 @@ connections cause the current connection to be dropped.
 <DT><A HREF="#lbAC">SYNOPSIS</A><DD>
 <DT><A HREF="#lbAD">DESCRIPTION</A><DD>
 <DL>
-<DT><A HREF="#lbAE">Arguments</A><DD>
-<DT><A HREF="#lbAF">Combining signal and data events</A><DD>
-<DT><A HREF="#lbAG">Practical</A><DD>
-<DT><A HREF="#lbAH">Select law</A><DD>
-<DT><A HREF="#lbAI">Usleep emulation</A><DD>
+<DT><A HREF="#lbAE">Combining signal and data events</A><DD>
+<DT><A HREF="#lbAF">Practical</A><DD>
+<DT><A HREF="#lbAG">Select law</A><DD>
 </DL>
-<DT><A HREF="#lbAJ">RETURN VALUE</A><DD>
-<DT><A HREF="#lbAK">NOTES</A><DD>
-<DT><A HREF="#lbAL">EXAMPLE</A><DD>
-<DT><A HREF="#lbAM">SEE ALSO</A><DD>
+<DT><A HREF="#lbAH">RETURN VALUE</A><DD>
+<DT><A HREF="#lbAI">NOTES</A><DD>
+<DT><A HREF="#lbAJ">EXAMPLE</A><DD>
+<DT><A HREF="#lbAK">SEE ALSO</A><DD>
 </DL>
 <HR>
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:52:42 GMT, April 20, 2020
+Time: 03:53:21 GMT, April 20, 2020
 </BODY>
 </HTML>

@@ -26,7 +26,7 @@ the source, must acknowledge the copyright and authors of this work.
 <HTML><HEAD><TITLE>Man page of EXECVE</TITLE>
 </HEAD><BODY>
 <H1>EXECVE</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2019-10-10<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2020-04-11<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -71,19 +71,32 @@ starting with a line of the form:
 For details of the latter case, see &quot;Interpreter scripts&quot; below.
 <P>
 
-<I>argv</I> is an array of argument strings passed to the new program.
+<I>argv</I> is an array of pointers to strings passed to the new program
+as its command-line arguments.
 By convention, the first of these strings (i.e.,
 <I>argv[0]</I>)
 
 should contain the filename associated with the file being executed.
-<I>envp</I> is an array of strings, conventionally of the form
-<B>key=value</B>, which are passed as environment to the new program.
-The <I>argv</I> and <I>envp</I> arrays must each include a null pointer
-at the end of the array.
+The
+<I>argv</I>
+
+array must be terminated by a NULL pointer
+(Thus, in the new program,
+<I>argv[argc]</I>
+
+will be NULL.)
+<P>
+
+<I>envp</I> is an array of pointers to strings, conventionally of the form
+<B>key=value</B>, which are passed as the environment of the new program.
+The
+<I>envp</I>
+
+array must be terminated by a NULL pointer
 <P>
 
 The argument vector and environment can be accessed by the
-called program's main function, when it is defined as:
+new program's main function, when it is defined as:
 <P>
 
 
@@ -189,7 +202,9 @@ This interpreter is typically
 for binaries linked with glibc (see
 <B><A HREF="../man8/ld-linux.so.8.html">ld-linux.so</A></B>(8)).
 
-<P>
+
+<A NAME="lbAE">&nbsp;</A>
+<H3>Effect on process attributes</H3>
 
 All process attributes are preserved during an
 <B>execve</B>(),
@@ -387,7 +402,7 @@ closed across an
 
 
 </DL>
-<A NAME="lbAE">&nbsp;</A>
+<A NAME="lbAF">&nbsp;</A>
 <H3>Interpreter scripts</H3>
 
 An interpreter script is a text file that has execute
@@ -469,7 +484,7 @@ the kernel permits the interpreter of a script to itself be a script.
 This permission is recursive, up to a limit of four recursions,
 so that the interpreter may be a script which is interpreted by a script,
 and so on.
-<A NAME="lbAF">&nbsp;</A>
+<A NAME="lbAG">&nbsp;</A>
 <H3>Limits on size of arguments and environment</H3>
 
 Most UNIX implementations impose some limit on the total size
@@ -545,7 +560,7 @@ Additionally, the limit per string is 32 pages (the kernel constant
 <B>MAX_ARG_STRLEN</B>),
 
 and the maximum number of strings is 0x7FFFFFFF.
-<A NAME="lbAG">&nbsp;</A>
+<A NAME="lbAH">&nbsp;</A>
 <H2>RETURN VALUE</H2>
 
 On success,
@@ -555,7 +570,7 @@ does not return, on error -1 is returned, and
 <I>errno</I>
 
 is set appropriately.
-<A NAME="lbAH">&nbsp;</A>
+<A NAME="lbAI">&nbsp;</A>
 <H2>ERRORS</H2>
 
 <DL COMPACT>
@@ -673,9 +688,7 @@ The system-wide limit on the total number of open files has been reached.
 The file
 <I>pathname</I>
 
-or a script or ELF interpreter does not exist, or a shared library
-
-needed for the file or interpreter cannot be found.
+or a script or ELF interpreter does not exist.
 <DT><B>ENOEXEC</B>
 
 <DD>
@@ -719,7 +732,7 @@ See
 <DD>
 The specified executable was open for writing by one or more processes.
 </DL>
-<A NAME="lbAI">&nbsp;</A>
+<A NAME="lbAJ">&nbsp;</A>
 <H2>CONFORMING TO</H2>
 
 POSIX.1-2001, POSIX.1-2008, SVr4, 4.3BSD.
@@ -729,7 +742,7 @@ POSIX does not document the #! behavior, but it exists
 
 
 
-<A NAME="lbAJ">&nbsp;</A>
+<A NAME="lbAK">&nbsp;</A>
 <H2>NOTES</H2>
 
 One sometimes sees
@@ -835,7 +848,7 @@ In such cases, the kernel kills the process with a
 
 signal.
 
-<A NAME="lbAK">&nbsp;</A>
+<A NAME="lbAL">&nbsp;</A>
 <H3>Interpreter scripts</H3>
 
 The kernel imposes a maximum length on the text that follows the
@@ -882,7 +895,7 @@ ignores the set-user-ID and set-group-ID bits on scripts.
 
 
 
-<A NAME="lbAL">&nbsp;</A>
+<A NAME="lbAM">&nbsp;</A>
 <H3>execve() and EAGAIN</H3>
 
 A more detailed explanation of the
@@ -988,7 +1001,7 @@ The flag is also cleared if a subsequent call to
 <B><A HREF="../man2/fork.2.html">fork</A></B>(2)
 
 by this process succeeds.
-<A NAME="lbAM">&nbsp;</A>
+<A NAME="lbAN">&nbsp;</A>
 <H3>Historical</H3>
 
 With UNIX&nbsp;V6, the argument list of an
@@ -1013,7 +1026,7 @@ Since UNIX&nbsp;V7, both are NULL.
 
 
 
-<A NAME="lbAN">&nbsp;</A>
+<A NAME="lbAO">&nbsp;</A>
 <H2>EXAMPLE</H2>
 
 The following program is designed to be execed by the second program below.
@@ -1128,7 +1141,7 @@ argv[3]: hello
 argv[4]: world
 
 
-<A NAME="lbAO">&nbsp;</A>
+<A NAME="lbAP">&nbsp;</A>
 <H2>SEE ALSO</H2>
 
 <B><A HREF="../man2/chmod.2.html">chmod</A></B>(2),
@@ -1166,25 +1179,26 @@ argv[4]: world
 <DT><A HREF="#lbAC">SYNOPSIS</A><DD>
 <DT><A HREF="#lbAD">DESCRIPTION</A><DD>
 <DL>
-<DT><A HREF="#lbAE">Interpreter scripts</A><DD>
-<DT><A HREF="#lbAF">Limits on size of arguments and environment</A><DD>
+<DT><A HREF="#lbAE">Effect on process attributes</A><DD>
+<DT><A HREF="#lbAF">Interpreter scripts</A><DD>
+<DT><A HREF="#lbAG">Limits on size of arguments and environment</A><DD>
 </DL>
-<DT><A HREF="#lbAG">RETURN VALUE</A><DD>
-<DT><A HREF="#lbAH">ERRORS</A><DD>
-<DT><A HREF="#lbAI">CONFORMING TO</A><DD>
-<DT><A HREF="#lbAJ">NOTES</A><DD>
+<DT><A HREF="#lbAH">RETURN VALUE</A><DD>
+<DT><A HREF="#lbAI">ERRORS</A><DD>
+<DT><A HREF="#lbAJ">CONFORMING TO</A><DD>
+<DT><A HREF="#lbAK">NOTES</A><DD>
 <DL>
-<DT><A HREF="#lbAK">Interpreter scripts</A><DD>
-<DT><A HREF="#lbAL">execve() and EAGAIN</A><DD>
-<DT><A HREF="#lbAM">Historical</A><DD>
+<DT><A HREF="#lbAL">Interpreter scripts</A><DD>
+<DT><A HREF="#lbAM">execve() and EAGAIN</A><DD>
+<DT><A HREF="#lbAN">Historical</A><DD>
 </DL>
-<DT><A HREF="#lbAN">EXAMPLE</A><DD>
-<DT><A HREF="#lbAO">SEE ALSO</A><DD>
+<DT><A HREF="#lbAO">EXAMPLE</A><DD>
+<DT><A HREF="#lbAP">SEE ALSO</A><DD>
 </DL>
 <HR>
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:52:40 GMT, April 20, 2020
+Time: 03:53:19 GMT, April 20, 2020
 </BODY>
 </HTML>

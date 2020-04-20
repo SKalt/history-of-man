@@ -26,7 +26,7 @@ the source, must acknowledge the copyright and authors of this work.
 <HTML><HEAD><TITLE>Man page of SHMOP</TITLE>
 </HEAD><BODY>
 <H1>SHMOP</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2019-08-02<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2020-04-11<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -62,14 +62,14 @@ The attaching address is specified by
 
 with one of the following criteria:
 <DL COMPACT>
-<DT>*<DD>
+<DT>&bull;<DD>
 If
 <I>shmaddr</I>
 
 is NULL,
 the system chooses a suitable (unused) page-aligned address to attach
 the segment.
-<DT>*<DD>
+<DT>&bull;<DD>
 If
 <I>shmaddr</I>
 
@@ -86,7 +86,7 @@ the attach occurs at the address equal to
 rounded down to the nearest multiple of
 <B>SHMLBA</B>.
 
-<DT>*<DD>
+<DT>&bull;<DD>
 Otherwise,
 <I>shmaddr</I>
 
@@ -156,15 +156,15 @@ structure (see
 
 associated with the shared memory segment as follows:
 <DL COMPACT>
-<DT><DD>
+<DT>&bull;<DD>
 <I>shm_atime</I>
 
 is set to the current time.
-<DT><DD>
+<DT>&bull;<DD>
 <I>shm_lpid</I>
 
 is set to the process-ID of the calling process.
-<DT><DD>
+<DT>&bull;<DD>
 <I>shm_nattch</I>
 
 is incremented by one.
@@ -197,15 +197,15 @@ call, the system updates the members of the
 
 structure associated with the shared memory segment as follows:
 <DL COMPACT>
-<DT><DD>
+<DT>&bull;<DD>
 <I>shm_dtime</I>
 
 is set to the current time.
-<DT><DD>
+<DT>&bull;<DD>
 <I>shm_lpid</I>
 
 is set to the process-ID of the calling process.
-<DT><DD>
+<DT>&bull;<DD>
 <I>shm_nattch</I>
 
 is decremented by one.
@@ -402,6 +402,226 @@ number of shared memory segments
 (<B>SHMSEG</B>).
 
 <A NAME="lbAK">&nbsp;</A>
+<H2>EXAMPLE</H2>
+
+<P>
+
+The two programs shown below exchange a string using a shared memory segment.
+Further details about the programs are given below.
+First, we show a shell session demonstrating their use.
+<P>
+
+In one terminal window, we run the &quot;reader&quot; program,
+which creates a System V shared memory segment and a System V semaphore set.
+The program prints out the IDs of the created objects,
+and then waits for the semaphore to change value.
+<P>
+
+
+
+$ <B>./svshm_string_read </B>
+shmid = 1114194; semid = 15
+
+
+<P>
+
+In another terminal window, we run the &quot;writer&quot; program.
+The &quot;writer&quot; program takes three command-line arguments:
+the IDs of the shared memory segment and semaphore set created
+by the &quot;reader&quot;, and a string.
+It attaches the existing shared memory segment,
+copies the string to the shared memory, and modifies the semaphore value.
+<P>
+
+
+
+$ <B>./svshm_string_write 1114194 15 'Hello, world'</B>
+
+
+<P>
+
+Returning to the terminal where the &quot;reader&quot; is running,
+we see that the program has ceased waiting on the semaphore
+and has printed the string that was copied into the
+shared memory segment by the writer:
+<P>
+
+
+
+Hello, world
+
+
+<P>
+
+
+<A NAME="lbAL">&nbsp;</A>
+<H3>Program source: svshm_string.h</H3>
+
+The following header file is included by the &quot;reader&quot; and &quot;writer&quot; programs.
+<P>
+
+
+
+#include &lt;<A HREF="file:///usr/include/sys/types.h">sys/types.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/sys/ipc.h">sys/ipc.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/sys/shm.h">sys/shm.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/sys/sem.h">sys/sem.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/stdlib.h">stdlib.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/string.h">string.h</A>&gt;
+<P>
+#define errExit(msg)    do { perror(msg); exit(EXIT_FAILURE); \
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}&nbsp;while&nbsp;(0)
+<P>
+union semun {                   /* Used in calls to semctl() */
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;val;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;struct&nbsp;semid_ds&nbsp;*&nbsp;&nbsp;&nbsp;buf;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;unsigned&nbsp;short&nbsp;*&nbsp;&nbsp;&nbsp;&nbsp;array;
+#if defined(__linux__)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;struct&nbsp;seminfo&nbsp;*&nbsp;&nbsp;&nbsp;&nbsp;__buf;
+#endif
+};
+<P>
+#define MEM_SIZE 4096
+
+
+
+<A NAME="lbAM">&nbsp;</A>
+<H3>Program source: svshm_string_read.c</H3>
+
+The &quot;reader&quot; program creates a shared memory segment and a semaphore set
+containing one semaphore.
+It then attaches the shared memory object into its address space
+and initializes the semaphore value to 1.
+Finally, the program waits for the semaphore value to become 0,
+and afterwards prints the string that has been copied into the
+shared memory segment by the &quot;writer&quot;.
+<P>
+
+
+
+#include &quot;svshm_string.h&quot;
+<P>
+int
+main(int argc, char *argv[])
+{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;semid,&nbsp;shmid;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;union&nbsp;semun&nbsp;arg,&nbsp;dummy;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;struct&nbsp;sembuf&nbsp;sop;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;char&nbsp;*addr;
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Create&nbsp;shared&nbsp;memory&nbsp;and&nbsp;semaphore&nbsp;set&nbsp;containing&nbsp;one
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;semaphore&nbsp;*/
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;shmid&nbsp;=&nbsp;shmget(IPC_PRIVATE,&nbsp;MEM_SIZE,&nbsp;IPC_CREAT&nbsp;|&nbsp;0600);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(shmid&nbsp;==&nbsp;-1)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;errExit(&quot;shmget&quot;);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;semid&nbsp;=&nbsp;semget(IPC_PRIVATE,&nbsp;1,&nbsp;IPC_CREAT&nbsp;|&nbsp;0600);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(shmid&nbsp;==&nbsp;-1)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;errExit(&quot;shmget&quot;);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Attach&nbsp;shared&nbsp;memory&nbsp;into&nbsp;our&nbsp;address&nbsp;space&nbsp;*/
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;addr&nbsp;=&nbsp;shmat(shmid,&nbsp;NULL,&nbsp;SHM_RDONLY);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(addr&nbsp;==&nbsp;(void&nbsp;*)&nbsp;-1)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;errExit(&quot;shmat&quot;);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Initialize&nbsp;semaphore&nbsp;0&nbsp;in&nbsp;set&nbsp;with&nbsp;value&nbsp;1&nbsp;*/
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;arg.val&nbsp;=&nbsp;1;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(semctl(semid,&nbsp;0,&nbsp;SETVAL,&nbsp;arg)&nbsp;==&nbsp;-1)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;errExit(&quot;semctl&quot;);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;shmid&nbsp;=&nbsp;%d;&nbsp;semid&nbsp;=&nbsp;%d\n&quot;,&nbsp;shmid,&nbsp;semid);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Wait&nbsp;for&nbsp;semaphore&nbsp;value&nbsp;to&nbsp;become&nbsp;0&nbsp;*/
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;sop.sem_num&nbsp;=&nbsp;0;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;sop.sem_op&nbsp;=&nbsp;0;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;sop.sem_flg&nbsp;=&nbsp;0;
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(semop(semid,&nbsp;&amp;sop,&nbsp;1)&nbsp;==&nbsp;-1)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;errExit(&quot;semop&quot;);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Print&nbsp;the&nbsp;string&nbsp;from&nbsp;shared&nbsp;memory&nbsp;*/
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;%s\n&quot;,&nbsp;addr);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Remove&nbsp;shared&nbsp;memory&nbsp;and&nbsp;semaphore&nbsp;set&nbsp;*/
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(shmctl(shmid,&nbsp;IPC_RMID,&nbsp;NULL)&nbsp;==&nbsp;-1)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;errExit(&quot;shmctl&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(semctl(semid,&nbsp;0,&nbsp;IPC_RMID,&nbsp;dummy)&nbsp;==&nbsp;-1)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;errExit(&quot;semctl&quot;);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_SUCCESS);
+}
+
+
+
+<A NAME="lbAN">&nbsp;</A>
+<H3>Program source: svshm_string_write.c</H3>
+
+The writer program takes three command-line arguments:
+the IDs of the shared memory segment and semaphore set
+that have already been created by the &quot;reader&quot;, and a string.
+It attaches the shared memory segment into its address space,
+and then decrements the semaphore value to 0 in order to inform the
+&quot;reader&quot; that it can now examine the contents of the shared memory.
+<P>
+
+
+
+#include &quot;svshm_string.h&quot;
+<P>
+int
+main(int argc, char *argv[])
+{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;semid,&nbsp;shmid;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;struct&nbsp;sembuf&nbsp;sop;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;char&nbsp;*addr;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;size_t&nbsp;len;
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(argc&nbsp;!=&nbsp;4)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fprintf(stderr,&nbsp;&quot;Usage:&nbsp;%s&nbsp;shmid&nbsp;semid&nbsp;string\n&quot;,&nbsp;argv[0]);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;len&nbsp;=&nbsp;strlen(argv[3])&nbsp;+&nbsp;1;&nbsp;&nbsp;/*&nbsp;+1&nbsp;to&nbsp;include&nbsp;trailing&nbsp;'\0'&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(len&nbsp;&gt;&nbsp;MEM_SIZE)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fprintf(stderr,&nbsp;&quot;String&nbsp;is&nbsp;too&nbsp;big!\n&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Get&nbsp;object&nbsp;IDs&nbsp;from&nbsp;command-line&nbsp;*/
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;shmid&nbsp;=&nbsp;atoi(argv[1]);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;semid&nbsp;=&nbsp;atoi(argv[2]);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Attach&nbsp;shared&nbsp;memory&nbsp;into&nbsp;our&nbsp;address&nbsp;space&nbsp;and&nbsp;copy&nbsp;string
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(including&nbsp;trailing&nbsp;null&nbsp;byte)&nbsp;into&nbsp;memory.&nbsp;*/
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;addr&nbsp;=&nbsp;shmat(shmid,&nbsp;NULL,&nbsp;0);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(addr&nbsp;==&nbsp;(void&nbsp;*)&nbsp;-1)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;errExit(&quot;shmat&quot;);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;memcpy(addr,&nbsp;argv[3],&nbsp;len);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Decrement&nbsp;semaphore&nbsp;t0&nbsp;0&nbsp;*/
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;sop.sem_num&nbsp;=&nbsp;0;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;sop.sem_op&nbsp;=&nbsp;-1;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;sop.sem_flg&nbsp;=&nbsp;0;
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(semop(semid,&nbsp;&amp;sop,&nbsp;1)&nbsp;==&nbsp;-1)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;errExit(&quot;semop&quot;);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_SUCCESS);
+}
+
+
+<A NAME="lbAO">&nbsp;</A>
 <H2>SEE ALSO</H2>
 
 <B><A HREF="../man2/brk.2.html">brk</A></B>(2),
@@ -434,12 +654,18 @@ number of shared memory segments
 <DT><A HREF="#lbAH">ERRORS</A><DD>
 <DT><A HREF="#lbAI">CONFORMING TO</A><DD>
 <DT><A HREF="#lbAJ">NOTES</A><DD>
-<DT><A HREF="#lbAK">SEE ALSO</A><DD>
+<DT><A HREF="#lbAK">EXAMPLE</A><DD>
+<DL>
+<DT><A HREF="#lbAL">Program source: svshm_string.h</A><DD>
+<DT><A HREF="#lbAM">Program source: svshm_string_read.c</A><DD>
+<DT><A HREF="#lbAN">Program source: svshm_string_write.c</A><DD>
+</DL>
+<DT><A HREF="#lbAO">SEE ALSO</A><DD>
 </DL>
 <HR>
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:52:43 GMT, April 20, 2020
+Time: 03:53:22 GMT, April 20, 2020
 </BODY>
 </HTML>

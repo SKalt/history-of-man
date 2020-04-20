@@ -19,7 +19,7 @@ License along with this manual; if not, see
 <HTML><HEAD><TITLE>Man page of EPOLL_CTL</TITLE>
 </HEAD><BODY>
 <H1>EPOLL_CTL</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2019-03-06<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2020-04-11<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -62,15 +62,20 @@ argument are:
 <DT><B>EPOLL_CTL_ADD</B>
 
 <DD>
-Add
-<I>fd</I>
+Add an entry to the interest list of the epoll file descriptor,
+<I>epfd</I>.
 
-to the interest list
-and associate the settings specified in
-<I>event</I>
+The entry includes the file descriptor,
+<I>fd</I>,
 
-with the internal file linked to
-<I>fd</I>.
+a reference to the corresponding open file description (see
+<B><A HREF="../man7/epoll.7.html">epoll</A></B>(7)
+
+and
+<B><A HREF="../man2/open.2.html">open</A></B>(2)),
+
+and the settings specified in
+<I>event</I>.
 
 <DT><B>EPOLL_CTL_MOD</B>
 
@@ -125,9 +130,24 @@ struct epoll_event {
 <P>
 
 The
+<I>data</I>
+
+member of the
+<I>epoll_event</I>
+
+structure specifies data that the kernel should save and then return (via
+<B><A HREF="../man2/epoll_wait.2.html">epoll_wait</A></B>(2))
+
+when this file descriptor becomes ready.
+<P>
+
+The
 <I>events</I>
 
-member is a bit mask composed by ORing together zero or more of
+member of the
+<I>epoll_event</I>
+
+structure is a bit mask composed by ORing together zero or more of
 the following available event types:
 <DL COMPACT>
 <DT><B>EPOLLIN</B>
@@ -150,7 +170,7 @@ operations.
 Stream socket peer closed connection,
 or shut down writing half of connection.
 (This flag is especially useful for writing simple code to detect
-peer shutdown when using Edge Triggered monitoring.)
+peer shutdown when using edge-triggered monitoring.)
 <DT><B>EPOLLPRI</B>
 
 <DD>
@@ -167,19 +187,27 @@ in
 Error condition happened on the associated file descriptor.
 This event is also reported for the write end of a pipe when the read end
 has been closed.
+<DT><DD>
 <B><A HREF="../man2/epoll_wait.2.html">epoll_wait</A></B>(2)
 
 will always report for this event; it is not necessary to set it in
-<I>events</I>.
+<I>events</I>
+
+when calling
+<B>epoll_ctl</B>().
 
 <DT><B>EPOLLHUP</B>
 
 <DD>
 Hang up happened on the associated file descriptor.
+<DT><DD>
 <B><A HREF="../man2/epoll_wait.2.html">epoll_wait</A></B>(2)
 
 will always wait for this event; it is not necessary to set it in
-<I>events</I>.
+<I>events</I>
+
+when calling
+<B>epoll_ctl</B>().
 
 <DT><DD>
 Note that when reading from a channel such as a pipe or a stream socket,
@@ -189,24 +217,34 @@ only after all outstanding data in the channel has been consumed.
 <DT><B>EPOLLET</B>
 
 <DD>
-Sets the Edge Triggered behavior for the associated file descriptor.
+Requests edge-triggered notification for the associated file descriptor.
 The default behavior for
 <B>epoll</B>
 
-is Level Triggered.
+is level-triggered.
 See
 <B><A HREF="../man7/epoll.7.html">epoll</A></B>(7)
 
-for more detailed information about Edge and Level Triggered event
-distribution architectures.
+for more detailed information about edge-triggered and
+level-triggered notification.
+<DT><DD>
+This flag is an input flag for the
+<I>event.events</I>
+
+field when calling
+<B>epoll_ctl</B>();
+
+it is never returned by
+<B><A HREF="../man2/epoll_wait.2.html">epoll_wait</A></B>(2).
+
 <DT><B>EPOLLONESHOT</B> (since Linux 2.6.2)
 
 <DD>
-Sets the one-shot behavior for the associated file descriptor.
-This means that after an event is pulled out with
-<B><A HREF="../man2/epoll_wait.2.html">epoll_wait</A></B>(2)
+Requests one-shot notification for the associated file descriptor.
+This means that after an event notified for the file descriptor by
+<B><A HREF="../man2/epoll_wait.2.html">epoll_wait</A></B>(2),
 
-the associated file descriptor is internally disabled and no other events
+the file descriptor is disabled in the interest list and no other events
 will be reported by the
 <B>epoll</B>
 
@@ -218,6 +256,16 @@ with
 <B>EPOLL_CTL_MOD</B>
 
 to rearm the file descriptor with a new event mask.
+<DT><DD>
+This flag is an input flag for the
+<I>event.events</I>
+
+field when calling
+<B>epoll_ctl</B>();
+
+it is never returned by
+<B><A HREF="../man2/epoll_wait.2.html">epoll_wait</A></B>(2).
+
 <DT><B>EPOLLWAKEUP</B> (since Linux 3.5)
 
 <DD>
@@ -256,6 +304,16 @@ for the event file descriptor with
 <B>EPOLL_CTL_MOD</B>.
 
 See also BUGS.
+<DT><DD>
+This flag is an input flag for the
+<I>event.events</I>
+
+field when calling
+<B>epoll_ctl</B>();
+
+it is never returned by
+<B><A HREF="../man2/epoll_wait.2.html">epoll_wait</A></B>(2).
+
 <DT><B>EPOLLEXCLUSIVE</B> (since Linux 4.5)
 
 <DD>
@@ -356,6 +414,19 @@ and specifies the target file descriptor
 as an epoll instance will likewise fail.
 The error in all of these cases is
 <B>EINVAL</B>.
+
+<DT><DD>
+The
+<B>EPOLLEXCLUSIVE</B>
+
+flag is an input flag for the
+<I>event.events</I>
+
+field when calling
+<B>epoll_ctl</B>();
+
+it is never returned by
+<B><A HREF="../man2/epoll_wait.2.html">epoll_wait</A></B>(2).
 
 </DL>
 <A NAME="lbAE">&nbsp;</A>
@@ -640,6 +711,6 @@ flag.
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:52:40 GMT, April 20, 2020
+Time: 03:53:19 GMT, April 20, 2020
 </BODY>
 </HTML>

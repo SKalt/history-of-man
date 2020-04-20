@@ -26,7 +26,7 @@ the source, must acknowledge the copyright and authors of this work.
 <HTML><HEAD><TITLE>Man page of SEMCTL</TITLE>
 </HEAD><BODY>
 <H1>SEMCTL</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2019-08-02<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2020-04-11<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -100,6 +100,46 @@ struct semid_ds {
 };
 
 
+The fields of the
+<I>semid_ds</I>
+
+structure are as follows:
+<DL COMPACT>
+<DT><I>sem_perm</I>
+
+<DD>
+This is an
+<I>ipc_perm</I>
+
+structure (see below) that specifies the access permissions on the semaphore
+set.
+<DT><I>sem_otime</I>
+
+<DD>
+Time of last
+<B><A HREF="../man2/semop.2.html">semop</A></B>(2)
+
+system call.
+<DT><I>sem_ctime</I>
+
+<DD>
+Time of last
+<B><A HREF="../man2/semctl.2.html">semctl</A></B>(2)
+
+system call that changed a member of the above structure or of one
+semaphore belonging to the set.
+<DT><I>sem_nsems</I>
+
+<DD>
+Number of semaphores in the set.
+Each semaphore of the set is referenced by a nonnegative integer
+ranging from
+<B>0</B>
+
+to
+<I>sem_nsems-1</I>.
+
+</DL>
 <P>
 
 The
@@ -124,6 +164,29 @@ struct ipc_perm {
 };
 
 
+<P>
+
+The least significant 9 bits of the
+<I>mode</I>
+
+field of the
+<I>ipc_perm</I>
+
+structure define the access permissions for the shared memory segment.
+The permission bits are as follows:
+<TABLE>
+<TR VALIGN=top><TD>0400</TD><TD>Read by user<BR></TD></TR>
+<TR VALIGN=top><TD>0200</TD><TD>Write by user<BR></TD></TR>
+<TR VALIGN=top><TD>0040</TD><TD>Read by group<BR></TD></TR>
+<TR VALIGN=top><TD>0020</TD><TD>Write by group<BR></TD></TR>
+<TR VALIGN=top><TD>0004</TD><TD>Read by others<BR></TD></TR>
+<TR VALIGN=top><TD>0002</TD><TD>Write by others<BR></TD></TR>
+</TABLE>
+
+<P>
+
+In effect, &quot;write&quot; means &quot;alter&quot; for a semaphore set.
+Bits 0100, 0010, and 0001 (the execute bits) are unused by the system.
 <P>
 
 Valid values for
@@ -331,28 +394,22 @@ The calling process must have read permission on the semaphore set.
 <DT><B>GETNCNT</B>
 
 <DD>
-Return the value of
+Return the
 <B>semncnt</B>
 
-for the
+value for the
 <I>semnum</I>-th
 
 semaphore of the set
-(i.e., the number of processes waiting for an increase of
-<B>semval</B>
-
-for the
-<I>semnum</I>-th
-
-semaphore of the set).
+(i.e., the number of processes waiting for the semaphore's value to increase).
 The calling process must have read permission on the semaphore set.
 <DT><B>GETPID</B>
 
 <DD>
-Return the value of
+Return the
 <B>sempid</B>
 
-for the
+value for the
 <I>semnum</I>-th
 
 semaphore of the set.
@@ -362,10 +419,10 @@ The calling process must have read permission on the semaphore set.
 <DT><B>GETVAL</B>
 
 <DD>
-Return the value of
+Return
 <B>semval</B>
 
-for the
+(i.e., the semaphore value) for the
 <I>semnum</I>-th
 
 semaphore of the set.
@@ -373,28 +430,22 @@ The calling process must have read permission on the semaphore set.
 <DT><B>GETZCNT</B>
 
 <DD>
-Return the value of
+Return the
 <B>semzcnt</B>
 
-for the
+value for the
 <I>semnum</I>-th
 
 semaphore of the set
-(i.e., the number of processes waiting for
-<B>semval</B>
-
-of the
-<I>semnum</I>-th
-
-semaphore of the set to become 0).
+(i.e., the number of processes waiting for the semaphore value to become 0).
 The calling process must have read permission on the semaphore set.
 <DT><B>SETALL</B>
 
 <DD>
-Set
+Set the
 <B>semval</B>
 
-for all semaphores of the set using
+values for all semaphores of the set using
 <I>arg.array</I>,
 
 updating also the
@@ -421,8 +472,8 @@ the semaphore set.
 <DT><B>SETVAL</B>
 
 <DD>
-Set the value of
-<B>semval</B>
+Set the semaphore value
+<B>(</B>semval<B>)</B>
 
 to
 <I>arg.val</I>
@@ -797,8 +848,8 @@ for
 <B>SETVAL</B>
 
 operations and semaphore adjustments.
-However, somewhat inconsistently, up to and including 4.5,
-Linux did not update
+However, somewhat inconsistently, up to and including Linux 4.5,
+the kernel did not update
 <I>sempid</I>
 
 for
@@ -809,6 +860,12 @@ This was rectified
 
 in Linux 4.6.
 <A NAME="lbAJ">&nbsp;</A>
+<H2>EXAMPLE</H2>
+
+See
+<B><A HREF="../man2/shmop.2.html">shmop</A></B>(2).
+
+<A NAME="lbAK">&nbsp;</A>
 <H2>SEE ALSO</H2>
 
 <B><A HREF="../man2/ipc.2.html">ipc</A></B>(2),
@@ -838,12 +895,13 @@ in Linux 4.6.
 <DL>
 <DT><A HREF="#lbAI">The sempid value</A><DD>
 </DL>
-<DT><A HREF="#lbAJ">SEE ALSO</A><DD>
+<DT><A HREF="#lbAJ">EXAMPLE</A><DD>
+<DT><A HREF="#lbAK">SEE ALSO</A><DD>
 </DL>
 <HR>
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:52:42 GMT, April 20, 2020
+Time: 03:53:21 GMT, April 20, 2020
 </BODY>
 </HTML>

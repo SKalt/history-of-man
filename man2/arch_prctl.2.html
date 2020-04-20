@@ -26,7 +26,7 @@ the source, must acknowledge the copyright and authors of this work.
 <HTML><HEAD><TITLE>Man page of ARCH_PRCTL</TITLE>
 </HEAD><BODY>
 <H1>ARCH_PRCTL</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2017-09-15<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2020-04-11<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -68,8 +68,62 @@ for the &quot;set&quot; operations, or as an
 for the &quot;get&quot; operations.
 <P>
 
-Subfunctions for x86-64 are:
+Subfunctions for both x86 and x86-64 are:
 <DL COMPACT>
+<DT><B>ARCH_SET_CPUID</B> (since Linux 4.12)
+
+<DD>
+
+Enable
+(<I>addr != 0</I>)
+
+or disable
+(<I>addr == 0</I>)
+
+the
+<I>cpuid</I>
+
+instruction for the current thread.
+The instruction is enabled by default.
+If disabled, any execution of a
+<I>cpuid</I>
+
+instruction will instead generate a
+<B>SIGSEGV</B>
+
+signal.
+This feature can be used to emulate
+<I>cpuid</I>
+
+results that differ from what the underlying
+hardware would have produced (e.g., in a paravirtualization setting).
+<DT><DD>
+The
+<B>ARCH_SET_CPUID</B>
+
+setting is preserved across
+<B><A HREF="../man2/fork.2.html">fork</A></B>(2)
+
+and
+<B><A HREF="../man2/clone.2.html">clone</A></B>(2)
+
+but reset to default (i.e.
+<I>cpuid</I>
+
+enabled) on
+<B><A HREF="../man2/execve.2.html">execve</A></B>(2).
+
+<DT><B>ARCH_GET_CPUID</B> (since Linux 4.12)
+
+<DD>
+Return the setting of the flag manipulated by
+<B>ARCH_SET_CPUID</B>
+
+as the result of the system call (1 for enabled, 0 for disabled).
+<I>addr</I>
+
+is ignored.
+<DT>Subfunctions for x86-64 only are:<DD>
 <DT><B>ARCH_SET_FS</B>
 
 <DD>
@@ -145,6 +199,12 @@ is not a valid subcommand.
 <I>addr</I>
 
 is outside the process address space.
+<DT><B>ENODEV</B>
+
+<DD>
+<B>ARCH_SET_CPUID</B>
+
+was requested, but the underlying hardware does not support CPUID faulting.
 
 
 </DL>
@@ -244,6 +304,6 @@ AMD X86-64 Programmer's manual
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:52:40 GMT, April 20, 2020
+Time: 03:53:19 GMT, April 20, 2020
 </BODY>
 </HTML>

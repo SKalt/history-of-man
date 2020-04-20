@@ -26,7 +26,7 @@ the source, must acknowledge the copyright and authors of this work.
 <HTML><HEAD><TITLE>Man page of STRCMP</TITLE>
 </HEAD><BODY>
 <H1>STRCMP</H1>
-Section: Linux Programmer's Manual (3)<BR>Updated: 2019-03-06<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2020-04-11<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -59,14 +59,36 @@ and
 The locale is not taken into account (for a locale-aware comparison, see
 <B><A HREF="../man3/strcoll.3.html">strcoll</A></B>(3)).
 
-It returns an integer less than, equal to, or greater
-than zero if
+The comparison is done using unsigned characters.
+<P>
+
+<B>strcmp</B>()
+
+returns an integer indicating the result of the comparison, as follows:
+<DL COMPACT>
+<DT>&bull;<DD>
+0, if the
 <I>s1</I>
 
-is found, respectively, to be less than,
-to match, or be greater than
-<I>s2</I>.
+and
+<I>s2</I>
 
+are equal;
+<DT>&bull;<DD>
+a negative value if
+<I>s1</I>
+
+is less than
+<I>s2</I>;
+
+<DT>&bull;<DD>
+a positive value if
+<I>s1</I>
+
+is greater than
+<I>s2</I>;
+
+</DL>
 <P>
 
 The
@@ -123,6 +145,122 @@ For an explanation of the terms used in this section, see
 
 POSIX.1-2001, POSIX.1-2008, C89, C99, SVr4, 4.3BSD.
 <A NAME="lbAH">&nbsp;</A>
+<H2>NOTES</H2>
+
+POSIX.1 specifies only that:
+<DL COMPACT><DT><DD>
+<P>
+
+The sign of a non-zero return value shall be determined by the sign
+of the difference between the values of the first pair of bytes
+(both interpreted as type
+<I>unsigned char</I>)
+
+that differ in the strings being compared.
+</DL>
+
+<P>
+
+In glibc, as in most other implementations,
+the return value is the arithmetic result of subtracting
+the last compared byte in
+<I>s2</I>
+
+from the last compared byte in
+<I>s1</I>.
+
+(If the two characters are equal, this difference is 0.)
+<A NAME="lbAI">&nbsp;</A>
+<H2>EXAMPLE</H2>
+
+The program below can be used to demonstrate the operation of
+<B>strcmp</B>()
+
+(when given two arguments) and
+<B>strncmp</B>()
+
+(when given three arguments).
+First, some examples using
+<B>strcmp</B>():
+
+<P>
+
+
+
+$ <B>./string_comp ABC ABC</B>
+&lt;str1&gt; and &lt;str2&gt; are equal
+$ <B>./string_comp ABC AB</B>      # 'C' is ASCII 67; 'C' - '&nbsp;' = 67
+&lt;str1&gt; is greater than &lt;str2&gt; (67)
+$ <B>./string_comp ABA ABZ</B>     # 'A' is ASCII 65; 'Z' is ASCII 90
+&lt;str1&gt; is less than &lt;str2&gt; (-25)
+$ <B>./string_comp ABJ ABC</B>
+&lt;str1&gt; is greater than &lt;str2&gt; (7)
+$ .<B>/string_comp $'\201' A</B>   # 0201 - 0101 = 0100 (or 64 decimal)
+&lt;str1&gt; is greater than &lt;str2&gt; (64)
+
+
+<P>
+
+The last example uses
+<B><A HREF="../man1/bash.1.html">bash</A></B>(1)-specific
+
+syntax to produce a string containing an 8-bit ASCII code;
+the result demonstrates that the string comparison uses unsigned
+characters.
+<P>
+
+And then some examples using
+<B>strncmp</B>():
+
+<P>
+
+
+
+$ <B>./string_comp ABC AB 3</B>
+&lt;str1&gt; is greater than &lt;str2&gt; (67)
+$ <B>./string_comp ABC AB 2</B>
+&lt;str1&gt; and &lt;str2&gt; are equal in the first 2 bytes
+
+
+<A NAME="lbAJ">&nbsp;</A>
+<H3>Program source</H3>
+
+
+
+#include &lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/stdlib.h">stdlib.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/string.h">string.h</A>&gt;
+<P>
+int
+main(int argc, char *argv[])
+{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;res;
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(argc&nbsp;&lt;&nbsp;3)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fprintf(stderr,&nbsp;&quot;Usage:&nbsp;%s&nbsp;&lt;str1&gt;&nbsp;&lt;str2&gt;&nbsp;[&lt;len&gt;]\n&quot;,&nbsp;argv[0]);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(argc&nbsp;==&nbsp;3)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;res&nbsp;=&nbsp;strcmp(argv[1],&nbsp;argv[2]);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;else
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;res&nbsp;=&nbsp;strncmp(argv[1],&nbsp;argv[2],&nbsp;atoi(argv[3]));
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(res&nbsp;==&nbsp;0)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;&lt;str1&gt;&nbsp;and&nbsp;&lt;str2&gt;&nbsp;are&nbsp;equal&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(argc&nbsp;&gt;&nbsp;3)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;&nbsp;in&nbsp;the&nbsp;first&nbsp;%d&nbsp;characters\n&quot;,&nbsp;atoi(argv[3]));
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;\n&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}&nbsp;else&nbsp;if&nbsp;(res&nbsp;&lt;&nbsp;0)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;&lt;str1&gt;&nbsp;is&nbsp;less&nbsp;than&nbsp;&lt;str2&gt;&nbsp;(%d)\n&quot;,&nbsp;res);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}&nbsp;else&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;printf(&quot;&lt;str1&gt;&nbsp;is&nbsp;greater&nbsp;than&nbsp;&lt;str2&gt;&nbsp;(%d)\n&quot;,&nbsp;res);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_SUCCESS);
+}
+
+<A NAME="lbAK">&nbsp;</A>
 <H2>SEE ALSO</H2>
 
 <B><A HREF="../man3/bcmp.3.html">bcmp</A></B>(3),
@@ -143,6 +281,8 @@ POSIX.1-2001, POSIX.1-2008, C89, C99, SVr4, 4.3BSD.
 
 <B><A HREF="../man3/wcsncmp.3.html">wcsncmp</A></B>(3)
 
+<B><A HREF="../man7/ascii.7.html">ascii</A></B>(7)
+
 <P>
 
 <HR>
@@ -154,12 +294,17 @@ POSIX.1-2001, POSIX.1-2008, C89, C99, SVr4, 4.3BSD.
 <DT><A HREF="#lbAE">RETURN VALUE</A><DD>
 <DT><A HREF="#lbAF">ATTRIBUTES</A><DD>
 <DT><A HREF="#lbAG">CONFORMING TO</A><DD>
-<DT><A HREF="#lbAH">SEE ALSO</A><DD>
+<DT><A HREF="#lbAH">NOTES</A><DD>
+<DT><A HREF="#lbAI">EXAMPLE</A><DD>
+<DL>
+<DT><A HREF="#lbAJ">Program source</A><DD>
+</DL>
+<DT><A HREF="#lbAK">SEE ALSO</A><DD>
 </DL>
 <HR>
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:52:51 GMT, April 20, 2020
+Time: 03:53:30 GMT, April 20, 2020
 </BODY>
 </HTML>

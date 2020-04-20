@@ -10,7 +10,7 @@ of the modification is added to the header.
 <HTML><HEAD><TITLE>Man page of SOCKET</TITLE>
 </HEAD><BODY>
 <H1>SOCKET</H1>
-Section: Linux Programmer's Manual (7)<BR>Updated: 2019-08-02<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (7)<BR>Updated: 2020-04-11<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -1051,6 +1051,53 @@ compete to receive datagrams on the same socket.
 Indicates that an unsigned 32-bit value ancillary message (cmsg)
 should be attached to received skbs indicating
 the number of packets dropped by the socket since its creation.
+<DT><B>SO_SELECT_ERR_QUEUE</B> (since Linux 3.10)
+
+<DD>
+
+
+When this option is set on a socket,
+an error condition on a socket causes notification not only via the
+<I>exceptfds</I>
+
+set of
+<B><A HREF="../man2/select.2.html">select</A></B>(2).
+
+Similarly,
+<B><A HREF="../man2/poll.2.html">poll</A></B>(2)
+
+also returns a
+<B>POLLPRI</B>
+
+whenever an
+<B>POLLERR</B>
+
+event is returned.
+
+<DT><DD>
+Background: this option was added when waking up on an error condition
+occurred only via the
+<I>readfds</I>
+
+and
+<I>writefds</I>
+
+sets of
+<B><A HREF="../man2/select.2.html">select</A></B>(2).
+
+The option was added to allow monitoring for error conditions via the
+<I>exceptfds</I>
+
+argument without simultaneously having to receive notifications (via
+<I>readfds</I>)
+
+for regular data that can be read from the socket.
+After changes in Linux 4.16,
+
+
+the use of this flag to achieve the desired notifications
+is no longer necessary.
+This option is nevertheless retained for backwards compatibility.
 <DT><B>SO_SNDBUF</B>
 
 <DD>
@@ -1095,7 +1142,13 @@ control message.
 The timestamp control message is sent with level
 <B>SOL_SOCKET</B>
 
-and the
+and a
+<I>cmsg_type</I>
+
+of
+<B>SCM_TIMESTAMP</B>.
+
+The
 <I>cmsg_data</I>
 
 field is a
@@ -1107,6 +1160,46 @@ See
 <B><A HREF="../man3/cmsg.3.html">cmsg</A></B>(3)
 
 for details on control messages.
+<DT><B>SO_TIMESTAMPNS</B> (since Linux 2.6.22)
+
+<DD>
+
+Enable or disable the receiving of the
+<B>SO_TIMESTAMPNS</B>
+
+control message.
+The timestamp control message is sent with level
+<B>SOL_SOCKET</B>
+
+and a
+<I>cmsg_type</I>
+
+of
+<B>SCM_TIMESTAMPNS</B>.
+
+The
+<I>cmsg_data</I>
+
+field is a
+<I>struct timespec</I>
+
+indicating the
+reception time of the last packet passed to the user in this call.
+The clock used for the timestamp is
+<B>CLOCK_REALTIME</B>.
+
+See
+<B><A HREF="../man3/cmsg.3.html">cmsg</A></B>(3)
+
+for details on control messages.
+<DT><DD>
+A socket cannot mix
+<B>SO_TIMESTAMP</B>
+
+and
+<B>SO_TIMESTAMPNS:</B>
+
+the two modes are mutually exclusive.
 <DT><B>SO_TYPE</B>
 
 <DD>
@@ -1291,15 +1384,21 @@ for a description of
 <I>struct timeval</I>.
 
 
-This ioctl should be used only if the socket option
+This ioctl should be used only if the socket options
 <B>SO_TIMESTAMP</B>
 
-is not set on the socket.
+and
+<B>SO_TIMESTAMPNS</B>
+
+are not set on the socket.
 Otherwise, it returns the timestamp of the
 last packet that was received while
 <B>SO_TIMESTAMP</B>
 
-was not set, or it fails if no such packet has been received,
+and
+<B>SO_TIMESTAMPNS</B>
+
+were not set, or it fails if no such packet has been received,
 (i.e.,
 <B><A HREF="../man2/ioctl.2.html">ioctl</A></B>(2)
 
@@ -1496,6 +1595,6 @@ program is designed to always set this option.
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:52:55 GMT, April 20, 2020
+Time: 03:53:34 GMT, April 20, 2020
 </BODY>
 </HTML>

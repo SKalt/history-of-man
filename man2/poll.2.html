@@ -1,5 +1,5 @@
 <!--
-Copyright (C) 1997 Andries Brouwer (aeb@cwi.nl)
+Copyright (C) 2006, 2019 Michael Kerrisk &lt;mtk.manpages@gmail.com&gt;
 %%%LICENSE_START(VERBATIM)
 Permission is granted to make and distribute verbatim copies of this
 manual provided the copyright notice and this permission notice are
@@ -26,7 +26,7 @@ the source, must acknowledge the copyright and authors of this work.
 <HTML><HEAD><TITLE>Man page of POLL</TITLE>
 </HEAD><BODY>
 <H1>POLL</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2019-08-02<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2020-04-11<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -59,6 +59,12 @@ performs a similar task to
 
 it waits for one of a set of file descriptors to become ready
 to perform I/O.
+The Linux-specific
+<B><A HREF="../man7/epoll.7.html">epoll</A></B>(7)
+
+API performs a similar task, but offers features beyond those found in
+<B><A HREF="../man2/poll.2.html">poll</A></B>(2).
+
 <P>
 
 The set of file descriptors to be monitored is specified in the
@@ -174,11 +180,11 @@ argument specifies the number of milliseconds that
 should block waiting for a file descriptor to become ready.
 The call will block until either:
 <DL COMPACT>
-<DT>*<DD>
+<DT>&bull;<DD>
 a file descriptor becomes ready;
-<DT>*<DD>
+<DT>&bull;<DD>
 the call is interrupted by a signal handler; or
-<DT>*<DD>
+<DT>&bull;<DD>
 the timeout expires.
 </DL>
 <P>
@@ -221,16 +227,16 @@ There is some exceptional condition on the file descriptor.
 Possibilities include:
 <DL COMPACT><DT><DD>
 <DL COMPACT>
-<DT>*<DD>
+<DT>&bull;<DD>
 There is out-of-band data on a TCP socket (see
 <B><A HREF="../man7/tcp.7.html">tcp</A></B>(7)).
 
-<DT>*<DD>
+<DT>&bull;<DD>
 A pseudoterminal master in packet mode has seen a state change on the slave
 (see
 <B><A HREF="../man2/ioctl_tty.2.html">ioctl_tty</A></B>(2)).
 
-<DT>*<DD>
+<DT>&bull;<DD>
 A
 <I>cgroup.events</I>
 
@@ -467,17 +473,24 @@ can block indefinitely.
 <A NAME="lbAF">&nbsp;</A>
 <H2>RETURN VALUE</H2>
 
-On success, a positive number is returned; this is
-the number of structures which have nonzero
+On success,
+<B>poll</B>()
+
+returns a nonnegative value which is the number of elements in the
+<I>pollfds</I>
+
+whose
 <I>revents</I>
 
-fields (in other words, those descriptors with events or errors reported).
-A value of 0 indicates that the call timed out and no file
-descriptors were ready.
+fields have been set to a nonzero value (indicating an event or an error).
+A return value of zero indicates that the system call timed out
+before any file descriptors became read.
+<P>
+
 On error, -1 is returned, and
 <I>errno</I>
 
-is set appropriately.
+is set to indicate the cause of the error.
 <A NAME="lbAG">&nbsp;</A>
 <H2>ERRORS</H2>
 
@@ -485,6 +498,9 @@ is set appropriately.
 <DT><B>EFAULT</B>
 
 <DD>
+<I>fds</I>
+
+points outside the process's accessible address space.
 The array given as argument was not contained in the calling program's
 address space.
 <DT><B>EINTR</B>
@@ -515,7 +531,7 @@ is invalid (negative).
 <DT><B>ENOMEM</B>
 
 <DD>
-There was no space to allocate file descriptor tables.
+Unable to allocate memory for kernel data structures.
 </DL>
 <A NAME="lbAH">&nbsp;</A>
 <H2>VERSIONS</H2>
@@ -525,8 +541,7 @@ The
 
 system call was introduced in Linux 2.1.23.
 On older kernels that lack this system call,
-
-the glibc (and the old Linux libc)
+the glibc
 <B>poll</B>()
 
 wrapper function provides emulation using
@@ -657,6 +672,212 @@ BUGS section of
 <B><A HREF="../man2/select.2.html">select</A></B>(2).
 
 <A NAME="lbAM">&nbsp;</A>
+<H2>EXAMPLE</H2>
+
+The program below opens each of the files named in its command-line
+arguments and monitors the resulting file descriptors for readiness to read
+(<B>POLLIN</B>).
+
+The program loops, repeatedly using
+<B>poll</B>()
+
+to monitor the file descriptors,
+printing the number of ready file descriptors on return.
+For each ready file descriptor, the program:
+<DL COMPACT>
+<DT>&bull;<DD>
+displays the returned
+<I>revents</I>
+
+field in a human-readable form;
+<DT>&bull;<DD>
+if the file descriptor is readable, reads some data from it,
+and displays that data on standard output; and
+<DT>&bull;<DD>
+if the file descriptors was not readable,
+but some other event occurred (presumably
+<B>POLLHUP</B>),
+
+closes the file descriptor.
+</DL>
+<P>
+
+Suppose we run the program in one terminal, asking it to open a FIFO:
+<P>
+
+
+
+$ <B>mkfifo myfifo</B>
+$ <B>./poll_input myfifo</B>
+
+
+<P>
+
+In a second terminal window, we then open the FIFO for writing,
+write some data to it, and close the FIFO:
+<P>
+
+
+
+$ <B>echo aaaaabbbbbccccc &gt; myfifo</B>
+
+
+<P>
+
+In the terminal where we are running the program, we would then see:
+<P>
+
+
+
+Opened &quot;myfifo&quot; on fd 3
+About to poll()
+Ready: 1
+<BR>&nbsp;&nbsp;fd=3;&nbsp;events:&nbsp;POLLIN&nbsp;POLLHUP
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;read&nbsp;10&nbsp;bytes:&nbsp;aaaaabbbbb
+About to poll()
+Ready: 1
+<BR>&nbsp;&nbsp;fd=3;&nbsp;events:&nbsp;POLLIN&nbsp;POLLHUP
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;read&nbsp;6&nbsp;bytes:&nbsp;ccccc
+<P>
+About to poll()
+Ready: 1
+<BR>&nbsp;&nbsp;fd=3;&nbsp;events:&nbsp;POLLHUP
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;closing&nbsp;fd&nbsp;3
+All file descriptors closed; bye
+
+
+<P>
+
+In the above output, we see that
+<B>poll</B>()
+
+returned three times:
+<DL COMPACT>
+<DT>&bull;<DD>
+On the first return, the bits returned in the
+<I>revents</I>
+
+field were
+<B>POLLIN</B>,
+
+indicating that the file descriptor is readable, and
+<B>POLLHUP</B>,
+
+indicating that the other end of the FIFO has been closed.
+The program then consumed some of the available input.
+<DT>&bull;<DD>
+The second return from
+<B>poll</B>()
+
+also indicated
+<B>POLLIN</B>
+
+and
+<B>POLLHUP</B>;
+
+the program then consumed the last of the available input.
+<DT>&bull;<DD>
+On the final return,
+<B>poll</B>()
+
+indicated only
+<B>POLLHUP</B>
+
+on the FIFO,
+at which point the file descriptor was closed and the program terminated.
+
+</DL>
+<A NAME="lbAN">&nbsp;</A>
+<H3>Program source</H3>
+
+
+<PRE>
+/* poll_input.c */
+
+#include &lt;<A HREF="file:///usr/include/poll.h">poll.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/fcntl.h">fcntl.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/sys/types.h">sys/types.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/stdlib.h">stdlib.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;
+
+#define errExit(msg)    do { perror(msg); exit(EXIT_FAILURE); \
+                        } while (0)
+
+int
+main(int argc, char *argv[])
+{
+    int nfds, num_open_fds;
+    struct pollfd *pfds;
+
+    if (argc &lt; 2) {
+       fprintf(stderr, &quot;Usage: %s file...\n&quot;, argv[0]);
+       exit(EXIT_FAILURE);
+    }
+
+    num_open_fds = nfds = argc - 1;
+    pfds = calloc(nfds, sizeof(struct pollfd));
+    if (pfds == NULL)
+        errExit(&quot;malloc&quot;);
+
+    /* Open each file on command line, and add it 'pfds' array */
+
+    for (int j = 0; j &lt; nfds; j++) {
+        pfds[j].fd = open(argv[j + 1], O_RDONLY);
+        if (pfds[j].fd == -1)
+            errExit(&quot;open&quot;);
+
+        printf(&quot;Opened \&quot;%s\&quot; on fd %d\n&quot;, argv[j + 1], pfds[j].fd);
+
+        pfds[j].events = POLLIN;
+    }
+
+    /* Keep calling poll() as long as at least one file descriptor is
+       open */
+
+    while (num_open_fds &gt; 0) {
+        int ready;
+
+        printf(&quot;About to poll()\n&quot;);
+        ready = poll(pfds, nfds, -1);
+        if (ready == -1)
+            errExit(&quot;poll&quot;);
+
+        printf(&quot;Ready: %d\n&quot;, ready);
+
+        /* Deal with array returned by poll() */
+
+        for (int j = 0; j &lt; nfds; j++) {
+            char buf[10];
+
+            if (pfds[j].revents != 0) {
+                printf(&quot;  fd=%d; events: %s%s%s\n&quot;, pfds[j].fd,
+                        (pfds[j].revents &amp; POLLIN)  ? &quot;POLLIN &quot;  : &quot;&quot;,
+                        (pfds[j].revents &amp; POLLHUP) ? &quot;POLLHUP &quot; : &quot;&quot;,
+                        (pfds[j].revents &amp; POLLERR) ? &quot;POLLERR &quot; : &quot;&quot;);
+
+                if (pfds[j].revents &amp; POLLIN) {
+                    ssize_t s = read(pfds[j].fd, buf, sizeof(buf));
+                    if (s == -1)
+                        errExit(&quot;read&quot;);
+                    printf(&quot;    read %zd bytes: %.*s\n&quot;,
+                            s, (int) s, buf);
+                } else {                /* POLLERR | POLLHUP */
+                    printf(&quot;    closing fd %d\n&quot;, pfds[j].fd);
+                    if (close(pfds[j].fd) == -1)
+                        errExit(&quot;close&quot;);
+                    num_open_fds--;
+                }
+            }
+        }
+    }
+
+    printf(&quot;All file descriptors closed; bye\n&quot;);
+    exit(EXIT_SUCCESS);
+}
+</PRE>
+
+<A NAME="lbAO">&nbsp;</A>
 <H2>SEE ALSO</H2>
 
 <B><A HREF="../man2/restart_syscall.2.html">restart_syscall</A></B>(2),
@@ -689,12 +910,16 @@ BUGS section of
 <DT><A HREF="#lbAK">C library/kernel differences</A><DD>
 </DL>
 <DT><A HREF="#lbAL">BUGS</A><DD>
-<DT><A HREF="#lbAM">SEE ALSO</A><DD>
+<DT><A HREF="#lbAM">EXAMPLE</A><DD>
+<DL>
+<DT><A HREF="#lbAN">Program source</A><DD>
+</DL>
+<DT><A HREF="#lbAO">SEE ALSO</A><DD>
 </DL>
 <HR>
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:52:42 GMT, April 20, 2020
+Time: 03:53:21 GMT, April 20, 2020
 </BODY>
 </HTML>

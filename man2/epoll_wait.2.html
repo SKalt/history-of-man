@@ -19,7 +19,7 @@ License along with this manual; if not, see
 <HTML><HEAD><TITLE>Man page of EPOLL_WAIT</TITLE>
 </HEAD><BODY>
 <H1>EPOLL_WAIT</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2019-03-06<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2020-04-11<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -51,10 +51,12 @@ system call waits for events on the
 instance referred to by the file descriptor
 <I>epfd</I>.
 
-The memory area pointed to by
+The buffer pointed to by
 <I>events</I>
 
-will contain the events that will be available for the caller.
+is used to return information from the ready list
+about file descriptors in the interest list that
+have some events available.
 Up to
 <I>maxevents</I>
 
@@ -78,13 +80,18 @@ Time is measured against the
 <B>CLOCK_MONOTONIC</B>
 
 clock.
-The call will block until either:
+<P>
+
+A call to
+<B>epoll_wait</B>()
+
+will block until either:
 <DL COMPACT>
-<DT>*<DD>
+<DT>&bull;<DD>
 a file descriptor delivers an event;
-<DT>*<DD>
+<DT>&bull;<DD>
 the call is interrupted by a signal handler; or
-<DT>*<DD>
+<DT>&bull;<DD>
 the timeout expires.
 </DL>
 <P>
@@ -136,17 +143,28 @@ struct epoll_event {
 The
 <I>data</I>
 
-field of each returned structure contains the same data as was specified
+field of each returned
+<I>epoll_event</I>
+
+structure contains the same data as was specified
 in the most recent call to
 <B><A HREF="../man2/epoll_ctl.2.html">epoll_ctl</A></B>(2)
 
 (<B>EPOLL_CTL_ADD</B>, <B>EPOLL_CTL_MOD</B>)
 
-for the corresponding open file description.
+for the corresponding open file descriptor.
+<P>
+
 The
 <I>events</I>
 
-field contains the returned event bit field.
+field is a bit mask that indicates the events that have occurred for the
+corresponding open file description.
+See
+<B><A HREF="../man2/epoll_ctl.2.html">epoll_ctl</A></B>(2)
+
+for a list of the bits that may appear in this mask.
+
 <A NAME="lbAE">&nbsp;</A>
 <H3>epoll_pwait()</H3>
 
@@ -406,6 +424,6 @@ wrapper function specifies this argument as a fixed value
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:52:40 GMT, April 20, 2020
+Time: 03:53:19 GMT, April 20, 2020
 </BODY>
 </HTML>

@@ -1,5 +1,5 @@
 <!--
-Copyright (C) 2002 Michael Kerrisk &lt;mtk.manpages@gmail.com&gt;
+Copyright (C) 2002, 2020 Michael Kerrisk &lt;mtk.manpages@gmail.com&gt;
 %%%LICENSE_START(VERBATIM)
 Permission is granted to make and distribute verbatim copies of this
 manual provided the copyright notice and this permission notice are
@@ -26,7 +26,7 @@ the source, must acknowledge the copyright and authors of this work.
 <HTML><HEAD><TITLE>Man page of SHM_OPEN</TITLE>
 </HEAD><BODY>
 <H1>SHM_OPEN</H1>
-Section: Linux Programmer's Manual (3)<BR>Updated: 2017-09-15<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2020-04-11<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -243,7 +243,7 @@ was specified, in which case a new, distinct object is created).
 On success,
 <B>shm_open</B>()
 
-returns a nonnegative file descriptor.
+returns a file descriptor (a nonnegative integer).
 On failure,
 <B>shm_open</B>()
 
@@ -410,6 +410,242 @@ filesystem that is normally mounted under
 <I>/dev/shm</I>.
 
 <A NAME="lbAK">&nbsp;</A>
+<H2>EXAMPLE</H2>
+
+The programs below employ POSIX shared memory and POSIX unnamed semaphores
+to exchange a piece of data.
+The &quot;bounce&quot; program (which must be run first) raises the case
+of a string that is placed into the shared memory by the &quot;send&quot; program.
+Once the data has been modified, the &quot;send&quot; program then prints
+the contents of the modified shared memory.
+An example execution of the two programs is the following:
+<P>
+
+
+
+$ <B>./pshm_ucase_bounce /myshm &amp;</B>
+[1] 270171
+$ <B>./pshm_ucase_send /myshm hello</B>
+HELLO
+
+
+<P>
+
+Further detail about these programs is provided below.
+
+<A NAME="lbAL">&nbsp;</A>
+<H3>Program source: pshm_ucase.h</H3>
+
+The following header file is included by both programs below.
+Its primary purpose is to define a structure that will be imposed
+on the memory object that is shared between the two programs.
+<P>
+
+
+
+#include &lt;<A HREF="file:///usr/include/sys/mman.h">sys/mman.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/fcntl.h">fcntl.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/semaphore.h">semaphore.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/sys/stat.h">sys/stat.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/stdlib.h">stdlib.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;
+<P>
+#define errExit(msg)    do { perror(msg); exit(EXIT_FAILURE); \
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}&nbsp;while&nbsp;(0)
+<P>
+#define BUF_SIZE 1024   /* Maximum size for exchanged string */
+<P>
+/* Define a structure that will be imposed on the shared
+<BR>&nbsp;&nbsp;&nbsp;memory&nbsp;object&nbsp;*/
+<P>
+struct shmbuf {
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;sem_t&nbsp;&nbsp;sem1;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;POSIX&nbsp;unnamed&nbsp;semaphore&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;sem_t&nbsp;&nbsp;sem2;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;POSIX&nbsp;unnamed&nbsp;semaphore&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;size_t&nbsp;cnt;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Number&nbsp;of&nbsp;bytes&nbsp;used&nbsp;in&nbsp;'buf'&nbsp;*/
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;char&nbsp;&nbsp;&nbsp;buf[BUF_SIZE];&nbsp;&nbsp;&nbsp;/*&nbsp;Data&nbsp;being&nbsp;transferred&nbsp;*/
+};
+
+
+<P>
+
+
+<A NAME="lbAM">&nbsp;</A>
+<H3>Program source: pshm_ucase_bounce.c</H3>
+
+<P>
+
+The &quot;bounce&quot; program creates a new shared memory object with the name
+given in its command-line argument and sizes the object to
+match the size of the
+<I>shmbuf</I>
+
+structure defined in the header file.
+It then maps the object into the process's address space,
+and initializes two POSIX semaphores inside the object to 0.
+<P>
+
+After the &quot;send&quot; program has posted the first of the semaphores,
+the &quot;bounce&quot; program upper cases the data that has been placed
+in the memory by the &quot;send&quot; program and then posts the second semaphore
+to tell the &quot;send&quot; program that it may now access the shared memory.
+<P>
+
+
+
+#include &lt;<A HREF="file:///usr/include/ctype.h">ctype.h</A>&gt;
+#include &quot;pshm_ucase.h&quot;
+<P>
+int
+main(int argc, char *argv[])
+{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(argc&nbsp;!=&nbsp;2)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fprintf(stderr,&nbsp;&quot;Usage:&nbsp;%s&nbsp;/shm-path\n&quot;,&nbsp;argv[0]);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;char&nbsp;*shmpath&nbsp;=&nbsp;argv[1];
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Create&nbsp;shared&nbsp;memory&nbsp;object&nbsp;and&nbsp;set&nbsp;its&nbsp;size&nbsp;to&nbsp;the&nbsp;size
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;of&nbsp;our&nbsp;structure&nbsp;*/
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;fd&nbsp;=&nbsp;shm_open(shmpath,&nbsp;O_CREAT&nbsp;|&nbsp;O_EXCL&nbsp;|&nbsp;O_RDWR,
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;S_IRUSR&nbsp;|&nbsp;S_IWUSR);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(fd&nbsp;==&nbsp;-1)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;errExit(&quot;shm_open&quot;);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(ftruncate(fd,&nbsp;sizeof(struct&nbsp;shmbuf))&nbsp;==&nbsp;-1)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;errExit(&quot;ftruncate&quot;);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Map&nbsp;the&nbsp;object&nbsp;into&nbsp;the&nbsp;caller's&nbsp;address&nbsp;space&nbsp;*/
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;struct&nbsp;shmbuf&nbsp;*shmp&nbsp;=&nbsp;mmap(NULL,&nbsp;sizeof(struct&nbsp;shmbuf),
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;PROT_READ&nbsp;|&nbsp;PROT_WRITE,
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;MAP_SHARED,&nbsp;fd,&nbsp;0);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(shmp&nbsp;==&nbsp;MAP_FAILED)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;errExit(&quot;mmap&quot;);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Initialize&nbsp;semaphores&nbsp;as&nbsp;process-shared,&nbsp;with&nbsp;value&nbsp;0&nbsp;*/
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(sem_init(&amp;shmp-&gt;sem1,&nbsp;1,&nbsp;0)&nbsp;==&nbsp;-1)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;errExit(&quot;sem_init-sem1&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(sem_init(&amp;shmp-&gt;sem2,&nbsp;1,&nbsp;0)&nbsp;==&nbsp;-1)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;errExit(&quot;sem_init-sem2&quot;);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Wait&nbsp;for&nbsp;'sem1'&nbsp;to&nbsp;be&nbsp;posted&nbsp;by&nbsp;peer&nbsp;before&nbsp;touching
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;shared&nbsp;memory&nbsp;*/
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(sem_wait(&amp;shmp-&gt;sem1)&nbsp;==&nbsp;-1)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;errExit(&quot;sem_wait&quot;);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Convert&nbsp;data&nbsp;in&nbsp;shared&nbsp;memory&nbsp;into&nbsp;upper&nbsp;case&nbsp;*/
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;for&nbsp;(int&nbsp;j&nbsp;=&nbsp;0;&nbsp;j&nbsp;&lt;&nbsp;shmp-&gt;cnt;&nbsp;j++)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;shmp-&gt;buf[j]&nbsp;=&nbsp;toupper((unsigned&nbsp;char)&nbsp;shmp-&gt;buf[j]);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Post&nbsp;'sem2'&nbsp;to&nbsp;tell&nbsp;the&nbsp;to&nbsp;tell&nbsp;peer&nbsp;that&nbsp;it&nbsp;can&nbsp;now
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;access&nbsp;the&nbsp;modified&nbsp;data&nbsp;in&nbsp;shared&nbsp;memory&nbsp;*/
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(sem_post(&amp;shmp-&gt;sem2)&nbsp;==&nbsp;-1)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;errExit(&quot;sem_post&quot;);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Unlink&nbsp;the&nbsp;shared&nbsp;memory&nbsp;object.&nbsp;Even&nbsp;if&nbsp;the&nbsp;peer&nbsp;process
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;is&nbsp;still&nbsp;using&nbsp;the&nbsp;object,&nbsp;this&nbsp;is&nbsp;okay.&nbsp;The&nbsp;object&nbsp;will
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;be&nbsp;removed&nbsp;only&nbsp;after&nbsp;all&nbsp;open&nbsp;references&nbsp;are&nbsp;closed.&nbsp;*/
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;shm_unlink(shmpath);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_SUCCESS);
+}
+
+
+<P>
+
+
+<A NAME="lbAN">&nbsp;</A>
+<H3>Program source: pshm_ucase_send.c</H3>
+
+<P>
+
+The &quot;send&quot; program takes two command-line arguments:
+the pathname of a shared memory object previously created by the &quot;bounce&quot;
+program and a string that is to be copied into that object.
+<P>
+
+The program opens the shared memory object
+and maps the object into its address space.
+It then copies the data specified in its second argument
+into the shared memory,
+and posts the first semaphore,
+which tells the &quot;bounce&quot; program that it can now access that data.
+After the &quot;bounce&quot; program posts the second semaphore,
+the &quot;send&quot; program prints the contents of the shared memory
+on standard output.
+<P>
+
+
+
+#include &lt;<A HREF="file:///usr/include/string.h">string.h</A>&gt;
+#include &quot;pshm_ucase.h&quot;
+<P>
+int
+main(int argc, char *argv[])
+{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(argc&nbsp;!=&nbsp;3)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fprintf(stderr,&nbsp;&quot;Usage:&nbsp;%s&nbsp;/shm-path&nbsp;string\n&quot;,&nbsp;argv[0]);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;char&nbsp;*shmpath&nbsp;=&nbsp;argv[1];
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;char&nbsp;*string&nbsp;=&nbsp;argv[2];
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;size_t&nbsp;len&nbsp;=&nbsp;strlen(string);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(len&nbsp;&gt;&nbsp;BUF_SIZE)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fprintf(stderr,&nbsp;&quot;String&nbsp;is&nbsp;too&nbsp;long\n&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;}
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Open&nbsp;the&nbsp;existing&nbsp;shared&nbsp;memory&nbsp;object&nbsp;and&nbsp;map&nbsp;it
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;into&nbsp;the&nbsp;caller's&nbsp;address&nbsp;space&nbsp;*/
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;fd&nbsp;=&nbsp;shm_open(shmpath,&nbsp;O_RDWR,&nbsp;0);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(fd&nbsp;==&nbsp;-1)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;errExit(&quot;shm_open&quot;);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;struct&nbsp;shmbuf&nbsp;*shmp&nbsp;=&nbsp;mmap(NULL,&nbsp;sizeof(struct&nbsp;shmbuf),
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;PROT_READ&nbsp;|&nbsp;PROT_WRITE,
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;MAP_SHARED,&nbsp;fd,&nbsp;0);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(shmp&nbsp;==&nbsp;MAP_FAILED)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;errExit(&quot;mmap&quot;);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Copy&nbsp;data&nbsp;into&nbsp;the&nbsp;shared&nbsp;memory&nbsp;object&nbsp;*/
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;shmp-&gt;cnt&nbsp;=&nbsp;len;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;memcpy(&amp;shmp-&gt;buf,&nbsp;string,&nbsp;len);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Tell&nbsp;peer&nbsp;that&nbsp;it&nbsp;can&nbsp;now&nbsp;access&nbsp;shared&nbsp;memory&nbsp;*/
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(sem_post(&amp;shmp-&gt;sem1)&nbsp;==&nbsp;-1)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;errExit(&quot;sem_post&quot;);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Wait&nbsp;until&nbsp;peer&nbsp;says&nbsp;that&nbsp;it&nbsp;has&nbsp;finished&nbsp;accessing
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;the&nbsp;shared&nbsp;memory&nbsp;*/
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(sem_wait(&amp;shmp-&gt;sem2)&nbsp;==&nbsp;-1)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;errExit(&quot;sem_wait&quot;);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Write&nbsp;modified&nbsp;data&nbsp;in&nbsp;shared&nbsp;memory&nbsp;to&nbsp;standard&nbsp;output&nbsp;*/
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;write(STDOUT_FILENO,&nbsp;&amp;shmp-&gt;buf,&nbsp;len);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;write(STDOUT_FILENO,&nbsp;&quot;\n&quot;,&nbsp;1);
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_SUCCESS);
+}
+
+
+<P>
+
+<A NAME="lbAO">&nbsp;</A>
 <H2>SEE ALSO</H2>
 
 <B><A HREF="../man2/close.2.html">close</A></B>(2),
@@ -448,12 +684,18 @@ filesystem that is normally mounted under
 <DT><A HREF="#lbAH">ATTRIBUTES</A><DD>
 <DT><A HREF="#lbAI">CONFORMING TO</A><DD>
 <DT><A HREF="#lbAJ">NOTES</A><DD>
-<DT><A HREF="#lbAK">SEE ALSO</A><DD>
+<DT><A HREF="#lbAK">EXAMPLE</A><DD>
+<DL>
+<DT><A HREF="#lbAL">Program source: pshm_ucase.h</A><DD>
+<DT><A HREF="#lbAM">Program source: pshm_ucase_bounce.c</A><DD>
+<DT><A HREF="#lbAN">Program source: pshm_ucase_send.c</A><DD>
+</DL>
+<DT><A HREF="#lbAO">SEE ALSO</A><DD>
 </DL>
 <HR>
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:52:51 GMT, April 20, 2020
+Time: 03:53:30 GMT, April 20, 2020
 </BODY>
 </HTML>

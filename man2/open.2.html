@@ -47,6 +47,10 @@ open, openat, creat - open and possibly create a file
 
 <B>int openat(int </B><I>dirfd</I><B>, const char *</B><I>pathname</I><B>, int </B><I>flags</I><B>);</B>
 <B>int openat(int </B><I>dirfd</I><B>, const char *</B><I>pathname</I><B>, int </B><I>flags</I><B>, mode_t </B><I>mode</I><B>);</B>
+
+/* Documented separately, in <B><A HREF="../man2/openat2.2.html">openat2</A></B>(2): */
+<B>int openat2(int </B><I>dirfd</I><B>, const char *</B><I>pathname</I><B>,</B>
+<B>            const struct open_how *</B><I>how</I><B>, size_t </B><I>size</I><B>);</B>
 </PRE>
 
 <P>
@@ -681,7 +685,10 @@ process does not have one.
 <DT><B>O_NOFOLLOW</B>
 
 <DD>
-If <I>pathname</I> is a symbolic link, then the open fails, with the error
+If the trailing component (i.e., basename) of
+<I>pathname</I>
+
+is a symbolic link, then the open fails, with the error
 <B>ELOOP</B>.
 
 Symbolic links in earlier components of the pathname will still be
@@ -1220,7 +1227,23 @@ is absolute, then
 <I>dirfd</I>
 
 is ignored.
+
 <A NAME="lbAG">&nbsp;</A>
+<H3><A HREF="../man2/openat2.2.html">openat2</A>(2)</H3>
+
+The
+<B><A HREF="../man2/openat2.2.html">openat2</A></B>(2)
+
+system call is an extension of
+<B>openat</B>(),
+
+and provides a superset of the features of
+<B>openat</B>().
+
+It is separate documented, in
+<B><A HREF="../man2/openat2.2.html">openat2</A></B>(2).
+
+<A NAME="lbAH">&nbsp;</A>
 <H2>RETURN VALUE</H2>
 
 <B>open</B>(),
@@ -1230,12 +1253,13 @@ is ignored.
 and
 <B>creat</B>()
 
-return the new file descriptor, or -1 if an error occurred
+return the new file descriptor (a nonnegative integer),
+or -1 if an error occurred
 (in which case,
 <I>errno</I>
 
 is set appropriately).
-<A NAME="lbAH">&nbsp;</A>
+<A NAME="lbAI">&nbsp;</A>
 <H2>ERRORS</H2>
 
 <B>open</B>(),
@@ -1340,6 +1364,14 @@ was specified in
 <I>flags</I>
 
 and the final component (&quot;basename&quot;) of the new file's
+<I>pathname</I>
+
+is invalid
+(e.g., it contains characters not permitted by the underlying filesystem).
+<DT><BR>&nbsp;.TP<DD>
+<B>EINVAL</B>
+
+The final component (&quot;basename&quot;) of
 <I>pathname</I>
 
 is invalid
@@ -1622,14 +1654,14 @@ is a relative pathname and
 
 is a file descriptor referring to a file other than a directory.
 </DL>
-<A NAME="lbAI">&nbsp;</A>
+<A NAME="lbAJ">&nbsp;</A>
 <H2>VERSIONS</H2>
 
 <B>openat</B>()
 
 was added to Linux in kernel 2.6.16;
 library support was added to glibc in version 2.4.
-<A NAME="lbAJ">&nbsp;</A>
+<A NAME="lbAK">&nbsp;</A>
 <H2>CONFORMING TO</H2>
 
 <B>open</B>(),
@@ -1642,6 +1674,11 @@ SVr4, 4.3BSD, POSIX.1-2001, POSIX.1-2008.
 <B>openat</B>():
 
 POSIX.1-2008.
+<P>
+
+<B><A HREF="../man2/openat2.2.html">openat2</A></B>(2)
+
+is Linux-specific.
 <P>
 
 The
@@ -1698,7 +1735,7 @@ must be defined before including
 <I>any</I>
 
 header files.
-<A NAME="lbAK">&nbsp;</A>
+<A NAME="lbAL">&nbsp;</A>
 <H2>NOTES</H2>
 
 Under Linux, the
@@ -1799,7 +1836,7 @@ the (BSD-derived)
 synonym is defined instead.
 
 
-<A NAME="lbAL">&nbsp;</A>
+<A NAME="lbAM">&nbsp;</A>
 <H3>Open file descriptions</H3>
 
 The term open file description is the one used by POSIX to refer to the
@@ -1846,7 +1883,7 @@ operation to test whether two file descriptors
 refer to the same open file description.
 
 
-<A NAME="lbAM">&nbsp;</A>
+<A NAME="lbAN">&nbsp;</A>
 <H3>Synchronized I/O</H3>
 
 The POSIX.1-2008 &quot;synchronized I/O&quot; option
@@ -1978,7 +2015,7 @@ new headers get at least
 
 semantics on pre-2.6.33 kernels.
 
-<A NAME="lbAN">&nbsp;</A>
+<A NAME="lbAO">&nbsp;</A>
 <H3>C library/kernel differences</H3>
 
 Since version 2.26,
@@ -1994,7 +2031,7 @@ system call, rather than the kernel's
 system call.
 For certain architectures, this is also true in glibc versions before 2.26.
 
-<A NAME="lbAO">&nbsp;</A>
+<A NAME="lbAP">&nbsp;</A>
 <H3>NFS</H3>
 
 There are many infelicities in the protocol underlying NFS, affecting
@@ -2020,7 +2057,7 @@ permissions, but UID mapping is performed by the server upon
 read and write requests.
 
 
-<A NAME="lbAP">&nbsp;</A>
+<A NAME="lbAQ">&nbsp;</A>
 <H3>FIFOs</H3>
 
 Opening the read or write end of a FIFO blocks until the other
@@ -2031,7 +2068,7 @@ See
 for further details.
 
 
-<A NAME="lbAQ">&nbsp;</A>
+<A NAME="lbAR">&nbsp;</A>
 <H3>File access mode</H3>
 
 Unlike the other values that can be specified in
@@ -2074,7 +2111,7 @@ operations.
 
 
 
-<A NAME="lbAR">&nbsp;</A>
+<A NAME="lbAS">&nbsp;</A>
 <H3>Rationale for openat() and other directory file descriptor APIs</H3>
 
 <B>openat</B>()
@@ -2196,7 +2233,7 @@ on the use of
 but less efficiently.)
 
 
-<A NAME="lbAS">&nbsp;</A>
+<A NAME="lbAT">&nbsp;</A>
 <H3>O_DIRECT</H3>
 
 <P>
@@ -2361,7 +2398,7 @@ It is recommended that applications treat use of
 <B>O_DIRECT</B>
 
 as a performance option which is disabled by default.
-<A NAME="lbAT">&nbsp;</A>
+<A NAME="lbAU">&nbsp;</A>
 <H2>BUGS</H2>
 
 Currently, it is not possible to enable signal-driven
@@ -2410,7 +2447,7 @@ will create a regular file (i.e.,
 <B>O_DIRECTORY</B>
 
 is ignored).
-<A NAME="lbAU">&nbsp;</A>
+<A NAME="lbAV">&nbsp;</A>
 <H2>SEE ALSO</H2>
 
 <B><A HREF="../man2/chmod.2.html">chmod</A></B>(2),
@@ -2432,6 +2469,8 @@ is ignored).
 <B><A HREF="../man2/mmap.2.html">mmap</A></B>(2),
 
 <B><A HREF="../man2/mount.2.html">mount</A></B>(2),
+
+<B><A HREF="../man2/openat2.2.html">openat2</A></B>(2),
 
 <B><A HREF="../man2/open_by_handle_at.2.html">open_by_handle_at</A></B>(2),
 
@@ -2470,29 +2509,30 @@ is ignored).
 <DL>
 <DT><A HREF="#lbAE">creat()</A><DD>
 <DT><A HREF="#lbAF">openat()</A><DD>
+<DT><A HREF="#lbAG">openat2(2)</A><DD>
 </DL>
-<DT><A HREF="#lbAG">RETURN VALUE</A><DD>
-<DT><A HREF="#lbAH">ERRORS</A><DD>
-<DT><A HREF="#lbAI">VERSIONS</A><DD>
-<DT><A HREF="#lbAJ">CONFORMING TO</A><DD>
-<DT><A HREF="#lbAK">NOTES</A><DD>
+<DT><A HREF="#lbAH">RETURN VALUE</A><DD>
+<DT><A HREF="#lbAI">ERRORS</A><DD>
+<DT><A HREF="#lbAJ">VERSIONS</A><DD>
+<DT><A HREF="#lbAK">CONFORMING TO</A><DD>
+<DT><A HREF="#lbAL">NOTES</A><DD>
 <DL>
-<DT><A HREF="#lbAL">Open file descriptions</A><DD>
-<DT><A HREF="#lbAM">Synchronized I/O</A><DD>
-<DT><A HREF="#lbAN">C library/kernel differences</A><DD>
-<DT><A HREF="#lbAO">NFS</A><DD>
-<DT><A HREF="#lbAP">FIFOs</A><DD>
-<DT><A HREF="#lbAQ">File access mode</A><DD>
-<DT><A HREF="#lbAR">Rationale for openat() and other directory file descriptor APIs</A><DD>
-<DT><A HREF="#lbAS">O_DIRECT</A><DD>
+<DT><A HREF="#lbAM">Open file descriptions</A><DD>
+<DT><A HREF="#lbAN">Synchronized I/O</A><DD>
+<DT><A HREF="#lbAO">C library/kernel differences</A><DD>
+<DT><A HREF="#lbAP">NFS</A><DD>
+<DT><A HREF="#lbAQ">FIFOs</A><DD>
+<DT><A HREF="#lbAR">File access mode</A><DD>
+<DT><A HREF="#lbAS">Rationale for openat() and other directory file descriptor APIs</A><DD>
+<DT><A HREF="#lbAT">O_DIRECT</A><DD>
 </DL>
-<DT><A HREF="#lbAT">BUGS</A><DD>
-<DT><A HREF="#lbAU">SEE ALSO</A><DD>
+<DT><A HREF="#lbAU">BUGS</A><DD>
+<DT><A HREF="#lbAV">SEE ALSO</A><DD>
 </DL>
 <HR>
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:52:42 GMT, April 20, 2020
+Time: 03:53:21 GMT, April 20, 2020
 </BODY>
 </HTML>
