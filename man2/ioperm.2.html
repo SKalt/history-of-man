@@ -25,7 +25,7 @@ License along with this manual; if not, see
 <HTML><HEAD><TITLE>Man page of IOPERM</TITLE>
 </HEAD><BODY>
 <H1>IOPERM</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2007-06-15<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2013-03-12<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -51,26 +51,42 @@ ioperm - set port input/output permissions
 
 <B>ioperm</B>()
 
-sets the port access permission bits for the calling process for
-<I>num</I> bytes starting from port address <I>from</I> to the value
-<I>turn_on</I>.
-If <I>turn_on</I> is nonzero, the calling process must be privileged
+sets the port access permission bits for the calling thread for
+<I>num</I>
+
+bits starting from port address
+<I>from</I>.
+
+If
+<I>turn_on</I>
+
+is nonzero, then permission for the specified bits is enabled;
+otherwise it is disabled.
+If
+<I>turn_on</I>
+
+is nonzero, the calling thread must be privileged
 (<B>CAP_SYS_RAWIO</B>).
 
 <P>
-
-
-
-
-Only the first 0x3ff I/O ports can be specified in this manner.
+Before Linux 2.6.8,
+only the first 0x3ff I/O ports could be specified in this manner.
 For more ports, the
 <B><A HREF="../man2/iopl.2.html">iopl</A></B>(2)
 
-system call must be used.
+system call had to be used (with a
+<I>level</I>
+
+argument of 3).
+Since Linux 2.6.8, 65,536 I/O ports can be specified.
 <P>
 Permissions are not inherited by the child created by
-<B><A HREF="../man2/fork.2.html">fork</A></B>(2).
+<B><A HREF="../man2/fork.2.html">fork</A></B>(2);
 
+following a
+<B><A HREF="../man2/fork.2.html">fork</A></B>(2)
+
+the child must turn on those permissions that it needs.
 Permissions are preserved across
 <B><A HREF="../man2/execve.2.html">execve</A></B>(2);
 
@@ -113,7 +129,7 @@ Out of memory.
 <DT><B>EPERM</B>
 
 <DD>
-The calling process has insufficient privilege.
+The calling thread has insufficient privilege.
 </DL>
 <A NAME="lbAG">&nbsp;</A>
 <H2>CONFORMING TO</H2>
@@ -125,6 +141,11 @@ intended to be portable.
 <A NAME="lbAH">&nbsp;</A>
 <H2>NOTES</H2>
 
+The
+<I>/proc/ioports</I>
+
+file shows the I/O ports that are currently allocated on the system.
+<P>
 Libc5 treats it as a system call and has a prototype in
 <I>&lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;</I>.
 
@@ -140,6 +161,8 @@ Avoid the latter, it is available on i386 only.
 <H2>SEE ALSO</H2>
 
 <B><A HREF="../man2/iopl.2.html">iopl</A></B>(2),
+
+<B><A HREF="../man2/outb.2.html">outb</A></B>(2),
 
 <B><A HREF="../man7/capabilities.7.html">capabilities</A></B>(7)
 
@@ -161,6 +184,6 @@ Avoid the latter, it is available on i386 only.
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:19:20 GMT, April 20, 2020
+Time: 03:19:56 GMT, April 20, 2020
 </BODY>
 </HTML>

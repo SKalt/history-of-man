@@ -11,7 +11,7 @@ the License, or (at your option) any later version.
 <HTML><HEAD><TITLE>Man page of RANDOM</TITLE>
 </HEAD><BODY>
 <H1>RANDOM</H1>
-Section: Linux Programmer's Manual (4)<BR>Updated: 2010-08-29<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (4)<BR>Updated: 2013-03-15<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -19,6 +19,13 @@ Section: Linux Programmer's Manual (4)<BR>Updated: 2010-08-29<BR><A HREF="#index
 
 random, urandom - kernel random number source devices
 <A NAME="lbAC">&nbsp;</A>
+<H2>SYNOPSIS</H2>
+
+#include &lt;<A HREF="file:///usr/include/linux/random.h">linux/random.h</A>&gt;
+<P>
+<B>int ioctl(</B><I>fd</I><B>, RND</B><I>request</I><B>, </B><I>param</I><B>);</B>
+
+<A NAME="lbAD">&nbsp;</A>
 <H2>DESCRIPTION</H2>
 
 The character special files <I>/dev/random</I> and
@@ -55,7 +62,15 @@ literature, but it is theoretically possible that such an attack may
 exist.
 If this is a concern in your application, use <I>/dev/random</I>
 instead.
-<A NAME="lbAD">&nbsp;</A>
+<P>
+
+Writing to <I>/dev/random</I> or <I>/dev/urandom</I> will update the
+entropy pool with the data written, but this will not result in a
+higher entropy count.
+This means that it will impact the contents
+read from both files, but it will not make reads from
+<I>/dev/random</I> faster.
+<A NAME="lbAE">&nbsp;</A>
 <H3>Usage</H3>
 
 If you are unsure about whether you should use
@@ -116,7 +131,7 @@ than one minute), that should be taken as a sign that its cryptography is
 <I>not</I>
 
 skillfully implemented.
-<A NAME="lbAE">&nbsp;</A>
+<A NAME="lbAF">&nbsp;</A>
 <H3>Configuration</H3>
 
 If your system does not have
@@ -171,7 +186,7 @@ run during the Linux system shutdown:
     dd if=/dev/urandom of=$random_seed count=1 bs=$bytes
 </PRE>
 
-<A NAME="lbAF">&nbsp;</A>
+<A NAME="lbAG">&nbsp;</A>
 <H3>/proc Interface</H3>
 
 The files in the directory
@@ -248,7 +263,78 @@ and
 contain random strings like 6fd5a44b-35f4-4ad4-a9b9-6b9be13e1fe9.
 The former is generated afresh for each read, the latter was
 generated once.
-<A NAME="lbAG">&nbsp;</A>
+<A NAME="lbAH">&nbsp;</A>
+<H3><A HREF="../man2/ioctl.2.html">ioctl</A>(2) interface</H3>
+
+The following
+<B><A HREF="../man2/ioctl.2.html">ioctl</A></B>(2)
+
+requests are defined on file descriptors connected to either <I>/dev/random</I>
+or <I>/dev/urandom</I>.
+All requests performed will interact with the input
+entropy pool impacting both <I>/dev/random</I> and <I>/dev/urandom</I>.
+The
+<B>CAP_SYS_ADMIN</B>
+
+capability is required for all requests except
+<B>RNDGETENTCNT</B>.
+
+<DL COMPACT>
+<DT><B>RNDGETENTCNT</B>
+
+<DD>
+Retrieve the entropy count of the input pool, the contents will be the same
+as the
+<I>entropy_avail</I>
+
+file under proc.
+The result will be stored in the int pointed to by the argument.
+<DT><B>RNDADDTOENTCNT</B>
+
+<DD>
+Increment or decrement the entropy count of the input pool
+by the value pointed to by the argument.
+<DT><B>RNDGETPOOL</B>
+
+<DD>
+Removed in Linux 2.6.9.
+<DT><B>RNDADDENTROPY</B>
+
+<DD>
+Add some additional entropy to the input pool,
+incrementing the entropy count.
+This differs from writing to <I>/dev/random</I> or <I>/dev/urandom</I>,
+which only adds some
+data but does not increment the entropy count.
+The following structure is used:
+<DT><DD>
+
+
+struct rand_pool_info {
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;&nbsp;&nbsp;&nbsp;entropy_count;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;int&nbsp;&nbsp;&nbsp;&nbsp;buf_size;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;__u32&nbsp;&nbsp;buf[0];
+};
+
+
+<DT><DD>
+Here
+<I>entropy_count</I>
+
+is the value added to (or subtracted from) from the entropy count, and
+<I>buf</I>
+
+is the buffer of size
+<I>buf_size</I>
+
+which gets added to the entropy pool.
+<DT><B>RNDZAPENTCNT</B>, <B>RNDCLEARPOOL</B>
+
+<DD>
+Zero the entropy count of all pools and add some system data (such as
+wall clock) to the pools.
+</DL>
+<A NAME="lbAI">&nbsp;</A>
 <H2>FILES</H2>
 
 /dev/random
@@ -258,7 +344,7 @@ generated once.
 
 
 
-<A NAME="lbAH">&nbsp;</A>
+<A NAME="lbAJ">&nbsp;</A>
 <H2>SEE ALSO</H2>
 
 <B><A HREF="../man1/mknod.1.html">mknod</A></B>(1)
@@ -272,19 +358,21 @@ RFC&nbsp;1750, &quot;Randomness Recommendations for Security&quot;
 <A NAME="index">&nbsp;</A><H2>Index</H2>
 <DL>
 <DT><A HREF="#lbAB">NAME</A><DD>
-<DT><A HREF="#lbAC">DESCRIPTION</A><DD>
+<DT><A HREF="#lbAC">SYNOPSIS</A><DD>
+<DT><A HREF="#lbAD">DESCRIPTION</A><DD>
 <DL>
-<DT><A HREF="#lbAD">Usage</A><DD>
-<DT><A HREF="#lbAE">Configuration</A><DD>
-<DT><A HREF="#lbAF">/proc Interface</A><DD>
+<DT><A HREF="#lbAE">Usage</A><DD>
+<DT><A HREF="#lbAF">Configuration</A><DD>
+<DT><A HREF="#lbAG">/proc Interface</A><DD>
+<DT><A HREF="#lbAH">ioctl(2) interface</A><DD>
 </DL>
-<DT><A HREF="#lbAG">FILES</A><DD>
-<DT><A HREF="#lbAH">SEE ALSO</A><DD>
+<DT><A HREF="#lbAI">FILES</A><DD>
+<DT><A HREF="#lbAJ">SEE ALSO</A><DD>
 </DL>
 <HR>
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:19:32 GMT, April 20, 2020
+Time: 03:20:09 GMT, April 20, 2020
 </BODY>
 </HTML>
