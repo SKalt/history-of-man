@@ -49,7 +49,7 @@ write - write to a file descriptor
 writes up to
 <I>count</I>
 
-bytes from the buffer pointed
+bytes from the buffer starting at
 <I>buf</I>
 
 to the file referred to by the file descriptor
@@ -237,6 +237,28 @@ or the file offset is not suitably aligned.
 
 <DD>
 A low-level I/O error occurred while modifying the inode.
+This error may relate to the write-back of data written by an earlier
+<B><A HREF="../man2/write.2.html">write</A></B>(2),
+
+which may have been issued to a different file descriptor on
+the same file.
+Since Linux 4.13, errors from write-back come
+with a promise that they
+<I>may</I>
+
+be reported by subsequent.
+<B><A HREF="../man2/write.2.html">write</A></B>(2)
+
+requests, and
+<I>will</I>
+
+be reported by a subsequent
+<B><A HREF="../man2/fsync.2.html">fsync</A></B>(2)
+
+(whether or not they were also reported by
+<B><A HREF="../man2/write.2.html">write</A></B>(2)).
+
+
 <DT><B>ENOSPC</B>
 
 <DD>
@@ -298,8 +320,17 @@ A successful return from
 <B>write</B>()
 
 does not make any guarantee that data has been committed to disk.
-In fact, on some buggy implementations, it does not even guarantee
+On some filesystems, including NFS, it does not even guarantee
 that space has successfully been reserved for the data.
+In this case,
+some errors might be delayed until a future
+<B><A HREF="../man2/write.2.html">write</A></B>(2),
+
+<B><A HREF="../man2/fsync.2.html">fsync</A></B>(2),
+
+or even
+<B><A HREF="../man2/close.2.html">close</A></B>(2).
+
 The only way to be sure is to call
 <B><A HREF="../man2/fsync.2.html">fsync</A></B>(2)
 
@@ -418,6 +449,6 @@ This problem was fixed in Linux 3.14.
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:47:17 GMT, April 20, 2020
+Time: 03:47:49 GMT, April 20, 2020
 </BODY>
 </HTML>

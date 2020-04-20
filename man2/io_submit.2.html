@@ -45,6 +45,178 @@ The
 
 argument should be an array of <I>nr</I> AIO control blocks,
 which will be submitted to context <I>ctx_id</I>.
+<P>
+
+The
+<I>iocb</I>
+
+(I/O control block) structure defined in
+<I>linux/aio_abi.h</I>
+
+defines the parameters that control the I/O operation.
+<P>
+
+
+
+#include &lt;<A HREF="file:///usr/include/linux/aio_abi.h">linux/aio_abi.h</A>&gt;
+<P>
+struct iocb {
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;__u64&nbsp;&nbsp;&nbsp;aio_data;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;__u32&nbsp;&nbsp;&nbsp;PADDED(aio_key,&nbsp;aio_rw_flags);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;__u16&nbsp;&nbsp;&nbsp;aio_lio_opcode;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;__s16&nbsp;&nbsp;&nbsp;aio_reqprio;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;__u32&nbsp;&nbsp;&nbsp;aio_fildes;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;__u64&nbsp;&nbsp;&nbsp;aio_buf;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;__u64&nbsp;&nbsp;&nbsp;aio_nbytes;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;__s64&nbsp;&nbsp;&nbsp;aio_offset;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;__u64&nbsp;&nbsp;&nbsp;aio_reserved2;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;__u32&nbsp;&nbsp;&nbsp;aio_flags;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;__u32&nbsp;&nbsp;&nbsp;aio_resfd;
+};
+
+
+<P>
+
+The fields of this structure are as follows:
+<DL COMPACT>
+<DT><I>aio_data</I>
+
+<DD>
+This is an internal field used by the kernel.
+Do not modify this field after an
+<B><A HREF="../man2/io_submit.2.html">io_submit</A></B>(2)
+
+call.
+<DT><I>aio_key</I>
+
+<DD>
+This is an internal field used by the kernel.
+Do not modify this field after an
+<B><A HREF="../man2/io_submit.2.html">io_submit</A></B>(2)
+
+call.
+<DT><I>aio_rw_flags</I>
+
+<DD>
+This defines the R/W flags passed with structure.
+The valid values are:
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT><B>RWF_HIPRI</B>
+
+<DD>
+High priority request, poll if possible
+<DT><B>RWF_DSYNC</B>
+
+<DD>
+Write operation complete according to requirement of
+synchronized I/O data integrity.
+See the description of the flag of the same name in
+<B><A HREF="../man2/pwritev2.2.html">pwritev2</A></B>(2)
+
+as well the description of
+<B>O_DSYNC</B>
+
+in
+<B><A HREF="../man2/open.2.html">open</A></B>(2).
+
+<DT><B>RWF_SYNC</B>
+
+<DD>
+Write operation complete according to requirement of
+synchronized I/O file integrity.
+See the description of the flag of the same name in
+<B><A HREF="../man2/pwritev2.2.html">pwritev2</A></B>(2)
+
+as well the description of
+<B>O_SYNC</B>
+
+in
+<B><A HREF="../man2/open.2.html">open</A></B>(2).
+
+<DT><B>RWF_NOWAIT</B>
+
+<DD>
+Don't wait if the I/O will block for operations such as
+file block allocations, dirty page flush, mutex locks,
+or a congested block device inside the kernel.
+If any of these conditions are met, the control block is returned
+immediately with a return value of
+<B>-EAGAIN</B>
+
+in the
+<I>res</I>
+
+field of the
+<I>io_event</I>
+
+structure (see
+<B><A HREF="../man2/io_getevents.2.html">io_getevents</A></B>(2)).
+
+</DL>
+</DL>
+
+<DT><I>aio_lio_opcode</I>
+
+<DD>
+This defines the type of I/O to be performed by the iocb structure.
+The
+valid values are defined by the enum defined in
+<I>linux/aio_abi.h</I>:
+
+<DT><DD>
+
+
+enum {
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;IOCB_CMD_PREAD&nbsp;=&nbsp;0,
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;IOCB_CMD_PWRITE&nbsp;=&nbsp;1,
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;IOCB_CMD_FSYNC&nbsp;=&nbsp;2,
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;IOCB_CMD_FDSYNC&nbsp;=&nbsp;3,
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;IOCB_CMD_NOOP&nbsp;=&nbsp;6,
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;IOCB_CMD_PREADV&nbsp;=&nbsp;7,
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;IOCB_CMD_PWRITEV&nbsp;=&nbsp;8,
+};
+
+
+<DT><I>aio_reqprio</I>
+
+<DD>
+This defines the requests priority.
+<DT><I>aio_filedes</I>
+
+<DD>
+The file descriptor on which the I/O operation is to be performed.
+<DT><I>aio_buf</I>
+
+<DD>
+This is the buffer used to transfer data for a read or write operation.
+<DT><I>aio_nbytes</I>
+
+<DD>
+This is the size of the buffer pointed to by
+<I>aio_buf</I>.
+
+<DT><I>aio_offset</I>
+
+<DD>
+This is the file offset at which the I/O operation is to be performed.
+<DT><I>aio_flags</I>
+
+<DD>
+This is the flag to be passed iocb structure.
+The only valid value is
+<B>IOCB_FLAG_RESFD</B>,
+
+which indicates that the asynchronous I/O control must signal the file
+descriptor mentioned in
+<I>aio_resfd</I>
+
+upon completion.
+<DT><I>aio_resfd</I>
+
+<DD>
+The file descriptor to signal in the event of asynchronous I/O completion.
+</DL>
 <A NAME="lbAE">&nbsp;</A>
 <H2>RETURN VALUE</H2>
 
@@ -179,6 +351,6 @@ set to a (positive) value that indicates the error.
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:47:14 GMT, April 20, 2020
+Time: 03:47:47 GMT, April 20, 2020
 </BODY>
 </HTML>

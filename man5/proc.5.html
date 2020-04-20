@@ -813,16 +813,13 @@ in
 <I>/proc/self/fd</I>.
 
 Thus the example command above could be written as:
-</DL>
-<P>
-
+<DT><DD>
 
 
 $<B> foobar -i /dev/stdin -o /dev/stdout ...</B>
 
 
 
-<DL COMPACT>
 <DT><DD>
 Permission to dereference or read
 (<B><A HREF="../man2/readlink.2.html">readlink</A></B>(2))
@@ -833,6 +830,36 @@ the symbolic links in this directory is governed by a ptrace access mode
 check; see
 <B><A HREF="../man2/ptrace.2.html">ptrace</A></B>(2).
 
+<DT><DD>
+Note that for file descriptors referring to inodes (pipes and sockets, see above),
+those inodes still have permission bits and ownership information
+distinct from those of the
+<I>/proc/[pid]/fd</I>
+
+entry,
+and that the owner may differ from the user and group IDs of the process.
+An unprivileged process may lack permissions to open them, as in this example:
+<DT><DD>
+
+
+$<B> echo test | sudo -u nobody cat</B>
+
+test
+$<B> echo test | sudo -u nobody cat /proc/self/fd/0</B>
+
+cat: /proc/self/fd/0: Permission denied
+
+
+<DT><DD>
+File descriptor 0 refers to the pipe created by the shell
+and owned by that shell's user, which is not
+<I>nobody</I>,
+
+so
+<B>cat</B>
+
+does not have permission to create a new file descriptor to read from that inode,
+even though it can still read from its existing file descriptor 0.
 <DT><I>/proc/[pid]/fdinfo/</I> (since Linux 2.6.22)
 
 <DD>
@@ -1495,7 +1522,28 @@ mount ID: a unique ID for the mount (may be reused after
 
 <DT>(2)<DD>
 parent ID: the ID of the parent mount
-(or of self for the top of the mount tree).
+(or of self for the root of this mount namespace's mount tree).
+<DT><DD>
+If the parent mount point lies outside the process's root directory (see
+<B><A HREF="../man2/chroot.2.html">chroot</A></B>(2)),
+
+the ID shown here won't have a corresponding record in
+<I>mountinfo</I>
+
+whose mount ID (field 1) matches this parent mount ID
+(because mount points that lie outside the process's root directory
+are not shown in
+<I>mountinfo</I>).
+
+As a special case of this point,
+the process's root mount point may have a parent mount
+(for the initramfs filesystem) that lies
+
+
+outside the process's root directory,
+and an entry for that mount point will not appear in
+<I>mountinfo</I>.
+
 <DT>(3)<DD>
 major:minor: the value of
 <I>st_dev</I>
@@ -1672,6 +1720,8 @@ Since Linux 2.6.36, use of this file is deprecated in favor of
 
 <DD>
 
+
+
 This file displays the current score that the kernel gives to
 this process for the purpose of selecting a process
 for the OOM-killer.
@@ -1680,6 +1730,18 @@ selected by the OOM-killer.
 The basis for this score is the amount of memory used by the process,
 with increases (+) or decreases (-) for factors including:
 
+
+
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT>*<DD>
+whether the process is privileged (-).
+
+</DL>
+</DL>
+
+<DT><DD>
+Before kernel 2.6.36 the following factors were also used in the calculation of oom_score:
 <DL COMPACT><DT><DD>
 <DL COMPACT>
 <DT>*<DD>
@@ -1691,10 +1753,7 @@ whether the process creates a lot of children using
 whether the process has been running a long time,
 or has used a lot of CPU time (-);
 <DT>*<DD>
-whether the process has a low nice value (i.e., &gt; 0) (+);
-<DT>*<DD>
-whether the process is privileged (-); and
-
+whether the process has a low nice value (i.e., &gt; 0) (+); and
 <DT>*<DD>
 whether the process is making direct hardware access (-).
 
@@ -1804,9 +1863,13 @@ If set, the page is present in RAM.
 If set, the page is in swap space
 <DT>61 (since Linux 3.5)<DD>
 The page is a file-mapped page or a shared anonymous page.
-<DT>60-56 (since Linux 3.11)<DD>
+<DT>60-57 (since Linux 3.11)<DD>
 Zero
 
+<DT>56 (since Linux 4.2)<DD>
+
+
+The page is exclusively mapped.
 <DT>55 (since Linux 3.11)<DD>
 PTE is soft-dirty
 (see the kernel source file
@@ -3166,7 +3229,7 @@ a higher order (thus with double the size) to satisfy allocation
 requests and to counter memory fragmentation.
 The order matches the column number, when starting to count at zero.
 <DT><DD>
-For example on a x86_64 system:
+For example on an x86-64 system:
 <DT><DD>
 
 
@@ -3400,7 +3463,7 @@ utility provides access to this information in a friendly format.
 <DD>
 This is used to record the number of interrupts per CPU per IO device.
 Since Linux 2.6.24,
-for the i386 and x86_64 architectures, at least, this also includes
+for the i386 and x86-64 architectures, at least, this also includes
 interrupts internal to the system (that is, not associated with a device
 as such), such as NMI (nonmaskable interrupt), LOC (local timer interrupt),
 and for SMP systems, TLB (TLB flush interrupt), RES (rescheduling
@@ -3472,6 +3535,23 @@ Information in this file is retrieved with the
 <B><A HREF="../man1/dmesg.1.html">dmesg</A></B>(1)
 
 program.
+<DT><I>/proc/kpagecgroup</I> (since Linux 4.3)
+
+<DD>
+
+This file contains a 64-bit inode number of
+the memory cgroup each page is charged to,
+indexed by page frame number (see the discussion of
+<I>/proc/[pid]/pagemap</I>).
+
+<DT><DD>
+The
+<I>/proc/kpagecgroup</I>
+
+file is present only if the
+<B>CONFIG_MEMCG</B>
+
+kernel configuration option is enabled.
 <DT><I>/proc/kpagecount</I> (since Linux 2.6.25)
 
 <DD>
@@ -3514,12 +3594,18 @@ The bits are as follows:
 <BR>&nbsp;&nbsp;&nbsp;&nbsp;14&nbsp;-&nbsp;KPF_SWAPBACKED&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(since&nbsp;Linux&nbsp;2.6.31)
 <BR>&nbsp;&nbsp;&nbsp;&nbsp;15&nbsp;-&nbsp;KPF_COMPOUND_HEAD&nbsp;&nbsp;(since&nbsp;Linux&nbsp;2.6.31)
 <BR>&nbsp;&nbsp;&nbsp;&nbsp;16&nbsp;-&nbsp;KPF_COMPOUND_TAIL&nbsp;&nbsp;(since&nbsp;Linux&nbsp;2.6.31)
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;16&nbsp;-&nbsp;KPF_HUGE&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(since&nbsp;Linux&nbsp;2.6.31)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;17&nbsp;-&nbsp;KPF_HUGE&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(since&nbsp;Linux&nbsp;2.6.31)
 <BR>&nbsp;&nbsp;&nbsp;&nbsp;18&nbsp;-&nbsp;KPF_UNEVICTABLE&nbsp;&nbsp;&nbsp;&nbsp;(since&nbsp;Linux&nbsp;2.6.31)
 <BR>&nbsp;&nbsp;&nbsp;&nbsp;19&nbsp;-&nbsp;KPF_HWPOISON&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(since&nbsp;Linux&nbsp;2.6.31)
 <BR>&nbsp;&nbsp;&nbsp;&nbsp;20&nbsp;-&nbsp;KPF_NOPAGE&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(since&nbsp;Linux&nbsp;2.6.31)
 <BR>&nbsp;&nbsp;&nbsp;&nbsp;21&nbsp;-&nbsp;KPF_KSM&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(since&nbsp;Linux&nbsp;2.6.32)
 <BR>&nbsp;&nbsp;&nbsp;&nbsp;22&nbsp;-&nbsp;KPF_THP&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(since&nbsp;Linux&nbsp;3.4)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;23&nbsp;-&nbsp;KPF_BALLOON&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(since&nbsp;Linux&nbsp;3.18)
+
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;24&nbsp;-&nbsp;KPF_ZERO_PAGE&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(since&nbsp;Linux&nbsp;4.0)
+
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;25&nbsp;-&nbsp;KPF_IDLE&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(since&nbsp;Linux&nbsp;4.3)
+
 <DT><DD>
 For further details on the meanings of these bits,
 see the kernel source file
@@ -3578,6 +3664,130 @@ This file shows current file locks
 and leases
 (<B><A HREF="../man2/fcntl.2.html">fcntl</A></B>(2)).
 
+<DT><DD>
+An example of the content shown in this file is the following:
+<DT><DD>
+
+
+1: POSIX  ADVISORY  READ  5433 08:01:7864448 128 128
+2: FLOCK  ADVISORY  WRITE 2001 08:01:7864554 0 EOF
+3: FLOCK  ADVISORY  WRITE 1568 00:2f:32388 0 EOF
+4: POSIX  ADVISORY  WRITE 699 00:16:28457 0 EOF
+5: POSIX  ADVISORY  WRITE 764 00:16:21448 0 0
+6: POSIX  ADVISORY  READ  3548 08:01:7867240 1 1
+7: POSIX  ADVISORY  READ  3548 08:01:7865567 1826 2335
+8: OFDLCK ADVISORY  WRITE -1 08:01:8713209 128 191
+
+
+<DT><DD>
+The fields shown in each line are as follows:
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT>(1)<DD>
+The ordinal position of the lock in the list.
+<DT>(2)<DD>
+The lock type.
+Values that may appear here include:
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT><B>FLOCK</B>
+
+<DD>
+This is a BSD file lock created using
+<B><A HREF="../man2/flock.2.html">flock</A></B>(2).
+
+<DT><B>OFDLCK</B>
+
+<DD>
+This is an open file description (OFD) lock created using
+<B><A HREF="../man2/fcntl.2.html">fcntl</A></B>(2).
+
+<DT><B>POSIX</B>
+
+<DD>
+This is a POSIX byte-range lock created using
+<B><A HREF="../man2/fcntl.2.html">fcntl</A></B>(2).
+
+</DL>
+</DL>
+
+<DT>(3)<DD>
+Among the strings that can appear here are the following:
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT><B>ADVISORY</B>
+
+<DD>
+This is an advisory lock.
+<DT><B>MANDATORY</B>
+
+<DD>
+This is a mandatory lock.
+</DL>
+</DL>
+
+<DT>(4)<DD>
+The type of lock.
+Values that can appear here are:
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT><B>READ</B>
+
+<DD>
+This is a POSIX or OFD read lock, or a BSD shared lock.
+<DT><B>WRITE</B>
+
+<DD>
+This is a POSIX or OFD write lock, or a BSD exclusive lock.
+</DL>
+</DL>
+
+<DT>(5)<DD>
+The PID of the process that owns the lock.
+<DT><DD>
+Because OFD locks are not owned by a single process
+(since multiple processes may have file descriptors that
+refer to the same open file description),
+the value -1 is displayed in this field for OFD locks.
+(Before kernel 4.14,
+
+a bug meant that the PID of the process that
+initially acquired the lock was displayed instead of the value -1.)
+<DT>(6)<DD>
+Three colon-separated subfields that identify the major and minor device
+ID of the device containing the filesystem where the locked file resides,
+followed by the inode number of the locked file.
+<DT>(7)<DD>
+The byte offset of the first byte of the lock.
+For BSD locks, this value is always 0.
+<DT>(8)<DD>
+The byte offset of the last byte of the lock.
+<B>EOF</B>
+
+in this field means that the lock extends to the end of the file.
+For BSD locks, the value shown is always
+<I>EOF</I>.
+
+</DL>
+</DL>
+
+<DT><DD>
+Since Linux 4.9,
+
+the list of locks shown in
+<I>/proc/locks</I>
+
+is filtered to show just the locks for the processes in the PID
+namespace (see
+<B><A HREF="../man7/pid_namespaces.7.html">pid_namespaces</A></B>(7))
+
+for which the
+<I>/proc</I>
+
+filesystem was mounted.
+(In the initial PID namespace,
+there is no filtering of the records shown in this file.)
+<DT><DD>
 The
 <B><A HREF="../man8/lslocks.8.html">lslocks</A></B>(8)
 
@@ -5436,6 +5646,12 @@ message queue.
 <DD>
 This is a read-only file that displays the upper limit on the
 number of a process's group memberships.
+<DT><I>/proc/sys/kernel/ns_last_pid</I> (since Linux 3.3)
+
+<DD>
+See
+<B><A HREF="../man7/pid_namespaces.7.html">pid_namespaces</A></B>(7).
+
 <DT><I>/proc/sys/kernel/ostype</I> and <I>/proc/sys/kernel/osrelease</I>
 
 <DD>
@@ -5655,6 +5871,16 @@ See
 See
 <B><A HREF="../man7/sched.7.html">sched</A></B>(7).
 
+<DT><I>/proc/sys/kernel/seccomp</I> (since Linux 4.14)
+
+<DD>
+
+This directory provides additional seccomp information and
+configuration.
+See
+<B><A HREF="../man2/seccomp.2.html">seccomp</A></B>(2)
+
+for further details.
 <DT><I>/proc/sys/kernel/sem</I> (since Linux 2.4)
 
 <DD>
@@ -5981,7 +6207,7 @@ cache management.
 <DD>
 
 This file defines the amount of free memory (in KiB) on the system that
-that should be reserved for users with the capability
+should be reserved for users with the capability
 <B>CAP_SYS_ADMIN</B>.
 
 <DT><DD>
@@ -6006,7 +6232,7 @@ and
 <B><A HREF="../man1/top.1.html">top</A></B>(1))
 
 Otherwise, the superuser may not be able to log in to recover the system.
-For example, on x86_64 a suitable value is 131072 (128MiB reserved).
+For example, on x86-64 a suitable value is 131072 (128MiB reserved).
 <DT><DD>
 Changing the value in this file takes effect whenever
 an application requests memory.
@@ -6580,7 +6806,7 @@ the callback function that is associated with the timer.
 During the Linux 4.11 development cycle,
 this file  was removed because of security concerns,
 as it exposes information across namespaces.
-Furthermore, it is possibile to obtain
+Furthermore, it is possible to obtain
 the same information via in-kernel tracing facilities such as ftrace.
 <DT><I>/proc/tty</I>
 
@@ -6622,7 +6848,7 @@ Linux version 1.0.9 (<A HREF="mailto:quinlan@phaze">quinlan@phaze</A>) #1 Sat Ma
 This file displays various virtual memory statistics.
 Each line of this file contains a single name-value pair,
 delimited by white space.
-Some files are present only if the kernel was configured with
+Some lines are present only if the kernel was configured with
 suitable options.
 (In some cases, the options required for particular files have changed
 across kernel versions, so they are not listed here.
@@ -7564,6 +7790,6 @@ and
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:47:27 GMT, April 20, 2020
+Time: 03:48:00 GMT, April 20, 2020
 </BODY>
 </HTML>

@@ -310,10 +310,15 @@ For further information on the above fields, see
 The
 <B>fstatat</B>()
 
-system call operates in exactly the same way as
+system call is a more general interface for accessing file information
+which can still provide exactly the behavior of each of
 <B>stat</B>(),
 
-except for the differences described here.
+<B>lstat</B>(),
+
+and
+<B>fstat</B>().
+
 <P>
 
 If the pathname given in
@@ -326,6 +331,9 @@ referred to by the file descriptor
 (rather than relative to the current working directory of
 the calling process, as is done by
 <B>stat</B>()
+
+and
+<B>lstat</B>()
 
 for a relative pathname).
 <P>
@@ -344,7 +352,10 @@ then
 
 is interpreted relative to the current working
 directory of the calling process (like
-<B>stat</B>()).
+<B>stat</B>()
+
+and
+<B>lstat</B>()).
 
 <P>
 
@@ -380,7 +391,13 @@ flag).
 In this case,
 <I>dirfd</I>
 
-can refer to any type of file, not just a directory.
+can refer to any type of file, not just a directory, and
+the behavior of
+<B>fstatat</B>()
+
+is similar to that of
+<B>fstat</B>().
+
 If
 <I>dirfd</I>
 
@@ -402,6 +419,10 @@ Don't automount the terminal (&quot;basename&quot;) component of
 if it is a directory that is an automount point.
 This allows the caller to gather attributes of an automount point
 (rather than the location it would mount).
+Since Linux 4.14,
+
+also don't instantiate a nonexistent name in an
+on-demand directory such as used for automounter indirect maps.
 This flag can be used in tools that scan directories
 to prevent mass-automounting of a directory of automount points.
 The
@@ -413,6 +434,16 @@ This flag is Linux-specific; define
 
 
 to obtain its definition.
+Both
+<B>stat</B>()
+
+and
+<B>lstat</B>()
+
+act as though
+<B>AT_NO_AUTOMOUNT</B>
+
+was set.
 <DT><B>AT_SYMLINK_NOFOLLOW</B>
 
 <DD>
@@ -629,19 +660,6 @@ and possibly on a single system when NFS mounts are involved.)
 <A NAME="lbAK">&nbsp;</A>
 <H2>NOTES</H2>
 
-On Linux,
-<B>lstat</B>()
-
-will generally not trigger automounter action, whereas
-<B>stat</B>()
-
-will (but see the description of the
-<B>fstatat</B>()
-
-<B>AT_NO_AUTOMOUNT</B>
-
-fag, above).
-
 <A NAME="lbAL">&nbsp;</A>
 <H3>Timestamp fields</H3>
 
@@ -828,7 +846,7 @@ or, on some architectures,
 <H2>EXAMPLE</H2>
 
 The following program calls
-<B>stat</B>()
+<B>lstat</B>()
 
 and displays selected fields in the returned
 <I>stat</I>
@@ -854,8 +872,8 @@ main(int argc, char *argv[])
 <BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
 <BR>&nbsp;&nbsp;&nbsp;&nbsp;}
 <P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(stat(argv[1],&nbsp;&amp;sb)&nbsp;==&nbsp;-1)&nbsp;{
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;perror(&quot;stat&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;(lstat(argv[1],&nbsp;&amp;sb)&nbsp;==&nbsp;-1)&nbsp;{
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;perror(&quot;lstat&quot;);
 <BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
 <BR>&nbsp;&nbsp;&nbsp;&nbsp;}
 <P>
@@ -950,6 +968,6 @@ main(int argc, char *argv[])
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:47:15 GMT, April 20, 2020
+Time: 03:47:47 GMT, April 20, 2020
 </BODY>
 </HTML>

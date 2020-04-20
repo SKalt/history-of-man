@@ -30,7 +30,7 @@ capget, capset - set/get capabilities of thread(s)
 <A NAME="lbAD">&nbsp;</A>
 <H2>DESCRIPTION</H2>
 
-As of Linux 2.2,
+Since Linux 2.2,
 the power of the superuser (root) has been partitioned into
 a set of discrete capabilities.
 Each thread has a set of effective capabilities identifying
@@ -154,7 +154,7 @@ whereas 32-bit capabilities use only
 
 <P>
 
-On kernels that support file capabilities (VFS capability support),
+On kernels that support file capabilities (VFS capabilities support),
 these system calls behave slightly differently.
 This support was added as an option in Linux 2.6.24,
 and became fixed (nonoptional) in Linux 2.6.33.
@@ -169,29 +169,36 @@ process ID with the
 
 field value.
 <A NAME="lbAF">&nbsp;</A>
-<H3>With VFS capability support</H3>
+<H3>With VFS capabilities support</H3>
 
-VFS Capability support creates a file-attribute method for adding
-capabilities to privileged executables.
+VFS capabilities employ a file extended attribute (see
+<B><A HREF="../man7/xattr.7.html">xattr</A></B>(7))
+
+to allow capabilities to be attached to executables.
 This privilege model obsoletes kernel support for one process
 asynchronously setting the capabilities of another.
-That is, with VFS support, for
-<B>capset</B>()
+That is, on kernels that have VFS capabilities support, when calling
+<B>capset</B>(),
 
-calls the only permitted values for
+the only permitted values for
 <I>hdrp-&gt;pid</I>
 
-are 0 or
-<B><A HREF="../man2/gettid.2.html">gettid</A></B>(2),
+are 0 or, equivalently, the value returned by
+<B><A HREF="../man2/gettid.2.html">gettid</A></B>(2).
 
-which are equivalent.
+
 <A NAME="lbAG">&nbsp;</A>
-<H3>Without VFS capability support</H3>
+<H3>Without VFS capabilities support</H3>
 
-When the kernel does not support VFS capabilities,
+On older kernels that do not provide VFS capabilities support
 <B>capset</B>()
 
-calls can operate on the capabilities of the thread specified by the
+can, if the caller has the
+<B>CAP_SETPCAP</B>
+
+capability, be used to change not only the caller's own capabilities,
+but also the capabilities of other threads.
+The call operates on the capabilities of the thread specified by the
 <I>pid</I>
 
 field of
@@ -238,7 +245,7 @@ On error, -1 is returned, and
 is set appropriately.
 <P>
 
-The calls will fail with the error
+The calls fail with the error
 <B>EINVAL</B>,
 
 and set the
@@ -345,8 +352,8 @@ library and is available here:
 <DT><A HREF="#lbAD">DESCRIPTION</A><DD>
 <DL>
 <DT><A HREF="#lbAE">Current details</A><DD>
-<DT><A HREF="#lbAF">With VFS capability support</A><DD>
-<DT><A HREF="#lbAG">Without VFS capability support</A><DD>
+<DT><A HREF="#lbAF">With VFS capabilities support</A><DD>
+<DT><A HREF="#lbAG">Without VFS capabilities support</A><DD>
 </DL>
 <DT><A HREF="#lbAH">RETURN VALUE</A><DD>
 <DT><A HREF="#lbAI">ERRORS</A><DD>
@@ -358,6 +365,6 @@ library and is available here:
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:47:13 GMT, April 20, 2020
+Time: 03:47:46 GMT, April 20, 2020
 </BODY>
 </HTML>

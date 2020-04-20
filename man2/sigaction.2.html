@@ -138,7 +138,7 @@ field is not intended for application use.
 <I>sa_restorer</I>
 
 field.)
-Some further details of purpose of this field can be found in
+Some further details of the purpose of this field can be found in
 <B><A HREF="../man2/sigreturn.2.html">sigreturn</A></B>(2).
 
 <P>
@@ -173,21 +173,7 @@ then
 specifies the signal-handling function for
 <I>signum</I>.
 
-This function receives the signal number as its first argument, a
-pointer to a
-<I>siginfo_t</I>
-
-as its second argument and a pointer to a
-<I>ucontext_t</I>
-
-(cast to <I>void&nbsp;*</I>) as its third argument.
-(Commonly, the handler function doesn't make any use of the third argument.
-See
-<B><A HREF="../man3/getcontext.3.html">getcontext</A></B>(3)
-
-for further information about
-<I>ucontext_t</I>.)
-
+This function receives three arguments, as described below.
 <P>
 
 <I>sa_mask</I>
@@ -360,6 +346,42 @@ handler(int sig, siginfo_t *info, void *ucontext)
 }
 
 
+<P>
+
+These three arguments are as follows
+<DL COMPACT>
+<DT><I>sig</I>
+
+<DD>
+The number of the signal that caused invocation of the handler.
+<DT><I>info</I>
+
+<DD>
+A pointer to a
+<I>siginfo_t</I>,
+
+which is a structure containing further information about the signal,
+as described below.
+<DT><I>ucontext</I>
+
+<DD>
+This is a pointer to a
+<I>ucontext_t</I>
+
+structure, cast to <I>void&nbsp;*</I>.
+The structure pointed to by this field contains
+signal context information that was saved
+on the user-space stack by the kernel; for details, see
+<B><A HREF="../man2/sigreturn.2.html">sigreturn</A></B>(2).
+
+Further information about the
+<I>ucontext_t</I>
+
+structure can be found in
+<B><A HREF="../man3/getcontext.3.html">getcontext</A></B>(3).
+
+Commonly, the handler function doesn't make any use of the third argument.
+</DL>
 <P>
 
 The
@@ -1307,6 +1329,25 @@ See
 for details.
 <P>
 
+On architectures where the signal trampoline resides in the C library,
+the glibc wrapper function for
+<B>sigaction</B>()
+
+places the address of the trampoline code in the
+<I>act.sa_restorer</I>
+
+field and sets the
+<B>SA_RESTORER</B>
+
+flag in the
+<I>act.sa_flags</I>
+
+field.
+See
+<B><A HREF="../man2/sigreturn.2.html">sigreturn</A></B>(2).
+
+<P>
+
 The original Linux system call was named
 <B>sigaction</B>().
 
@@ -1356,7 +1397,7 @@ it was also possible to get some additional information,
 namely by using a
 <I>sa_handler</I>
 
-with second argument of type
+with a second argument of type
 <I>struct sigcontext.</I>
 
 See the relevant Linux kernel sources for details.
@@ -1454,6 +1495,6 @@ See
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:47:16 GMT, April 20, 2020
+Time: 03:47:49 GMT, April 20, 2020
 </BODY>
 </HTML>

@@ -238,7 +238,7 @@ pages.
 In the initial implementation, only
 <B><A HREF="../man5/tmpfs.5.html">tmpfs</A></B>(5)
 
-is supported
+was supported
 <B>MADV_REMOVE</B>;
 
 but since Linux 3.5,
@@ -251,7 +251,7 @@ any filesystem which supports the
 mode also supports
 <B>MADV_REMOVE</B>.
 
-Hugetlbfs will fail with the error
+Hugetlbfs fails with the error
 <B>EINVAL</B>
 
 and other filesystems fail with the error
@@ -515,6 +515,42 @@ can be applied only to private anonymous pages (see
 
 On a swapless system, freeing pages in a given range happens instantly,
 regardless of memory pressure.
+<DT><B>MADV_WIPEONFORK</B> (since Linux 4.14)
+
+<DD>
+
+Present the child process with zero-filled memory in this range after a
+<B><A HREF="../man2/fork.2.html">fork</A></B>(2).
+
+This is useful in forking servers in order to ensure
+that sensitive per-process data
+(for example, PRNG seeds, cryptographic secrets, and so on)
+is not handed to child processes.
+<DT><DD>
+The
+<B>MADV_WIPEONFORK</B>
+
+operation can be applied only to private anonymous pages (see
+<B><A HREF="../man2/mmap.2.html">mmap</A></B>(2)).
+
+<DT><DD>
+Within the child created by
+<B><A HREF="../man2/fork.2.html">fork</A></B>(2),
+
+the
+<B>MADV_WIPEONFORK</B>
+
+setting remains in place on the specified address range.
+This setting is cleared during
+<B><A HREF="../man2/execve.2.html">execve</A></B>(2).
+
+<DT><B>MADV_KEEPONFORK</B> (since Linux 4.14)
+
+<DD>
+
+Undo the effect of an earlier
+<B>MADV_WIPEONFORK</B>.
+
 </DL>
 <A NAME="lbAG">&nbsp;</A>
 <H2>RETURN VALUE</H2>
@@ -594,6 +630,24 @@ or
 but the kernel was not configured with
 <B>CONFIG_KSM</B>.
 
+<DT><B>EINVAL</B>
+
+<DD>
+<I>advice</I>
+
+is
+<B>MADV_FREE</B>
+
+or
+<B>MADV_WIPEONFORK</B>
+
+but the specified address range includes file, Huge TLB,
+<B>MAP_SHARED</B>,
+
+or
+<B>VM_PFNMAP</B>
+
+ranges.
 <DT><B>EIO</B>
 
 <DD>
@@ -742,6 +796,6 @@ from the system call, as it should).
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:47:14 GMT, April 20, 2020
+Time: 03:47:47 GMT, April 20, 2020
 </BODY>
 </HTML>

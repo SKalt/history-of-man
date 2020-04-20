@@ -76,16 +76,32 @@ _ATFILE_SOURCE
 <A NAME="lbAD">&nbsp;</A>
 <H2>DESCRIPTION</H2>
 
-Given a
-<I>pathname</I>
-
-for a file,
+The
 <B>open</B>()
 
-returns a file descriptor, a small, nonnegative integer
-for use in subsequent system calls
-(<B><A HREF="../man2/read.2.html">read</A></B>(2), <B><A HREF="../man2/write.2.html">write</A></B>(2), <B><A HREF="../man2/lseek.2.html">lseek</A></B>(2), <B><A HREF="../man2/fcntl.2.html">fcntl</A></B>(2), etc.).
+system call opens the file specified by
+<I>pathname</I>.
 
+If the specified file does not exist,
+it may optionally (if
+<B>O_CREAT</B>
+
+is specified in
+<I>flags</I>)
+
+be created by
+<B>open</B>().
+
+<P>
+
+The return value of
+<B>open</B>()
+
+is a file descriptor, a small, nonnegative integer that is used
+in subsequent system calls
+(<B><A HREF="../man2/read.2.html">read</A></B>(2), <B><A HREF="../man2/write.2.html">write</A></B>(2), <B><A HREF="../man2/lseek.2.html">lseek</A></B>(2), <B><A HREF="../man2/fcntl.2.html">fcntl</A></B>(2),
+
+etc.) to refer to the open file.
 The file descriptor returned by a successful call will be
 the lowest-numbered file descriptor not currently open for the process.
 <P>
@@ -294,7 +310,10 @@ flag to deal with this problem.)
 <DT><B>O_CREAT</B>
 
 <DD>
-If the file does not exist, it will be created.
+If
+<I>pathname</I>
+
+does not exist, create it as a regular file.
 <DT><DD>
 The owner (user ID) of the new file is set to the effective user ID
 of the process.
@@ -520,7 +539,9 @@ and
 already exists, then
 <B>open</B>()
 
-will fail.
+fails with the error
+<B>EEXIST</B>.
+
 <DT><DD>
 When these two flags are specified, symbolic links are not followed:
 
@@ -530,7 +551,7 @@ if
 is a symbolic link, then
 <B>open</B>()
 
-fails regardless of where the symbolic link points to.
+fails regardless of where the symbolic link points.
 <DT><DD>
 In general, the behavior of
 <B>O_EXCL</B>
@@ -754,15 +775,19 @@ be performed on the resulting file descriptor:
 <DL COMPACT><DT><DD>
 <DL COMPACT>
 <DT>*<DD>
-<B><A HREF="../man2/close.2.html">close</A></B>(2);
+<B><A HREF="../man2/close.2.html">close</A></B>(2).
 
-<B><A HREF="../man2/fchdir.2.html">fchdir</A></B>(2)
+<DT>*<DD>
+<B><A HREF="../man2/fchdir.2.html">fchdir</A></B>(2),
 
-(since Linux 3.5);
+if the file descriptor refers to a directory
+(since Linux 3.5).
 
+<DT>*<DD>
 <B><A HREF="../man2/fstat.2.html">fstat</A></B>(2)
 
-(since Linux 3.6);
+(since Linux 3.6).
+<DT>*<DD>
 
 <B><A HREF="../man2/fstatfs.2.html">fstatfs</A></B>(2)
 
@@ -841,6 +866,29 @@ and
 
 are ignored.
 <DT><DD>
+Opening a file or directory with the
+<B>O_PATH</B>
+
+flag requires no permissions on the object itself
+(but does require execute permission on the directories in the path prefix).
+Depending on the subsequent operation,
+a check for suitable file permissions may be performed (e.g.,
+<B><A HREF="../man2/fchdir.2.html">fchdir</A></B>(2)
+
+requires execute permission on the directory referred to
+by its file descriptor argument).
+By contrast,
+obtaining a reference to a filesystem object by opening it with the
+<B>O_RDONLY</B>
+
+flag requires that the caller have read permission on the object,
+even when the subsequent operation (e.g.,
+<B><A HREF="../man2/fchdir.2.html">fchdir</A></B>(2),
+
+<B><A HREF="../man2/fstat.2.html">fstat</A></B>(2))
+
+does not require read permission on the object.
+<DT><DD>
 If
 <I>pathname</I>
 
@@ -876,6 +924,33 @@ can then be used to determine if it is, in fact, an untriggered
 automount point
 (<B>.f_type == AUTOFS_SUPER_MAGIC</B>).
 
+<DT><DD>
+One use of
+<B>O_PATH</B>
+
+for regular files is to provide the equivalent of POSIX.1's
+<B>O_EXEC</B>
+
+functionality.
+This permits us to open a file for which we have execute
+permission but not read permission, and then execute that file,
+with steps something like the following:
+<DT><DD>
+
+
+char buf[PATH_MAX];
+fd = open(&quot;some_prog&quot;, O_PATH);
+snprintf(buf, &quot;/proc/self/fd/%d&quot;, fd);
+execl(buf, &quot;some_prog&quot;, (char *) NULL);
+
+
+<DT><DD>
+An
+<B>O_PATH</B>
+
+file descriptor can also be passed as the argument of
+<B><A HREF="../man3/fexecve.3.html">fexecve</A></B>(3).
+
 <DT><B>O_SYNC</B>
 
 <DD>
@@ -896,8 +971,8 @@ provided by
 By the time
 <B><A HREF="../man2/write.2.html">write</A></B>(2)
 
-(and similar)
-return, the output data and associated file metadata
+(or similar)
+returns, the output data and associated file metadata
 have been transferred to the underlying hardware
 (i.e., as though each
 <B><A HREF="../man2/write.2.html">write</A></B>(2)
@@ -913,7 +988,7 @@ was followed by a call to
 
 
 
-Create an unnamed temporary file.
+Create an unnamed temporary regular file.
 The
 <I>pathname</I>
 
@@ -1077,8 +1152,8 @@ system call operates in exactly the same way as
 <B>open</B>(),
 
 except for the differences described here.
-<DL COMPACT>
-<DT><DD>
+<P>
+
 If the pathname given in
 <I>pathname</I>
 
@@ -1091,7 +1166,8 @@ the calling process, as is done by
 <B>open</B>()
 
 for a relative pathname).
-<DT><DD>
+<P>
+
 If
 <I>pathname</I>
 
@@ -1108,7 +1184,8 @@ is interpreted relative to the current working
 directory of the calling process (like
 <B>open</B>()).
 
-<DT><DD>
+<P>
+
 If
 <I>pathname</I>
 
@@ -1116,7 +1193,6 @@ is absolute, then
 <I>dirfd</I>
 
 is ignored.
-</DL>
 <A NAME="lbAG">&nbsp;</A>
 <H2>RETURN VALUE</H2>
 
@@ -1228,6 +1304,19 @@ nor
 <B>O_RDWR</B>
 
 was specified.
+<DT><B>EINVAL</B>
+
+<DD>
+<B>O_CREAT</B>
+
+was specified in
+<I>flags</I>
+
+and the final component (&quot;basename&quot;) of the new file's
+<I>pathname</I>
+
+is invalid
+(e.g., it contains characters not permitted by the underlying filesystem).
 <DT><B>EISDIR</B>
 
 <DD>
@@ -1820,8 +1909,23 @@ new headers get at least
 
 semantics on pre-2.6.33 kernels.
 
-
 <A NAME="lbAN">&nbsp;</A>
+<H3>C library/kernel differences</H3>
+
+Since version 2.26,
+the glibc wrapper function for
+<B>open</B>()
+
+employs the
+<B>openat</B>()
+
+system call, rather than the kernel's
+<B>open</B>()
+
+system call.
+For certain architectures, this is also true in glibc versions before 2.26.
+
+<A NAME="lbAO">&nbsp;</A>
 <H3>NFS</H3>
 
 There are many infelicities in the protocol underlying NFS, affecting
@@ -1847,7 +1951,7 @@ permissions, but UID mapping is performed by the server upon
 read and write requests.
 
 
-<A NAME="lbAO">&nbsp;</A>
+<A NAME="lbAP">&nbsp;</A>
 <H3>FIFOs</H3>
 
 Opening the read or write end of a FIFO blocks until the other
@@ -1858,7 +1962,7 @@ See
 for further details.
 
 
-<A NAME="lbAP">&nbsp;</A>
+<A NAME="lbAQ">&nbsp;</A>
 <H3>File access mode</H3>
 
 Unlike the other values that can be specified in
@@ -1901,7 +2005,7 @@ operations.
 
 
 
-<A NAME="lbAQ">&nbsp;</A>
+<A NAME="lbAR">&nbsp;</A>
 <H3>Rationale for openat() and other directory file descriptor APIs</H3>
 
 <B>openat</B>()
@@ -1971,17 +2075,17 @@ could be changed in parallel with the call to
 <B>open</B>().
 
 Suppose, for example, that we wish to create the file
-<I>path/to/xxx.dep</I>
+<I>dir1/dir2/xxx.dep</I>
 
 if the file
-<I>path/to/xxx</I>
+<I>dir1/dir2/xxx</I>
 
 exists.
-The problem is that between the existence check and the file creation step,
-<I>path</I>
+The problem is that between the existence check and the file-creation step,
+<I>dir1</I>
 
 or
-<I>to</I>
+<I>dir2</I>
 
 (which might be symbolic links)
 could be modified to point to a different location.
@@ -2023,7 +2127,7 @@ on the use of
 but less efficiently.)
 
 
-<A NAME="lbAR">&nbsp;</A>
+<A NAME="lbAS">&nbsp;</A>
 <H3>O_DIRECT</H3>
 
 <P>
@@ -2130,10 +2234,10 @@ a flag of the same name, but without alignment restrictions.
 
 support was added under Linux in kernel version 2.4.10.
 Older Linux kernels simply ignore this flag.
-Some filesystems may not implement the flag and
+Some filesystems may not implement the flag, in which case
 <B>open</B>()
 
-will fail with
+fails with the error
 <B>EINVAL</B>
 
 if it is used.
@@ -2196,7 +2300,7 @@ interface is just stupid, and was probably designed by a deranged monkey
 on some serious mind-controlling substances.&quot;---Linus
 </DL>
 
-<A NAME="lbAS">&nbsp;</A>
+<A NAME="lbAT">&nbsp;</A>
 <H2>BUGS</H2>
 
 Currently, it is not possible to enable signal-driven
@@ -2245,7 +2349,7 @@ will create a regular file (i.e.,
 <B>O_DIRECTORY</B>
 
 is ignored).
-<A NAME="lbAT">&nbsp;</A>
+<A NAME="lbAU">&nbsp;</A>
 <H2>SEE ALSO</H2>
 
 <B><A HREF="../man2/chmod.2.html">chmod</A></B>(2),
@@ -2314,19 +2418,20 @@ is ignored).
 <DL>
 <DT><A HREF="#lbAL">Open file descriptions</A><DD>
 <DT><A HREF="#lbAM">Synchronized I/O</A><DD>
-<DT><A HREF="#lbAN">NFS</A><DD>
-<DT><A HREF="#lbAO">FIFOs</A><DD>
-<DT><A HREF="#lbAP">File access mode</A><DD>
-<DT><A HREF="#lbAQ">Rationale for openat() and other directory file descriptor APIs</A><DD>
-<DT><A HREF="#lbAR">O_DIRECT</A><DD>
+<DT><A HREF="#lbAN">C library/kernel differences</A><DD>
+<DT><A HREF="#lbAO">NFS</A><DD>
+<DT><A HREF="#lbAP">FIFOs</A><DD>
+<DT><A HREF="#lbAQ">File access mode</A><DD>
+<DT><A HREF="#lbAR">Rationale for openat() and other directory file descriptor APIs</A><DD>
+<DT><A HREF="#lbAS">O_DIRECT</A><DD>
 </DL>
-<DT><A HREF="#lbAS">BUGS</A><DD>
-<DT><A HREF="#lbAT">SEE ALSO</A><DD>
+<DT><A HREF="#lbAT">BUGS</A><DD>
+<DT><A HREF="#lbAU">SEE ALSO</A><DD>
 </DL>
 <HR>
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:47:15 GMT, April 20, 2020
+Time: 03:47:47 GMT, April 20, 2020
 </BODY>
 </HTML>

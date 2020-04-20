@@ -25,7 +25,7 @@ License along with this manual; if not, see
 <HTML><HEAD><TITLE>Man page of MREMAP</TITLE>
 </HEAD><BODY>
 <H1>MREMAP</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2017-09-15<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2017-09-25<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -68,6 +68,28 @@ may be provided; see the description of
 <B>MREMAP_FIXED</B>
 
 below.
+<P>
+
+If the value of <I>old_size</I> is zero, and <I>old_address</I> refers to
+a shareable mapping (see
+<B><A HREF="../man2/mmap.2.html">mmap</A></B>(2)
+
+<B>MAP_SHARED</B>),
+
+then
+<B>mremap</B>()
+
+will create a new mapping of the same pages.
+<I>new_size</I>
+will be the size of the new mapping and the location of the new mapping
+may be specified with <I>new_address</I>; see the description of
+<B>MREMAP_FIXED</B>
+
+below.
+If a new mapping is requested via this method, then the
+<B>MREMAP_MAYMOVE</B>
+
+flag must also be specified.
 <P>
 
 In Linux the memory is divided into pages.
@@ -196,8 +218,14 @@ whole address space requested, but those mappings are of different types.
 
 <DD>
 An invalid argument was given.
-Possible causes are: <I>old_address</I> was not
-page aligned; a value other than
+Possible causes are:
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT>*<DD>
+<I>old_address</I> was not
+page aligned;
+<DT>*<DD>
+a value other than
 <B>MREMAP_MAYMOVE</B>
 
 or
@@ -206,16 +234,19 @@ or
 was specified in
 <I>flags</I>;
 
+<DT>*<DD>
 <I>new_size</I>
 
 was zero;
+<DT>*<DD>
 <I>new_size</I>
 
 or
 <I>new_address</I>
 
 was invalid;
-or the new address range specified by
+<DT>*<DD>
+the new address range specified by
 <I>new_address</I>
 
 and
@@ -227,11 +258,22 @@ overlapped the old address range specified by
 and
 <I>old_size</I>;
 
-or
+<DT>*<DD>
 <B>MREMAP_FIXED</B>
 
 was specified without also specifying
-<B>MREMAP_MAYMOVE</B>.
+<B>MREMAP_MAYMOVE</B>;
+
+<DT>*<DD>
+<I>old_size</I> was zero and <I>old_address</I> does not refer to a
+shareable mapping (but see BUGS);
+<DT>*<DD>
+<I>old_size</I> was zero and the
+<B>MREMAP_MAYMOVE</B>
+
+flag was not specified.
+</DL>
+</DL>
 
 <DT><B>ENOMEM</B>
 
@@ -280,6 +322,36 @@ with
 
 if the area cannot be populated.
 <A NAME="lbAI">&nbsp;</A>
+<H2>BUGS</H2>
+
+Before Linux 4.14,
+if
+<I>old_size</I>
+
+was zero and the mapping referred to by
+<I>old_address</I>
+
+was a private mapping
+(<B><A HREF="../man2/mmap.2.html">mmap</A></B>(2) <B>MAP_PRIVATE</B>),
+
+<B>mremap</B>()
+
+created a new private mapping unrelated to the original mapping.
+This behavior was unintended
+and probably unexpected in user-space applications
+(since the intention of
+<B>mremap</B>()
+
+is to create a new mapping based on the original mapping).
+Since Linux 4.14,
+
+<B>mremap</B>()
+
+fails with the error
+<B>EINVAL</B>
+
+in this scenario.
+<A NAME="lbAJ">&nbsp;</A>
 <H2>SEE ALSO</H2>
 
 <B><A HREF="../man2/brk.2.html">brk</A></B>(2),
@@ -317,12 +389,13 @@ for more information on paged memory
 <DT><A HREF="#lbAF">ERRORS</A><DD>
 <DT><A HREF="#lbAG">CONFORMING TO</A><DD>
 <DT><A HREF="#lbAH">NOTES</A><DD>
-<DT><A HREF="#lbAI">SEE ALSO</A><DD>
+<DT><A HREF="#lbAI">BUGS</A><DD>
+<DT><A HREF="#lbAJ">SEE ALSO</A><DD>
 </DL>
 <HR>
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:47:15 GMT, April 20, 2020
+Time: 03:47:47 GMT, April 20, 2020
 </BODY>
 </HTML>

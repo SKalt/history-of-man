@@ -92,7 +92,7 @@ If
 is NULL, then
 <B>system</B>()
 
-returns a status indicating whether a shell is available on the system
+returns a status indicating whether a shell is available on the system.
 <A NAME="lbAE">&nbsp;</A>
 <H2>RETURN VALUE</H2>
 
@@ -235,33 +235,6 @@ while (something) {
 
 <P>
 
-Do not use
-<B>system</B>()
-
-from a program with set-user-ID or set-group-ID privileges,
-because strange values for some environment variables
-might be used to subvert system integrity.
-Use the
-<B><A HREF="../man3/exec.3.html">exec</A></B>(3)
-
-family of functions instead, but not
-<B><A HREF="../man3/execlp.3.html">execlp</A></B>(3)
-
-or
-<B><A HREF="../man3/execvp.3.html">execvp</A></B>(3).
-
-<B>system</B>()
-
-will not, in fact, work properly from programs with set-user-ID or
-set-group-ID privileges on systems on which
-<I>/bin/sh</I>
-
-is bash version 2, since bash 2 drops privileges on startup.
-(Debian uses a modified bash which does not do this when invoked as
-<B>sh</B>.)
-
-<P>
-
 According to POSIX.1, it is unspecified whether handlers registered using
 <B><A HREF="../man3/pthread_atfork.3.html">pthread_atfork</A></B>(3)
 
@@ -296,7 +269,67 @@ which yields a
 
 return value that is indistinguishable from the case
 where a shell could not be executed in the child process.
+
 <A NAME="lbAI">&nbsp;</A>
+<H3>Caveats</H3>
+
+<P>
+
+Do not use
+<B>system</B>()
+
+from a privileged program
+(a set-user-ID or set-group-ID program, or a program with capabilities)
+because strange values for some environment variables
+might be used to subvert system integrity.
+For example,
+<B>PATH</B>
+
+could be manipulated so that an arbitrary program
+is executed with privilege.
+Use the
+<B><A HREF="../man3/exec.3.html">exec</A></B>(3)
+
+family of functions instead, but not
+<B><A HREF="../man3/execlp.3.html">execlp</A></B>(3)
+
+or
+<B><A HREF="../man3/execvp.3.html">execvp</A></B>(3)
+
+(which also use the
+<B>PATH</B>
+
+environment variable to search for an executable).
+<P>
+
+<B>system</B>()
+
+will not, in fact, work properly from programs with set-user-ID or
+set-group-ID privileges on systems on which
+<I>/bin/sh</I>
+
+is bash version 2: as a security measure, bash 2 drops privileges on startup.
+(Debian uses a different shell,
+<B><A HREF="../man1/dash.1.html">dash</A></B>(1),
+
+which does not do this when invoked as
+<B>sh</B>.)
+
+<P>
+
+Any user input that is employed as part of
+<I>command</I>
+
+should be
+<I>carefully</I>
+
+sanitized, to ensure that unexpected shell commands or command options
+are not executed.
+Such risks are especially grave when using
+<B>system</B>()
+
+from a privileged program.
+<A NAME="lbAJ">&nbsp;</A>
 <H2>SEE ALSO</H2>
 
 <B><A HREF="../man1/sh.1.html">sh</A></B>(1),
@@ -327,12 +360,15 @@ where a shell could not be executed in the child process.
 <DT><A HREF="#lbAF">ATTRIBUTES</A><DD>
 <DT><A HREF="#lbAG">CONFORMING TO</A><DD>
 <DT><A HREF="#lbAH">NOTES</A><DD>
-<DT><A HREF="#lbAI">SEE ALSO</A><DD>
+<DL>
+<DT><A HREF="#lbAI">Caveats</A><DD>
+</DL>
+<DT><A HREF="#lbAJ">SEE ALSO</A><DD>
 </DL>
 <HR>
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:47:25 GMT, April 20, 2020
+Time: 03:47:57 GMT, April 20, 2020
 </BODY>
 </HTML>

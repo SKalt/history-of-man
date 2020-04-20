@@ -1,5 +1,5 @@
 <!--
-Copyright (c) 2001, Michael Kerrisk &lt;mtk.manpages@gmail.com&gt;
+Copyright (c) 2001, 2017 Michael Kerrisk &lt;mtk.manpages@gmail.com&gt;
 %%%LICENSE_START(VERBATIM)
 Permission is granted to make and distribute verbatim copies of this
 manual provided the copyright notice and this permission notice are
@@ -26,7 +26,7 @@ the source, must acknowledge the copyright and authors of this work.
 <HTML><HEAD><TITLE>Man page of SIGALTSTACK</TITLE>
 </HEAD><BODY>
 <H1>SIGALTSTACK</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2017-09-15<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2017-11-08<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -132,7 +132,34 @@ the fields of this structure are set as follows:
 <DT><I>ss.ss_flags</I>
 
 <DD>
-This field is set to zero.
+This field contains either 0, or the following flag:
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT><B>SS_AUTODISARM</B> (since Linux 4.7)
+
+<DD>
+
+
+Clear the alternate signal stack settings on entry to the signal handler.
+When the signal handler returns,
+the previous alternate signal stack settings are restored.
+<DT><DD>
+This flag was added in order make it safe
+to switch away from the signal handler with
+<B><A HREF="../man3/swapcontext.3.html">swapcontext</A></B>(3).
+
+Without this flag, a subsequently handled signal will corrupt
+the state of the switched-away signal handler.
+On kernels where this flag is not supported,
+<B>sigaltstack</B>()
+
+fails with the error
+<B>EINVAL</B>
+
+when this flag is supplied.
+</DL>
+</DL>
+
 <DT><I>ss.ss_sp</I>
 
 <DD>
@@ -153,8 +180,11 @@ size required to execute a signal handler.
 
 To disable an existing stack, specify <I>ss.ss_flags</I>
 as <B>SS_DISABLE</B>.
-In this case, the remaining fields
-in <I>ss</I> are ignored.
+In this case, the kernel ignores any other flags in
+<I>ss.ss_flags</I>
+
+and the remaining fields
+in <I>ss</I>.
 <P>
 
 If <I>old_ss</I> is not NULL, then it is used to return information about
@@ -177,6 +207,29 @@ currently executing on it.)
 
 <DD>
 The alternate signal stack is currently disabled.
+<DT><DD>
+Alternatively, this value is returned if the process is currently
+executing on an alternate signal stack that was established using the
+<B>SS_AUTODISARM</B>
+
+flag.
+In this case, it is safe to switch away from the signal handler with
+<B><A HREF="../man3/swapcontext.3.html">swapcontext</A></B>(3).
+
+It is also possible to set up a different alternative signal stack
+using a further call to
+<B>sigaltstack</B>().
+
+
+
+
+
+
+<DT><B>SS_AUTODISARM</B>
+
+<DD>
+The alternate signal stack has been marked to be autodisarmed
+as described above.
 </DL>
 <P>
 
@@ -242,7 +295,13 @@ For an explanation of the terms used in this section, see
 <A NAME="lbAH">&nbsp;</A>
 <H2>CONFORMING TO</H2>
 
-POSIX.1-2001, POSIX.1-2009, SUSv2, SVr4.
+POSIX.1-2001, POSIX.1-2008, SUSv2, SVr4.
+<P>
+
+The
+<B>SS_AUTODISARM</B>
+
+flag is a Linux extension.
 <A NAME="lbAI">&nbsp;</A>
 <H2>NOTES</H2>
 
@@ -323,8 +382,16 @@ had to know the direction of stack growth.
 <H2>EXAMPLE</H2>
 
 The following code segment demonstrates the use of
-<B>sigaltstack</B>():
+<B>sigaltstack</B>()
 
+(and
+<B><A HREF="../man2/sigaction.2.html">sigaction</A></B>(2))
+
+to install an alternate signal stack that is employed by a handler
+for the
+<B>SIGSEGV</B>
+
+signal:
 <P>
 
 
@@ -332,46 +399,79 @@ The following code segment demonstrates the use of
 stack_t ss;
 <P>
 ss.ss_sp = malloc(SIGSTKSZ);
-if (ss.ss_sp == NULL)
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Handle&nbsp;error&nbsp;*/;
+if (ss.ss_sp == NULL) {
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;perror(&quot;malloc&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
+}
+<P>
 ss.ss_size = SIGSTKSZ;
 ss.ss_flags = 0;
 if (sigaltstack(&amp;ss, NULL) == -1)
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Handle&nbsp;error&nbsp;*/;
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;perror(&quot;sigaltstack&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
+}
+<P>
+sa.sa_flags = SA_ONSTACK;
+sa.sa_handler = handler();      /* Address of a signal handler */
+sigemptyset(&amp;sa.sa_mask);
+if (sigaction(SIGSEGV, &amp;sa, NULL) == -1) {
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;perror(&quot;sigaction&quot;);
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;exit(EXIT_FAILURE);
+}
 
 
 <A NAME="lbAL">&nbsp;</A>
 <H2>BUGS</H2>
 
-In the lead up to the development of the Linux 2.4 kernel,
+In Linux 2.2 and earlier, the only flag that could be specified
+in
+<I>ss.sa_flags</I>
 
-someone got confused and allowed the kernel to accept
+was
+<B>SS_DISABLE</B>.
+
+In the lead up to the release of the Linux 2.4 kernel,
+
+
+
+
+
+a change was made to allow
+<B>sigaltstack</B>()
+
+to allow
+<I>ss.ss_flags==SS_ONSTACK</I>
+
+with the same meaning as
+<I>ss.ss_flags==0</I>
+
+(i.e., the inclusion of
 <B>SS_ONSTACK</B>
 
 in
-<I>ss.ss_flags</I>,
+<I>ss.ss_flags</I>
 
-which results in behavior that is the same as when
-<I>ss_flags</I>
-
-is 0.
+is a no-op).
 On other implementations, and according to POSIX.1,
 <B>SS_ONSTACK</B>
 
 appears only as a reported flag in
 <I>old_ss.ss_flags</I>.
 
-There is no need ever to specify this flag in
-<I>ss.ss_flags</I>
+On Linux, there is no need ever to specify
+<B>SS_ONSTACK</B>
 
-(and indeed, doing so decreases portability,
-since some implementations
+in
+<I>ss.ss_flags</I>,
+
+and indeed doing so should be avoided on portability grounds:
+various other systems
 
 give an error if
 <B>SS_ONSTACK</B>
 
 is specified in
-<I>ss.ss_flags</I>).
+<I>ss.ss_flags</I>.
 
 <A NAME="lbAM">&nbsp;</A>
 <H2>SEE ALSO</H2>
@@ -412,6 +512,6 @@ is specified in
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:47:16 GMT, April 20, 2020
+Time: 03:47:49 GMT, April 20, 2020
 </BODY>
 </HTML>
