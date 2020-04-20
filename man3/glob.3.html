@@ -4,7 +4,7 @@
 <HTML><HEAD><TITLE>Man page of GLOB</TITLE>
 </HEAD><BODY>
 <H1>GLOB</H1>
-Section: Linux Programmer's Manual (3)<BR>Updated: 1999-09-12<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2007-10-10<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -57,13 +57,13 @@ The results of a
 <B>glob</B>()
 
 call are stored in the structure pointed to by
-<I>pglob</I>,
+<I>pglob</I>.
 
-which is a
+This structure is of type
 <I>glob_t</I>
 
-which is declared in
-<I>&lt;<A HREF="file:///usr/include/glob.h">glob.h</A>&gt;</I>
+(declared in
+<I>&lt;<A HREF="file:///usr/include/glob.h">glob.h</A>&gt;</I>)
 
 and includes the following elements defined by POSIX.2 (more may be
 present as an extension):
@@ -87,62 +87,87 @@ Results are stored in dynamically allocated storage.
 The parameter
 <I>flags</I>
 
-is made up of bitwise OR of zero or more the following symbolic
-constants, which modify the of behavior of
+is made up of the bitwise OR of zero or more the following symbolic
+constants, which modify the behavior of
 <B>glob</B>():
 
 <DL COMPACT>
 <DT><B>GLOB_ERR</B>
 
 <DD>
-which means to return upon read error (because a directory does not
-have read permission, for example),
+Return upon a read error (because a directory does not
+have read permission, for example).
+By default,
+<B>glob</B>()
+
+attempts carry on despite errors,
+reading all of the directories that it can.
 <DT><B>GLOB_MARK</B>
 
 <DD>
-which means to append a slash to each path which corresponds to a directory,
+Append a slash to each path which corresponds to a directory.
 <DT><B>GLOB_NOSORT</B>
 
 <DD>
-which means don't sort the returned pathnames (they are by default),
+Don't sort the returned pathnames.
+The only reason to do this is to save processing time.
+By default, the returned pathnames are sorted.
 <DT><B>GLOB_DOOFFS</B>
 
 <DD>
-which means that
+Reserve
 <I>pglob-&gt;gl_offs</I>
 
-slots will be reserved at the beginning of the list of strings in
-<I>pglob-&gt;pathv</I>,
+slots at the beginning of the list of strings in
+<I>pglob-&gt;pathv</I>.
 
+The reserved slots contain NULL pointers.
 <DT><B>GLOB_NOCHECK</B>
 
 <DD>
-which means that, if no pattern matches, to return the original pattern,
+If no pattern matches, return the original pattern.
+By default,
+<B>glob</B>()
+
+returns
+<B>GLOB_NOMATCH</B>
+
+if there are no matches.
 <DT><B>GLOB_APPEND</B>
 
 <DD>
-which means to append to the results of a previous call.
+Append the results of this call to the vector of results
+returned by a previous call to
+<B>glob</B>().
+
 Do not set this flag on the first invocation of
 <B>glob</B>().
 
 <DT><B>GLOB_NOESCAPE</B>
 
 <DD>
-which means that meta characters cannot be quoted by backslashes.
+Don't allow backslash ('') to be used as an escape
+character.
+Normally, a backslash can be used to quote the following character,
+providing a mechanism to turn off the special meaning
+metacharacters.
 </DL>
 <P>
 
-The flags may also include some of the following, which are GNU
+<I>flags</I>
+
+may also include any of the following, which are GNU
 extensions and not defined by POSIX.2:
 <DL COMPACT>
 <DT><B>GLOB_PERIOD</B>
 
 <DD>
-which means that a leading period can be matched by meta characters,
+Allow a leading period to be matched by metacharacters.
+By default, metacharacters can't match a leading period.
 <DT><B>GLOB_ALTDIRFUNC</B>
 
 <DD>
-which means that alternative functions
+Use alternative functions
 <I>pglob-&gt;gl_closedir</I>,
 
 <I>pglob-&gt;gl_readdir</I>,
@@ -153,27 +178,76 @@ which means that alternative functions
 
 <I>pglob-&gt;gl_stat</I>
 
-are used for file system access instead of the normal library
-functions,
+for file system access instead of the normal library
+functions.
 <DT><B>GLOB_BRACE</B>
 
 <DD>
-which means that
+Expand
 <B><A HREF="../man1/csh.1.html">csh</A></B>(1)
 
-style brace expressions <B>{a,b}</B> are expanded,
+style brace expressions of the form <B>{a,b}</B>.
+Brace expressions can be nested.
+Thus, for example, specifying the pattern
+&quot;{foo/{,cat,dog},bar}&quot; would return the same results as four separate
+<B>glob</B>()
+
+calls using the strings:
+&quot;foo/&quot;,
+&quot;foo/cat&quot;,
+&quot;foo/dog&quot;,
+and
+&quot;bar&quot;.
 <DT><B>GLOB_NOMAGIC</B>
 
 <DD>
-which means that the pattern is returned if it contains no metacharacters,
+If the pattern contains no metacharacters
+then it should be returned as the sole matching word,
+even if there is no file with that name.
 <DT><B>GLOB_TILDE</B>
 
 <DD>
-which means that tilde expansion is carried out, and
+Carry out tilde expansion.
+If a tilde ('~') is the only character in the pattern,
+or an initial tilde is followed immediately by a slash ('/'),
+then the home directory of the caller is substituted for
+the tilde.
+If an initial tilde is followed by a username (e.g., &quot;~andrea/bin&quot;),
+then the tilde and username are substituted by the home directory
+of that user.
+If the username is invalid, or the home directory cannot be
+determined, then no substitution is performed.
+<DT><B>GLOB_TILDE_CHECK</B>
+
+<DD>
+This provides behavior similar to that of
+<B>GLOB_TILDE</B>.
+
+The difference is that if the username is invalid, or the
+home directory cannot be determined, then
+instead of using the pattern itself as the name,
+<B>glob</B>()
+
+returns
+<B>GLOB_NOMATCH</B>
+
+to indicate an error.
 <DT><B>GLOB_ONLYDIR</B>
 
 <DD>
-which means that only directories are matched.
+This is a
+<I>hint</I>
+
+to
+<B>glob</B>()
+
+that the caller is interested only in directories that match the pattern.
+If the implementation can easily determine file-type information,
+then non-directory files are not returned to the caller.
+However, the caller must still check that returned files
+are directories.
+(The purpose of this flag is merely to optimize performance when
+the caller is interested only interested in directories.)
 </DL>
 <P>
 
@@ -218,8 +292,8 @@ Upon successful return,
 contains the number of matched pathnames and
 <I>pglob-&gt;gl_pathv</I>
 
-a pointer to the list of matched pathnames.
-The first pointer after the last pathname is NULL.
+contains a pointer to the list of pointers to matched pathnames.
+The list of pointers is terminated by a NULL pointer.
 <P>
 
 It is possible to call
@@ -280,7 +354,7 @@ and
 are declared as
 <I>size_t</I>
 
-in glibc 2.1, as they should according to POSIX.2,
+in glibc 2.1, as they should be according to POSIX.2,
 but are declared as
 <I>int</I>
 
@@ -364,6 +438,6 @@ execvp(&quot;ls&quot;, &amp;globbuf.gl_pathv[0]);
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 02:46:01 GMT, April 20, 2020
+Time: 02:46:34 GMT, April 20, 2020
 </BODY>
 </HTML>

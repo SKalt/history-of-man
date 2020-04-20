@@ -1,196 +1,94 @@
 <!--
-Copyright (c) 1993 Michael Haardt (michael@moria.de),
+Copyright (C) 2007 Michael Kerrisk &lt;mtk.manpages@gmail.com&gt;
 -->
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
 <HTML><HEAD><TITLE>Man page of INTRO</TITLE>
 </HEAD><BODY>
 <H1>INTRO</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 1996-05-22<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2007-10-23<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
 <H2>NAME</H2>
 
-intro, _syscall - Introduction to system calls
+intro - Introduction to system calls
 <A NAME="lbAC">&nbsp;</A>
 <H2>DESCRIPTION</H2>
 
-This chapter describes the Linux system calls.
-For a list of the Linux system calls, see <A HREF="../man2/syscalls.2.html">syscalls</A>(2).
+Section 2 of the manual describes the Linux system calls.
+A system call is an entry point into the Linux kernel.
+Usually, system calls are not invoked directly:
+instead, most system calls have corresponding C library
+wrapper functions which perform the steps required
+(e.g., trapping to kernel mode) in order to invoke
+the system call.
+Thus, making a system looks the same as invoking a normal
+library function.
+<P>
+For a list of the Linux system calls, see
+<B><A HREF="../man2/syscalls.2.html">syscalls</A></B>(2).
+
 <A NAME="lbAD">&nbsp;</A>
+<H2>RETURN VALUE</H2>
+
+On error, most system calls return a negative error number
+(i.e., the negated value of one of the constants described in
+<B><A HREF="../man3/errno.3.html">errno</A></B>(3)).
+
+The C library wrapper hides this detail from the caller: when a
+system call returns a negative value, the wrapper copies the
+absolute value into the
+<I>errno</I>
+
+variable, and returns -1 as the return value of the wrapper.
+<P>
+The value returned by a successful system call depends on the call.
+Many system calls return 0 on success, but some can return non-zero
+values from a successful call.
+The details are described in the individual manual pages.
+<P>
+In some cases,
+the programmer must define a feature test macro in order to obtain
+the declaration of a system call from the header file specified
+in the man page SYNOPSIS section.
+In such cases, the required macro is described in the man page.
+For further information on feature test macros, see
+<B><A HREF="../man7/feature_test_macros.7.html">feature_test_macros</A></B>(7).
+
+<A NAME="lbAE">&nbsp;</A>
+<H2>CONFORMING TO</H2>
+
+Certain terms and abbreviations are used to indicate Unix variants
+and standards to which calls in this section conform.
+See
+<B><A HREF="../man7/standards.7.html">standards</A></B>(7).
+
+<A NAME="lbAF">&nbsp;</A>
+<H2>NOTES</H2>
+
+<A NAME="lbAG">&nbsp;</A>
 <H3>Calling Directly</H3>
 
-In most cases, it is unnecessary to invoke a system call directly, but there
-are times when the Standard C library does not implement a nice function call
-for you.
+In most cases, it is unnecessary to invoke a system call directly,
+but there are times when the Standard C library does not implement
+a nice wrapper function for you.
 In this case, the programmer must manually invoke the system call using
 <B><A HREF="../man2/syscall.2.html">syscall</A></B>(2).
 
 Historically, this was also possible using one of the _syscall macros
-described below.
-<A NAME="lbAE">&nbsp;</A>
-<H3>Synopsis</H3>
-
-<B>#include &lt;<A HREF="file:///usr/include/linux/unistd.h">linux/unistd.h</A>&gt;</B>
-
-<P>
-A _syscall macro
-<P>
-desired system call
-<A NAME="lbAF">&nbsp;</A>
-<H3>Set-up</H3>
-
-The important thing to know about a system call is its prototype.
-You need to know how many arguments, their types,
-and the function return type.
-There are six macros that make the actual call into the system easier.
-They have the form:
-<P>
-<DL COMPACT><DT><DD>
-_syscall<I>X</I>(<I>type</I>,<I>name</I>,<I>type1</I>,<I>arg1</I>,<I>type2</I>,<I>arg2</I>,...)
-
-<DL COMPACT><DT><DD>
-<DL COMPACT>
-<DT>
-<DD>where <I>X</I> is 0-5, which are the number of arguments taken by the
-system call
-<DT>
-<I>type</I> is the return type of the system call
-<DT>
-<I>name</I> is the name of the system call
-<DT>
-<I>typeN</I> is the Nth argument's type
-<DT>
-<I>argN</I> is the name of the Nth argument
-</DL>
-</DL>
-
-</DL>
-
-<P>
-<DD>These macros create a function called <I>name</I> with the arguments you
-specify.
-Once you include the _syscall() in your source file,
-you call the system call by <I>name</I>.
-<A NAME="lbAG">&nbsp;</A>
-<H2>FILES</H2>
-
-<I>/usr/include/linux/unistd.h</I>
+described in
+<B><A HREF="../man2/_syscall.2.html">_syscall</A></B>(2).
 
 <A NAME="lbAH">&nbsp;</A>
-<H2>CONFORMING TO</H2>
+<H3>Authors and Copyright Terms</H3>
 
-Certain codes are used to indicate Unix variants and standards to
-which calls in the section conform.
-See
-<B><A HREF="../man7/standards.7.html">standards</A></B>(7).
-
+Look at the header of the manual page source for the author(s) and copyright
+conditions.
+Note that these can be different from page to page!
 <A NAME="lbAI">&nbsp;</A>
-<H2>NOTES</H2>
-
-Starting around kernel 2.6.18, the _syscall macros were removed
-from header files supplied to user space.
-Use
-<B><A HREF="../man2/syscall.2.html">syscall</A></B>(2)
-
-instead.
-(Some architectures, notably ia64, never provided the _syscall macros;
-on those architectures,
-<B><A HREF="../man2/syscall.2.html">syscall</A></B>(2)
-
-was always required.)
-<P>
-The _syscall() macros <I> do not</I> produce a prototype.
-You may have to
-create one, especially for C++ users.
-<P>
-System calls are not required to return only positive or negative error
-codes.
-You need to read the source to be sure how it will return errors.
-Usually, it is the negative of a standard error code,
-for example, -<B>EPERM</B>.
-The _syscall() macros will return the result <I>r</I> of the system call
-when <I>r</I> is non-negative, but will return -1 and set the variable
-<I>errno</I>
-
-to -<I>r</I> when <I>r</I> is negative.
-For the error codes, see
-<B><A HREF="../man3/errno.3.html">errno</A></B>(3).
-
-<P>
-Some system calls, such as
-<B><A HREF="../man2/mmap.2.html">mmap</A></B>(2),
-
-require more than five arguments.
-These are handled by pushing the
-arguments on the stack and passing a pointer to the block of arguments.
-<P>
-When defining a system call, the argument types <I>must</I> be
-passed by-value or by-pointer (for aggregates like structs).
-
-
-
-
-
-
-
-
-
-
-
-<A NAME="lbAJ">&nbsp;</A>
-<H2>EXAMPLE</H2>
-
-<P>
-<PRE>
-#include &lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;
-#include &lt;<A HREF="file:///usr/include/stdlib.h">stdlib.h</A>&gt;
-#include &lt;<A HREF="file:///usr/include/errno.h">errno.h</A>&gt;
-#include &lt;<A HREF="file:///usr/include/linux/unistd.h">linux/unistd.h</A>&gt;       /* for _syscallX macros/related stuff */
-#include &lt;<A HREF="file:///usr/include/linux/kernel.h">linux/kernel.h</A>&gt;       /* for struct sysinfo */
-
-_syscall1(int, sysinfo, struct sysinfo *, info);
-
-/* Note: if you copy directly from the nroff source, remember to
-REMOVE the extra backslashes in the printf statement. */
-
-int
-main(void)
-{
-    struct sysinfo s_info;
-    int error;
-
-    error = sysinfo(&amp;s_info);
-    printf(&quot;code error = %d\n&quot;, error);
-    printf(&quot;Uptime = %lds\nLoad: 1 min %lu / 5 min %lu / 15 min %lu\n&quot;
-           &quot;RAM: total %lu / free %lu / shared %lu\n&quot;
-           &quot;Memory in buffers = %lu\nSwap: total %lu / free %lu\n&quot;
-           &quot;Number of processes = %d\n&quot;,
-           s_info.uptime, s_info.loads[0],
-           s_info.loads[1], s_info.loads[2],
-           s_info.totalram, s_info.freeram,
-           s_info.sharedram, s_info.bufferram,
-           s_info.totalswap, s_info.freeswap,
-           s_info.procs);
-    exit(EXIT_SUCCESS);
-}
-</PRE>
-
-<A NAME="lbAK">&nbsp;</A>
-<H3>Sample Output</H3>
-
-<PRE>
-code error = 0
-uptime = 502034s
-Load: 1 min 13376 / 5 min 5504 / 15 min 1152
-RAM: total 15343616 / free 827392 / shared 8237056
-Memory in buffers = 5066752
-Swap: total 27881472 / free 24698880
-Number of processes = 40
-</PRE>
-
-<A NAME="lbAL">&nbsp;</A>
 <H2>SEE ALSO</H2>
+
+<B><A HREF="../man2/_syscall.2.html">_syscall</A></B>(2),
 
 <B><A HREF="../man2/syscall.2.html">syscall</A></B>(2),
 
@@ -207,24 +105,19 @@ Number of processes = 40
 <DL>
 <DT><A HREF="#lbAB">NAME</A><DD>
 <DT><A HREF="#lbAC">DESCRIPTION</A><DD>
+<DT><A HREF="#lbAD">RETURN VALUE</A><DD>
+<DT><A HREF="#lbAE">CONFORMING TO</A><DD>
+<DT><A HREF="#lbAF">NOTES</A><DD>
 <DL>
-<DT><A HREF="#lbAD">Calling Directly</A><DD>
-<DT><A HREF="#lbAE">Synopsis</A><DD>
-<DT><A HREF="#lbAF">Set-up</A><DD>
+<DT><A HREF="#lbAG">Calling Directly</A><DD>
+<DT><A HREF="#lbAH">Authors and Copyright Terms</A><DD>
 </DL>
-<DT><A HREF="#lbAG">FILES</A><DD>
-<DT><A HREF="#lbAH">CONFORMING TO</A><DD>
-<DT><A HREF="#lbAI">NOTES</A><DD>
-<DT><A HREF="#lbAJ">EXAMPLE</A><DD>
-<DL>
-<DT><A HREF="#lbAK">Sample Output</A><DD>
-</DL>
-<DT><A HREF="#lbAL">SEE ALSO</A><DD>
+<DT><A HREF="#lbAI">SEE ALSO</A><DD>
 </DL>
 <HR>
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 02:45:53 GMT, April 20, 2020
+Time: 02:46:27 GMT, April 20, 2020
 </BODY>
 </HTML>
