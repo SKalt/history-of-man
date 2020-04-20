@@ -1,17 +1,17 @@
 <!--
-Copyright (C) 1995 Michael Shields &lt;shields@tembel.org&gt;.
+Copyright (C) 2007 Michael Kerrisk &lt;mtk-manpages@gmx.net&gt;
 -->
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
 <HTML><HEAD><TITLE>Man page of MPROTECT</TITLE>
 </HEAD><BODY>
 <H1>MPROTECT</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2003-08-24<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2007-06-02<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
 <H2>NAME</H2>
 
-mprotect - control allowable accesses to a region of memory
+mprotect - set protection on a region of memory
 <A NAME="lbAC">&nbsp;</A>
 <H2>SYNOPSIS</H2>
 
@@ -24,20 +24,28 @@ mprotect - control allowable accesses to a region of memory
 <A NAME="lbAD">&nbsp;</A>
 <H2>DESCRIPTION</H2>
 
-The function
 <B>mprotect</B>()
 
-specifies the desired protection for the memory page(s) containing
-part or all of the interval [<I>addr</I>,<I>addr</I>+<I>len</I>-1].
-If an access is disallowed by the protection given it,
-the program receives a
-<B>SIGSEGV</B>.
+changes protection for the calling process's memory page(s)
+containing any part of the address range in the 
+interval [<I>addr</I>,<I>addr</I>+<I>len</I>-1].
+<I>addr</I>
 
+must be aligned to a page boundary.
+<P>
+If the calling process tries to access memory in a manner
+that violates the protection, then the kernel generates a 
+<B>SIGSEGV</B>
+
+signal for the process.
 <P>
 
 <I>prot</I>
 
-is a bitwise-or of the following values:
+is either
+<B>PROT_NONE</B>
+
+or a bitwise-or of the other values in the following list:
 <DL COMPACT>
 <DT><B>PROT_NONE</B>
 
@@ -50,23 +58,14 @@ The memory can be read.
 <DT><B>PROT_WRITE</B>
 
 <DD>
-The memory can be written to.
+The memory can be modified.
 <DT><B>PROT_EXEC</B>
 
 <DD>
-The memory can contain executing code.
+The memory can contain be executed.
 
 
 </DL>
-<P>
-
-The new protection replaces any existing protection.
-For example, if the
-memory had previously been marked <B>PROT_READ</B>, and
-<B>mprotect</B>()
-
-is then called with <I>prot</I> <B>PROT_WRITE</B>, it will no longer
-be readable.
 <A NAME="lbAE">&nbsp;</A>
 <H2>RETURN VALUE</H2>
 
@@ -102,7 +101,8 @@ The memory cannot be accessed.
 <DT><B>EINVAL</B>
 
 <DD>
-<I>addr</I> is not a valid pointer, or not a multiple of PAGESIZE.
+<I>addr</I> is not a valid pointer,
+or not a multiple of the system page size.
 <DT><B>ENOMEM</B>
 
 <DD>
@@ -121,10 +121,11 @@ or specify one or more pages that are not mapped.
 SVr4, POSIX.1-2001.
 
 
-POSIX says that
+POSIX says that the behaviour of
 <B>mprotect</B>()
 
-can be used only on regions of memory obtained from
+is unspecified if it is applied to a region of memory that
+was not obtained via
 <B><A HREF="../man2/mmap.2.html">mmap</A></B>(2).
 
 <A NAME="lbAH">&nbsp;</A>
@@ -145,49 +146,100 @@ has any effect different from
 <B>PROT_READ</B>
 
 is architecture and kernel version dependent.
+<P>
+POSIX.1-2001 says that an implementation may permit access
+other than that specified in
+<I>prot</I>,
+
+but at a minimum can only allow write access if
+<B>PROT_WRITE</B>
+
+has been set, and must not allow any access if
+<B>PROT_NONE</B>
+
+has been set.
 <A NAME="lbAI">&nbsp;</A>
 <H2>EXAMPLE</H2>
 
+<P>
+
+The program below allocates four pages of memory, makes the third
+of these pages read-only, and then executes a loop that walks upwards
+through the allocated region modifying bytes.
+<P>
+An example of what we might see when running the program is the
+following:
+<P>
+
 <PRE>
+$ ./a.out
+Start of region:        0x804c000
+Got SIGSEGV at address: 0x804e000
+</PRE>
+
+
+<PRE>
+
+#include &lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/signal.h">signal.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/malloc.h">malloc.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/stdlib.h">stdlib.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/errno.h">errno.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/sys/mman.h">sys/mman.h</A>&gt;
 
-#include &lt;<A HREF="file:///usr/include/limits.h">limits.h</A>&gt;    /* for PAGESIZE */
-#ifndef PAGESIZE
-#define PAGESIZE 4096
-#endif
+char *buffer;
+
+static void
+handler(int sig, siginfo_t *si, void *unused)
+{
+    printf(&quot;Got SIGSEGV at address: 0x%lx\n&quot;, 
+            (long) si-&gt;si_addr);
+    exit(EXIT_FAILURE);
+}
 
 int
-main(void)
+main(int argc, char *argv[])
 {
     char *p;
-    char c;
+    int pagesize;
+    struct sigaction sa;
 
-    /* Allocate a buffer; it will have the default
-       protection of PROT_READ|PROT_WRITE. */
-    p = malloc(1024+PAGESIZE-1);
-    if (!p) {
-        perror(&quot;Couldn't malloc(1024)&quot;);
-        exit(errno);
+    sa.sa_flags = SA_SIGINFO;
+    sigemptyset(&amp;sa.sa_mask);
+    sa.sa_sigaction = handler;
+    if (sigaction(SIGSEGV, &amp;sa, NULL) == -1) {
+        perror(&quot;sigaction&quot;);
+        exit(EXIT_FAILURE);
     }
 
-    /* Align to a multiple of PAGESIZE, assumed to be a power of two */
-    p = (char *)(((int) p + PAGESIZE-1) &amp; ~(PAGESIZE-1));
-
-    c = p[666];         /* Read; ok */
-    p[666] = 42;        /* Write; ok */
-
-    /* Mark the buffer read-only. */
-    if (mprotect(p, 1024, PROT_READ)) {
-        perror(&quot;Couldn't mprotect&quot;);
-        exit(errno);
+    pagesize = sysconf(_SC_PAGE_SIZE);
+    if (pagesize == -1) {
+        perror(&quot;sysconf&quot;);
+        exit(EXIT_FAILURE);
     }
 
-    c = p[666];         /* Read; ok */
-    p[666] = 42;        /* Write; program dies on SIGSEGV */
+    /* Allocate a buffer aligned on a page boundary; 
+       initial protection is PROT_READ | PROT_WRITE */
 
+    buffer = memalign(pagesize, 4 * pagesize);
+    if (buffer == NULL) {
+        perror(&quot;memalign&quot;);
+        exit(EXIT_FAILURE);
+    }
+
+    printf(&quot;Start of region:        0x%lx\n&quot;, (long) buffer);
+
+    if (mprotect(buffer + pagesize * 2, pagesize, 
+                PROT_NONE) == -1) {
+        perror(&quot;mprotect&quot;);
+        exit(EXIT_FAILURE);
+    }
+
+    for (p = buffer ; ; )
+        *(p++) = 'a';
+
+    printf(&quot;Loop completed\n&quot;);     /* Should never happen */
     exit(EXIT_SUCCESS);
 }
 </PRE>
@@ -195,7 +247,9 @@ main(void)
 <A NAME="lbAJ">&nbsp;</A>
 <H2>SEE ALSO</H2>
 
-<B><A HREF="../man2/mmap.2.html">mmap</A></B>(2)
+<B><A HREF="../man2/mmap.2.html">mmap</A></B>(2),
+
+<B><A HREF="../man3/sysconf.3.html">sysconf</A></B>(3)
 
 <P>
 
@@ -216,6 +270,6 @@ main(void)
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 02:38:22 GMT, April 20, 2020
+Time: 02:38:56 GMT, April 20, 2020
 </BODY>
 </HTML>
