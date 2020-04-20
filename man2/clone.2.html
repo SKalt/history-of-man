@@ -5,7 +5,7 @@ Copyright (c) 1992 Drew Eckhardt &lt;drew@cs.colorado.edu&gt;, March 28, 1992
 <HTML><HEAD><TITLE>Man page of CLONE</TITLE>
 </HEAD><BODY>
 <H1>CLONE</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2008-04-13<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2008-09-23<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -185,7 +185,7 @@ calling process itself, will be signaled.
 If
 <B>CLONE_FS</B>
 
-is set, the caller and the child processes share the same file system
+is set, the caller and the child process share the same file system
 information.
 This includes the root of the file system, the current
 working directory, and the umask.
@@ -222,7 +222,7 @@ performed later by one of the processes do not affect the other process.
 If
 <B>CLONE_FILES</B>
 
-is set, the calling process and the child processes share the same file
+is set, the calling process and the child process share the same file
 descriptor table.
 Any file descriptor created by the calling process or by the child
 process is also valid in the other process.
@@ -311,7 +311,7 @@ call.
 If
 <B>CLONE_SIGHAND</B>
 
-is set, the calling process and the child processes share the same table of
+is set, the calling process and the child process share the same table of
 signal handlers.
 If the calling process or child process calls
 <B><A HREF="../man2/sigaction.2.html">sigaction</A></B>(2)
@@ -418,7 +418,7 @@ in any particular order.
 If
 <B>CLONE_VM</B>
 
-is set, the calling process and the child processes run in the same memory
+is set, the calling process and the child process run in the same memory
 space.
 In particular, memory writes performed by the calling process
 or by the child process are also visible in the other process.
@@ -896,14 +896,41 @@ contain a wrapper function for
 <B><A HREF="../man2/getpid.2.html">getpid</A></B>(2)
 
 that performs caching of PIDs.
-In programs linked against such libraries, calls to
-<B><A HREF="../man2/getpid.2.html">getpid</A></B>(2)
+This caching relies on support in the glibc wrapper for
+<B>clone</B>(),
 
-may return the same value, even when the threads were not created using
-<B>CLONE_THREAD</B>
+but as currently implemented,
+the cache may not be up to date in some circumstances.
+In particular,
+if a signal is delivered to the child immediately after the
+<B>clone</B>()
 
-(and thus are not in the same thread group).
-To get the truth, it may be necessary to use code such as the following
+call, then a call to
+<B>getpid</B>()
+
+in a handler for the signal may return the PID
+of the calling process (&quot;the parent&quot;),
+if the clone wrappper has not yet had a chance to update the PID
+cache in the child.
+(This discussion ignores the case where the child was created using
+<B>CLONE_THREAD,</B>
+
+when
+<B>getpid</B>()
+
+<I>should</I>
+
+return the same value in the child and in the process that called
+<B>clone</B>(),
+
+since the caller and the child are in the same thread group.
+The stale-cache problem also does not occur if the
+<I>flags</I>
+
+argument includes
+<B>CLONE_VM</B>.)
+
+To get the truth, it may be necessary to use code such as the following:
 <PRE>
 
     #include &lt;<A HREF="file:///usr/include/syscall.h">syscall.h</A>&gt;
@@ -912,6 +939,9 @@ To get the truth, it may be necessary to use code such as the following
 
     mypid = syscall(SYS_getpid);
 </PRE>
+
+
+
 
 <A NAME="lbAL">&nbsp;</A>
 <H2>SEE ALSO</H2>
@@ -961,6 +991,6 @@ To get the truth, it may be necessary to use code such as the following
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 02:57:51 GMT, April 20, 2020
+Time: 02:58:20 GMT, April 20, 2020
 </BODY>
 </HTML>
