@@ -34,7 +34,7 @@ SUCH DAMAGE.
 <HTML><HEAD><TITLE>Man page of EXEC</TITLE>
 </HEAD><BODY>
 <H1>EXEC</H1>
-Section: Linux Programmer's Manual (3)<BR>Updated: 2019-03-06<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2019-08-02<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -94,18 +94,17 @@ The initial argument for these functions is the name of a file that is
 to be executed.
 <P>
 
+The functions can be grouped based on the letters following the &quot;exec&quot; prefix.
+
+<A NAME="lbAE">&nbsp;</A>
+<H3>l - execl(), execlp(), execle()</H3>
+
+<P>
+
 The
 <I>const char&nbsp;*arg</I>
 
-and subsequent ellipses in the
-<B>execl</B>(),
-
-<B>execlp</B>(),
-
-and
-<B>execle</B>()
-
-functions can be thought of as
+and subsequent ellipses can be thought of as
 <I>arg0</I>,
 
 <I>arg1</I>,
@@ -126,15 +125,18 @@ and, since these are variadic functions, this pointer must be cast
 
 <P>
 
+By contrast with the 'l' functions, the 'v' functions (below) specify the
+command-line arguments of the executed program as a vector.
+
+<A NAME="lbAF">&nbsp;</A>
+<H3>v - execv(), execvp(), execvpe()</H3>
+
+<P>
+
 The
-<B>execv</B>(),
+<I>char&nbsp;*const argv[]</I>
 
-<B>execvp</B>(),
-
-and
-<B>execvpe</B>()
-
-functions provide an array of pointers to null-terminated strings that
+argument is an array of pointers to null-terminated strings that
 represent the argument list available to the new program.
 The first argument, by convention, should point to the filename
 associated with the file being executed.
@@ -142,16 +144,12 @@ The array of pointers
 <I>must</I>
 
 be terminated by a null pointer.
+<A NAME="lbAG">&nbsp;</A>
+<H3>e - execle(), execvpe()</H3>
+
 <P>
 
-The
-<B>execle</B>()
-
-and
-<B>execvpe</B>()
-
-functions allow the caller to specify the environment of the
-executed program via the argument
+The environment of the caller is specified via the argument
 <I>envp</I>.
 
 The
@@ -161,25 +159,23 @@ argument is an array of pointers to null-terminated strings and
 <I>must</I>
 
 be terminated by a null pointer.
-The other functions take the environment for the new process
+<P>
+
+All other
+<B>exec</B>()
+
+functions (which do not include 'e' in the suffix)
+take the environment for the new process
 image from the external variable
 <I>environ</I>
 
 in the calling process.
-<A NAME="lbAE">&nbsp;</A>
-<H3>Special semantics for execlp(), execvp(), and execvpe()</H3>
+<A NAME="lbAH">&nbsp;</A>
+<H3>p - execlp(), execvp(), execvpe()</H3>
 
 <P>
 
-The
-<B>execlp</B>(),
-
-<B>execvp</B>(),
-
-and
-<B>execvpe</B>()
-
-functions duplicate the actions of the shell in
+These functions duplicate the actions of the shell in
 searching for an executable file
 if the specified filename does not contain a slash (/) character.
 The file is sought in the colon-separated list of directory pathnames
@@ -232,7 +228,15 @@ these functions will execute the shell
 
 with the path of the file as its first argument.
 (If this attempt fails, no further searching is done.)
-<A NAME="lbAF">&nbsp;</A>
+<P>
+
+All other
+<B>exec</B>()
+
+functions (which do not include 'p' in the suffix)
+take as their first argument a (relative or absolute) pathname
+that identifies the program to be executed.
+<A NAME="lbAI">&nbsp;</A>
 <H2>RETURN VALUE</H2>
 
 The
@@ -243,7 +247,7 @@ The return value is -1, and
 <I>errno</I>
 
 is set to indicate the error.
-<A NAME="lbAG">&nbsp;</A>
+<A NAME="lbAJ">&nbsp;</A>
 <H2>ERRORS</H2>
 
 All of these functions may fail and set
@@ -252,14 +256,14 @@ All of these functions may fail and set
 for any of the errors specified for
 <B><A HREF="../man2/execve.2.html">execve</A></B>(2).
 
-<A NAME="lbAH">&nbsp;</A>
+<A NAME="lbAK">&nbsp;</A>
 <H2>VERSIONS</H2>
 
 The
 <B>execvpe</B>()
 
 function first appeared in glibc 2.11.
-<A NAME="lbAI">&nbsp;</A>
+<A NAME="lbAL">&nbsp;</A>
 <H2>ATTRIBUTES</H2>
 
 For an explanation of the terms used in this section, see
@@ -285,7 +289,7 @@ For an explanation of the terms used in this section, see
 </TD><TD>Thread safety</TD><TD>MT-Safe env<BR></TD></TR>
 </TABLE>
 
-<A NAME="lbAJ">&nbsp;</A>
+<A NAME="lbAM">&nbsp;</A>
 <H2>CONFORMING TO</H2>
 
 POSIX.1-2001, POSIX.1-2008.
@@ -295,7 +299,7 @@ The
 <B>execvpe</B>()
 
 function is a GNU extension.
-<A NAME="lbAK">&nbsp;</A>
+<A NAME="lbAN">&nbsp;</A>
 <H2>NOTES</H2>
 
 The default search path (used when the environment
@@ -358,7 +362,7 @@ and
 upon which they returned.
 They now return if any error other than the ones
 described above occurs.
-<A NAME="lbAL">&nbsp;</A>
+<A NAME="lbAO">&nbsp;</A>
 <H2>BUGS</H2>
 
 Before glibc 2.24,
@@ -375,7 +379,7 @@ in violation of the requirements of POSIX.1.
 
 This was fixed in glibc 2.24.
 
-<A NAME="lbAM">&nbsp;</A>
+<A NAME="lbAP">&nbsp;</A>
 <H3>Architecture-specific details</H3>
 
 On sparc and sparc64,
@@ -391,7 +395,7 @@ employed by the
 <B>execv</B>()
 
 wrapper function on those architectures.
-<A NAME="lbAN">&nbsp;</A>
+<A NAME="lbAQ">&nbsp;</A>
 <H2>SEE ALSO</H2>
 
 <B><A HREF="../man1/sh.1.html">sh</A></B>(1),
@@ -419,24 +423,27 @@ wrapper function on those architectures.
 <DT><A HREF="#lbAC">SYNOPSIS</A><DD>
 <DT><A HREF="#lbAD">DESCRIPTION</A><DD>
 <DL>
-<DT><A HREF="#lbAE">Special semantics for execlp(), execvp(), and execvpe()</A><DD>
+<DT><A HREF="#lbAE">l - execl(), execlp(), execle()</A><DD>
+<DT><A HREF="#lbAF">v - execv(), execvp(), execvpe()</A><DD>
+<DT><A HREF="#lbAG">e - execle(), execvpe()</A><DD>
+<DT><A HREF="#lbAH">p - execlp(), execvp(), execvpe()</A><DD>
 </DL>
-<DT><A HREF="#lbAF">RETURN VALUE</A><DD>
-<DT><A HREF="#lbAG">ERRORS</A><DD>
-<DT><A HREF="#lbAH">VERSIONS</A><DD>
-<DT><A HREF="#lbAI">ATTRIBUTES</A><DD>
-<DT><A HREF="#lbAJ">CONFORMING TO</A><DD>
-<DT><A HREF="#lbAK">NOTES</A><DD>
-<DT><A HREF="#lbAL">BUGS</A><DD>
+<DT><A HREF="#lbAI">RETURN VALUE</A><DD>
+<DT><A HREF="#lbAJ">ERRORS</A><DD>
+<DT><A HREF="#lbAK">VERSIONS</A><DD>
+<DT><A HREF="#lbAL">ATTRIBUTES</A><DD>
+<DT><A HREF="#lbAM">CONFORMING TO</A><DD>
+<DT><A HREF="#lbAN">NOTES</A><DD>
+<DT><A HREF="#lbAO">BUGS</A><DD>
 <DL>
-<DT><A HREF="#lbAM">Architecture-specific details</A><DD>
+<DT><A HREF="#lbAP">Architecture-specific details</A><DD>
 </DL>
-<DT><A HREF="#lbAN">SEE ALSO</A><DD>
+<DT><A HREF="#lbAQ">SEE ALSO</A><DD>
 </DL>
 <HR>
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:50:18 GMT, April 20, 2020
+Time: 03:50:56 GMT, April 20, 2020
 </BODY>
 </HTML>

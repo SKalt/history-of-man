@@ -25,7 +25,7 @@ License along with this manual; if not, see
 <HTML><HEAD><TITLE>Man page of DLOPEN</TITLE>
 </HEAD><BODY>
 <H1>DLOPEN</H1>
-Section: Linux Programmer's Manual (3)<BR>Updated: 2017-09-15<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2019-08-02<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -215,7 +215,7 @@ references in subsequently loaded shared objects.
 Do not unload the shared object during
 <B>dlclose</B>().
 
-Consequently, the object's static variables are not reinitialized
+Consequently, the object's static and global variables are not reinitialized
 if the object is reloaded with
 <B>dlopen</B>()
 
@@ -267,19 +267,37 @@ with the flag
 
 <P>
 
-External references in the shared object are resolved using the
-shared objects in that object's dependency list and any other
-objects previously opened with the
+Symbol references in the shared object are resolved using (in order):
+symbols in the link map of objects loaded for the main program and its
+dependencies;
+symbols in shared objects (and their dependencies)
+that were previously opened with
+<B>dlopen</B>()
+
+using the
 <B>RTLD_GLOBAL</B>
 
-flag.
-If the executable was linked with the flag &quot;-rdynamic&quot;
-(or, synonymously, &quot;--export-dynamic&quot;),
-then the global symbols in the executable will also be used
-to resolve references in a dynamically loaded shared object.
+flag;
+and definitions in the shared object itself
+(and any dependencies that were loaded for that object).
 <P>
 
-If the same shared object is loaded again with
+Any global symbols in the executable that were placed into
+its dynamic symbol table by
+<B><A HREF="../man1/ld.1.html">ld</A></B>(1)
+
+can also be used to resolve references in a dynamically loaded shared object.
+Symbols may be placed in the dynamic symbol table
+either because the executable was linked with the flag &quot;-rdynamic&quot;
+(or, synonymously, &quot;--export-dynamic&quot;), which causes all of
+the executable's global symbols to be placed in the dynamic symbol table,
+or because
+<B><A HREF="../man1/ld.1.html">ld</A></B>(1)
+
+noted a dependency on a symbol in another object during static linking.
+<P>
+
+If the same shared object is opened again with
 <B>dlopen</B>(),
 
 the same object handle is returned.
@@ -292,8 +310,11 @@ has been called on it as many times as
 <B>dlopen</B>()
 
 has succeeded on it.
-Any initialization returns (see below) are called just once.
-However, a subsequent
+Constructors (see below) are called only when the object is actually loaded
+into memory (i.e., when the reference count increases to 1).
+<P>
+
+A subsequent
 <B>dlopen</B>()
 
 call that loads the same shared object with
@@ -301,6 +322,15 @@ call that loads the same shared object with
 
 may force symbol resolution for a shared object earlier loaded with
 <B>RTLD_LAZY</B>.
+
+Similarly, an object that was previously opened with
+<B>RTLD_LOCAL</B>
+
+can be promoted to
+<B>RTLD_GLOBAL</B>
+
+in a subsequent
+<B>dlopen</B>().
 
 <P>
 
@@ -397,8 +427,19 @@ decrements the reference count on the
 dynamically loaded shared object referred to by
 <I>handle</I>.
 
-If the reference count drops to zero,
-then the object is unloaded.
+<P>
+
+If the object's reference count drops to zero
+and no symbols in this object are required by other objects,
+then the object is unloaded
+after first calling any destructors defined for the object.
+(Symbols in this object might be required in another object
+because this object was opened with the
+<B>RTLD_GLOBAL</B>
+
+flag and one of its symbols satisfied a relocation in another object.)
+<P>
+
 All shared objects that were automatically loaded when
 <B>dlopen</B>()
 
@@ -431,7 +472,7 @@ On success,
 and
 <B>dlmopen</B>()
 
-return a non-NULL handle for the loaded library.
+return a non-NULL handle for the loaded object.
 On error
 (file could not be found, was not readable, had the wrong format,
 or caused errors during loading),
@@ -836,6 +877,6 @@ gcc info pages, ld info pages
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:50:17 GMT, April 20, 2020
+Time: 03:50:56 GMT, April 20, 2020
 </BODY>
 </HTML>
