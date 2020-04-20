@@ -5,7 +5,7 @@ Copyright (c) 1999 Andries Brouwer (aeb@cwi.nl)
 <HTML><HEAD><TITLE>Man page of PRINTF</TITLE>
 </HEAD><BODY>
 <H1>PRINTF</H1>
-Section: Linux Programmer's Manual (3)<BR>Updated: 2011-09-28<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2013-03-05<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -1394,6 +1394,10 @@ one might obtain &quot;Sonntag, 3. Juli, 10:02&quot;.
 
 To allocate a sufficiently large string and print into it
 (code correct for both glibc 2.0 and glibc 2.1):
+<P>
+
+If truncation occurs in glibc versions prior to 2.0.6, this is treated as an
+error instead of being handled gracefully.
 <PRE>
 
 #include &lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;
@@ -1404,7 +1408,7 @@ char *
 make_message(const char *fmt, ...)
 {
     int n;
-    int size = 100;     /* Guess we need no more than 100 bytes. */
+    int size = 100;     /* Guess we need no more than 100 bytes */
     char *p, *np;
     va_list ap;
 
@@ -1413,23 +1417,26 @@ make_message(const char *fmt, ...)
 
     while (1) {
 
-        /* Try to print in the allocated space. */
+        /* Try to print in the allocated space */
 
         va_start(ap, fmt);
         n = vsnprintf(p, size, fmt, ap);
         va_end(ap);
 
-        /* If that worked, return the string. */
+        /* Check error code */
 
-        if (n &gt; -1 &amp;&amp; n &lt; size)
+        if (n &lt; 0)
+            return NULL;
+
+        /* If that worked, return the string */
+
+        if (n &lt; size)
             return p;
 
-        /* Else try again with more space. */
+        /* Else try again with more space */
 
-        if (n &gt; -1)    /* glibc 2.1 */
-            size = n+1; /* precisely what is needed */
-        else           /* glibc 2.0 */
-            size *= 2;  /* twice the old size */
+        size = n + 1;       /* Precisely what is needed */
+
 
         if ((np = realloc (p, size)) == NULL) {
             free(p);
@@ -1487,6 +1494,6 @@ make_message(const char *fmt, ...)
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:18:29 GMT, April 20, 2020
+Time: 03:18:59 GMT, April 20, 2020
 </BODY>
 </HTML>

@@ -5,7 +5,7 @@ Copyright (C) 1996 Andries Brouwer &lt;aeb@cwi.nl&gt;
 <HTML><HEAD><TITLE>Man page of MMAP</TITLE>
 </HEAD><BODY>
 <H1>MMAP</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2012-04-16<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2013-02-25<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -23,6 +23,8 @@ mmap, munmap - map or unmap files or devices into memory
 <B>int munmap(void *</B><I>addr</I><B>, size_t </B><I>length</I><B>);</B>
 </PRE>
 
+<P>
+See NOTES for information on feature test macro requirements.
 <A NAME="lbAD">&nbsp;</A>
 <H2>DESCRIPTION</H2>
 
@@ -597,6 +599,23 @@ was set but the object specified by
 <I>fd</I>
 
 is open for writing.
+<DT><B>EOVERFLOW</B>
+
+<DD>
+On 32-bit architecture together with the large file extension
+(i.e., using 64-bit
+<I>off_t</I>):
+
+the number of pages used for
+<I>length</I>
+
+plus number of pages used for
+<I>offset</I>
+
+would overflow
+<I>unsigned long</I>
+
+(32 bits).
 </DL>
 <P>
 
@@ -700,6 +719,52 @@ flag is specified, and
 <I>addr</I>
 
 is 0 (NULL), then the mapped address will be 0 (NULL).
+<P>
+Certain
+<I>flags</I>
+
+constants are defined only if either
+<B>_BSD_SOURCE</B>
+
+or
+<B>_SVID_SOURCE</B>
+
+is defined.
+(Requiring
+<B>_GNU_SOURCE</B>
+
+also suffices,
+and requiring that macro specifically would have been more logical,
+since these flags are all Linux specific.)
+The relevant flags are:
+<B>MAP_32BIT</B>,
+
+<B>MAP_ANONYMOUS</B>
+
+(and the synonym
+<B>MAP_ANON</B>),
+
+<B>MAP_DENYWRITE</B>,
+
+<B>MAP_EXECUTABLE</B>,
+
+<B>MAP_FILE</B>,
+
+<B>MAP_GROWSDOWN</B>,
+
+<B>MAP_HUGETLB</B>,
+
+<B>MAP_LOCKED</B>,
+
+<B>MAP_NONBLOCK</B>,
+
+<B>MAP_NORESERVE</B>,
+
+<B>MAP_POPULATE</B>,
+
+and
+<B>MAP_STACK</B>.
+
 <A NAME="lbAL">&nbsp;</A>
 <H2>BUGS</H2>
 
@@ -739,6 +804,24 @@ fails with the error
 <B>EINVAL</B>
 
 for this case.
+<P>
+POSIX specifies that the system shall always
+zero fill any partial page at the end
+of the object and that system will never write any modification of the
+object beyond its end.
+On Linux, when you write data to such partial page after the end
+of the object, the data stays in the page cache even after the file
+is closed and unmapped
+and even though the data is never written to the file itself,
+subsequent mappings may see the modified content.
+In some cases, this could be fixed by calling
+<B><A HREF="../man2/msync.2.html">msync</A></B>(2)
+
+before the unmap takes place;
+however, this doesn't work on tmpfs
+(for example, when using POSIX shared memory interface documented in
+<B><A HREF="../man7/shm_overview.7.html">shm_overview</A></B>(7)).
+
 <A NAME="lbAM">&nbsp;</A>
 <H2>EXAMPLE</H2>
 
@@ -883,6 +966,6 @@ B.O. Gallmeister, POSIX.4, O'Reilly, pp. 128-129 and 389-391.
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:18:20 GMT, April 20, 2020
+Time: 03:18:50 GMT, April 20, 2020
 </BODY>
 </HTML>

@@ -5,7 +5,7 @@ Copyright (c) 1993 Michael Haardt &lt;michael@moria.de&gt;
 <HTML><HEAD><TITLE>Man page of PTRACE</TITLE>
 </HEAD><BODY>
 <H1>PTRACE</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2013-01-27<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2013-02-16<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -73,7 +73,10 @@ followed (typically) by an
 <B><A HREF="../man2/execve.2.html">execve</A></B>(2).
 
 Alternatively, one process may commence tracing another process using
-<B>PTRACE_ATTACH</B>.
+<B>PTRACE_ATTACH</B>
+
+or
+<B>PTRACE_SEIZE</B>.
 
 <P>
 
@@ -150,7 +153,11 @@ In the following requests,
 
 specifies the thread ID of the tracee to be acted on.
 For requests other than
-<B>PTRACE_ATTACH</B>
+<B>PTRACE_ATTACH</B>,
+
+<B>PTRACE_SEIZE</B>,
+
+<B>PTRACE_INTERRUPT</B>
 
 and
 <B>PTRACE_KILL</B>,
@@ -265,6 +272,35 @@ and
 <B>PTRACE_GETFPREGS</B>
 
 are not present on all architectures.
+<DT><B>PTRACE_GETREGSET</B> (since Linux 2.6.34)
+
+<DD>
+Read the tracee's registers.
+<I>addr</I>
+
+specifies, in an architecture-dependent way, the type of registers to be read.
+<B>NT_PRSTATUS</B>
+
+(with numerical value 1)
+usually results in reading of general-purpose registers.
+If the CPU has, for example,
+floating-point and/or vector registers, they can be retrieved by setting
+<I>addr</I>
+
+to the corresponding
+<B>NT_foo</B>
+
+constant.
+<I>data</I>
+
+points to a
+<B>struct iovec</B>,
+
+which describes the destination buffer's location and length.
+On return, the kernel modifies
+<B>iov.len</B>
+
+to indicate the actual number of bytes returned.
 <DT><B>PTRACE_GETSIGINFO</B> (since Linux 2.3.99-pre6)
 
 <DD>
@@ -285,7 +321,7 @@ is ignored.)
 <DT><B>PTRACE_SETREGS</B>, <B>PTRACE_SETFPREGS</B>
 
 <DD>
-Copy the tracee's general-purpose or floating-point registers,
+Modify the tracee's general-purpose or floating-point registers,
 respectively, from the address
 <I>data</I>
 
@@ -317,6 +353,19 @@ and
 <B>PTRACE_SETFPREGS</B>
 
 are not present on all architectures.
+<DT><B>PTRACE_SETREGSET</B> (since Linux 2.6.34)
+
+<DD>
+Modify the tracee's registers.
+The meaning of
+<I>addr</I>
+
+and
+<I>data</I>
+
+is analogous to
+<B>PTRACE_GETREGSET</B>.
+
 <DT><B>PTRACE_SETSIGINFO</B> (since Linux 2.3.99-pre6)
 
 <DD>
@@ -351,9 +400,7 @@ is ignored.)
 
 is interpreted as a bit mask of options,
 which are specified by the following flags:
-<P>
 <DL COMPACT><DT><DD>
-<P>
 <DL COMPACT>
 <DT><B>PTRACE_O_EXITKILL</B> (since Linux 3.8)
 
@@ -365,7 +412,6 @@ If a tracer sets this flag, a
 signal will be sent to every tracee if the tracer exits.
 This option is useful for ptrace jailers that
 want to ensure that tracees can never escape the tracer's control.
-<P>
 <DT><B>PTRACE_O_TRACECLONE</B> (since Linux 2.5.46)
 
 <DD>
@@ -422,7 +468,6 @@ will be delivered if
 <B>PTRACE_O_TRACEFORK</B>
 
 is set.
-<P>
 <DT><B>PTRACE_O_TRACEEXEC</B> (since Linux 2.5.46)
 
 <DD>
@@ -447,7 +492,6 @@ the thread ID is reset to thread group leader's ID before this stop.
 Since Linux 3.0, the former thread ID can be retrieved with
 <B>PTRACE_GETEVENTMSG</B>.
 
-<P>
 <DT><B>PTRACE_O_TRACEEXIT</B> (since Linux 2.5.60)
 
 <DD>
@@ -476,7 +520,6 @@ whereas the normal exit notification is done after the process
 is finished exiting.
 Even though context is available,
 the tracer cannot prevent the exit from happening at this point.
-<P>
 <DT><B>PTRACE_O_TRACEFORK</B> (since Linux 2.5.46)
 
 <DD>
@@ -503,7 +546,6 @@ value such that
 The PID of the new process can be retrieved with
 <B>PTRACE_GETEVENTMSG</B>.
 
-<P>
 <DT><B>PTRACE_O_TRACESYSGOOD</B> (since Linux 2.4.6)
 
 <DD>
@@ -564,11 +606,9 @@ value such that
 The PID of the new process can (since Linux 2.6.18) be retrieved with
 <B>PTRACE_GETEVENTMSG</B>.
 
-<P>
 </DL>
 </DL>
 
-<P>
 <DT><B>PTRACE_GETEVENTMSG</B> (since Linux 2.5.46)
 
 <DD>
@@ -672,6 +712,21 @@ argument is ignored.
 These requests are currently
 
 supported only on x86.
+<DT><B>PTRACE_LISTEN</B> (since Linux 3.4)
+
+<DD>
+Restart the stopped tracee, but prevent it from executing.
+The resulting state of the tracee is similar to a process which
+has been stopped by a
+<B>SIGSTOP</B>
+
+(or other stopping signal).
+See the &quot;group-stop&quot; subsection for additional information.
+<B>PTRACE_LISTEN</B>
+
+only works on tracees attached by
+<B>PTRACE_SEIZE</B>.
+
 <DT><B>PTRACE_KILL</B>
 
 <DD>
@@ -710,6 +765,26 @@ directly has no such limitation.
 
 
 
+<DT><B>PTRACE_INTERRUPT</B> (since Linux 3.4)
+
+<DD>
+Stop a tracee.
+If the tracee is running, it will stop with
+<B>PTRACE_EVENT_STOP</B>.
+
+If the tracee is already stopped by a signal, or receives a signal
+in parallel with
+<B>PTRACE_INTERRUPT</B>,
+
+it may report a group-stop
+or a signal-delivery-stop instead of
+<B>PTRACE_EVENT_STOP</B>.
+
+<B>PTRACE_INTERRUPT</B>
+
+only works on tracees attached by
+<B>PTRACE_SEIZE</B>.
+
 <DT><B>PTRACE_ATTACH</B>
 
 <DD>
@@ -744,6 +819,35 @@ and
 <I>data</I>
 
 are ignored.)
+<DT><B>PTRACE_SEIZE</B> (since Linux 3.4)
+
+<DD>
+Attach to the process specified in
+<I>pid</I>,
+
+making it a tracee of the calling process.
+Unlike
+<B>PTRACE_ATTACH</B>,
+
+<B>PTRACE_SEIZE</B>
+
+does not stop the process.
+Only a
+<B>PTRACE_SEIZE</B>d
+
+process can accept
+<B>PTRACE_INTERRUPT</B>
+
+and
+<B>PTRACE_LISTEN</B>
+
+commands.
+<I>addr</I>
+
+must be zero.
+<I>data</I>
+
+contains a bit mask of ptrace options to activate immediately.
 <DT><B>PTRACE_DETACH</B>
 
 <DD>
@@ -1133,7 +1237,7 @@ is a cause of confusion among ptrace users.
 One typical scenario is that the tracer observes group-stop,
 mistakes it for signal-delivery-stop, restarts the tracee with
 <P>
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;ptrace(PTRACE_rest,&nbsp;pid,&nbsp;0,&nbsp;stopsig)
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;ptrace(PTRACE_restart,&nbsp;pid,&nbsp;0,&nbsp;stopsig)
 <P>
 with the intention of injecting
 <I>stopsig</I>,
@@ -1275,7 +1379,7 @@ then it is definitely a group-stop.
 killed the tracee.)
 <P>
 
-As of kernel 2.6.38,
+As of Linux 2.6.38,
 after the tracer sees the tracee ptrace-stop and until it
 restarts or kills it, the tracee will not run,
 and will not send notifications (except
@@ -1303,6 +1407,22 @@ this would cause the
 <B>SIGCONT</B>
 
 signals to have no effect on the tracee.
+<P>
+
+Since Linux 3.4, there is a method to overcome this problem: instead of
+<B>PTRACE_CONT</B>,
+
+a
+<B>PTRACE_LISTEN</B>
+
+command can be used to restart a tracee in a way where it does not execute,
+but waits for a new event which it can report via
+<B><A HREF="../man2/waitpid.2.html">waitpid</A></B>(2)
+
+(such as when
+it is restarted by a
+<B>SIGCONT</B>).
+
 <A NAME="lbAJ">&nbsp;</A>
 <H3>PTRACE_EVENT stops</H3>
 
@@ -1431,6 +1551,13 @@ or
 <B>PTRACE_DETACH</B>ed
 
 to finish exiting.
+<DT><B>PTRACE_EVENT_STOP</B>
+
+<DD>
+Stop induced by
+<B>PTRACE_INTERRUPT</B>
+
+command.
 </DL>
 <P>
 
@@ -1649,7 +1776,11 @@ or
 Most ptrace commands (all except
 <B>PTRACE_ATTACH</B>,
 
+<B>PTRACE_SEIZE</B>,
+
 <B>PTRACE_TRACEME</B>,
+
+<B>PTRACE_INTERRUPT</B>,
 
 and
 <B>PTRACE_KILL</B>)
@@ -1670,6 +1801,8 @@ These commands leave the tracee in ptrace-stopped state:
     ptrace(PTRACE_POKETEXT/POKEDATA/POKEUSER, pid, addr, long_val);
     ptrace(PTRACE_GETREGS/GETFPREGS, pid, 0, &amp;struct);
     ptrace(PTRACE_SETREGS/SETFPREGS, pid, 0, &amp;struct);
+    ptrace(PTRACE_GETREGSET, pid, NT_foo, &amp;iov);
+    ptrace(PTRACE_SETREGSET, pid, NT_foo, &amp;iov);
     ptrace(PTRACE_GETSIGINFO, pid, 0, &amp;siginfo);
     ptrace(PTRACE_SETSIGINFO, pid, 0, &amp;siginfo);
     ptrace(PTRACE_GETEVENTMSG, pid, 0, &amp;long_var);
@@ -1723,6 +1856,8 @@ where
 is
 <B>PTRACE_CONT</B>,
 
+<B>PTRACE_LISTEN</B>,
+
 <B>PTRACE_DETACH</B>,
 
 <B>PTRACE_SYSCALL</B>,
@@ -1753,7 +1888,13 @@ A thread can be attached to the tracer using the call
 <P>
 <BR>&nbsp;&nbsp;&nbsp;&nbsp;ptrace(PTRACE_ATTACH,&nbsp;pid,&nbsp;0,&nbsp;0);
 <P>
-This also sends
+or
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;ptrace(PTRACE_SEIZE,&nbsp;pid,&nbsp;0,&nbsp;PTRACE_O_flags);
+<P>
+<B>PTRACE_ATTACH</B>
+
+sends
 <B>SIGSTOP</B>
 
 to this thread.
@@ -1792,6 +1933,22 @@ and the tracer usually suppresses it, this may cause a stray
 
 return from the currently executing system call in the tracee,
 as described in the &quot;Signal injection and suppression&quot; section.
+<P>
+
+Since Linux 3.4,
+<B>PTRACE_SEIZE</B>
+
+can be used instead of
+<B>PTRACE_ATTACH</B>.
+
+<B>PTRACE_SEIZE</B>
+
+does not stop the attached process. If you need to stop
+it after attach (or at any other time) without sending it any signals,
+use
+<B>PTRACE_INTERRUPT</B>
+
+command.
 <P>
 
 The request
@@ -2492,6 +2649,6 @@ attach.)
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:18:21 GMT, April 20, 2020
+Time: 03:18:51 GMT, April 20, 2020
 </BODY>
 </HTML>
