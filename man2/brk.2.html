@@ -56,11 +56,20 @@ location of the program break.
 On success,
 <B>brk</B>()
 
-returns zero, and
+returns zero.
+On error, -1 is returned, and
+<I>errno</I>
+
+is set to
+<B>ENOMEM</B>.
+
+(But see LINUX NOTES below.)
+<P>
+On success,
 <B>sbrk</B>()
 
-returns a pointer to the start of the new area.  On error, -1 is returned,
-and
+returns a pointer to the start of the new area.  
+On error, -1 is returned, and
 <I>errno</I>
 
 is set to
@@ -92,6 +101,38 @@ Common are <I>int</I>, <I>ssize_t</I>, <I>ptrdiff_t</I>, <I>intptr_t</I>.
 
 
 <A NAME="lbAH">&nbsp;</A>
+<H2>LINUX NOTES</H2>
+
+The return value described above for
+<B>brk</B>()
+
+is the behaviour provided by the glibc wrapper function for the Linux
+<B>brk</B>()
+
+system call.  
+(On most other implementations, the return value from 
+<B>brk</B>()
+
+is the same.)
+However, 
+the actual Linux system call returns the new program break on success.
+On failure, the system call returns the current break 
+(thus for example, the call
+<I>brk(0)</I>
+
+can be used to obtain the current break).
+The glibc wrapper function does some work to provide the 0 
+and -1 return values described above.
+<P>
+On Linux, 
+<B>sbrk</B>()
+
+is implemented as a library function that uses the
+<B>brk</B>()
+
+system call, and does some internal bookkeeping so that it can 
+return the old break value.
+<A NAME="lbAI">&nbsp;</A>
 <H2>SEE ALSO</H2>
 
 <B><A HREF="../man2/execve.2.html">execve</A></B>(2),
@@ -111,12 +152,13 @@ Common are <I>int</I>, <I>ssize_t</I>, <I>ptrdiff_t</I>, <I>intptr_t</I>.
 <DT><A HREF="#lbAE">RETURN VALUE</A><DD>
 <DT><A HREF="#lbAF">CONFORMING TO</A><DD>
 <DT><A HREF="#lbAG">NOTES</A><DD>
-<DT><A HREF="#lbAH">SEE ALSO</A><DD>
+<DT><A HREF="#lbAH">LINUX NOTES</A><DD>
+<DT><A HREF="#lbAI">SEE ALSO</A><DD>
 </DL>
 <HR>
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 02:31:51 GMT, April 20, 2020
+Time: 02:32:22 GMT, April 20, 2020
 </BODY>
 </HTML>
