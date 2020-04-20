@@ -25,7 +25,7 @@ License along with this manual; if not, see
 <HTML><HEAD><TITLE>Man page of PTRACE</TITLE>
 </HEAD><BODY>
 <H1>PTRACE</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2015-12-05<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2016-07-17<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -1041,17 +1041,13 @@ and
 
 are ignored.)
 <P>
-Processes that are not dumpable (see the description of
-<B>PR_SET_DUMPABLE</B>
+Permission to perform a
+<B>PTRACE_ATTACH</B>
 
-in
-<B><A HREF="../man2/prctl.2.html">prctl</A></B>(2))
+is governed by a ptrace access mode
+<B>PTRACE_MODE_ATTACH_REALCREDS</B>
 
-can  not  be  attached  via
-<B><A HREF="../man2/ptrace.2.html">ptrace</A></B>(2)
-
-<B>PTRACE_ATTACH</B>.
-
+check; see below.
 <DT><B>PTRACE_SEIZE</B> (since Linux 3.4)
 
 <DD>
@@ -1126,6 +1122,14 @@ must be zero.
 <I>data</I>
 
 contains a bit mask of ptrace options to activate immediately.
+<P>
+Permission to perform a
+<B>PTRACE_SEIZE</B>
+
+is governed by a ptrace access mode
+<B>PTRACE_MODE_ATTACH_REALCREDS</B>
+
+check; see below.
 <DT><B>PTRACE_DETACH</B>
 
 <DD>
@@ -2793,13 +2797,318 @@ In any case, use of
 
 is highly specific to the operating system and architecture.
 
+
+
 <A NAME="lbAU">&nbsp;</A>
+<H3>Ptrace access mode checking</H3>
+
+Various parts of the kernel-user-space API (not just
+<B><A HREF="../man2/ptrace.2.html">ptrace</A></B>(2)
+
+operations), require so-called &quot;ptrace access mode&quot; checks,
+whose outcome determines whether an operation is permitted
+(or, in a few cases, causes a &quot;read&quot; operation to return sanitized data).
+These checks are performed in cases where one process can
+inspect sensitive information about,
+or in some cases modify the state of, another process.
+The checks are based on factors such as the credentials and capabilities
+of the two processes,
+whether or not the &quot;target&quot; process is dumpable,
+and the results of checks performed by any enabled Linux Security Module
+(LSM)---for example, SELinux, Yama, or Smack---and by the commoncap LSM
+(which is always invoked).
+<P>
+Prior to Linux 2.6.27, all access checks were of a single type.
+Since Linux 2.6.27,
+
+two access mode levels are distinguished:
+<DL COMPACT>
+<DT><B>PTRACE_MODE_READ</B>
+
+<DD>
+For &quot;read&quot; operations or other operations that are less dangerous,
+such as:
+<B><A HREF="../man2/get_robust_list.2.html">get_robust_list</A></B>(2);
+
+<B><A HREF="../man2/kcmp.2.html">kcmp</A></B>(2);
+
+reading
+<I>/proc/[pid]/auxv</I>,
+
+<I>/proc/[pid]/environ</I>,
+
+or
+<I>/proc/[pid]/stat</I>;
+
+or
+<B><A HREF="../man2/readlink.2.html">readlink</A></B>(2)
+
+of a
+<I>/proc/[pid]/ns/*</I>
+
+file.
+<DT><B>PTRACE_MODE_ATTACH</B>
+
+<DD>
+For &quot;write&quot; operations, or other operations that are more dangerous,
+such as: ptrace attaching
+(<B>PTRACE_ATTACH</B>)
+
+to another process
+or calling
+<B><A HREF="../man2/process_vm_writev.2.html">process_vm_writev</A></B>(2).
+
+(<B>PTRACE_MODE_ATTACH</B>
+
+was effectively the default before Linux 2.6.27.)
+
+
+
+
+
+
+
+
+
+
+
+
+
+</DL>
+<P>
+
+Since Linux 4.5,
+
+the above access mode checks are combined (ORed) with
+one of the following modifiers:
+<DL COMPACT>
+<DT><B>PTRACE_MODE_FSCREDS</B>
+
+<DD>
+Use the caller's filesystem UID and GID (see
+<B><A HREF="../man7/credentials.7.html">credentials</A></B>(7))
+
+or effective capabilities for LSM checks.
+<DT><B>PTRACE_MODE_REALCREDS</B>
+
+<DD>
+Use the caller's real UID and GID or permitted capabilities for LSM checks.
+This was effectively the default before Linux 4.5.
+</DL>
+<P>
+
+Because combining one of the credential modifiers with one of
+the aforementioned access modes is typical,
+some macros are defined in the kernel sources for the combinations:
+<DL COMPACT>
+<DT><B>PTRACE_MODE_READ_FSCREDS</B>
+
+<DD>
+Defined as
+<B>PTRACE_MODE_READ | PTRACE_MODE_FSCREDS</B>.
+
+<DT><B>PTRACE_MODE_READ_REALCREDS</B>
+
+<DD>
+Defined as
+<B>PTRACE_MODE_READ | PTRACE_MODE_REALCREDS</B>.
+
+<DT><B>PTRACE_MODE_ATTACH_FSCREDS</B>
+
+<DD>
+Defined as
+<B>PTRACE_MODE_ATTACH | PTRACE_MODE_FSCREDS</B>.
+
+<DT><B>PTRACE_MODE_ATTACH_REALCREDS</B>
+
+<DD>
+Defined as
+<B>PTRACE_MODE_ATTACH | PTRACE_MODE_REALCREDS</B>.
+
+
+</DL>
+<P>
+
+One further modifier can be ORed with the access mode:
+<DL COMPACT>
+<DT><B>PTRACE_MODE_NOAUDIT</B> (since Linux 3.3)
+
+<DD>
+
+
+Don't audit this access mode check.
+This modifier is employed for ptrace access mode checks
+(such as checks when reading
+<I>/proc/[pid]/stat</I>)
+
+that merely cause the output to be filtered or sanitized,
+rather than causing an error to be returned to the caller.
+In these cases, accessing the file is not a security violation and
+there is no reason to generate a security audit record.
+This modifier suppresses the generation of
+such an audit record for the particular access check.
+</DL>
+<P>
+
+Note that all of the
+<B>PTRACE_MODE_*</B>
+
+constants described in this subsection are kernel-internal,
+and not visible to user space.
+The constant names are mentioned here in order to label the various kinds of
+ptrace access mode checks that are performed for various system calls
+and accesses to various pseudofiles (e.g., under
+<I>/proc</I>).
+
+These names are used in other manual pages to provide a simple
+shorthand for labeling the different kernel checks.
+<P>
+The algorithm employed for ptrace access mode checking determines whether
+the calling process is allowed to perform the corresponding action
+on the target process.
+(In the case of opening
+<I>/proc/[pid]</I>
+
+files, the &quot;calling process&quot; is the one opening the file,
+and the process with the corresponding PID is the &quot;target process&quot;.)
+The algorithm is as follows:
+<DL COMPACT>
+<DT>1.<DD>
+If the calling thread and the target thread are in the same
+thread group, access is always allowed.
+<DT>2.<DD>
+If the access mode specifies
+<B>PTRACE_MODE_FSCREDS</B>,
+
+then, for the check in the next step,
+employ the caller's filesystem UID and GID.
+(As noted in
+<B><A HREF="../man7/credentials.7.html">credentials</A></B>(7),
+
+the filesystem UID and GID almost always have the same values
+as the corresponding effective IDs.)
+<P>
+Otherwise, the access mode specifies
+<B>PTRACE_MODE_REALCREDS</B>,
+
+so use the caller's real UID and GID for the checks in the next step.
+(Most APIs that check the caller's UID and GID use the effective IDs.
+For historical reasons, the
+<B>PTRACE_MODE_REALCREDS</B>
+
+check uses the real IDs instead.)
+<DT>3.<DD>
+Deny access if
+<I>neither</I>
+
+of the following is true:
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT>&bull;<DD>
+The real, effective, and saved-set user IDs of the target
+match the caller's user ID,
+<I>and</I>
+
+the real, effective, and saved-set group IDs of the target
+match the caller's group ID.
+<DT>&bull;<DD>
+The caller has the
+<B>CAP_SYS_PTRACE</B>
+
+capability in the user namespace of the target.
+</DL>
+</DL>
+
+<DT>4.<DD>
+Deny access if the target process &quot;dumpable&quot; attribute has a value other than 1
+(<B>SUID_DUMP_USER</B>;
+
+see the discussion of
+<B>PR_SET_DUMPABLE</B>
+
+in
+<B><A HREF="../man2/prctl.2.html">prctl</A></B>(2)),
+
+and the caller does not have the
+<B>CAP_SYS_PTRACE</B>
+
+capability in the user namespace of the target process.
+<DT>5.<DD>
+The kernel LSM
+<I>security_ptrace_access_check</I>()
+
+interface is invoked to see if ptrace access is permitted.
+The results depend on the LSM(s).
+The implementation of this interface in the commoncap LSM performs
+the following steps:
+
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT>a)<DD>
+If the access mode includes
+<B>PTRACE_MODE_FSCREDS</B>,
+
+then use the caller's
+<I>effective</I>
+
+capability set
+in the following check;
+otherwise (the access mode specifies
+<B>PTRACE_MODE_REALCREDS</B>,
+
+so) use the caller's
+<I>permitted</I>
+
+capability set.
+<DT>b)<DD>
+Deny access if
+<I>neither</I>
+
+of the following is true:
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT>&bull;<DD>
+The caller and the target process are in the same user namespace,
+and the caller's capabilities are a proper superset of the target process's
+<I>permitted</I>
+
+capabilities.
+<DT>&bull;<DD>
+The caller has the
+<B>CAP_SYS_PTRACE</B>
+
+capability in the target process's user namespace.
+</DL>
+</DL>
+
+<DT><DD>
+Note that the commoncap LSM does not distinguish between
+<B>PTRACE_MODE_READ</B>
+
+and
+<B>PTRACE_MODE_ATTACH</B>.
+
+</DL>
+</DL>
+
+<DT>6.<DD>
+If access has not been denied by any of the preceding steps,
+then access is allowed.
+
+
+
+</DL>
+<A NAME="lbAV">&nbsp;</A>
 <H3>/proc/sys/kernel/yama/ptrace_scope</H3>
 
-On systems with the Yama Linux Security Module installed, the
+On systems with the Yama Linux Security Module (LSM) installed
+(i.e., the kernel was configured with
+<B>CONFIG_SECURITY_YAMA</B>),
+
+the
 <I>/proc/sys/kernel/yama/ptrace_scope</I>
 
-(available since Linux 3.4)
+file (available since Linux 3.4)
 
 can be used to restrict the ability to trace a process with
 <B><A HREF="../man2/ptrace.2.html">ptrace</A></B>(2)
@@ -2813,52 +3122,74 @@ and
 The goal of such restrictions is to prevent attack escalation whereby
 a compromised process can ptrace-attach to other sensitive processes
 (e.g., a GPG agent or an SSH session) owned by the user in order
-to gain additional credentials and thus expand the scope of the attack.
+to gain additional credentials that may exist in memory
+and thus expand the scope of the attack.
 <P>
-A process with the
+More precisely, the Yama LSM limits two types of operations:
+<DL COMPACT>
+<DT>*<DD>
+Any operation that performs a ptrace access mode
+<B>PTRACE_MODE_ATTACH</B>
+
+check---for example,
+<B>ptrace</B>()
+
+<B>PTRACE_ATTACH</B>.
+
+(See the &quot;Ptrace access mode checking&quot; discussion above.)
+<P>
+<DT>*<DD>
+<B>ptrace</B>()
+
+<B>PTRACE_TRACEME</B>.
+
+</DL>
+<P>
+
+A process that has the
 <B>CAP_SYS_PTRACE</B>
 
-capability can update this file with one of the following values:
+capability can update the
+<I>/proc/sys/kernel/yama/ptrace_scope</I>
+
+file with one of the following values:
 <DL COMPACT>
 <DT>0 (&quot;classic ptrace permissions&quot;)<DD>
-A process can
-<B>PTRACE_ATTACH</B>
+No additional restrictions on operations that perform
+<B>PTRACE_MODE_ATTACH</B>
 
-to any other process running under the same UID,
-as long as the tracee is dumpable (i.e., it did
-not transition UIDs or start privileged, and it has not employed
-the
-<B><A HREF="../man2/prctl.2.html">prctl</A></B>(2)
-
-<B>PR_SET_DUMPABLE</B>
-
-operation to make itself nondumpable).
+checks (beyond those imposed by the commoncap and other LSMs).
 <P>
 The use of
 <B>PTRACE_TRACEME</B>
 
 is unchanged.
-<DT>1 (&quot;restricted ptrace&quot;)<DD>
-A process must have a predefined relationship
-with the tracee to which it wants to
-<B>PTRACE_ATTACH</B>.
+<DT>1 (&quot;restricted ptrace&quot;) [default value]<DD>
+When performing an operation that requires a
+<B>PTRACE_MODE_ATTACH</B>
 
+check, the calling process must either have the
+<B>CAP_SYS_PTRACE</B>
+
+capability in the user namespace of the target process or
+it must have a predefined relationship with the target process.
 By default,
-the predefined relationship is that the tracee is a child of the
-caller and the aforementioned classic criteria are also met.
-To specify a different process that may trace it, a tracee can employ the
+the predefined relationship is that the target process
+must be a descendant of the caller.
+<P>
+A target process can employ the
 <B><A HREF="../man2/prctl.2.html">prctl</A></B>(2)
 
 <B>PR_SET_PTRACER</B>
 
-operation to declare a different PID that is allowed to
-<B>PTRACE_ATTACH</B>
+operation to declare an additional PID that is allowed to perform
+<B>PTRACE_MODE_ATTACH</B>
 
-to the tracee.
-(See the kernel source file
+operations on the target.
+See the kernel source file
 <I>Documentation/security/Yama.txt</I>
 
-for further details.)
+for further details.
 <P>
 The use of
 <B>PTRACE_TRACEME</B>
@@ -2868,24 +3199,40 @@ is unchanged.
 Only processes with the
 <B>CAP_SYS_PTRACE</B>
 
-capability may use
-<B>PTRACE_ATTACH</B>
+capability in the user namespace of the target process may perform
+<B>PTRACE_MODE_ATTACH</B>
 
-or trace children that employ
+operations or trace children that employ
 <B>PTRACE_TRACEME</B>.
 
 <DT>3 (&quot;no attach&quot;)<DD>
-No process may use
-<B>PTRACE_ATTACH</B>
+No process may perform
+<B>PTRACE_MODE_ATTACH</B>
 
-or trace children that employ
+operations or trace children that employ
 <B>PTRACE_TRACEME</B>.
 
 <P>
 Once this value has been written to the file, it cannot be changed.
-
 </DL>
-<A NAME="lbAV">&nbsp;</A>
+<P>
+
+With respect to values 1 and 2,
+note that creating a new user namespace effectively removes the
+protection offered by Yama.
+This is because a process in the parent user namespace whose effective
+UID matches the UID of the creator of a child namespace
+has all capabilities (including
+<B>CAP_SYS_PTRACE</B>)
+
+when performing operations within the child user namespace
+(and further-removed descendants of that namespace).
+Consequently, when a process tries to use user namespaces to sandbox itself,
+it inadvertently weakens the protections offered by the Yama LSM.
+
+
+
+<A NAME="lbAW">&nbsp;</A>
 <H3>C library/kernel differences</H3>
 
 At the system call level, the
@@ -2903,7 +3250,7 @@ at the address specified by the
 parameter, and the return value is the error flag.
 The glibc wrapper function provides the API given in DESCRIPTION above,
 with the result being returned via the function return value.
-<A NAME="lbAW">&nbsp;</A>
+<A NAME="lbAX">&nbsp;</A>
 <H2>BUGS</H2>
 
 On hosts with 2.6 kernel headers,
@@ -3054,7 +3401,7 @@ errors may behave in an unintended way upon an
 <B><A HREF="../man1/strace.1.html">strace</A></B>(1)
 
 attach.)
-<A NAME="lbAX">&nbsp;</A>
+<A NAME="lbAY">&nbsp;</A>
 <H2>SEE ALSO</H2>
 
 <B><A HREF="../man1/gdb.1.html">gdb</A></B>(1),
@@ -3114,16 +3461,17 @@ attach.)
 <DT><A HREF="#lbAS">CONFORMING TO</A><DD>
 <DT><A HREF="#lbAT">NOTES</A><DD>
 <DL>
-<DT><A HREF="#lbAU">/proc/sys/kernel/yama/ptrace_scope</A><DD>
-<DT><A HREF="#lbAV">C library/kernel differences</A><DD>
+<DT><A HREF="#lbAU">Ptrace access mode checking</A><DD>
+<DT><A HREF="#lbAV">/proc/sys/kernel/yama/ptrace_scope</A><DD>
+<DT><A HREF="#lbAW">C library/kernel differences</A><DD>
 </DL>
-<DT><A HREF="#lbAW">BUGS</A><DD>
-<DT><A HREF="#lbAX">SEE ALSO</A><DD>
+<DT><A HREF="#lbAX">BUGS</A><DD>
+<DT><A HREF="#lbAY">SEE ALSO</A><DD>
 </DL>
 <HR>
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:42:56 GMT, April 20, 2020
+Time: 03:43:34 GMT, April 20, 2020
 </BODY>
 </HTML>

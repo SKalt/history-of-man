@@ -7,7 +7,7 @@ Subject to the GPL.
 <HTML><HEAD><TITLE>Man page of NETLINK</TITLE>
 </HEAD><BODY>
 <H1>NETLINK</H1>
-Section: Linux Programmer's Manual (7)<BR>Updated: 2015-01-10<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (7)<BR>Updated: 2016-07-17<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -28,7 +28,7 @@ netlink - communication between kernel and user space (AF_NETLINK)
 <A NAME="lbAD">&nbsp;</A>
 <H2>DESCRIPTION</H2>
 
-Netlink is used to transfer information between kernel and
+Netlink is used to transfer information between the kernel and
 user-space processes.
 It consists of a standard sockets-based interface for user space
 processes and an internal kernel API for kernel modules.
@@ -64,7 +64,7 @@ neighbor setups, queueing disciplines, traffic classes and
 packet classifiers (see
 <B><A HREF="../man7/rtnetlink.7.html">rtnetlink</A></B>(7)).
 
-<DT><B>NETLINK_W1</B>
+<DT><B>NETLINK_W1</B> (since Linux 2.6.13)
 
 <DD>
 Messages from 1-wire subsystem.
@@ -80,7 +80,7 @@ Used by
 <I>ip_queue</I>
 
 kernel module.
-<DT><B>NETLINK_INET_DIAG</B>
+<DT><B>NETLINK_INET_DIAG</B> (since Linux 2.6.14)
 
 <DD>
 
@@ -94,26 +94,26 @@ Netfilter/iptables ULOG.
 <DD>
 
 IPsec.
-<DT><B>NETLINK_SELINUX</B>
+<DT><B>NETLINK_SELINUX</B> (since Linux 2.6.4)
 
 <DD>
 SELinux event notifications.
-<DT><B>NETLINK_ISCSI</B>
+<DT><B>NETLINK_ISCSI</B> (since Linux 2.6.15)
 
 <DD>
 
 Open-iSCSI.
-<DT><B>NETLINK_AUDIT</B>
+<DT><B>NETLINK_AUDIT</B> (since Linux 2.6.6)
 
 <DD>
 
 Auditing.
-<DT><B>NETLINK_FIB_LOOKUP</B>
+<DT><B>NETLINK_FIB_LOOKUP</B> (since Linux 2.6.13)
 
 <DD>
 
 Access to FIB lookup from user space.
-<DT><B>NETLINK_CONNECTOR</B>
+<DT><B>NETLINK_CONNECTOR</B> (since Linux 2.6.14)
 
 <DD>
 Kernel connector.
@@ -121,7 +121,7 @@ See
 <I>Documentation/connector/*</I>
 
 in the Linux kernel source tree for further information.
-<DT><B>NETLINK_NETFILTER</B>
+<DT><B>NETLINK_NETFILTER  (since Linux 2.6.14)</B>
 
 <DD>
 
@@ -138,12 +138,12 @@ kernel module.
 
 <DD>
 DECnet routing messages.
-<DT><B>NETLINK_KOBJECT_UEVENT</B>
+<DT><B>NETLINK_KOBJECT_UEVENT</B> (since Linux 2.6.10)
 
 <DD>
 
 Kernel messages to user space.
-<DT><B>NETLINK_GENERIC</B>
+<DT><B>NETLINK_GENERIC</B> (since Linux 2.6.15)
 
 <DD>
 Generic netlink family for simplified netlink usage.
@@ -190,11 +190,11 @@ the payload follows.
 
 <PRE>
 struct nlmsghdr {
-    __u32 nlmsg_len;    /* Length of message including header. */
-    __u16 nlmsg_type;   /* Type of message content. */
-    __u16 nlmsg_flags;  /* Additional flags. */
-    __u32 nlmsg_seq;    /* Sequence number. */
-    __u32 nlmsg_pid;    /* Sender port ID. */
+    __u32 nlmsg_len;    /* Length of message including header */
+    __u16 nlmsg_type;   /* Type of message content */
+    __u16 nlmsg_flags;  /* Additional flags */
+    __u32 nlmsg_seq;    /* Sequence number */
+    __u32 nlmsg_pid;    /* Sender port ID */
 };
 </PRE>
 
@@ -363,9 +363,9 @@ not equal 0).
 <PRE>
 struct sockaddr_nl {
     sa_family_t     nl_family;  /* AF_NETLINK */
-    unsigned short  nl_pad;     /* Zero. */
-    pid_t           nl_pid;     /* Port ID. */
-    __u32           nl_groups;  /* Multicast groups mask. */
+    unsigned short  nl_pad;     /* Zero */
+    pid_t           nl_pid;     /* Port ID */
+    __u32           nl_groups;  /* Multicast groups mask */
 };
 </PRE>
 
@@ -457,28 +457,121 @@ and
 
 groups allow other users to receive messages.
 No groups allow other users to send messages.
+<P>
 <A NAME="lbAF">&nbsp;</A>
+<H3>Socket options</H3>
+
+To set or get a netlink socket option, call
+<B><A HREF="../man2/getsockopt.2.html">getsockopt</A></B>(2)
+
+to read or
+<B><A HREF="../man2/setsockopt.2.html">setsockopt</A></B>(2)
+
+to write the option with the option level argument set to
+<B>SOL_NETLINK</B>.
+
+Unless otherwise noted,
+<I>optval</I>
+
+is a pointer to an
+<I>int</I>.
+
+<DL COMPACT>
+<DT><B>NETLINK_PKTINFO</B> (since Linux 2.6.14)
+
+<DD>
+
+
+Enable
+<B>nl_pktinfo</B>
+
+control messages for received packets to get the extended
+destination group number.
+<DT><B>NETLINK_ADD_MEMBERSHIP</B>,&nbsp;<B>NETLINK_DROP_MEMBERSHIP</B> (since Linux 2.6.14)
+
+<DD>
+
+
+Join/leave a group specified by
+<I>optval</I>.
+
+<DT><B>NETLINK_LIST_MEMBERSHIPS</B> (since Linux 4.2)
+
+<DD>
+
+
+Retrieve all groups a socket is a member of.
+<I>optval</I>
+
+is a pointer to
+<B>__u32</B>
+
+and
+<I>optlen</I>
+
+is the size of the array.
+The array is filled with the full membership set of the
+socket, and the required array size is returned in
+<I>optlen.</I>
+
+<DT><B>NETLINK_BROADCAST_ERROR</B> (since Linux 2.6.30)
+
+<DD>
+
+
+When not set,
+<B>netlink_broadcast()</B>
+
+only reports
+<B>ESRCH</B>
+
+errors and silently ignore
+<B>NOBUFS</B>
+
+errors.
+<DT><B>NETLINK_NO_ENOBUFS</B> (since Linux 2.6.30)
+
+<DD>
+
+
+This flag can be used by unicast and broadcast listeners to avoid receiving
+<B>ENOBUFS</B>
+
+errors.
+<DT><B>NETLINK_LISTEN_ALL_NSID</B> (since Linux 4.2)
+
+<DD>
+
+
+When set, this socket will receive netlink notifications from
+all network namespaces that have an
+<I>nsid</I>
+
+assigned into the network namespace where the socket has been opened.
+The
+<I>nsid</I>
+
+is sent to user space via an ancillary data.
+<DT><B>NETLINK_CAP_ACK</B> (since Linux 4.2)
+
+<DD>
+
+
+The kernel may fail to allocate the necessary room for the acknowledgment
+message back to userspace.
+This option trims off the payload of the original netlink message.
+The netlink message header is still included, so the user can guess from the
+sequence number which message triggered the acknowledgment.
+</DL>
+<A NAME="lbAG">&nbsp;</A>
 <H2>VERSIONS</H2>
 
-The socket interface to netlink is a new feature of Linux 2.2.
+The socket interface to netlink first appeared Linux 2.2.
 <P>
 Linux 2.0 supported a more primitive device-based netlink interface
 (which is still available as a compatibility option).
 This obsolete interface is not described here.
-<P>
-NETLINK_SELINUX appeared in Linux 2.6.4.
-<P>
-NETLINK_AUDIT appeared in Linux 2.6.6.
-<P>
-NETLINK_KOBJECT_UEVENT appeared in Linux 2.6.10.
-<P>
-NETLINK_W1 and NETLINK_FIB_LOOKUP appeared in Linux 2.6.13.
-<P>
-NETLINK_INET_DIAG, NETLINK_CONNECTOR and NETLINK_NETFILTER appeared in
-Linux 2.6.14.
-<P>
-NETLINK_GENERIC and NETLINK_ISCSI appeared in Linux 2.6.15.
-<A NAME="lbAG">&nbsp;</A>
+<A NAME="lbAH">&nbsp;</A>
 <H2>NOTES</H2>
 
 It is often better to use netlink via
@@ -488,11 +581,11 @@ or
 <I>libnl</I>
 
 than via the low-level kernel interface.
-<A NAME="lbAH">&nbsp;</A>
+<A NAME="lbAI">&nbsp;</A>
 <H2>BUGS</H2>
 
 This manual page is not complete.
-<A NAME="lbAI">&nbsp;</A>
+<A NAME="lbAJ">&nbsp;</A>
 <H2>EXAMPLE</H2>
 
 The following example creates a
@@ -527,7 +620,7 @@ in order to reliably track acknowledgements.
 <P>
 
 <PRE>
-struct nlmsghdr *nh;    /* The nlmsghdr with payload to send. */
+struct nlmsghdr *nh;    /* The nlmsghdr with payload to send */
 struct sockaddr_nl sa;
 struct iovec iov = { nh, nh-&gt;nlmsg_len };
 struct msghdr msg;
@@ -537,7 +630,7 @@ memset(&amp;sa, 0, sizeof(sa));
 sa.nl_family = AF_NETLINK;
 nh-&gt;nlmsg_pid = 0;
 nh-&gt;nlmsg_seq = ++sequence_number;
-/* Request an ack from kernel by setting NLM_F_ACK. */
+/* Request an ack from kernel by setting NLM_F_ACK */
 nh-&gt;nlmsg_flags |= NLM_F_ACK;
 
 sendmsg(fd, &amp;msg, 0);
@@ -561,21 +654,21 @@ len = recvmsg(fd, &amp;msg, 0);
 
 for (nh = (struct nlmsghdr *) buf; NLMSG_OK (nh, len);
      nh = NLMSG_NEXT (nh, len)) {
-    /* The end of multipart message. */
+    /* The end of multipart message */
     if (nh-&gt;nlmsg_type == NLMSG_DONE)
         return;
 
     if (nh-&gt;nlmsg_type == NLMSG_ERROR)
-        /* Do some error handling. */
+        /* Do some error handling */
     ...
 
-    /* Continue with parsing payload. */
+    /* Continue with parsing payload */
     ...
 }
 </PRE>
 
 
-<A NAME="lbAJ">&nbsp;</A>
+<A NAME="lbAK">&nbsp;</A>
 <H2>SEE ALSO</H2>
 
 <B><A HREF="../man3/cmsg.3.html">cmsg</A></B>(3),
@@ -606,17 +699,18 @@ RFC 3549 &quot;Linux Netlink as an IP Services Protocol&quot;
 <DT><A HREF="#lbAD">DESCRIPTION</A><DD>
 <DL>
 <DT><A HREF="#lbAE">Address formats</A><DD>
+<DT><A HREF="#lbAF">Socket options</A><DD>
 </DL>
-<DT><A HREF="#lbAF">VERSIONS</A><DD>
-<DT><A HREF="#lbAG">NOTES</A><DD>
-<DT><A HREF="#lbAH">BUGS</A><DD>
-<DT><A HREF="#lbAI">EXAMPLE</A><DD>
-<DT><A HREF="#lbAJ">SEE ALSO</A><DD>
+<DT><A HREF="#lbAG">VERSIONS</A><DD>
+<DT><A HREF="#lbAH">NOTES</A><DD>
+<DT><A HREF="#lbAI">BUGS</A><DD>
+<DT><A HREF="#lbAJ">EXAMPLE</A><DD>
+<DT><A HREF="#lbAK">SEE ALSO</A><DD>
 </DL>
 <HR>
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:43:08 GMT, April 20, 2020
+Time: 03:43:46 GMT, April 20, 2020
 </BODY>
 </HTML>

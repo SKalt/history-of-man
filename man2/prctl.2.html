@@ -26,7 +26,7 @@ the source, must acknowledge the copyright and authors of this work.
 <HTML><HEAD><TITLE>Man page of PRCTL</TITLE>
 </HEAD><BODY>
 <H1>PRCTL</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2015-12-05<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2016-07-17<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -179,6 +179,7 @@ if
 <I>arg2</I>
 
 is zero, unset the attribute.
+<P>
 When a process is marked as a child subreaper,
 all of the children that it creates, and their descendants,
 will be marked as having a subreaper.
@@ -193,7 +194,7 @@ the nearest still living ancestor subreaper
 will receive a
 <B>SIGCHLD</B>
 
-signal and be able to
+signal and will be able to
 <B><A HREF="../man2/wait.2.html">wait</A></B>(2)
 
 on the process to discover its termination status.
@@ -1129,18 +1130,23 @@ option enabled.
 <DD>
 
 
-Set the current timer slack for the calling thread to the nanosecond value
-supplied in
-<I>arg2</I>.
+Each thread has two associated timer slack values:
+a &quot;default&quot; value, and a &quot;current&quot; value.
+This operation sets the &quot;current&quot; timer slack value for the calling thread.
+If the nanosecond value supplied in
+<I>arg2</I>
 
+is greater than zero, then the &quot;current&quot; value is set to this value.
 If
 <I>arg2</I>
 
 is less than or equal to zero,
 
 
-reset the current timer slack to the thread's default timer slack value.
-The timer slack is used by the kernel to group timer expirations
+the &quot;current&quot; timer slack is reset to the
+thread's &quot;default&quot; timer slack value.
+<P>
+The &quot;current&quot; timer slack is used by the kernel to group timer expirations
 for the calling thread that are close to one another;
 as a consequence, timer expirations for the thread may be
 up to the specified number of nanoseconds late (but will never expire early).
@@ -1186,17 +1192,13 @@ a real-time scheduling policy (see
 <B><A HREF="../man2/sched_setscheduler.2.html">sched_setscheduler</A></B>(2)).
 
 <P>
-Each thread has two associated timer slack values:
-a &quot;default&quot; value, and a &quot;current&quot; value.
-The current value is the one that governs grouping
-of timer expirations.
 When a new thread is created,
-the two timer slack values are made the same as the current value
+the two timer slack values are made the same as the &quot;current&quot; value
 of the creating thread.
-Thereafter, a thread can adjust its current timer slack value via
-<B>PR_SET_TIMERSLACK</B>
+Thereafter, a thread can adjust its &quot;current&quot; timer slack value via
+<B>PR_SET_TIMERSLACK</B>.
 
-(the default value can't be changed).
+The &quot;default&quot; value can't be changed.
 The timer slack values of
 <I>init</I>
 
@@ -1205,11 +1207,19 @@ are 50,000 nanoseconds (50 microseconds).
 The timer slack values are preserved across
 <B><A HREF="../man2/execve.2.html">execve</A></B>(2).
 
+<P>
+Since Linux 4.6, the &quot;current&quot; timer slack value of any process
+can be examined and changed via the file
+<I>/proc/[pid]/timerslack_ns</I>.
+
+See
+<B><A HREF="../man5/proc.5.html">proc</A></B>(5).
+
 <DT><B>PR_GET_TIMERSLACK</B> (since Linux 2.6.28)
 
 <DD>
 Return (as the function result)
-the current timer slack value of the calling thread.
+the &quot;current&quot; timer slack value of the calling thread.
 <DT><B>PR_SET_TIMING</B> (since Linux 2.6.0-test4)
 
 <DD>
@@ -1840,6 +1850,6 @@ get or set the maximum stack size, and so on.
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:42:56 GMT, April 20, 2020
+Time: 03:43:34 GMT, April 20, 2020
 </BODY>
 </HTML>

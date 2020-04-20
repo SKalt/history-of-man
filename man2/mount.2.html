@@ -26,7 +26,7 @@ the source, must acknowledge the copyright and authors of this work.
 <HTML><HEAD><TITLE>Man page of MOUNT</TITLE>
 </HEAD><BODY>
 <H1>MOUNT</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2016-03-15<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2016-07-17<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -52,8 +52,10 @@ mount - mount filesystem
 attaches the filesystem specified by
 <I>source</I>
 
-(which is often a device name, but can also be a directory name
-or a dummy) to the directory specified by
+(which is often a pathname referring to a device,
+but can also be the pathname of a directory or file,
+or a dummy string) to the location (a directory or file)
+specified by the pathname in
 <I>target</I>.
 
 <P>
@@ -62,97 +64,104 @@ Appropriate privilege (Linux: the
 
 capability) is required to mount filesystems.
 <P>
-Since Linux 2.4 a single filesystem can be visible at
-multiple mount points, and multiple mounts can be stacked
-on the same mount point.
-
-<P>
 Values for the
 <I>filesystemtype</I>
 
 argument supported by the kernel are listed in
 <I>/proc/filesystems</I>
 
-(e.g., &quot;minix&quot;, &quot;ext2&quot;, &quot;ext3&quot;, &quot;jfs&quot;, &quot;xfs&quot;, &quot;reiserfs&quot;,
-&quot;msdos&quot;, &quot;proc&quot;, &quot;nfs&quot;, &quot;iso9660&quot;).
+(e.g., &quot;btrfs&quot;, &quot;ext4&quot;, &quot;jfs&quot;, &quot;xfs&quot;, &quot;vfat&quot;, &quot;fuse&quot;,
+&quot;tmpfs&quot;, &quot;cgroup&quot;, &quot;proc&quot;, &quot;mqueue&quot;, &quot;nfs&quot;, &quot;cifs&quot;, &quot;iso9660&quot;).
 Further types may become available when the appropriate modules
 are loaded.
 <P>
 The
+<I>data</I>
+
+argument is interpreted by the different filesystems.
+Typically it is a string of comma-separated options
+understood by this filesystem.
+See
+<B><A HREF="../man8/mount.8.html">mount</A></B>(8)
+
+for details of the options available for each filesystem type.
+<P>
+A call to
+<B>mount</B>()
+
+performs one of a number of general types of operation.
+depending on the bits specified in
+<I>mountflags</I>.
+
+The choice of operation is determined by testing the bits set in
+<I>mountflags</I>,
+
+with the tests being conducted in the order listed here:
+<DL COMPACT>
+<DT>*<DD>
+Remount an existing mount:
 <I>mountflags</I>
 
-argument may have the magic number 0xC0ED (<B>MS_MGC_VAL</B>)
-in the top 16 bits (this was required in kernel versions prior to 2.4, but
-is no longer required and ignored if specified),
-and various mount flags
+includes
+<B>MS_REMOUNT</B>.
 
+<DT>*<DD>
+Create a bind mount:
+<I>mountflags</I>
 
-in the low order 16 bits:
+includes
+<B>MS_BIND</B>.
 
+<DT>*<DD>
+Change the propagation type of an existing mount:
+<I>mountflags</I>
 
+includes one of
+<B>MS_SHARED</B>,
 
+<B>MS_PRIVATE</B>,
 
+<B>MS_SLAVE</B>,
 
+or
+<B>MS_UNBINDABLE</B>.
 
+<DT>*<DD>
+Move an existing mount to a new location:
+<I>mountflags</I>
 
+includes
+<B>MS_MOVE</B>.
 
+<DT>*<DD>
+Create a new mount:
+<I>mountflags</I>
 
+includes none of the above flags.
+</DL>
+<P>
 
+Each of these operations is detailed later in this page.
+Further flags may be specified in
+<I>mountflags</I>
 
+to modify the behavior of
+<B>mount</B>(),
 
+as described below.
 
+<A NAME="lbAE">&nbsp;</A>
+<H3>Additional mount flags</H3>
 
+The list below describes the additional flags that can be specified in
+<I>mountflags</I>.
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+Note that some operation types ignore some or all of these flags,
+as described later in this page.
 
 
 
 <DL COMPACT>
-<DT><B>MS_BIND</B> (Linux 2.4 onward)
-
-<DD>
-
-Perform a bind mount, making a file or a directory subtree visible at
-another point within a filesystem.
-Bind mounts may cross filesystem boundaries and span
-<B><A HREF="../man2/chroot.2.html">chroot</A></B>(2)
-
-jails.
-The
-<I>filesystemtype</I>
-
-and
-<I>data</I>
-
-arguments are ignored.
-Up until Linux 2.6.26,
-<I>mountflags</I>
-
-was also ignored
-
-(the bind mount has the same mount options as
-the underlying mount point).
 <DT><B>MS_DIRSYNC</B> (since Linux 2.5.19)
 
 <DD>
@@ -228,21 +237,6 @@ this mount option requires the
 
 capability.
 
-<DT><B>MS_MOVE</B>
-
-<DD>
-Move a subtree.
-<I>source</I>
-
-specifies an existing mount point and
-<I>target</I>
-
-specifies the new location.
-The move is atomic: at no point is the subtree unmounted.
-The
-<I>filesystemtype</I>, <I>mountflags</I>, and <I>data</I>
-
-arguments are ignored.
 <DT><B>MS_NOATIME</B>
 
 <DD>
@@ -274,18 +268,24 @@ Do not allow programs to be executed from this filesystem.
 <DT><B>MS_NOSUID</B>
 
 <DD>
-Do not honor set-user-ID and set-group-ID bits when executing
-programs from this filesystem.
+Do not honor set-user-ID and set-group-ID bits or file capabilities
+when executing programs from this filesystem.
 
 
 <DT><B>MS_RDONLY</B>
 
 <DD>
 Mount filesystem read-only.
+<DT><B>MS_REC</B> (since Linux 2.4.11)
 
+<DD>
+Used in conjunction with
+<B>MS_BIND</B>
 
-
-
+to create a recursive bind mount,
+and in conjunction with the propagation type flags to recursively change
+the propagation type of all of the mounts in a subtree.
+See below for further details.
 <DT><B>MS_RELATIME</B> (since Linux 2.6.20)
 
 <DD>
@@ -310,63 +310,6 @@ the file's last access time is always updated if it
 is more than 1 day old.
 
 
-
-<DT><B>MS_REMOUNT</B>
-
-<DD>
-Remount an existing mount.
-This allows you to change the
-<I>mountflags</I>
-
-and
-<I>data</I>
-
-of an existing mount without having to unmount and remount the filesystem.
-<I>target</I>
-
-should be the same value specified in the initial
-<B>mount</B>()
-
-call;
-<I>source</I>
-
-and
-<I>filesystemtype</I>
-
-are ignored.
-The
-<I>mountflags</I>
-
-and
-<I>data</I>
-
-arguments should match the values used in the original
-<B>mount</B>()
-
-call, except for those parameters that are being deliberately changed.
-<P>
-The following
-<I>mountflags</I>
-
-can be changed:
-<B>MS_RDONLY</B>,
-
-<B>MS_SYNCHRONOUS</B>,
-
-<B>MS_MANDLOCK</B>;
-
-before kernel 2.6.16, the following could also be changed:
-<B>MS_NOATIME</B>
-
-and
-<B>MS_NODIRATIME</B>;
-
-and, additionally, before kernel 2.4.10, the following could also be changed:
-<B>MS_NOSUID</B>,
-
-<B>MS_NODEV</B>,
-
-<B>MS_NOEXEC</B>.
 
 <DT><B>MS_SILENT</B> (since Linux 2.6.17)
 
@@ -421,19 +364,357 @@ The
 <B>MS_RELATIME</B>
 
 flag is also settable on a per-mount-point basis.
-<P>
 
-The
+<A NAME="lbAF">&nbsp;</A>
+<H3>Remounting an existing mount</H3>
+
+An existing mount may be remounted by specifying
+<B>MS_REMOUNT</B>
+
+in
+<I>mountflags</I>.
+
+This allows you to change the
+<I>mountflags</I>
+
+and
 <I>data</I>
 
-argument is interpreted by the different filesystems.
-Typically it is a string of comma-separated options
-understood by this filesystem.
-See
-<B><A HREF="../man8/mount.8.html">mount</A></B>(8)
+of an existing mount without having to unmount and remount the filesystem.
+<I>target</I>
 
-for details of the options available for each filesystem type.
-<A NAME="lbAE">&nbsp;</A>
+should be the same value specified in the initial
+<B>mount</B>()
+
+call.
+<P>
+The
+<I>source</I>
+
+and
+<I>filesystemtype</I>
+
+arguments are ignored.
+<P>
+The
+<I>mountflags</I>
+
+and
+<I>data</I>
+
+arguments should match the values used in the original
+<B>mount</B>()
+
+call, except for those parameters that are being deliberately changed.
+<P>
+The following
+<I>mountflags</I>
+
+can be changed:
+<B>MS_LAZYTIME</B>,
+
+<B>MS_MANDLOCK</B>,
+
+<B>MS_NOATIME</B>,
+
+<B>MS_NODEV</B>,
+
+<B>MS_NODIRATIME</B>,
+
+<B>MS_NOEXEC</B>,
+
+<B>MS_NOSUID</B>,
+
+<B>MS_RELATIME</B>,
+
+<B>MS_RDONLY</B>,
+
+and
+<B>MS_SYNCHRONOUS</B>.
+
+Attempts to change the setting of the
+
+<B>MS_DIRSYNC</B>
+
+flag during a remount are silently ignored.
+<P>
+Since Linux 3.17,
+
+if none of
+<B>MS_NOATIME</B>,
+
+<B>MS_NODIRATIME</B>,
+
+<B>MS_RELATIME</B>,
+
+or
+<B>MS_STRICTATIME</B>
+
+is specified in
+<I>mountflags</I>,
+
+then the remount operation preserves the existing values of these flags
+(rather than defaulting to
+<B>MS_RELATIME</B>).
+
+<P>
+Since Linux 2.6.26, this flag can also be used to make
+
+an existing bind mount read-only by specifying
+<I>mountflags</I>
+
+as:
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;MS_REMOUNT&nbsp;|&nbsp;MS_BIND&nbsp;|&nbsp;MS_RDONLY
+<P>
+Note that only the
+<B>MS_RDONLY</B>
+
+setting of the bind mount can be changed in this manner.
+
+<A NAME="lbAG">&nbsp;</A>
+<H3>Creating a bind mount</H3>
+
+If
+<I>mountflags</I>
+
+includes
+<B>MS_BIND</B>
+
+(available since Linux 2.4),
+
+then perform a bind mount.
+A bind mount makes a file or a directory subtree visible at
+another point within the single directory hierarchy.
+Bind mounts may cross filesystem boundaries and span
+<B><A HREF="../man2/chroot.2.html">chroot</A></B>(2)
+
+jails.
+<P>
+The
+<I>filesystemtype</I>
+
+and
+<I>data</I>
+
+arguments are ignored.
+<P>
+The remaining bits in the
+<I>mountflags</I>
+
+argument are also ignored, with the exception of
+<B>MS_REC</B>.
+
+(The bind mount has the same mount options as
+the underlying mount point.)
+However, see the discussion of remounting above,
+for a method of making an existing bind mount read-only.
+<P>
+By default, when a directory is bind mounted,
+only that directory is mounted;
+if there are any submounts under the directory tree,
+they are not bind mounted.
+If the
+<B>MS_REC</B>
+
+flag is also specified, then a recursive bind mount operation is performed:
+all submounts under the
+<I>source</I>
+
+subtree (other than unbindable mounts)
+are also bind mounted at the corresponding location in the
+<I>target</I>
+
+subtree.
+
+<A NAME="lbAH">&nbsp;</A>
+<H3>Changing the propagation type of an existing mount</H3>
+
+If
+<I>mountflags</I>
+
+includes one of
+<B>MS_SHARED</B>,
+
+<B>MS_PRIVATE</B>,
+
+<B>MS_SLAVE</B>,
+
+or
+<B>MS_UNBINDABLE</B>
+
+(all available since Linux 2.6.15),
+then the propagation type of an existing mount is changed.
+If more than one of these flags is specified, an error results.
+<P>
+The only flags that can be used with changing the propagation type are
+<B>MS_REC</B>
+
+and
+<B>MS_SILENT</B>.
+
+<P>
+The
+<I>source</I>,
+
+<I>filesystemtype</I>,
+
+and
+<I>data</I>
+
+arguments are ignored.
+<P>
+The meanings of the propagation type flags are as follows:
+<DL COMPACT>
+<DT><B>MS_SHARED</B>
+
+<DD>
+Make this mount point shared.
+Mount and unmount events immediately under this mount point will propagate
+to the other mount points that are members of this mount's peer group.
+Propagation here means that the same mount or unmount will automatically
+occur under all of the other mount points in the peer group.
+Conversely, mount and unmount events that take place under
+peer mount points will propagate to this mount point.
+<DT><B>MS_PRIVATE</B>
+
+<DD>
+Make this mount point private.
+Mount and unmount events do not propagate into or out of this mount point.
+This is the default propagation type for newly created mount points.
+<DT><B>MS_SLAVE</B>
+
+<DD>
+If this is a shared mount point that is a member of a peer group
+that contains other members, convert it to a slave mount.
+If this is a shared mount point that is a member of a peer group
+that contains no other members, convert it to a private mount.
+Otherwise, the propagation type of the mount point is left unchanged.
+<P>
+When a mount point is a slave,
+mount and unmount events propagate into this mount point from
+the (master) shared peer group of which it was formerly a member.
+Mount and unmount events under this mount point do not propagate to any peer.
+<P>
+A mount point can be the slave of another peer group
+while at the same time sharing mount and unmount events
+with a peer group of which it is a member.
+<DT><B>MS_UNBINDABLE</B>
+
+<DD>
+Make this mount unbindable.
+This is like a private mount,
+and in addition this mount can't be bind mounted.
+When a recursive bind mount
+(<B><A HREF="../man2/mount.2.html">mount</A></B>(2)
+
+with the
+<B>MS_BIND</B>
+
+and
+<B>MS_REC</B>
+
+flags) is performed on a directory subtree,
+any bind mounts within the subtree are automatically pruned
+(i.e., not replicated)
+when replicating that subtree to produce the target subtree.
+</DL>
+<P>
+
+By default, changing the propagation type affects only the
+<I>target</I>
+
+mount point.
+If the
+<B>MS_REC</B>
+
+flag is also specified in
+<I>mountflags</I>,
+
+then the propagation type of all mount points under
+<I>target</I>
+
+is also changed.
+<P>
+For further details regarding mount propagation types, see
+<B><A HREF="../man7/mount_namespaces.7.html">mount_namespaces</A></B>(7).
+
+
+<A NAME="lbAI">&nbsp;</A>
+<H3>Moving a mount</H3>
+
+If
+<I>mountflags</I>
+
+contains the flag
+<B>MS_MOVE</B>
+
+(available since Linux 2.4.18),
+then move a subtree:
+<I>source</I>
+
+specifies an existing mount point and
+<I>target</I>
+
+specifies the new location to which that mount point is to be relocated.
+The move is atomic: at no point is the subtree unmounted.
+<P>
+The remaining bits in the
+<I>mountflags</I>
+
+argument are ignored, as are the
+<I>filesystemtype</I>
+
+and
+<I>data</I>
+
+arguments.
+
+<A NAME="lbAJ">&nbsp;</A>
+<H3>Creating a new mount point</H3>
+
+If none of
+<B>MS_REMOUNT</B>,
+
+<B>MS_BIND</B>,
+
+<B>MS_MOVE</B>,
+
+<B>MS_SHARED</B>,
+
+<B>MS_PRIVATE</B>,
+
+<B>MS_SLAVE</B>,
+
+or
+<B>MS_UNBINDABLE</B>
+
+is specified in
+<I>mountflags</I>,
+
+then
+<B>mount</B>()
+
+performs its default action: creating a new mount point.
+<I>source</I>
+
+specifies the source for the new mount point, and
+<I>target</I>
+
+specifies the directory at which to create the mount point.
+<P>
+The
+<I>filesystemtype</I>
+
+and
+<I>data</I>
+
+arguments are employed, and further bits may be specified in
+<I>mountflags</I>
+
+to modify the behavior of the call.
+
+<A NAME="lbAK">&nbsp;</A>
 <H2>RETURN VALUE</H2>
 
 On success, zero is returned.
@@ -441,7 +722,7 @@ On error, -1 is returned, and
 <I>errno</I>
 
 is set appropriately.
-<A NAME="lbAF">&nbsp;</A>
+<A NAME="lbAL">&nbsp;</A>
 <H2>ERRORS</H2>
 
 The error values given below result from filesystem type independent
@@ -457,11 +738,17 @@ A component of a path was not searchable.
 (See also
 <B><A HREF="../man7/path_resolution.7.html">path_resolution</A></B>(7).)
 
-Or, mounting a read-only filesystem was attempted without giving the
+<DT><B>EACCES</B>
+
+<DD>
+Mounting a read-only filesystem was attempted without giving the
 <B>MS_RDONLY</B>
 
 flag.
-Or, the block device
+<DT><B>EACCES</B>
+
+<DD>
+The block device
 <I>source</I>
 
 is located on a filesystem mounted with the
@@ -476,9 +763,19 @@ option.
 <I>source</I>
 
 is already mounted.
-Or, it cannot be remounted read-only,
+<DT><B>EBUSY</B>
+
+<DD>
+<I>source</I>
+
+cannot be remounted read-only,
 because it still holds files open for writing.
-Or, it cannot be mounted on
+<DT><B>EBUSY</B>
+
+<DD>
+<I>source</I>
+
+cannot be mounted on
 <I>target</I>
 
 because
@@ -496,7 +793,10 @@ One of the pointer arguments points outside the user address space.
 <I>source</I>
 
 had an invalid superblock.
-Or, a remount
+<DT><B>EINVAL</B>
+
+<DD>
+A remount operation
 (<B>MS_REMOUNT</B>)
 
 was attempted, but
@@ -505,18 +805,64 @@ was attempted, but
 was not already mounted on
 <I>target</I>.
 
-Or, a move
+<DT><B>EINVAL</B>
+
+<DD>
+A move operation
 (<B>MS_MOVE</B>)
 
 was attempted, but
 <I>source</I>
 
 was not a mount point, or was '/'.
+<DT><B>EINVAL</B>
+
+<DD>
+<I>mountflags</I>
+
+includes more than one of
+<B>MS_SHARED</B>,
+
+<B>MS_PRIVATE</B>,
+
+<B>MS_SLAVE</B>,
+
+or
+<B>MS_UNBINDABLE</B>.
+
+<DT><B>EINVAL</B>
+
+<DD>
+<I>mountflags</I>
+
+includes
+<B>MS_SHARED</B>,
+
+<B>MS_PRIVATE</B>,
+
+<B>MS_SLAVE</B>,
+
+or
+<B>MS_UNBINDABLE</B>
+
+and also includes a flag other than
+<B>MS_REC</B>
+
+or
+<B>MS_SILENT</B>.
+
+<DT><B>EINVAL</B>
+
+<DD>
+An attempt was made to bind mount an unbindable mount.
 <DT><B>ELOOP</B>
 
 <DD>
 Too many links encountered during pathname resolution.
-Or, a move was attempted, while
+<DT><B>ELOOP</B>
+
+<DD>
+A move operation was attempted, and
 <I>target</I>
 
 is a descendant of
@@ -574,7 +920,7 @@ is out of range.
 <DD>
 The caller does not have the required privileges.
 </DL>
-<A NAME="lbAG">&nbsp;</A>
+<A NAME="lbAM">&nbsp;</A>
 <H2>VERSIONS</H2>
 
 The definitions of
@@ -582,24 +928,51 @@ The definitions of
 
 <B>MS_MOVE</B>,
 
+<B>MS_PRIVATE</B>,
+
 <B>MS_REC</B>,
 
 <B>MS_RELATIME</B>,
 
-and
+<B>MS_SHARED</B>,
+
+<B>MS_SLAVED</B>,
+
 <B>MS_STRICTATIME</B>
+
+and
+<B>MS_UNBINDABLE</B>
 
 were added to glibc headers in version 2.12.
 
-
-<A NAME="lbAH">&nbsp;</A>
+<A NAME="lbAN">&nbsp;</A>
 <H2>CONFORMING TO</H2>
 
 This function is Linux-specific and should not be used in
 programs intended to be portable.
-<A NAME="lbAI">&nbsp;</A>
+<A NAME="lbAO">&nbsp;</A>
 <H2>NOTES</H2>
 
+Since Linux 2.4 a single filesystem can be mounted at
+multiple mount points, and multiple mounts can be stacked
+on the same mount point.
+
+<P>
+The
+<I>mountflags</I>
+
+argument may have the magic number 0xC0ED (<B>MS_MGC_VAL</B>)
+in the top 16 bits.
+(All of the other flags discussed in DESCRIPTION
+occupy the low order 16 bits of
+<I>mountflags</I>.)
+
+Specifying
+<B>MS_MGC_VAL</B>
+
+was required in kernel versions prior to 2.4,
+but since Linux 2.4 is no longer required and is ignored if specified.
+<P>
 The original
 <B>MS_SYNC</B>
 
@@ -623,7 +996,9 @@ would fail with
 Since Linux 2.4 the set-user-ID and set-group-ID bits are
 just silently ignored in this case.
 
-<A NAME="lbAJ">&nbsp;</A>
+
+<P>
+<A NAME="lbAP">&nbsp;</A>
 <H3>Per-process namespaces</H3>
 
 Starting with kernel 2.4.19, Linux provides
@@ -679,12 +1054,12 @@ namespace of the process with the specified ID; see
 <B><A HREF="../man5/proc.5.html">proc</A></B>(5)
 
 for details.
-<A NAME="lbAK">&nbsp;</A>
+<A NAME="lbAQ">&nbsp;</A>
 <H2>SEE ALSO</H2>
 
 <B><A HREF="../man2/umount.2.html">umount</A></B>(2),
 
-<B><A HREF="../man7/namespaces.7.html">namespaces</A></B>(7),
+<B><A HREF="../man7/mount_namespaces.7.html">mount_namespaces</A></B>(7),
 
 <B><A HREF="../man7/path_resolution.7.html">path_resolution</A></B>(7),
 
@@ -704,20 +1079,28 @@ for details.
 <DT><A HREF="#lbAB">NAME</A><DD>
 <DT><A HREF="#lbAC">SYNOPSIS</A><DD>
 <DT><A HREF="#lbAD">DESCRIPTION</A><DD>
-<DT><A HREF="#lbAE">RETURN VALUE</A><DD>
-<DT><A HREF="#lbAF">ERRORS</A><DD>
-<DT><A HREF="#lbAG">VERSIONS</A><DD>
-<DT><A HREF="#lbAH">CONFORMING TO</A><DD>
-<DT><A HREF="#lbAI">NOTES</A><DD>
 <DL>
-<DT><A HREF="#lbAJ">Per-process namespaces</A><DD>
+<DT><A HREF="#lbAE">Additional mount flags</A><DD>
+<DT><A HREF="#lbAF">Remounting an existing mount</A><DD>
+<DT><A HREF="#lbAG">Creating a bind mount</A><DD>
+<DT><A HREF="#lbAH">Changing the propagation type of an existing mount</A><DD>
+<DT><A HREF="#lbAI">Moving a mount</A><DD>
+<DT><A HREF="#lbAJ">Creating a new mount point</A><DD>
 </DL>
-<DT><A HREF="#lbAK">SEE ALSO</A><DD>
+<DT><A HREF="#lbAK">RETURN VALUE</A><DD>
+<DT><A HREF="#lbAL">ERRORS</A><DD>
+<DT><A HREF="#lbAM">VERSIONS</A><DD>
+<DT><A HREF="#lbAN">CONFORMING TO</A><DD>
+<DT><A HREF="#lbAO">NOTES</A><DD>
+<DL>
+<DT><A HREF="#lbAP">Per-process namespaces</A><DD>
+</DL>
+<DT><A HREF="#lbAQ">SEE ALSO</A><DD>
 </DL>
 <HR>
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:42:55 GMT, April 20, 2020
+Time: 03:43:33 GMT, April 20, 2020
 </BODY>
 </HTML>

@@ -34,7 +34,7 @@ SUCH DAMAGE.
 <HTML><HEAD><TITLE>Man page of GETPRIORITY</TITLE>
 </HEAD><BODY>
 <H1>GETPRIORITY</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2015-07-23<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2016-07-17<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -74,6 +74,10 @@ call and set with the
 <B>setpriority</B>()
 
 call.
+The process attribute dealt with by these system calls is
+the same attribute (also known as the &quot;nice&quot; value) that is dealt with by
+<B><A HREF="../man2/nice.2.html">nice</A></B>(2).
+
 <P>
 The value
 <I>which</I>
@@ -107,12 +111,14 @@ A zero value for
 
 denotes (respectively) the calling process, the process group of the
 calling process, or the real user ID of the calling process.
+<P>
 The
 <I>prio</I>
 
 argument is a value in the range -20 to 19 (but see NOTES below).
+with -20 being the highest priority and 19 being the lowest priority.
 The default priority is 0;
-lower priorities cause more favorable scheduling.
+lower values give a process a higher scheduling priority.
 <P>
 The
 <B>getpriority</B>()
@@ -124,7 +130,17 @@ The
 
 call sets the priorities of all of the specified processes
 to the specified value.
-Only the superuser may lower priorities.
+<P>
+Traditionally, only a privileged process could lower the nice value
+(i.e., set a higher priority).
+However, since Linux 2.6.12, an unprivileged process can decrease
+the nice value of a target process that has a suitable
+<B>RLIMIT_NICE</B>
+
+soft limit; see
+<B><A HREF="../man2/getrlimit.2.html">getrlimit</A></B>(2)
+
+for details.
 <A NAME="lbAE">&nbsp;</A>
 <H2>RETURN VALUE</H2>
 
@@ -181,19 +197,12 @@ may fail if:
 <DT><B>EACCES</B>
 
 <DD>
-The caller attempted to lower a process priority, but did not
+The caller attempted to set a lower nice value
+(i.e., a higher process priority), but did not
 have the required privilege (on Linux: did not have the
 <B>CAP_SYS_NICE</B>
 
 capability).
-Since Linux 2.6.12, this error occurs only if the caller attempts
-to set a process priority outside the range of the
-<B>RLIMIT_NICE</B>
-
-soft resource limit of the target process; see
-<B><A HREF="../man2/getrlimit.2.html">getrlimit</A></B>(2)
-
-for details.
 <DT><B>EPERM</B>
 
 <DD>
@@ -339,6 +348,6 @@ in the Linux kernel source tree (since Linux 2.6.23)
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:42:54 GMT, April 20, 2020
+Time: 03:43:32 GMT, April 20, 2020
 </BODY>
 </HTML>

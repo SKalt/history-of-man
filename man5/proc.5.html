@@ -25,7 +25,7 @@ License along with this manual; if not, see
 <HTML><HEAD><TITLE>Man page of PROC</TITLE>
 </HEAD><BODY>
 <H1>PROC</H1>
-Section: Linux Programmer's Manual (5)<BR>Updated: 2016-03-15<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (5)<BR>Updated: 2016-07-17<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -132,11 +132,11 @@ Specifies the ID of a group whose members are authorized to
 learn process information otherwise prohibited by
 <B>hidepid</B>
 
-(ie/e/, users in this group behave as though
+(i.e., users in this group behave as though
 <I>/proc</I>
 
 was mounted with
-<I>hidepid=0</I>.
+<I>hidepid=0</I>).
 
 This group should be used instead of approaches such as putting
 nonroot users into the
@@ -318,6 +318,13 @@ plus one <I>unsigned long</I> value for each entry.
 The last entry contains two zeros.
 See also
 <B><A HREF="../man3/getauxval.3.html">getauxval</A></B>(3).
+
+<P>
+Permission to access this file is governed by a ptrace access mode
+<B>PTRACE_MODE_READ_FSCREDS</B>
+
+check; see
+<B><A HREF="../man2/ptrace.2.html">ptrace</A></B>(2).
 
 <DT><I>/proc/[pid]/cgroup</I> (since Linux 2.6.24)
 
@@ -504,6 +511,16 @@ are not available if the main thread has already terminated
 (typically by calling
 <B><A HREF="../man3/pthread_exit.3.html">pthread_exit</A></B>(3)).
 
+<P>
+Permission to dereference or read
+(<B><A HREF="../man2/readlink.2.html">readlink</A></B>(2))
+
+this symbolic link is governed by a ptrace access mode
+<B>PTRACE_MODE_READ_FSCREDS</B>
+
+check; see
+<B><A HREF="../man2/ptrace.2.html">ptrace</A></B>(2).
+
 <DT><I>/proc/[pid]/environ</I>
 
 <DD>
@@ -518,6 +535,12 @@ $<B> strings /proc/1/environ</B>
 </PRE>
 
 
+<P>
+Permission to access this file is governed by a ptrace access mode
+<B>PTRACE_MODE_READ_FSCREDS</B>
+
+check; see
+<B><A HREF="../man2/ptrace.2.html">ptrace</A></B>(2).
 
 <DT><I>/proc/[pid]/exe</I>
 
@@ -538,6 +561,16 @@ In a multithreaded process, the contents of this symbolic link
 are not available if the main thread has already terminated
 (typically by calling
 <B><A HREF="../man3/pthread_exit.3.html">pthread_exit</A></B>(3)).
+
+<P>
+Permission to dereference or read
+(<B><A HREF="../man2/readlink.2.html">readlink</A></B>(2))
+
+this symbolic link is governed by a ptrace access mode
+<B>PTRACE_MODE_READ_FSCREDS</B>
+
+check; see
+<B><A HREF="../man2/ptrace.2.html">ptrace</A></B>(2).
 
 <P>
 Under Linux 2.0 and earlier,
@@ -691,6 +724,16 @@ Thus the example command above could be written as:
 $<B> foobar -i /dev/stdin -o /dev/stdout ...</B>
 </PRE>
 
+
+<DT><DD>
+Permission to dereference or read
+(<B><A HREF="../man2/readlink.2.html">readlink</A></B>(2))
+
+the symbolic links in this directory is governed by a ptrace access mode
+<B>PTRACE_MODE_READ_FSCREDS</B>
+
+check; see
+<B><A HREF="../man2/ptrace.2.html">ptrace</A></B>(2).
 
 
 
@@ -1081,6 +1124,13 @@ if process A reads process B's
 
 while process B is updating one of these 64-bit counters,
 process A could see an intermediate result.
+<P>
+Permission to access this file is governed by a ptrace access mode
+<B>PTRACE_MODE_READ_FSCREDS</B>
+
+check; see
+<B><A HREF="../man2/ptrace.2.html">ptrace</A></B>(2).
+
 <DT><I>/proc/[pid]/gid_map</I> (since Linux 3.5)
 
 <DD>
@@ -1166,6 +1216,13 @@ See
 <B><A HREF="../man2/mmap.2.html">mmap</A></B>(2)
 
 for some further information about memory mappings.
+<P>
+Permission to access this file is governed by a ptrace access mode
+<B>PTRACE_MODE_READ_FSCREDS</B>
+
+check; see
+<B><A HREF="../man2/ptrace.2.html">ptrace</A></B>(2).
+
 <P>
 The format of the file is:
 <P>
@@ -1301,12 +1358,22 @@ This file can be used to access the pages of a process's memory through
 and
 <B><A HREF="../man2/lseek.2.html">lseek</A></B>(2).
 
+<P>
+Permission to access this file is governed by a ptrace access mode
+<B>PTRACE_MODE_ATTACH_FSCREDS</B>
+
+check; see
+<B><A HREF="../man2/ptrace.2.html">ptrace</A></B>(2).
+
 <DT><I>/proc/[pid]/mountinfo</I> (since Linux 2.6.26)
 
 <DD>
 
 
-This file contains information about mount points.
+This file contains information about mount points
+in the process's mount namespace (see
+<B><A HREF="../man7/mount_namespaces.7.html">mount_namespaces</A></B>(7)).
+
 It supplies various information
 (e.g., propagation state, root of mount for bind mounts,
 identifier for each mount and its parent) that is missing from the (older)
@@ -1345,7 +1412,7 @@ for files on this filesystem (see
 root: the pathname of the directory in the filesystem
 which forms the root of this mount.
 <DT>(5)<DD>
-mount point: ithe pathname of the mount point relative
+mount point: the pathname of the mount point relative
 to the process's root directory.
 <DT>(6)<DD>
 mount options: per-mount options.
@@ -1363,29 +1430,22 @@ super options: per-superblock options.
 </DL>
 
 <DT><DD>
-Currently, the possible optional fields are:
-<DL COMPACT><DT><DD>
-<DL COMPACT>
-<DT>shared:X<DD>
-mount is shared in peer group X
-<DT>master:X<DD>
-mount is slave to peer group X
-<DT>propagate_from:X<DD>
-mount is slave and receives propagation from peer group X (*)
-<DT>unbindable<DD>
-mount is unbindable
-</DL>
-</DL>
+Currently, the possible optional fields are
+<I>shared</I>,
 
-<DT><DD>
+<I>master</I>,
+
+<I>propagate_from</I>,
+
+and
+<I>unbindable</I>.
+
+See
+<B><A HREF="../man7/mount_namespaces.7.html">mount_namespaces</A></B>(7)
+
+for a description of these fields.
 Parsers should ignore all unrecognized optional fields.
 <DT><DD>
-(*) X is the closest dominant peer group under the process's root.
-If X is the immediate master of the mount,
-or if there is no dominant peer group under the same root,
-then only the &quot;master:X&quot; field is present
-and not the &quot;propagate_from:X&quot; field.
-<P>
 For more information on mount propagation see:
 <I>Documentation/filesystems/sharedsubtree.txt</I>
 
@@ -1393,32 +1453,46 @@ in the Linux kernel source tree.
 <DT><I>/proc/[pid]/mounts</I> (since Linux 2.4.19)
 
 <DD>
-This is a list of all the filesystems currently mounted in the
-process's mount namespace.
+This file lists all the filesystems currently mounted in the
+process's mount namespace (see
+<B><A HREF="../man7/mount_namespaces.7.html">mount_namespaces</A></B>(7)).
+
 The format of this file is documented in
 <B><A HREF="../man5/fstab.5.html">fstab</A></B>(5).
 
+<P>
 Since kernel version 2.6.15, this file is pollable:
 after opening the file for reading, a change in this file
 (i.e., a filesystem mount or unmount) causes
 <B><A HREF="../man2/select.2.html">select</A></B>(2)
 
-to mark the file descriptor as readable, and
+to mark the file descriptor as having an exceptional condition, and
 <B><A HREF="../man2/poll.2.html">poll</A></B>(2)
 
 and
 <B><A HREF="../man2/epoll_wait.2.html">epoll_wait</A></B>(2)
 
-mark the file as having an error condition.
-See
-<B><A HREF="../man7/namespaces.7.html">namespaces</A></B>(7)
+mark the file as having a priority event
+(<B>POLLPRI</B>).
 
-for more information.
+(Before Linux 2.6.30,
+a change in this file was indicated by the file descriptor
+being marked as readable for
+<B><A HREF="../man2/select.2.html">select</A></B>(2),
+
+and being marked as having an error condition for
+<B><A HREF="../man2/poll.2.html">poll</A></B>(2)
+
+and
+<B><A HREF="../man2/epoll_wait.2.html">epoll_wait</A></B>(2).)
+
 <DT><I>/proc/[pid]/mountstats</I> (since Linux 2.6.17)
 
 <DD>
 This file exports information (statistics, configuration information)
-about the mount points in the process's mount namespace.
+about the mount points in the process's mount namespace (see
+<B><A HREF="../man7/mount_namespaces.7.html">mount_namespaces</A></B>(7)).
+
 Lines in this file have the form:
 <PRE>
 
@@ -1446,11 +1520,12 @@ information via this field.
 
 <DT><DD>
 This file is readable only by the owner of the process.
-<P>
-See
-<B><A HREF="../man7/namespaces.7.html">namespaces</A></B>(7)
+<DT>
+<DD>
+/proc/[pid]/net &quot; (since Linux 2.6.25)&quot;
+See the description of
+<I>/proc/net</I>.
 
-for more information.
 <DT><I>/proc/[pid]/ns/</I> (since Linux 3.0)
 
 <DD>
@@ -1674,6 +1749,13 @@ file is present only if the
 <B>CONFIG_PROC_PAGE_MONITOR</B>
 
 kernel configuration option is enabled.
+<P>
+Permission to access this file is governed by a ptrace access mode
+<B>PTRACE_MODE_READ_FSCREDS</B>
+
+check; see
+<B><A HREF="../man2/ptrace.2.html">ptrace</A></B>(2).
+
 <DT><I>/proc/[pid]/personality</I> (since Linux 2.6.28)
 
 <DD>
@@ -1682,6 +1764,13 @@ This read-only file exposes the process's execution domain, as set by
 <B><A HREF="../man2/personality.2.html">personality</A></B>(2).
 
 The value is displayed in hexadecimal notation.
+<P>
+Permission to access this file is governed by a ptrace access mode
+<B>PTRACE_MODE_ATTACH_FSCREDS</B>
+
+check; see
+<B><A HREF="../man2/ptrace.2.html">ptrace</A></B>(2).
+
 <DT><I>/proc/[pid]/root</I>
 
 <DD>
@@ -1703,6 +1792,16 @@ In a multithreaded process, the contents of this symbolic link
 are not available if the main thread has already terminated
 (typically by calling
 <B><A HREF="../man3/pthread_exit.3.html">pthread_exit</A></B>(3)).
+
+<P>
+Permission to dereference or read
+(<B><A HREF="../man2/readlink.2.html">readlink</A></B>(2))
+
+this symbolic link is governed by a ptrace access mode
+<B>PTRACE_MODE_READ_FSCREDS</B>
+
+check; see
+<B><A HREF="../man2/ptrace.2.html">ptrace</A></B>(2).
 
 
 
@@ -1864,6 +1963,13 @@ This file is provided only if the kernel was built with the
 <B>CONFIG_STACKTRACE</B>
 
 configuration option.
+<P>
+Permission to access this file is governed by a ptrace access mode
+<B>PTRACE_MODE_ATTACH_FSCREDS</B>
+
+check; see
+<B><A HREF="../man2/ptrace.2.html">ptrace</A></B>(2).
+
 <DT><I>/proc/[pid]/stat</I>
 
 <DD>
@@ -1878,7 +1984,17 @@ It is defined in the kernel source file
 The fields, in order, with their proper
 <B><A HREF="../man3/scanf.3.html">scanf</A></B>(3)
 
-format specifiers, are:
+format specifiers, are listed below.
+Whether or not certain of these fields display valid information is governed by
+a ptrace access mode
+<B>PTRACE_MODE_READ_FSCREDS</B>&nbsp;|&nbsp;<B>PTRACE_MODE_NOAUDIT</B>
+
+check (refer to
+<B><A HREF="../man2/ptrace.2.html">ptrace</A></B>(2)).
+
+If the check denies access, then the field value is displayed as 0.
+The affected fields are indicated with the marking [PT].
+<P>
 <DL COMPACT><DT><DD>
 <DL COMPACT>
 <DT>(1) <I>pid</I> &nbsp;%d<DD>
@@ -2073,16 +2189,16 @@ see the description of
 in
 <B><A HREF="../man2/getrlimit.2.html">getrlimit</A></B>(2).
 
-<DT>(26) <I>startcode</I> &nbsp;%lu<DD>
+<DT>(26) <I>startcode</I> &nbsp;%lu &nbsp;[PT]<DD>
 The address above which program text can run.
-<DT>(27) <I>endcode</I> &nbsp;%lu<DD>
+<DT>(27) <I>endcode</I> &nbsp;%lu &nbsp;[PT]<DD>
 The address below which program text can run.
-<DT>(28) <I>startstack</I> &nbsp;%lu<DD>
+<DT>(28) <I>startstack</I> &nbsp;%lu &nbsp;[PT]<DD>
 The address of the start (i.e., bottom) of the stack.
-<DT>(29) <I>kstkesp</I> &nbsp;%lu<DD>
+<DT>(29) <I>kstkesp</I> &nbsp;%lu &nbsp;[PT]<DD>
 The current value of ESP (stack pointer), as found in the
 kernel stack page for the process.
-<DT>(30) <I>kstkeip</I> &nbsp;%lu<DD>
+<DT>(30) <I>kstkeip</I> &nbsp;%lu &nbsp;[PT]<DD>
 The current EIP (instruction pointer).
 <DT>(31) <I>signal</I> &nbsp;%lu<DD>
 The bitmap of pending signals, displayed as a decimal number.
@@ -2108,7 +2224,7 @@ Obsolete, because it does not provide information on real-time signals; use
 <I>/proc/[pid]/status</I>
 
 instead.
-<DT>(35) <I>wchan</I> &nbsp;%lu<DD>
+<DT>(35) <I>wchan</I> &nbsp;%lu &nbsp;[PT]<DD>
 This is the &quot;channel&quot; in which the process is waiting.
 It is the address of a location in the kernel where the process is sleeping.
 The corresponding symbolic name can be found in
@@ -2150,38 +2266,38 @@ for a guest operating system), measured in clock ticks (divide by
 Guest time of the process's children, measured in clock ticks (divide by
 <I>sysconf(_SC_CLK_TCK)</I>).
 
-<DT>(45) <I>start_data</I> &nbsp;%lu &nbsp;(since Linux 3.3)<DD>
+<DT>(45) <I>start_data</I> &nbsp;%lu &nbsp;(since Linux 3.3) &nbsp;[PT]<DD>
 
 Address above which program initialized and
 uninitialized (BSS) data are placed.
-<DT>(46) <I>end_data</I> &nbsp;%lu &nbsp;(since Linux 3.3)<DD>
+<DT>(46) <I>end_data</I> &nbsp;%lu &nbsp;(since Linux 3.3) &nbsp;[PT]<DD>
 
 Address below which program initialized and
 uninitialized (BSS) data are placed.
-<DT>(47) <I>start_brk</I> &nbsp;%lu &nbsp;(since Linux 3.3)<DD>
+<DT>(47) <I>start_brk</I> &nbsp;%lu &nbsp;(since Linux 3.3) &nbsp;[PT]<DD>
 
 Address above which program heap can be expanded with
 <B><A HREF="../man2/brk.2.html">brk</A></B>(2).
 
-<DT>(48) <I>arg_start</I> &nbsp;%lu &nbsp;(since Linux 3.5)<DD>
+<DT>(48) <I>arg_start</I> &nbsp;%lu &nbsp;(since Linux 3.5) &nbsp;[PT]<DD>
 
 Address above which program command-line arguments
 (<I>argv</I>)
 
 are placed.
-<DT>(49) <I>arg_end</I> &nbsp;%lu &nbsp;(since Linux 3.5)<DD>
+<DT>(49) <I>arg_end</I> &nbsp;%lu &nbsp;(since Linux 3.5) &nbsp;[PT]<DD>
 
 Address below program command-line arguments
 (<I>argv</I>)
 
 are placed.
-<DT>(50) <I>env_start</I> &nbsp;%lu &nbsp;(since Linux 3.5)<DD>
+<DT>(50) <I>env_start</I> &nbsp;%lu &nbsp;(since Linux 3.5) &nbsp;[PT]<DD>
 
 Address above which program environment is placed.
-<DT>(51) <I>env_end</I> &nbsp;%lu &nbsp;(since Linux 3.5)<DD>
+<DT>(51) <I>env_end</I> &nbsp;%lu &nbsp;(since Linux 3.5) &nbsp;[PT]<DD>
 
 Address below which program environment is placed.
-<DT>(52) <I>exit_code</I> &nbsp;%d &nbsp;(since Linux 3.5)<DD>
+<DT>(52) <I>exit_code</I> &nbsp;%d &nbsp;(since Linux 3.5) &nbsp;[PT]<DD>
 
 The thread's exit status in the form reported by
 <B><A HREF="../man2/waitpid.2.html">waitpid</A></B>(2).
@@ -2225,15 +2341,21 @@ Here's an example:
 
 $<B> cat /proc/$$/status</B>
 Name:   bash
+Umask:  0022
 State:  S (sleeping)
-Tgid:   3515
-Pid:    3515
-PPid:   3452
+Tgid:   17248
+Ngid:   0
+Pid:    17248
+PPid:   17200
 TracerPid:      0
 Uid:    1000    1000    1000    1000
 Gid:    100     100     100     100
 FDSize: 256
 Groups: 16 33 100
+NStgid: 17248
+NSpid:  17248
+NSpgid: 17248
+NSsid:  17200
 VmPeak:     9136 kB
 VmSize:     7896 kB
 VmLck:         0 kB
@@ -2278,6 +2400,11 @@ The fields are as follows:
 
 Command run by this process.
 <DT>*<DD>
+<I>Umask</I>:
+
+Process umask, expressed in octal with a leading zero.
+(Since Linux 4.7.)
+<DT>*<DD>
 <I>State</I>:
 
 Current state of the process.
@@ -2294,6 +2421,10 @@ or
 <I>Tgid</I>:
 
 Thread group ID (i.e., Process ID).
+<DT>*<DD>
+<I>Ngid</I>:
+
+NUMA group ID (0 if none; since Linux 3.13).
 <DT>*<DD>
 <I>Pid</I>:
 
@@ -2320,6 +2451,52 @@ Number of file descriptor slots currently allocated.
 <I>Groups</I>:
 
 Supplementary group list.
+<DT>*<DD>
+<I>NStgid</I>
+
+Thread group ID (i.e., PID) in each of the PID namespaces of which
+<I>[pid]</I>
+
+is a member.
+The leftmost entry shows the value with respect to the PID namespace
+of the reading process,
+followed by the value in successively nested inner namespaces.
+
+(Since Linux 4.1.)
+<DT>*<DD>
+<I>NSpid</I>
+
+Thread ID in each of the PID namespaces of which
+<I>[pid]</I>
+
+is a member.
+The fields are ordered as for
+<I>NStgid</I>.
+
+(Since Linux 4.1.)
+<DT>*<DD>
+<I>NSpgid</I>
+
+Process group ID in each of the PID namespaces of which
+<I>[pid]</I>
+
+is a member.
+The fields are ordered as for
+<I>NStgid</I>.
+
+(Since Linux 4.1.)
+<DT>*<DD>
+<I>NSsid</I>
+
+descendant namespace session ID hierarchy
+Session ID in each of the PID namespaces of which
+<I>[pid]</I>
+
+is a member.
+The fields are ordered as for
+<I>NStgid</I>.
+
+(Since Linux 4.1.)
 <DT>*<DD>
 <I>VmPeak</I>:
 
@@ -2501,6 +2678,13 @@ If process is not blocked, then the file contains just the string &quot;running&
 This file is present only if the kernel was configured with
 <B>CONFIG_HAVE_ARCH_TRACEHOOK</B>.
 
+<P>
+Permission to access this file is governed by a ptrace access mode
+<B>PTRACE_MODE_ATTACH_FSCREDS</B>
+
+check; see
+<B><A HREF="../man2/ptrace.2.html">ptrace</A></B>(2).
+
 <DT><I>/proc/[pid]/task</I> (since Linux 2.6.0-test6)
 
 <DD>
@@ -2641,6 +2825,30 @@ in this field.
 This file is available only when the kernel was configured with
 <B>CONFIG_CHECKPOINT_RESTORE</B>.
 
+<DT><I>/proc/[pid]/timerslack_ns</I> (since Linux 4.6)
+
+<DD>
+
+
+This file exposes the process's &quot;current&quot; timer slack value,
+expressed in nanoseconds.
+The file is writable,
+allowing the process's timer slack value to be changed.
+Writing 0 to this file resets the &quot;current&quot; timer slack to the
+&quot;default&quot; timer slack value.
+For further details, see the discussion of
+<B>PR_SET_TIMERSLACK</B>
+
+in
+<B><A HREF="../man2/prctl.2.html">prctl</A></B>(2).
+
+<P>
+Permission to access this file is governed by a ptrace access mode
+<B>PTRACE_MODE_ATTACH_FSCREDS</B>
+
+check; see
+<B><A HREF="../man2/ptrace.2.html">ptrace</A></B>(2).
+
 <DT><I>/proc/[pid]/uid_map</I>, <I>/proc/[pid]/gid_map</I> (since Linux 3.5)
 
 <DD>
@@ -2652,6 +2860,13 @@ See
 <DD>
 The symbolic name corresponding to the location
 in the kernel where the process is sleeping.
+<P>
+Permission to access this file is governed by a ptrace access mode
+<B>PTRACE_MODE_READ_FSCREDS</B>
+
+check; see
+<B><A HREF="../man2/ptrace.2.html">ptrace</A></B>(2).
+
 <DT><I>/proc/apm</I>
 
 <DD>
@@ -3328,7 +3543,8 @@ allocated for the entire 1GB.
 This 1GB is memory which has been &quot;committed&quot; to by the VM
 and can be used at any time by the allocating application.
 With strict overcommit enabled on the system (mode 2 in
-IR /proc/sys/vm/overcommit_memory ),
+<I>/proc/sys/vm/overcommit_memory</I>),
+
 allocations which would exceed the
 <I>CommitLimit</I>
 
@@ -3455,8 +3671,10 @@ See also
 <DD>
 Before kernel 2.4.19, this file was a list
 of all the filesystems currently mounted on the system.
-With the introduction of per-process mount namespaces in
-Linux 2.4.19, this file became a link to
+With the introduction of per-process mount namespaces in Linux 2.4.19 (see
+<B><A HREF="../man7/mount_namespaces.7.html">mount_namespaces</A></B>(7)),
+
+this file became a link to
 <I>/proc/self/mounts</I>,
 
 which lists the mount points of the process's own mount namespace.
@@ -3474,9 +3692,9 @@ for details.
 <DT><I>/proc/net</I>
 
 <DD>
-various net pseudo-files, all of which give the status of some part of
-the networking layer.
-These files contain ASCII structures and are,
+This directory contains various files and subdirectories containing
+information about the networking layer.
+The files contain ASCII structures and are,
 therefore, readable with
 <B><A HREF="../man1/cat.1.html">cat</A></B>(1).
 
@@ -3484,6 +3702,21 @@ However, the standard
 <B><A HREF="../man8/netstat.8.html">netstat</A></B>(8)
 
 suite provides much cleaner access to these files.
+<P>
+With the advent of network namespaces,
+various information relating to the network stack is virtualized (see
+<B><A HREF="../man7/namespaces.7.html">namespaces</A></B>(7)).
+
+Thus, since Linux 2.6.25,
+
+<I>/proc/net</I>
+
+is a symbolic link to the directory
+<I>/proc/self/net</I>,
+
+which contains the same files and directories as listed below.
+However, these files and directories now expose information
+for the network namespace of which the process is a member.
 <DT><I>/proc/net/arp</I>
 
 <DD>
@@ -6815,6 +7048,6 @@ and
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:43:08 GMT, April 20, 2020
+Time: 03:43:46 GMT, April 20, 2020
 </BODY>
 </HTML>

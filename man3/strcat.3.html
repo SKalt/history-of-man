@@ -26,7 +26,7 @@ the source, must acknowledge the copyright and authors of this work.
 <HTML><HEAD><TITLE>Man page of STRCAT</TITLE>
 </HEAD><BODY>
 <H1>STRCAT</H1>
-Section: Linux Programmer's Manual (3)<BR>Updated: 2015-08-08<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2016-07-17<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -241,7 +241,61 @@ but is available on Linux via the
 <I>libbsd</I>
 
 library.
+
 <A NAME="lbAI">&nbsp;</A>
+<H2>EXAMPLE</H2>
+
+Because
+<B>strcat</B>()
+
+and
+<B>strncat</B>()
+
+must find the null byte that terminates the string
+<I>dest</I>
+
+using a search that starts at the beginning of the string,
+the execution time of these functions
+scales according to the length of the string
+<I>dest</I>.
+
+This can be demonstrated by running the program below.
+(If the goal is to concatenate many strings to one target,
+then manually copying the bytes from each source string
+while maintaining a pointer to the end of the target string
+will provide better performance.)
+
+<A NAME="lbAJ">&nbsp;</A>
+<H3>Program source</H3>
+
+
+<PRE>
+#include &lt;<A HREF="file:///usr/include/string.h">string.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/time.h">time.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;
+
+int
+main(int argc, char *argv[])
+{
+#define LIM 4000000
+    int j;
+    char p[LIM];
+    time_t base;
+
+    base = time(NULL);
+    p[0] = '\0';
+
+    for (j = 0; j &lt; LIM; j++) {
+        if ((j % 10000) == 0)
+            printf(&quot;%d %ld\n&quot;, j, (long) (time(NULL) - base));
+        strcat(p, &quot;a&quot;);
+    }
+}
+</PRE>
+
+
+
+<A NAME="lbAK">&nbsp;</A>
 <H2>SEE ALSO</H2>
 
 <B><A HREF="../man3/bcopy.3.html">bcopy</A></B>(3),
@@ -272,12 +326,16 @@ library.
 <DT><A HREF="#lbAF">ATTRIBUTES</A><DD>
 <DT><A HREF="#lbAG">CONFORMING TO</A><DD>
 <DT><A HREF="#lbAH">NOTES</A><DD>
-<DT><A HREF="#lbAI">SEE ALSO</A><DD>
+<DT><A HREF="#lbAI">EXAMPLE</A><DD>
+<DL>
+<DT><A HREF="#lbAJ">Program source</A><DD>
+</DL>
+<DT><A HREF="#lbAK">SEE ALSO</A><DD>
 </DL>
 <HR>
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:43:05 GMT, April 20, 2020
+Time: 03:43:43 GMT, April 20, 2020
 </BODY>
 </HTML>

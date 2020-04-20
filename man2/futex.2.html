@@ -7,7 +7,7 @@ may be freely modified and distributed
 <HTML><HEAD><TITLE>Man page of FUTEX</TITLE>
 </HEAD><BODY>
 <H1>FUTEX</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2016-03-15<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2016-07-17<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -214,6 +214,7 @@ Where it is required, the
 
 argument is a pointer to a second futex word that is employed
 by the operation.
+<P>
 The interpretation of the final integer argument,
 <I>val3</I>,
 
@@ -278,24 +279,24 @@ This option bit can be employed only with the
 <B>FUTEX_WAIT_REQUEUE_PI</B>,
 
 and
-<B>FUTEX_WAIT</B>
-
 (since Linux 4.5)
+
+<B>FUTEX_WAIT</B>
 
 operations.
 <P>
-If this option is set, the kernel treats
+If this option is set, the kernel measures the
 <I>timeout</I>
 
-as an absolute time based on
-<B>CLOCK_REALTIME</B>.
+against the
+<B>CLOCK_REALTIME</B>
 
+clock.
 <P>
-If this option is not set, the kernel treats
+If this option is not set, the kernel measures the
 <I>timeout</I>
 
-as a relative time,
-measured against the
+against the
 <B>CLOCK_MONOTONIC</B>
 
 clock.
@@ -359,17 +360,54 @@ value change and will not start to sleep.
 If the
 <I>timeout</I>
 
-argument is non-NULL, its contents specify a relative timeout for the wait,
-measured according to the
-<B>CLOCK_MONOTONIC</B>
-
-clock.
+is not NULL, the structure it points to specifies a
+timeout for the wait.
 (This interval will be rounded up to the system clock granularity,
 and is guaranteed not to expire early.)
+The timeout is by default measured according to the
+<B>CLOCK_MONOTONIC</B>
+
+clock, but, since Linux 4.5, the
+<B>CLOCK_REALTIME</B>
+
+clock can be selected by specifying
+<B>FUTEX_CLOCK_REALTIME</B>
+
+in
+<I>futex_op</I>.
+
 If
 <I>timeout</I>
 
 is NULL, the call blocks indefinitely.
+<P>
+<I>Note</I>:
+
+for
+<B>FUTEX_WAIT</B>,
+
+<I>timeout</I>
+
+is interpreted as a
+<I>relative</I>
+
+value.
+This differs from other futex operations, where
+<I>timeout</I>
+
+is interpreted as an absolute value.
+To obtain the equivalent of
+<B>FUTEX_WAIT</B>
+
+with an absolute timeout, employ
+<B>FUTEX_WAIT_BITSET</B>
+
+with
+<I>val3</I>
+
+specified as
+<B>FUTEX_BITSET_MATCH_ANY</B>.
+
 <P>
 The arguments
 <I>uaddr2</I>
@@ -839,26 +877,24 @@ This operation is like
 except that
 <I>val3</I>
 
-is used to provide a 32-bit mask to the kernel.
-This bit mask is stored in the kernel-internal state of the waiter.
+is used to provide a 32-bit bit mask to the kernel.
+This bit mask, in which at least one bit must be set,
+is stored in the kernel-internal state of the waiter.
 See the description of
 <B>FUTEX_WAKE_BITSET</B>
 
 for further details.
 <P>
-The
-<B>FUTEX_WAIT_BITSET</B>
-
-operation also interprets the
+If
 <I>timeout</I>
 
-argument differently from
-<B>FUTEX_WAIT</B>.
+is not NULL, the structure it points to specifies
+an absolute timeout for the wait operation.
+If
+<I>timeout</I>
 
-See the discussion of
-<B>FUTEX_CLOCK_REALTIME</B>,
-
-above.
+is NULL, the operation can block indefinitely.
+<P>
 <P>
 The
 <I>uaddr2</I>
@@ -878,7 +914,8 @@ except that the
 <I>val3</I>
 
 argument is used to provide a 32-bit bit mask to the kernel.
-This bit mask is used to select which waiters should be woken up.
+This bit mask, in which at least one bit must be set,
+is used to select which waiters should be woken up.
 The selection is done by a bit-wise AND of the &quot;wake&quot; bit mask
 (i.e., the value in
 <I>val3</I>)
@@ -919,6 +956,48 @@ including those that are not interested in being woken up
 
 
 <P>
+The constant
+<B>FUTEX_BITSET_MATCH_ANY</B>,
+
+which corresponds to all 32 bits set in the bit mask, can be used as the
+<I>val3</I>
+
+argument for
+<B>FUTEX_WAIT_BITSET</B>
+
+and
+<B>FUTEX_WAKE_BITSET</B>.
+
+Other than differences in the handling of the
+<I>timeout</I>
+
+argument, the
+<B>FUTEX_WAIT</B>
+
+operation is equivalent to
+<B>FUTEX_WAIT_BITSET</B>
+
+with
+<I>val3</I>
+
+specified as
+<B>FUTEX_BITSET_MATCH_ANY</B>;
+
+that is, allow a wake-up by any waker.
+The
+<B>FUTEX_WAKE</B>
+
+operation is equivalent to
+<B>FUTEX_WAKE_BITSET</B>
+
+with
+<I>val3</I>
+
+specified as
+<B>FUTEX_BITSET_MATCH_ANY</B>;
+
+that is, wake up any waiter(s).
+<P>
 The
 <I>uaddr2</I>
 
@@ -926,20 +1005,6 @@ and
 <I>timeout</I>
 
 arguments are ignored.
-<P>
-The
-<B>FUTEX_WAIT</B>
-
-and
-<B>FUTEX_WAKE</B>
-
-operations correspond to
-<B>FUTEX_WAIT_BITSET</B>
-
-and
-<B>FUTEX_WAKE_BITSET</B>
-
-operations where the bit masks are all ones.
 
 
 
@@ -1256,10 +1321,30 @@ The
 <I>timeout</I>
 
 argument provides a timeout for the lock attempt.
-It is interpreted as an absolute time, measured against the
+If
+<I>timeout</I>
+
+is not NULL, the structure it points to specifies
+an absolute timeout, measured against the
 <B>CLOCK_REALTIME</B>
 
 clock.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 If
 <I>timeout</I>
 
@@ -1464,11 +1549,8 @@ operation fails with the error
 If
 <I>timeout</I>
 
-is not NULL, it specifies a timeout for the wait operation;
-this timeout is interpreted as outlined above in the description of the
-<B>FUTEX_CLOCK_REALTIME</B>
-
-option.
+is not NULL, the structure it points to specifies
+an absolute timeout for the wait operation.
 If
 <I>timeout</I>
 
@@ -1988,7 +2070,9 @@ option was specified in
 <I>futex_op</I>,
 
 but the accompanying operation was neither
-<B>FUTEX_WAIT_BITSET</B>
+<B>FUTEX_WAIT</B>,
+
+<B>FUTEX_WAIT_BITSET</B>,
 
 nor
 <B>FUTEX_WAIT_REQUEUE_PI</B>.
@@ -2389,6 +2473,6 @@ Futex example library, futex-*.tar.bz2 at
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:42:54 GMT, April 20, 2020
+Time: 03:43:32 GMT, April 20, 2020
 </BODY>
 </HTML>
