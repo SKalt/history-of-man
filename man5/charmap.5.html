@@ -20,168 +20,155 @@ License along with this manual; if not, see
 <HTML><HEAD><TITLE>Man page of CHARMAP</TITLE>
 </HEAD><BODY>
 <H1>CHARMAP</H1>
-Section: Linux User Manual (5)<BR>Updated: 1994-11-28<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (5)<BR>Updated: 2014-06-02<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
 <H2>NAME</H2>
 
-charmap - character symbols to define character encodings
+charmap - characters to define character sets
 <A NAME="lbAC">&nbsp;</A>
 <H2>DESCRIPTION</H2>
 
-A character set description (charmap) defines a character set of
-available characters and their encodings.
-All supported character
-sets should have the
-<B>portable character set</B>
-
-as a proper subset.
-
-
-
-
-
+A character set description (charmap) defines all available characters
+and their encodings in a character set.
+All ISO C compliant character sets should have
+the ASCII character set as a proper subset.
 <A NAME="lbAD">&nbsp;</A>
 <H3>Syntax</H3>
 
-The charmap file starts with a header, that may consist of the
+The charmap file starts with a header that may consist of the
 following keywords:
 <DL COMPACT>
-<DT><I>&lt;codeset&gt;</I>
+<DT><I>&lt;code_set_name&gt;</I>
 
 <DD>
-is followed by the name of the codeset.
-<DT><I>&lt;mb_cur_max&gt;</I>
-
-<DD>
-is followed by the max number of bytes for a multibyte-character.
-Multibyte characters are currently not supported.
-The default value
-is 1.
-<DT><I>&lt;mb_cur_min&gt;</I>
-
-<DD>
-is followed by the min number of bytes for a character.
-This
-value must be less than or equal than
-<B>mb_cur_max</B>.
-
-If not specified, it defaults to
-<B>mb_cur_max</B>.
-
-<DT><I>&lt;escape_char&gt;</I>
-
-<DD>
-is followed by a character that should be used as the
-escape-character for the rest of the file to mark characters that
-should be interpreted in a special way.
-It defaults to
-the backslash (
-<B>\\</B>
-
-).
+is followed by the name of the character map.
 <DT><I>&lt;comment_char&gt;</I>
 
 <DD>
-is followed by a character that will be used as the
-comment-character for the rest of the file.
-It defaults to the
-number sign (
-<B>#</B>
+is followed by a character that will be used as the comment character
+for the rest of the file.
+It defaults to the number sign (#).
+<DT><I>&lt;escape_char&gt;</I>
 
-).
+<DD>
+is followed by a character that should be used as the escape character
+for the rest of the file to mark characters that should be interpreted
+in a special way.
+It defaults to the backslash (\).
+<DT><I>&lt;mb_cur_max&gt;</I>
+
+<DD>
+is followed by the maximum number of bytes for a character.
+The default value is 1.
+<DT><I>&lt;mb_cur_min&gt;</I>
+
+<DD>
+is followed by the minimum number of bytes for a character.
+This value must be less than or equal than
+<I>mb_cur_max</I>.
+
+If not specified, it defaults to
+<I>mb_cur_max</I>.
+
 </DL>
 <P>
 
-The charmap-definition itself starts with the keyword
+The character set definition section starts with the keyword
 <B>CHARMAP</B>
 
-in column 1.
+in the first column.
 <P>
 The following lines may have one of the two following forms to
-define the character-encodings:
+define the character set:
 <DL COMPACT>
-<DT><I>&lt;symbolic-name&gt; &lt;encoding&gt; &lt;comments&gt;</I>
+<DT><I>&lt;character&gt; &lt;byte-sequence&gt; &lt;comment&gt;</I>
 
 <DD>
-This form defines exactly one character and its encoding.
-<DT><I>&lt;symbolic-name&gt;...&lt;symbolic-name&gt; &lt;encoding&gt; &lt;comments&gt;</I>
+This form defines exactly one character and its byte sequence,
+<I>&lt;comment&gt;</I>
+
+being optional.
+<DT><I>&lt;character&gt;..&lt;character&gt; &lt;byte-sequence&gt; &lt;comment&gt;</I>
 
 <DD>
-This form defines a couple of characters.
-This is useful only for
-multibyte-characters, which are currently not implemented.
+This form defines a character range and its byte sequence,
+<I>&lt;comment&gt;</I>
+
+being optional.
 </DL>
 <P>
 
-The last line in a charmap-definition file must contain
-<B>END CHARMAP.</B>
+The character set definition section ends with the string
+<I>END CHARMAP</I>.
+
+<P>
+
+The character set definition section may optionally be followed by a
+section to define widths of characters.
+<P>
+
+The width section starts with the keyword
+<B>WIDTH</B>
+
+in the first column.
+<P>
+The following lines may have one of the two following forms to
+define the widths of the characters:
+<DL COMPACT>
+<DT><I>&lt;character&gt; &lt;width&gt;</I>
+
+<DD>
+This form defines the width of exactly one character.
+<DT><I>&lt;character&gt;...&lt;character&gt; &lt;width&gt;</I>
+
+<DD>
+This form defines the width for all the characters in the range.
+</DL>
+<P>
+
+The width definition section ends with the string
+<I>END WIDTH</I>.
 
 <A NAME="lbAE">&nbsp;</A>
-<H3>Symbolic names</H3>
-
-A
-<B>symbolic name</B>
-
-for a character contains only characters of the
-<B>portable character set.</B>
-
-The name itself is enclosed between angle brackets.
-Characters following an
-<B>&lt;escape_char&gt;</B>
-
-are interpreted as itself; for example, the sequence
-<B>&lt;\\\\\\&gt;&gt;</B>
-
-represents the symbolic name
-<B>\\&gt;</B>
-
-enclosed in angle brackets.
-<A NAME="lbAF">&nbsp;</A>
-<H3>Character encoding</H3>
-
-The
-encoding may be in each of the following three forms:
-<DL COMPACT>
-<DT><I>&lt;escape_char&gt;d&lt;number&gt;</I>
-
-<DD>
-with a decimal number
-<DT><I>&lt;escape_char&gt;x&lt;number&gt;</I>
-
-<DD>
-with a hexadecimal number
-<DT><I>&lt;escape_char&gt;&lt;number&gt;</I>
-
-<DD>
-with an octal number.
-
-
-</DL>
-<A NAME="lbAG">&nbsp;</A>
 <H2>FILES</H2>
 
-<I>/usr/share/i18n/charmaps/*</I>
+<DL COMPACT>
+<DT><I>/usr/share/i18n/charmaps</I>
 
-
-
-<A NAME="lbAH">&nbsp;</A>
+<DD>
+Usual default character map path.
+</DL>
+<A NAME="lbAF">&nbsp;</A>
 <H2>CONFORMING TO</H2>
 
 POSIX.2.
-<A NAME="lbAI">&nbsp;</A>
+<A NAME="lbAG">&nbsp;</A>
+<H2>EXAMPLE</H2>
+
+The Euro sign is defined as follows in the
+<I>UTF-8</I>
+
+charmap:
+<P>
+
+<PRE>
+&lt;U20AC&gt;     /xe2/x82/xac
+</PRE>
+
+<A NAME="lbAH">&nbsp;</A>
 <H2>SEE ALSO</H2>
+
+<B><A HREF="../man1/iconv.1.html">iconv</A></B>(1),
 
 <B><A HREF="../man1/locale.1.html">locale</A></B>(1),
 
 <B><A HREF="../man1/localedef.1.html">localedef</A></B>(1),
 
-<B><A HREF="../man3/localeconv.3.html">localeconv</A></B>(3),
+<B><A HREF="../man5/locale.5.html">locale</A></B>(5),
 
-<B><A HREF="../man3/setlocale.3.html">setlocale</A></B>(3),
-
-<B><A HREF="../man5/locale.5.html">locale</A></B>(5)
+<B><A HREF="../man7/charsets.7.html">charsets</A></B>(7)
 
 <P>
 
@@ -192,17 +179,16 @@ POSIX.2.
 <DT><A HREF="#lbAC">DESCRIPTION</A><DD>
 <DL>
 <DT><A HREF="#lbAD">Syntax</A><DD>
-<DT><A HREF="#lbAE">Symbolic names</A><DD>
-<DT><A HREF="#lbAF">Character encoding</A><DD>
 </DL>
-<DT><A HREF="#lbAG">FILES</A><DD>
-<DT><A HREF="#lbAH">CONFORMING TO</A><DD>
-<DT><A HREF="#lbAI">SEE ALSO</A><DD>
+<DT><A HREF="#lbAE">FILES</A><DD>
+<DT><A HREF="#lbAF">CONFORMING TO</A><DD>
+<DT><A HREF="#lbAG">EXAMPLE</A><DD>
+<DT><A HREF="#lbAH">SEE ALSO</A><DD>
 </DL>
 <HR>
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:30:28 GMT, April 20, 2020
+Time: 03:31:05 GMT, April 20, 2020
 </BODY>
 </HTML>

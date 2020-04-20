@@ -26,7 +26,7 @@ the source, must acknowledge the copyright and authors of this work.
 <HTML><HEAD><TITLE>Man page of STATFS</TITLE>
 </HEAD><BODY>
 <H1>STATFS</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2010-11-21<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2014-06-13<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -89,20 +89,30 @@ Filesystem types:
 
    ADFS_SUPER_MAGIC      0xadf5
    AFFS_SUPER_MAGIC      0xADFF
+   BDEVFS_MAGIC          0x62646576
    BEFS_SUPER_MAGIC      0x42465331
    BFS_MAGIC             0x1BADFACE
+   BINFMTFS_MAGIC        0x42494e4d
+   BTRFS_SUPER_MAGIC     0x9123683E
+   CGROUP_SUPER_MAGIC    0x27e0eb
    CIFS_MAGIC_NUMBER     0xFF534D42
    CODA_SUPER_MAGIC      0x73757245
    COH_SUPER_MAGIC       0x012FF7B7
    CRAMFS_MAGIC          0x28cd3d45
+   DEBUGFS_MAGIC         0x64626720
    DEVFS_SUPER_MAGIC     0x1373
+   DEVPTS_SUPER_MAGIC    0x1cd1
+   EFIVARFS_MAGIC        0xde5e81e4
    EFS_SUPER_MAGIC       0x00414A53
    EXT_SUPER_MAGIC       0x137D
    EXT2_OLD_SUPER_MAGIC  0xEF51
    EXT2_SUPER_MAGIC      0xEF53
    EXT3_SUPER_MAGIC      0xEF53
    EXT4_SUPER_MAGIC      0xEF53
+   FUSE_SUPER_MAGIC      0x65735546
+   FUTEXFS_SUPER_MAGIC   0xBAD1DEA
    HFS_SUPER_MAGIC       0x4244
+   HOSTFS_SUPER_MAGIC    0x00c0ffee
    HPFS_SUPER_MAGIC      0xF995E849
    HUGETLBFS_MAGIC       0x958458f6
    ISOFS_SUPER_MAGIC     0x9660
@@ -112,29 +122,49 @@ Filesystem types:
    MINIX_SUPER_MAGIC2    0x138F /* 30 char minix */
    MINIX2_SUPER_MAGIC    0x2468 /* minix V2 */
    MINIX2_SUPER_MAGIC2   0x2478 /* minix V2, 30 char names */
+   MINIX3_SUPER_MAGIC    0x4d5a /* minix V3 fs, 60 char names */
+   MQUEUE_MAGIC          0x19800202
    MSDOS_SUPER_MAGIC     0x4d44
    NCP_SUPER_MAGIC       0x564c
    NFS_SUPER_MAGIC       0x6969
+   NILFS_SUPER_MAGIC     0x3434
    NTFS_SB_MAGIC         0x5346544e
    OPENPROM_SUPER_MAGIC  0x9fa1
+   PIPEFS_MAGIC          0x50495045
    PROC_SUPER_MAGIC      0x9fa0
+   PSTOREFS_MAGIC        0x6165676C
    QNX4_SUPER_MAGIC      0x002f
+   QNX6_SUPER_MAGIC      0x68191122
+   RAMFS_MAGIC           0x858458f6
    REISERFS_SUPER_MAGIC  0x52654973
    ROMFS_MAGIC           0x7275
+   SELINUX_MAGIC         0xf97cff8c
+   SMACK_MAGIC           0x43415d53
    SMB_SUPER_MAGIC       0x517B
+   SOCKFS_MAGIC          0x534F434B
+   SQUASHFS_MAGIC        0x73717368
+   SYSFS_MAGIC           0x62656572
    SYSV2_SUPER_MAGIC     0x012FF7B6
    SYSV4_SUPER_MAGIC     0x012FF7B5
    TMPFS_MAGIC           0x01021994
    UDF_SUPER_MAGIC       0x15013346
    UFS_MAGIC             0x00011954
    USBDEVICE_SUPER_MAGIC 0x9fa2
+   V9FS_MAGIC            0x01021997
    VXFS_SUPER_MAGIC      0xa501FCF5
+   XENFS_SUPER_MAGIC     0xabba1974
    XENIX_SUPER_MAGIC     0x012FF7B4
    XFS_SUPER_MAGIC       0x58465342
    _XIAFS_SUPER_MAGIC    0x012FD16D
 </PRE>
 
 
+<P>
+
+Most of these MAGIC constants are defined in
+<I>/usr/include/linux/magic.h</I>
+
+some are hardcoded in kernel sources.
 <P>
 
 Nobody knows what
@@ -352,9 +382,9 @@ contains some random stuff such that the pair
 (<I>f_fsid</I>,<I>ino</I>)
 
 uniquely determines a file.
-Some operating systems use (a variation on) the device number, or the device number
-combined with the filesystem type.
-Several OSes restrict giving out the
+Some operating systems use (a variation on) the device number,
+or the device number combined with the filesystem type.
+Several operating systems restrict giving out the
 <I>f_fsid</I>
 
 field to the superuser only (and zero it for unprivileged users),
@@ -362,14 +392,28 @@ because this field is used in the filehandle of the filesystem
 when NFS-exported, and giving it out is a security concern.
 <P>
 
-Under some operating systems the
+Under some operating systems, the
 <I>fsid</I>
 
-can be used as second argument to the
+can be used as the second argument to the
 <B><A HREF="../man2/sysfs.2.html">sysfs</A></B>(2)
 
 system call.
 <A NAME="lbAJ">&nbsp;</A>
+<H2>BUGS</H2>
+
+From Linux 2.6.38 up to and including Linux 3.1,
+
+
+<B>fstatfs</B>()
+
+failed with the error
+<B>ENOSYS</B>
+
+for file descriptors created by
+<B><A HREF="../man2/pipe.2.html">pipe</A></B>(2).
+
+<A NAME="lbAK">&nbsp;</A>
 <H2>SEE ALSO</H2>
 
 <B><A HREF="../man2/stat.2.html">stat</A></B>(2),
@@ -393,12 +437,13 @@ system call.
 <DL>
 <DT><A HREF="#lbAI">The f_fsid field</A><DD>
 </DL>
-<DT><A HREF="#lbAJ">SEE ALSO</A><DD>
+<DT><A HREF="#lbAJ">BUGS</A><DD>
+<DT><A HREF="#lbAK">SEE ALSO</A><DD>
 </DL>
 <HR>
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:30:18 GMT, April 20, 2020
+Time: 03:30:54 GMT, April 20, 2020
 </BODY>
 </HTML>

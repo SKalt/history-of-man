@@ -26,7 +26,7 @@ the source, must acknowledge the copyright and authors of this work.
 <HTML><HEAD><TITLE>Man page of SETUID</TITLE>
 </HEAD><BODY>
 <H1>SETUID</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2010-11-22<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2014-06-13<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -96,6 +96,16 @@ On error, -1 is returned, and
 <I>errno</I>
 
 is set appropriately.
+<P>
+<I>Note</I>:
+
+there are cases where
+<B>setuid</B>()
+
+can fail even when the caller is UID 0;
+it is a grave security error to omit checking for a failure return from
+<B>setuid</B>().
+
 <A NAME="lbAF">&nbsp;</A>
 <H2>ERRORS</H2>
 
@@ -103,16 +113,33 @@ is set appropriately.
 <DT><B>EAGAIN</B>
 
 <DD>
-The
+The call would change the caller's real UID (i.e.,
 <I>uid</I>
 
-does not match the current uid and
+does not match the caller's real UID),
+but there was a temporary failure allocating the
+necessary kernel data structures.
+<DT><B>EAGAIN</B>
+
+<DD>
 <I>uid</I>
 
-brings process over its
+does not match the real user ID of the caller and this call would
+bring the number of processes belonging to the real user ID
+<I>uid</I>
+
+over the caller's
 <B>RLIMIT_NPROC</B>
 
 resource limit.
+Since Linux 3.1, this error case no longer occurs
+(but robust applications should check for this error);
+see the description of
+<B>EAGAIN</B>
+
+in
+<B><A HREF="../man2/execve.2.html">execve</A></B>(2).
+
 <DT><B>EPERM</B>
 
 <DD>
@@ -196,6 +223,6 @@ wrapper function transparently deals with the variation across kernel versions.
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:30:17 GMT, April 20, 2020
+Time: 03:30:54 GMT, April 20, 2020
 </BODY>
 </HTML>

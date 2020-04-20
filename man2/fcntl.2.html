@@ -25,7 +25,7 @@ the source, must acknowledge the copyright and authors of this work.
 <HTML><HEAD><TITLE>Man page of FCNTL</TITLE>
 </HEAD><BODY>
 <H1>FCNTL</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2014-05-21<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2014-06-13<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -73,6 +73,20 @@ or
 <I>void</I>
 
 is specified if the argument is not required.
+<P>
+Certain of the operations below are supported only since a particular
+Linux kernel version.
+The preferred method of checking whether the host kernel supports
+a particular operation is to invoke
+<B>fcntl</B>()
+
+with the desired
+<I>cmd</I>
+
+value and then test whether the call failed with
+<B>EINVAL</B>,
+
+indicating that the kernel does not recognize this value.
 <A NAME="lbAE">&nbsp;</A>
 <H3>Duplicating a file descriptor</H3>
 
@@ -249,8 +263,13 @@ and
 flags; see BUGS, below.
 </DL>
 <A NAME="lbAH">&nbsp;</A>
-<H3>Advisory locking</H3>
+<H3>Advisory record locking</H3>
 
+Linux implements traditional (&quot;process-associated&quot;) UNIX record locks,
+as standardized by POSIX.
+For a Linux-specific alternative with better semantics,
+see the discussion of open file description locks below.
+<P>
 <B>F_SETLK</B>,
 
 <B>F_SETLKW</B>,
@@ -259,7 +278,7 @@ and
 <B>F_GETLK</B>
 
 are used to acquire, release, and test for the existence of record
-locks (also known as file-segment or file-region locks).
+locks (also known as byte-range, file-segment, or file-region locks).
 The third argument,
 <I>lock</I>,
 
@@ -277,7 +296,7 @@ struct flock {
     off_t l_start;   /* Starting offset for lock */
     off_t l_len;     /* Number of bytes to lock */
     pid_t l_pid;     /* PID of process blocking our lock
-                        (F_GETLK only) */
+                        (set by F_GETLK and F_OFD_GETLK) */
     ...
 };
 </PRE>
@@ -415,6 +434,8 @@ to
 or
 <B>EAGAIN</B>.
 
+(The error returned in this case differs across implementations,
+so POSIX requires a portable application to check for both errors.)
 <DT><B>F_SETLKW</B> (<I>struct flock *</I>)
 
 <DD>
@@ -454,23 +475,27 @@ field of
 <I>lock</I>
 
 and leaves the other fields of the structure unchanged.
+<P>
 If one or more incompatible locks would prevent
 this lock being placed, then
 <B>fcntl</B>()
 
-returns details about one of these locks in the
+returns details about one of those locks in the
 <I>l_type</I>, <I>l_whence</I>, <I>l_start</I>, and <I>l_len</I>
 
 fields of
-<I>lock</I>
+<I>lock</I>.
 
-and sets
+If the conflicting lock is a traditional (process-associated) record lock,
+then the
 <I>l_pid</I>
 
-to be the PID of the process holding that lock.
-Note that the information returned by
-<B>F_GETLK</B>
+field is set to the PID of the process holding that lock.
+If the conflicting lock is an open file description lock, then
+<I>l_pid</I>
 
+is set to -1.
+Note that the returned information
 may already be out of date by the time the caller inspects it.
 </DL>
 <P>
@@ -485,27 +510,37 @@ In order to place a write lock,
 must be open for writing.
 To place both types of lock, open a file read-write.
 <P>
+When placing locks with
+<B>F_SETLKW</B>,
 
+the kernel detects
+<I>deadlocks</I>,
+
+whereby two or more processes have their
+lock requests mutually blocked by locks held by the other processes.
+For example, suppose process A holds a write lock on byte 100 of a file,
+and process B holds a write lock on byte 200.
+If each process then attempts to lock the byte already
+locked by the other process using
+<B>F_SETLKW</B>,
+
+then, without deadlock detection,
+both processes would remain blocked indefinitely.
+When the kernel detects such deadlocks,
+it causes one of the blocking lock requests to immediately fail with the error
+<B>EDEADLK</B>;
+
+an application that encounters such an error should release
+some of its locks to allow other applications to proceed before
+attempting regain the locks that it requires.
+Circular deadlocks involving more than two processes are also detected.
+Note, however, that there are limitations to the kernel's
+deadlock-detection algorithm; see BUGS.
+<P>
 As well as being removed by an explicit
 <B>F_UNLCK</B>,
 
-record locks are automatically released when the process
-terminates or if it closes
-<I>any</I>
-
-file descriptor referring to a file on which locks are held.
-
-
-
-This is bad: it means that a process can lose the locks on
-a file like
-<I>/etc/passwd</I>
-
-or
-<I>/etc/mtab</I>
-
-when for some reason a library function decides to open, read
-and close it.
+record locks are automatically released when the process terminates.
 <P>
 
 Record locks are not inherited by a child created via
@@ -527,16 +562,221 @@ and
 <B><A HREF="../man2/write.2.html">write</A></B>(2)
 
 instead.
+<P>
+The record locks described above are associated with the process
+(unlike the open file description locks described below).
+This has some unfortunate consequences:
+<DL COMPACT>
+<DT>*<DD>
+If a process closes
+<I>any</I>
+
+file descriptor referring to a file,
+then all of the process's locks on that file are released,
+regardless of the file descriptor(s) on which the locks were obtained.
+
+
+
+This is bad: it means that a process can lose its locks on
+a file such as
+<I>/etc/passwd</I>
+
+or
+<I>/etc/mtab</I>
+
+when for some reason a library function decides to open, read,
+and close the same file.
+<DT>*<DD>
+The threads in a process share locks.
+In other words,
+a multithreaded program can't use record locking to ensure
+that threads don't simultaneously access the same region of a file.
+</DL>
+<P>
+
+Open file description locks solve both of these problems.
 <A NAME="lbAI">&nbsp;</A>
+<H3>Open file description locks (non-POSIX)</H3>
+
+Open file description locks are advisory byte-range locks whose operation is
+in most respects identical to the traditional record locks described above.
+This lock type is Linux-specific,
+and available since Linux 3.15.
+For an explanation of open file descriptions, see
+<B><A HREF="../man2/open.2.html">open</A></B>(2)
+
+<P>
+The principal difference between the two lock types
+is that whereas traditional record locks
+are associated with a process,
+open file description locks are associated with the
+open file description on which they are acquired,
+much like locks acquired with
+<B><A HREF="../man2/flock.2.html">flock</A></B>(2).
+
+Consequently (and unlike traditional advisory record locks),
+open file description locks are inherited across
+<B><A HREF="../man2/fork.2.html">fork</A></B>(2)
+
+(and
+<B><A HREF="../man2/clone.2.html">clone</A></B>(2)
+
+with
+<B>CLONE_FILES</B>),
+
+and are only automatically released on the last close
+of the open file description,
+instead of being released on any close of the file.
+<P>
+
+Open file description locks always conflict with traditional record locks,
+even when they are acquired by the same process on the same file descriptor.
+<P>
+Open file description locks placed via the same open file description
+(i.e., via the same file descriptor,
+or via a duplicate of the file descriptor created by
+<B><A HREF="../man2/fork.2.html">fork</A></B>(2),
+
+<B><A HREF="../man2/dup.2.html">dup</A></B>(2),
+
+<B><A HREF="../man2/fcntl.2.html">fcntl</A></B>(2)
+
+<B>F_DUPFD</B>,
+
+and so on) are always compatible:
+if a new lock is placed on an already locked region,
+then the existing lock is converted to the new lock type.
+(Such conversions may result in splitting, shrinking, or coalescing with
+an existing lock as discussed above.)
+<P>
+On the other hand, open file description locks may conflict with
+each other when they are acquired via different open file descriptions.
+Thus, the threads in a multithreaded program can use
+open file description locks to synchronize access to a file region
+by having each thread perform its own
+<B><A HREF="../man2/open.2.html">open</A></B>(2)
+
+on the file and applying locks via the resulting file descriptor.
+<P>
+
+As with traditional advisory locks, the third argument to
+<B>fcntl</B>(),
+
+<I>lock</I>,
+
+is a pointer to an
+<I>flock</I>
+
+structure.
+By contrast with traditional record locks, the
+<I>l_pid</I>
+
+field of that structure must be set to zero
+when using the commands described below.
+<P>
+The commands for working with open file description locks are analogous
+to those used with traditional locks:
+<DL COMPACT>
+<DT><B>F_OFD_SETLK</B> (<I>struct flock *</I>)
+
+<DD>
+Acquire an open file description lock (when
+<I>l_type</I>
+
+is
+<B>F_RDLCK</B>
+
+or
+<B>F_WRLCK</B>)
+
+or release an open file description lock (when
+<I>l_type</I>
+
+is
+<B>F_UNLCK</B>)
+
+on the bytes specified by the
+<I>l_whence</I>, <I>l_start</I>, and <I>l_len</I>
+
+fields of
+<I>lock</I>.
+
+If a conflicting lock is held by another process,
+this call returns -1 and sets
+<I>errno</I>
+
+to
+<B>EAGAIN</B>.
+
+<DT><B>F_OFD_SETLKW</B> (<I>struct flock *</I>)
+
+<DD>
+As for
+<B>F_OFD_SETLK</B>,
+
+but if a conflicting lock is held on the file, then wait for that lock to be
+released.
+If a signal is caught while waiting, then the call is interrupted
+and (after the signal handler has returned) returns immediately
+(with return value -1 and
+<I>errno</I>
+
+set to
+<B>EINTR</B>;
+
+see
+<B><A HREF="../man7/signal.7.html">signal</A></B>(7)).
+
+<DT><B>F_OFD_GETLK</B> (<I>struct flock *</I>)
+
+<DD>
+On input to this call,
+<I>lock</I>
+
+describes an open file description lock we would like to place on the file.
+If the lock could be placed,
+<B>fcntl</B>()
+
+does not actually place it, but returns
+<B>F_UNLCK</B>
+
+in the
+<I>l_type</I>
+
+field of
+<I>lock</I>
+
+and leaves the other fields of the structure unchanged.
+If one or more incompatible locks would prevent this lock being placed,
+then details about one of these locks are returned via
+<I>lock</I>,
+
+as described above for
+<B>F_GETLK</B>.
+
+</DL>
+<P>
+
+In the current implementation,
+
+no deadlock detection is performed for open file description locks.
+(This contrasts with process-associated record locks,
+for which the kernel does perform deadlock detection.)
+
+<A NAME="lbAJ">&nbsp;</A>
 <H3>Mandatory locking</H3>
 
-(Non-POSIX.)
-The above record locks may be either advisory or mandatory,
-and are advisory by default.
+<I>Warning</I>:
+
+the Linux implementation of mandatory locking is unreliable.
+See BUGS below.
 <P>
+By default, both traditional (process-associated) and open file description
+record locks are advisory.
 Advisory locks are not enforced and are useful only between
 cooperating processes.
 <P>
+Both lock types can also be mandatory.
 Mandatory locks are enforced for all processes.
 If a process tries to perform an incompatible access (e.g.,
 <B><A HREF="../man2/read.2.html">read</A></B>(2)
@@ -553,7 +793,7 @@ If the
 <B>O_NONBLOCK</B>
 
 flag is not enabled, then
-system call is blocked until the lock is removed
+the system call is blocked until the lock is removed
 or converted to a mode that is compatible with the access.
 If the
 <B>O_NONBLOCK</B>
@@ -584,9 +824,10 @@ and
 <B><A HREF="../man2/chmod.2.html">chmod</A></B>(2)).
 
 <P>
-The Linux implementation of mandatory locking is unreliable.
-See BUGS below.
-<A NAME="lbAJ">&nbsp;</A>
+Mandatory locking is not specified by POSIX.
+Some other systems also support mandatory locking,
+although the details of how to enable it vary across systems.
+<A NAME="lbAK">&nbsp;</A>
 <H3>Managing signals</H3>
 
 <B>F_GETOWN</B>,
@@ -1038,7 +1279,7 @@ POSIX has asynchronous I/O and the
 
 structure to achieve similar things; these are also available
 in Linux as part of the GNU C Library (Glibc).
-<A NAME="lbAK">&nbsp;</A>
+<A NAME="lbAL">&nbsp;</A>
 <H3>Leases</H3>
 
 <B>F_SETLEASE</B>
@@ -1261,7 +1502,7 @@ structure as its second argument, and the
 field of this argument will hold the descriptor of the leased file
 that has been accessed by another process.
 (This is useful if the caller holds leases against multiple files).
-<A NAME="lbAL">&nbsp;</A>
+<A NAME="lbAM">&nbsp;</A>
 <H3>File and directory change notification (dnotify)</H3>
 
 <DL COMPACT>
@@ -1387,7 +1628,7 @@ See
 <B><A HREF="../man7/inotify.7.html">inotify</A></B>(7).
 
 </DL>
-<A NAME="lbAM">&nbsp;</A>
+<A NAME="lbAN">&nbsp;</A>
 <H3>Changing the capacity of a pipe</H3>
 
 <DL COMPACT>
@@ -1440,7 +1681,7 @@ Return (as the function result) the capacity of the pipe referred to by
 <I>fd</I>.
 
 </DL>
-<A NAME="lbAN">&nbsp;</A>
+<A NAME="lbAO">&nbsp;</A>
 <H2>RETURN VALUE</H2>
 
 For a successful call, the return value depends on the operation:
@@ -1486,7 +1727,7 @@ On error, -1 is returned, and
 <I>errno</I>
 
 is set appropriately.
-<A NAME="lbAO">&nbsp;</A>
+<A NAME="lbAP">&nbsp;</A>
 <H2>ERRORS</H2>
 
 <DL COMPACT>
@@ -1544,6 +1785,13 @@ NFS), but can sometimes happen locally.
 <DT><B>EINVAL</B>
 
 <DD>
+The value specified in
+<I>cmd</I>
+
+is not recognized by this kernel.
+<DT><B>EINVAL</B>
+
+<DD>
 For
 <B>F_DUPFD</B>,
 
@@ -1556,6 +1804,23 @@ For
 <I>arg</I>
 
 is not an allowable signal number.
+<DT><B>EINVAL</B>
+
+<DD>
+<I>cmd</I>
+
+is
+<B>F_OFD_SETLK</B>,
+
+<B>F_OFD_SETLKW</B>,
+
+or
+<B>F_OFD_GETLK</B>,
+
+and
+<I>l_pid</I>
+
+was not specified as zero.
 <DT><B>EMFILE</B>
 
 <DD>
@@ -1576,7 +1841,7 @@ Attempted to clear the
 
 flag on a file that has the append-only attribute set.
 </DL>
-<A NAME="lbAP">&nbsp;</A>
+<A NAME="lbAQ">&nbsp;</A>
 <H2>CONFORMING TO</H2>
 
 SVr4, 4.3BSD, POSIX.1-2001.
@@ -1606,13 +1871,13 @@ and
 <B>F_SETOWN</B>
 
 are specified in POSIX.1-2001.
-(To get their definitions, define
+(To get their definitions, define either
 <B>_BSD_SOURCE</B>,
 
 or
 <B>_XOPEN_SOURCE</B>
 
-with the value 500 or greater, or define
+with the value 500 or greater, or
 <B>_POSIX_C_SOURCE</B>
 
 with the value 200809L or greater.)
@@ -1654,7 +1919,18 @@ are Linux-specific.
 macro to obtain these definitions.)
 
 
-<A NAME="lbAQ">&nbsp;</A>
+<P>
+<B>F_OFD_SETLK</B>,
+
+<B>F_OFD_SETLKW</B>,
+
+and
+<B>F_OFD_GETLK</B>
+
+are Linux-specific,
+but work is being done to have them included in the next version of POSIX.1.
+
+<A NAME="lbAR">&nbsp;</A>
 <H2>NOTES</H2>
 
 The errors returned by
@@ -1664,7 +1940,7 @@ are different from those returned by
 <B>F_DUPFD</B>.
 
 
-<A NAME="lbAR">&nbsp;</A>
+<A NAME="lbAS">&nbsp;</A>
 <H3>File locking</H3>
 
 The original Linux
@@ -1696,6 +1972,15 @@ However, these details can be ignored by applications using glibc, whose
 wrapper function transparently employs the more recent system call
 where it is available.
 <P>
+The errors returned by
+<B><A HREF="../man2/dup2.2.html">dup2</A></B>(2)
+
+are different from those returned by
+<B>F_DUPFD</B>.
+
+<A NAME="lbAT">&nbsp;</A>
+<H3>Record locks</H3>
+
 Since kernel 2.0, there is no interaction between the types of lock
 placed by
 <B><A HREF="../man2/flock.2.html">flock</A></B>(2)
@@ -1712,15 +1997,91 @@ such as, for example,
 
 
 
+
 Clearly,
 <I>l_pid</I>
 
 alone is not going to be very useful if the process holding the lock
 may live on a different machine.
-<A NAME="lbAS">&nbsp;</A>
+<P>
+The original Linux
+<B>fcntl</B>()
+
+system call was not designed to handle large file offsets
+(in the
+<I>flock</I>
+
+structure).
+Consequently, an
+<B>fcntl64</B>()
+
+system call was added in Linux 2.4.
+The newer system call employs a different structure for file locking,
+<I>flock64</I>,
+
+and corresponding commands,
+<B>F_GETLK64</B>,
+
+<B>F_SETLK64</B>,
+
+and
+<B>F_SETLKW64</B>.
+
+However, these details can be ignored by applications using glibc, whose
+<B>fcntl</B>()
+
+wrapper function transparently employs the more recent system call
+where it is available.
+<A NAME="lbAU">&nbsp;</A>
+<H3>Record locking and NFS</H3>
+
+Before Linux 3.12, if an NFSv4 client
+loses contact with the server for a period of time
+(defined as more than 90 seconds with no communication),
+
+
+
+
+
+it might lose and regain a lock without ever being aware of the fact.
+(The period of time after which contact is assumed lost is known as
+the NFSv4 leasetime.
+On a Linux NFS server, this can be determined by looking at
+<I>/proc/fs/nfsd/nfsv4leasetime</I>,
+
+which expresses the period in seconds.
+The default value for this file is 90.)
+
+
+
+
+
+
+
+
+
+This scenario potentially risks data corruption,
+since another process might acquire a lock in the intervening period
+and perform file I/O.
+<P>
+Since Linux 3.12,
+
+if an NFSv4 client loses contact with the server,
+any I/O to the file by a process which &quot;thinks&quot; it holds
+a lock will fail until that process closes and reopens the file.
+A kernel parameter,
+<I>nfs.recover_lost_locks</I>,
+
+can be set to 1 to obtain the pre-3.12 behavior,
+whereby the client will attempt to recover lost locks
+when contact is reestablished with the server.
+Because of the attendant risk of data corruption,
+
+this parameter defaults to 0 (disabled).
+<A NAME="lbAV">&nbsp;</A>
 <H2>BUGS</H2>
 
-<A NAME="lbAT">&nbsp;</A>
+<A NAME="lbAW">&nbsp;</A>
 <H3>F_SETFL</H3>
 
 It is not possible to use
@@ -1737,7 +2098,7 @@ flags.
 
 
 Attempts to change the state of these flags are silently ignored.
-<A NAME="lbAU">&nbsp;</A>
+<A NAME="lbAX">&nbsp;</A>
 <H3>F_GETOWN</H3>
 
 A limitation of the Linux system call conventions on some
@@ -1772,7 +2133,7 @@ problem invisible by implementing
 using
 <B>F_GETOWN_EX</B>.
 
-<A NAME="lbAV">&nbsp;</A>
+<A NAME="lbAY">&nbsp;</A>
 <H3>F_SETOWN</H3>
 
 In Linux 2.4 and earlier, there is bug that can occur
@@ -1795,11 +2156,44 @@ even when the owner process (group) is one that the caller
 has permission to send signals to.
 Despite this error return, the file descriptor owner is set,
 and signals will be sent to the owner.
-<A NAME="lbAW">&nbsp;</A>
+
+<A NAME="lbAZ">&nbsp;</A>
+<H3>Deadlock detection</H3>
+
+The deadlock-detection algorithm employed by the kernel when dealing with
+<B>F_SETLKW</B>
+
+requests can yield both
+false negatives (failures to detect deadlocks,
+leaving a set of deadlocked processes blocked indefinitely)
+and false positives
+(<B>EDEADLK</B>
+
+errors when there is no deadlock).
+For example,
+the kernel limits the lock depth of its dependency search to 10 steps,
+meaning that circular deadlock chains that exceed
+that size will not be detected.
+In addition, the kernel may falsely indicate a deadlock
+when two or more processes created using the
+<B><A HREF="../man2/clone.2.html">clone</A></B>(2)
+
+<B>CLONE_FILES</B>
+
+flag place locks that appear (to the kernel) to conflict.
+
+<A NAME="lbBA">&nbsp;</A>
 <H3>Mandatory locking</H3>
 
-The implementation of mandatory locking in all known versions of Linux
+The Linux implementation of mandatory locking
 is subject to race conditions which render it unreliable:
+
+
+
+
+
+
+
 
 a
 <B><A HREF="../man2/write.2.html">write</A></B>(2)
@@ -1815,7 +2209,7 @@ Similar races exist between mandatory locks and
 <B><A HREF="../man2/mmap.2.html">mmap</A></B>(2).
 
 It is therefore inadvisable to rely on mandatory locking.
-<A NAME="lbAX">&nbsp;</A>
+<A NAME="lbBB">&nbsp;</A>
 <H2>SEE ALSO</H2>
 
 <B><A HREF="../man2/dup2.2.html">dup2</A></B>(2),
@@ -1864,33 +2258,37 @@ is called
 <DT><A HREF="#lbAE">Duplicating a file descriptor</A><DD>
 <DT><A HREF="#lbAF">File descriptor flags</A><DD>
 <DT><A HREF="#lbAG">File status flags</A><DD>
-<DT><A HREF="#lbAH">Advisory locking</A><DD>
-<DT><A HREF="#lbAI">Mandatory locking</A><DD>
-<DT><A HREF="#lbAJ">Managing signals</A><DD>
-<DT><A HREF="#lbAK">Leases</A><DD>
-<DT><A HREF="#lbAL">File and directory change notification (dnotify)</A><DD>
-<DT><A HREF="#lbAM">Changing the capacity of a pipe</A><DD>
+<DT><A HREF="#lbAH">Advisory record locking</A><DD>
+<DT><A HREF="#lbAI">Open file description locks (non-POSIX)</A><DD>
+<DT><A HREF="#lbAJ">Mandatory locking</A><DD>
+<DT><A HREF="#lbAK">Managing signals</A><DD>
+<DT><A HREF="#lbAL">Leases</A><DD>
+<DT><A HREF="#lbAM">File and directory change notification (dnotify)</A><DD>
+<DT><A HREF="#lbAN">Changing the capacity of a pipe</A><DD>
 </DL>
-<DT><A HREF="#lbAN">RETURN VALUE</A><DD>
-<DT><A HREF="#lbAO">ERRORS</A><DD>
-<DT><A HREF="#lbAP">CONFORMING TO</A><DD>
-<DT><A HREF="#lbAQ">NOTES</A><DD>
+<DT><A HREF="#lbAO">RETURN VALUE</A><DD>
+<DT><A HREF="#lbAP">ERRORS</A><DD>
+<DT><A HREF="#lbAQ">CONFORMING TO</A><DD>
+<DT><A HREF="#lbAR">NOTES</A><DD>
 <DL>
-<DT><A HREF="#lbAR">File locking</A><DD>
+<DT><A HREF="#lbAS">File locking</A><DD>
+<DT><A HREF="#lbAT">Record locks</A><DD>
+<DT><A HREF="#lbAU">Record locking and NFS</A><DD>
 </DL>
-<DT><A HREF="#lbAS">BUGS</A><DD>
+<DT><A HREF="#lbAV">BUGS</A><DD>
 <DL>
-<DT><A HREF="#lbAT">F_SETFL</A><DD>
-<DT><A HREF="#lbAU">F_GETOWN</A><DD>
-<DT><A HREF="#lbAV">F_SETOWN</A><DD>
-<DT><A HREF="#lbAW">Mandatory locking</A><DD>
+<DT><A HREF="#lbAW">F_SETFL</A><DD>
+<DT><A HREF="#lbAX">F_GETOWN</A><DD>
+<DT><A HREF="#lbAY">F_SETOWN</A><DD>
+<DT><A HREF="#lbAZ">Deadlock detection</A><DD>
+<DT><A HREF="#lbBA">Mandatory locking</A><DD>
 </DL>
-<DT><A HREF="#lbAX">SEE ALSO</A><DD>
+<DT><A HREF="#lbBB">SEE ALSO</A><DD>
 </DL>
 <HR>
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:30:15 GMT, April 20, 2020
+Time: 03:30:52 GMT, April 20, 2020
 </BODY>
 </HTML>

@@ -26,7 +26,7 @@ the source, must acknowledge the copyright and authors of this work.
 <HTML><HEAD><TITLE>Man page of FLOCK</TITLE>
 </HEAD><BODY>
 <H1>FLOCK</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2014-04-22<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2014-06-13<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -194,16 +194,6 @@ appears on most UNIX systems.
 <A NAME="lbAH">&nbsp;</A>
 <H2>NOTES</H2>
 
-<B>flock</B>()
-
-does not lock files over NFS.
-Use
-<B><A HREF="../man2/fcntl.2.html">fcntl</A></B>(2)
-
-instead: that does work over NFS, given a sufficiently recent version of
-Linux and a server which supports locking.
-<P>
-
 Since kernel 2.0,
 <B>flock</B>()
 
@@ -211,7 +201,7 @@ is implemented as a system call in its own right rather
 than being emulated in the GNU C library as a call to
 <B><A HREF="../man2/fcntl.2.html">fcntl</A></B>(2).
 
-This yields true BSD semantics:
+This yields classical BSD semantics:
 there is no interaction between the types of lock
 placed by
 <B>flock</B>()
@@ -223,6 +213,59 @@ and
 <B>flock</B>()
 
 does not detect deadlock.
+(Note, however, that on some modern BSDs,
+
+<B>flock</B>()
+
+and
+<B><A HREF="../man2/fcntl.2.html">fcntl</A></B>(2)
+
+locks
+<I>do</I>
+
+interact with one another.)
+<P>
+
+In Linux kernels up to 2.6.11,
+<B>flock</B>()
+
+does not lock files over NFS
+(i.e., the scope of locks was limited to the local system).
+Instead, one could use
+<B><A HREF="../man2/fcntl.2.html">fcntl</A></B>(2)
+
+byte-range locking, which does work over NFS,
+given a sufficiently recent version of
+Linux and a server which supports locking.
+Since Linux 2.6.12, NFS clients support
+<B>flock</B>()
+
+locks by emulating them as byte-range locks on the entire file.
+This means that
+<B><A HREF="../man2/fcntl.2.html">fcntl</A></B>(2)
+
+and
+<B>flock</B>()
+
+locks
+<I>do</I>
+
+interact with one another over NFS.
+Since Linux 2.6.37,
+
+the kernel supports a compatibility mode that allows
+<B>flock</B>()
+
+locks (and also
+<B><A HREF="../man2/fcntl.2.html">fcntl</A></B>(2)
+
+byte region locks) to be treated as local;
+see the discussion of the
+<I>local_lock</I>
+
+option in
+<B><A HREF="../man5/nfs.5.html">nfs</A></B>(5).
+
 <P>
 
 <B>flock</B>()
@@ -311,6 +354,6 @@ in older kernels)
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:30:15 GMT, April 20, 2020
+Time: 03:30:52 GMT, April 20, 2020
 </BODY>
 </HTML>
