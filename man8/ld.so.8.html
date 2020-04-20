@@ -91,9 +91,9 @@ of the binary if present and DT_RUNPATH attribute does not exist.
 Use of DT_RPATH is deprecated.
 <DT>o<DD>
 Using the environment variable
-<B>LD_LIBRARY_PATH</B>.
+<B>LD_LIBRARY_PATH</B>
 
-Except if the executable is a set-user-ID/set-group-ID binary,
+(unless the executable is being run in secure-execution mode; see below).
 in which case it is ignored.
 <DT>o<DD>
 (ELF only) Using the directories specified in the
@@ -235,10 +235,7 @@ environment variable setting (see below).
 Ignore RPATH and RUNPATH information in object names in
 <I>list</I>.
 
-This option is ignored if
-<B>ld.so</B>
-
-is set-user-ID or set-group-ID.
+This option is ignored when running in secure-execution mode (see below).
 <DT><B>--audit</B><I> list</I>
 
 <DD>
@@ -249,6 +246,39 @@ as auditors.
 </DL>
 <A NAME="lbAG">&nbsp;</A>
 <H2>ENVIRONMENT</H2>
+
+Various environment variables influence the operation of the dynamic linker.
+
+<A NAME="lbAH">&nbsp;</A>
+<H3>Secure-execution mode</H3>
+
+For security reasons,
+the effects of some environment variables are voided or modified if
+the dynamic linker determines that the binary should be
+run in secure-execution mode.
+This determination is made by checking whether the
+<B>AT_SECURE</B>
+
+entry in the auxiliary vector (see
+<B><A HREF="../man3/getauxval.3.html">getauxval</A></B>(3))
+
+has a nonzero value.
+This entry may have a nonzero value for various reasons, including:
+<DL COMPACT>
+<DT>*<DD>
+The process's real and effective user IDs differ,
+or the real and effective group IDs differ.
+This typically occurs as a result of executing
+a set-user-ID or set-group-ID program.
+<DT>*<DD>
+A process with a non-root user ID executed a binary that
+conferred permitted or effective capabilities.
+<DT>*<DD>
+A nonzero value may have been set by a Linux Security Module.
+
+</DL>
+<A NAME="lbAI">&nbsp;</A>
+<H3>Environment variables</H3>
 
 Among the more important environment variables are the following:
 <DL COMPACT>
@@ -323,7 +353,7 @@ Similar to the
 <B>PATH</B>
 
 environment variable.
-Ignored in set-user-ID and set-group-ID programs.
+This variable is ignored in secure-execution mode.
 <DT><B>LD_PRELOAD</B>
 
 <DD>
@@ -332,7 +362,7 @@ objects to be loaded before all others.
 The items of the list can be separated by spaces or colons.
 This can be used to selectively override functions in other shared objects.
 The objects are searched for using the rules given under DESCRIPTION.
-For set-user-ID/set-group-ID ELF binaries,
+In secure-execution mode,
 preload pathnames containing slashes are ignored,
 and shared objects in the standard search directories are loaded
 only if the set-user-ID mode bit is enabled on the shared object file.
@@ -384,7 +414,7 @@ would occur in the process).
 These objects can be used to audit the operation of the dynamic linker.
 <B>LD_AUDIT</B>
 
-is ignored for set-user-ID/set-group-ID binaries.
+is ignored in secure-execution mode.
 <P>
 The dynamic linker will notify the audit
 shared objects at so-called auditing checkpoints---for example,
@@ -423,7 +453,10 @@ environment variable.
 Since glibc 2.3.4,
 <B>LD_DEBUG</B>
 
-is ignored for set-user-ID/set-group-ID binaries.
+is ignored in secure-execution mode, unless the file
+<I>/etc/suid-debug</I>
+
+exists (the content of the file is irrelevant).
 <DT><B>LD_DEBUG_OUTPUT</B>
 
 <DD>
@@ -435,16 +468,23 @@ output should be written.
 The default is standard error.
 <B>LD_DEBUG_OUTPUT</B>
 
-is ignored for set-user-ID/set-group-ID binaries.
+is ignored in secure-execution mode.
 <DT><B>LD_DYNAMIC_WEAK</B>
 
 <DD>
 (glibc since 2.1.91)
 Allow weak symbols to be overridden (reverting to old glibc behavior).
-For security reasons, since glibc 2.3.4,
+
+
+
+
+
+
+
+Since glibc 2.3.4,
 <B>LD_DYNAMIC_WEAK</B>
 
-is ignored for set-user-ID/set-group-ID binaries.
+is ignored in secure-execution mode.
 <DT><B>LD_HWCAP_MASK</B>
 
 <DD>
@@ -467,16 +507,16 @@ version numbers.
 <DD>
 (glibc since 2.1)
 Path where the binary is found (for non-set-user-ID programs).
-For security reasons, since glibc 2.4,
+Since glibc 2.4,
 <B>LD_ORIGIN_PATH</B>
 
-is ignored for set-user-ID/set-group-ID binaries.
+is ignored in secure-execution mode.
 
 
 <DT><B>LD_POINTER_GUARD</B>
 
 <DD>
-(glibc since 2.4)
+(glibc from 2.4 to 2.22)
 Set to 0 to disable pointer guarding.
 Any other value enables pointer guarding, which is also the default.
 Pointer guarding is a security mechanism whereby some pointers to code
@@ -487,6 +527,12 @@ or function pointers used by various glibc internals) are mangled
 semi-randomly to make it more difficult for an attacker to hijack
 the pointers for use in the event of a buffer overrun or
 stack-smashing attack.
+Since glibc 2.23,
+
+<B>LD_POINTER_GUARD</B>
+
+can no longer be used to disable pointer guarding,
+which is now always enabled.
 <DT><B>LD_PROFILE</B>
 
 <DD>
@@ -509,19 +555,19 @@ then the default is
 
 <B>LD_PROFILE_OUTPUT</B>
 
-is ignored for set-user-ID and set-group-ID programs,
-which always use
-<I>/var/profile</I>.
+is ignored in secure-execution mode; instead
+<I>/var/profile</I>
 
+is always used.
 <DT><B>LD_SHOW_AUXV</B>
 
 <DD>
 (glibc since 2.1)
 Show auxiliary array passed up from the kernel.
-For security reasons, since glibc 2.3.5,
+Since glibc 2.3.5,
 <B>LD_SHOW_AUXV</B>
 
-is ignored for set-user-ID/set-group-ID binaries.
+is ignored in secure-execution mode.
 <DT><B>LD_TRACE_PRELINKING</B>
 
 <DD>
@@ -556,7 +602,7 @@ If
 
 is defined with the value 0,
 neither executables nor PIEs will honor the base addresses.
-This variable is ignored by set-user-ID and set-group-ID programs.
+This variable is ignored in secure-execution mode.
 <DT><B>LD_VERBOSE</B>
 
 <DD>
@@ -583,7 +629,7 @@ to be used by
 
 when none is present.
 </DL>
-<A NAME="lbAH">&nbsp;</A>
+<A NAME="lbAJ">&nbsp;</A>
 <H2>FILES</H2>
 
 
@@ -612,7 +658,7 @@ be loaded before the program.
 shared objects
 
 </DL>
-<A NAME="lbAI">&nbsp;</A>
+<A NAME="lbAK">&nbsp;</A>
 <H2>NOTES</H2>
 
 The
@@ -621,7 +667,7 @@ The
 functionality is available for executables compiled using libc version
 4.4.3 or greater.
 ELF functionality is available since Linux 1.1.52 and libc5.
-<A NAME="lbAJ">&nbsp;</A>
+<A NAME="lbAL">&nbsp;</A>
 <H3>Hardware capabilities</H3>
 
 Some shared objects are compiled using hardware-specific instructions which do
@@ -665,7 +711,7 @@ z900, z990, z9-109, z10, zarch
 acpi, apic, clflush, cmov, cx8, dts, fxsr, ht, i386, i486, i586, i686, mca, mmx,
 mtrr, pat, pbe, pge, pn, pse36, sep, ss, sse, sse2, tm
 </DL>
-<A NAME="lbAK">&nbsp;</A>
+<A NAME="lbAM">&nbsp;</A>
 <H2>SEE ALSO</H2>
 
 <B><A HREF="../man1/ld.1.html">ld</A></B>(1),
@@ -679,6 +725,8 @@ mtrr, pat, pbe, pge, pn, pse36, sep, ss, sse, sse2, tm
 <B><A HREF="../man3/dlopen.3.html">dlopen</A></B>(3),
 
 <B><A HREF="../man3/getauxval.3.html">getauxval</A></B>(3),
+
+<B><A HREF="../man7/capabilities.7.html">capabilities</A></B>(7),
 
 <B><A HREF="../man7/rtld-audit.7.html">rtld-audit</A></B>(7),
 
@@ -705,17 +753,21 @@ mtrr, pat, pbe, pge, pn, pse36, sep, ss, sse, sse2, tm
 </DL>
 <DT><A HREF="#lbAF">OPTIONS</A><DD>
 <DT><A HREF="#lbAG">ENVIRONMENT</A><DD>
-<DT><A HREF="#lbAH">FILES</A><DD>
-<DT><A HREF="#lbAI">NOTES</A><DD>
 <DL>
-<DT><A HREF="#lbAJ">Hardware capabilities</A><DD>
+<DT><A HREF="#lbAH">Secure-execution mode</A><DD>
+<DT><A HREF="#lbAI">Environment variables</A><DD>
 </DL>
-<DT><A HREF="#lbAK">SEE ALSO</A><DD>
+<DT><A HREF="#lbAJ">FILES</A><DD>
+<DT><A HREF="#lbAK">NOTES</A><DD>
+<DL>
+<DT><A HREF="#lbAL">Hardware capabilities</A><DD>
+</DL>
+<DT><A HREF="#lbAM">SEE ALSO</A><DD>
 </DL>
 <HR>
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:40:49 GMT, April 20, 2020
+Time: 03:41:26 GMT, April 20, 2020
 </BODY>
 </HTML>

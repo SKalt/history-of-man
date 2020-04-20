@@ -164,6 +164,12 @@ If the symbol is never referenced, then it is never resolved.
 (Lazy binding is performed only for function references;
 references to variables are always immediately bound when
 the shared object is loaded.)
+Since glibc 2.1.1,
+
+this flag is overridden by the effect of the
+<B>LD_BIND_NOW</B>
+
+environment variable.
 <DT><B>RTLD_NOW</B>
 
 <DD>
@@ -480,7 +486,7 @@ The
 <B>RTLD_NODELETE</B>,
 
 and
-<B>RTLD_DEEP_BIND</B>
+<B>RTLD_DEEPBIND</B>
 
 flags are GNU extensions;
 the first two of these flags are also present on Solaris.
@@ -529,7 +535,7 @@ function also can be used to provide better isolation than the
 <B>RTLD_LOCAL</B>
 
 flag.
-In particular, shared objects laoded with
+In particular, shared objects loaded with
 <B>RTLD_LOCAL</B>
 
 may be promoted to
@@ -656,21 +662,39 @@ These functions are part of the dlopen API, derived from SunOS.
 <A NAME="lbAP">&nbsp;</A>
 <H2>EXAMPLE</H2>
 
-Load the math library, and print the cosine of 2.0:
+The program below loads the (glibc) math library,
+looks up the address of the
+<B><A HREF="../man3/cos.3.html">cos</A></B>(3)
+
+function, and prints the cosine of 2.0.
+The following is an example of building and running the program:
+<P>
+
+<PRE>
+$ <B>cc dlopen_demo.c -ldl</B>
+$ <B>./a.out</B>
+-0.416147
+</PRE>
+
+
+<A NAME="lbAQ">&nbsp;</A>
+<H3>Program source</H3>
+
 <PRE>
 
 #include &lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/stdlib.h">stdlib.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/dlfcn.h">dlfcn.h</A>&gt;
-
+#include &lt;<A HREF="file:///usr/include/gnu/lib-names.h">gnu/lib-names.h</A>&gt;  /* Defines LIBM_SO (which will be a
+                               string such as &quot;libm.so.6&quot;) */
 int
-main(int argc, char **argv)
+main(void)
 {
     void *handle;
     double (*cosine)(double);
     char *error;
 
-    handle = dlopen(&quot;libm.so&quot;, RTLD_LAZY);
+    handle = dlopen(LIBM_SO, RTLD_LAZY);
     if (!handle) {
         fprintf(stderr, &quot;%s\n&quot;, dlerror());
         exit(EXIT_FAILURE);
@@ -708,7 +732,7 @@ main(int argc, char **argv)
 }
 </PRE>
 
-<A NAME="lbAQ">&nbsp;</A>
+<A NAME="lbAR">&nbsp;</A>
 <H2>BUGS</H2>
 
 As at glibc 2.21, specifying the
@@ -730,7 +754,7 @@ results in a program crash
 
 if the call is made from any object loaded in a
 namespace other than the initial namespace.
-<A NAME="lbAR">&nbsp;</A>
+<A NAME="lbAS">&nbsp;</A>
 <H2>SEE ALSO</H2>
 
 <B><A HREF="../man1/ld.1.html">ld</A></B>(1),
@@ -781,13 +805,16 @@ gcc info pages, ld info pages
 <DT><A HREF="#lbAO">History</A><DD>
 </DL>
 <DT><A HREF="#lbAP">EXAMPLE</A><DD>
-<DT><A HREF="#lbAQ">BUGS</A><DD>
-<DT><A HREF="#lbAR">SEE ALSO</A><DD>
+<DL>
+<DT><A HREF="#lbAQ">Program source</A><DD>
+</DL>
+<DT><A HREF="#lbAR">BUGS</A><DD>
+<DT><A HREF="#lbAS">SEE ALSO</A><DD>
 </DL>
 <HR>
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:40:40 GMT, April 20, 2020
+Time: 03:41:18 GMT, April 20, 2020
 </BODY>
 </HTML>

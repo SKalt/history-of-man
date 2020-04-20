@@ -26,7 +26,7 @@ the source, must acknowledge the copyright and authors of this work.
 <HTML><HEAD><TITLE>Man page of CAPABILITIES</TITLE>
 </HEAD><BODY>
 <H1>CAPABILITIES</H1>
-Section: Linux Programmer's Manual (7)<BR>Updated: 2015-05-07<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (7)<BR>Updated: 2015-12-05<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -931,15 +931,46 @@ a program whose associated file capabilities grant that capability).
 This is a set of capabilities preserved across an
 <B><A HREF="../man2/execve.2.html">execve</A></B>(2).
 
-It provides a mechanism for a process to assign capabilities
-to the permitted set of the new program during an
-<B><A HREF="../man2/execve.2.html">execve</A></B>(2).
+Inheritable capabilities remain inheritable when executing any program,
+and inheritable capabilities are added to the permitted set when executing
+a program that has the corresponding bits set in the file inheritable set.
+<DT><DD>
+Because inheritable capabilities are not generally preserved across
+<B><A HREF="../man2/execve.2.html">execve</A></B>(2)
 
+when running as a non-root user, applications that wish to run helper
+programs with elevated capabilities should consider using
+ambient capabilities, described below.
 <DT><I>Effective</I>:
 
 <DD>
 This is the set of capabilities used by the kernel to
 perform permission checks for the thread.
+<DT><I>Ambient</I> (since Linux 4.3):
+
+<DD>
+
+This is a set of capabilities that are preserved across an
+<B><A HREF="../man2/execve.2.html">execve</A></B>(2)
+
+of a program that is not privileged.
+The ambient capability set obeys the invariant that no capability
+can ever be ambient if it is not both permitted and inheritable.
+<P>
+The ambient capability set can be directly modified using
+<B><A HREF="../man2/prctl.2.html">prctl</A></B>(2).
+
+Ambient capabilities are automatically lowered if either of
+the corresponding permitted or inheritable capabilities is lowered.
+<P>
+Executing a program that changes UID or GID due to the
+set-user-ID or set-group-ID bits or executing a program that has
+any file capabilities set will clear the ambient set.
+Ambient capabilities are added to the permitted set and
+assigned to the effective set when
+<B><A HREF="../man2/execve.2.html">execve</A></B>(2)
+
+is called.
 </DL>
 <P>
 
@@ -1052,10 +1083,12 @@ the process using the following algorithm:
 
 <PRE>
 
-P'(permitted) = (P(inheritable) &amp; F(inheritable)) |
-                (F(permitted) &amp; cap_bset)
+P'(ambient) = (file is privileged) ? 0 : P(ambient)
 
-P'(effective) = F(effective) ? P'(permitted) : 0
+P'(permitted) = (P(inheritable) &amp; F(inheritable)) |
+                (F(permitted) &amp; cap_bset) | P'(ambient)
+
+P'(effective) = F(effective) ? P'(permitted) : P'(ambient)
 
 P'(inheritable) = P(inheritable)    [i.e., unchanged]
 
@@ -1080,6 +1113,10 @@ is the value of the capability bounding set (described below).
 </DL>
 </DL>
 
+<P>
+
+A privileged file is one that has capabilities or
+has the set-user-ID or set-group-ID bit set.
 
 <A NAME="lbAI">&nbsp;</A>
 <H3>Capabilities and execution of programs by root</H3>
@@ -1431,6 +1468,15 @@ an effective or real UID of 0 calls
 (See the subsection
 <I>Capabilities and execution of programs by root</I>.)
 
+<DT><B>SECBIT_NO_CAP_AMBIENT_RAISE</B>
+
+<DD>
+Setting this flag disallows raising ambient capabilities via the
+<B><A HREF="../man2/prctl.2.html">prctl</A></B>(2)
+
+<B>PR_CAP_AMBIENT_RAISE</B>
+
+operation.
 </DL>
 <P>
 
@@ -1443,8 +1489,10 @@ The locked flags are:
 
 <B>SECBIT_NO_SETUID_FIXUP_LOCKED</B>,
 
+<B>SECBIT_NOROOT_LOCKED</B>,
+
 and
-<B>SECBIT_NOROOT_LOCKED</B>.
+<B>SECBIT_NO_CAP_AMBIENT_RAISE</B>.
 
 <P>
 
@@ -1658,6 +1706,6 @@ in the Linux kernel source tree
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:40:48 GMT, April 20, 2020
+Time: 03:41:26 GMT, April 20, 2020
 </BODY>
 </HTML>

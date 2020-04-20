@@ -26,7 +26,7 @@ the source, must acknowledge the copyright and authors of this work.
 <HTML><HEAD><TITLE>Man page of PRCTL</TITLE>
 </HEAD><BODY>
 <H1>PRCTL</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2015-05-07<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2015-12-05<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -52,7 +52,68 @@ is called with a first argument describing what to do
 (with values defined in <I>&lt;<A HREF="file:///usr/include/linux/prctl.h">linux/prctl.h</A>&gt;</I>), and further
 arguments with a significance depending on the first one.
 The first argument can be:
+
 <DL COMPACT>
+<DT><B>PR_CAP_AMBIENT</B> (since Linux 4.3)
+
+<DD>
+
+Reads or changes the ambient capability set, according to the value of
+<I>arg2</I>,
+
+which must be one of the following:
+<DL COMPACT><DT><DD>
+
+<DL COMPACT>
+<DT><B>PR_CAP_AMBIENT_RAISE</B>
+
+<DD>
+The capability specified in
+<I>arg3</I>
+
+is added to the ambient set.
+The specified capability must already be present in
+both the permitted and the inheritable sets of the process.
+This operation is not permitted if the
+<B>SECBIT_NO_CAP_AMBIENT_RAISE</B>
+
+securebit is set.
+<DT><B>PR_CAP_AMBIENT_LOWER</B>
+
+<DD>
+The capability specified in
+<I>arg3</I>
+
+is removed from the ambient set.
+<DT><B>PR_CAP_AMBIENT_IS_SET</B>
+
+<DD>
+The
+<B><A HREF="../man2/prctl.2.html">prctl</A></B>(2)
+
+call returns 1 if the capability in
+<I>arg3</I>
+
+is in the ambient set and 0 if it is not.
+<DT><B>PR_CAP_AMBIENT_CLEAR_ALL</B>
+
+<DD>
+All capabilities will be removed from the ambient set.
+This operation requires setting
+<I>arg3</I>
+
+to zero.
+</DL>
+</DL>
+
+<DT><DD>
+In all of the above operations,
+<I>arg4</I>
+
+and
+<I>arg5</I>
+
+must be specified as 0.
 <DT><B>PR_CAPBSET_READ</B> (since Linux 2.6.25)
 
 <DD>
@@ -340,6 +401,334 @@ The &quot;keep capabilities&quot; value will be reset to 0 on subsequent calls t
 <DD>
 Return (as the function result) the current state of the calling threads's
 &quot;keep capabilities&quot; flag.
+<DT><B>PR_MCE_KILL</B> (since Linux 2.6.32)
+
+<DD>
+Set the machine check memory corruption kill policy for the current thread.
+If
+<I>arg2</I>
+
+is
+<B>PR_MCE_KILL_CLEAR</B>,
+
+clear the thread memory corruption kill policy and use the system-wide default.
+(The system-wide default is defined by
+<I>/proc/sys/vm/memory_failure_early_kill</I>;
+
+see
+<B><A HREF="../man5/proc.5.html">proc</A></B>(5).)
+
+If
+<I>arg2</I>
+
+is
+<B>PR_MCE_KILL_SET</B>,
+
+use a thread-specific memory corruption kill policy.
+In this case,
+<I>arg3</I>
+
+defines whether the policy is
+<I>early kill</I>
+
+(<B>PR_MCE_KILL_EARLY</B>),
+
+<I>late kill</I>
+
+(<B>PR_MCE_KILL_LATE</B>),
+
+or the system-wide default
+(<B>PR_MCE_KILL_DEFAULT</B>).
+
+Early kill means that the thread receives a
+<B>SIGBUS</B>
+
+signal as soon as hardware memory corruption is detected inside
+its address space.
+In late kill mode, the process is killed only when it accesses a corrupted page.
+See
+<B><A HREF="../man2/sigaction.2.html">sigaction</A></B>(2)
+
+for more information on the
+<B>SIGBUS</B>
+
+signal.
+The policy is inherited by children.
+The remaining unused
+<B>prctl</B>()
+
+arguments must be zero for future compatibility.
+<DT><B>PR_MCE_KILL_GET</B> (since Linux 2.6.32)
+
+<DD>
+Return the current per-process machine check kill policy.
+All unused
+<B>prctl</B>()
+
+arguments must be zero.
+<DT><B>PR_SET_MM</B> (since Linux 3.3)
+
+<DD>
+
+Modify certain kernel memory map descriptor fields
+of the calling process.
+Usually these fields are set by the kernel and dynamic loader (see
+<B><A HREF="../man8/ld.so.8.html">ld.so</A></B>(8)
+
+for more information) and a regular application should not use this feature.
+However, there are cases, such as self-modifying programs,
+where a program might find it useful to change its own memory map.
+This feature is available only if the kernel is built with the
+<B>CONFIG_CHECKPOINT_RESTORE</B>
+
+option enabled.
+The calling process must have the
+<B>CAP_SYS_RESOURCE</B>
+
+capability.
+The value in
+<I>arg2</I>
+
+is one of the options below, while
+<I>arg3</I>
+
+provides a new value for the option.
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT><B>PR_SET_MM_START_CODE</B>
+
+<DD>
+Set the address above which the program text can run.
+The corresponding memory area must be readable and executable,
+but not writable or sharable (see
+<B><A HREF="../man2/mprotect.2.html">mprotect</A></B>(2)
+
+and
+<B><A HREF="../man2/mmap.2.html">mmap</A></B>(2)
+
+for more information).
+<DT><B>PR_SET_MM_END_CODE</B>
+
+<DD>
+Set the address below which the program text can run.
+The corresponding memory area must be readable and executable,
+but not writable or sharable.
+<DT><B>PR_SET_MM_START_DATA</B>
+
+<DD>
+Set the address above which initialized and
+uninitialized (bss) data are placed.
+The corresponding memory area must be readable and writable,
+but not executable or sharable.
+<DT><B>PR_SET_MM_END_DATA</B>
+
+<DD>
+Set the address below which initialized and
+uninitialized (bss) data are placed.
+The corresponding memory area must be readable and writable,
+but not executable or sharable.
+<DT><B>PR_SET_MM_START_STACK</B>
+
+<DD>
+Set the start address of the stack.
+The corresponding memory area must be readable and writable.
+<DT><B>PR_SET_MM_START_BRK</B>
+
+<DD>
+Set the address above which the program heap can be expanded with
+<B><A HREF="../man2/brk.2.html">brk</A></B>(2)
+
+call.
+The address must be greater than the ending address of
+the current program data segment.
+In addition, the combined size of the resulting heap and
+the size of the data segment can't exceed the
+<B>RLIMIT_DATA</B>
+
+resource limit (see
+<B><A HREF="../man2/setrlimit.2.html">setrlimit</A></B>(2)).
+
+<DT><B>PR_SET_MM_BRK</B>
+
+<DD>
+Set the current
+<B><A HREF="../man2/brk.2.html">brk</A></B>(2)
+
+value.
+The requirements for the address are the same as for the
+<B>PR_SET_MM_START_BRK</B>
+
+option.
+</DL>
+<P>
+
+The following options are available since Linux 3.5.
+
+<DL COMPACT>
+<DT><B>PR_SET_MM_ARG_START</B>
+
+<DD>
+Set the address above which the program command line is placed.
+<DT><B>PR_SET_MM_ARG_END</B>
+
+<DD>
+Set the address below which the program command line is placed.
+<DT><B>PR_SET_MM_ENV_START</B>
+
+<DD>
+Set the address above which the program environment is placed.
+<DT><B>PR_SET_MM_ENV_END</B>
+
+<DD>
+Set the address below which the program environment is placed.
+<DT><DD>
+The address passed with
+<B>PR_SET_MM_ARG_START</B>,
+
+<B>PR_SET_MM_ARG_END</B>,
+
+<B>PR_SET_MM_ENV_START</B>,
+
+and
+<B>PR_SET_MM_ENV_END</B>
+
+should belong to a process stack area.
+Thus, the corresponding memory area must be readable, writable, and
+(depending on the kernel configuration) have the
+<B>MAP_GROWSDOWN</B>
+
+attribute set (see
+<B><A HREF="../man2/mmap.2.html">mmap</A></B>(2)).
+
+<DT><B>PR_SET_MM_AUXV</B>
+
+<DD>
+Set a new auxiliary vector.
+The
+<I>arg3</I>
+
+argument should provide the address of the vector.
+The
+<I>arg4</I>
+
+is the size of the vector.
+<DT><B>PR_SET_MM_EXE_FILE</B>
+
+<DD>
+
+Supersede the
+<I>/proc/pid/exe</I>
+
+symbolic link with a new one pointing to a new executable file
+identified by the file descriptor provided in
+<I>arg3</I>
+
+argument.
+The file descriptor should be obtained with a regular
+<B><A HREF="../man2/open.2.html">open</A></B>(2)
+
+call.
+<DT><DD>
+To change the symbolic link, one needs to unmap all existing
+executable memory areas, including those created by the kernel itself
+(for example the kernel usually creates at least one executable
+memory area for the ELF
+<I>.text</I>
+
+section).
+<DT><DD>
+The second limitation is that such transitions can be done only once
+in a process life time.
+Any further attempts will be rejected.
+This should help system administrators monitor unusual
+symbolic-link transitions over all processes running on a system.
+</DL>
+</DL>
+
+<DT><B>PR_MPX_ENABLE_MANAGEMENT</B>, <B>PR_MPX_DISABLE_MANAGEMENT</B> (since Linux 3.19) 
+
+<DD>
+
+
+
+Enable or disable kernel management of Memory Protection eXtensions (MPX)
+bounds tables.
+The
+<I>arg2</I>,
+
+<I>arg3</I>,
+
+<I>arg4</I>,
+
+and
+<I>arg5</I>
+
+
+arguments must be zero.
+<P>
+MPX is a hardware-assisted mechanism for performing bounds checking on
+pointers.
+It consists of a set of registers storing bounds information
+and a set of special instruction prefixes that tell the CPU on which
+instructions it should do bounds enforcement.
+There is a limited number of these registers and
+when there are more pointers than registers,
+their contents must be &quot;spilled&quot; into a set of tables.
+These tables are called &quot;bounds tables&quot; and the MPX
+<B>prctl</B>()
+
+operations control
+whether the kernel manages their allocation and freeing.
+<P>
+When management is enabled, the kernel will take over allocation
+and freeing of the bounds tables.
+It does this by trapping the #BR exceptions that result
+at first use of missing bounds tables and
+instead of delivering the exception to user space,
+it allocates the table and populates the bounds directory
+with the location of the new table.
+For freeing, the kernel checks to see if bounds tables are
+present for memory which is not allocated, and frees them if so.
+<P>
+Before enabling MPX management using
+<B>PR_MPX_ENABLE_MANAGEMENT</B>,
+
+the application must first have allocated a user-space buffer for
+the bounds directory and placed the location of that directory in the
+<I>bndcfgu</I>
+
+register.
+<P>
+These calls will fail if the CPU or kernel does not support MPX.
+Kernel support for MPX is enabled via the
+<B>CONFIG_X86_INTEL_MPX</B>
+
+configuration option.
+You can check whether the CPU supports MPX by looking for the 'mpx'
+CPUID bit, like with the following command:
+<P>
+<TT>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT>cat /proc/cpuinfo | grep ' mpx '<BR>
+<P>
+A thread may not switch in or out of long (64-bit) mode while MPX is
+enabled.
+<P>
+All threads in a process are affected by these calls.
+<P>
+The child of a
+<B><A HREF="../man2/fork.2.html">fork</A></B>(2)
+
+inherits the state of MPX management.
+During
+<B><A HREF="../man2/execve.2.html">execve</A></B>(2),
+
+MPX management is reset to a state as if
+<B>PR_MPX_DISABLE_MANAGEMENT</B>
+
+had been called.
+<P>
+For further information on Intel MPX, see the kernel source file
+<I>Documentation/x86/intel_mpx.txt</I>.
+
 <DT><B>PR_SET_NAME</B> (since Linux 2.6.9)
 
 <DD>
@@ -671,6 +1060,42 @@ The setting of the &quot;THP disable&quot; flag is inherited by a child created 
 and is preserved across
 <B><A HREF="../man2/execve.2.html">execve</A></B>(2).
 
+
+<DT><B>PR_TASK_PERF_EVENTS_DISABLE</B> (since Linux 2.6.31)
+
+<DD>
+Disable all performance counters attached to the calling process,
+regardless of whether the counters were created by
+this process or another process.
+Performance counters created by the calling process for other
+processes are unaffected.
+For more information on performance counters, see the Linux kernel source file
+<I>tools/perf/design.txt</I>.
+
+<DT><DD>
+Originally called
+<B>PR_TASK_PERF_COUNTERS_DISABLE</B>;
+
+
+renamed (with same numerical value)
+in Linux 2.6.32.
+
+<DT><B>PR_TASK_PERF_EVENTS_ENABLE</B> (since Linux 2.6.31)
+
+<DD>
+The converse of
+<B>PR_TASK_PERF_EVENTS_DISABLE</B>;
+
+enable performance counters attached to the calling process.
+<DT><DD>
+Originally called
+<B>PR_TASK_PERF_COUNTERS_ENABLE</B>;
+
+
+renamed
+
+in Linux 2.6.32.
+
 <DT><B>PR_GET_THP_DISABLE</B> (since Linux 3.15)
 
 <DD>
@@ -812,39 +1237,6 @@ is not currently implemented
 <DD>
 Return (as the function result) which process timing method is currently
 in use.
-<DT><B>PR_TASK_PERF_EVENTS_DISABLE</B> (since Linux 2.6.31)
-
-<DD>
-Disable all performance counters attached to the calling process,
-regardless of whether the counters were created by
-this process or another process.
-Performance counters created by the calling process for other
-processes are unaffected.
-For more information on performance counters, see the Linux kernel source file
-<I>tools/perf/design.txt</I>.
-
-<DT><DD>
-Originally called
-<B>PR_TASK_PERF_COUNTERS_DISABLE</B>;
-
-
-renamed (with same numerical value)
-in Linux 2.6.32.
-<DT><B>PR_TASK_PERF_EVENTS_ENABLE</B> (since Linux 2.6.31)
-
-<DD>
-The converse of
-<B>PR_TASK_PERF_EVENTS_DISABLE</B>;
-
-enable performance counters attached to the calling process.
-<DT><DD>
-Originally called
-<B>PR_TASK_PERF_COUNTERS_ENABLE</B>;
-
-
-renamed
-
-in Linux 2.6.32.
 <DT><B>PR_SET_TSC</B> (since Linux 2.6.26, x86 only)
 
 <DD>
@@ -893,335 +1285,6 @@ for information on versions and architectures)
 Return unaligned access control bits, in the location pointed to by
 <I>(int&nbsp;*) arg2</I>.
 
-<DT><B>PR_MCE_KILL</B> (since Linux 2.6.32)
-
-<DD>
-Set the machine check memory corruption kill policy for the current thread.
-If
-<I>arg2</I>
-
-is
-<B>PR_MCE_KILL_CLEAR</B>,
-
-clear the thread memory corruption kill policy and use the system-wide default.
-(The system-wide default is defined by
-<I>/proc/sys/vm/memory_failure_early_kill</I>;
-
-see
-<B><A HREF="../man5/proc.5.html">proc</A></B>(5).)
-
-If
-<I>arg2</I>
-
-is
-<B>PR_MCE_KILL_SET</B>,
-
-use a thread-specific memory corruption kill policy.
-In this case,
-<I>arg3</I>
-
-defines whether the policy is
-<I>early kill</I>
-
-(<B>PR_MCE_KILL_EARLY</B>),
-
-<I>late kill</I>
-
-(<B>PR_MCE_KILL_LATE</B>),
-
-or the system-wide default
-(<B>PR_MCE_KILL_DEFAULT</B>).
-
-Early kill means that the thread receives a
-<B>SIGBUS</B>
-
-signal as soon as hardware memory corruption is detected inside
-its address space.
-In late kill mode, the process is killed only when it accesses a corrupted page.
-See
-<B><A HREF="../man2/sigaction.2.html">sigaction</A></B>(2)
-
-for more information on the
-<B>SIGBUS</B>
-
-signal.
-The policy is inherited by children.
-The remaining unused
-<B>prctl</B>()
-
-arguments must be zero for future compatibility.
-<DT><B>PR_MCE_KILL_GET</B> (since Linux 2.6.32)
-
-<DD>
-Return the current per-process machine check kill policy.
-All unused
-<B>prctl</B>()
-
-arguments must be zero.
-<DT><B>PR_SET_MM</B> (since Linux 3.3)
-
-<DD>
-
-Modify certain kernel memory map descriptor fields
-of the calling process.
-Usually these fields are set by the kernel and dynamic loader (see
-<B><A HREF="../man8/ld.so.8.html">ld.so</A></B>(8)
-
-for more information) and a regular application should not use this feature.
-However, there are cases, such as self-modifying programs,
-where a program might find it useful to change its own memory map.
-This feature is available only if the kernel is built with the
-<B>CONFIG_CHECKPOINT_RESTORE</B>
-
-option enabled.
-The calling process must have the
-<B>CAP_SYS_RESOURCE</B>
-
-capability.
-The value in
-<I>arg2</I>
-
-is one of the options below, while
-<I>arg3</I>
-
-provides a new value for the option.
-<DL COMPACT><DT><DD>
-<DL COMPACT>
-<DT><B>PR_SET_MM_START_CODE</B>
-
-<DD>
-Set the address above which the program text can run.
-The corresponding memory area must be readable and executable,
-but not writable or sharable (see
-<B><A HREF="../man2/mprotect.2.html">mprotect</A></B>(2)
-
-and
-<B><A HREF="../man2/mmap.2.html">mmap</A></B>(2)
-
-for more information).
-<DT><B>PR_SET_MM_END_CODE</B>
-
-<DD>
-Set the address below which the program text can run.
-The corresponding memory area must be readable and executable,
-but not writable or sharable.
-<DT><B>PR_SET_MM_START_DATA</B>
-
-<DD>
-Set the address above which initialized and
-uninitialized (bss) data are placed.
-The corresponding memory area must be readable and writable,
-but not executable or sharable.
-<DT><B>PR_SET_MM_END_DATA</B>
-
-<DD>
-Set the address below which initialized and
-uninitialized (bss) data are placed.
-The corresponding memory area must be readable and writable,
-but not executable or sharable.
-<DT><B>PR_SET_MM_START_STACK</B>
-
-<DD>
-Set the start address of the stack.
-The corresponding memory area must be readable and writable.
-<DT><B>PR_SET_MM_START_BRK</B>
-
-<DD>
-Set the address above which the program heap can be expanded with
-<B><A HREF="../man2/brk.2.html">brk</A></B>(2)
-
-call.
-The address must be greater than the ending address of
-the current program data segment.
-In addition, the combined size of the resulting heap and
-the size of the data segment can't exceed the
-<B>RLIMIT_DATA</B>
-
-resource limit (see
-<B><A HREF="../man2/setrlimit.2.html">setrlimit</A></B>(2)).
-
-<DT><B>PR_SET_MM_BRK</B>
-
-<DD>
-Set the current
-<B><A HREF="../man2/brk.2.html">brk</A></B>(2)
-
-value.
-The requirements for the address are the same as for the
-<B>PR_SET_MM_START_BRK</B>
-
-option.
-</DL>
-<P>
-
-The following options are available since Linux 3.5.
-
-<DL COMPACT>
-<DT><B>PR_SET_MM_ARG_START</B>
-
-<DD>
-Set the address above which the program command line is placed.
-<DT><B>PR_SET_MM_ARG_END</B>
-
-<DD>
-Set the address below which the program command line is placed.
-<DT><B>PR_SET_MM_ENV_START</B>
-
-<DD>
-Set the address above which the program environment is placed.
-<DT><B>PR_SET_MM_ENV_END</B>
-
-<DD>
-Set the address below which the program environment is placed.
-<DT><DD>
-The address passed with
-<B>PR_SET_MM_ARG_START</B>,
-
-<B>PR_SET_MM_ARG_END</B>,
-
-<B>PR_SET_MM_ENV_START</B>,
-
-and
-<B>PR_SET_MM_ENV_END</B>
-
-should belong to a process stack area.
-Thus, the corresponding memory area must be readable, writable, and
-(depending on the kernel configuration) have the
-<B>MAP_GROWSDOWN</B>
-
-attribute set (see
-<B><A HREF="../man2/mmap.2.html">mmap</A></B>(2)).
-
-<DT><B>PR_SET_MM_AUXV</B>
-
-<DD>
-Set a new auxiliary vector.
-The
-<I>arg3</I>
-
-argument should provide the address of the vector.
-The
-<I>arg4</I>
-
-is the size of the vector.
-<DT><B>PR_SET_MM_EXE_FILE</B>
-
-<DD>
-
-Supersede the
-<I>/proc/pid/exe</I>
-
-symbolic link with a new one pointing to a new executable file
-identified by the file descriptor provided in
-<I>arg3</I>
-
-argument.
-The file descriptor should be obtained with a regular
-<B><A HREF="../man2/open.2.html">open</A></B>(2)
-
-call.
-<DT><DD>
-To change the symbolic link, one needs to unmap all existing
-executable memory areas, including those created by the kernel itself
-(for example the kernel usually creates at least one executable
-memory area for the ELF
-<I>.text</I>
-
-section).
-<DT><DD>
-The second limitation is that such transitions can be done only once
-in a process life time.
-Any further attempts will be rejected.
-This should help system administrators monitor unusual
-symbolic-link transitions over all processes running on a system.
-</DL>
-</DL>
-
-<DT><B>PR_MPX_ENABLE_MANAGEMENT</B>, <B>PR_MPX_DISABLE_MANAGEMENT</B> (since Linux 3.19) 
-
-<DD>
-
-
-
-Enable or disable kernel management of Memory Protection eXtensions (MPX)
-bounds tables.
-The
-<I>arg2</I>,
-
-<I>arg3</I>,
-
-<I>arg4</I>,
-
-and
-<I>arg5</I>
-
-
-arguments must be zero.
-<P>
-MPX is a hardware-assisted mechanism for performing bounds checking on
-pointers.
-It consists of a set of registers storing bounds information
-and a set of special instruction prefixes that tell the CPU on which
-instructions it should do bounds enforcement.
-There is a limited number of these registers and
-when there are more pointers than registers,
-their contents must be &quot;spilled&quot; into a set of tables.
-These tables are called &quot;bounds tables&quot; and the MPX
-<B>prctl</B>()
-
-operations control
-whether the kernel manages their allocation and freeing.
-<P>
-When management is enabled, the kernel will take over allocation
-and freeing of the bounds tables.
-It does this by trapping the #BR exceptions that result
-at first use of missing bounds tables and
-instead of delivering the exception to user space,
-it allocates the table and populates the bounds directory
-with the location of the new table.
-For freeing, the kernel checks to see if bounds tables are
-present for memory which is not allocated, and frees them if so.
-<P>
-Before enabling MPX management using
-<B>PR_MPX_ENABLE_MANAGEMENT</B>,
-
-the application must first have allocated a user-space buffer for
-the bounds directory and placed the location of that directory in the
-<I>bndcfgu</I>
-
-register.
-<P>
-These calls will fail if the CPU or kernel does not support MPX.
-Kernel support for MPX is enabled via the
-<B>CONFIG_X86_INTEL_MPX</B>
-
-configuration option.
-You can check whether the CPU supports MPX by looking for the 'mpx'
-CPUID bit, like with the following command:
-<P>
-<TT>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT>cat /proc/cpuinfo | grep ' mpx '<BR>
-<P>
-A thread may not switch in or out of long (64-bit) mode while MPX is
-enabled.
-<P>
-All threads in a process are affected by these calls.
-<P>
-The child of a
-<B><A HREF="../man2/fork.2.html">fork</A></B>(2)
-
-inherits the state of MPX management.
-During
-<B><A HREF="../man2/execve.2.html">execve</A></B>(2),
-
-MPX management is reset to a state as if
-<B>PR_MPX_DISABLE_MANAGEMENT</B>
-
-had been called.
-<P>
-For further information on Intel MPX, see the kernel source file
-<I>Documentation/x86/intel_mpx.txt</I>.
-
-
 </DL>
 <A NAME="lbAE">&nbsp;</A>
 <H2>RETURN VALUE</H2>
@@ -1245,6 +1308,8 @@ On success,
 
 <B>PR_MCE_KILL_GET</B>,
 
+<B>PR_CAP_AMBIENT</B>+<B>PR_CAP_AMBIENT_IS_SET</B>,
+
 and (if it returns)
 <B>PR_GET_SECCOMP</B>
 
@@ -1261,6 +1326,55 @@ is set appropriately.
 <H2>ERRORS</H2>
 
 <DL COMPACT>
+<DT><B>EACCES</B>
+
+<DD>
+<I>option</I>
+
+is
+<B>PR_SET_MM</B>,
+
+and
+<I>arg3</I>
+
+is
+<B>PR_SET_MM_EXE_FILE</B>,
+
+the file is not executable.
+<DT><B>EBADF</B>
+
+<DD>
+<I>option</I>
+
+is
+<B>PR_SET_MM</B>,
+
+<I>arg3</I>
+
+is
+<B>PR_SET_MM_EXE_FILE</B>,
+
+and the file descriptor passed in
+<I>arg4</I>
+
+is not valid.
+<DT><B>EBUSY</B>
+
+<DD>
+<I>option</I>
+
+is
+<B>PR_SET_MM</B>,
+
+<I>arg3</I>
+
+is
+<B>PR_SET_MM_EXE_FILE</B>,
+
+and this the second attempt to change the
+<I>/proc/pid/exe</I>
+
+symbolic link, which is prohibited.
 <DT><B>EFAULT</B>
 
 <DD>
@@ -1545,6 +1659,57 @@ or
 <I>arg5</I>
 
 is nonzero.
+<DT><B>EINVAL</B>
+
+<DD>
+<I>option</I>
+
+is
+<B>PR_CAP_AMBIENT</B>
+
+and an unused argument
+(<I>arg4</I>,
+
+<I>arg5</I>,
+
+or,
+in the case of
+<B>PR_CAP_AMBIENT_CLEAR_ALL</B>,
+
+<I>arg3</I>)
+
+is nonzero; or
+<I>arg2</I>
+
+has an invalid value;
+or
+<I>arg2</I>
+
+is
+<B>PR_CAP_AMBIENT_LOWER</B>,
+
+<B>PR_CAP_AMBIENT_RAISE</B>,
+
+or
+<B>PR_CAP_AMBIENT_IS_SET</B>
+
+and
+<I>arg3</I>
+
+does not specify a valid capability.
+<DT><B>ENXIO</B>
+
+<DD>
+<I>option</I>
+
+was
+<B>PR_MPX_ENABLE_MANAGEMENT</B>
+
+or
+<B>PR_MPX_DISABLE_MANAGEMENT</B>
+
+and the kernel or the CPU does not support MPX management.
+Check that the kernel and processor have MPX support.
 <DT><B>EPERM</B>
 
 <DD>
@@ -1601,76 +1766,28 @@ and the caller does not have the
 <B>CAP_SYS_RESOURCE</B>
 
 capability.
-<DT><B>EACCES</B>
+<DT><B>EPERM</B>
 
 <DD>
 <I>option</I>
 
 is
-<B>PR_SET_MM</B>,
+<B>PR_CAP_AMBIENT</B>
 
 and
+<I>arg2</I>
+
+is
+<B>PR_CAP_AMBIENT_RAISE</B>,
+
+but either the capability specified in
 <I>arg3</I>
 
-is
-<B>PR_SET_MM_EXE_FILE</B>,
+is not present in the process's permitted and inheritable capability sets,
+or the
+<B>PR_CAP_AMBIENT_LOWER</B>
 
-the file is not executable.
-<DT><B>EBUSY</B>
-
-<DD>
-<I>option</I>
-
-is
-<B>PR_SET_MM</B>,
-
-<I>arg3</I>
-
-is
-<B>PR_SET_MM_EXE_FILE</B>,
-
-and this the second attempt to change the
-<I>/proc/pid/exe</I>
-
-symbolic link, which is prohibited.
-<DT><B>EBADF</B>
-
-<DD>
-<I>option</I>
-
-is
-<B>PR_SET_MM</B>,
-
-<I>arg3</I>
-
-is
-<B>PR_SET_MM_EXE_FILE</B>,
-
-and the file descriptor passed in
-<I>arg4</I>
-
-is not valid.
-
-
-
-
-
-
-
-
-<DT><B>ENXIO</B>
-
-<DD>
-<I>option</I>
-
-was
-<B>PR_MPX_ENABLE_MANAGEMENT</B>
-
-or
-<B>PR_MPX_DISABLE_MANAGEMENT</B>
-
-and the kernel or the CPU does not support MPX management.
-Check that the kernel and processor have MPX support.
+securebit has been set.
 </DL>
 <A NAME="lbAG">&nbsp;</A>
 <H2>VERSIONS</H2>
@@ -1723,6 +1840,6 @@ get or set the maximum stack size, and so on.
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:40:36 GMT, April 20, 2020
+Time: 03:41:13 GMT, April 20, 2020
 </BODY>
 </HTML>

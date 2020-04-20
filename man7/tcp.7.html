@@ -10,7 +10,7 @@ of the modification is added to the header.
 <HTML><HEAD><TITLE>Man page of TCP</TITLE>
 </HEAD><BODY>
 <H1>TCP</H1>
-Section: Linux Programmer's Manual (7)<BR>Updated: 2015-03-29<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (7)<BR>Updated: 2015-12-05<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -427,14 +427,47 @@ option.
 <DD>
 
 Enable RFC&nbsp;2883 TCP Duplicate SACK support.
-<DT><I>tcp_ecn</I> (Boolean; default: disabled; since Linux 2.4)
+<DT><I>tcp_ecn</I> (Integer; default: se below; since Linux 2.4)
 
 <DD>
 
-Enable RFC&nbsp;2884 Explicit Congestion Notification.
-When enabled, connectivity to some
-destinations could be affected due to older, misbehaving
-routers along the path causing connections to be dropped.
+Enable RFC&nbsp;3168 Explicit Congestion Notification.
+<P>
+This file can have one of the following values:
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT>0<DD>
+Disable ECN.
+Neither initiate nor accept ECN.
+This was the default up to and including Linux 2.6.30.
+<DT>1<DD>
+Enable ECN when requested by incoming connections and also
+request ECN on outgoing connection attempts.
+<DT>2<DD>
+
+Enable ECN when requested by incoming connections,
+but do not request ECN on outgoing connections.
+This value is supported, and is the default, since Linux 2.6.31.
+</DL>
+</DL>
+
+<DT><DD>
+When enabled, connectivity to some destinations could be affected
+due to older, misbehaving middle boxes along the path, causing
+connections to be dropped.
+However, to facilitate and encourage deployment with option 1, and
+to work around such buggy equipment, the
+<B>tcp_ecn_fallback</B>
+
+option has been introduced.
+<DT><I>tcp_ecn_fallback</I> (Boolean; default: enabled; since Linux 4.1)
+
+<DD>
+
+Enable RFC&nbsp;3168, Section 6.1.1.1. fallback.
+When enabled, outgoing ECN-setup SYNs that time out within the
+normal SYN retransmission timeout will be resent with CWR and
+ECE cleared.
 <DT><I>tcp_fack</I> (Boolean; default: enabled; since Linux 2.2)
 
 <DD>
@@ -1590,6 +1623,6 @@ RFC&nbsp;2018 and RFC&nbsp;2883 for SACK and extensions to SACK.
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:40:49 GMT, April 20, 2020
+Time: 03:41:26 GMT, April 20, 2020
 </BODY>
 </HTML>

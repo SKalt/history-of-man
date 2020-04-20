@@ -25,7 +25,7 @@ License along with this manual; if not, see
 <HTML><HEAD><TITLE>Man page of PROC</TITLE>
 </HEAD><BODY>
 <H1>PROC</H1>
-Section: Linux Programmer's Manual (5)<BR>Updated: 2015-05-07<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (5)<BR>Updated: 2015-12-05<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -2127,6 +2127,7 @@ CapInh: 0000000000000000
 CapPrm: 0000000000000000
 CapEff: 0000000000000000
 CapBnd: ffffffffffffffff
+CapAmb: 0000000000000000
 Seccomp:        0
 Cpus_allowed:   00000001
 Cpus_allowed_list:      0
@@ -2286,6 +2287,13 @@ Masks of capabilities enabled in inheritable, permitted, and effective sets
 
 Capability Bounding set
 (since Linux 2.6.26, see
+<B><A HREF="../man7/capabilities.7.html">capabilities</A></B>(7)).
+
+<DT>*<DD>
+<I>CapAmb</I>:
+
+Ambient capability set
+(since Linux 4.3, see
 <B><A HREF="../man7/capabilities.7.html">capabilities</A></B>(7)).
 
 <DT>*<DD>
@@ -3848,6 +3856,17 @@ the <I>/proc</I> filesystem, and the (deprecated)
 <B><A HREF="../man2/sysctl.2.html">sysctl</A></B>(2)
 
 system call.
+<P>
+String values may be terminated by either '\0' or '\n'.
+<P>
+Integer and long values may be written either in decimal or in
+hexadecimal notation (e.g. 0x3FFF).
+When writing multiple integer or long values, these may be separated
+by any of the following whitespace characters:
+'&nbsp;', '\t', or '\n'.
+Using other separators leads to the error
+<B>EINVAL</B>.
+
 <DT><I>/proc/sys/abi</I> (since Linux 2.4.10)
 
 <DD>
@@ -5036,8 +5055,42 @@ date following it indicates the time the kernel was built.
 <DT><I>/proc/sys/kernel/threads-max</I> (since Linux 2.3.11)
 
 <DD>
+
 This file specifies the system-wide limit on the number of
 threads (tasks) that can be created on the system.
+<P>
+Since Linux 4.1,
+
+the value that can be written to
+<I>threads-max</I>
+
+is bounded.
+The minimum value that can be written is 20.
+The maximum value that can be written is given by the
+constant
+<B>FUTEX_TID_MASK</B>
+
+(0x3fffffff).
+If a value outside of this range is written to
+<I>threads-max</I>,
+
+the error
+<B>EINVAL</B>
+
+occurs.
+<P>
+The value written is checked against the available RAM pages.
+If the thread structures would occupy too much (more than 1/8th)
+of the available RAM pages,
+<I>threads-max</I>
+
+is reduced accordingly.
+<DT><I>/proc/sys/kernel/yama/ptrace_scope</I> (since Linux 3.5)
+
+<DD>
+See
+<B><A HREF="../man2/ptrace.2.html">ptrace</A></B>(2).
+
 <DT><I>/proc/sys/kernel/zero-paged</I> (PowerPC only) 
 
 <DD>
@@ -6565,6 +6618,6 @@ and
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:40:48 GMT, April 20, 2020
+Time: 03:41:25 GMT, April 20, 2020
 </BODY>
 </HTML>

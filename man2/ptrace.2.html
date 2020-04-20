@@ -25,7 +25,7 @@ License along with this manual; if not, see
 <HTML><HEAD><TITLE>Man page of PTRACE</TITLE>
 </HEAD><BODY>
 <H1>PTRACE</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2015-07-23<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2015-12-05<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -780,6 +780,25 @@ The seccomp event message data (from the
 portion of the seccomp filter rule) can be retrieved with
 <B>PTRACE_GETEVENTMSG</B>.
 
+<DT><B>PTRACE_O_SUSPEND_SECCOMP</B> (since Linux 4.3)
+
+<DD>
+
+Suspend the tracee's seccomp protections.
+This applies regardless of mode, and
+can be used when the tracee has not yet installed seccomp filters.
+That is, a valid use case is to suspend a tracee's seccomp protections
+before they are installed by the tracee,
+let the tracee install the filters,
+and then clear this flag when the filters should be resumed.
+Setting this option requires that the tracer have the
+<B>CAP_SYS_ADMIN</B>
+
+capability,
+not have any seccomp protections installed, and not have
+<B>PTRACE_O_SUSPEND_SECCOMP</B>
+
+set on itself.
 </DL>
 </DL>
 
@@ -1021,6 +1040,18 @@ and
 <I>data</I>
 
 are ignored.)
+<P>
+Processes that are not dumpable (see the description of
+<B>PR_SET_DUMPABLE</B>
+
+in
+<B><A HREF="../man2/prctl.2.html">prctl</A></B>(2))
+
+can  not  be  attached  via
+<B><A HREF="../man2/ptrace.2.html">ptrace</A></B>(2)
+
+<B>PTRACE_ATTACH</B>.
+
 <DT><B>PTRACE_SEIZE</B> (since Linux 3.4)
 
 <DD>
@@ -1054,7 +1085,7 @@ instead of having
 <B>SIGSTOP</B>
 
 signal delivered to them.
-<B><A HREF="../man2/evecve.2.html">evecve</A></B>(2)
+<B><A HREF="../man2/execve.2.html">execve</A></B>(2)
 
 does not deliver an extra
 <B>SIGTRAP</B>.
@@ -2750,7 +2781,100 @@ In any case, use of
 <B>ptrace</B>()
 
 is highly specific to the operating system and architecture.
+
 <A NAME="lbAU">&nbsp;</A>
+<H3>/proc/sys/kernel/yama/ptrace_scope</H3>
+
+On systems with the Yama Linux Security Module installed, the
+<I>/proc/sys/kernel/yama/ptrace_scope</I>
+
+(available since Linux 3.4)
+
+can be used to restrict the ability to trace a process with
+<B><A HREF="../man2/ptrace.2.html">ptrace</A></B>(2)
+
+(and thus also the ability to use tools such as
+<B><A HREF="../man1/strace.1.html">strace</A></B>(1)
+
+and
+<B><A HREF="../man1/gdb.1.html">gdb</A></B>(1)).
+
+The goal of such restrictions is to prevent attack escalation whereby
+a compromised process can ptrace-attach to other sensitive processes
+(e.g., a GPG agent or an SSH session) owned by the user in order
+to gain additional credentials and thus expand the scope of the attack.
+<P>
+A process with the
+<B>CAP_SYS_PTRACE</B>
+
+capability can update this file with one of the following values:
+<DL COMPACT>
+<DT>0 (&quot;classic ptrace permissions&quot;)<DD>
+A process can
+<B>PTRACE_ATTACH</B>
+
+to any other process running under the same UID,
+as long as the tracee is dumpable (i.e., it did
+did not transition UIDs or start start privileged, and it has not employed
+the
+<B><A HREF="../man2/prctl.2.html">prctl</A></B>(2)
+
+<B>PR_SET_DUMPABLE</B>
+
+operation to make itself nondumpable).
+<P>
+The use of
+<B>PTRACE_TRACEME</B>
+
+is unchanged.
+<DT>1 (&quot;restricted ptrace&quot;)<DD>
+A process must have a predefined relationship
+with the tracee to which it wants to
+<B>PTRACE_ATTACH</B>.
+
+By default,
+the predefined relationship is that the tracee is a child of the
+caller and the aforementioned classic criteria are also met.
+To specify a different process that may trace it, a tracee can employ the
+<B><A HREF="../man2/prctl.2.html">prctl</A></B>(2)
+
+<B>PR_SET_PTRACER</B>
+
+operation to declare a different PID that is allowed to
+<B>PTRACE_ATTACH</B>
+
+to the tracee.
+(See the kernel source file
+<I>Documentation/security/Yama.txt</I>
+
+for further details.)
+<P>
+The use of
+<B>PTRACE_TRACEME</B>
+
+is unchanged.
+<DT>2 (&quot;admin-only attach&quot;)<DD>
+Only processes with the
+<B>CAP_SYS_PTRACE</B>
+
+capability may use
+<B>PTRACE_ATTACH</B>
+
+or trace children that employ
+<B>PTRACE_TRACEME</B>.
+
+<DT>3 (&quot;no attach&quot;)<DD>
+No process may use
+<B>PTRACE_ATTACH</B>
+
+or trace children that employ
+<B>PTRACE_TRACEME</B>.
+
+<P>
+Once this value has been written to the file, it cannot be changed.
+
+</DL>
+<A NAME="lbAV">&nbsp;</A>
 <H3>C library/kernel differences</H3>
 
 At the system call level, the
@@ -2768,7 +2892,7 @@ at the address specified by the
 parameter, and the return value is the error flag.
 The glibc wrapper function provides the API given in DESCRIPTION above,
 with the result being returned via the function return value.
-<A NAME="lbAV">&nbsp;</A>
+<A NAME="lbAW">&nbsp;</A>
 <H2>BUGS</H2>
 
 On hosts with 2.6 kernel headers,
@@ -2919,7 +3043,7 @@ errors may behave in an unintended way upon an
 <B><A HREF="../man1/strace.1.html">strace</A></B>(1)
 
 attach.)
-<A NAME="lbAW">&nbsp;</A>
+<A NAME="lbAX">&nbsp;</A>
 <H2>SEE ALSO</H2>
 
 <B><A HREF="../man1/gdb.1.html">gdb</A></B>(1),
@@ -2933,6 +3057,8 @@ attach.)
 <B><A HREF="../man2/fork.2.html">fork</A></B>(2),
 
 <B><A HREF="../man2/gettid.2.html">gettid</A></B>(2),
+
+<B><A HREF="../man2/prctl.2.html">prctl</A></B>(2),
 
 <B><A HREF="../man2/seccomp.2.html">seccomp</A></B>(2),
 
@@ -2977,15 +3103,16 @@ attach.)
 <DT><A HREF="#lbAS">CONFORMING TO</A><DD>
 <DT><A HREF="#lbAT">NOTES</A><DD>
 <DL>
-<DT><A HREF="#lbAU">C library/kernel differences</A><DD>
+<DT><A HREF="#lbAU">/proc/sys/kernel/yama/ptrace_scope</A><DD>
+<DT><A HREF="#lbAV">C library/kernel differences</A><DD>
 </DL>
-<DT><A HREF="#lbAV">BUGS</A><DD>
-<DT><A HREF="#lbAW">SEE ALSO</A><DD>
+<DT><A HREF="#lbAW">BUGS</A><DD>
+<DT><A HREF="#lbAX">SEE ALSO</A><DD>
 </DL>
 <HR>
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:40:36 GMT, April 20, 2020
+Time: 03:41:13 GMT, April 20, 2020
 </BODY>
 </HTML>
