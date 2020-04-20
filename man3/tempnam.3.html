@@ -41,21 +41,40 @@ in case
 is a non-NULL string of at most five bytes.
 The directory prefix part of the pathname generated is required to
 be `appropriate' (often that at least implies writable).
+<P>
 Attempts to find an appropriate directory go through the following
-steps: (i) In case the environment variable TMPDIR exists and
+steps: 
+<DL COMPACT>
+<DT>a)<DD>
+In case the environment variable TMPDIR exists and
 contains the name of an appropriate directory, that is used.
-(ii) Otherwise, if the
+<DT>b)<DD>
+Otherwise, if the
 <I>dir</I>
 
 argument is non-NULL and appropriate, it is used.
-(iii) Otherwise,
+<DT>c)<DD>
+Otherwise,
 <I>P_tmpdir</I>
 
 (as defined in
 <I>&lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;</I>)
 
 is used when appropriate.
-(iv) Finally an implementation-defined directory may be used.
+<DT>d)<DD>
+Finally an implementation-defined directory may be used.
+</DL>
+<P>
+
+The string returned by
+<B>tempnam</B>()
+
+is allocated using
+<B><A HREF="../man3/malloc.3.html">malloc</A></B>(3)
+
+and hence should be freed by
+<B><A HREF="../man3/free.3.html">free</A></B>(3).
+
 <A NAME="lbAE">&nbsp;</A>
 <H2>RETURN VALUE</H2>
 
@@ -68,28 +87,52 @@ filename, or NULL if a unique name cannot be generated.
 <H2>ERRORS</H2>
 
 <DL COMPACT>
-<DT><DT><B>ENOMEM</B>
+<DT><B>ENOMEM</B>
 
-<DD>
 <DD>
 Allocation of storage failed.
 </DL>
 <A NAME="lbAG">&nbsp;</A>
 <H2>NOTES</H2>
 
+Although 
+<B><A HREF="../man3/tempnam.3.html">tempnam</A></B>(3)
+
+generates names that are difficult to guess,
+it is nevertheless possible that between the time that
+<B><A HREF="../man3/tempnam.3.html">tempnam</A></B>(3)
+
+returns a pathname, and the time that the program opens it,
+another program might create that pathname using
+<B><A HREF="../man2/open.2.html">open</A></B>(2),
+
+or create it as a symbolic link.
+This can lead to security holes.
+To avoid such possibilities, use the 
+<B><A HREF="../man2/open.2.html">open</A></B>(2)
+
+<B>O_EXCL</B>
+
+flag to open the pathname.  Or better yet, use
+<B><A HREF="../man3/mkstemp.3.html">mkstemp</A></B>(3)
+
+or
+<B><A HREF="../man3/tmpfile.3.html">tmpfile</A></B>(3).
+
+<P>
 SUSv2 does not mention the use of TMPDIR; glibc will use it only
 when the program is not set-user-ID.
-SVID2 specifies that the directory used under (iv) is
-<I>/tmp</I>.
+SVID2 specifies that the directory used under <B>d)</B> is
+<I>/tmp</I>
 
-SVID2 specifies that the string returned by
-<B>tempnam</B>()
+(and this is what glibc does).
+<P>
 
-was allocated using
-<B><A HREF="../man3/malloc.3.html">malloc</A></B>(3)
+Because it dynamically allocates memory used to return the pathname,
+<B>tempnam()</B>
 
-and hence can be freed by
-<B><A HREF="../man3/free.3.html">free</A></B>(3).
+is reentrant, and thus thread safe, unlike
+<B><A HREF="../man3/tmpnam.3.html">tmpnam</A></B>(3).
 
 <P>
 
@@ -104,11 +147,11 @@ times. If it is called more than TMP_MAX times,
 the behaviour is implementation defined.
 <P>
 
-In case the
-<I>pfx</I>
+<B>tempnam</B>()
 
-argument has length larger than five, glibc will use the first
-five bytes.
+uses at most the first five bytes from
+<I>pfx</I>.
+
 <P>
 The glibc implementation of
 <B>tempnam</B>()
@@ -122,8 +165,12 @@ upon failure to find a unique name.
 
 The precise meaning of `appropriate' is undefined;
 it is unspecified how accessibility of a directory is determined.
+<P>
 Never use this function. Use
 <B><A HREF="../man3/mkstemp.3.html">mkstemp</A></B>(3)
+
+or
+<B><A HREF="../man3/tmpfile.3.html">tmpfile</A></B>(3)
 
 instead.
 <A NAME="lbAI">&nbsp;</A>
@@ -160,6 +207,6 @@ SVID 2, 4.3BSD, POSIX 1003.1-2003
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 02:27:56 GMT, April 20, 2020
+Time: 02:28:25 GMT, April 20, 2020
 </BODY>
 </HTML>
