@@ -4,7 +4,7 @@
 <HTML><HEAD><TITLE>Man page of OPEN</TITLE>
 </HEAD><BODY>
 <H1>OPEN</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2008-01-03<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2008-01-11<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -208,7 +208,7 @@ and
 of the ext2 filesystem, as described in
 <B><A HREF="../man8/mount.8.html">mount</A></B>(8)).
 
-<DT><B>O_DIRECT</B> (Since Linux 2.6.10)
+<DT><B>O_DIRECT</B> (Since Linux 2.4.10)
 
 <DD>
 Try to minimize cache effects of the I/O to and from this file.
@@ -221,14 +221,10 @@ The I/O is synchronous, that is, at the completion of a
 or
 <B><A HREF="../man2/write.2.html">write</A></B>(2),
 
-data is guaranteed to have been transferred.
-Under Linux 2.4 transfer sizes, and the alignment of user buffer
-and file offset must all be multiples of the logical block size
-of the file system.
-Under Linux 2.6 alignment to 512-byte boundaries
-suffices.
+data is guaranteed to have been transferred.  See
+<B>NOTES</B>
 
-
+below for further discussion.
 <P>
 A semantically similar (but deprecated) interface for block devices
 is described in
@@ -757,23 +753,6 @@ On many systems the file is actually truncated.
 
 <P>
 
-The
-<B>O_DIRECT</B>
-
-flag was introduced in SGI IRIX, where it has alignment restrictions
-similar to those of Linux 2.4.
-IRIX has also a <A HREF="../man2/fcntl.2.html">fcntl</A>(2) call to
-query appropriate alignments, and sizes.
-FreeBSD 4.x introduced
-a flag of same name, but without alignment restrictions.
-Support was added under Linux in kernel version 2.4.10.
-Older Linux kernels simply ignore this flag.
-One may have to define the
-<B>_GNU_SOURCE</B>
-
-macro to get its definition.
-<P>
-
 There are many infelicities in the protocol underlying NFS, affecting
 amongst others
 <B>O_SYNC</B> and <B>O_NDELAY</B>.
@@ -838,12 +817,123 @@ Otherwise, if the file is modified because of the
 
 flag, its st_ctime and st_mtime fields are set to the current time.
 <A NAME="lbAI">&nbsp;</A>
-<H2>BUGS</H2>
+<H3>O_DIRECT</H3>
 
+<P>
+
+The
+<B>O_DIRECT</B>
+
+flag may impose alignment restrictions on the length and address
+of userspace buffers and the file offset of I/Os.
+In Linux alignment
+restrictions vary by filesystem and kernel version and might be
+absent entirely.
+However there is currently no filesystem-independent
+interface for an application to discover these restrictions for a given
+file or filesystem.
+Some filesystems provide their own interfaces
+for doing so, for example the
+<B>XFS_IOC_DIOINFO</B>
+
+operation in
+<B><A HREF="../man3/xfsctl.3.html">xfsctl</A></B>(3).
+
+<P>
+
+Under Linux 2.4, transfer sizes, and the alignment of user buffer
+and file offset must all be multiples of the logical block size
+of the file system.
+Under Linux 2.6, alignment to 512-byte boundaries
+suffices.
+<P>
+
+The
+<B>O_DIRECT</B>
+
+flag was introduced in SGI IRIX, where it has alignment
+restrictions similar to those of Linux 2.4.
+IRIX has also a
+<B><A HREF="../man2/fcntl.2.html">fcntl</A></B>(2)
+
+call to query appropriate alignments, and sizes.
+FreeBSD 4.x introduced
+a flag of the same name, but without alignment restrictions.
+<P>
+
+<B>O_DIRECT</B>
+
+support was added under Linux in kernel version 2.4.10.
+Older Linux kernels simply ignore this flag.
+Some filesystems may not implement the flag and
+<B>open</B>()
+
+will fail with
+<B>EINVAL</B>
+
+if it is used.
+<P>
+
+Applications should avoid mixing
+<B>O_DIRECT</B>
+
+and normal I/O to the same file,
+and especially to overlapping byte regions in the same file.
+Even when the filesystem correctly handles the coherency issues in
+this situation, overall I/O throughput is likely to be slower than
+using either mode alone.
+Likewise, applications should avoid mixing
+<B><A HREF="../man2/mmap.2.html">mmap</A></B>(2)
+
+of files with direct I/O to the same files.
+<P>
+
+The behaviour of
+<B>O_DIRECT</B>
+
+with NFS will differ from local filesystems.
+Older kernels, or
+kernels configured in certain ways, may not support this combination.
+The NFS protocol does not support passing the flag to the server, so
+<B>O_DIRECT</B>
+
+I/O will only bypass the page cache on the client; the server may
+still cache the I/O.
+The client asks the server to make the I/O
+synchronous to preserve the synchronous semantics of
+<B>O_DIRECT</B>.
+
+Some servers will perform poorly under these circumstances, especially
+if the I/O size is small.
+Some servers may also be configured to
+lie to clients about the I/O having reached stable storage; this
+will avoid the performance penalty at some risk to data integrity
+in the event of server power failure.
+The Linux NFS client places no alignment restrictions on
+<B>O_DIRECT</B>
+
+I/O.
+<P>
+
+In summary,
+<B>O_DIRECT</B>
+
+is a potentially powerful tool that should be used with caution.
+It is recommended that applications treat use of
+<B>O_DIRECT</B>
+
+as a performance option which is disabled by default.
+<P>
+
+<DL COMPACT><DT><DD>
 &quot;The thing that has always disturbed me about O_DIRECT is that the whole
 interface is just stupid, and was probably designed by a deranged monkey
 on some serious mind-controlling substances.&quot; --- Linus
-<P>
+</DL>
+
+<A NAME="lbAJ">&nbsp;</A>
+<H2>BUGS</H2>
+
 Currently, it is not possible to enable signal-driven
 I/O by specifying
 <B>O_ASYNC</B>
@@ -857,7 +947,7 @@ use
 to enable this flag.
 
 
-<A NAME="lbAJ">&nbsp;</A>
+<A NAME="lbAK">&nbsp;</A>
 <H2>SEE ALSO</H2>
 
 <B><A HREF="../man2/close.2.html">close</A></B>(2),
@@ -910,13 +1000,16 @@ to enable this flag.
 <DT><A HREF="#lbAF">ERRORS</A><DD>
 <DT><A HREF="#lbAG">CONFORMING TO</A><DD>
 <DT><A HREF="#lbAH">NOTES</A><DD>
-<DT><A HREF="#lbAI">BUGS</A><DD>
-<DT><A HREF="#lbAJ">SEE ALSO</A><DD>
+<DL>
+<DT><A HREF="#lbAI">O_DIRECT</A><DD>
+</DL>
+<DT><A HREF="#lbAJ">BUGS</A><DD>
+<DT><A HREF="#lbAK">SEE ALSO</A><DD>
 </DL>
 <HR>
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 02:51:02 GMT, April 20, 2020
+Time: 02:51:31 GMT, April 20, 2020
 </BODY>
 </HTML>
