@@ -5,7 +5,7 @@ Copyright (c) 2002 Michael Kerrisk &lt;mtk.manpages@gmail.com&gt;
 <HTML><HEAD><TITLE>Man page of SIGWAITINFO</TITLE>
 </HEAD><BODY>
 <H1>SIGWAITINFO</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2012-05-02<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2012-07-21<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -44,24 +44,24 @@ _POSIX_C_SOURCE&nbsp;&gt;=&nbsp;199309L
 suspends execution of the calling thread until one of the signals in
 <I>set</I>
 
-is delivered.
+is pending
 (If one of the signals in
 <I>set</I>
 
 is already pending for the calling thread,
 <B>sigwaitinfo</B>()
 
-will return immediately with information about that signal.)
+will return immediately.)
 <P>
 <B>sigwaitinfo</B>()
 
-removes the delivered signal from the set of pending
+removes the signal from the set of pending
 signals and returns the signal number as its function result.
 If the
 <I>info</I>
 
 argument is not NULL,
-then it returns a structure of type
+then the buffer that it points to is used to return a structure of type
 <I>siginfo_t</I>
 
 (see
@@ -70,10 +70,13 @@ then it returns a structure of type
 containing information about the signal.
 <P>
 
-Signals returned via
+If multiple signals in
+<I>set</I>
+
+are pending for the caller, the signal that is retrieved by
 <B>sigwaitinfo</B>()
 
-are delivered in the usual order; see
+is determined according to the usual ordering rules; see
 <B><A HREF="../man7/signal.7.html">signal</A></B>(7)
 
 for further details.
@@ -137,7 +140,7 @@ set to indicate the error.
 No signal in
 <I>set</I>
 
-was delivered within the
+was became pending within the
 <I>timeout</I>
 
 period specified to
@@ -173,7 +176,7 @@ via a prior call to
 <B><A HREF="../man2/sigprocmask.2.html">sigprocmask</A></B>(2)
 
 (so that the default disposition for these signals does not occur if they
-are delivered between successive calls to
+become pending between successive calls to
 <B>sigwaitinfo</B>()
 
 or
@@ -181,8 +184,9 @@ or
 
 and does not establish handlers for these signals.
 In a multithreaded program,
-the signal should be blocked in all threads to prevent
-the signal being delivered to a thread other than the one calling
+the signal should be blocked in all threads, in order to prevent
+the signal being treated according to its default disposition in
+a thread other than the one calling
 <B>sigwaitinfo</B>()
 
 or
@@ -211,7 +215,7 @@ or
 <B>sigtimedwait</B>(),
 
 then exactly one of the threads will actually receive the
-signal if it is delivered to the process as a whole;
+signal if it becomes pending for the process as a whole;
 which of the threads receives the signal is indeterminate.
 <P>
 POSIX leaves the meaning of a NULL value for the
@@ -275,6 +279,6 @@ is a library function implemented on top of
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:15:03 GMT, April 20, 2020
+Time: 03:15:35 GMT, April 20, 2020
 </BODY>
 </HTML>

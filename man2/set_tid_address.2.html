@@ -5,7 +5,7 @@ Copyright (C) 2004 Andries Brouwer (aeb@cwi.nl)
 <HTML><HEAD><TITLE>Man page of SET_TID_ADDRESS</TITLE>
 </HEAD><BODY>
 <H1>SET_TID_ADDRESS</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2004-09-10<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2012-07-19<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -24,16 +24,17 @@ set_tid_address - set pointer to thread ID
 <A NAME="lbAD">&nbsp;</A>
 <H2>DESCRIPTION</H2>
 
-The kernel keeps for each process two values called
+For each process, the kernel maintains two attributes (addresses) called
 <I>set_child_tid</I>
 
 and
-<I>clear_child_tid</I>
+<I>clear_child_tid</I>.
 
-that are NULL by default.
-<A NAME="lbAE">&nbsp;</A>
-<H3>set_child_tid</H3>
+These two attributes contain the value NULL by default.
+<DL COMPACT>
+<DT><I>set_child_tid</I>
 
+<DD>
 If a process is started using
 <B><A HREF="../man2/clone.2.html">clone</A></B>(2)
 
@@ -43,20 +44,19 @@ with the
 flag,
 <I>set_child_tid</I>
 
-is set to
-<I>child_tidptr</I>,
+is set to the value passed in the
+<I>ctid</I>
 
-the fifth argument of that system call.
-<P>
-
+argument of that system call.
+<DT><DD>
 When
 <I>set_child_tid</I>
 
 is set, the very first thing the new process does
 is writing its PID at this address.
-<A NAME="lbAF">&nbsp;</A>
-<H3>clear_child_tid</H3>
+<DT><I>clear_child_tid</I>
 
+<DD>
 If a process is started using
 <B><A HREF="../man2/clone.2.html">clone</A></B>(2)
 
@@ -66,10 +66,11 @@ with the
 flag,
 <I>clear_child_tid</I>
 
-is set to
-<I>child_tidptr</I>,
+is set to the value passed in the
+<I>ctid</I>
 
-the fifth argument of that system call.
+argument of that system call.
+</DL>
 <P>
 
 The system call
@@ -83,39 +84,43 @@ value for the calling process to
 
 <P>
 
-When
+When a process whose
 <I>clear_child_tid</I>
 
-is set, and the process exits, and the process was sharing memory
-with other processes or threads, then 0 is written at this address,
-and a
-<I>futex(child_tidptr, FUTEX_WAKE, 1, NULL, NULL, 0);</I>
+is not NULL terminates, then,
+if the process is sharing memory with other processes or threads,
+then 0 is written at the address specified in
+<I>clear_child_tid</I>
 
-call is done.
-(That is, wake a single process waiting on this futex.)
-Errors are ignored.
-<A NAME="lbAG">&nbsp;</A>
+and the kernel performs the following operation:
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;futex(clear_child_tid,&nbsp;FUTEX_WAKE,&nbsp;1,&nbsp;NULL,&nbsp;NULL,&nbsp;0);
+<P>
+The effect of this operation is to wake a single process that
+is performing a futex wait on the memory location.
+Errors from the futex wake operation are ignored.
+<A NAME="lbAE">&nbsp;</A>
 <H2>RETURN VALUE</H2>
 
 <B>set_tid_address</B>()
 
 always returns the PID of the calling process.
-<A NAME="lbAH">&nbsp;</A>
+<A NAME="lbAF">&nbsp;</A>
 <H2>ERRORS</H2>
 
 <B>set_tid_address</B>()
 
 always succeeds.
-<A NAME="lbAI">&nbsp;</A>
+<A NAME="lbAG">&nbsp;</A>
 <H2>VERSIONS</H2>
 
 This call is present since Linux 2.5.48.
 Details as given here are valid since Linux 2.5.49.
-<A NAME="lbAJ">&nbsp;</A>
+<A NAME="lbAH">&nbsp;</A>
 <H2>CONFORMING TO</H2>
 
 This system call is Linux-specific.
-<A NAME="lbAK">&nbsp;</A>
+<A NAME="lbAI">&nbsp;</A>
 <H2>SEE ALSO</H2>
 
 <B><A HREF="../man2/clone.2.html">clone</A></B>(2),
@@ -130,20 +135,16 @@ This system call is Linux-specific.
 <DT><A HREF="#lbAB">NAME</A><DD>
 <DT><A HREF="#lbAC">SYNOPSIS</A><DD>
 <DT><A HREF="#lbAD">DESCRIPTION</A><DD>
-<DL>
-<DT><A HREF="#lbAE">set_child_tid</A><DD>
-<DT><A HREF="#lbAF">clear_child_tid</A><DD>
-</DL>
-<DT><A HREF="#lbAG">RETURN VALUE</A><DD>
-<DT><A HREF="#lbAH">ERRORS</A><DD>
-<DT><A HREF="#lbAI">VERSIONS</A><DD>
-<DT><A HREF="#lbAJ">CONFORMING TO</A><DD>
-<DT><A HREF="#lbAK">SEE ALSO</A><DD>
+<DT><A HREF="#lbAE">RETURN VALUE</A><DD>
+<DT><A HREF="#lbAF">ERRORS</A><DD>
+<DT><A HREF="#lbAG">VERSIONS</A><DD>
+<DT><A HREF="#lbAH">CONFORMING TO</A><DD>
+<DT><A HREF="#lbAI">SEE ALSO</A><DD>
 </DL>
 <HR>
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:15:02 GMT, April 20, 2020
+Time: 03:15:35 GMT, April 20, 2020
 </BODY>
 </HTML>

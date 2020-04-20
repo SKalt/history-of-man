@@ -4,7 +4,7 @@
 <HTML><HEAD><TITLE>Man page of FUTEX</TITLE>
 </HEAD><BODY>
 <H1>FUTEX</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2010-08-29<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2012-08-13<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -224,8 +224,12 @@ is ignored.
 
 <P>
 
-Depending on which operation was executed,
-the returned value for a successful call can have differing meanings.
+In the event of an error, all operations return -1, and set
+<I>errno</I>
+
+to indicate the error.
+The return value on success depends on the operation,
+as described in the following list:
 <DL COMPACT>
 <DT><B>FUTEX_WAIT</B>
 
@@ -234,23 +238,7 @@ Returns 0 if the process was woken by a
 <B>FUTEX_WAKE</B>
 
 call.
-In case of timeout,
-the operation fails with the error
-<B>ETIMEDOUT</B>.
-
-If the futex was not equal to the expected value,
-the operation fails with the error
-<B>EWOULDBLOCK</B>.
-
-Signals (see
-<B><A HREF="../man7/signal.7.html">signal</A></B>(7))
-
-or other spurious wakeups cause
-<B>FUTEX_WAIT</B>
-
-to fail with the error
-<B>EINTR</B>.
-
+See ERRORS for the various possible error returns.
 <DT><B>FUTEX_WAKE</B>
 
 <DD>
@@ -268,12 +256,6 @@ Returns the number of processes woken up.
 <DD>
 Returns the number of processes woken up.
 </DL>
-<P>
-
-In the event of an error, all operations return -1, and set
-<I>errno</I>
-
-to indicate the error.
 <A NAME="lbAF">&nbsp;</A>
 <H2>ERRORS</H2>
 
@@ -287,7 +269,12 @@ No read access to futex memory.
 <DD>
 <B>FUTEX_CMP_REQUEUE</B>
 
-found an unexpected futex value.
+detected that the value pointed to by
+<I>uaddr</I>
+
+is not equal to the expected value
+<I>val3</I>.
+
 (This probably indicates a race;
 use the safe
 <B>FUTEX_WAKE</B>
@@ -296,14 +283,24 @@ now.)
 <DT><B>EFAULT</B>
 
 <DD>
-Error in getting
+Error retrieving
 <I>timeout</I>
 
 information from userspace.
+<DT><B>EINTR</B>
+
+<DD>
+A
+<B>FUTEX_WAIT</B>
+
+operation was interrupted by a signal (see
+<B><A HREF="../man7/signal.7.html">signal</A></B>(7))
+
+or a spurious wakeup.
 <DT><B>EINVAL</B>
 
 <DD>
-An operation was not defined or error in page alignment.
+Invalid argument.
 <DT><B>ENFILE</B>
 
 <DD>
@@ -314,6 +311,28 @@ The system limit on the total number of open files has been reached.
 Invalid operation specified in
 <I>op</I>.
 
+<DT><B>ETIMEDOUT</B>
+
+<DD>
+Timeout during the
+<B>FUTEX_WAIT</B>
+
+operation.
+<DT><B>EWOULDBLOCK</B>
+
+<DD>
+<I>op</I>
+
+was
+<B>FUTEX_WAIT</B>
+
+and the value pointed to by
+<I>uaddr</I>
+
+was not equal to the expected value
+<I>val</I>
+
+at the time of the call.
 </DL>
 <A NAME="lbAG">&nbsp;</A>
 <H2>VERSIONS</H2>
@@ -360,13 +379,15 @@ read the sources of the futex userspace library referenced below.
 (proceedings of the Ottawa Linux Symposium 2002), online at
 <BR>
 
-<A HREF="http://kernel.org/doc/ols/2002/ols2002-pages-479-495.pdf">http://kernel.org/doc/ols/2002/ols2002-pages-479-495.pdf</A>
+
+
 <P>
 
 Futex example library, futex-*.tar.bz2 at
 <BR>
 
-<A HREF="ftp://ftp.nl.kernel.org/pub/linux/kernel/people/rusty/.">ftp://ftp.nl.kernel.org/pub/linux/kernel/people/rusty/.</A>
+
+
 <P>
 
 <HR>
@@ -386,6 +407,6 @@ Futex example library, futex-*.tar.bz2 at
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:15:00 GMT, April 20, 2020
+Time: 03:15:33 GMT, April 20, 2020
 </BODY>
 </HTML>

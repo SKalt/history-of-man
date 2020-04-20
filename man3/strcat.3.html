@@ -5,7 +5,7 @@ Copyright 1993 David Metcalfe (david@prism.demon.co.uk)
 <HTML><HEAD><TITLE>Man page of STRCAT</TITLE>
 </HEAD><BODY>
 <H1>STRCAT</H1>
-Section: Linux Programmer's Manual (3)<BR>Updated: 2012-05-10<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2012-07-19<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -35,6 +35,12 @@ overwriting the terminating null byte ('\0') at the end of
 <I>dest</I>, and then adds a terminating null byte.
 The strings may not overlap, and the <I>dest</I> string must have
 enough space for the result.
+If
+<I>dest</I>
+
+is not large enough, program behavior is unpredictable;
+<I>buffer overruns are a favorite avenue for attacking secure programs</I>.
+
 <P>
 
 The
@@ -101,6 +107,59 @@ functions return a pointer to the resulting string <I>dest</I>.
 
 SVr4, 4.3BSD, C89, C99.
 <A NAME="lbAG">&nbsp;</A>
+<H2>NOTES</H2>
+
+Some systems (the BSDs, Solaris, and others) provide the following function:
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;size_t&nbsp;strlcat(char&nbsp;*dest,&nbsp;const&nbsp;char&nbsp;*src,&nbsp;size_t&nbsp;size);
+<P>
+This function appends the null-terminated string
+<I>src</I>
+
+to the string
+<I>dest</I>,
+
+copying at most
+<I>size-strlen(dest)-1</I>
+
+from
+<I>src</I>,
+
+and adds a null terminator to the result,
+<I>unless</I>
+
+<I>size</I>
+
+is less than
+<I>strlen(dest)</I>.
+
+This function fixes the buffer overrun problem of
+<B>strcat</B>(),
+
+but the caller must still handle the possibility of data loss if
+<I>size</I>
+
+is too small.
+The function returns the length of the string
+<B>strlcat</B>()
+
+tried to create; if the return value is greater than or equal to
+<I>size</I>,
+
+data loss occurred.
+If data loss matters, the caller
+<I>must</I>
+
+either check the arguments before the call, or test the function return value.
+<B>strlcat</B>()
+
+is not present in glibc and is not standardized by POSIX,
+
+but is available on Linux via the
+<I>libbsd</I>
+
+library.
+<A NAME="lbAH">&nbsp;</A>
 <H2>SEE ALSO</H2>
 
 <B><A HREF="../man3/bcopy.3.html">bcopy</A></B>(3),
@@ -129,12 +188,13 @@ SVr4, 4.3BSD, C89, C99.
 <DT><A HREF="#lbAD">DESCRIPTION</A><DD>
 <DT><A HREF="#lbAE">RETURN VALUE</A><DD>
 <DT><A HREF="#lbAF">CONFORMING TO</A><DD>
-<DT><A HREF="#lbAG">SEE ALSO</A><DD>
+<DT><A HREF="#lbAG">NOTES</A><DD>
+<DT><A HREF="#lbAH">SEE ALSO</A><DD>
 </DL>
 <HR>
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:15:11 GMT, April 20, 2020
+Time: 03:15:43 GMT, April 20, 2020
 </BODY>
 </HTML>

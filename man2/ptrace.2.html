@@ -5,7 +5,7 @@ Copyright (c) 1993 Michael Haardt &lt;michael@moria.de&gt;
 <HTML><HEAD><TITLE>Man page of PTRACE</TITLE>
 </HEAD><BODY>
 <H1>PTRACE</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2012-04-26<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2012-08-03<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -751,11 +751,8 @@ tracees within a multithreaded process.
 
 <B>SIGKILL</B>
 
-operates similarly, with exceptions.
-No signal-delivery-stop is generated for
-<B>SIGKILL</B>
-
-and therefore the tracer can't suppress it.
+does not generate signal-delivery-stop and
+therefore the tracer can't suppress it.
 <B>SIGKILL</B>
 
 kills even within system calls
@@ -937,8 +934,13 @@ even if the tracer knows there should be a notification.
 Example:
 <PRE>
 
-    kill(tracee, SIGKILL);
-    waitpid(tracee, &amp;status, __WALL | WNOHANG);
+    errno = 0;
+    ptrace(PTRACE_CONT, pid, 0L, 0L);
+    if (errno == ESRCH) {
+        /* tracee is dead */
+        r = waitpid(tracee, &amp;status, __WALL | WNOHANG);
+        /* r can still be 0 here! */
+    }
 </PRE>
 
 
@@ -2204,11 +2206,14 @@ as a variadic function with only the
 <I>request</I>
 
 argument fixed.
-This means that unneeded trailing arguments may be omitted,
-though doing so makes use of undocumented
-<B><A HREF="../man1/gcc.1.html">gcc</A></B>(1)
+It is recommended to always supply four arguments,
+even if the requested operation does not use them,
+setting unused/ignored arguments to
+<I>0L</I>
 
-behavior.
+or
+<I>(void&nbsp;*)&nbsp;0.</I>
+
 <P>
 
 In Linux kernels before 2.6.26,
@@ -2335,6 +2340,62 @@ from an
 <B><A HREF="../man7/inotify.7.html">inotify</A></B>(7)
 
 file descriptor.
+The usual symptom of this bug is that when you attach to
+a quiescent process with the command
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;strace&nbsp;-p&nbsp;&lt;process-ID&gt;
+<P>
+then, instead of the usual
+and expected one-line output such as
+<PRE>
+
+    restart_syscall(&lt;... resuming interrupted call ...&gt;_
+
+</PRE>
+
+or
+<PRE>
+
+    select(6, [5], NULL, [5], NULL_
+
+</PRE>
+
+('_' denotes the cursor position), you observe more than one line.
+For example:
+<PRE>
+
+    clock_gettime(CLOCK_MONOTONIC, {15370, 690928118}) = 0
+    epoll_wait(4,_
+
+</PRE>
+
+What is not visible here is that the process was blocked in
+<B><A HREF="../man2/epoll_wait.2.html">epoll_wait</A></B>(2)
+
+before
+<B><A HREF="../man1/strace.1.html">strace</A></B>(1)
+
+has attached to it.
+Attaching caused
+<B><A HREF="../man2/epoll_wait.2.html">epoll_wait</A></B>(2)
+
+to return to userspace with the error
+<B>EINTR</B>.
+
+In this particular case, the program reacted to
+<B>EINTR</B>
+
+by checking the current time, and then executing
+<B><A HREF="../man2/epoll_wait.2.html">epoll_wait</A></B>(2)
+
+again.
+(Programs which do not expect such &quot;stray&quot;
+<B>EINTR</B>
+
+errors may behave in an unintended way upon an
+<B><A HREF="../man1/strace.1.html">strace</A></B>(1)
+
+attach.)
 <A NAME="lbAV">&nbsp;</A>
 <H2>SEE ALSO</H2>
 
@@ -2397,6 +2458,6 @@ file descriptor.
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:15:02 GMT, April 20, 2020
+Time: 03:15:34 GMT, April 20, 2020
 </BODY>
 </HTML>

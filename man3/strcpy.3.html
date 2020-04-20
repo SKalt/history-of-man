@@ -5,7 +5,7 @@ Copyright (C) 1993 David Metcalfe (david@prism.demon.co.uk)
 <HTML><HEAD><TITLE>Man page of STRCPY</TITLE>
 </HEAD><BODY>
 <H1>STRCPY</H1>
-Section: Linux Programmer's Manual (3)<BR>Updated: 2012-05-10<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2012-07-19<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -34,6 +34,9 @@ including the terminating null byte ('\0'),
 to the buffer pointed to by <I>dest</I>.
 The strings may not overlap, and the destination string
 <I>dest</I> must be large enough to receive the copy.
+<I>Beware of buffer overruns!</I>
+
+(See BUGS.)
 <P>
 
 The
@@ -56,10 +59,13 @@ is less than
 
 <B>strncpy</B>()
 
-pads the remainder of
+writes additional null bytes to
 <I>dest</I>
 
-with null bytes.
+to ensure that a total of
+<I>n</I>
+
+bytes are written.
 <P>
 
 A simple implementation of
@@ -113,13 +119,22 @@ the length of <I>src</I>, then
 
 can be used.
 <P>
+One valid (and intended) use of
+<B>strncpy</B>()
+
+is to copy a C string to a fixed-length buffer
+while ensuring both that the buffer is not overflowed
+and that unused bytes in the target buffer are zeroed out
+(perhaps to prevent information leaks if the buffer is to be
+written to media or transmitted to another process via an
+interprocess communication technique).
+<P>
 If there is no terminating null byte in the first <I>n</I>
 bytes of <I>src</I>,
 <B>strncpy</B>()
 
 produces an unterminated string in <I>dest</I>.
-Programmers often prevent this mistake by forcing termination
-as follows:
+You can force termination using something like the following:
 
 <PRE>
 
@@ -129,6 +144,65 @@ if (n &gt; 0)
 </PRE>
 
 
+<P>
+
+(Of course, the above technique ignores the fact that
+information contained in
+<I>src</I>
+
+is lost in the copying to
+<I>dest</I>.)
+
+<P>
+Some systems (the BSDs, Solaris, and others) provide the following function:
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;size_t&nbsp;strlcpy(char&nbsp;*dest,&nbsp;const&nbsp;char&nbsp;*src,&nbsp;size_t&nbsp;size);
+<P>
+
+
+
+This function is similar to
+<B>strncpy</B>(),
+
+but it copies at most
+<I>size-1</I>
+
+bytes to
+<I>dest</I>,
+
+always adds a terminating null byte,
+and does not pad the target with (further) null bytes.
+This function fixes some of the problems of
+<B>strcpy</B>()
+
+and
+<B>strncpy</B>(),
+
+but the caller must still handle the possibility of data loss if
+<I>size</I>
+
+is too small.
+The return value of the function is the length of
+<I>src</I>,
+
+which allows truncation to be easily detected:
+if the return value is greater than or equal to
+<I>size</I>,
+
+truncation occurred.
+If loss of data matters, the caller
+<I>must</I>
+
+either check the arguments before the call,
+or test the function return value.
+<B>strlcpy</B>()
+
+is not present in glibc and is not standardized by POSIX,
+
+but is available on Linux via the
+<I>libbsd</I>
+
+library.
 <A NAME="lbAH">&nbsp;</A>
 <H2>BUGS</H2>
 
@@ -184,6 +258,6 @@ in ways that may make the impossible possible.
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:15:11 GMT, April 20, 2020
+Time: 03:15:43 GMT, April 20, 2020
 </BODY>
 </HTML>

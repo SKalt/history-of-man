@@ -4,7 +4,7 @@
 <HTML><HEAD><TITLE>Man page of NETLINK</TITLE>
 </HEAD><BODY>
 <H1>NETLINK</H1>
-Section: Linux Programmer's Manual (7)<BR>Updated: 2012-04-14<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (7)<BR>Updated: 2012-08-05<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -183,7 +183,7 @@ struct nlmsghdr {
     __u16 nlmsg_type;   /* Type of message content. */
     __u16 nlmsg_flags;  /* Additional flags. */
     __u32 nlmsg_seq;    /* Sequence number. */
-    __u32 nlmsg_pid;    /* PID of the sending process. */
+    __u32 nlmsg_pid;    /* Sender port ID. */
 };
 </PRE>
 
@@ -222,14 +222,9 @@ appropriate manual pages for that, for example,
 for
 <B>NETLINK_ROUTE</B>.
 
-<P>
-Standard flag bits in
-<I>nlmsg_flags</I>
-
-<BR>
-
----------------------------------
 <TABLE>
+<TR VALIGN=top><TD COLSPAN=2>Standard flag bits in <I>nlmsg_flags</I><BR></TD></TR>
+<TR VALIGN=top><TD COLSPAN=2><HR></TD></TR>
 <TR VALIGN=top><TD><B>NLM_F_REQUEST</B></TD><TD>Must be set on all request messages.<BR></TD></TR>
 <TR VALIGN=top><TD><B>NLM_F_MULTI</B></TD><TD>
 The message is part of a multipart message terminated by
@@ -240,20 +235,24 @@ The message is part of a multipart message terminated by
 <TR VALIGN=top><TD><B>NLM_F_ECHO</B></TD><TD>Echo this request.<BR></TD></TR>
 </TABLE>
 
-<P>
-Additional flag bits for GET requests
-<BR>
 
--------------------------------------
+<P>
+
+
 <TABLE>
+<TR VALIGN=top><TD COLSPAN=2>Additional flag bits for GET requests<BR></TD></TR>
+<TR VALIGN=top><TD COLSPAN=2><HR></TD></TR>
 <TR VALIGN=top><TD><B>NLM_F_ROOT</B></TD><TD>Return the complete table instead of a single entry.<BR></TD></TR>
 <TR VALIGN=top><TD><B>NLM_F_MATCH</B></TD><TD>
 Return all entries matching criteria passed in message content.
 Not implemented yet.
 <BR></TD></TR>
 <TR VALIGN=top><TD><B>NLM_F_ATOMIC</B></TD><TD>Return an atomic snapshot of the table.<BR></TD></TR>
-<TR VALIGN=top><TD><B>NLM_F_DUMP</B></TD><TD>Convenience macro; equivalent to (NLM_F_ROOT|NLM_F_MATCH).<BR></TD></TR>
+<TR VALIGN=top><TD><B>NLM_F_DUMP</B></TD><TD>
+Convenience macro; equivalent to (NLM_F_ROOT|NLM_F_MATCH).
+<BR></TD></TR>
 </TABLE>
+
 
 <P>
 Note that
@@ -264,16 +263,16 @@ requires the
 
 capability or an effective UID of 0.
 <P>
-Additional flag bits for NEW requests
-<BR>
 
--------------------------------------
 <TABLE>
+<TR VALIGN=top><TD COLSPAN=2>Additional flag bits for NEW requests<BR></TD></TR>
+<TR VALIGN=top><TD COLSPAN=2><HR></TD></TR>
 <TR VALIGN=top><TD><B>NLM_F_REPLACE</B></TD><TD>Replace existing matching object.<BR></TD></TR>
 <TR VALIGN=top><TD><B>NLM_F_EXCL</B></TD><TD>Don't replace if the object already exists.<BR></TD></TR>
 <TR VALIGN=top><TD><B>NLM_F_CREATE</B></TD><TD>Create object if it doesn't already exist.<BR></TD></TR>
 <TR VALIGN=top><TD><B>NLM_F_APPEND</B></TD><TD>Add to the end of the object list.<BR></TD></TR>
 </TABLE>
+
 
 <P>
 <I>nlmsg_seq</I>
@@ -358,7 +357,7 @@ not equal 0).
 struct sockaddr_nl {
     sa_family_t     nl_family;  /* AF_NETLINK */
     unsigned short  nl_pad;     /* Zero. */
-    pid_t           nl_pid;     /* Process ID. */
+    pid_t           nl_pid;     /* Port ID. */
     __u32           nl_groups;  /* Multicast groups mask. */
 };
 </PRE>
@@ -520,10 +519,10 @@ in order to reliably track acknowledgements.
 <PRE>
 struct nlmsghdr *nh;    /* The nlmsghdr with payload to send. */
 struct sockaddr_nl sa;
-struct iovec iov = { (void *) nh, nh-&gt;nlmsg_len };
+struct iovec iov = { nh, nh-&gt;nlmsg_len };
 struct msghdr msg;
 
-msg = { (void *)&amp;sa, sizeof(sa), &amp;iov, 1, NULL, 0, 0 };
+msg = { &amp;sa, sizeof(sa), &amp;iov, 1, NULL, 0, 0 };
 memset(&amp;sa, 0, sizeof(sa));
 sa.nl_family = AF_NETLINK;
 nh-&gt;nlmsg_pid = 0;
@@ -547,7 +546,7 @@ struct sockaddr_nl sa;
 struct msghdr msg;
 struct nlmsghdr *nh;
 
-msg = { (void *)&amp;sa, sizeof(sa), &amp;iov, 1, NULL, 0, 0 };
+msg = { &amp;sa, sizeof(sa), &amp;iov, 1, NULL, 0, 0 };
 len = recvmsg(fd, &amp;msg, 0);
 
 for (nh = (struct nlmsghdr *) buf; NLMSG_OK (nh, len);
@@ -579,12 +578,16 @@ for (nh = (struct nlmsghdr *) buf; NLMSG_OK (nh, len);
 
 <P>
 
-<A HREF="ftp://ftp.inr.ac.ru/ip-routing/iproute2*">ftp://ftp.inr.ac.ru/ip-routing/iproute2*</A>
-for information about libnetlink.
-<P>
-<A HREF="http://people.suug.ch/~tgr/libnl/">http://people.suug.ch/~tgr/libnl/</A>
-for information about libnl.
-<P>
+
+information about libnetlink
+
+<BR>
+
+
+information about libnl
+
+<BR>
+
 RFC 3549 &quot;Linux Netlink as an IP Services Protocol&quot;
 <P>
 
@@ -607,6 +610,6 @@ RFC 3549 &quot;Linux Netlink as an IP Services Protocol&quot;
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:15:14 GMT, April 20, 2020
+Time: 03:15:47 GMT, April 20, 2020
 </BODY>
 </HTML>

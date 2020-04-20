@@ -5,7 +5,7 @@ Copyright 1995 by Jim Van Zandt &lt;jrv@vanzandt.mv.com&gt;
 <HTML><HEAD><TITLE>Man page of TSEARCH</TITLE>
 </HEAD><BODY>
 <H1>TSEARCH</H1>
-Section: Linux Programmer's Manual (3)<BR>Updated: 2008-09-23<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2012-08-03<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -56,7 +56,9 @@ They are generalized from Knuth (6.2.2) Algorithm T.
 The first field in each node of the tree is a pointer to the
 corresponding data item.
 (The calling program must store the actual data.)
-<I>compar</I> points to a comparison routine, which takes
+<I>compar</I>
+
+points to a comparison routine, which takes
 pointers to two items.
 It should return an integer which is negative,
 zero, or positive, depending on whether the first item is less than,
@@ -66,10 +68,17 @@ equal to, or greater than the second.
 <B>tsearch</B>()
 
 searches the tree for an item.
-<I>key</I> points to the item to be searched for.
-<I>rootp</I> points to a variable which points to the root of the tree.
+<I>key</I>
+
+points to the item to be searched for.
+<I>rootp</I>
+
+points to a variable which points to the root of the tree.
 If the tree is empty,
-then the variable that <I>rootp</I> points to should be set to NULL.
+then the variable that
+<I>rootp</I>
+
+points to should be set to NULL.
 If the item is found in the tree, then
 <B>tsearch</B>()
 
@@ -106,43 +115,91 @@ Its arguments are the same as for
 
 performs depth-first, left-to-right traversal of a binary
 tree.
-<I>root</I> points to the starting node for the traversal.
+<I>root</I>
+
+points to the starting node for the traversal.
 If that node is not the root, then only part of the tree will be visited.
 <B>twalk</B>()
 
-calls the user function <I>action</I> each time a node is
+calls the user function
+<I>action</I>
+
+each time a node is
 visited (that is, three times for an internal node, and once for a
 leaf).
-<I>action</I>, in turn, takes three arguments.
-The first is a pointer to the node being visited.
-The second is an integer which
-takes on the values <B>preorder</B>, <B>postorder</B>, and
-<B>endorder</B> depending on whether this is the first, second, or
-third visit to the internal node, or <B>leaf</B> if it is the single
-visit to a leaf node.
-(These symbols are defined in <I>&lt;<A HREF="file:///usr/include/search.h">search.h</A>&gt;</I>.)
-The third argument is the depth of the node, with
-zero being the root.
+<I>action</I>,
+
+in turn, takes three arguments.
+The first argument is a pointer to the node being visited.
+The structure of the node is unspecified,
+but it is possible to cast the pointer to a pointer-to-pointer-to-element
+in order to access the element stored within the node.
+The application must not modify the structure pointed to by this argument.
+The second argument is an integer which
+takes one of the values
+<B>preorder</B>,
+
+<B>postorder</B>,
+
+or
+<B>endorder</B>
+
+depending on whether this is the first, second, or
+third visit to the internal node,
+or the value
+<B>leaf</B>
+
+if this is the single visit to a leaf node.
+(These symbols are defined in
+<I>&lt;<A HREF="file:///usr/include/search.h">search.h</A>&gt;</I>.)
+
+The third argument is the depth of the node;
+the root node has depth zero.
 <P>
 
-(More commonly, <B>preorder</B>, <B>postorder</B>, and <B>endorder</B>
-are known as <B>preorder</B>, <B>inorder</B>, and <B>postorder</B>:
+(More commonly,
+<B>preorder</B>,
+
+<B>postorder</B>,
+
+and
+<B>endorder</B>
+
+are known as
+<B>preorder</B>,
+
+<B>inorder</B>,
+
+and
+<B>postorder</B>:
+
 before visiting the children, after the first and before the second,
 and after visiting the children.
-Thus, the choice of name <B>postorder</B>
+Thus, the choice of name
+<B>postorder</B>
+
 is rather confusing.)
 <P>
 
 <B>tdestroy</B>()
 
-removes the whole tree pointed to by <I>root</I>,
+removes the whole tree pointed to by
+<I>root</I>,
+
+<P>
 freeing all resources allocated by the
 <B>tsearch</B>()
 
 function.
-For the data in each tree node the function <I>free_node</I> is called.
+For the data in each tree node the function
+<I>free_node</I>
+
+is called.
 The pointer to the data is passed as the argument to the function.
-If no such work is necessary <I>free_node</I> must point to a function
+If no such work is necessary,
+<I>free_node</I>
+
+must point to a function
 doing nothing.
 <A NAME="lbAE">&nbsp;</A>
 <H2>RETURN VALUE</H2>
@@ -174,7 +231,10 @@ and
 <B>tdelete</B>()
 
 also
-return NULL if <I>rootp</I> was NULL on entry.
+return NULL if
+<I>rootp</I>
+
+was NULL on entry.
 <A NAME="lbAF">&nbsp;</A>
 <H2>CONFORMING TO</H2>
 
@@ -190,14 +250,6 @@ is a GNU extension.
 
 takes a pointer to the root, while the other functions
 take a pointer to a variable which points to the root.
-<P>
-
-<B>twalk</B>()
-
-uses <B>postorder</B> to mean &quot;after the left subtree, but
-before the right subtree&quot;.
-Some authorities would call this
-&quot;inorder&quot;, and reserve &quot;postorder&quot; to mean &quot;after both subtrees&quot;.
 <P>
 
 <B>tdelete</B>()
@@ -281,7 +333,7 @@ main(void)
 
     srand(time(NULL));
     for (i = 0; i &lt; 12; i++) {
-        ptr = (int *) xmalloc(sizeof(int));
+        ptr = xmalloc(sizeof(int));
         *ptr = rand() &amp; 0xff;
         val = tsearch((void *) ptr, &amp;root, compare);
         if (val == NULL)
@@ -324,6 +376,6 @@ main(void)
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:15:12 GMT, April 20, 2020
+Time: 03:15:44 GMT, April 20, 2020
 </BODY>
 </HTML>
