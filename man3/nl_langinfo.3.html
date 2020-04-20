@@ -11,13 +11,13 @@ the License, or (at your option) any later version.
 <HTML><HEAD><TITLE>Man page of NL_LANGINFO</TITLE>
 </HEAD><BODY>
 <H1>NL_LANGINFO</H1>
-Section: Linux Programmer's Manual (3)<BR>Updated: 2015-03-02<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2015-07-31<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
 <H2>NAME</H2>
 
-nl_langinfo - query language and locale information
+nl_langinfo, nl_langinfo_l - query language and locale information
 <A NAME="lbAC">&nbsp;</A>
 <H2>SYNOPSIS</H2>
 
@@ -25,6 +25,8 @@ nl_langinfo - query language and locale information
 <B>#include &lt;<A HREF="file:///usr/include/langinfo.h">langinfo.h</A>&gt;</B>
 
 <B>char *nl_langinfo(nl_item </B><I>item</I><B>);</B>
+
+<B>char *nl_langinfo_l(nl_item </B><I>item</I><B>, locale_t </B><I>locale</I><B>);</B>
 </PRE>
 
 <A NAME="lbAD">&nbsp;</A>
@@ -33,11 +35,25 @@ nl_langinfo - query language and locale information
 The
 <B>nl_langinfo</B>()
 
-function provides access to locale information
-in a more flexible way than
-<B><A HREF="../man3/localeconv.3.html">localeconv</A></B>(3)
+and
+<B>nl_langinfo_l</B>()
 
-does.
+functions provide access to locale information
+in a more flexible way than
+<B><A HREF="../man3/localeconv.3.html">localeconv</A></B>(3).
+
+<B>nl_langinfo()</B>
+
+returns a string which is the value corresponding to
+<I>item</I> in the program's current global
+locale.
+<B>nl_langinfo()</B>
+
+returns a string which is the value corresponding to <I>item</I>
+for the locale identified by the locale object <I>locale</I>,
+which was previously created by
+<B><A HREF="../man1/newlocale.1.html">newlocale</A></B>(1).
+
 Individual and additional elements of the locale categories can
 be queried.
 <P>
@@ -134,26 +150,59 @@ For a more detailed list, consult
 <A NAME="lbAE">&nbsp;</A>
 <H2>RETURN VALUE</H2>
 
+On success, these functions return a pointer to a string which
+is the value corresponding to
+<I>item</I>
+
+in the specified locale.
+<P>
 If no locale has been selected by
 <B><A HREF="../man3/setlocale.3.html">setlocale</A></B>(3)
 
 for the appropriate category,
 <B>nl_langinfo</B>()
 
-returns a pointer to the corresponding string in the
-&quot;C&quot; locale.
+return a pointer to the corresponding string in the &quot;C&quot; locale.
+The same is true of
+<B>nl_langinfo_l</B>()
+
+if
+<I>locale</I>
+
+specifies a locale where
+<I>langinfo</I>
+
+data is not defined.
 <P>
 
 If <I>item</I> is not valid, a pointer to an empty string is returned.
 <P>
 
-This pointer may point to static data that may be overwritten on the
-next call to
-<B>nl_langinfo</B>()
+The pointer returned by these functions may point to static data that
+may be overwritten, or the pointer itself may be invalidated,
+by a subsequent call to
+<B>nl_langinfo</B>(),
+
+<B>nl_langinfo_l</B>(),
 
 or
 <B><A HREF="../man3/setlocale.3.html">setlocale</A></B>(3).
 
+The same statements apply to
+<B>nl_langinfo_l</B>()
+
+if the locale object referred to by
+<I>locale</I>
+
+is freed or modified by
+<B><A HREF="../man3/freelocale.3.html">freelocale</A></B>(3)
+
+or
+<B><A HREF="../man3/newlocale.3.html">newlocale</A></B>(3).
+
+<P>
+POSIX specifies that the application may not modify
+the string returned by these functions.
 <A NAME="lbAF">&nbsp;</A>
 <H2>ATTRIBUTES</H2>
 
@@ -171,8 +220,21 @@ For an explanation of the terms used in this section, see
 <A NAME="lbAG">&nbsp;</A>
 <H2>CONFORMING TO</H2>
 
-SUSv2, POSIX.1-2001.
+POSIX.1-2001, POSIX.1-2008, SUSv2.
 <A NAME="lbAH">&nbsp;</A>
+<H2>NOTES</H2>
+
+The behavior of
+<B>nl_langinfo_l</B>()
+
+is undefined if
+<I>locale</I>
+
+is the special locale object
+<B>LC_GLOBAL_LOCALE</B>
+
+or is not a valid locale object handle.
+<A NAME="lbAI">&nbsp;</A>
 <H2>EXAMPLE</H2>
 
 The following program sets the character type and the numeric locale
@@ -191,13 +253,15 @@ main(int argc, char *argv[])
 {
     setlocale(LC_CTYPE, &quot;&quot;);
     setlocale(LC_NUMERIC, &quot;&quot;);
+
     printf(&quot;%s\n&quot;, nl_langinfo(CODESET));
     printf(&quot;%s\n&quot;, nl_langinfo(RADIXCHAR));
+
     exit(EXIT_SUCCESS);
 }
 </PRE>
 
-<A NAME="lbAI">&nbsp;</A>
+<A NAME="lbAJ">&nbsp;</A>
 <H2>SEE ALSO</H2>
 
 <B><A HREF="../man1/locale.1.html">locale</A></B>(1),
@@ -224,13 +288,14 @@ The GNU C Library Reference Manual
 <DT><A HREF="#lbAE">RETURN VALUE</A><DD>
 <DT><A HREF="#lbAF">ATTRIBUTES</A><DD>
 <DT><A HREF="#lbAG">CONFORMING TO</A><DD>
-<DT><A HREF="#lbAH">EXAMPLE</A><DD>
-<DT><A HREF="#lbAI">SEE ALSO</A><DD>
+<DT><A HREF="#lbAH">NOTES</A><DD>
+<DT><A HREF="#lbAI">EXAMPLE</A><DD>
+<DT><A HREF="#lbAJ">SEE ALSO</A><DD>
 </DL>
 <HR>
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:40:06 GMT, April 20, 2020
+Time: 03:40:44 GMT, April 20, 2020
 </BODY>
 </HTML>

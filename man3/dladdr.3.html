@@ -1,484 +1,376 @@
 <!--
+Copyright (C) 2015 Michael Kerrisk &lt;mtk.manpages@gmail.com&gt;
+%%%LICENSE_START(VERBATIM)
+Permission is granted to make and distribute verbatim copies of this
+manual provided the copyright notice and this permission notice are
+preserved on all copies.
+.\"
+Permission is granted to copy and distribute modified versions of this
+manual under the conditions for verbatim copying, provided that the
+entire resulting derived work is distributed under the terms of a
+permission notice identical to this one.
+.\"
+Since the Linux kernel and libraries are constantly changing, this
+manual page may be incorrect or out-of-date.  The author(s) assume no
+responsibility for errors or omissions, or for damages resulting from
+the use of the information contained herein.  The author(s) may not
+have taken the same level of care in the production of this manual,
+which is licensed free of charge, as they might when working
+professionally.
+.\"
+Formatted or processed versions of this manual, if unaccompanied by
+the source, must acknowledge the copyright and authors of this work.
+%%%LICENSE_END
 -->
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
-<HTML><HEAD><TITLE>Man page of DLOPEN</TITLE>
+<HTML><HEAD><TITLE>Man page of DLADDR</TITLE>
 </HEAD><BODY>
-<H1>DLOPEN</H1>
-Section: Linux Programmer's Manual (3)<BR>Updated: 2003-11-17<BR><A HREF="#index">Index</A>
+<H1>DLADDR</H1>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2015-08-08<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
 <H2>NAME</H2>
 
-dladdr, dlclose, dlerror, dlopen, dlsym, dlvsym - programming interface to
-dynamic linking loader
+dladdr, dladdr1 - translate address to symbolic information
 <A NAME="lbAC">&nbsp;</A>
 <H2>SYNOPSIS</H2>
 
-<B>#include &lt;<A HREF="file:///usr/include/dlfcn.h">dlfcn.h</A>&gt;</B>
-
-<P>
-<B>void *dlopen(const char *</B><I>filename</I><B>, int </B><I>flag</I><B>);</B>
-
-<P>
-<B>char *dlerror(void);</B>
-
-<P>
-<B>void *dlsym(void *</B><I>handle</I><B>, const char *</B><I>symbol</I><B>);</B>
-
-<P>
-<B>int dlclose(void *</B><I>handle</I><B>);</B>
-
-<A NAME="lbAD">&nbsp;</A>
-<H2>DESCRIPTION</H2>
-
-The four functions
-<B>dlopen()</B>,
-
-<B>dlsym()</B>,
-
-<B>dlclose()</B>,
-
-<B>dlerror()</B>
-
-implement the interface to the dynamic linking loader.
-<A NAME="lbAE">&nbsp;</A>
-<H3>dlerror</H3>
-
-The function
-<B>dlerror()</B>
-
-returns a human readable string describing the most recent error
-that occurred from any of the dl routines (dlopen, dlsym or dlclose)
-since the last call to
-<B>dlerror()</B>.
-
-It returns NULL if no errors have occurred since initialization or since
-it was last called.
-<A NAME="lbAF">&nbsp;</A>
-<H3>dlopen</H3>
-
-The function
-<B>dlopen()</B>
-
-loads the dynamic library file named by the null-terminated
-string
-<I>filename</I>
-
-and returns an opaque &quot;handle&quot; for the dynamic library.
-If
-<I>filename</I>
-
-is NULL, then the returned handle is for the main program.
-If
-<I>filename</I>
-
-contains a slash (&quot;/&quot;), then it is interpreted as a (relative
-or absolute) pathname.
-Otherwise, the dynamic linker searches for the library as follows
-(see
-<B><A HREF="../man8/ld.so.8.html">ld.so</A></B>(8)
-
-for further details):
-<DL COMPACT>
-<DT>o<DD>
-(ELF only) If the executable file for the calling program
-contains a DT_RPATH tag, and does not contain a DT_RUNPATH tag,
-then the directories listed in the DT_RPATH tag are searched.
-<DT>o<DD>
-If the environment variable
-<B>LD_LIBRARY_PATH</B>
-
-is defined to contain a colon-separated list of directories,
-then these are searched.
-(As a security measure this variable is ignored for set-UID and 
-set-GID programs.)
-<DT>o<DD>
-(ELF only) If the executable file for the calling program
-contains a DT_RUNPATH tag, then the directories listed in that tag
-are searched.
-<DT>o<DD>
-The cache file
-<B>/etc/ld.so.cache</B>
-
-(maintained by
-<B><A HREF="../man8/ldconfig.8.html">ldconfig</A></B>(8))
-
-is checked to see whether it contains an entry for
-<I>filename</I>.
-
-<DT>o<DD>
-The directories
-<B>/lib </B>
-
-and 
-<B>/usr/lib </B>
-
-are searched (in that order).
-</DL>
-<P>
-
-If the library has dependencies on other shared libraries,
-then these are also automatically loaded by the dynamic linker
-using the same rules.  (This process may occur recursively,
-if those libraries in turn have dependencies, and so on.)
-<P>
-
-The value of
-<I>flag</I>
-
-can be either
-<B>RTLD_LAZY</B>
-
-or
-<B>RTLD_NOW</B>.
-
-When
-<B>RTLD_NOW</B>
-
-is specified, or the environment variable
-<B>LD_BIND_NOW</B>
-
-is set to a non-empty string,
-all undefined symbols in the library are resolved before
-<B>dlopen()</B>
-
-returns. If this cannot be done, an error is returned.
-Otherwise binding is lazy: symbol values are first resolved
-when needed.
-<P>
-
-Optionally,
-<B>RTLD_GLOBAL</B>
-
-may be or'ed into
-<I>flag</I>,
-
-in which case the external symbols defined in the library will be
-made available for symbol resolution of subsequently loaded libraries.
-(The converse of
-<B>RTLD_GLOBAL</B>
-
-is
-<B>RTLD_LOCAL</B>.
-
-
-
-This is the default.)
-<P>
-
-If
-<I>filename</I>
-
-is a NULL pointer, then the returned handle is for the main program.
-When given to
-<B>dlsym()</B>,
-
-this handle causes a search for a symbol in the main program,
-followed by all shared libraries loaded at program startup,
-and then all shared libraries loaded by 
-<B>dlopen()</B>
-
-with the flag
-<B>RTLD_GLOBAL.</B>
-
-<P>
-
-External references in the library are resolved using the libraries
-in that library's dependency list and any other libraries previously
-opened with the 
-<B>RTLD_GLOBAL</B>
-
-flag.
-If the executable was linked with the flag &quot;-rdynamic&quot;
-(or, synonymously, &quot;--export-dynamic&quot;),
-then the global symbols in the executable will also be used
-to resolve references in a dynamically loaded library.
-<P>
-
-If the same library is loaded again with
-<B>dlopen()</B>,
-
-the same file handle is returned. The dl library maintains reference
-counts for library handles, so a dynamic library is not
-deallocated until
-<B>dlclose()</B>
-
-has been called on it as many times as
-<B>dlopen()</B>
-
-has succeeded on it. The
-<B>_init</B>
-
-routine, if present, is only called once. But a subsequent call with
-<B>RTLD_NOW</B>
-
-may force symbol resolution for a library earlier loaded with
-<B>RTLD_LAZY</B>.
-
-<P>
-
-If
-<B>dlopen()</B>
-
-fails for any reason, it returns NULL.
-<A NAME="lbAG">&nbsp;</A>
-<H3>dlsym</H3>
-
-The function
-<B>dlsym()</B>
-
-takes a &quot;handle&quot; of a dynamic library returned by dlopen and the
-NUL-terminated symbol name, returning the address where that symbol is
-loaded into memory.  If the symbol is not found, in the specified
-library or any of the libraries that were automatically loaded by
-<B>dlopen()</B>
-
-when that library was loaded,
-<B>dlsym()</B>
-
-returns NULL.
-(The search performed by
-<B>dlsym()</B>
-
-is breadth first through the dependency tree of these libraries.)
-Since the value of the symbol could actually be NULL (so that a
-NULL return from
-<B>dlsym()</B>
-
-need not indicate an error), the correct way to test for an error
-is to call
-<B>dlerror()</B>
-
-to clear any old error conditions, then call
-<B>dlsym()</B>,
-
-and then call
-<B>dlerror()</B>
-
-again, saving its return value into a variable, and check whether
-this saved value is not NULL.
-<P>
-
-There are two special pseudo-handles,
-<B>RTLD_DEFAULT</B>
-
-and
-<B>RTLD_NEXT</B>.
-
-The former will find the first occurrence of the desired symbol
-using the default library search order. The latter
-will find the next occurrence of a function in the search order
-after the current library.  This allows one to provide a wrapper
-around a function in another shared library.
-<A NAME="lbAH">&nbsp;</A>
-<H3>dlclose</H3>
-
-The function
-<B>dlclose()</B>
-
-decrements the reference count on the dynamic library handle
-<I>handle</I>.
-
-If the reference count drops to zero and no other loaded libraries use
-symbols in it, then the dynamic library is unloaded.
-<P>
-
-The function
-<B>dlclose()</B>
-
-returns 0 on success, and non-zero on error.
-<A NAME="lbAI">&nbsp;</A>
-<H3>The obsolete symbols _init and _fini</H3>
-
-The linker recognizes special symbols
-<B>_init</B>
-
-and
-<B>_fini</B>.
-
-If a dynamic library exports a routine named
-<B>_init</B>,
-
-then that code is executed after the loading, before
-<B>dlopen()</B>
-
-returns. If the dynamic library exports a routine named
-<B>_fini</B>,
-
-then that routine is called just before the library is unloaded.
-In case you  need to  avoid  linking against the system startup files,
-this can be done by giving gcc the &quot;-nostartfiles&quot; parameter on
-the command line.
-<P>
-
-Using these routines, or the gcc
-<B>-nostartupfiles</B>
-
-or
-<B>-nostdlib</B>
-
-options, is not recommended. Their use may result in undesired behavior,
-since the constructor/destructor routines will not be executed
-(unless special measures are taken).
-
-
-<P>
-
-Instead, libraries should export routines using the
-<B>__attribute__((constructor))</B>
-
-and
-<B>__attribute__((destructor))</B>
-
-function attributes.  See the gcc info pages for information on these.
-Constructor routines are executed before
-<B>dlopen</B>
-
-returns, and destructor routines are executed before
-<B>dlclose</B>
-
-returns.
-<A NAME="lbAJ">&nbsp;</A>
-<H2>GNU EXTENSIONS</H2>
-
-Glibc adds two functions not described by POSIX, with prototypes
-<P>
 <PRE>
-<B>#define GNU_SOURCE</B>
+<B>#define _GNU_SOURCE</B>
 <B>#include &lt;<A HREF="file:///usr/include/dlfcn.h">dlfcn.h</A>&gt;</B>
 
 <B>int dladdr(void *</B><I>addr</I><B>, Dl_info *</B><I>info</I><B>);</B>
 
-<B>void *dlvsym(void *</B><I>handle</I><B>, char *</B><I>symbol</I><B>, char *</B><I>version</I><B>);</B>
+<B>int dladdr1(void *</B><I>addr</I><B>, Dl_info *</B><I>info</I><B>, void **</B><I></I><B>extra_info</B><I>, int </I><B>flags</B><I>);</I>
+
+Link with <I>-ldl</I>.
 </PRE>
 
-<P>
+<A NAME="lbAD">&nbsp;</A>
+<H2>DESCRIPTION</H2>
 
 The function
-<B>dladdr()</B>
+<B>dladdr</B>()
 
-takes a function pointer and tries to resolve name
-and file where it is located. Information is stored in the
-Dl_info structure:
+determines whether the address specified in
+<I>addr</I>
+
+is located in one of the shared objects loaded by the calling application.
+If it is, then
+<B>dladdr</B>()
+
+returns information about the shared object and symbol that overlaps
+<I>addr</I>.
+
+This information is returned in a
+<I>Dl_info</I>
+
+structure:
 <P>
+
 <PRE>
 typedef struct {
-  const char *dli_fname;/* File name of defining object */
-  void *dli_fbase;      /* Load address of that object */
-  const char *dli_sname;/* Name of nearest lower symbol */
-  void *dli_saddr;      /* Exact value of nearest symbol */
+    const char *dli_fname;  /* Pathname of shared object that
+                               contains address */
+    void       *dli_fbase;  /* Base address at which shared
+                               object is loaded */
+    const char *dli_sname;  /* Name of symbol whose definition
+                               overlaps <I>addr</I> */
+    void       *dli_saddr;  /* Exact address of symbol named
+                               in <I>dli_sname</I> */
 } Dl_info;
 </PRE>
 
-<P>
-<B>dladdr()</B>
 
-returns 0 on error, and non-zero on success.
 <P>
 
+If no symbol matching
+<I>addr</I>
+
+could be found, then
+<I>dli_sname</I>
+
+and
+<I>dli_saddr</I>
+
+are set to NULL.
+<P>
 The function
-<B>dlvsym()</B>
+<B>dladdr1</B>()
 
-does the same as
-<B>dlsym()</B>
+is like
+<B>dladdr</B>(),
 
-but takes a version string as additional argument.
+but returns additional information via the argument
+<I>extra_info</I>.
+
+The information returned depends on the value specified in
+<I>flags</I>,
+
+which can have one of the following values:
+<DL COMPACT>
+<DT><B>RTLD_DL_LINKMAP</B>
+
+<DD>
+Obtain a pointer to the link map for the matched file.
+The
+<I>extra_info</I>
+
+argument points to a pointer to a
+<I>link_map</I>
+
+structure (i.e.,
+<I>struct link_map&nbsp;**</I>),
+
+defined in
+<I>&lt;<A HREF="file:///usr/include/link.h">link.h</A>&gt;</I>
+
+as:
 <P>
-<A NAME="lbAK">&nbsp;</A>
-<H2>EXAMPLE</H2>
 
-<B>Load the math library, and print the cosine of 2.0:</B>
-
-<DL COMPACT><DT><DD>
 <PRE>
-#include &lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;
-#include &lt;<A HREF="file:///usr/include/dlfcn.h">dlfcn.h</A>&gt;
+struct link_map {
+    ElfW(Addr) l_addr;  /* Difference between the
+                           address in the ELF file and
+                           the address in memory */
+    char      *l_name;  /* Absolute pathname where
+                           object was found */
+    ElfW(Dyn) *l_ld;    /* Dynamic section of the
+                           shared object */
+    struct link_map *l_next, *l_prev;
+                        /* Chain of loaded objects */
 
-int main(int argc, char **argv) {
-    void *handle;
-    double (*cosine)(double);
-    char *error;
-
-    handle = dlopen (&quot;libm.so&quot;, RTLD_LAZY);
-    if (!handle) {
-        fprintf (stderr, &quot;%s\n&quot;, dlerror());
-        <A HREF="../man1/exit.1.html">exit</A>(1);
-    }
-
-    dlerror();    /* Clear any existing error */
-    *(void **) (&amp;cosine) = dlsym(handle, &quot;cos&quot;);
-    if ((error = dlerror()) != NULL)  {
-        fprintf (stderr, &quot;%s\n&quot;, error);
-        <A HREF="../man1/exit.1.html">exit</A>(1);
-    }
-
-    printf (&quot;%f\n&quot;, (*cosine)(2.0));
-    dlclose(handle);
-    return 0;
-}
+    /* Plus additional fields private to the
+       implementation */
+};
 </PRE>
 
+
+<DT><B>RTLD_DL_SYMENT</B>
+
+<DD>
+Obtain a pointer to the ELF symbol table entry of the matching symbol.
+The
+<I>extra_info</I>
+
+argument is a pointer to a symbol pointer:
+<I>const ElfW(Sym) **</I>.
+
+The
+<I>ElfW</I>()
+
+macro definition turns its argument into the name of an ELF data
+type suitable for the hardware architecture.
+For example, on a 64-bit platform,
+<I>ElfW(Sym)</I>
+
+yields the data type name
+<I>Elf64_Sym</I>,
+
+which is defined in
+<I>&lt;<A HREF="file:///usr/include/elf.h">elf.h</A>&gt;</I>
+
+as:
+<P>
+
+<PRE>
+typedef struct  {
+    Elf64_Word    st_name;     /* Symbol name */
+    unsigned char st_info;     /* Symbol type and binding */
+    unsigned char st_other;    /* Symbol visibility */
+    Elf64_Section st_shndx;    /* Section index */
+    Elf64_Addr    st_value;    /* Symbol value */
+    Elf64_Xword   st_size;     /* Symbol size */
+} Elf64_Sym;
+</PRE>
+
+
+<P>
+The
+<I>st_name</I>
+
+field is an index into the string table.
+<P>
+The
+<I>st_info</I>
+
+field encodes the symbol's type and binding.
+The type can be extracted using the macro
+<B>ELF64_ST_TYPE(st_info)</B>
+
+(or
+<B>ELF32_ST_TYPE()</B>
+
+on 32-bit platforms), which yields one of the following values:
+
+<TABLE>
+<TR VALIGN=top><TD><B>Value</B></TD><TD><B>Description</B><BR></TD></TR>
+<TR VALIGN=top><TD><B>STT_NOTYPE</B></TD><TD>Symbol type is unspecified<BR></TD></TR>
+<TR VALIGN=top><TD><B>STT_OBJECT</B></TD><TD>Symbol is a data object<BR></TD></TR>
+<TR VALIGN=top><TD><B>STT_FUNC</B></TD><TD>Symbol is a code object<BR></TD></TR>
+<TR VALIGN=top><TD><B>STT_SECTION</B></TD><TD>Symbol associated with a section<BR></TD></TR>
+<TR VALIGN=top><TD><B>STT_FILE</B></TD><TD>Symbol's name is file name<BR></TD></TR>
+<TR VALIGN=top><TD><B>STT_COMMON</B></TD><TD>Symbol is a common data object<BR></TD></TR>
+<TR VALIGN=top><TD><B>STT_TLS</B></TD><TD>Symbol is thread-local data object<BR></TD></TR>
+<TR VALIGN=top><TD><B>STT_GNU_IFUNC</B></TD><TD>Symbol is indirect code object<BR></TD></TR>
+</TABLE>
+
+
+<DT><DD>
+The symbol binding can be extracted from the
+<I>st_info</I>
+
+field using the macro
+<B>ELF64_ST_BIND(st_info)</B>
+
+(or
+<B>ELF32_ST_BIND()</B>
+
+on 32-bit platforms), which yields one of the following values:
+<P>
+
+<TABLE>
+<TR VALIGN=top><TD><B>Value</B></TD><TD><B>Description</B><BR></TD></TR>
+<TR VALIGN=top><TD><B>STB_LOCAL</B></TD><TD>Local symbol<BR></TD></TR>
+<TR VALIGN=top><TD><B>STB_GLOBAL</B></TD><TD>Global symbol<BR></TD></TR>
+<TR VALIGN=top><TD><B>STB_WEAK</B></TD><TD>Weak symbol<BR></TD></TR>
+<TR VALIGN=top><TD><B>STB_GNU_UNIQUE</B></TD><TD>Unique symbol<BR></TD></TR>
+</TABLE>
+
+
+<DT><DD>
+The
+<I>st_other</I>
+
+field contains the symbol's visibility, which can be extracted using the macro
+<B>ELF64_ST_VISIBILITY(st_info)</B>
+
+(or
+<B>ELF32_ST_VISIBILITY()</B>
+
+on 32-bit platforms), which yields one of the following values:
+
+<TABLE>
+<TR VALIGN=top><TD><B>Value</B></TD><TD><B>Description</B><BR></TD></TR>
+<TR VALIGN=top><TD><B>STV_DEFAULT</B></TD><TD>Default symbol visibility rules<BR></TD></TR>
+<TR VALIGN=top><TD><B>STV_INTERNAL</B></TD><TD>Processor-specific hidden class<BR></TD></TR>
+<TR VALIGN=top><TD><B>STV_HIDDEN</B></TD><TD>Symbol unavailable in other modules<BR></TD></TR>
+<TR VALIGN=top><TD><B>STV_PROTECTED</B></TD><TD>Not preemptible, not exported<BR></TD></TR>
+</TABLE>
+
+
 </DL>
+<A NAME="lbAE">&nbsp;</A>
+<H2>RETURN VALUE</H2>
 
+On success, these functions return a nonzero value.
+If the address specified in
+<I>addr</I>
+
+could be matched to a shared object,
+but not to a symbol in the shared object, then the
+<I>info-&gt;dli_sname</I>
+
+and
+<I>info-&gt;dli_saddr</I>
+
+fields are set to NULL.
 <P>
-
-If this program were in a file named &quot;foo.c&quot;, you would build the program
-with the following command:
-<DL COMPACT><DT><DD>
 <P>
+If the address specified in
+<I>addr</I>
 
-gcc -rdynamic -o foo foo.c -ldl
-</DL>
-
-<P>
-
-Libraries exporting _init() and _fini() will want to be compiled as
-follows, using bar.c as the example name:
-<DL COMPACT><DT><DD>
-<P>
-
-gcc -shared -nostartfiles -o bar bar.c
-</DL>
-
-<A NAME="lbAL">&nbsp;</A>
-<H2>NOTES</H2>
-
-The symbols RTLD_DEFAULT and RTLD_NEXT are defined by
-<I>&lt;<A HREF="file:///usr/include/dlfcn.h">dlfcn.h</A>&gt;</I>
-
-only when _GNU_SOURCE was defined before including it.
+could not be matched to a shared object, then these functions return 0.
+In this case, an error message is
+<I>not</I>
 
 
 
+available via
+<B><A HREF="../man3/dlerror.3.html">dlerror</A></B>(3).
 
+<A NAME="lbAF">&nbsp;</A>
+<H2>VERSIONS</H2>
 
+<B>dladdr</B>()
 
+is present in glibc 2.0 and later.
+<B>dladdr1</B>()
 
+first appeared in glibc 2.3.3.
+<A NAME="lbAG">&nbsp;</A>
+<H2>ATTRIBUTES</H2>
 
-<A NAME="lbAM">&nbsp;</A>
-<H2>HISTORY</H2>
+For an explanation of the terms used in this section, see
+<B><A HREF="../man7/attributes.7.html">attributes</A></B>(7).
 
-The dlopen interface standard comes from SunOS. That system also has
-dladdr, but not dlvsym.
-<A NAME="lbAN">&nbsp;</A>
+<TABLE BORDER>
+<TR VALIGN=top><TD><B>Interface</B></TD><TD><B>Attribute</B></TD><TD><B>Value</B><BR></TD></TR>
+<TR VALIGN=top><TD>
+<B>dladdr</B>(),
+
+<B>dladdr1</B>()
+
+</TD><TD>Thread safety</TD><TD>MT-Safe<BR></TD></TR>
+</TABLE>
+
+<A NAME="lbAH">&nbsp;</A>
 <H2>CONFORMING TO</H2>
 
-POSIX 1003.1-2003 describes dlclose, dlerror, dlopen, dlsym.
-<A NAME="lbAO">&nbsp;</A>
+These functions are nonstandard GNU extensions
+that are also present on Solaris.
+<A NAME="lbAI">&nbsp;</A>
+<H2>BUGS</H2>
+
+Sometimes, the function pointers you pass to
+<B>dladdr</B>()
+
+may surprise you.
+On some architectures (notably i386 and x86_64),
+<I>dli_fname</I>
+
+and
+<I>dli_fbase</I>
+
+may end up pointing back at the object from which you called
+<B>dladdr</B>(),
+
+even if the function used as an argument should come from
+a dynamically linked library.
+<P>
+
+The problem is that the function pointer will still be resolved
+at compile time, but merely point to the
+<I>plt</I>
+
+(Procedure Linkage Table)
+section of the original object (which dispatches the call after
+asking the dynamic linker to resolve the symbol).
+To work around this,
+you can try to compile the code to be position-independent:
+then, the compiler cannot prepare the pointer
+at compile time any more and
+<B><A HREF="../man1/gcc.1.html">gcc</A></B>(1)
+
+will generate code that just loads the final symbol address from the
+<I>got</I>
+
+(Global Offset Table) at run time before passing it to
+<B>dladdr</B>().
+
+<A NAME="lbAJ">&nbsp;</A>
 <H2>SEE ALSO</H2>
-
-<B><A HREF="../man1/ld.1.html">ld</A></B>(1),
-
-<B><A HREF="../man1/ldd.1.html">ldd</A></B>(1),
 
 <B><A HREF="../man3/dl_iterate_phdr.3.html">dl_iterate_phdr</A></B>(3),
 
-<B><A HREF="../man8/ld.so.8.html">ld.so</A></B>(8),
+<B><A HREF="../man3/dlinfo.3.html">dlinfo</A></B>(3),
 
-<B><A HREF="../man8/ldconfig.8.html">ldconfig</A></B>(8),
+<B><A HREF="../man3/dlopen.3.html">dlopen</A></B>(3),
 
-ld.so info pages, gcc info pages, ld info pages
+<B><A HREF="../man3/dlsym.3.html">dlsym</A></B>(3),
+
+<B><A HREF="../man8/ld.so.8.html">ld.so</A></B>(8)
 
 <P>
 
@@ -488,24 +380,17 @@ ld.so info pages, gcc info pages, ld info pages
 <DT><A HREF="#lbAB">NAME</A><DD>
 <DT><A HREF="#lbAC">SYNOPSIS</A><DD>
 <DT><A HREF="#lbAD">DESCRIPTION</A><DD>
-<DL>
-<DT><A HREF="#lbAE">dlerror</A><DD>
-<DT><A HREF="#lbAF">dlopen</A><DD>
-<DT><A HREF="#lbAG">dlsym</A><DD>
-<DT><A HREF="#lbAH">dlclose</A><DD>
-<DT><A HREF="#lbAI">The obsolete symbols _init and _fini</A><DD>
-</DL>
-<DT><A HREF="#lbAJ">GNU EXTENSIONS</A><DD>
-<DT><A HREF="#lbAK">EXAMPLE</A><DD>
-<DT><A HREF="#lbAL">NOTES</A><DD>
-<DT><A HREF="#lbAM">HISTORY</A><DD>
-<DT><A HREF="#lbAN">CONFORMING TO</A><DD>
-<DT><A HREF="#lbAO">SEE ALSO</A><DD>
+<DT><A HREF="#lbAE">RETURN VALUE</A><DD>
+<DT><A HREF="#lbAF">VERSIONS</A><DD>
+<DT><A HREF="#lbAG">ATTRIBUTES</A><DD>
+<DT><A HREF="#lbAH">CONFORMING TO</A><DD>
+<DT><A HREF="#lbAI">BUGS</A><DD>
+<DT><A HREF="#lbAJ">SEE ALSO</A><DD>
 </DL>
 <HR>
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 02:10:24 GMT, April 20, 2020
+Time: 03:40:40 GMT, April 20, 2020
 </BODY>
 </HTML>

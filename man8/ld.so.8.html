@@ -7,7 +7,7 @@ This is in the public domain
 <HTML><HEAD><TITLE>Man page of LD.SO</TITLE>
 </HEAD><BODY>
 <H1>LD.SO</H1>
-Section: Linux Programmer's Manual (8)<BR>Updated: 2015-05-07<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (8)<BR>Updated: 2015-08-08<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -18,7 +18,8 @@ ld.so, ld-linux.so* - dynamic linker/loader
 <H2>SYNOPSIS</H2>
 
 The dynamic linker can be run either indirectly by running some
-dynamically linked program or library (in which case no command-line options
+dynamically linked program or shared object
+(in which case no command-line options
 to the dynamic linker can be passed and, in the ELF case, the dynamic linker
 which is stored in the
 <B>.interp</B>
@@ -38,8 +39,8 @@ The programs
 and
 <B>ld-linux.so*</B>
 
-find and load the shared libraries needed by a program, prepare
-the program to run, and then run it.
+find and load the shared objects (shared libraries) needed by a program,
+prepare the program to run, and then run it.
 <P>
 
 Linux binaries require dynamic linking (linking at run time)
@@ -71,16 +72,16 @@ and
 
 <P>
 
-When resolving library dependencies,
+When resolving shared object dependencies,
 the dynamic linker first inspects each dependency
 string to see if it contains a slash (this can occur if
-a library pathname containing slashes was specified at link time).
+a shared object pathname containing slashes was specified at link time).
 If a slash is found, then the dependency string is interpreted as
 a (relative or absolute) pathname,
-and the library is loaded using that pathname.
+and the shared object is loaded using that pathname.
 <P>
 
-If a library dependency does not contain a slash,
+If a shared object dependency does not contain a slash,
 then it is searched for in the following order:
 <DL COMPACT>
 <DT>o<DD>
@@ -102,14 +103,14 @@ of the binary if present.
 From the cache file
 <I>/etc/ld.so.cache</I>,
 
-which contains a compiled list of candidate libraries previously found
+which contains a compiled list of candidate shared objects previously found
 in the augmented library path.
 If, however, the binary was linked with the
 <B>-z nodeflib</B>
 
-linker option, libraries in the default library paths are skipped.
-Libraries installed in hardware capability directories (see below)
-are preferred to other libraries.
+linker option, shared objects in the default paths are skipped.
+Shared objects installed in hardware capability directories (see below)
+are preferred to other shared objects.
 <DT>o<DD>
 In the default path
 <I>/lib</I>,
@@ -117,7 +118,7 @@ In the default path
 and then
 <I>/usr/lib</I>.
 
-(On some 64-bit archiectures, the default spaths for 64-bit libraries are
+(On some 64-bit archiectures, the default paths for 64-bit shared objects are
 <I>/lib64</I>,
 
 and then
@@ -141,7 +142,7 @@ understands certain strings in an rpath specification (DT_RPATH or DT_RUNPATH); 
 
 <DD>
 This expands to
-the directory containing the program or shared library.
+the directory containing the program or shared object.
 Thus, an application located in
 <I>somedir/app</I>
 
@@ -149,7 +150,7 @@ could be compiled with
 <P>
 <BR>&nbsp;&nbsp;&nbsp;&nbsp;gcc&nbsp;-Wl,-rpath,'$ORIGIN/../lib'
 <P>
-so that it finds an associated shared library in
+so that it finds an associated shared object in
 <I>somedir/lib</I>
 
 no matter where
@@ -159,7 +160,7 @@ is located in the directory hierarchy.
 This facilitates the creation of &quot;turn-key&quot; applications that
 do not need to be installed into special directories,
 but can instead be unpacked into any directory
-and still find their own shared libraries.
+and still find their own shared objects.
 <DT><I>$LIB</I> (or equivalently <I>${LIB}</I>)
 
 <DD>
@@ -255,7 +256,7 @@ Among the more important environment variables are the following:
 
 <DD>
 (glibc since 2.2.3)
-Each shared library can inform the dynamic linker of the minimum kernel ABI
+Each shared object can inform the dynamic linker of the minimum kernel ABI
 version that it requires.
 (This requirement is encoded in an ELF note section that is viewable via
 <I>readelf&nbsp;-n</I>
@@ -265,7 +266,7 @@ as a section labeled
 
 At run time,
 the dynamic linker determines the ABI version of the running kernel and
-will reject loading shared libraries that specify minimum ABI versions
+will reject loading shared objects that specify minimum ABI versions
 that exceed that ABI version.
 <P>
 <B>LD_ASSUME_KERNEL</B>
@@ -275,7 +276,7 @@ cause the dynamic linker to assume that it is running on a system with
 a different kernel ABI version.
 For example, the following command line causes the
 dynamic linker to assume it is running on Linux 2.2.5 when loading
-the shared libraries required by
+the shared objects required by
 <I>myprog</I>:
 
 <P>
@@ -286,12 +287,12 @@ $ <B>LD_ASSUME_KERNEL=2.2.5 ./myprog</B>
 
 
 <P>
-On systems that provide multiple versions of a shared library
+On systems that provide multiple versions of a shared object
 (in different directories in the search path) that have
 different minimum kernel ABI version requirements,
 <B>LD_ASSUME_KERNEL</B>
 
-can be used to select the version of the library that is used
+can be used to select the version of the object that is used
 (dependent on the directory search order).
 Historically, the most common use of the
 <B>LD_ASSUME_KERNEL</B>
@@ -315,8 +316,9 @@ This is useful when using a debugger.
 <DT><B>LD_LIBRARY_PATH</B>
 
 <DD>
-A colon-separated list of directories in which to search for
+A list of directories in which to search for
 ELF libraries at execution-time.
+The items in the list are separated by either colons or semicolons.
 Similar to the
 <B>PATH</B>
 
@@ -326,19 +328,19 @@ Ignored in set-user-ID and set-group-ID programs.
 
 <DD>
 A list of additional, user-specified, ELF shared
-libraries to be loaded before all others.
+objects to be loaded before all others.
 The items of the list can be separated by spaces or colons.
-This can be used to selectively override functions in other shared libraries.
-The libraries are searched for using the rules given under DESCRIPTION.
+This can be used to selectively override functions in other shared objects.
+The objects are searched for using the rules given under DESCRIPTION.
 For set-user-ID/set-group-ID ELF binaries,
 preload pathnames containing slashes are ignored,
-and libraries in the standard search directories are loaded
-only if the set-user-ID mode bit is enabled on the library file.
+and shared objects in the standard search directories are loaded
+only if the set-user-ID mode bit is enabled on the shared object file.
 <DT><B>LD_TRACE_LOADED_OBJECTS</B>
 
 <DD>
 (ELF only)
-If set to a nonempty string, causes the program to list its dynamic library
+If set to a nonempty string, causes the program to list its dynamic
 dependencies, as if run by
 <B><A HREF="../man1/ldd.1.html">ldd</A></B>(1),
 
@@ -379,16 +381,16 @@ A colon-separated list of user-specified, ELF shared objects
 to be loaded before all others in a separate linker namespace
 (i.e., one that does not intrude upon the normal symbol bindings that
 would occur in the process).
-These libraries can be used to audit the operation of the dynamic linker.
+These objects can be used to audit the operation of the dynamic linker.
 <B>LD_AUDIT</B>
 
 is ignored for set-user-ID/set-group-ID binaries.
 <P>
 The dynamic linker will notify the audit
-libraries at so-called auditing checkpoints---for example,
-loading a new library, resolving a symbol,
+shared objects at so-called auditing checkpoints---for example,
+loading a new shared object, resolving a symbol,
 or calling a symbol from another shared object---by
-calling an appropriate function within the audit library.
+calling an appropriate function within the audit shared object.
 For details, see
 <B><A HREF="../man7/rtld-audit.7.html">rtld-audit</A></B>(7).
 
@@ -541,7 +543,7 @@ then all prelinking activity is traced.
 
 By default (i.e., if this variable is not defined),
 executables and prelinked
-shared objects will honor base addresses of their dependent libraries
+shared objects will honor base addresses of their dependent shared objects
 and (nonprelinked) position-independent executables (PIEs)
 and other shared objects will not honor them.
 If
@@ -598,16 +600,16 @@ ELF dynamic linker/loader
 
 <DD>
 File containing a compiled list of directories in which to search for
-libraries and an ordered list of candidate libraries.
+shared objects and an ordered list of candidate shared objects.
 <DT><I>/etc/ld.so.preload</I>
 
 <DD>
-File containing a whitespace-separated list of ELF shared libraries to
+File containing a whitespace-separated list of ELF shared objects to
 be loaded before the program.
 <DT><B>lib*.so*</B>
 
 <DD>
-shared libraries
+shared objects
 
 </DL>
 <A NAME="lbAI">&nbsp;</A>
@@ -622,14 +624,14 @@ ELF functionality is available since Linux 1.1.52 and libc5.
 <A NAME="lbAJ">&nbsp;</A>
 <H3>Hardware capabilities</H3>
 
-Some libraries are compiled using hardware-specific instructions which do
+Some shared objects are compiled using hardware-specific instructions which do
 not exist on every CPU.
-Such libraries should be installed in directories whose names define the
+Such objects should be installed in directories whose names define the
 required hardware capabilities, such as
 <I>/usr/lib/sse2/</I>.
 
 The dynamic linker checks these directories against the hardware of the
-machine and selects the most suitable version of a given library.
+machine and selects the most suitable version of a given shared object.
 Hardware capability directories can be cascaded to combine CPU features.
 The list of supported hardware capability names depends on the CPU.
 The following names are currently recognized:
@@ -714,6 +716,6 @@ mtrr, pat, pbe, pge, pn, pse36, sep, ss, sse, sse2, tm
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:40:11 GMT, April 20, 2020
+Time: 03:40:49 GMT, April 20, 2020
 </BODY>
 </HTML>

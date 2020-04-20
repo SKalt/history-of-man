@@ -25,14 +25,14 @@ License along with this manual; if not, see
 <HTML><HEAD><TITLE>Man page of DLOPEN</TITLE>
 </HEAD><BODY>
 <H1>DLOPEN</H1>
-Section: Linux Programmer's Manual (3)<BR>Updated: 2015-03-29<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2015-08-08<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
 <H2>NAME</H2>
 
-dladdr, dlclose, dlerror, dlopen, dlsym, dlvsym - programming interface to
-dynamic linking loader
+dlclose, dlopen, dlmopen -
+open and close a shared object
 <A NAME="lbAC">&nbsp;</A>
 <H2>SYNOPSIS</H2>
 
@@ -42,62 +42,55 @@ dynamic linking loader
 <B>void *dlopen(const char *</B><I>filename</I><B>, int </B><I>flags</I><B>);</B>
 
 <P>
-<B>char *dlerror(void);</B>
-
-<P>
-<B>void *dlsym(void *</B><I>handle</I><B>, const char *</B><I>symbol</I><B>);</B>
-
-<P>
 <B>int dlclose(void *</B><I>handle</I><B>);</B>
+
+<P>
+<B>#define _GNU_SOURCE</B>
+
+<BR>
+
+<B>#include &lt;<A HREF="file:///usr/include/dlfcn.h">dlfcn.h</A>&gt;</B>
+
+<P>
+<B>void *dlmopen (Lmid_t </B><I>lmid</I><B>, const char *</B><I>filename</I><B>, int </B><I>flags</I><B>);</B>
 
 <P>
 Link with <I>-ldl</I>.
 <A NAME="lbAD">&nbsp;</A>
 <H2>DESCRIPTION</H2>
 
-The four functions
-<B>dlopen</B>(),
-
-<B>dlsym</B>(),
-
-<B>dlclose</B>(),
-
-<B>dlerror</B>()
-
-implement the interface to the dynamic linking loader.
 <A NAME="lbAE">&nbsp;</A>
-<H3>dlerror()</H3>
-
-The function
-<B>dlerror</B>()
-
-returns a human-readable string describing the most recent error
-that occurred from
-<B>dlopen</B>(),
-
-<B>dlsym</B>()
-
-or
-<B>dlclose</B>()
-
-since the last call to
-<B>dlerror</B>().
-
-It returns NULL if no errors have occurred since initialization or since
-it was last called.
-<A NAME="lbAF">&nbsp;</A>
 <H3>dlopen()</H3>
 
 The function
 <B>dlopen</B>()
 
-loads the dynamic library file named by the null-terminated
+loads the dynamic shared object (shared library)
+file named by the null-terminated
 string
 <I>filename</I>
 
-and returns an opaque &quot;handle&quot; for the dynamic library.
+and returns an opaque &quot;handle&quot; for the loaded object.
+This handle is employed with other functions in the dlopen API, such as
+<B><A HREF="../man3/dlsym.3.html">dlsym</A></B>(3),
+
+<B><A HREF="../man3/dladdr.3.html">dladdr</A></B>(3),
+
+<B><A HREF="../man3/dlinfo.3.html">dlinfo</A></B>(3),
+
+and
+<B>dlclose</B>().
+
+<P>
 If
 <I>filename</I>
+
+
+
+
+
+
+
 
 is NULL, then the returned handle is for the main program.
 If
@@ -105,7 +98,7 @@ If
 
 contains a slash (&quot;/&quot;), then it is interpreted as a (relative
 or absolute) pathname.
-Otherwise, the dynamic linker searches for the library as follows
+Otherwise, the dynamic linker searches for the object as follows
 (see
 <B><A HREF="../man8/ld.so.8.html">ld.so</A></B>(8)
 
@@ -121,7 +114,7 @@ If, at the time that the program was started, the environment variable
 
 was defined to contain a colon-separated list of directories,
 then these are searched.
-(As a security measure this variable is ignored for set-user-ID and
+(As a security measure, this variable is ignored for set-user-ID and
 set-group-ID programs.)
 <DT>o<DD>
 (ELF only) If the executable file for the calling program
@@ -148,11 +141,14 @@ are searched (in that order).
 </DL>
 <P>
 
-If the library has dependencies on other shared libraries,
+If the object specified by
+<I>filename</I>
+
+has dependencies on other shared objects,
 then these are also automatically loaded by the dynamic linker
 using the same rules.
 (This process may occur recursively,
-if those libraries in turn have dependencies, and so on.)
+if those objects in turn have dependencies, and so on.)
 <P>
 
 One of the following two values must be included in
@@ -167,7 +163,7 @@ Only resolve symbols as the code that references them is executed.
 If the symbol is never referenced, then it is never resolved.
 (Lazy binding is performed only for function references;
 references to variables are always immediately bound when
-the library is loaded.)
+the shared object is loaded.)
 <DT><B>RTLD_NOW</B>
 
 <DD>
@@ -175,7 +171,7 @@ If this value is specified, or the environment variable
 <B>LD_BIND_NOW</B>
 
 is set to a nonempty string,
-all undefined symbols in the library are resolved before
+all undefined symbols in the shared object are resolved before
 <B>dlopen</B>()
 
 returns.
@@ -190,8 +186,8 @@ Zero or more of the following values may also be ORed in
 <DT><B>RTLD_GLOBAL</B>
 
 <DD>
-The symbols defined by this library will be
-made available for symbol resolution of subsequently loaded libraries.
+The symbols defined by this shared object will be
+made available for symbol resolution of subsequently loaded shared objects.
 <DT><B>RTLD_LOCAL</B>
 
 <DD>
@@ -199,38 +195,34 @@ This is the converse of
 <B>RTLD_GLOBAL</B>,
 
 and the default if neither flag is specified.
-Symbols defined in this library are not made available to resolve
-references in subsequently loaded libraries.
+Symbols defined in this shared object are not made available to resolve
+references in subsequently loaded shared objects.
 <DT><B>RTLD_NODELETE</B> (since glibc 2.2)
 
 <DD>
-Do not unload the library during
+Do not unload the shared object during
 <B>dlclose</B>().
 
-Consequently, the library's static variables are not reinitialized
-if the library is reloaded with
+Consequently, the object's static variables are not reinitialized
+if the object is reloaded with
 <B>dlopen</B>()
 
 at a later time.
-This flag is not specified in POSIX.1-2001.
-
 <DT><B>RTLD_NOLOAD</B> (since glibc 2.2)
 
 <DD>
-Don't load the library.
-This can be used to test if the library is already resident
+Don't load the shared object.
+This can be used to test if the object is already resident
 (<B>dlopen</B>()
 
-returns NULL if it is not, or the library's handle if it is resident).
-This flag can also be used to promote the flags on a library
+returns NULL if it is not, or the object's handle if it is resident).
+This flag can also be used to promote the flags on a shared object
 that is already loaded.
-For example, a library that was previously loaded with
+For example, a shared object that was previously loaded with
 <B>RTLD_LOCAL</B>
 
 can be reopened with
 <B>RTLD_NOLOAD&nbsp;|&nbsp;RTLD_GLOBAL</B>.
-
-This flag is not specified in POSIX.1-2001.
 
 
 <DT><B>RTLD_DEEPBIND</B> (since glibc 2.3.4)
@@ -239,11 +231,10 @@ This flag is not specified in POSIX.1-2001.
 
 
 Place the lookup scope of the symbols in this
-library ahead of the global scope.
-This means that a self-contained library will use
+shared object ahead of the global scope.
+This means that a self-contained object will use
 its own symbols in preference to global symbols with the same name
-contained in libraries that have already been loaded.
-This flag is not specified in POSIX.1-2001.
+contained in objects that have already been loaded.
 </DL>
 <P>
 
@@ -255,8 +246,8 @@ When given to
 <B>dlsym</B>(),
 
 this handle causes a search for a symbol in the main program,
-followed by all shared libraries loaded at program startup,
-and then all shared libraries loaded by
+followed by all shared objects loaded at program startup,
+and then all shared objects loaded by
 <B>dlopen</B>()
 
 with the flag
@@ -264,24 +255,24 @@ with the flag
 
 <P>
 
-External references in the library are resolved using the libraries
-in that library's dependency list and any other libraries previously
-opened with the
+External references in the shared object are resolved using the
+shared objects in that object's dependency list and any other
+objects previously opened with the
 <B>RTLD_GLOBAL</B>
 
 flag.
 If the executable was linked with the flag &quot;-rdynamic&quot;
 (or, synonymously, &quot;--export-dynamic&quot;),
 then the global symbols in the executable will also be used
-to resolve references in a dynamically loaded library.
+to resolve references in a dynamically loaded shared object.
 <P>
 
-If the same library is loaded again with
+If the same shared object is loaded again with
 <B>dlopen</B>(),
 
-the same library handle is returned.
-The dl library maintains reference
-counts for library handles, so a dynamic library is not
+the same object handle is returned.
+The dynamic linker maintains reference
+counts for object handles, so a dynamically loaded shared object is not
 deallocated until
 <B>dlclose</B>()
 
@@ -289,14 +280,14 @@ has been called on it as many times as
 <B>dlopen</B>()
 
 has succeeded on it.
-The
-<B>_init</B>()
+Any initialization returns (see below) are called just once.
+However, a subsequent
+<B>dlopen</B>()
 
-routine, if present, is called only once.
-But a subsequent call with
+call that loads the same shared object with
 <B>RTLD_NOW</B>
 
-may force symbol resolution for a library earlier loaded with
+may force symbol resolution for a shared object earlier loaded with
 <B>RTLD_LAZY</B>.
 
 <P>
@@ -305,90 +296,95 @@ If
 <B>dlopen</B>()
 
 fails for any reason, it returns NULL.
-<A NAME="lbAG">&nbsp;</A>
-<H3>dlsym()</H3>
 
-The function
-<B>dlsym</B>()
+<A NAME="lbAF">&nbsp;</A>
+<H3>dlmopen()</H3>
 
-takes a &quot;handle&quot; of a dynamic library returned by
+This function performs the same task as
+<B>dlopen</B>()---the
+
+<I>filename</I>
+
+and
+<I>flags</I>
+
+arguments, as well as the return value, are the same,
+except for the differences noted below.
+<P>
+The
+<B>dlmopen</B>()
+
+function differs from
 <B>dlopen</B>()
 
-and the
-null-terminated symbol name, returning the address where that symbol is
-loaded into memory.
-If the symbol is not found, in the specified
-library or any of the libraries that were automatically loaded by
+primarily in that it accepts an additional argument,
+<I>lmid</I>,
+
+that specifies the link-map list (also referred to as a
+<I>namespace</I>)
+
+in which the shared object should be loaded.
+(By comparison,
 <B>dlopen</B>()
 
-when that library was loaded,
-<B>dlsym</B>()
+adds the dynamically loaded shared object to the same namespace as
+the shared object from which the
+<B>dlopen</B>()
 
-returns NULL.
-(The search performed by
-<B>dlsym</B>()
+call is made.)
+The
+<I>Lmid_t</I>
 
-is breadth first through the dependency tree of these libraries.)
-Since the value of the symbol could actually be NULL (so that a
-NULL return from
-<B>dlsym</B>()
+type is an opaque handle that refers to a namespace.
+<P>
+The
+<I>lmid</I>
 
-need not indicate an error), the correct way to test for an error
-is to call
-<B>dlerror</B>()
+argument is either the ID of an existing namespace
 
-to clear any old error conditions, then call
-<B>dlsym</B>(),
+(which can be obtained using the
+<B><A HREF="../man3/dlinfo.3.html">dlinfo</A></B>(3)
 
-and then call
-<B>dlerror</B>()
+<B>RTLD_DI_LMID</B>
 
-again, saving its return value into a variable, and check whether
-this saved value is not NULL.
+request) or one of the following special values:
+<DL COMPACT>
+<DT><B>LM_ID_BASE</B>
+
+<DD>
+Load the shared object in the initial namespace
+(i.e., the application's namespace).
+<DT><B>LM_ID_NEWLM</B>
+
+<DD>
+Create a new namespace and load the shared object in that namespace.
+The object must have been correctly linked
+to reference all of the other shared objects that it requires,
+since the new namespace is initially empty.
+</DL>
 <P>
 
-There are two special pseudo-handles:
-<DL COMPACT>
-<DT><B>RTLD_DEFAULT</B>
+If
+<I>filename</I>
 
-<DD>
-Find the first occurrence of the desired symbol
-using the default library search order.
-The search will include global symbols in the executable
-and its dependencies,
-as well as symbols in libraries that were dynamically loaded with the
-<B>RTLD_GLOBAL</B>
+is NULL, then the only permitted value for
+<I>lmid</I>
 
-flag.
-<DT><B>RTLD_NEXT</B>
+is
+<B>LM_ID_BASE</B>.
 
-<DD>
-Find the next occurrence of the desired symbol in the search order
-after the current library.
-This allows one to provide a wrapper
-around a function in another shared library, so that, for example,
-the definition of a function in a preloaded library
-(see
-<B>LD_PRELOAD</B>
-
-in
-<B><A HREF="../man8/ld.so.8.html">ld.so</A></B>(8))
-
-can find and invoke the &quot;real&quot; function provided in another library
-(or for that matter, the &quot;next&quot; definition of the function in cases
-where there are multiple layers of preloading).
-</DL>
-<A NAME="lbAH">&nbsp;</A>
+<A NAME="lbAG">&nbsp;</A>
 <H3>dlclose()</H3>
 
 The function
 <B>dlclose</B>()
 
-decrements the reference count on the dynamic library handle
+decrements the reference count on the
+dynamically loaded shared object referred to by
 <I>handle</I>.
 
 If the reference count drops to zero,
-then the dynamic library is unloaded.
+then the object is unloaded.
 All shared objects that were automatically loaded when
 <B>dlopen</B>()
 
@@ -397,32 +393,226 @@ was invoked on the object referred to by
 
 are recursively closed in the same manner.
 <P>
-
-The function
+A successful return from
 <B>dlclose</B>()
 
-returns 0 on success, and nonzero on error.
-<A NAME="lbAI">&nbsp;</A>
-<H3>The obsolete symbols _init() and _fini()</H3>
+does not guarantee that the symbols associated with
+<I>handle</I>
 
-The linker recognizes special symbols
+are removed from the caller's address space.
+In addition to references resulting from explicit
+<B>dlopen</B>()
+
+calls, a shared object may have been implicitly loaded
+(and reference counted) because of dependencies in other shared objects.
+Only when all references have been released can the shared object
+be removed from the address space.
+<A NAME="lbAH">&nbsp;</A>
+<H2>RETURN VALUE</H2>
+
+On success,
+<B>dlopen</B>()
+
+and
+<B>dlmopen</B>()
+
+return a non-NULL handle for the loaded library.
+On error
+(file could not be found, was not readable, had the wrong format,
+or caused errors during loading),
+these functions return NULL.
+<P>
+On success,
+<B>dlclose</B>()
+
+returns 0; on error, it returns a nonzero value.
+<P>
+Errors from these functions can be diagnosed using
+<B><A HREF="../man3/dlerror.3.html">dlerror</A></B>(3).
+
+<A NAME="lbAI">&nbsp;</A>
+<H2>VERSIONS</H2>
+
+<B>dlopen</B>()
+
+and
+<B>dlclose</B>()
+
+are present in glibc 2.0 and later.
+<B>dlmopen</B>()
+
+first appeared in glibc 2.3.4.
+<A NAME="lbAJ">&nbsp;</A>
+<H2>ATTRIBUTES</H2>
+
+For an explanation of the terms used in this section, see
+<B><A HREF="../man7/attributes.7.html">attributes</A></B>(7).
+
+<TABLE BORDER>
+<TR VALIGN=top><TD><B>Interface</B></TD><TD><B>Attribute</B></TD><TD><B>Value</B><BR></TD></TR>
+<TR VALIGN=top><TD>
+<B>dlopen</B>(),
+
+<B>dlmopen</B>(),
+
+<B>dlclose</B>()
+
+</TD><TD>Thread safety</TD><TD>MT-Safe<BR></TD></TR>
+</TABLE>
+
+<A NAME="lbAK">&nbsp;</A>
+<H2>CONFORMING TO</H2>
+
+POSIX.1-2001 describes
+<B>dlclose</B>()
+
+and
+<B>dlopen</B>().
+
+The
+<B>dlmopen</B>()
+
+function is a GNU extension.
+<P>
+The
+<B>RTLD_NOLOAD</B>,
+
+<B>RTLD_NODELETE</B>,
+
+and
+<B>RTLD_DEEP_BIND</B>
+
+flags are GNU extensions;
+the first two of these flags are also present on Solaris.
+<A NAME="lbAL">&nbsp;</A>
+<H2>NOTES</H2>
+
+<A NAME="lbAM">&nbsp;</A>
+<H3>dlmopen() and namespaces</H3>
+
+A link-map list defines an isolated namespace for the
+resolution of symbols by the dynamic linker.
+Within a namespace,
+dependent shared objects are implicitly loaded according to the usual rules,
+and symbol references are likewise resolved according to the usual rules,
+but such resolution is confined to the definitions provided by the
+objects that have been (explicitly and implicitly) loaded into the namespace.
+<P>
+The
+<B>dlmopen</B>()
+
+function permits object-load isolation---the ability
+to load a shared object in a new namespace without
+exposing the rest of the application to the symbols
+made available by the new object.
+Note that the use of the
+<B>RTLD_LOCAL</B>
+
+flag is not sufficient for this purpose,
+since it prevents a shared object's symbols from being available to
+<I>any</I>
+
+other shared object.
+In some cases,
+we may want to make the symbols provided by a dynamically
+loaded shared object available to (a subset of) other shared objects
+without exposing those symbols to the entire application.
+This can be achieved by using a separate namespace and the
+<B>RTLD_GLOBAL</B>
+
+flag.
+<P>
+The
+<B>dlmopen</B>()
+
+function also can be used to provide better isolation than the
+<B>RTLD_LOCAL</B>
+
+flag.
+In particular, shared objects laoded with
+<B>RTLD_LOCAL</B>
+
+may be promoted to
+<B>RTLD_GLOBAL</B>
+
+if they are dependencies of another shared object loaded with
+<B>RTLD_GLOBAL</B>.
+
+Thus,
+<B>RTLD_LOCAL</B>
+
+is insufficient to isolate a loaded shared object except in the (uncommon)
+case where one has explicit control over all shared object dependencies.
+<P>
+Possible uses of
+<B>dlmopen</B>()
+
+are plugins where the author of the plugin-loading framework
+can't trust the plugin authors and does not wish
+any undefined symbols from the plugin framework to be resolved to plugin
+symbols.
+Another use is to load the same object more than once.
+Without the use of
+<B>dlmopen</B>(),
+
+this would require the creation of distinct copies of the shared object file.
+Using
+<B>dlmopen</B>(),
+
+this can be achieved by loading the same shared object file into
+different namespaces.
+<P>
+The glibc implementation supports a maximum of
+
+16 namespaces.
+
+<A NAME="lbAN">&nbsp;</A>
+<H3>Initialization and finalization functions</H3>
+
+Shared objects may export functions using the
+<B>__attribute__((constructor))</B>
+
+and
+<B>__attribute__((destructor))</B>
+
+function attributes.
+Constructor functions are executed before
+<B>dlopen</B>()
+
+returns, and destructor functions are executed before
+<B>dlclose</B>()
+
+returns.
+A shared object may export multiple constructors and destructors,
+and priorities can be associated with each function
+to determine the order in which they are executed.
+See the
+<B>gcc</B>
+
+info pages (under &quot;Function attributes&quot;)
+
+for further information.
+<P>
+An older method of (partially) achieving the same result is via the use of
+two special symbols recognized by the linker:
 <B>_init</B>
 
 and
 <B>_fini</B>.
 
-If a dynamic library exports a routine named
+If a dynamically loaded shared object exports a routine named
 <B>_init</B>(),
 
-then that code is executed after the loading, before
+then that code is executed after loading a shared object, before
 <B>dlopen</B>()
 
 returns.
-If the dynamic library exports a routine named
+If the shared object exports a routine named
 <B>_fini</B>(),
 
-then that routine is called just before the library is unloaded.
-In case you need to avoid linking against the system startup files,
+then that routine is called just before the object is unloaded.
+In this case, one must avoid linking against the system startup files,
+which contain default versions of these files;
 this can be done by using the
 <B><A HREF="../man1/gcc.1.html">gcc</A></B>(1)
 
@@ -431,132 +621,19 @@ this can be done by using the
 command-line option.
 <P>
 
-Using these routines, or the gcc
-<B>-nostartfiles</B>
-
-or
-<B>-nostdlib</B>
-
-options, is not recommended.
-Their use may result in undesired behavior,
-since the constructor/destructor routines will not be executed
-(unless special measures are taken).
-
-
-<P>
-
-Instead, libraries should export routines using the
-<B>__attribute__((constructor))</B>
+Use of
+<B>_init</B>
 
 and
-<B>__attribute__((destructor))</B>
+<B>_fini</B>
 
-function attributes.
-See the gcc info pages for information on these.
-Constructor routines are executed before
-<B>dlopen</B>()
-
-returns, and destructor routines are executed before
-<B>dlclose</B>()
-
-returns.
-<A NAME="lbAJ">&nbsp;</A>
-<H3>Glibc extensions: dladdr() and dlvsym()</H3>
-
-Glibc adds two functions not described by POSIX, with prototypes
-<P>
-<PRE>
-<B>#define _GNU_SOURCE</B>         /* See <A HREF="../man7/feature_test_macros.7.html">feature_test_macros</A>(7) */
-<B>#include &lt;<A HREF="file:///usr/include/dlfcn.h">dlfcn.h</A>&gt;</B>
-
-<B>int dladdr(void *</B><I>addr</I><B>, Dl_info *</B><I>info</I><B>);</B>
-
-<B>void *dlvsym(void *</B><I>handle</I><B>, char *</B><I>symbol</I><B>, char *</B><I>version</I><B>);</B>
-</PRE>
-
-<P>
-
-The function
-<B>dladdr</B>()
-
-takes a function pointer and tries to resolve name
-and file where it is located.
-Information is stored in the
-<I>Dl_info</I>
-
-structure:
-<P>
-
-<PRE>
-typedef struct {
-    const char *dli_fname;  /* Pathname of shared object that
-                               contains address */
-    void       *dli_fbase;  /* Address at which shared object
-                               is loaded */
-    const char *dli_sname;  /* Name of symbol whose definition
-                               overlaps <I>addr</I> */
-    void       *dli_saddr;  /* Exact address of symbol named
-                               in <I>dli_sname</I> */
-} Dl_info;
-</PRE>
+is now deprecated in favor of the aforementioned
+constructors and destructors,
+which among other advantages,
+permit multiple initialization and finalization functions to be defined.
 
 
-<P>
 
-If no symbol matching
-<I>addr</I>
-
-could be found, then
-<I>dli_sname</I>
-
-and
-<I>dli_saddr</I>
-
-are set to NULL.
-<P>
-
-<B>dladdr</B>()
-
-returns 0 on error, and nonzero on success.
-<P>
-
-The function
-<B>dlvsym</B>(),
-
-provided by glibc since version 2.1,
-does the same as
-<B>dlsym</B>()
-
-but takes a version string as an additional argument.
-<A NAME="lbAK">&nbsp;</A>
-<H2>CONFORMING TO</H2>
-
-POSIX.1-2001 describes
-<B>dlclose</B>(),
-
-<B>dlerror</B>(),
-
-<B>dlopen</B>(),
-
-and
-<B>dlsym</B>().
-
-<A NAME="lbAL">&nbsp;</A>
-<H2>NOTES</H2>
-
-The symbols
-<B>RTLD_DEFAULT</B>
-
-and
-<B>RTLD_NEXT</B>
-
-are defined by
-<I>&lt;<A HREF="file:///usr/include/dlfcn.h">dlfcn.h</A>&gt;</I>
-
-only when
-<B>_GNU_SOURCE</B>
-
-was defined before including it.
 
 
 
@@ -571,57 +648,12 @@ Since glibc 2.2.3,
 <B><A HREF="../man3/atexit.3.html">atexit</A></B>(3)
 
 can be used to register an exit handler that is automatically
-called when a library is unloaded.
-<A NAME="lbAM">&nbsp;</A>
+called when a shared object is unloaded.
+<A NAME="lbAO">&nbsp;</A>
 <H3>History</H3>
 
-The dlopen interface standard comes from SunOS.
-That system also has
-<B>dladdr</B>(),
-
-but not
-<B>dlvsym</B>().
-
-<A NAME="lbAN">&nbsp;</A>
-<H2>BUGS</H2>
-
-Sometimes, the function pointers you pass to
-<B>dladdr</B>()
-
-may surprise you.
-On some architectures (notably i386 and x86_64),
-<I>dli_fname</I>
-
-and
-<I>dli_fbase</I>
-
-may end up pointing back at the object from which you called
-<B>dladdr</B>(),
-
-even if the function used as an argument should come from
-a dynamically linked library.
-<P>
-
-The problem is that the function pointer will still be resolved
-at compile time, but merely point to the
-<I>plt</I>
-
-(Procedure Linkage Table)
-section of the original object (which dispatches the call after
-asking the dynamic linker to resolve the symbol).
-To work around this,
-you can try to compile the code to be position-independent:
-then, the compiler cannot prepare the pointer
-at compile time anymore and today's
-<B><A HREF="../man1/gcc.1.html">gcc</A></B>(1)
-
-will generate code that just loads the final symbol address from the
-<I>got</I>
-
-(Global Offset Table) at run time before passing it to
-<B>dladdr</B>().
-
-<A NAME="lbAO">&nbsp;</A>
+These functions are part of the dlopen API, derived from SunOS.
+<A NAME="lbAP">&nbsp;</A>
 <H2>EXAMPLE</H2>
 
 Load the math library, and print the cosine of 2.0:
@@ -676,34 +708,29 @@ main(int argc, char **argv)
 }
 </PRE>
 
-<P>
+<A NAME="lbAQ">&nbsp;</A>
+<H2>BUGS</H2>
 
-If this program were in a file named &quot;foo.c&quot;, you would build the program
-with the following command:
+As at glibc 2.21, specifying the
+<B>RTLD_GLOBAL</B>
 
-<P>
+flag when calling
+<B>dlmopen</B>()
 
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;gcc&nbsp;-rdynamic&nbsp;-o&nbsp;foo&nbsp;foo.c&nbsp;-ldl
 
-<P>
+generates an error.
+Furthermore, specifying
+<B>RTLD_GLOBAL</B>
 
-Libraries exporting
-<B>_init</B>()
+when calling
+<B>dlopen</B>()
 
-and
-<B>_fini</B>()
+results in a program crash
+(<B>SIGSEGV</B>)
 
-will want to be compiled as
-follows, using
-<I>bar.c</I>
-
-as the example name:
-
-<P>
-
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;gcc&nbsp;-shared&nbsp;-nostartfiles&nbsp;-o&nbsp;bar&nbsp;bar.c
-
-<A NAME="lbAP">&nbsp;</A>
+if the call is made from any object loaded in a
+namespace other than the initial namespace.
+<A NAME="lbAR">&nbsp;</A>
 <H2>SEE ALSO</H2>
 
 <B><A HREF="../man1/ld.1.html">ld</A></B>(1),
@@ -714,6 +741,14 @@ as the example name:
 
 <B><A HREF="../man3/dl_iterate_phdr.3.html">dl_iterate_phdr</A></B>(3),
 
+<B><A HREF="../man3/dladdr.3.html">dladdr</A></B>(3),
+
+<B><A HREF="../man3/dlerror.3.html">dlerror</A></B>(3),
+
+<B><A HREF="../man3/dlinfo.3.html">dlinfo</A></B>(3),
+
+<B><A HREF="../man3/dlsym.3.html">dlsym</A></B>(3),
+
 <B><A HREF="../man7/rtld-audit.7.html">rtld-audit</A></B>(7),
 
 <B><A HREF="../man8/ld.so.8.html">ld.so</A></B>(8),
@@ -721,7 +756,7 @@ as the example name:
 <B><A HREF="../man8/ldconfig.8.html">ldconfig</A></B>(8)
 
 <P>
-ld.so info pages, gcc info pages, ld info pages
+gcc info pages, ld info pages
 <P>
 
 <HR>
@@ -731,26 +766,28 @@ ld.so info pages, gcc info pages, ld info pages
 <DT><A HREF="#lbAC">SYNOPSIS</A><DD>
 <DT><A HREF="#lbAD">DESCRIPTION</A><DD>
 <DL>
-<DT><A HREF="#lbAE">dlerror()</A><DD>
-<DT><A HREF="#lbAF">dlopen()</A><DD>
-<DT><A HREF="#lbAG">dlsym()</A><DD>
-<DT><A HREF="#lbAH">dlclose()</A><DD>
-<DT><A HREF="#lbAI">The obsolete symbols _init() and _fini()</A><DD>
-<DT><A HREF="#lbAJ">Glibc extensions: dladdr() and dlvsym()</A><DD>
+<DT><A HREF="#lbAE">dlopen()</A><DD>
+<DT><A HREF="#lbAF">dlmopen()</A><DD>
+<DT><A HREF="#lbAG">dlclose()</A><DD>
 </DL>
+<DT><A HREF="#lbAH">RETURN VALUE</A><DD>
+<DT><A HREF="#lbAI">VERSIONS</A><DD>
+<DT><A HREF="#lbAJ">ATTRIBUTES</A><DD>
 <DT><A HREF="#lbAK">CONFORMING TO</A><DD>
 <DT><A HREF="#lbAL">NOTES</A><DD>
 <DL>
-<DT><A HREF="#lbAM">History</A><DD>
+<DT><A HREF="#lbAM">dlmopen() and namespaces</A><DD>
+<DT><A HREF="#lbAN">Initialization and finalization functions</A><DD>
+<DT><A HREF="#lbAO">History</A><DD>
 </DL>
-<DT><A HREF="#lbAN">BUGS</A><DD>
-<DT><A HREF="#lbAO">EXAMPLE</A><DD>
-<DT><A HREF="#lbAP">SEE ALSO</A><DD>
+<DT><A HREF="#lbAP">EXAMPLE</A><DD>
+<DT><A HREF="#lbAQ">BUGS</A><DD>
+<DT><A HREF="#lbAR">SEE ALSO</A><DD>
 </DL>
 <HR>
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:40:02 GMT, April 20, 2020
+Time: 03:40:40 GMT, April 20, 2020
 </BODY>
 </HTML>
