@@ -291,6 +291,8 @@ domain, and accept connections:
 #define MY_SOCK_PATH &quot;/somepath&quot;
 #define LISTEN_BACKLOG 50
 
+#define die(msg) do { perror(msg); exit(EXIT_FAILURE); } while (0)
+
 int
 main(int argc, char *argv[])
 {
@@ -299,10 +301,8 @@ main(int argc, char *argv[])
     socklen_t peer_addr_size;
 
     sfd = socket(AF_UNIX, SOCK_STREAM, 0);
-    if (sfd == -1) {
-        perror(&quot;socket&quot;);
-        exit(EXIT_FAILURE);
-    }
+    if (sfd == -1)
+        die(&quot;socket&quot;);
 
     memset(&amp;my_addr, 0, sizeof(struct sockaddr_un));
                         /* Clear structure */
@@ -311,25 +311,20 @@ main(int argc, char *argv[])
             sizeof(my_addr.sun_path) - 1);
 
     if (bind(sfd, (struct sockaddr *) &amp;my_addr,
-            sizeof(struct sockaddr_un)) == -1) {
-        perror(&quot;bind&quot;);
-        exit(EXIT_FAILURE);
-    }
+            sizeof(struct sockaddr_un)) == -1)
+        die(&quot;bind&quot;);
     
-    if (listen(sfd, LISTEN_BACKLOG) == -1) {
-        perror(&quot;listen&quot;);
-        exit(EXIT_FAILURE);
-    }
+    if (listen(sfd, LISTEN_BACKLOG) == -1)
+        die(&quot;listen&quot;);
 
     /* Now we can accept incoming connections one 
        at a time using <A HREF="../man2/accept.2.html">accept</A>(2) */
 
     peer_addr_size = sizeof(struct sockaddr_un);
     cfd = accept(sfd, (struct sockaddr *) &amp;peer_addr,
-                 &amp;peer_addr_size) == -1) {
-        perror(&quot;accept&quot;);
-        exit(EXIT_FAILURE);
-    }
+                 &amp;peer_addr_size)
+    if (cfd == -1)
+        die(&quot;accept&quot;);
 }
 </PRE>
 
@@ -383,6 +378,6 @@ The transparent proxy options are not described.
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 02:39:56 GMT, April 20, 2020
+Time: 02:40:29 GMT, April 20, 2020
 </BODY>
 </HTML>
