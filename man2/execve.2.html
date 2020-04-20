@@ -5,7 +5,7 @@ Copyright (c) 1992 Drew Eckhardt (drew@cs.colorado.edu), March 28, 1992
 <HTML><HEAD><TITLE>Man page of EXECVE</TITLE>
 </HEAD><BODY>
 <H1>EXECVE</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2004-06-23<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2006-09-04<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -44,11 +44,7 @@ argc, char *argv[], char *envp[])</B>.
 <P>
 <B>execve</B>() does not return on success, and the text, data, bss, and
 stack of the calling process are overwritten by that of the program
-loaded.  The program invoked inherits the calling process's PID, and any
-open file descriptors that are not set to close-on-exec.  Signals pending
-on the calling process are cleared.  Any signals set to be caught by
-the calling process are reset to their default behaviour.
-The SIGCHLD signal (when set to SIG_IGN) may or may not be reset to SIG_DFL.
+loaded.  
 <P>
 If the current program is being ptraced, a <B>SIGTRAP</B> is sent to it
 after a successful <B>execve</B>().
@@ -56,7 +52,7 @@ after a successful <B>execve</B>().
 If the set-user-ID bit is set on the program file pointed to by
 <I>filename</I>, and the calling process is not being ptraced,
 then the effective user ID of the calling process is changed
-to that of the owner of the program file.  i
+to that of the owner of the program file.
 Similarly, when the set-group-ID
 bit of the program file is set the effective group ID of the calling
 process is set to the group of the program file.
@@ -81,6 +77,140 @@ shared libraries.  This interpreter is typically
 <I>/lib/ld-linux.so.1</I> for binaries linked with the Linux libc
 version 5, or <I>/lib/ld-linux.so.2</I> for binaries linked with the
 GNU libc version 2.
+<P>
+All process attributes are preserved during an
+<B>execve</B>(),
+
+except the following:
+<DL COMPACT>
+<DT>*<DD>
+File descriptors that are marked close-on-exec are closed
+(see the description of
+<B>FD_CLOEXEC</B>
+
+in
+<B><A HREF="../man2/fcntl.2.html">fcntl</A></B>(2)).
+
+
+<DT>*<DD>
+The set of pending signals is cleared
+(<B><A HREF="../man2/sigpending.2.html">sigpending</A></B>(2)).
+
+<DT>*<DD>
+The set of pending signals is cleared
+(<B><A HREF="../man2/sigpending.2.html">sigpending</A></B>(2)).
+
+<DT>*<DD>
+The disposition of any signals that are being caught are 
+reset to being ignored.
+<DT>*<DD>
+Any alternate signal stack is not preserved
+(<B><A HREF="../man2/sigaltstack.2.html">sigaltstack</A></B>(2)).
+
+<DT>*<DD>
+Memory mappings are not preserved
+(<B><A HREF="../man2/mmap.2.html">mmap</A></B>(2)).
+
+<DT>*<DD>
+Attached System V shared memory segments are detached
+(<B><A HREF="../man2/shmat.2.html">shmat</A></B>(2)).
+
+<DT>*<DD>
+POSIX shared memory regions are unmapped
+(<B><A HREF="../man3/shm_open.3.html">shm_open</A></B>(3)).
+
+<DT>*<DD>
+Open POSIX message queue descriptors are closed
+(<B><A HREF="../man7/mq_overview.7.html">mq_overview</A></B>(7)).
+
+<DT>*<DD>
+Any open POSIX named semaphores are closed
+(<B><A HREF="../man7/sem_overview.7.html">sem_overview</A></B>(7)).
+
+<DT>*<DD>
+POSIX timers are not preserved
+(<B><A HREF="../man3/timer_create.3.html">timer_create</A></B>(3)).
+
+<DT>*<DD>
+Any open directory streams are closed
+(<B><A HREF="../man3/opendir.3.html">opendir</A></B>(3)).
+
+<DT>*<DD>
+Memory locks are not preserved
+(<B><A HREF="../man2/mlock.2.html">mlock</A></B>(2),
+
+<B><A HREF="../man2/mlockall.2.html">mlockall</A></B>(2)).
+
+<DT>*<DD>
+Exit handlers are not preserved
+(<B><A HREF="../man3/atexit.3.html">atexit</A></B>(3),
+
+<B><A HREF="../man3/on_exit.3.html">on_exit</A></B>(3)).
+
+</DL>
+<P>
+
+The process attributes in the preceding list are all specified 
+in POSIX.1-2001.
+The following Linux-specific process attributes are also 
+not preserved during an
+<B>execve</B>():
+
+<DL COMPACT>
+<DT>*<DD>
+The 
+<B><A HREF="../man2/prctl.2.html">prctl</A></B>(2)
+
+<B>PR_SET_DUMPABLE </B>
+
+flag is set,
+unless a set-user-ID or set-group ID program is being executed,
+in which case it is cleared.
+<DT>*<DD>
+The 
+<B><A HREF="../man2/prctl.2.html">prctl</A></B>(2)
+
+<B>PR_SET_KEEPCAPS</B>
+
+flag is cleared.
+<DT>*<DD>
+The termination signal is reset to SIGCHLD
+(see
+<B><A HREF="../man2/clone.2.html">clone</A></B>(2)).
+
+</DL>
+<P>
+
+Note the following further points:
+<DL COMPACT>
+<DT>*<DD>
+All threads other than calling thread are destroyed during an
+<B>execve</B>().
+
+Mutexes, condition variables, and other pthreads objects are not preserved.
+<DT>*<DD>
+The equivalent of <I>setlocale(LC_ALL, &quot;C&quot;)</I>
+is executed at program start-up.
+<DT>*<DD>
+POSIX.1-2001 specifies that the dispositions of any signals that 
+are ignored or set to the default are left unchanged.
+POSIX.1-2001 specifies one exception: if SIGCHLD is being ignored, 
+then an implementation may leave the disposition unchanged or 
+reset it to the default; Linux does the former.
+<DT>*<DD>
+Any outstanding asynchronous I/O operations are cancelled
+(<B><A HREF="../man3/aio_read.3.html">aio_read</A></B>(3),
+
+<B><A HREF="../man3/aio_write.3.html">aio_write</A></B>(3)).
+
+<DT>*<DD>
+For the handling of capabilities during 
+<B><A HREF="../man2/execve.2.html">execve</A></B>(2),
+
+see
+<B><A HREF="../man7/capabilities.7.html">capabilities</A></B>(7).
+
+</DL>
 <A NAME="lbAE">&nbsp;</A>
 <H2>RETURN VALUE</H2>
 
@@ -305,6 +435,6 @@ Since Unix V7 both are NULL.
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 02:30:43 GMT, April 20, 2020
+Time: 02:31:15 GMT, April 20, 2020
 </BODY>
 </HTML>
