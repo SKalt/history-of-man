@@ -16,12 +16,12 @@ poll, ppoll - wait for some event on a file descriptor
 <H2>SYNOPSIS</H2>
 
 <PRE>
-<B>#include &lt;<A HREF="file:///usr/include/sys/poll.h">sys/poll.h</A>&gt;</B>
+<B>#include &lt;<A HREF="file:///usr/include/poll.h">poll.h</A>&gt;</B>
 
 <B>int poll(struct pollfd *</B><I>fds</I><B>, nfds_t </B><I>nfds</I><B>, int </B><I>timeout</I><B>);</B>
 
 <B>#define _GNU_SOURCE</B>
-<B>#include &lt;<A HREF="file:///usr/include/sys/poll.h">sys/poll.h</A>&gt;</B>
+<B>#include &lt;<A HREF="file:///usr/include/poll.h">poll.h</A>&gt;</B>
 
 <B>int ppoll(struct pollfd *</B><I>fds</I><B>, nfds_t </B><I>nfds</I><B>, </B>
 <B>        const struct timespec *</B><I>timeout</I><B>, const sigset_t *</B><I>sigmask</I><B>);</B>
@@ -59,11 +59,13 @@ The field
 <I>fd</I>
 
 contains a file descriptor for an open file.
+<P>
 The field
 <I>events</I>
 
 is an input parameter, a bitmask specifying the events the application
 is interested in.
+<P>
 The field
 <I>revents</I>
 
@@ -90,58 +92,13 @@ field, and will be set in the
 <I>revents</I>
 
 field whenever the corresponding condition is true.)
+<P>
 If none of the events requested (and no error) has occurred for any
 of the file descriptors, then
 <B>poll</B>()
 
 blocks until one of the events occurs.
-The bits that may be set/returned in
-<I>events</I>
-
-and
-<I>revents</I>
-
-are defined in &lt;<A HREF="file:///usr/include/sys/poll.h">sys/poll.h</A>&gt;:
-<BR>
-
-<PRE>
-
-    #define POLLIN      0x0001    /* There is data to read */
-    #define POLLPRI     0x0002    /* There is urgent data to read */
-    #define POLLOUT     0x0004    /* Writing now will not block */
-    #define POLLERR     0x0008    /* Error condition (output only) */
-    #define POLLHUP     0x0010    /* Hung up (output only) */
-    #define POLLNVAL    0x0020    /* Invalid request: fd not open 
-                                     (output only) */
-
-</PRE>
-
-When compiling XPG4.2 source one also has:
-<BR>
-
-<PRE>
-
-    #ifdef _XOPEN_SOURCE
-    #define POLLRDNORM  0x0040    /* Normal data may be read */
-    #define POLLRDBAND  0x0080    /* Priority data may be read */
-    #define POLLWRNORM  0x0100    /* Writing now will not block */
-    #define POLLWRBAND  0x0200    /* Priority data may be written */
-    #endif
-
-</PRE>
-
-Finally, Linux knows about:
-<BR>
-
-<PRE>
-
-    #ifdef _GNU_SOURCE
-    #define POLLMSG     0x0400
-    #endif
-</PRE>
-
 <P>
-
 The 
 <I>timeout</I>
 
@@ -153,6 +110,96 @@ Specifying a negative value in
 <I>timeout</I>
 
 means an infinite timeout.
+<P>
+The bits that may be set/returned in
+<I>events</I>
+
+and
+<I>revents</I>
+
+are defined in &lt;<A HREF="file:///usr/include/poll.h">poll.h</A>&gt;:
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT><B>POLLIN</B>
+
+<DD>
+There is data to read.
+<DT><B>POLLPRI</B>
+
+<DD>
+There is urgent data to read (e.g., out-of-band data on TCP socket; 
+pseudo-terminal master in packet mode has seen state change in slave).
+<DT><B>POLLOUT</B>
+
+<DD>
+Writing now will not block.
+<DT><B>POLLRDHUP</B> (since Linux 2.6.17)
+
+<DD>
+Stream socket peer closed connection, 
+or shut down writing half of connection.
+The 
+<B>_GNU_SOURCE</B>
+
+feature test macro must be defined in order to obtain this definition.
+<DT><B>POLLERR</B>
+
+<DD>
+Error condition (output only).
+<DT><B>POLLHUP</B>
+
+<DD>
+Hang up (output only).
+<DT><B>POLLNVAL</B>
+
+<DD>
+Invalid request: 
+<I>fd</I>
+
+not open (output only).
+</DL>
+</DL>
+
+<P>
+
+When compiling with 
+<B>_XOPEN_SOURCE</B>
+
+defined, one also has the following, 
+which convey no further information beyond the bits listed above:
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT><B>POLLRDNORM</B>
+
+<DD>
+Equivalent to
+<B>POLLIN</B>.
+
+<DT><B>POLLRDBAND</B>
+
+<DD>
+Priority band data can be read (generally unused on Linux).
+
+<DT><B>POLLWRNORM</B>
+
+<DD>
+Equivalent to
+<B>POLLOUT</B>.
+
+<DT><B>POLLWRBAND</B>
+
+<DD>
+Priority data may be written.
+</DL>
+</DL>
+
+<P>
+
+Linux also knows about, but does not use 
+<B>POLLMSG</B>.
+
+<P>
+
 <A NAME="lbAE">&nbsp;</A>
 <H3>ppoll()</H3>
 
@@ -297,7 +344,10 @@ is passed to the system call.
 Thus, the glibc 
 <B>ppoll</B>()
 
-function does not modify its timeout argument.
+function does not modify its 
+<I>timeout </I>
+
+argument.
 <A NAME="lbAI">&nbsp;</A>
 <H2>BUGS</H2>
 
@@ -383,6 +433,6 @@ This constant is not provided in glibc.
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 02:28:16 GMT, April 20, 2020
+Time: 02:28:42 GMT, April 20, 2020
 </BODY>
 </HTML>

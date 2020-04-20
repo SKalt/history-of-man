@@ -137,23 +137,35 @@ domain:
 <PRE>
 #include &lt;<A HREF="file:///usr/include/sys/socket.h">sys/socket.h</A>&gt;
 #include &lt;<A HREF="file:///usr/include/sys/un.h">sys/un.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/stdlib.h">stdlib.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/stdlio.h">stdlio.h</A>&gt;
 
-int sfd;
-struct sockaddr_un addr;
+#define MY_SOCK_PATH &quot;/somepath&quot;
 
-sfd = socket(AF_UNIX, SOCK_STREAM, 0);         
-if (sfd == -1) { perror(&quot;socket&quot;); exit(EXIT_FAILURE); }
+int
+main(int argc, char *argv[])
+{
+    int sfd;
+    struct sockaddr_un addr;
+    
+    sfd = socket(AF_UNIX, SOCK_STREAM, 0);         
+    if (sfd == -1) { 
+        perror(&quot;socket&quot;); 
+        exit(EXIT_FAILURE); 
+    }
 
-memset(&amp;addr, 0, sizeof(struct sockaddr_un));  
+    memset(&amp;addr, 0, sizeof(struct sockaddr_un));  
                         /* Clear structure */
-addr.sun_family = AF_UNIX;                     
-strncpy(addr.sun_path, MY_SOCK_PATH, 
-        sizeof(addr.sun_path) - 1);
+    addr.sun_family = AF_UNIX;                     
+    strncpy(addr.sun_path, MY_SOCK_PATH, 
+            sizeof(addr.sun_path) - 1);
 
-if (bind(sfd, (struct sockaddr *) &amp;addr,
-        sizeof(struct sockaddr_un)) == -1) { 
-    perror(&quot;bind&quot;); 
-    exit(EXIT_FAILURE); 
+    if (bind(sfd, (struct sockaddr *) &amp;addr,
+            sizeof(struct sockaddr_un)) == -1) { 
+        perror(&quot;bind&quot;); 
+        exit(EXIT_FAILURE); 
+    }
+    ...
 }
 </PRE>
 
@@ -208,6 +220,11 @@ Search permission is denied on a component of the path prefix.
 (See also
 <B><A HREF="../man2/path_resolution.2.html">path_resolution</A></B>(2).)
 
+<DT><B>EADDRNOTAVAIL</B>
+
+<DD>
+A non-existent interface was requested or the requested 
+address was not local.
 <DT><B>EFAULT</B>
 
 <DD>
@@ -264,13 +281,10 @@ SVr4, 4.4BSD (the
 <B>bind</B>()
 
 function first appeared in 4.2BSD).  
-SVr4 documents additional
-<B>EADDRNOTAVAIL</B>
-
-and
+SVr4 documents an additional
 <B>ENOSR </B>
 
-general error conditions, and
+general error condition, and
 additional 
 <B>EIO</B>
 
@@ -339,6 +353,6 @@ See also
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 02:28:15 GMT, April 20, 2020
+Time: 02:28:41 GMT, April 20, 2020
 </BODY>
 </HTML>
