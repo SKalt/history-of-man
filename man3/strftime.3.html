@@ -26,7 +26,7 @@ the source, must acknowledge the copyright and authors of this work.
 <HTML><HEAD><TITLE>Man page of STRFTIME</TITLE>
 </HEAD><BODY>
 <H1>STRFTIME</H1>
-Section: Linux Programmer's Manual (3)<BR>Updated: 2012-05-10<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2013-06-28<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -49,9 +49,19 @@ strftime - format date and time
 The
 <B>strftime</B>()
 
-function formats the broken-down time <I>tm</I>
-according to the format specification <I>format</I> and places the
-result in the character array <I>s</I> of size <I>max</I>.
+function formats the broken-down time
+<I>tm</I>
+
+according to the format specification
+<I>format</I>
+
+and places the
+result in the character array
+<I>s</I>
+
+of size
+<I>max</I>.
+
 
 
 <P>
@@ -70,7 +80,12 @@ All other character sequences are
 <P>
 
 The characters of ordinary character sequences (including the null byte)
-are copied verbatim from <I>format</I> to <I>s</I>.
+are copied verbatim from
+<I>format</I>
+
+to
+<I>s</I>.
+
 However, the characters
 of conversion specifications are replaced as follows:
 <DL COMPACT>
@@ -231,7 +246,10 @@ In the POSIX locale this is equivalent to
 <DT><B>%R</B>
 
 <DD>
-The time in 24-hour notation (<B>%H:%M</B>). (SU)
+The time in 24-hour notation
+(<B>%H:%M</B>).
+
+(SU)
 For a version including the seconds, see
 <B>%T</B>
 
@@ -252,7 +270,10 @@ A tab character. (SU)
 <DT><B>%T</B>
 
 <DD>
-The time in 24-hour notation (<B>%H:%M:%S</B>). (SU)
+The time in 24-hour notation
+(<B>%H:%M:%S</B>).
+
+(SU)
 <DT><B>%u</B>
 
 <DD>
@@ -327,7 +348,7 @@ numeric timezone (that is, the hour and minute offset from UTC). (SU)
 <DT><B>%Z</B>
 
 <DD>
-The timezone or name or abbreviation.
+The timezone name or abbreviation.
 <DT><B>%+</B>
 
 <DD>
@@ -405,30 +426,54 @@ alternative numeric symbols (say, roman numerals), and that of the
 E modifier is to use a locale-dependent alternative representation.
 <P>
 
-The broken-down time structure <I>tm</I> is defined in <I>&lt;<A HREF="file:///usr/include/time.h">time.h</A>&gt;</I>.
+The broken-down time structure
+<I>tm</I>
+
+is defined in
+<I>&lt;<A HREF="file:///usr/include/time.h">time.h</A>&gt;</I>.
+
 See also
 <B><A HREF="../man3/ctime.3.html">ctime</A></B>(3).
 
 <A NAME="lbAE">&nbsp;</A>
 <H2>RETURN VALUE</H2>
 
-The
+Provided that the result string,
+including the terminating null byte, does not exceed
+<I>max</I>
+
+bytes,
 <B>strftime</B>()
 
-function returns the number of bytes placed
-in the array <I>s</I>, not including the terminating null byte,
-provided the string, including the terminating null byte, fits.
-Otherwise, it returns 0, and the contents of the array is undefined.
+returns the number of bytes (excluding the terminating null byte)
+placed in the array
+<I>s</I>.
+
+If the length of the result string (including the terminating null byte)
+would exceed
+<I>max</I>
+
+bytes, then
+<B>strftime</B>()
+
+returns 0, and the contents of the array are undefined.
 (This behavior applies since at least libc 4.4.4;
 very old versions of libc, such as libc 4.4.1,
-would return <I>max</I> if the array was too small.)
+would return
+<I>max</I>
+
+if the array was too small.)
 <P>
 
-Note that the return value 0 does not necessarily indicate an error;
-for example, in many locales
+Note that the return value 0 does not necessarily indicate an error.
+For example, in many locales
 <B>%p</B>
 
 yields an empty string.
+An empty
+<I>format</I>
+
+string will likewise yield an empty string.
 <A NAME="lbAF">&nbsp;</A>
 <H2>ENVIRONMENT</H2>
 
@@ -498,7 +543,12 @@ of the preceding year.
 For example, 1 January 2010 is a Friday,
 meaning that just three days of that calendar week fall in 2010.
 Thus, the ISO&nbsp;8601 week-based system considers these days to be part of
-week 53 (<B>%V</B>) of the year 2009 (<B>%G</B>) ;
+week 53
+(<B>%V</B>)
+
+of the year 2009
+(<B>%G</B>);
+
 week 01 of ISO&nbsp;8601 year 2010 starts on Monday, 4 January 2010.
 <A NAME="lbAJ">&nbsp;</A>
 <H3>Glibc notes</H3>
@@ -561,6 +611,31 @@ then the result string is padded (on the left) to the specified width.
 <A NAME="lbAK">&nbsp;</A>
 <H2>BUGS</H2>
 
+If the output string would exceed
+<I>max</I>
+
+bytes,
+<I>errno</I>
+
+is
+<I>not</I>
+
+set.
+This makes it impossible to distinguish this error case from cases where the
+<I>format</I>
+
+string legitimately produces a zero-length output string.
+POSIX.1-2001
+does
+<I>not</I>
+
+specify any
+<I>errno</I>
+
+settings for
+<B>strftime</B>().
+
+<P>
 Some buggy versions of
 <B><A HREF="../man1/gcc.1.html">gcc</A></B>(1)
 
@@ -596,7 +671,10 @@ my_strftime(char *s, size_t max, const char *fmt,
 Nowadays,
 <B><A HREF="../man1/gcc.1.html">gcc</A></B>(1)
 
-provides the <I>-Wno-format-y2k</I> option to prevent the warning,
+provides the
+<I>-Wno-format-y2k</I>
+
+option to prevent the warning,
 so that the above workaround is no longer required.
 <A NAME="lbAL">&nbsp;</A>
 <H2>EXAMPLE</H2>
@@ -716,6 +794,6 @@ main(int argc, char *argv[])
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:20:43 GMT, April 20, 2020
+Time: 03:21:13 GMT, April 20, 2020
 </BODY>
 </HTML>

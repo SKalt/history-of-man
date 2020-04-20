@@ -10,7 +10,7 @@ of the modification is added to the header.
 <HTML><HEAD><TITLE>Man page of SOCKET</TITLE>
 </HEAD><BODY>
 <H1>SOCKET</H1>
-Section: Linux Programmer's Manual (7)<BR>Updated: 2013-03-15<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (7)<BR>Updated: 2013-06-21<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -312,7 +312,7 @@ in a generic way
 <A NAME="lbAG">&nbsp;</A>
 <H3>Socket options</H3>
 
-These socket options can be set by using
+The socket options listed below can be set by using
 <B><A HREF="../man2/setsockopt.2.html">setsockopt</A></B>(2)
 
 and read with
@@ -321,7 +321,13 @@ and read with
 with the socket level set to
 <B>SOL_SOCKET</B>
 
-for all sockets:
+for all sockets.
+Unless otherwise noted,
+<I>optval</I>
+
+is a pointer to an
+<I>int</I>.
+
 
 
 
@@ -512,6 +518,84 @@ control message.
 For more information see
 <B><A HREF="../man7/unix.7.html">unix</A></B>(7).
 
+
+
+<DT><B>SO_PEEK_OFF</B> (since Linux 3.4)
+
+<DD>
+
+This option, which is currently supported only for
+<B><A HREF="../man7/unix.7.html">unix</A></B>(7)
+
+sockets, sets the value of the &quot;peek offset&quot; for the
+<B><A HREF="../man2/recv.2.html">recv</A>(2)</B>
+
+system call when used with
+<B>MSG_PEEK</B>
+
+flag.
+<P>
+When this option is set to a negative value
+(it is set to -1 for all new sockets),
+traditional behavior is provided:
+<B><A HREF="../man2/recv.2.html">recv</A>(2)</B>
+
+with the
+<B>MSG_PEEK</B>
+
+flag will peek data from the front of the queue.
+<P>
+When the option is set to a value greater than or equal to zero,
+then the next peek at data queued in the socket will occur at
+the byte offset specified by the option value.
+At the same time, the &quot;peek offset&quot; will be
+incremented by the number of bytes that were peeked from the queue,
+so that a subsequent peek will return the next data in the queue.i
+<P>
+If data is removed from the front of the queue via a call to
+<B><A HREF="../man2/recv.2.html">recv</A></B>(2)
+
+(or similar) without the
+<B>MSG_PEEK</B>
+
+flag, the &quot;peek offset&quot; will be decreased by the number of bytes removed.
+In other words, receiving data without the
+<B>MSG_PEEK</B>
+
+flag will cause the &quot;peek offset&quot; to be adjusted to maintain
+the correct relative position in the queued data,
+so that a subsequent peek will retrieve the data that would have been
+retrieved had the data not been removed.
+<P>
+For datagram sockets, if the &quot;peek offset&quot; points to the middle of a packet,
+the data returned will be marked with the
+<B>MSG_TRUNC</B>
+
+flag.
+<P>
+The following example serves to illustrate the use of
+<B>SO_PEEK_OFF</B>.
+
+Suppose a stream socket has the following queued input data:
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;aabbccddeeff
+<P>
+<DT><DD>
+The following sequence of
+<B><A HREF="../man2/recv.2.html">recv</A></B>(2)
+
+calls would have the effect noted in the comments:
+<P>
+
+<PRE>
+int ov = 4;                  // Set peek offset to 4
+setsockopt(fd, SOL_SOCKET, SO_PEEK_OFF, &amp;ov, sizeof(ov));
+
+recv(fd, buf, 2, MSG_PEEK);  // Peeks &quot;cc&quot;; offset set to 6
+recv(fd, buf, 2, MSG_PEEK);  // Peeks &quot;dd&quot;; offset set to 8
+recv(fd, buf, 2, 0);         // Reads &quot;aa&quot;; offset set to 6
+recv(fd, buf, 2, MSG_PEEK);  // Peeks &quot;ee&quot;; offset set to 8
+</PRE>
 
 
 <DT><B>SO_PEERCRED</B>
@@ -1140,6 +1224,6 @@ library.
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:20:46 GMT, April 20, 2020
+Time: 03:21:17 GMT, April 20, 2020
 </BODY>
 </HTML>
