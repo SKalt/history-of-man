@@ -38,9 +38,12 @@ set and get scheduling algorithm/parameters
 <B>sched_setscheduler</B>()
 
 sets both the scheduling policy and the associated parameters for the
-process identified by <I>pid</I>. If <I>pid</I> equals zero, the
-scheduler of the calling process will be set. The interpretation of
-the parameter <I>param</I> depends on the selected policy. Currently, the
+process identified by <I>pid</I>.
+If <I>pid</I> equals zero, the
+scheduler of the calling process will be set.
+The interpretation of
+the parameter <I>param</I> depends on the selected policy.
+Currently, the
 following three scheduling policies are supported under Linux:
 <I>SCHED_FIFO</I>,
 
@@ -58,22 +61,28 @@ their respective semantics are described below.
 <B>sched_getscheduler</B>()
 
 queries the scheduling policy currently applied to the process
-identified by <I>pid</I>. If <I>pid</I> equals zero, the policy of the
+identified by <I>pid</I>.
+If <I>pid</I> equals zero, the policy of the
 calling process will be retrieved.
 <A NAME="lbAE">&nbsp;</A>
 <H3>Scheduling Policies</H3>
 
 The scheduler is the kernel part that decides which runnable process
-will be executed by the CPU next. The Linux scheduler offers three
+will be executed by the CPU next.
+The Linux scheduler offers three
 different scheduling policies, one for normal processes and two for
-real-time applications. A static priority value <I>sched_priority</I>
+real-time applications.
+A static priority value <I>sched_priority</I>
 is assigned to each process and this value can be changed only via
-system calls. Conceptually, the scheduler maintains a list of runnable
+system calls.
+Conceptually, the scheduler maintains a list of runnable
 processes for each possible <I>sched_priority</I> value, and
-<I>sched_priority</I> can have a value in the range 0 to 99. In order
+<I>sched_priority</I> can have a value in the range 0 to 99.
+In order
 to determine the process that runs next, the Linux scheduler looks for
 the non-empty list with the highest static priority and takes the
-process at the head of this list. The scheduling policy determines for
+process at the head of this list.
+The scheduling policy determines for
 each process, where it will be inserted into the list of processes
 with equal static priority and how it will move inside this list.
 <P>
@@ -83,12 +92,12 @@ policy used by most processes.
 <I>SCHED_FIFO</I> and <I>SCHED_RR</I> are
 intended for special time-critical applications that need precise
 control over the way in which runnable processes are selected for
-execution. 
+execution.
 <P>
 Processes scheduled with <I>SCHED_OTHER</I> or <I>SCHED_BATCH</I>
 must be assigned the static priority 0.
 Processes scheduled under <I>SCHED_FIFO</I> or
-<I>SCHED_RR</I> can have a static priority in the range 1 to 99. 
+<I>SCHED_RR</I> can have a static priority in the range 1 to 99.
 The system calls <B>sched_get_priority_min</B>() and
 <B>sched_get_priority_max</B>() can be used to find out the valid
 priority range for a scheduling policy in a portable way on all
@@ -96,7 +105,8 @@ POSIX.1-2001 conforming systems.
 <P>
 All scheduling is preemptive: If a process with a higher static
 priority gets ready to run, the current process will be preempted and
-returned into its wait list. The scheduling policy only determines the
+returned into its wait list.
+The scheduling policy only determines the
 ordering within the list of runnable processes with equal static
 priority.
 <A NAME="lbAF">&nbsp;</A>
@@ -105,15 +115,18 @@ priority.
 <I>SCHED_FIFO</I> can only be used with static priorities higher than
 0, which means that when a <I>SCHED_FIFO</I> processes becomes runnable,
 it will always immediately preempt any currently running
-<I>SCHED_OTHER</I> or <I>SCHED_BATCH</I> process. 
+<I>SCHED_OTHER</I> or <I>SCHED_BATCH</I> process.
 <I>SCHED_FIFO</I> is a simple scheduling
-algorithm without time slicing. For processes scheduled under the
+algorithm without time slicing.
+For processes scheduled under the
 <I>SCHED_FIFO</I> policy, the following rules are applied: A
 <I>SCHED_FIFO</I> process that has been preempted by another process of
 higher priority will stay at the head of the list for its priority and
 will resume execution as soon as all processes of higher priority are
-blocked again. When a <I>SCHED_FIFO</I> process becomes runnable, it
-will be inserted at the end of the list for its priority. A call to
+blocked again.
+When a <I>SCHED_FIFO</I> process becomes runnable, it
+will be inserted at the end of the list for its priority.
+A call to
 <B>sched_setscheduler</B>() or <B>sched_setparam</B>() will put the
 <I>SCHED_FIFO</I> (or <I>SCHED_RR</I>) process identified by
 <I>pid</I> at the start of the list if it was runnable.
@@ -124,23 +137,29 @@ of the list.)
 
 
 A process calling <B>sched_yield</B>() will be
-put at the end of the list. No other events will move a process
+put at the end of the list.
+No other events will move a process
 scheduled under the <I>SCHED_FIFO</I> policy in the wait list of
-runnable processes with equal static priority. A <I>SCHED_FIFO</I>
+runnable processes with equal static priority.
+A <I>SCHED_FIFO</I>
 process runs until either it is blocked by an I/O request, it is
 preempted by a higher priority process, or it calls <B>sched_yield</B>().
 <A NAME="lbAG">&nbsp;</A>
 <H3>SCHED_RR: Round Robin scheduling</H3>
 
-<I>SCHED_RR</I> is a simple enhancement of <I>SCHED_FIFO</I>. Everything
+<I>SCHED_RR</I> is a simple enhancement of <I>SCHED_FIFO</I>.
+Everything
 described above for <I>SCHED_FIFO</I> also applies to <I>SCHED_RR</I>,
 except that each process is only allowed to run for a maximum time
-quantum. If a <I>SCHED_RR</I> process has been running for a time
+quantum.
+If a <I>SCHED_RR</I> process has been running for a time
 period equal to or longer than the time quantum, it will be put at the
-end of the list for its priority. A <I>SCHED_RR</I> process that has
+end of the list for its priority.
+A <I>SCHED_RR</I> process that has
 been preempted by a higher priority process and subsequently resumes
 execution as a running process will complete the unexpired portion of
-its round robin time quantum. The length of the time quantum can be
+its round robin time quantum.
+The length of the time quantum can be
 retrieved using <B><A HREF="../man2/sched_rr_get_interval.2.html">sched_rr_get_interval</A></B>(2).
 
 
@@ -151,12 +170,15 @@ retrieved using <B><A HREF="../man2/sched_rr_get_interval.2.html">sched_rr_get_i
 <I>SCHED_OTHER</I> can only be used at static priority 0.
 <I>SCHED_OTHER</I> is the standard Linux time-sharing scheduler that is
 intended for all processes that do not require special static priority
-real-time mechanisms. The process to run is chosen from the static
+real-time mechanisms.
+The process to run is chosen from the static
 priority 0 list based on a dynamic priority that is determined only
-inside this list. The dynamic priority is based on the nice level (set
+inside this list.
+The dynamic priority is based on the nice level (set
 by <B><A HREF="../man2/nice.2.html">nice</A></B>(2) or <B><A HREF="../man2/setpriority.2.html">setpriority</A></B>(2)) and increased for
 each time quantum the process is ready to run, but denied to run by
-the scheduler. This ensures fair progress among all <I>SCHED_OTHER</I>
+the scheduler.
+This ensures fair progress among all <I>SCHED_OTHER</I>
 processes.
 <A NAME="lbAI">&nbsp;</A>
 <H3>SCHED_BATCH: Scheduling batch processes</H3>
@@ -173,8 +195,8 @@ decisions.
 
 
 This policy is useful for workloads that are non-interactive,
-but do not want to lower their nice value, 
-and for workloads that want a deterministic scheduling policy without 
+but do not want to lower their nice value,
+and for workloads that want a deterministic scheduling policy without
 interactivity causing extra preemptions (between the workload's tasks).
 <A NAME="lbAJ">&nbsp;</A>
 <H3>Privileges and resource limits</H3>
@@ -199,7 +221,7 @@ The only change that an unprivileged process can make is to set the
 policy, and this can only be done if the effective user ID of the caller of
 <B>sched_setscheduler</B>()
 
-matches the real or effective user ID of the target process 
+matches the real or effective user ID of the target process
 (i.e., the process specified by
 <I>pid</I>)
 
@@ -216,22 +238,22 @@ and
 <B>SCHED_FIFO</B>
 
 policies.
-If an unprivileged process has a non-zero 
+If an unprivileged process has a non-zero
 <B>RLIMIT_RTPRIO</B>
 
-soft limit, then it can change its scheduling policy and priority, 
-subject to the restriction that the priority cannot be set to a 
-value higher than the 
+soft limit, then it can change its scheduling policy and priority,
+subject to the restriction that the priority cannot be set to a
+value higher than the
 <B>RLIMIT_RTPRIO</B>
 
 soft limit.
-If the 
+If the
 <B>RLIMIT_RTPRIO</B>
 
 soft limit is 0, then the only permitted change is to lower the priority.
-Subject to the same rules, 
-another unprivileged process can also make these changes, 
-as long as the effective user ID of the process making the change 
+Subject to the same rules,
+another unprivileged process can also make these changes,
+as long as the effective user ID of the process making the change
 matches the real or effective user ID of the target process.
 See
 <B><A HREF="../man2/getrlimit.2.html">getrlimit</A></B>(2)
@@ -248,7 +270,8 @@ they can make arbitrary changes to scheduling policy and priority.
 <H3>Response time</H3>
 
 A blocked high priority process waiting for the I/O has a certain
-response time before it is scheduled again. The device driver writer
+response time before it is scheduled again.
+The device driver writer
 can greatly reduce this response time by using a &quot;slow interrupt&quot;
 interrupt handler.
 
@@ -259,15 +282,15 @@ interrupt handler.
 Child processes inherit the scheduling algorithm and parameters across a
 <B>fork</B>().
 
-The scheduling algorithm and parameters are preserved across 
+The scheduling algorithm and parameters are preserved across
 <B><A HREF="../man2/execve.2.html">execve</A></B>(2).
 
 <P>
-Memory locking is usually needed for real-time processes to avoid 
+Memory locking is usually needed for real-time processes to avoid
 paging delays, this can be done with
 <B>mlock</B>()
 
-or 
+or
 <B>mlockall</B>().
 
 <P>
@@ -275,7 +298,8 @@ As a non-blocking end-less loop in a process scheduled under
 <I>SCHED_FIFO</I> or <I>SCHED_RR</I> will block all processes with lower
 priority forever, a software developer should always keep available on
 the console a shell scheduled under a higher static priority than the
-tested application. This will allow an emergency kill of tested
+tested application.
+This will allow an emergency kill of tested
 real-time applications that do not block or terminate as expected.
 <P>
 POSIX systems on which
@@ -294,11 +318,11 @@ in &lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;.
 On success,
 <B>sched_setscheduler</B>()
 
-returns zero.  
+returns zero.
 On success,
 <B>sched_getscheduler</B>()
 
-returns the policy for the process (a non-negative integer).  
+returns the policy for the process (a non-negative integer).
 On error, -1 is returned, and
 <I>errno</I>
 
@@ -425,6 +449,6 @@ by Bill O. Gallmeister, O'Reilly &amp; Associates, Inc., ISBN 1-56592-074-0
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 02:34:33 GMT, April 20, 2020
+Time: 02:35:00 GMT, April 20, 2020
 </BODY>
 </HTML>

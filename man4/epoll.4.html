@@ -21,15 +21,16 @@ epoll - I/O event notification facility
 
 <B>epoll</B>
 
-is a variant of 
+is a variant of
 <B><A HREF="../man2/poll.2.html">poll</A></B>(2)
 
 that can be used either as Edge or Level Triggered interface and scales
-well to large numbers of watched fds. Three system calls are provided to
+well to large numbers of watched fds.
+Three system calls are provided to
 set up and control an
 <B>epoll</B>
 
-set: 
+set:
 <B><A HREF="../man2/epoll_create.2.html">epoll_create</A></B>(2),
 
 <B><A HREF="../man2/epoll_ctl.2.html">epoll_ctl</A></B>(2),
@@ -43,10 +44,10 @@ An
 set is connected to a file descriptor created by
 <B><A HREF="../man2/epoll_create.2.html">epoll_create</A></B>(2).
 
-Interest for certain file descriptors is then registered via 
+Interest for certain file descriptors is then registered via
 <B><A HREF="../man2/epoll_ctl.2.html">epoll_ctl</A></B>(2).
 
-Finally, the actual wait is started by 
+Finally, the actual wait is started by
 <B><A HREF="../man2/epoll_wait.2.html">epoll_wait</A></B>(2).
 
 <A NAME="lbAE">&nbsp;</A>
@@ -56,8 +57,10 @@ The
 <B>epoll</B>
 
 event distribution interface is able to behave both as Edge Triggered
-( ET ) and Level Triggered ( LT ). The difference between ET and LT
-event distribution mechanism can be described as follows. Suppose that
+( ET ) and Level Triggered ( LT ).
+The difference between ET and LT
+event distribution mechanism can be described as follows.
+Suppose that
 this scenario happens :
 <DL COMPACT>
 <DT><B>1</B>
@@ -117,13 +120,15 @@ done in step
 
 will probably hang because of the available data still present in the file
 input buffers and the remote peer might be expecting a response based on the
-data it already sent. The reason for this is that Edge Triggered event
+data it already sent.
+The reason for this is that Edge Triggered event
 distribution delivers events only when events happens on the monitored file.
 So, in step
 <B>5</B>
 
 the caller might end up waiting for some data that is already present inside
-the input buffer. In the above example, an event on
+the input buffer.
+In the above example, an event on
 <B>RFD</B>
 
 will be generated because of the write done in
@@ -141,7 +146,8 @@ does not consume the whole buffer data, the call to
 done in step
 <B>5</B>
 
-might lock indefinitely. The
+might lock indefinitely.
+The
 <B>epoll</B>
 
 interface, when used with the
@@ -153,7 +159,7 @@ read or write starve the task that is handling multiple file descriptors.
 The suggested way to use
 <B>epoll</B>
 
-as an Edge Triggered 
+as an Edge Triggered
 (<B>EPOLLET</B>)
 
 interface is below, and possible pitfalls to avoid follow.
@@ -169,7 +175,7 @@ with non-blocking file descriptors
 by going to wait for an event only after
 <B><A HREF="../man2/read.2.html">read</A></B>(2)
 
-or 
+or
 <B><A HREF="../man2/write.2.html">write</A></B>(2)
 
 return EAGAIN
@@ -185,7 +191,8 @@ is by all means a faster
 <B><A HREF="../man2/poll.2.html">poll</A></B>(2),
 
 and can be used wherever the latter is used since it shares the
-same semantics. Since even with the Edge Triggered
+same semantics.
+Since even with the Edge Triggered
 <B>epoll</B>
 
 multiple events can be generated up on receipt of multiple chunks of data,
@@ -201,7 +208,8 @@ to disable the associated file descriptor after the receipt of an event with
 When the
 <B>EPOLLONESHOT</B>
 
-flag is specified, it is caller responsibility to rearm the file descriptor using
+flag is specified,
+it is caller responsibility to rearm the file descriptor using
 <B><A HREF="../man2/epoll_ctl.2.html">epoll_ctl</A></B>(2)
 
 with
@@ -218,11 +226,13 @@ semantics of
 <B><A HREF="../man2/poll.2.html">poll</A></B>(2),
 
 an Edge Triggered usage requires more clarification to avoid stalls
-in the application event loop. In this example, listener is a
+in the application event loop.
+In this example, listener is a
 non-blocking socket on which
 <B><A HREF="../man2/listen.2.html">listen</A></B>(2)
 
-has been called. The function do_use_fd() uses the new ready
+has been called.
+The function do_use_fd() uses the new ready
 file descriptor until EAGAIN is returned by either
 <B><A HREF="../man2/read.2.html">read</A></B>(2)
 
@@ -237,7 +247,7 @@ it will continue to
 or
 <B><A HREF="../man2/write.2.html">write</A></B>(2)
 
-from where it stopped before.  
+from where it stopped before.
 <P>
 <PRE>
 struct epoll_event ev, *events;
@@ -276,7 +286,8 @@ possible to add the file descriptor inside the epoll interface (
 ) once by specifying (
 <B>EPOLLIN</B>|<B>EPOLLOUT</B>
 
-). This allows you to avoid
+).
+This allows you to avoid
 continuously switching between
 <B>EPOLLIN</B>
 
@@ -290,19 +301,21 @@ with
 <B>EPOLL_CTL_MOD</B>.
 
 <A NAME="lbAG">&nbsp;</A>
-<H2>QUESTIONS AND ANSWERS </H2>
+<H2>QUESTIONS AND ANSWERS</H2>
 
 <DL COMPACT>
-<DT><B>Q1 </B>
+<DT><B>Q1</B>
 
 <DD>
 What happens if you add the same fd to an epoll_set twice?
-<DT><B>A1 </B>
+<DT><B>A1</B>
 
 <DD>
-You will probably get EEXIST. However, it is possible that two
-threads may add the same fd twice. This is a harmless condition.
-<DT><B>Q2 </B>
+You will probably get EEXIST.
+However, it is possible that two
+threads may add the same fd twice.
+This is a harmless condition.
+<DT><B>Q2</B>
 
 <DD>
 Can two
@@ -316,7 +329,9 @@ sets fds?
 <DT><B>A2</B>
 
 <DD>
-Yes. However, it is not recommended. Yes it would be reported to both.
+Yes.
+However, it is not recommended.
+Yes it would be reported to both.
 <DT><B>Q3</B>
 
 <DD>
@@ -328,7 +343,7 @@ fd itself poll/epoll/selectable?
 
 <DD>
 Yes.
-<DT><B>Q4 </B>
+<DT><B>Q4</B>
 
 <DD>
 What happens if the
@@ -338,10 +353,11 @@ fd is put into its own fd set?
 <DT><B>A4</B>
 
 <DD>
-It will fail. However, you can add an
+It will fail.
+However, you can add an
 <B>epoll</B>
 
-fd inside another epoll fd set. 
+fd inside another epoll fd set.
 <DT><B>Q5</B>
 
 <DD>
@@ -364,7 +380,7 @@ sets automatically?
 
 <DD>
 Yes.
-<DT><B>Q7 </B>
+<DT><B>Q7</B>
 
 <DD>
 If more than one event comes in between
@@ -383,8 +399,10 @@ events?
 <DT><B>A8</B>
 
 <DD>
-You can do two operations on an existing fd. Remove would be meaningless for
-this case. Modify will re-read available I/O.
+You can do two operations on an existing fd.
+Remove would be meaningless for
+this case.
+Modify will re-read available I/O.
 <DT><B>Q9</B>
 
 <DD>
@@ -395,22 +413,28 @@ flag ( Edge Triggered behaviour ) ?
 <DT><B>A9</B>
 
 <DD>
-No you don't. Receiving an event from
+No you don't.
+Receiving an event from
 <B><A HREF="../man2/epoll_wait.2.html">epoll_wait</A></B>(2)
 
-should suggest to you that such file descriptor is ready for the requested I/O
-operation. You have simply to consider it ready until you will receive the
-next EAGAIN. When and how you will use such file descriptor is entirely up
-to you. Also, the condition that the read/write I/O space is exhausted can
+should suggest to you that such file descriptor is ready
+for the requested I/O operation.
+You have simply to consider it ready until you will receive the
+next EAGAIN.
+When and how you will use such file descriptor is entirely up
+to you.
+Also, the condition that the read/write I/O space is exhausted can
 be detected by checking the amount of data read/write from/to the target
-file descriptor. For example, if you call
+file descriptor.
+For example, if you call
 <B><A HREF="../man2/read.2.html">read</A></B>(2)
 
 by asking to read a certain amount of data and
 <B><A HREF="../man2/read.2.html">read</A></B>(2)
 
 returns a lower number of bytes, you can be sure to have exhausted the read
-I/O space for such file descriptor. Same is valid when writing using the
+I/O space for such file descriptor.
+Same is valid when writing using the
 <B><A HREF="../man2/write.2.html">write</A></B>(2)
 
 function.
@@ -425,20 +449,23 @@ function.
 </DL>
 <P>
 
-If there is a large amount of I/O space, it is possible that by trying to drain
-it the other files will not get processed causing starvation. This
-is not specific to
+If there is a large amount of I/O space,
+it is possible that by trying to drain
+it the other files will not get processed causing starvation.
+This is not specific to
 <B>epoll</B>.
 
 <P>
 
-The solution is to maintain a ready list and mark the file descriptor as ready
+The solution is to maintain a ready list
+and mark the file descriptor as ready
 in its associated data structure, thereby allowing the application to
 remember which files need to be processed but still round robin amongst
-all the ready files. This also supports ignoring subsequent events you
+all the ready files.
+This also supports ignoring subsequent events you
 receive for fd's that are already ready.
 <DL COMPACT>
-<DT><B>o If using an event cache...  </B>
+<DT><B>o If using an event cache...</B>
 
 <DD>
 </DL>
@@ -447,38 +474,41 @@ receive for fd's that are already ready.
 If you use an event cache or store all the fd's returned from
 <B><A HREF="../man2/epoll_wait.2.html">epoll_wait</A></B>(2),
 
-then make sure to provide a way to mark its closure dynamically (ie- caused by 
-a previous event's processing). Suppose you receive 100 events from 
+then make sure to provide a way to mark
+its closure dynamically (ie- caused by
+a previous event's processing).
+Suppose you receive 100 events from
 <B><A HREF="../man2/epoll_wait.2.html">epoll_wait</A></B>(2),
 
-and in event #47 a condition causes event #13 to be closed. 
-If you remove the structure and 
+and in event #47 a condition causes event #13 to be closed.
+If you remove the structure and
 <B>close</B>()
 
-the fd for event #13, then your 
-event cache might still say there are events waiting for that fd causing 
+the fd for event #13, then your
+event cache might still say there are events waiting for that fd causing
 confusion.
 <P>
 
 One solution for this is to call, during the processing of event 47,
 <B>epoll_ctl</B>(<B>EPOLL_CTL_DEL</B>)
 
-to delete fd 13 and 
+to delete fd 13 and
 <B>close</B>(),
 
 then mark its associated
-data structure as removed and link it to a cleanup list. If you find another
+data structure as removed and link it to a cleanup list.
+If you find another
 event for fd 13 in your batch processing, you will discover the fd had been
 previously removed and there will be no confusion.
 <A NAME="lbAI">&nbsp;</A>
 <H2>CONFORMING TO</H2>
 
-The epoll API is Linux specific.  
+The epoll API is Linux specific.
 Some other systems provide similar
-mechanisms, e.g., FreeBSD has 
+mechanisms, e.g., FreeBSD has
 <I>kqueue</I>,
 
-and Solaris has 
+and Solaris has
 <I>/dev/poll</I>.
 
 <A NAME="lbAJ">&nbsp;</A>
@@ -509,7 +539,7 @@ Its interface should be finalized in Linux kernel 2.5.66.
 <DT><A HREF="#lbAD">DESCRIPTION</A><DD>
 <DT><A HREF="#lbAE">NOTES</A><DD>
 <DT><A HREF="#lbAF">EXAMPLE FOR SUGGESTED USAGE</A><DD>
-<DT><A HREF="#lbAG">QUESTIONS AND ANSWERS </A><DD>
+<DT><A HREF="#lbAG">QUESTIONS AND ANSWERS</A><DD>
 <DT><A HREF="#lbAH">POSSIBLE PITFALLS AND WAYS TO AVOID THEM</A><DD>
 <DT><A HREF="#lbAI">CONFORMING TO</A><DD>
 <DT><A HREF="#lbAJ">VERSIONS</A><DD>
@@ -519,6 +549,6 @@ Its interface should be finalized in Linux kernel 2.5.66.
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 02:34:43 GMT, April 20, 2020
+Time: 02:35:10 GMT, April 20, 2020
 </BODY>
 </HTML>

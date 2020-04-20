@@ -54,27 +54,29 @@ struct cmsghdr {
 
 These macros are used to create and access control messages (also called
 ancillary data) that are not a part of the socket payload.
-This control information may 
-include the interface the packet was received on, various rarely used header 
+This control information may
+include the interface the packet was received on, various rarely used header
 fields, an extended error description, a set of file descriptors or Unix
-credentials.  For instance, control messages can be used to send 
-additional header fields such as IP options. 
-Ancillary data is sent by calling 
+credentials.
+For instance, control messages can be used to send
+additional header fields such as IP options.
+Ancillary data is sent by calling
 <B><A HREF="../man2/sendmsg.2.html">sendmsg</A></B>(2)
 
 and received by calling
 <B><A HREF="../man2/recvmsg.2.html">recvmsg</A></B>(2).
 
-See their manual pages for more information. 
+See their manual pages for more information.
 <P>
 
-Ancillary data is a sequence of 
-<I>struct cmsghdr </I>
+Ancillary data is a sequence of
+<I>struct cmsghdr</I>
 
-structures with appended data. This sequence should only be accessed
-using the macros described in this manual page and never directly. 
-See the specific protocol man pages for the available control message types. 
-The maximum ancillary buffer size allowed per socket can be set using the 
+structures with appended data.
+This sequence should only be accessed
+using the macros described in this manual page and never directly.
+See the specific protocol man pages for the available control message types.
+The maximum ancillary buffer size allowed per socket can be set using the
 <B>net.core.optmem_max</B>
 
 sysctl; see
@@ -84,21 +86,21 @@ sysctl; see
 
 <B>CMSG_FIRSTHDR</B>()
 
-returns a pointer to the first 
-<B>cmsghdr </B>
+returns a pointer to the first
+<B>cmsghdr</B>
 
 in the ancillary
-data buffer associated with the passed 
+data buffer associated with the passed
 <B>msghdr</B>.
 
 <P>
 
 <B>CMSG_NXTHDR</B>()
 
-returns the next valid 
-<B>cmsghdr </B>
+returns the next valid
+<B>cmsghdr</B>
 
-after the passed 
+after the passed
 <B>cmsghdr</B>.
 
 It returns NULL when there isn't enough space left in the buffer.
@@ -106,48 +108,52 @@ It returns NULL when there isn't enough space left in the buffer.
 
 <B>CMSG_ALIGN</B>(),
 
-given a length, returns it including the required alignment. This is a 
+given a length, returns it including the required alignment.
+This is a
 constant expression.
 <P>
 
 <B>CMSG_SPACE</B>()
 
-returns the number of bytes an ancillary element with payload of the 
-passed data length occupies. 
+returns the number of bytes an ancillary element with payload of the
+passed data length occupies.
 This is a constant expression.
 <P>
 
 <B>CMSG_DATA</B>
 
-returns a pointer to the data portion of a 
+returns a pointer to the data portion of a
 <B>cmsghdr</B>.
 
 <P>
 
 <B>CMSG_LEN</B>
 
-returns the value to store in the 
+returns the value to store in the
 <I>cmsg_len</I>
 
-member of the 
-<B>cmsghdr </B>
+member of the
+<B>cmsghdr</B>
 
 structure, taking into account any necessary
-alignment. It takes the data length as an argument. This is a constant
-expression.  
+alignment.
+It takes the data length as an argument.
+This is a constant
+expression.
 <P>
 
-To create ancillary data, first initialize the 
+To create ancillary data, first initialize the
 <I>msg_controllen</I>
 
-member of the 
-<B>msghdr </B>
+member of the
+<B>msghdr</B>
 
-with the length of the control message buffer.  Use 
+with the length of the control message buffer.
+Use
 <B>CMSG_FIRSTHDR</B>()
 
-on the 
-<B>msghdr </B>
+on the
+<B>msghdr</B>
 
 to get the first control message and
 <B>CMSG_NEXTHDR</B>
@@ -156,27 +162,27 @@ to get all subsequent ones.
 In each control message, initialize
 <I>cmsg_len</I>
 
-(with 
+(with
 <B>CMSG_LEN</B>),
 
-the other 
-<B>cmsghdr </B>
+the other
+<B>cmsghdr</B>
 
-header fields, and the data portion using 
+header fields, and the data portion using
 <B>CMSG_DATA</B>.
 
-Finally, the 
-<I>msg_controllen </I>
+Finally, the
+<I>msg_controllen</I>
 
-field of the 
-<B>msghdr </B>
+field of the
+<B>msghdr</B>
 
-should be set to the sum of the 
+should be set to the sum of the
 <B>CMSG_SPACE</B>()
 
-of the length of 
-all control messages in the buffer. 
-For more information on the 
+of the length of
+all control messages in the buffer.
+For more information on the
 <B>msghdr</B>,
 
 see
@@ -185,56 +191,54 @@ see
 <P>
 
 When the control message buffer is too short to store all messages, the
-<B>MSG_CTRUNC </B>
+<B>MSG_CTRUNC</B>
 
-flag is set in the 
-<I>msg_flags </I>
+flag is set in the
+<I>msg_flags</I>
 
-member of the 
+member of the
 <B>msghdr</B>.
 
 <A NAME="lbAE">&nbsp;</A>
 <H2>EXAMPLE</H2>
 
-This code looks for the 
-<B>IP_TTL </B>
+This code looks for the
+<B>IP_TTL</B>
 
 option in a received ancillary buffer:
 <P>
 
 <DL COMPACT><DT><DD>
 <PRE>
-
-struct msghdr msgh; 
+struct msghdr msgh;
 struct cmsghdr *cmsg;
 int *ttlptr;
 int received_ttl;
 
-/* Receive auxiliary data in msgh */ 
-for (cmsg = CMSG_FIRSTHDR(&amp;msgh); 
-    cmsg != NULL; 
+/* Receive auxiliary data in msgh */
+for (cmsg = CMSG_FIRSTHDR(&amp;msgh);
+    cmsg != NULL;
     cmsg = CMSG_NXTHDR(&amp;msgh,cmsg)) {
-        if (cmsg-&gt;cmsg_level == IPPROTO_IP 
-                &amp;&amp; cmsg-&gt;cmsg_type == IP_TTL) { 
+        if (cmsg-&gt;cmsg_level == IPPROTO_IP
+                &amp;&amp; cmsg-&gt;cmsg_type == IP_TTL) {
             ttlptr = (int *) CMSG_DATA(cmsg);
-            received_ttl = *ttlptr; 
+            received_ttl = *ttlptr;
             break;
         }
-}
+    }
 if (cmsg == NULL) {
     /*
      * Error: IP_TTL not enabled or small buffer
      * or I/O error.
-     */ 
-} 
-
+     */
+}
 </PRE>
 
 </DL>
 
 <P>
 
-The code below passes an array of file descriptors over a Unix socket using 
+The code below passes an array of file descriptors over a Unix socket using
 <B>SCM_RIGHTS</B>:
 
 <P>
@@ -244,20 +248,20 @@ The code below passes an array of file descriptors over a Unix socket using
 
 struct msghdr msg = {0};
 struct cmsghdr *cmsg;
-int myfds[NUM_FD]; /* Contains the file descriptors to pass. */ 
+int myfds[NUM_FD]; /* Contains the file descriptors to pass. */
 char buf[CMSG_SPACE(sizeof myfds)];  /* ancillary data buffer */
 int *fdptr;
 
-msg.msg_control = buf; 
+msg.msg_control = buf;
 msg.msg_controllen = sizeof buf;
-cmsg = CMSG_FIRSTHDR(&amp;msg); 
+cmsg = CMSG_FIRSTHDR(&amp;msg);
 cmsg-&gt;cmsg_level = SOL_SOCKET;
 cmsg-&gt;cmsg_type = SCM_RIGHTS;
-cmsg-&gt;cmsg_len = CMSG_LEN(sizeof(int) * NUM_FD); 
-/* Initialize the payload: */ 
-fdptr = (int *)CMSG_DATA(cmsg); 
-memcpy(fdptr, myfds, NUM_FD * sizeof(int)); 
-/* Sum of the length of all control messages in the buffer: */ 
+cmsg-&gt;cmsg_len = CMSG_LEN(sizeof(int) * NUM_FD);
+/* Initialize the payload: */
+fdptr = (int *)CMSG_DATA(cmsg);
+memcpy(fdptr, myfds, NUM_FD * sizeof(int));
+/* Sum of the length of all control messages in the buffer: */
 msg.msg_controllen = cmsg-&gt;cmsg_len;
 
 </PRE>
@@ -268,7 +272,7 @@ msg.msg_controllen = cmsg-&gt;cmsg_len;
 <H2>NOTES</H2>
 
 For portability, ancillary data should be accessed only using the macros
-described here. 
+described here.
 <B>CMSG_ALIGN</B>()
 
 is a Linux extension and should be not used in portable programs.
@@ -284,15 +288,16 @@ and
 
 are constant expressions (assuming their argument is constant);
 this could be used to declare the size of global
-variables. This may be not portable, however.
+variables.
+This may be not portable, however.
 <A NAME="lbAG">&nbsp;</A>
 <H2>CONFORMING TO</H2>
 
 This ancillary data model conforms to the POSIX.1g draft, 4.4BSD-Lite,
 the IPv6 advanced API described in RFC&nbsp;2292 and the SUSv2.
-<B>CMSG_ALIGN </B>
+<B>CMSG_ALIGN</B>
 
-is a Linux extension. 
+is a Linux extension.
 <A NAME="lbAH">&nbsp;</A>
 <H2>SEE ALSO</H2>
 
@@ -320,6 +325,6 @@ RFC&nbsp;2292
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 02:34:36 GMT, April 20, 2020
+Time: 02:35:03 GMT, April 20, 2020
 </BODY>
 </HTML>

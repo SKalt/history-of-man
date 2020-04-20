@@ -29,12 +29,13 @@ We will describe each of these in more detail below.
 
 After power-on or hard reset, control is given
 to a program stored on read only memory (normally
-PROM). In PC we usually call this program the
-<B>BIOS</B>.
+PROM).
+In PC we usually call this program the <B>BIOS</B>.
 <P>
 This program normally makes a basic self-test of the
 machine and accesses non-volatile memory to read
-further parameters. This memory in the PC is
+further parameters.
+This memory in the PC is
 battery-backed CMOS memory, so most people
 refer to it as the <B>CMOS</B>, although outside
 of the PC world, it is usually called <B>nvram</B>
@@ -50,7 +51,8 @@ loads the OS Loader, which is located on a fixed position
 on the boot device, and transfers control to it.
 <DL COMPACT>
 <DT>Note:<DD>
-We do not cover here booting from network. Those who want
+We do not cover here booting from network.
+Those who want
 to investigate this subject may want to research:
 DHCP, TFTP, PXE, Etherboot.
 </DL>
@@ -62,7 +64,8 @@ of the boot device - this is the <B>MBR</B>
 (Master Boot Record).
 <P>
 In most systems, this primary loader is very
-limited due to various constraints. Even on non-PC systems
+limited due to various constraints.
+Even on non-PC systems
 there are some limitations to the size and complexity
 of this loader, but the size limitation of the PC MBR
 (512 bytes including the partition table) makes it
@@ -85,7 +88,8 @@ containing the bootstrap code to load the second part
 of the loader from the root partition.
 <P>
 The main job of the OS Loader is to locate the kernel
-on the disk, load it and run it. Most OS loaders allow
+on the disk, load it and run it.
+Most OS loaders allow
 interactive use, to enable specification of alternative
 kernel (maybe a backup in case the last compiled one
 isn't functioning) and to pass optional parameters
@@ -100,13 +104,15 @@ file system (/).
 <P>
 Some of the parameters that may be passed to the kernel
 relate to these activities (e.g: You can override the
-default root file system). For further information
+default root file system).
+For further information
 on Linux kernel parameters read
 <B><A HREF="../man7/bootparam.7.html">bootparam</A></B>(7).
 
 <P>
 Only then the kernel creates the first (user land)
-process which is numbered 1. This process executes the
+process which is numbered 1.
+This process executes the
 program
 <I>/sbin/init</I>,
 
@@ -123,7 +129,8 @@ This file defines what should be run in different <I>run-levels</I>.
 This gives the system administrator an easy management scheme, where
 each run-level is associated with a set of services (e.g:
 <B>S</B> is <I>single-user</I>, on <B>2</B> most network
-services start, etc.). The administrator may change the current
+services start, etc.).
+The administrator may change the current
 run-level via
 <B><A HREF="../man8/init.8.html">init</A></B>(8)
 
@@ -143,7 +150,8 @@ that actually start/stop the individual services.
 The following description applies to System V release 4 based system, which
 currently covers most commercial Unix systems (Solaris, HP-UX, Irix, Tru64)
 as well as the major Linux distributions (RedHat, Debian, Mandrake,
-Suse, Caldera). Some systems (Slackware Linux, FreeBSD, OpenBSD)
+Suse, Caldera).
+Some systems (Slackware Linux, FreeBSD, OpenBSD)
 have a somewhat different scheme of boot scripts.
 </DL>
 <P>
@@ -155,34 +163,41 @@ a single startup script located in a specific directory
 in most versions of Linux).
 Each of these scripts accepts as a single argument
 the word 'start' -- causing it to start the service, or the word
-'stop' -- causing it to stop the service. The script may optionally
+'stop' -- causing it to stop the service.
+The script may optionally
 accept other &quot;convenience&quot; parameters (e.g: 'restart', to stop and then
-start, 'status' do display the service status). Running the script
+start, 'status' do display the service status).
+Running the script
 without parameters displays the possible arguments.
 <A NAME="lbAI">&nbsp;</A>
 <H3>Sequencing Directories</H3>
 
 To make specific scripts start/stop at specific run-levels and in
-specific order, there are <I>sequencing directories</I>. These
-are normally in <I>/etc/rc[0-6S].d</I>. In each of these directories
+specific order, there are <I>sequencing directories</I>.
+These
+are normally in <I>/etc/rc[0-6S].d</I>.
+In each of these directories
 there are links (usually symbolic) to the scripts in the <I>init.d</I>
 directory.
 <P>
-A primary script (usually <I>/etc/rc</I>) is called from 
+A primary script (usually <I>/etc/rc</I>) is called from
 <B><A HREF="../man5/inittab.5.html">inittab</A></B>(5)
 
 and calls the services scripts via the links in the sequencing directories.
 All links with names that begin with 'S' are being called with
-the argument 'start' (thereby starting the service). All links with
+the argument 'start' (thereby starting the service).
+All links with
 names that begin with 'K' are being called with the argument 'stop'
 (thereby stopping the service).
 <P>
 To define the starting or stopping order within the same run-level,
 the names of the links contain order-numbers.
 Also, to make the names clearer, they usually
-end with the name of the service they refer to. Example:
+end with the name of the service they refer to.
+Example:
 the link <I>/etc/rc2.d/S80sendmail</I> starts the sendmail service on
-runlevel 2. This happens after <I>/etc/rc2.d/S12syslog</I> is run
+runlevel 2.
+This happens after <I>/etc/rc2.d/S12syslog</I> is run
 but before <I>/etc/rc2.d/S90xfs</I> is run.
 <P>
 To manage the boot order and run-levels, we have to manage these links.
@@ -194,16 +209,18 @@ However, on many versions of Linux, there are tools to help with this task
 <H3>Boot Configuration</H3>
 
 Usually the daemons started may optionally receive command line options
-and parameters. To allow system administrators to change these
-parameters without editing the boot scripts themselves, 
-configuration files are used. These are located in a specific
+and parameters.
+To allow system administrators to change these
+parameters without editing the boot scripts themselves,
+configuration files are used.
+These are located in a specific
 directory (<I>/etc/sysconfig</I> on RedHat systems) and are
 used by the boot scripts.
 <P>
 In older Unix systems, these files contained the actual command line
 options for the daemons, but in modern Linux systems (and also
-in HP-UX), these files just contain shell variables. The boot
-scripts in <I>/etc/init.d</I> <B>source</B> the configuration
+in HP-UX), these files just contain shell variables.
+The boot scripts in <I>/etc/init.d</I> <B>source</B> the configuration
 files, and then use the variable values.
 <A NAME="lbAK">&nbsp;</A>
 <H2>FILES</H2>
@@ -252,6 +269,6 @@ files, and then use the variable values.
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 02:34:44 GMT, April 20, 2020
+Time: 02:35:11 GMT, April 20, 2020
 </BODY>
 </HTML>

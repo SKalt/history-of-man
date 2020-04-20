@@ -22,37 +22,38 @@ udp - User Datagram Protocol for IPv4
 
 <BR>
 
-<B>udp_socket = socket(PF_INET, SOCK_DGRAM, 0); </B>
+<B>udp_socket = socket(PF_INET, SOCK_DGRAM, 0);</B>
 
 <A NAME="lbAD">&nbsp;</A>
 <H2>DESCRIPTION</H2>
 
-This is an implementation of the User Datagram Protocol 
-described in RFC&nbsp;768. 
+This is an implementation of the User Datagram Protocol
+described in RFC&nbsp;768.
 It implements a connectionless, unreliable datagram packet service.
-Packets may be reordered or duplicated before they arrive. UDP
-generates and checks checksums to catch transmission errors.  
+Packets may be reordered or duplicated before they arrive.
+UDP generates and checks checksums to catch transmission errors.
 <P>
-When a UDP socket is created, 
+When a UDP socket is created,
 its local and remote addresses are unspecified.
-Datagrams can be sent immediately using 
+Datagrams can be sent immediately using
 <B><A HREF="../man2/sendto.2.html">sendto</A></B>(2)
 
 or
 <B><A HREF="../man2/sendmsg.2.html">sendmsg</A></B>(2)
 
-with a valid destination address as an argument.  When 
+with a valid destination address as an argument.
+When
 <B><A HREF="../man2/connect.2.html">connect</A></B>(2)
 
-is called on the socket the default destination address is set and 
-datagrams can now be sent using 
+is called on the socket the default destination address is set and
+datagrams can now be sent using
 <B><A HREF="../man2/send.2.html">send</A></B>(2)
 
-or 
+or
 <B><A HREF="../man2/write.2.html">write</A></B>(2)
 
 without specifying an destination address.
-It is still possible to send to other destinations by passing an 
+It is still possible to send to other destinations by passing an
 address to
 <B><A HREF="../man2/sendto.2.html">sendto</A></B>(2)
 
@@ -71,8 +72,8 @@ and bind the socket to
 <I>INADDR_ANY</I>.
 
 <P>
-All receive operations return only one packet.  
-When the packet is smaller than the passed buffer only that much 
+All receive operations return only one packet.
+When the packet is smaller than the passed buffer only that much
 data is returned, when it is bigger the packet is truncated and the
 <B>MSG_TRUNC</B>
 
@@ -81,69 +82,71 @@ flag is set.
 
 is not supported.
 <P>
-IP options may be sent or received using the socket options described in 
+IP options may be sent or received using the socket options described in
 <B><A HREF="../man7/ip.7.html">ip</A></B>(7).
 
 They are only processed by the kernel when the appropriate sysctl
-is enabled (but still passed to the user even when it is turned off). 
+is enabled (but still passed to the user even when it is turned off).
 See
 <B><A HREF="../man7/ip.7.html">ip</A></B>(7).
 
 <P>
-When the 
+When the
 <B>MSG_DONTROUTE</B>
 
-flag is set on sending the destination address must refer to an local 
-interface address and the packet is only sent to that interface.  
+flag is set on sending the destination address must refer to an local
+interface address and the packet is only sent to that interface.
 <P>
-By default Linux UDP does path MTU (Maximum Transmission Unit) discovery. 
+By default Linux UDP does path MTU (Maximum Transmission Unit) discovery.
 This means the kernel
 will keep track of the MTU to a specific target IP address and return
 <I>EMSGSIZE</I>
 
-when a UDP packet write exceeds it. 
-When this happens the application should decrease the packet size. 
+when a UDP packet write exceeds it.
+When this happens the application should decrease the packet size.
 Path MTU discovery can be also turned off using the
 <B>IP_MTU_DISCOVER</B>
 
-socket option or the 
+socket option or the
 <B>ip_no_pmtu_disc</B>
 
-sysctl, see 
+sysctl, see
 <B><A HREF="../man7/ip.7.html">ip</A>(7)</B>
 
-for details. 
+for details.
 When turned off UDP will fragment outgoing UDP packets
-that exceed the interface MTU. 
+that exceed the interface MTU.
 However disabling it is not recommended
 for performance and reliability reasons.
 <A NAME="lbAE">&nbsp;</A>
 <H2>ADDRESS FORMAT</H2>
 
-UDP uses the IPv4 
-<B>sockaddr_in </B>
+UDP uses the IPv4
+<B>sockaddr_in</B>
 
-address format described in 
+address format described in
 <B><A HREF="../man7/ip.7.html">ip</A></B>(7).
 
 <A NAME="lbAF">&nbsp;</A>
 <H2>ERROR HANDLING</H2>
 
-All fatal errors will be passed to the user as an error return even 
-when the socket is not connected. This includes asynchronous errors
-received from the network. You may get an error for an earlier packet
+All fatal errors will be passed to the user as an error return even
+when the socket is not connected.
+This includes asynchronous errors
+received from the network.
+You may get an error for an earlier packet
 that was sent on the same socket.
 This behaviour differs from many other BSD socket implementations
 which don't pass any errors unless the socket is connected.
-Linux's behaviour is mandated by 
+Linux's behaviour is mandated by
 <B>RFC&nbsp;1122</B>.
 
 <P>
-For compatibility with legacy code in Linux 2.0 and 2.2 
+For compatibility with legacy code in Linux 2.0 and 2.2
 it was possible to set the
-<B>SO_BSDCOMPAT  </B>
+<B>SO_BSDCOMPAT</B>
 
-SOL_SOCKET option to receive remote errors only when the socket has been 
+SOL_SOCKET option to receive remote errors only when the socket has been
 connected (except for
 <B>EPROTO</B>
 
@@ -151,19 +154,19 @@ and
 <B>EMSGSIZE</B>).
 
 Locally generated errors are always passed.
-Support for this socket option was removed in later kernels; see 
+Support for this socket option was removed in later kernels; see
 <B><A HREF="../man7/socket.7.html">socket</A></B>(7)
 
 for further information.
 <P>
-When the 
+When the
 <B>IP_RECVERR</B>
 
 option is enabled all errors are stored in the socket error queue
 and can be received by
 <B><A HREF="../man2/recvmsg.2.html">recvmsg</A></B>(2)
 
-with the 
+with the
 <B>MSG_ERRQUEUE</B>
 
 flag set.
@@ -176,7 +179,7 @@ To set or get a UDP socket option, call
 to read or
 <B><A HREF="../man2/setsockopt.2.html">setsockopt</A></B>(2)
 
-to write the option with the option level argument set to 
+to write the option with the option level argument set to
 <B>IPPROTO_UDP</B>.
 
 <DL COMPACT>
@@ -211,13 +214,13 @@ The correct syntax is:
 <DT><B>FIONREAD</B> (<B>SIOCINQ</B>)
 
 <DD>
-Gets a pointer to an integer as argument. 
-Returns the size of the next pending datagram in the integer in bytes, 
+Gets a pointer to an integer as argument.
+Returns the size of the next pending datagram in the integer in bytes,
 or 0 when no datagram is pending.
 <DT><B>TIOCOUTQ</B> (<B>SIOCOUTQ</B>)
 
 <DD>
-Returns the number of data bytes in the local send queue. 
+Returns the number of data bytes in the local send queue.
 Only supported with Linux 2.4 and above.
 </DL>
 <P>
@@ -232,17 +235,17 @@ are supported.
 <A NAME="lbAI">&nbsp;</A>
 <H2>ERRORS</H2>
 
-All errors documented for 
+All errors documented for
 <B><A HREF="../man7/socket.7.html">socket</A></B>(7)
 
-or 
+or
 <B><A HREF="../man7/ip.7.html">ip</A></B>(7)
 
-may be returned by a send or receive on a UDP socket. 
+may be returned by a send or receive on a UDP socket.
 <P>
 <B>ECONNREFUSED</B>
 
-No receiver was associated with the destination address.  
+No receiver was associated with the destination address.
 This might be caused by a previous packet sent over the socket.
 <A NAME="lbAJ">&nbsp;</A>
 <H2>VERSIONS</H2>
@@ -290,6 +293,6 @@ RFC&nbsp;1191 for a description of path MTU discovery.
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 02:34:44 GMT, April 20, 2020
+Time: 02:35:12 GMT, April 20, 2020
 </BODY>
 </HTML>

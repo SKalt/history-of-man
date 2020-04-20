@@ -14,11 +14,11 @@ initrd - boot loader initialized RAM disk
 <A NAME="lbAC">&nbsp;</A>
 <H2>DESCRIPTION</H2>
 
-The special file 
-<I>/dev/initrd </I>
+The special file
+<I>/dev/initrd</I>
 
-is a read-only block device.  
-Device 
+is a read-only block device.
+Device
 <I>/dev/initrd</I>
 
 is a RAM disk that is initialized (e.g. loaded) by the boot loader before
@@ -29,16 +29,16 @@ The kernel then can use the block device
 contents for a two phased system boot-up.
 <P>
 
-In the first boot-up phase, the kernel starts up 
-and mounts an initial root file-system from the contents 
-of 
-<I>/dev/initrd </I>
+In the first boot-up phase, the kernel starts up
+and mounts an initial root file-system from the contents
+of
+<I>/dev/initrd</I>
 
-(e.g. RAM disk initialized by the boot loader). 
-In the second phase, additional drivers or other modules 
-are loaded from the initial root device's contents.  
-After loading the additional modules, a new root file system 
-(i.e. the normal root file system) is mounted from a 
+(e.g. RAM disk initialized by the boot loader).
+In the second phase, additional drivers or other modules
+are loaded from the initial root device's contents.
+After loading the additional modules, a new root file system
+(i.e. the normal root file system) is mounted from a
 different device.
 
 
@@ -46,110 +46,110 @@ different device.
 <A NAME="lbAD">&nbsp;</A>
 <H2>BOOT-UP OPERATION</H2>
 
-When booting up with 
+When booting up with
 <B>initrd</B>, the system boots as follows:
 
 <DL COMPACT><DT><DD>
 <P>
 
-1. The boot loader loads the kernel program and 
+1. The boot loader loads the kernel program and
 <I>/dev/initrd</I>'s contents into memory.
 
 <P>
 
-2. On kernel startup, 
-the kernel uncompresses and copies the contents of the device 
+2. On kernel startup,
+the kernel uncompresses and copies the contents of the device
 <I>/dev/initrd</I>
 
-onto device 
-<I>/dev/ram0 </I>
+onto device
+<I>/dev/ram0</I>
 
-and then frees the memory used by 
+and then frees the memory used by
 <I>/dev/initrd</I>.
 
 <P>
 
 3. The kernel then read-write mounts device
-<I>/dev/ram0 </I>
+<I>/dev/ram0</I>
 
 as the initial root file system.
 <P>
 
 4. If the indicated normal root file system is also the initial root file-system
-(e.g. 
+(e.g.
 <I>/dev/ram0</I>
 
 ) then the kernel skips to the last step for the usual boot sequence.
 <P>
 
-5. If the executable file 
+5. If the executable file
 <I>/linuxrc</I> is present in the initial root file-system, <I>/linuxrc</I>
 
-is executed with UID 0.  
-(The file 
+is executed with UID 0.
+(The file
 <I>/linuxrc</I>
 
-must have executable permission.  
-The file 
+must have executable permission.
+The file
 <I>/linuxrc</I>
 
-can be any valid executable, including a shell script.)  
+can be any valid executable, including a shell script.)
 <P>
 
-6. If  
+6. If
 <I>/linuxrc</I>
 
-is not executed or when 
+is not executed or when
 <I>/linuxrc</I>
 
-terminates, the normal root file system is mounted.  
+terminates, the normal root file system is mounted.
 (If
 <I>/linuxrc</I>
 
-exits with any file-systems mounted on the initial root 
-file-system, then the behavior of the kernel is 
+exits with any file-systems mounted on the initial root
+file-system, then the behavior of the kernel is
 <B>UNSPECIFIED</B>.
 
-See the 
+See the
 <B>NOTES</B>
 
 section for the current kernel behavior.)
 <P>
 
-7. If the normal root file has directory 
+7. If the normal root file has directory
 <I>/initrd</I>, device
 
 <I>/dev/ram0</I>
 
-is moved from 
+is moved from
 <I>/</I> to <I>/initrd</I>.
 
-Otherwise if directory  
+Otherwise if directory
 <I>/initrd</I> does not exist device <I>/dev/ram0</I> is unmounted.
 
-(When moved from 
+(When moved from
 <I>/</I> to <I>/initrd</I>, <I>/dev/ram0</I>
 
-is not unmounted and therefore processes can remain running from 
+is not unmounted and therefore processes can remain running from
 <I>/dev/ram0</I>.
 
-If directory 
+If directory
 <I>/initrd</I>
 
-does not exist on the normal root file-system 
-and any processes remain running from  
+does not exist on the normal root file-system
+and any processes remain running from
 <I>/dev/ram0</I> when <I>/linuxrc</I>
 
-exits, the behavior of the kernel is 
+exits, the behavior of the kernel is
 <B>UNSPECIFIED</B>.
 
-See the 
+See the
 <B>NOTES</B>
 
 section for the current kernel behavior.)
 <P>
 
-8. The usual boot sequence (e.g. invocation of 
+8. The usual boot sequence (e.g. invocation of
 <I>/sbin/init</I>)
 
 is performed on the normal root file system.
@@ -160,27 +160,27 @@ is performed on the normal root file system.
 <A NAME="lbAE">&nbsp;</A>
 <H2>OPTIONS</H2>
 
-The following boot loader options when used with 
+The following boot loader options when used with
 <B>initrd</B>, affect the kernel's boot-up operation:
 
 <DL COMPACT>
 <DT><B>initrd=</B><I>filename</I>
 
 <DD>
-Specifies the file to load as the contents of 
+Specifies the file to load as the contents of
 <I>/dev/initrd</I>.
 
 For
-<B>LOADLIN </B>
+<B>LOADLIN</B>
 
 this is a command line option.
-For 
-<B>LILO </B>
+For
+<B>LILO</B>
 
-you have to use this command in the 
-<B>LILO </B>
+you have to use this command in the
+<B>LILO</B>
 
-configuration file 
+configuration file
 <I>/etc/lilo.config</I>.
 
 The filename specified with this
@@ -189,35 +189,35 @@ option will typically be a gzipped file-system image.
 
 <DD>
 This boot time option disables the two phase boot-up operation.
-The kernel performs the usual boot sequence as if 
-<I>/dev/initrd </I>
-
-was not initialized. 
-With this option, any contents of
-<I>/dev/initrd </I>
-
-loaded into memory by the boot loader contents are preserved.
-This option permits the contents of 
+The kernel performs the usual boot sequence as if
 <I>/dev/initrd</I>
 
-to be any data and need not be limited to a file system image.  
-However, device  
-<I>/dev/initrd </I>
+was not initialized.
+With this option, any contents of
+<I>/dev/initrd</I>
+
+loaded into memory by the boot loader contents are preserved.
+This option permits the contents of
+<I>/dev/initrd</I>
+
+to be any data and need not be limited to a file system image.
+However, device
+<I>/dev/initrd</I>
 
 is read-only and can be read only one time after system startup.
 <DT><B>root=</B><I>device-name</I>
 
 <DD>
-Specifies the device to be used as the normal root file system. 
+Specifies the device to be used as the normal root file system.
 For <B>LOADLIN</B>
 
 this is a command line option.
 For <B>LILO</B> this is a boot time option or
 
-can be used as an option line in the  
+can be used as an option line in the
 <B>LILO</B> configuration file <B>/etc/lilo.config</B>.
 
-The device specified by the this option must be a mountable 
+The device specified by the this option must be a mountable
 device having a suitable root file-system.
 
 
@@ -226,18 +226,18 @@ device having a suitable root file-system.
 <A NAME="lbAF">&nbsp;</A>
 <H2>CHANGING THE NORMAL ROOT FILE SYSTEM</H2>
 
-By default, 
+By default,
 the kernel's settings
-(e.g. set in the kernel file with 
+(e.g. set in the kernel file with
 <B><A HREF="../man8/rdev.8.html">rdev</A></B>(8)
 
 or compiled into the kernel file),
 or the boot loader option setting
 is used for the normal root file systems.
-For a NFS-mounted normal root file system, one has to use the 
+For a NFS-mounted normal root file system, one has to use the
 <B>nfs_root_name</B> and <B>nfs_root_addrs</B>
 
-boot options to give the NFS settings. 
+boot options to give the NFS settings.
 For more information on NFS-mounted root see the kernel documentation file
 <B>nfsroot.txt</B>.
 
@@ -246,17 +246,17 @@ For more information on setting the root file system also see the
 
 <P>
 
-It is also possible for the 
+It is also possible for the
 <I>/linuxrc</I>
 
 executable to change the normal root device.
-For 
+For
 <I>/linuxrc</I>
 
-to change the normal root device, 
+to change the normal root device,
 <I>/proc</I> must be mounted.
 
-After mounting 
+After mounting
 <I>/proc</I>, <I>/linuxrc</I>
 
 changes the normal root device by writing into the proc files
@@ -284,7 +284,7 @@ and then writing 0xff (e.g. the pseudo-NFS-device number) into file
 <I>/proc/sys/kernel/real-root-dev</I>.
 
 For example, the following shell command line would change
-the normal root device to 
+the normal root device to
 <I>/dev/hdb1</I>:
 
 <PRE>
@@ -293,11 +293,11 @@ the normal root device to
 
 </PRE>
 
-For a NFS example, the following shell command lines would change the 
-normal root device to the NFS directory 
+For a NFS example, the following shell command lines would change the
+normal root device to the NFS directory
 <I>/var/nfsroot</I>
 
-on a local networked NFS server with IP number 193.8.232.7 for a system with 
+on a local networked NFS server with IP number 193.8.232.7 for a system with
 IP number 193.8.232.7 and named 'idefix':
 <PRE>
 
@@ -323,7 +323,7 @@ as well as
 and
 <B><A HREF="../man8/pivot_root.8.html">pivot_root</A></B>(8)
 
-for information on the modern method of changing the root file system. 
+for information on the modern method of changing the root file system.
 
 
 
@@ -331,10 +331,10 @@ for information on the modern method of changing the root file system.
 <A NAME="lbAG">&nbsp;</A>
 <H2>USAGE</H2>
 
-The main motivation for implementing 
+The main motivation for implementing
 <B>initrd</B>
 
-was to allow for modular kernel configuration at system installation. 
+was to allow for modular kernel configuration at system installation.
 <P>
 
 A possible system installation scenario is as follows:
@@ -342,14 +342,14 @@ A possible system installation scenario is as follows:
 <P>
 
 1. The loader program boots from floppy or other media with a minimal kernel
-(e.g. support for 
+(e.g. support for
 <I>/dev/ram</I>, <I>/dev/initrd</I>, and the ext2 file-system) and loads 
 
 <I>/dev/initrd</I> with a gzipped version of the initial file-system.
 
 <P>
 
-2. The executable 
+2. The executable
 <I>/linuxrc</I>
 
 determines what is needed to (1) mount the normal root file-system
@@ -359,24 +359,24 @@ done by asking the user, by auto-probing, or by using a hybrid
 approach.
 <P>
 
-3. The executable 
+3. The executable
 <I>/linuxrc</I>
 
 loads the necessary modules from the initial root file-system.
 <P>
 
-4. The executable 
+4. The executable
 <I>/linuxrc</I>
 
-creates and populates the root file system.  (At this stage the normal
-root file system does not have to be a
+creates and populates the root file system.
+(At this stage the normal root file system does not have to be a
 completed system yet.)
 <P>
 
-5. The executable 
+5. The executable
 <I>/linuxrc</I> sets <I>/proc/sys/kernel/real-root-dev,</I>
 
-unmount 
+unmount
 <I>/proc</I>, 
 
 the normal root file system and any other file
@@ -393,7 +393,7 @@ the boot loader can be installed.
 8. The boot loader is configured to load into
 <I>/dev/initrd</I>
 
-a file system with the set of modules that was used to bring up the system. 
+a file system with the set of modules that was used to bring up the system.
 (e.g. Device
 <I>/dev/ram0</I>
 
@@ -409,22 +409,22 @@ performed.
 
 <P>
 
-The key role of 
+The key role of
 <I>/dev/initrd</I>
 
-in the above is to re-use the configuration data during normal system operation 
+in the above is to re-use the configuration data during normal system operation
 without requiring initial kernel selection, a large generic kernel or,
 recompiling the kernel.
 <P>
 
 A second scenario is for installations where Linux runs on systems with
-different hardware configurations in a single administrative network. 
+different hardware configurations in a single administrative network.
 In such cases, it may be desirable to use only a small set of kernels
 (ideally only one) and to keep the system-specific part of configuration
-information as small as possible. 
-In this case, create a common file 
-with all needed modules. 
-Then, only the 
+information as small as possible.
+In this case, create a common file
+with all needed modules.
+Then, only the
 <I>/linuxrc</I>
 
 file or a file executed by
@@ -433,27 +433,27 @@ file or a file executed by
 would be different.
 <P>
 
-A third scenario is more convenient recovery disks. 
-Because information like the location of the root file-system 
-partition is not needed at boot time, the system loaded from 
-<I>/dev/initrd </I>
+A third scenario is more convenient recovery disks.
+Because information like the location of the root file-system
+partition is not needed at boot time, the system loaded from
+<I>/dev/initrd</I>
 
-can use a dialog and/or auto-detection followed by a 
+can use a dialog and/or auto-detection followed by a
 possible sanity check.
 <P>
 
-Last but not least, Linux distributions on CD-ROM may use 
+Last but not least, Linux distributions on CD-ROM may use
 <B>initrd</B>
 
-for easy installation from the CD-ROM.  
-The distribution can use 
+for easy installation from the CD-ROM.
+The distribution can use
 <B>LOADLIN</B>
 
-to directly load 
+to directly load
 <I>/dev/initrd</I>
 
 from CD-ROM without the need of any floppies.
-The distribution could also use a 
+The distribution could also use a
 <B>LILO</B>
 
 boot floppy and then bootstrap a bigger ram disk via
@@ -465,16 +465,16 @@ boot floppy and then bootstrap a bigger ram disk via
 <A NAME="lbAH">&nbsp;</A>
 <H2>CONFIGURATION</H2>
 
-The 
-<I>/dev/initrd </I>
-
-is a read-only block device assigned 
-major number 1 and minor number 250.  
-Typically 
+The
 <I>/dev/initrd</I>
 
-is owned by 
-<I>root.disk </I>
+is a read-only block device assigned
+major number 1 and minor number 250.
+Typically
+<I>/dev/initrd</I>
+
+is owned by
+<I>root.disk</I>
 
 with mode 0400 (read access by root only).
 If the Linux system does not have
@@ -488,14 +488,14 @@ already created, it can be created with the following commands:
 </B>
 </PRE>
 
-Also, support for both &quot;RAM disk&quot; and &quot;Initial RAM disk&quot; 
-(e.g. 
+Also, support for both &quot;RAM disk&quot; and &quot;Initial RAM disk&quot;
+(e.g.
 <B>CONFIG_BLK_DEV_RAM=y</B> and <B>CONFIG_BLK_DEV_INITRD=y</B>
 
-) support must be compiled directly into the Linux kernel to use 
+) support must be compiled directly into the Linux kernel to use
 <I>/dev/initrd</I>.
 
-When using 
+When using
 <I>/dev/initrd</I>, 
 
 the RAM disk driver cannot be loaded as a module.
@@ -547,34 +547,35 @@ the LOADLIN documentation, the SYSLINUX documentation.
 1. With the current kernel, any file systems that remain mounted when
 <I>/dev/ram0</I> is moved from <I>/</I> to <I>/initrd</I>
 
-continue to be accessible.  However, the
+continue to be accessible.
+However, the
 <I>/proc/mounts</I>
 
-entries are not updated. 
+entries are not updated.
 <P>
 
-2. With the current kernel, if directory 
+2. With the current kernel, if directory
 <I>/initrd</I> does not exist, then 
 
-<I>/dev/ram0 </I>
+<I>/dev/ram0</I>
 
-will NOT be fully unmounted if 
+will NOT be fully unmounted if
 <I>/dev/ram0</I>
 
 is used by any process or has any file-system mounted on it.
-If  
+If
 <I>/dev/ram0</I> is NOT fully unmounted, 
 
-then  
+then
 <I>/dev/ram0</I>
 
 will remain in memory.
 <P>
 
-3. Users of 
+3. Users of
 <I>/dev/initrd</I>
 
-should not depend on the behavior give in the above notes.  
+should not depend on the behavior give in the above notes.
 The behavior may change in future versions of the Linux kernel.
 
 
@@ -582,10 +583,10 @@ The behavior may change in future versions of the Linux kernel.
 <A NAME="lbAL">&nbsp;</A>
 <H2>AUTHOR</H2>
 
-The kernel code for device 
+The kernel code for device
 <B>initrd</B>
 
-was written by Werner Almesberger &lt;<A HREF="mailto:almesber@lrc.epfl.ch">almesber@lrc.epfl.ch</A>&gt; and 
+was written by Werner Almesberger &lt;<A HREF="mailto:almesber@lrc.epfl.ch">almesber@lrc.epfl.ch</A>&gt; and
 Hans Lermen &lt;<A HREF="mailto:lermen@elserv.ffm.fgan.de">lermen@elserv.ffm.fgan.de</A>&gt;.
 The code for
 <B>initrd</B>
@@ -612,6 +613,6 @@ was added to the baseline Linux kernel in development version 1.3.73.
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 02:34:43 GMT, April 20, 2020
+Time: 02:35:10 GMT, April 20, 2020
 </BODY>
 </HTML>

@@ -67,10 +67,10 @@ and modified on return to indicate the actual size of the address stored
 there.
 <P>
 
-The 
+The
 <B>recv</B>()
 
-call is normally used only on a 
+call is normally used only on a
 <I>connected</I>
 
 socket (see
@@ -82,11 +82,12 @@ and is identical to
 with a NULL
 <I>from</I>
 
-parameter. 
+parameter.
 <P>
 
 All three routines return the length of the message on successful
-completion.  If a message is too long to fit in the supplied buffer, excess
+completion.
+If a message is too long to fit in the supplied buffer, excess
 bytes may be discarded depending on the type of socket the message is
 received from.
 <P>
@@ -117,10 +118,10 @@ call may be used to determine when more data arrives.
 The
 <I>flags</I>
 
-argument to a 
+argument to a
 <B>recv</B>()
 
-call is formed by 
+call is formed by
 <I>OR</I>'ing
 
 one or more of the following values:
@@ -148,7 +149,8 @@ The error is passed in
 an ancillary message with a type dependent on the protocol (for IPv4
 <B>IP_RECVERR</B>).
 
-The user should supply a buffer of sufficient size. See 
+The user should supply a buffer of sufficient size.
+See
 <B><A HREF="../man3/cmsg.3.html">cmsg</A></B>(3)
 
 and
@@ -180,7 +182,7 @@ After an error has been passed, the pending socket error
 is regenerated based on the next queued error and will be passed
 on the next socket operation.
 <P>
-The error is supplied in a 
+The error is supplied in a
 <I>sock_extended_err</I>
 
 structure:
@@ -195,13 +197,13 @@ structure:
 struct sock_extended_err
 {
     u_int32_t ee_errno;   /* error number */
-    u_int8_t  ee_origin;  /* where the error originated */ 
+    u_int8_t  ee_origin;  /* where the error originated */
     u_int8_t  ee_type;    /* type */
     u_int8_t  ee_code;    /* code */
     u_int8_t  ee_pad;
     u_int32_t ee_info;    /* additional information */
-    u_int32_t ee_data;    /* other data */  
-    /* More data may follow */ 
+    u_int32_t ee_data;    /* other data */
+    /* More data may follow */
 };
 
 struct sockaddr *SO_EE_OFFENDER(struct sock_extended_err *);
@@ -209,44 +211,45 @@ struct sockaddr *SO_EE_OFFENDER(struct sock_extended_err *);
 
 
 <DT><DD>
-<B>ee_errno </B>
+<B>ee_errno</B>
 
-contains the errno number of the queued error. 
+contains the errno number of the queued error.
 <B>ee_origin</B>
 
-is the origin code of where the error originated. 
-The other fields are protocol specific. The macro
-<B>SOCK_EE_OFFENDER </B>
+is the origin code of where the error originated.
+The other fields are protocol specific.
+The macro
+<B>SOCK_EE_OFFENDER</B>
 
 returns a pointer to the address of the network object
 where the error originated from given a pointer to the ancillary message.
 If this address is not known, the
-<I>sa_family </I>
+<I>sa_family</I>
 
-member of the 
-<B>sockaddr </B>
+member of the
+<B>sockaddr</B>
 
-contains 
+contains
 <B>AF_UNSPEC</B>
 
-and the other fields of the 
-<B>sockaddr </B>
+and the other fields of the
+<B>sockaddr</B>
 
-are undefined. The payload of the packet
-that caused the error is passed as normal data. 
+are undefined.
+The payload of the packet that caused the error is passed as normal data.
 <DT><DD>
 For local errors, no address is passed (this
-can be checked with the 
-<I>cmsg_len </I>
+can be checked with the
+<I>cmsg_len</I>
 
-member of the 
+member of the
 <I>cmsghdr</I>).
 
 For error receives,
-the 
-<B>MSG_ERRQUEUE </B>
+the
+<B>MSG_ERRQUEUE</B>
 
-is set in the 
+is set in the
 <I>msghdr</I>.
 
 After an error has been passed, the pending socket error
@@ -256,25 +259,30 @@ on the next socket operation.
 
 <DD>
 This flag requests receipt of out-of-band data that would not be received
-in the normal data stream.  Some protocols place expedited data
+in the normal data stream.
+Some protocols place expedited data
 at the head of the normal data queue, and thus this flag cannot
 be used with such protocols.
 <DT><B>MSG_PEEK</B>
 
 <DD>
-This flag causes the receive operation to return data from the beginning of the
-receive queue without removing that data from the queue.  Thus, a
+This flag causes the receive operation to
+return data from the beginning of the
+receive queue without removing that data from the queue.
+Thus, a
 subsequent receive call will return the same data.
 <DT><B>MSG_TRUNC</B>
 
 <DD>
 Return the real length of the packet, even when it was longer than
-the passed buffer. Only valid for packet sockets.
+the passed buffer.
+Only valid for packet sockets.
 <DT><B>MSG_WAITALL</B>
 
 <DD>
 This flag requests that the operation block until the full request is
-satisfied.  However, the call may still return less data than requested if
+satisfied.
+However, the call may still return less data than requested if
 a signal is caught, an error or disconnect occurs, or the next data to be
 received is of a different type than that returned.
 </DL>
@@ -283,11 +291,11 @@ received is of a different type than that returned.
 The
 <B>recvmsg</B>()
 
-call uses a 
+call uses a
 <I>msghdr</I>
 
-structure to minimize the number of directly supplied parameters.  This
-structure has the following form, as defined in
+structure to minimize the number of directly supplied parameters.
+This structure has the following form, as defined in
 <I>&lt;<A HREF="file:///usr/include/sys/socket.h">sys/socket.h</A>&gt;</I>:
 
 
@@ -332,14 +340,15 @@ The field
 which has length
 <I>msg_controllen</I>,
 
-points to a buffer for other protocol control related messages or 
-miscellaneous ancillary data. When 
+points to a buffer for other protocol control related messages or
+miscellaneous ancillary data.
+When
 <B>recvmsg</B>()
 
-is called, 
+is called,
 <I>msg_controllen</I>
 
-should contain the length of the available buffer in 
+should contain the length of the available buffer in
 <I>msg_control</I>;
 
 upon return from a successful call it will contain the length
@@ -362,13 +371,13 @@ struct cmsghdr {
 
 <P>
 
-Ancillary data should only be accessed by the macros defined in 
+Ancillary data should only be accessed by the macros defined in
 <B><A HREF="../man3/cmsg.3.html">cmsg</A></B>(3).
 
 <P>
 
 As an example, Linux uses this auxiliary data mechanism to pass extended
-errors, IP options or file descriptors over Unix sockets. 
+errors, IP options or file descriptors over Unix sockets.
 <P>
 
 The
@@ -410,14 +419,16 @@ error queue.
 <H2>RETURN VALUE</H2>
 
 These calls return the number of bytes received, or -1
-if an error occurred. The return value will be 0 when the
+if an error occurred.
+The return value will be 0 when the
 peer has performed an orderly shutdown.
 <A NAME="lbAF">&nbsp;</A>
 <H2>ERRORS</H2>
 
-These are some standard errors generated by the socket layer. Additional errors
-may be generated and returned from the underlying protocol modules; see their
-manual pages.
+These are some standard errors generated by the socket layer.
+Additional errors
+may be generated and returned from the underlying protocol modules;
+see their manual pages.
 <DL COMPACT>
 <DT><B>EAGAIN</B>
 
@@ -450,12 +461,12 @@ any data were available.
 <DT><B>EINVAL</B>
 
 <DD>
-Invalid argument passed. 
+Invalid argument passed.
 
 <DT><B>ENOMEM</B>
 
 <DD>
-Could not allocate memory for 
+Could not allocate memory for
 <B>recvmsg</B>().
 
 <DT><B>ENOTCONN</B>
@@ -524,7 +535,7 @@ field of the
 structure should be typed as
 <I>socklen_t</I>,
 
-but glibc currently (2.4) types it as 
+but glibc currently (2.4) types it as
 <I>size_t</I>.
 
 
@@ -569,6 +580,6 @@ but glibc currently (2.4) types it as
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 02:34:33 GMT, April 20, 2020
+Time: 02:35:00 GMT, April 20, 2020
 </BODY>
 </HTML>

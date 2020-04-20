@@ -18,7 +18,7 @@ ddp - Linux AppleTalk protocol implementation
 
 <BR>
 
-<B>#include &lt;<A HREF="file:///usr/include/netatalk/at.h">netatalk/at.h</A>&gt; </B>
+<B>#include &lt;<A HREF="file:///usr/include/netatalk/at.h">netatalk/at.h</A>&gt;</B>
 
 <P>
 <I>ddp_socket</I><B> = socket(PF_APPLETALK, SOCK_DGRAM, 0);</B>
@@ -30,63 +30,68 @@ ddp - Linux AppleTalk protocol implementation
 <A NAME="lbAD">&nbsp;</A>
 <H2>DESCRIPTION</H2>
 
-Linux implements the Appletalk protocols described in 
+Linux implements the Appletalk protocols described in
 <I>Inside Appletalk</I>.
 
 Only the DDP layer and AARP are present in
-the kernel. They are designed to be used via the 
-<B>netatalk </B>
+the kernel.
+They are designed to be used via the
+<B>netatalk</B>
 
 protocol
-libraries. This page documents the interface for those who wish or need to
+libraries.
+This page documents the interface for those who wish or need to
 use the DDP layer directly.
 <P>
 
 The communication between Appletalk and the user program works using a
-BSD-compatible socket interface. For more information on sockets, see
+BSD-compatible socket interface.
+For more information on sockets, see
 <B><A HREF="../man7/socket.7.html">socket</A></B>(7).
 
 <P>
 
-An AppleTalk socket is created by calling the 
+An AppleTalk socket is created by calling the
 <B><A HREF="../man2/socket.2.html">socket</A></B>(2)
 
-function with a 
+function with a
 <B>PF_APPLETALK</B>
 
-socket family argument. Valid socket types are 
+socket family argument.
+Valid socket types are
 <B>SOCK_DGRAM</B>
 
-to open a 
-<B>ddp </B>
+to open a
+<B>ddp</B>
 
 socket or
 <B>SOCK_RAW</B>
 
-to open a 
-<B>raw </B>
+to open a
+<B>raw</B>
 
-socket. 
-<I>protocol </I>
+socket.
+<I>protocol</I>
 
-is the Appletalk protocol to be received or sent. For 
-<B>SOCK_RAW </B>
+is the Appletalk protocol to be received or sent.
+For
+<B>SOCK_RAW</B>
 
 you must specify
 <B>ATPROTO_DDP</B>.
 
 <P>
 
-Raw sockets may be only opened by a process with effective user ID 0 
-or when the process has the 
-<B>CAP_NET_RAW </B>
+Raw sockets may be only opened by a process with effective user ID 0
+or when the process has the
+<B>CAP_NET_RAW</B>
 
-capability.  
+capability.
 <A NAME="lbAE">&nbsp;</A>
 <H2>ADDRESS FORMAT</H2>
 
 An Appletalk socket address is defined as a combination of a network number,
-a node number, and a port number. 
+a node number, and a port number.
 <P>
 
 <DL COMPACT><DT><DD>
@@ -110,47 +115,50 @@ struct sockaddr_atalk {
 
 <I>sat_family</I>
 
-is always set to 
+is always set to
 <B>AF_APPLETALK</B>.
 
 <I>sat_port</I>
 
-contains the port. The port numbers below 129 are known as 
+contains the port.
+The port numbers below 129 are known as
 <I>reserved ports.</I>
 
-Only processes with the effective user ID 0 or the 
-<B>CAP_NET_BIND_SERVICE </B>
+Only processes with the effective user ID 0 or the
+<B>CAP_NET_BIND_SERVICE</B>
 
-capability may 
+capability may
 <B><A HREF="../man2/bind.2.html">bind</A></B>(2)
 
-to these sockets. 
-<I>sat_addr </I>
+to these sockets.
+<I>sat_addr</I>
 
 is the host address.
-The 
+The
 <I>net</I>
 
-member of 
+member of
 <I>struct at_addr</I>
 
-contains the host network in network byte order.  The value of 
-<B>AT_ANYNET </B>
+contains the host network in network byte order.
+The value of
+<B>AT_ANYNET</B>
 
-is a 
+is a
 wildcard and also implies "this network."
-The 
+The
 <I>node</I>
 
-member of 
+member of
 <I>struct at_addr</I>
 
-contains the host node number.  The value of 
-<B>AT_ANYNODE </B>
+contains the host node number.
+The value of
+<B>AT_ANYNODE</B>
 
-is a 
-wildcard and also implies "this node." The value of 
-<B>ATADDR_BCAST </B>
+is a
+wildcard and also implies "this node." The value of
+<B>ATADDR_BCAST</B>
 
 is a link
 local broadcast address.
@@ -162,12 +170,12 @@ No protocol-specific socket options are supported.
 <A NAME="lbAG">&nbsp;</A>
 <H2>SYSCTLS</H2>
 
-IP supports a sysctl interface to configure some global AppleTalk 
-parameters. 
-The sysctls can be accessed by reading or writing the 
-<I>/proc/sys/net/atalk/* </I>
+IP supports a sysctl interface to configure some global AppleTalk
+parameters.
+The sysctls can be accessed by reading or writing the
+<I>/proc/sys/net/atalk/*</I>
 
-files or with the 
+files or with the
 <B><A HREF="../man2/sysctl.2.html">sysctl</A></B>(2)
 
 interface.
@@ -179,12 +187,12 @@ The time interval (in seconds) before an AARP cache entry expires.
 <DT><B>aarp-resolve-time</B>
 
 <DD>
-The time interval (in seconds) before an AARP cache entry is resolved. 
+The time interval (in seconds) before an AARP cache entry is resolved.
 <DT><B>aarp-retransmit-limit</B>
 
 <DD>
 The number of retransmissions of an AARP query before the node is declared
-dead. 
+dead.
 <DT><B>aarp-tick-time</B>
 
 <DD>
@@ -205,16 +213,18 @@ apply to ddp.
 <A NAME="lbAI">&nbsp;</A>
 <H2>NOTES</H2>
 
-Be very careful with the 
+Be very careful with the
 <B>SO_BROADCAST</B>
 
-option - it is not privileged in Linux. It is easy to overload the network
-with careless sending to broadcast addresses. 
+option - it is not privileged in Linux.
+It is easy to overload the network
+with careless sending to broadcast addresses.
 <A NAME="lbAJ">&nbsp;</A>
 <H2>VERSIONS</H2>
 
-Appletalk is supported by Linux 2.0 or higher. The 
-<B>sysctl </B>
+Appletalk is supported by Linux 2.0 or higher.
+The
+<B>sysctl</B>
 
 interface is
 new in Linux 2.2.
@@ -233,18 +243,18 @@ connected.
 <DT><B>EINVAL</B>
 
 <DD>
-Invalid argument passed. 
-<DT><B>EMSGSIZE </B>
+Invalid argument passed.
+<DT><B>EMSGSIZE</B>
 
 <DD>
 Datagram is bigger than the DDP MTU.
 <DT><B>EACCES</B>
 
 <DD>
-The user tried to execute an operation without the necessary permissions. 
-These include sending to a broadcast address without 
+The user tried to execute an operation without the necessary permissions.
+These include sending to a broadcast address without
 having the broadcast flag set,
-and trying to bind to a reserved port without effective user ID 0 or 
+and trying to bind to a reserved port without effective user ID 0 or
 <B>CAP_NET_BIND_SERVICE</B>.
 
 <DT><B>EADDRINUSE</B>
@@ -254,7 +264,7 @@ Tried to bind to an address already in use.
 <DT><B>ENOMEM</B> and <B>ENOBUFS</B>
 
 <DD>
-Not enough memory available. 
+Not enough memory available.
 <DT><B>ENOPROTOOPT</B> and <B>EOPNOTSUPP</B>
 
 <DD>
@@ -262,7 +272,7 @@ Invalid socket option passed.
 <DT><B>EPERM</B>
 
 <DD>
-User doesn't have permission to set high priority, 
+User doesn't have permission to set high priority,
 make a configuration change,
 or send signals to the requested process or group,
 <DT><B>EADDRNOTAVAIL</B>
@@ -291,7 +301,7 @@ A connection operation on a non-blocking socket is already in progress.
 <DT><B>ECONNABORTED</B>
 
 <DD>
-A connection was closed during an 
+A connection was closed during an
 <B><A HREF="../man2/accept.2.html">accept</A></B>(2).
 
 <DT><B>EPIPE</B>
@@ -301,18 +311,18 @@ The connection was unexpectedly closed or shut down by the other end.
 <DT><B>ENOENT</B>
 
 <DD>
-<B>SIOCGSTAMP </B>
+<B>SIOCGSTAMP</B>
 
 was called on a socket where no packet arrived.
 <DT><B>EHOSTUNREACH</B>
 
 <DD>
-No routing table entry matches the destination address. 
-<DT><B>ENODEV </B>
+No routing table entry matches the destination address.
+<DT><B>ENODEV</B>
 
 <DD>
 Network device not available or not capable of sending IP.
-<DT><B>ENOPKG </B>
+<DT><B>ENOPKG</B>
 
 <DD>
 A kernel subsystem was not configured.
@@ -320,26 +330,27 @@ A kernel subsystem was not configured.
 <A NAME="lbAL">&nbsp;</A>
 <H2>COMPATIBILITY</H2>
 
-The basic AppleTalk socket interface is compatible with 
-<B>netatalk </B>
+The basic AppleTalk socket interface is compatible with
+<B>netatalk</B>
 
-on BSD-derived systems. Many BSD systems fail to check
+on BSD-derived systems.
+Many BSD systems fail to check
 <B>SO_BROADCAST</B>
 
 when sending broadcast frames; this can lead to compatibility problems.
 <P>
 
-The 
+The
 raw
 socket mode is unique to Linux and exists to support the alternative CAP
 package and AppleTalk monitoring tools more easily.
 <A NAME="lbAM">&nbsp;</A>
 <H2>BUGS</H2>
 
-There are too many inconsistent error values. 
+There are too many inconsistent error values.
 <P>
 
-The ioctls used to configure routing tables, devices, 
+The ioctls used to configure routing tables, devices,
 AARP tables and other devices are not yet described.
 <A NAME="lbAN">&nbsp;</A>
 <H2>SEE ALSO</H2>
@@ -375,6 +386,6 @@ AARP tables and other devices are not yet described.
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 02:34:44 GMT, April 20, 2020
+Time: 02:35:11 GMT, April 20, 2020
 </BODY>
 </HTML>

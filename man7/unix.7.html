@@ -10,7 +10,7 @@ Section: Linux Programmer's Manual (7)<BR>Updated: 2004-05-27<BR><A HREF="#index
 <A NAME="lbAB">&nbsp;</A>
 <H2>NAME</H2>
 
-unix, PF_UNIX, AF_UNIX, PF_LOCAL, AF_LOCAL - Sockets for local 
+unix, PF_UNIX, AF_UNIX, PF_LOCAL, AF_LOCAL - Sockets for local
 interprocess communication
 <A NAME="lbAC">&nbsp;</A>
 <H2>SYNOPSIS</H2>
@@ -38,10 +38,11 @@ The
 <B>PF_LOCAL</B>)
 
 socket family is used to communicate between processes on the same machine
-efficiently. Unix sockets can be either anonymous (created by 
+efficiently.
+Unix sockets can be either anonymous (created by
 <B><A HREF="../man2/socketpair.2.html">socketpair</A></B>(2))
 
-or associated with a file of type socket. 
+or associated with a file of type socket.
 Linux also supports an abstract namespace which is independent of the
 file system.
 <P>
@@ -58,18 +59,20 @@ and (since kernel 2.6.4)
 <B>SOCK_SEQPACKET</B>,
 
 for a connection-oriented socket that preserves message boundaries
-and delivers messages in the order that they were sent. 
+and delivers messages in the order that they were sent.
 <P>
-Unix sockets support passing file descriptors or process credentials 
+Unix sockets support passing file descriptors or process credentials
 to other processes using ancillary data.
 <A NAME="lbAE">&nbsp;</A>
 <H2>ADDRESS FORMAT</H2>
 
-A Unix address is defined as a filename in the filesystem or 
-as a unique string in the abstract namespace. Sockets created by 
+A Unix address is defined as a filename in the filesystem or
+as a unique string in the abstract namespace.
+Sockets created by
 <B><A HREF="../man2/socketpair.2.html">socketpair</A></B>(2)
 
-are anonymous. For non-anonymous sockets the target address can be set 
+are anonymous.
+For non-anonymous sockets the target address can be set
 using
 <B><A HREF="../man2/connect.2.html">connect</A></B>(2).
 
@@ -77,7 +80,7 @@ The local address can be set using
 <B><A HREF="../man2/bind.2.html">bind</A></B>(2).
 
 When a socket is connected and it doesn't already have a local address a
-unique address in the abstract namespace will be generated automatically. 
+unique address in the abstract namespace will be generated automatically.
 <P>
 
 <PRE>
@@ -91,7 +94,7 @@ struct sockaddr_un {
 
 
 <P>
-<B>sun_family </B>
+<B>sun_family</B>
 
 always contains
 <B>AF_UNIX</B>.
@@ -99,13 +102,13 @@ always contains
 <B>sun_path</B>
 
 contains the zero-terminated pathname of the socket in the file system.
-If 
+If
 <B>sun_path</B>
 
-starts with a null byte (''&nbsp;'), 
+starts with a null byte (''&nbsp;'),
 then it refers to the abstract namespace maintained by
 the Unix protocol module.
-The socket's address in this namespace is given by the rest of the 
+The socket's address in this namespace is given by the rest of the
 bytes in
 <B>sun_path</B>.
 
@@ -113,12 +116,12 @@ Note that names in the abstract namespace are not zero-terminated.
 <A NAME="lbAF">&nbsp;</A>
 <H2>SOCKET OPTIONS</H2>
 
-For historical reasons these socket options are specified with a 
+For historical reasons these socket options are specified with a
 SOL_SOCKET type even though they are PF_UNIX specific.
-They can be set with 
+They can be set with
 <B><A HREF="../man2/setsockopt.2.html">setsockopt</A></B>(2)
 
-and read with 
+and read with
 <B><A HREF="../man2/getsockopt.2.html">getsockopt</A></B>(2)
 
 by specifying SOL_SOCKET as the socket family.
@@ -126,20 +129,20 @@ by specifying SOL_SOCKET as the socket family.
 <DT><B>SO_PASSCRED</B>
 
 <DD>
-Enables the receiving of the credentials of the sending process 
-ancillary message. 
+Enables the receiving of the credentials of the sending process
+ancillary message.
 When this option is set and the socket is not yet connected
 a unique name in the abstract namespace will be generated automatically.
-Expects an integer boolean flag. 
+Expects an integer boolean flag.
 </DL>
 <A NAME="lbAG">&nbsp;</A>
 <H2>(UN)SUPPORTED FEATURES</H2>
 
-The following paragraphs describe domain-specific details and 
+The following paragraphs describe domain-specific details and
 unsupported features of the sockets API for Unix domain sockets on Linux.
 <P>
-Unix domain sockets do not support the transmission of 
-out-of-band data (the 
+Unix domain sockets do not support the transmission of
+out-of-band data (the
 <B>MSG_OOB</B>
 
 flag for
@@ -181,25 +184,26 @@ and
 <B><A HREF="../man2/recvmsg.2.html">recvmsg</A></B>(2).
 
 For historical reasons the ancillary message types listed below
-are specified with a SOL_SOCKET type even though they are PF_UNIX 
+are specified with a SOL_SOCKET type even though they are PF_UNIX
 specific.
 To send them set the
 <B>cmsg_level</B>
 
-field of the struct 
+field of the struct
 <B>cmsghdr</B>
 
-to SOL_SOCKET and the 
-<B>cmsg_type </B>
+to SOL_SOCKET and the
+<B>cmsg_type</B>
 
-field to the type. For more information see 
+field to the type.
+For more information see
 <B><A HREF="../man3/cmsg.3.html">cmsg</A></B>(3).
 
 <DL COMPACT>
 <DT><B>SCM_RIGHTS</B>
 
 <DD>
-Send or receive a set of open file descriptors from another process. 
+Send or receive a set of open file descriptors from another process.
 The data portion contains an integer array of the file descriptors.
 The passed file descriptors behave as though they have been created with
 <B><A HREF="../man2/dup.2.html">dup</A></B>(2).
@@ -207,8 +211,9 @@ The passed file descriptors behave as though they have been created with
 <DT><B>SCM_CREDENTIALS</B>
 
 <DD>
-Send or receive Unix credentials.  This can be used for authentication.
-The credentials are passed as a 
+Send or receive Unix credentials.
+This can be used for authentication.
+The credentials are passed as a
 <I>struct ucred</I>
 
 ancillary message.
@@ -216,24 +221,24 @@ ancillary message.
 
 <PRE>
 struct ucred {
-    pid_t pid;    /* process ID of the sending process */  
-    uid_t uid;    /* user ID of the sending process */ 
-    gid_t gid;    /* group ID of the sending process */ 
+    pid_t pid;    /* process ID of the sending process */
+    uid_t uid;    /* user ID of the sending process */
+    gid_t gid;    /* group ID of the sending process */
 };
 </PRE>
 
 
-<BR>&nbsp;
+<P>
 The credentials which the sender specifies are checked by the kernel.
-A process with effective user ID 0 is allowed to specify values that do 
-not match its own. 
+A process with effective user ID 0 is allowed to specify values that do
+not match its own.
 The sender must specify its own process ID (unless it has the capability
 <B>CAP_SYS_ADMIN</B>),
 
 its user ID, effective user ID, or saved set-user-ID (unless it has
 <B>CAP_SETUID</B>),
 
-and its group ID, effective group ID, or saved set-group-ID 
+and its group ID, effective group ID, or saved set-group-ID
 (unless it has
 <B>CAP_SETGID</B>).
 
@@ -241,14 +246,14 @@ To receive a
 <I>struct ucred</I>
 
 message the
-<B>SO_PASSCRED </B>
+<B>SO_PASSCRED</B>
 
 option must be enabled on the socket.
 </DL>
 <A NAME="lbAI">&nbsp;</A>
 <H2>VERSIONS</H2>
 
-<B>SCM_CREDENTIALS </B>
+<B>SCM_CREDENTIALS</B>
 
 and the abstract namespace were introduced with Linux 2.2 and should not
 be used in portable programs.
@@ -258,13 +263,14 @@ but the implementation details differ.)
 <H2>NOTES</H2>
 
 In the Linux implementation, sockets which are visible in the
-filesystem honour the permissions of the directory they are in. Their
-owner, group and their permissions can be changed.
+filesystem honour the permissions of the directory they are in.
+Their owner, group and their permissions can be changed.
 Creation of a new socket will fail if the process does not have write and
 search (execute) permission on the directory the socket is created in.
 Connecting to the socket object requires read/write permission.
 This behavior differs from many BSD-derived systems which
-ignore permissions for Unix sockets. Portable programs should not rely on
+ignore permissions for Unix sockets.
+Portable programs should not rely on
 this feature for security.
 <P>
 Binding to a socket with a filename creates a socket
@@ -273,7 +279,7 @@ longer needed (using
 <B><A HREF="../man2/unlink.2.html">unlink</A></B>(2)).
 
 The usual Unix close-behind semantics apply; the socket can be unlinked
-at any time and will be finally removed from the file system when the last 
+at any time and will be finally removed from the file system when the last
 reference to it is closed.
 <P>
 To pass file descriptors or credentials over a SOCK_STREAM, you need
@@ -299,21 +305,23 @@ Out of memory.
 <DD>
 <B><A HREF="../man2/connect.2.html">connect</A></B>(2)
 
-called with a socket object that isn't listening. This can happen when
+called with a socket object that isn't listening.
+This can happen when
 the remote socket does not exist or the filename is not a socket.
 <DT><B>EINVAL</B>
 
 <DD>
-Invalid argument passed. A common cause is the missing setting of AF_UNIX
-in the 
-<I>sun_type </I>
+Invalid argument passed.
+A common cause is the missing setting of AF_UNIX
+in the
+<I>sun_type</I>
 
-field of passed addresses or the socket being in an 
+field of passed addresses or the socket being in an
 invalid state for the applied operation.
 <DT><B>EOPNOTSUPP</B>
 
 <DD>
-Stream operation called on non-stream oriented socket or tried to 
+Stream operation called on non-stream oriented socket or tried to
 use the out-of-band data option.
 <DT><B>EPROTONOSUPPORT</B>
 
@@ -331,8 +339,8 @@ SOCK_STREAM)
 <DT><B>EADDRINUSE</B>
 
 <DD>
-Selected local address is already taken or filesystem socket 
-object already exists. 
+Selected local address is already taken or filesystem socket
+object already exists.
 <DT><B>EISCONN</B>
 
 <DD>
@@ -351,10 +359,12 @@ Remote socket was unexpectedly closed.
 <DT><B>EPIPE</B>
 
 <DD>
-Remote socket was closed on a stream socket. If enabled, a 
-<B>SIGPIPE </B>
+Remote socket was closed on a stream socket.
+If enabled, a
+<B>SIGPIPE</B>
 
-is sent as well. This can be avoided by passing the 
+is sent as well.
+This can be avoided by passing the
 <B>MSG_NOSIGNAL</B>
 
 flag to
@@ -376,9 +386,9 @@ The sender passed invalid credentials in the
 </DL>
 <P>
 
-Other errors can be generated by the generic socket layer or 
-by the filesystem while generating a filesystem socket object. See
-the appropriate manual pages for more information. 
+Other errors can be generated by the generic socket layer or
+by the filesystem while generating a filesystem socket object.
+See the appropriate manual pages for more information.
 <A NAME="lbAL">&nbsp;</A>
 <H2>SEE ALSO</H2>
 
@@ -417,6 +427,6 @@ the appropriate manual pages for more information.
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 02:34:45 GMT, April 20, 2020
+Time: 02:35:12 GMT, April 20, 2020
 </BODY>
 </HTML>

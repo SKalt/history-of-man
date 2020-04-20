@@ -23,7 +23,8 @@ The
 <I>utmp</I>
 
 file allows one to discover information about who is currently using the
-system.  There may be more users currently using the system, because not
+system.
+There may be more users currently using the system, because not
 all programs use utmp logging.
 <P>
 
@@ -32,7 +33,8 @@ all programs use utmp logging.
 <I>utmp</I>
 
 must not be writable, because many system programs (foolishly)
-depend on its integrity.  You risk faked system logfiles and
+depend on its integrity.
+You risk faked system logfiles and
 modifications of system files if you leave
 <I>utmp</I>
 
@@ -75,9 +77,9 @@ struct utmp {
     char ut_host[UT_HOSTSIZE];  /* hostname for remote login */
     struct exit_status ut_exit; /* The exit status of a process
                                    marked as DEAD_PROCESS */
-  
-    /* The ut_session and ut_tv fields must be the same size when 
-       compiled 32- and 64-bit.  This allows data files and shared 
+
+    /* The ut_session and ut_tv fields must be the same size when
+       compiled 32- and 64-bit.  This allows data files and shared
        memory to be shared between 32- and 64-bit applications */
 #if __WORDSIZE == 64 &amp;&amp; defined __WORDSIZE_COMPAT32
     int32_t ut_session;         /* Session ID, used for windowing */
@@ -126,9 +128,10 @@ Before an entry is processed, though,
 cleans up utmp by setting <I>ut_type</I> to <B>DEAD_PROCESS</B>, clearing
 <I>ut_user</I>, <I>ut_host</I>, and <I>ut_time</I> with null bytes for each
 record which <I>ut_type</I> is not <B>DEAD_PROCESS</B> or <B>RUN_LVL</B>
-and where no process with PID <I>ut_pid</I> exists.  If no empty record
-with the needed <I>ut_id</I> can be found, init creates a new one.  It
-sets <I>ut_id</I> from the inittab, <I>ut_pid</I> and <I>ut_time</I> to the
+and where no process with PID <I>ut_pid</I> exists.
+If no empty record
+with the needed <I>ut_id</I> can be found, init creates a new one.
+It sets <I>ut_id</I> from the inittab, <I>ut_pid</I> and <I>ut_time</I> to the
 current values, and <I>ut_type</I> to <B>INIT_PROCESS</B>.
 <P>
 
@@ -141,7 +144,8 @@ for connection to be established.
 
 after a user has been
 authenticated, changes <I>ut_type</I> to <B>USER_PROCESS</B>, changes
-<I>ut_time</I>, and sets <I>ut_host</I> and <I>ut_addr</I>.  Depending on
+<I>ut_time</I>, and sets <I>ut_host</I> and <I>ut_addr</I>.
+Depending on
 <B><A HREF="../man8/getty.8.html">getty</A></B>(8)
 
 and
@@ -164,17 +168,20 @@ clears <I>ut_user</I>, <I>ut_host</I> and <I>ut_time</I> with null bytes.
 and other terminal emulators directly create a
 <B>USER_PROCESS</B> record and generate the <I>ut_id</I> by using the last
 two letters of <I>/dev/ttyp</I><I>%c</I> or by using <I>p</I><I>%d</I> for
-<I>/dev/pts/</I><I>%d</I>.  If they find a <B>DEAD_PROCESS</B> for this ID,
-they recycle it, otherwise they create a new entry.  If they can, they
+<I>/dev/pts/</I><I>%d</I>.
+If they find a <B>DEAD_PROCESS</B> for this ID,
+they recycle it, otherwise they create a new entry.
+If they can, they
 will mark it as <B>DEAD_PROCESS</B> on exiting and it is advised that
 they null <I>ut_line</I>, <I>ut_time</I>, <I>ut_user</I>, and <I>ut_host</I>
 as well.
 <P>
 
 <I><A HREF="../man8/xdm.8.html">xdm</A></I>(8) should not create a utmp record, because there is no
-assigned terminal.  Letting it create one will result in errors, such
-as 'finger: cannot stat /dev/machine.dom'.  It should create wtmp entries,
-though, just like
+assigned terminal.
+Letting it create one will result in errors, such
+as 'finger: cannot stat /dev/machine.dom'.
+It should create wtmp entries, though, just like
 <B><A HREF="../man8/ftpd.8.html">ftpd</A></B>(8)
 
 does.
@@ -185,15 +192,18 @@ does.
 sets up a <B>LOGIN_PROCESS</B> entry and leaves the rest to
 <B><A HREF="../man8/login.8.html">login</A></B>(8)
 
-as usual.  After the telnet session ends,
+as usual.
+After the telnet session ends,
 <B><A HREF="../man8/telnetd.8.html">telnetd</A></B>(8)
 
 cleans up utmp in the described way.
 <P>
 
-The <I>wtmp</I> file records all logins and logouts.  Its format is
-exactly like <I>utmp</I> except that a null user name indicates a logout
-on the associated terminal.  Furthermore, the terminal name <B>~</B>
+The <I>wtmp</I> file records all logins and logouts.
+Its format is exactly like <I>utmp</I> except that a null user name
+indicates a logout
+on the associated terminal.
+Furthermore, the terminal name <B>~</B>
 with user name <B>shutdown</B> or <B>reboot</B> indicates a system
 shutdown or reboot and the pair of terminal names <B>|</B>/<B>}</B>
 logs the old/new system time when
@@ -216,7 +226,7 @@ Note that on <I>biarch</I> platforms, i.e. systems which can run both
 <I>ut_tv</I> is the same size in 32-bit mode as in 64-bit mode.
 The same goes for <I>ut_session</I> and <I>ut_time</I> if they are present.
 This allows data files and shared memory to be shared between
-32-bit and 64-bit applications. 
+32-bit and 64-bit applications.
 Since <I>ut_tv</I> may not be the same as <I>struct timeval</I>,
 then instead of the call:
 <DL COMPACT><DT><DD>
@@ -257,13 +267,17 @@ ut.ut_tv.tv_usec = tv.tv_usec;
 Linux utmp entries conform neither to v7/BSD nor to System V; they are a
 mix of the two.  v7/BSD has fewer fields; most importantly it lacks
 <I>ut_type</I>, which causes native v7/BSD-like programs to display (for
-example) dead or login entries.  Further, there is no configuration file
-which allocates slots to sessions.  BSD does so because it lacks
-<I>ut_id</I> fields.  In Linux (as in System V), the <I>ut_id</I> field of a
+example) dead or login entries.
+Further, there is no configuration file
+which allocates slots to sessions.
+BSD does so because it lacks <I>ut_id</I> fields.
+In Linux (as in System V), the <I>ut_id</I> field of a
 record will never change once it has been set, which reserves that slot
-without needing a configuration file.  Clearing <I>ut_id</I> may result
+without needing a configuration file.
+Clearing <I>ut_id</I> may result
 in race conditions leading to corrupted utmp entries and potential
-security holes.  Clearing the above mentioned fields by filling them
+security holes.
+Clearing the above mentioned fields by filling them
 with null bytes is not required by System V semantics, but it allows to run
 many programs which assume BSD semantics and which do not modify utmp.
 Linux uses the BSD conventions for line contents, as documented above.
@@ -277,7 +291,8 @@ System V has no <I>ut_host</I> or <I>ut_addr_v6</I> fields.
 
 Unlike various other
 systems, where utmp logging can be disabled by removing the file, utmp
-must always exist on Linux.  If you want to disable <I><A HREF="../man1/who.1.html">who</A></I>(1) then
+must always exist on Linux.
+If you want to disable <I><A HREF="../man1/who.1.html">who</A></I>(1) then
 do not make utmp world readable.
 <P>
 
@@ -355,6 +370,6 @@ This manpage is based on the libc5 one, things may work differently now.
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 02:34:44 GMT, April 20, 2020
+Time: 02:35:11 GMT, April 20, 2020
 </BODY>
 </HTML>

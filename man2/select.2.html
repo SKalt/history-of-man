@@ -10,7 +10,7 @@ Section: Linux Programmer's Manual (2)<BR>Updated: 2006-03-11<BR><A HREF="#index
 <A NAME="lbAB">&nbsp;</A>
 <H2>NAME</H2>
 
-select, pselect, FD_CLR, FD_ISSET, FD_SET, FD_ZERO - 
+select, pselect, FD_CLR, FD_ISSET, FD_SET, FD_ZERO -
 synchronous I/O multiplexing
 <A NAME="lbAC">&nbsp;</A>
 <H2>SYNOPSIS</H2>
@@ -28,7 +28,7 @@ synchronous I/O multiplexing
 <BR>
 <B>#include &lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;</B>
 
-<B>int select(int </B><I>nfds</I><B>, fd_set *</B><I>readfds</I><B>, fd_set *</B><I>writefds</I><B>, 
+<B>int select(int </B><I>nfds</I><B>, fd_set *</B><I>readfds</I><B>, fd_set *</B><I>writefds</I><B>,
            fd_set *</B><I>exceptfds</I><B>, struct timeval *</B><I>timeout</I><B>);
 
 void FD_CLR(int </B><I>fd</I><B>, fd_set *</B><I>set</I><B>);</B>
@@ -42,8 +42,8 @@ void FD_CLR(int </B><I>fd</I><B>, fd_set *</B><I>set</I><B>);</B>
 <B>#define _XOPEN_SOURCE 600</B>
 <B>#include &lt;<A HREF="file:///usr/include/sys/select.h">sys/select.h</A>&gt;</B>
 
-<B>int pselect(int </B><I>nfds</I><B>, fd_set *</B><I>readfds</I><B>, fd_set *</B><I>writefds</I><B>, 
-            fd_set *</B><I>exceptfds</I><B>, const struct timespec *</B><I>timeout</I><B>, 
+<B>int pselect(int </B><I>nfds</I><B>, fd_set *</B><I>readfds</I><B>, fd_set *</B><I>writefds</I><B>,
+            fd_set *</B><I>exceptfds</I><B>, const struct timespec *</B><I>timeout</I><B>,
             const sigset_t *</B><I>sigmask</I><B>);
 </B></PRE>
 
@@ -59,7 +59,7 @@ allow a program to monitor multiple file descriptors,
 waiting until one or more of the file descriptors become &quot;ready&quot;
 for some class of I/O operation (e.g., input possible).
 A file descriptor is considered ready if it is possible to
-perform the corresponding I/O operation (e.g., 
+perform the corresponding I/O operation (e.g.,
 <B><A HREF="../man2/read.2.html">read</A></B>(2))
 
 without blocking.
@@ -111,7 +111,7 @@ called with NULL
 </DL>
 <P>
 
-Three independent sets of file descriptors are watched.  
+Three independent sets of file descriptors are watched.
 Those listed in
 <I>readfds</I>
 
@@ -125,10 +125,11 @@ will be watched to see if a write will not block, and
 those in
 <I>exceptfds</I>
 
-will be watched for exceptions.  On exit, the sets are modified in place
+will be watched for exceptions.
+On exit, the sets are modified in place
 to indicate which file descriptors actually changed status.
 Each of the three file descriptor sets may be specified as NULL
-if no file descriptors are to be watched for the corresponding class 
+if no file descriptors are to be watched for the corresponding class
 of events.
 <P>
 
@@ -144,7 +145,7 @@ and
 respectively add and remove a given file descriptor from a set.
 <B>FD_ISSET</B>()
 
-tests to see if a file descriptor is part of the set; 
+tests to see if a file descriptor is part of the set;
 this is useful after
 <B>select</B>()
 
@@ -161,10 +162,13 @@ is the highest-numbered file descriptor in any of the three sets, plus 1.
 is an upper bound on the amount of time elapsed before
 <B>select</B>()
 
-returns. It may be zero, causing
+returns.
+It may be zero, causing
 <B>select</B>()
 
-to return immediately. (This is useful for polling.) If
+to return immediately.
+(This is useful for polling.)
+If
 <I>timeout</I>
 
 is NULL (no timeout),
@@ -191,13 +195,13 @@ signal mask.
 Other than the difference in the precision of the
 <I>timeout</I>
 
-argument, the following 
+argument, the following
 <B>pselect</B>()
 
 call:
 <PRE>
 
-    ready = pselect(nfds, &amp;readfds, &amp;writefds, &amp;exceptfds, 
+    ready = pselect(nfds, &amp;readfds, &amp;writefds, &amp;exceptfds,
                     timeout, &amp;sigmask);
 
 </PRE>
@@ -217,18 +221,19 @@ executing the following calls:
 
 <P>
 
-The reason that 
+The reason that
 <B>pselect</B>()
 
 is needed is that if one wants to wait for either a signal
 or for a file descriptor to become ready, then
-an atomic test is needed to prevent race conditions. 
+an atomic test is needed to prevent race conditions.
 (Suppose the signal handler sets a global flag and
-returns. Then a test of this global flag followed by a call of
+returns.
+Then a test of this global flag followed by a call of
 <B>select</B>()
 
 could hang indefinitely if the signal arrived just after the test
-but just before the call. 
+but just before the call.
 By contrast,
 <B>pselect</B>()
 
@@ -250,7 +255,7 @@ and look like
 <P>
 
 <PRE>
-struct timeval { 
+struct timeval {
     long    tv_sec;         /* seconds */
     long    tv_usec;        /* microseconds */
 };
@@ -285,7 +290,7 @@ zero, and a non-NULL
 as a fairly portable way to sleep with subsecond precision.
 <P>
 
-On Linux, 
+On Linux,
 <B>select</B>()
 
 modifies
@@ -301,7 +306,8 @@ is ported to other operating systems, and when code is ported to Linux
 that reuses a struct timeval for multiple
 <B>select</B>()s
 
-in a loop without reinitializing it.  Consider
+in a loop without reinitializing it.
+Consider
 <I>timeout</I>
 
 to be undefined after
@@ -346,7 +352,7 @@ rely on their contents after an error.
 
 <DD>
 An invalid file descriptor was given in one of the sets.
-(Perhaps a file descriptor that was already closed, 
+(Perhaps a file descriptor that was already closed,
 or one on which an error has occurred.)
 <DT><B>EINTR</B>
 
@@ -376,7 +382,8 @@ unable to allocate memory for internal tables.
 #include &lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;
 
 int
-main(void) {
+main(void)
+{
     fd_set rfds;
     struct timeval tv;
     int retval;
@@ -409,13 +416,15 @@ main(void) {
 
 <B>select</B>()
 
-conforms to POSIX.1-2001 and 
-4.4BSD 
+conforms to POSIX.1-2001 and
+4.4BSD
 (<B>select</B>()
 
-first appeared in 4.2BSD).  Generally portable to/from
+first appeared in 4.2BSD).
+Generally portable to/from
 non-BSD systems supporting clones of the BSD socket layer (including
-System V variants).  However, note that the System V variant typically
+System V variants).
+However, note that the System V variant typically
 sets the timeout variable before exit, but the BSD variant does not.
 <P>
 
@@ -426,28 +435,29 @@ POSIX.1-2001.
 <A NAME="lbAJ">&nbsp;</A>
 <H2>NOTES</H2>
 
-An 
-<I>fd_set </I>
+An
+<I>fd_set</I>
 
-is a fixed size buffer. 
-Executing 
+is a fixed size buffer.
+Executing
 <B>FD_CLR</B>()
 
-or 
+or
 <B>FD_SET</B>()
 
 with a value of
 <I>fd</I>
 
 that is negative or is equal to or larger than FD_SETSIZE will result
-in undefined behavior. Moreover, POSIX requires
+in undefined behavior.
+Moreover, POSIX requires
 <I>fd</I>
 
 to be a valid file descriptor.
 <P>
 Concerning the types involved, the classical situation is that
 the two fields of a
-<I>timeval </I>
+<I>timeval</I>
 
 structure are longs (as shown above),
 and the structure is defined in
@@ -469,11 +479,11 @@ struct timeval {
 where the structure is defined in
 <I>&lt;<A HREF="file:///usr/include/sys/select.h">sys/select.h</A>&gt;</I>
 
-and the data types 
-<I>time_t </I>
+and the data types
+<I>time_t</I>
 
-and 
-<I>suseconds_t </I>
+and
+<I>suseconds_t</I>
 
 are defined in
 <I>&lt;<A HREF="file:///usr/include/sys/types.h">sys/types.h</A>&gt;</I>.
@@ -530,14 +540,14 @@ was emulated in glibc (but see BUGS).
 The Linux
 <B>pselect</B>()
 
-system call modifies its 
-<I>timeout </I>
+system call modifies its
+<I>timeout</I>
 
 argument.
 However, the glibc wrapper function hides this behaviour
 by using a local variable for the timeout argument that
 is passed to the system call.
-Thus, the glibc 
+Thus, the glibc
 <B>pselect</B>()
 
 function does not modify its timeout argument;
@@ -548,15 +558,15 @@ this is the behaviour required by POSIX.1-2001.
 Glibc 2.0 provided a version of
 <B>pselect</B>()
 
-that did not take a 
-<I>sigmask </I>
+that did not take a
+<I>sigmask</I>
 
 argument.
 <P>
 Since version 2.1, glibc has provided an emulation of
 <B>pselect</B>()
 
-that is implemented using 
+that is implemented using
 <B><A HREF="../man2/sigprocmask.2.html">sigprocmask</A></B>(2)
 
 and
@@ -569,10 +579,10 @@ was designed to prevent.
 On systems that lack
 <B>pselect</B>()
 
-reliable (and more portable) signal trapping can be achieved 
-using the self-pipe trick 
+reliable (and more portable) signal trapping can be achieved
+using the self-pipe trick
 (where a signal handler writes a byte to a pipe whose other end
-is monitored by 
+is monitored by
 <B>select</B>()
 
 in the main program.)
@@ -581,9 +591,11 @@ Under Linux,
 <B>select</B>()
 
 may report a socket file descriptor as &quot;ready for reading&quot;, while
-nevertheless a subsequent read blocks. This could for example
+nevertheless a subsequent read blocks.
+This could for example
 happen when data has arrived but upon examination has wrong
-checksum and is discarded. There may be other circumstances
+checksum and is discarded.
+There may be other circumstances
 in which a file descriptor is spuriously reported as ready.
 
 
@@ -646,6 +658,6 @@ For vaguely related stuff, see
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 02:34:33 GMT, April 20, 2020
+Time: 02:35:00 GMT, April 20, 2020
 </BODY>
 </HTML>

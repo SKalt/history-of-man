@@ -10,7 +10,7 @@ Section: Linux Programmer's Manual (7)<BR>Updated: 1999-04-29<BR><A HREF="#index
 <A NAME="lbAB">&nbsp;</A>
 <H2>NAME</H2>
 
-packet, PF_PACKET - packet interface on device level. 
+packet, PF_PACKET - packet interface on device level.
 <A NAME="lbAC">&nbsp;</A>
 <H2>SYNOPSIS</H2>
 
@@ -28,83 +28,90 @@ packet, PF_PACKET - packet interface on device level.
 <H2>DESCRIPTION</H2>
 
 Packet sockets are used to receive or send raw packets at the device driver
-(OSI Layer 2)
-level. They allow the user to implement protocol modules in user space 
+(OSI Layer 2) level.
+They allow the user to implement protocol modules in user space
 on top of the physical layer.
 <P>
 The
 <I>socket_type</I>
 
-is either 
-<B>SOCK_RAW </B>
+is either
+<B>SOCK_RAW</B>
 
-for raw packets including the link level header or 
+for raw packets including the link level header or
 <B>SOCK_DGRAM</B>
 
-for cooked packets with the link level header removed. The link level
-header information is available in a common format in a 
+for cooked packets with the link level header removed.
+The link level
+header information is available in a common format in a
 <B>sockaddr_ll</B>.
 
-<I>protocol </I>
+<I>protocol</I>
 
-is the IEEE 802.3 protocol number in network order. See the 
-<I>&lt;<A HREF="file:///usr/include/linux/if_ether.h">linux/if_ether.h</A>&gt; </I>
+is the IEEE 802.3 protocol number in network order.
+See the
+<I>&lt;<A HREF="file:///usr/include/linux/if_ether.h">linux/if_ether.h</A>&gt;</I>
 
-include file for a list of allowed protocols. When protocol 
+include file for a list of allowed protocols.
+When protocol
 is set to
-<B>htons(ETH_P_ALL) </B>
+<B>htons(ETH_P_ALL)</B>
 
 then all protocols are received.
 All incoming packets of that protocol type will be passed to the packet
 socket before they are passed to the protocols implemented in the kernel.
-<BR>&nbsp;
+<P>
 Only processes with effective UID 0 or the
 <B>CAP_NET_RAW</B>
 
-capability may open packet sockets. 
+capability may open packet sockets.
 <P>
 <B>SOCK_RAW</B>
 
 packets are passed to and from the device driver without any changes in
-the packet data.  
+the packet data.
 When receiving a packet, the address is still parsed and
 passed in a standard
 <B>sockaddr_ll</B>
 
-address structure.  When transmitting a packet, the user supplied buffer
-should contain the physical layer header.  That packet is then
+address structure.
+When transmitting a packet, the user supplied buffer
+should contain the physical layer header.
+That packet is then
 queued unmodified to the network driver of the interface defined by the
-destination address. Some device drivers always add other headers. 
+destination address.
+Some device drivers always add other headers.
 <B>SOCK_RAW</B>
 
-is similar to but not compatible with the obsolete 
+is similar to but not compatible with the obsolete
 <B>PF_INET/SOCK_PACKET</B>
 
 of Linux 2.0.
 <P>
-<B>SOCK_DGRAM </B>
+<B>SOCK_DGRAM</B>
 
-operates on a slightly higher level. 
-The physical header is removed before the packet is passed to the user.  
+operates on a slightly higher level.
+The physical header is removed before the packet is passed to the user.
 Packets sent through a
 <B>SOCK_DGRAM</B>
 
-packet socket get a suitable physical layer header based on the 
-information in the 
-<B>sockaddr_ll </B>
+packet socket get a suitable physical layer header based on the
+information in the
+<B>sockaddr_ll</B>
 
 destination address before they are queued.
 <P>
 By default all packets of the specified protocol type
-are passed to a packet socket. 
+are passed to a packet socket.
 To only get packets from a specific interface use
 <B><A HREF="../man2/bind.2.html">bind</A></B>(2)
 
 specifying an address in a
 <I>struct sockaddr_ll</I>
 
-to bind the packet socket to an interface. Only the 
-<B>sll_protocol </B>
+to bind the packet socket to an interface.
+Only the
+<B>sll_protocol</B>
 
 and the
 <B>sll_ifindex</B>
@@ -126,7 +133,7 @@ flag is passed to
 
 <B><A HREF="../man2/recvfrom.2.html">recvfrom</A></B>(2)
 
-the real length of the packet on the wire is always returned, 
+the real length of the packet on the wire is always returned,
 even when it is longer than the buffer.
 <A NAME="lbAE">&nbsp;</A>
 <H2>ADDRESS TYPES</H2>
@@ -139,38 +146,40 @@ struct sockaddr_ll {
     unsigned short sll_family;   /* Always AF_PACKET */
     unsigned short sll_protocol; /* Physical layer protocol */
     int            sll_ifindex;  /* Interface number */
-    unsigned short sll_hatype;   /* Header type */    
+    unsigned short sll_hatype;   /* Header type */
     unsigned char  sll_pkttype;  /* Packet type */
-    unsigned char  sll_halen;    /* Length of address */ 
+    unsigned char  sll_halen;    /* Length of address */
     unsigned char  sll_addr[8];  /* Physical layer address */
 };
 </PRE>
 
 
 <P>
-<B>sll_protocol </B>
+<B>sll_protocol</B>
 
 is the standard ethernet protocol type in network order as defined
 in the
 <I>&lt;<A HREF="file:///usr/include/linux/if_ether.h">linux/if_ether.h</A>&gt;</I>
 
-include file.  It defaults to the socket's protocol.
-<B>sll_ifindex </B>
+include file.
+It defaults to the socket's protocol.
+<B>sll_ifindex</B>
 
 is the interface index of the interface
 (see
 <B><A HREF="../man7/netdevice.7.html">netdevice</A></B>(7));
 
-0 matches any interface (only legal for binding). 
-<B>sll_hatype </B>
+0 matches any interface (only legal for binding).
+<B>sll_hatype</B>
 
-is a ARP type as defined in the 
+is a ARP type as defined in the
 <I>&lt;<A HREF="file:///usr/include/linux/if_arp.h">linux/if_arp.h</A>&gt;</I>
 
 include file.
-<B>sll_pkttype </B>
+<B>sll_pkttype</B>
 
-contains the packet type. Valid types are 
+contains the packet type.
+Valid types are
 <B>PACKET_HOST</B>
 
 for a packet addressed to the local host,
@@ -187,14 +196,15 @@ in promiscuous mode, and
 <B>PACKET_OUTGOING</B>
 
 for a packet originated from the local host that is looped back to a packet
-socket. These types make only sense for receiving.
+socket.
+These types make only sense for receiving.
 <B>sll_addr</B>
 
 and
 <B>sll_halen</B>
 
-contain the physical layer (e.g. IEEE 802.3) address and its length. The 
-exact interpretation depends on the device.
+contain the physical layer (e.g. IEEE 802.3) address and its length.
+The exact interpretation depends on the device.
 <P>
 When you send packets it is enough to specify
 <B>sll_family</B>,
@@ -222,18 +232,19 @@ are used.
 <A NAME="lbAF">&nbsp;</A>
 <H2>SOCKET OPTIONS</H2>
 
-Packet sockets can be used to configure physical layer multicasting 
-and promiscuous mode. It works by calling 
+Packet sockets can be used to configure physical layer multicasting
+and promiscuous mode.
+It works by calling
 <B><A HREF="../man2/setsockopt.2.html">setsockopt</A></B>(2)
 
-on a packet socket for SOL_PACKET and one of the options 
-<B>PACKET_ADD_MEMBERSHIP </B>
+on a packet socket for SOL_PACKET and one of the options
+<B>PACKET_ADD_MEMBERSHIP</B>
 
-to add a binding or 
+to add a binding or
 <B>PACKET_DROP_MEMBERSHIP</B>
 
 to drop it.
-They both expect a 
+They both expect a
 <B>packet_mreq</B>
 
 structure as argument:
@@ -244,7 +255,7 @@ struct packet_mreq {
     int            mr_ifindex;    /* interface index */
     unsigned short mr_type;       /* action */
     unsigned short mr_alen;       /* address length */
-    unsigned char  mr_address[8]; /* physical layer address */ 
+    unsigned char  mr_address[8]; /* physical layer address */
 };
 </PRE>
 
@@ -262,9 +273,9 @@ parameter specifies which action to perform.
 
 enables receiving all packets on a shared medium (often known as
 ``promiscuous mode''),
-<B>PACKET_MR_MULTICAST </B>
+<B>PACKET_MR_MULTICAST</B>
 
-binds the socket to the physical layer multicast group specified in 
+binds the socket to the physical layer multicast group specified in
 <B>mr_address</B>
 
 and
@@ -273,10 +284,10 @@ and
 and
 <B>PACKET_MR_ALLMULTI</B>
 
-sets the socket up to receive all multicast packets arriving at 
-the interface. 
+sets the socket up to receive all multicast packets arriving at
+the interface.
 <P>
-In addition the traditional ioctls 
+In addition the traditional ioctls
 <B>SIOCSIFFLAGS</B>,
 
 <B>SIOCADDMULTI</B>,
@@ -289,23 +300,23 @@ can be used for the same purpose.
 
 <B>SIOCGSTAMP</B>
 
-can be used to receive the time stamp of the last received packet. 
-Argument is a 
+can be used to receive the time stamp of the last received packet.
+Argument is a
 <I>struct timeval.</I>
 
 <P>
 In addition all standard ioctls defined in
 <B><A HREF="../man7/netdevice.7.html">netdevice</A></B>(7)
 
-and 
+and
 <B><A HREF="../man7/socket.7.html">socket</A></B>(7)
 
 are valid on packet sockets.
 <A NAME="lbAH">&nbsp;</A>
 <H2>ERROR HANDLING</H2>
 
-Packet sockets do no error handling other than errors occurred 
-while passing the packet to the device driver. 
+Packet sockets do no error handling other than errors occurred
+while passing the packet to the device driver.
 They don't have the concept of a pending error.
 <A NAME="lbAI">&nbsp;</A>
 <H2>COMPATIBILITY</H2>
@@ -320,7 +331,7 @@ The main difference between the two methods is that
 uses the old
 <I>struct sockaddr_pkt</I>
 
-to specify an interface, which doesn't provide physical layer 
+to specify an interface, which doesn't provide physical layer
 independence.
 <P>
 
@@ -334,28 +345,28 @@ struct sockaddr_pkt {
 
 
 <P>
-<B>spkt_family </B>
+<B>spkt_family</B>
 
-contains 
+contains
 the device type,
-<B>spkt_protocol </B>
+<B>spkt_protocol</B>
 
 is the IEEE 802.3 protocol type as defined in
 <I>&lt;<A HREF="file:///usr/include/sys/if_ether.h">sys/if_ether.h</A>&gt;</I>
 
 and
-<B>spkt_device </B>
+<B>spkt_device</B>
 
-is the device name as a null terminated string, e.g. eth0.  
+is the device name as a null terminated string, e.g. eth0.
 <P>
 This structure is obsolete and should not be used in new code.
 <A NAME="lbAJ">&nbsp;</A>
 <H2>NOTES</H2>
 
-For portable programs it is suggested to use 
+For portable programs it is suggested to use
 <B>PF_PACKET</B>
 
-via 
+via
 <B><A HREF="../man3/pcap.3.html">pcap</A></B>(3);
 
 although this only covers a subset of the
@@ -366,27 +377,28 @@ features.
 The
 <B>SOCK_DGRAM</B>
 
-packet sockets make no attempt to create or parse the IEEE 802.2 LLC 
-header for a IEEE 802.3 frame. 
-When 
-<B>ETH_P_802_3 </B>
+packet sockets make no attempt to create or parse the IEEE 802.2 LLC
+header for a IEEE 802.3 frame.
+When
+<B>ETH_P_802_3</B>
 
-is specified as protocol for sending the kernel creates the 
-802.3 frame and fills out the length field; the user has to supply the LLC 
-header to get a fully conforming packet. 
-Incoming 802.3 packets are not multiplexed on the DSAP/SSAP protocol 
-fields; instead they are supplied to the user as protocol 
+is specified as protocol for sending the kernel creates the
+802.3 frame and fills out the length field; the user has to supply the LLC
+header to get a fully conforming packet.
+Incoming 802.3 packets are not multiplexed on the DSAP/SSAP protocol
+fields; instead they are supplied to the user as protocol
 <B>ETH_P_802_2</B>
 
-with the LLC header prepended. It is thus not possible to bind to
+with the LLC header prepended.
+It is thus not possible to bind to
 <B>ETH_P_802_3</B>;
 
-bind to 
-<B>ETH_P_802_2 </B>
+bind to
+<B>ETH_P_802_2</B>
 
 instead and do the protocol multiplex yourself.
-The default for sending is the standard Ethernet DIX 
-encapsulation with the protocol filled in. 
+The default for sending is the standard Ethernet DIX
+encapsulation with the protocol filled in.
 <P>
 Packet sockets are not subject to the input or output firewall chains.
 <A NAME="lbAK">&nbsp;</A>
@@ -396,7 +408,7 @@ Packet sockets are not subject to the input or output firewall chains.
 <DT><B>ENETDOWN</B>
 
 <DD>
-Interface is not up. 
+Interface is not up.
 <DT><B>ENOTCONN</B>
 
 <DD>
@@ -408,7 +420,7 @@ Unknown device name or interface index specified in interface address.
 <DT><B>EMSGSIZE</B>
 
 <DD>
-Packet is bigger than interface MTU. 
+Packet is bigger than interface MTU.
 <DT><B>ENOBUFS</B>
 
 <DD>
@@ -443,15 +455,16 @@ In addition other errors may be generated by the low-level driver.
 <A NAME="lbAL">&nbsp;</A>
 <H2>VERSIONS</H2>
 
-<B>PF_PACKET </B>
+<B>PF_PACKET</B>
 
-is a new feature in Linux 2.2. Earlier Linux versions supported only
+is a new feature in Linux 2.2.
+Earlier Linux versions supported only
 <B>SOCK_PACKET</B>.
 
 <A NAME="lbAM">&nbsp;</A>
 <H2>BUGS</H2>
 
-glibc 2.1 does not have a define for 
+glibc 2.1 does not have a define for
 <B>SOL_PACKET</B>.
 
 The suggested workaround is to use:
@@ -465,10 +478,10 @@ The suggested workaround is to use:
 </PRE>
 
 
-This is fixed in later glibc versions and also does not occur on 
+This is fixed in later glibc versions and also does not occur on
 libc5 systems.
 <P>
-The IEEE 802.2/803.3 LLC handling could be considered as a bug. 
+The IEEE 802.2/803.3 LLC handling could be considered as a bug.
 <P>
 Socket filters are not documented.
 <P>
@@ -486,7 +499,8 @@ packets via SOCK_DGRAM.
 The include file
 <I>&lt;<A HREF="file:///usr/include/netpacket/packet.h">netpacket/packet.h</A>&gt;</I>
 
-is present since glibc2.1. Older systems need
+is present since glibc2.1.
+Older systems need
 <P>
 <PRE>
 <B>#include &lt;<A HREF="file:///usr/include/asm/types.h">asm/types.h</A>&gt;</B>
@@ -521,7 +535,7 @@ RFC&nbsp;894 for the standard IP Ethernet encapsulation.
 <P>
 RFC&nbsp;1700 for the IEEE 802.3 IP encapsulation.
 <P>
-The 
+The
 <I>&lt;<A HREF="file:///usr/include/linux/if_ether.h">linux/if_ether.h</A>&gt;</I>
 
 include file for physical layer protocols.
@@ -549,6 +563,6 @@ include file for physical layer protocols.
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 02:34:44 GMT, April 20, 2020
+Time: 02:35:12 GMT, April 20, 2020
 </BODY>
 </HTML>
