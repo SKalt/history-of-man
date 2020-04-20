@@ -5,7 +5,7 @@ Copyright (c) 1983, 1991 Regents of the University of California.
 <HTML><HEAD><TITLE>Man page of SETPGID</TITLE>
 </HEAD><BODY>
 <H1>SETPGID</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2003-01-20<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2007-07-26<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -24,20 +24,63 @@ setpgid, getpgid, setpgrp, getpgrp - set/get process group
 
 <B>pid_t getpgid(pid_t </B><I>pid</I><B>);</B>
 
+<P>
+<B>pid_t getpgrp(void);</B>                /* POSIX.1 version */
+
 <BR>
 
-<B>int setpgrp(void);</B>
+<B>pid_t getpgrp(psid_t </B><I>pid</I><B>);&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</B>
+
+/* BSD version */
+<P>
+<B>int setpgrp(void);</B>                  /* System V version */
 
 <BR>
 
-<B>pid_t getpgrp(void);</B>
+<B>int setpgrp(pid_t </B><I>pid</I><B>, pid_t </B><I>pgid</I><B>);</B>
+
+/* BSD version */
+<P>
+
+Feature Test Macro Requirements for glibc (see
+<B><A HREF="../man7/feature_test_macros.7.html">feature_test_macros</A></B>(7)):
+
+
+<P>
+
+<B>getpgid</B>():
+
+_XOPEN_SOURCE&nbsp;&gt;=&nbsp;500
+<BR>
+
+<B>setpgrp</B>()
+
+(POSIX.1): _SVID_SOURCE || _XOPEN_SOURCE &gt;= 500
+<P>
+<B>setpgrp</B>()&nbsp;(BSD),
+
+<B>getpgrp</B>()&nbsp;(BSD):
+
+_BSD_SOURCE &amp;&amp; !&nbsp;(_POSIX_SOURCE || _POSIX_C_SOURCE ||
+_XOPEN_SOURCE || _XOPEN_SOURCE_EXTENDED || _GNU_SOURCE || _SVID_SOURCE)
 
 <A NAME="lbAD">&nbsp;</A>
 <H2>DESCRIPTION</H2>
 
+All of these interfaces are available on Linux,
+and are used for getting and setting the
+process group ID (PGID) of a process.
+The preferred, POSIX.1-specified ways of doing this are:
+<B>getpgrp</B>(void),
+
+for retrieving the calling process's PGID; and
+<B>setpgid</B>(),
+
+for setting a process's PGID.
+<P>
 <B>setpgid</B>()
 
-sets the process group ID of the process specified by
+sets the PGID of the process specified by
 <I>pid</I>
 
 to
@@ -59,79 +102,69 @@ If
 
 is used to move a process from one process
 group to another (as is done by some shells when creating pipelines),
-both process groups must be part of the same session.
+both process groups must be part of the same session (see
+<B><A HREF="../man2/setsid.2.html">setsid</A></B>(2)
+
+and
+<B><A HREF="../man7/credentials.7.html">credentials</A></B>(7)).
+
 In this case,
 the <I>pgid</I> specifies an existing process group to be joined and the
 session ID of that group must match the session ID of the joining process.
 <P>
+The POSIX.1 version of
+<B>getpgrp</B>(),
+
+which takes no arguments,
+returns the PGID of the calling process.
+<P>
 <B>getpgid</B>()
 
-returns the process group ID of the process specified by
+returns the PGID of the process specified by
 <I>pid</I>.
 
 If
 <I>pid</I>
 
 is zero, the process ID of the current process is used.
-<P>
-The call
-<I>setpgrp</I>()
+(Retrieving the PGID of a process other than the caller is rarely
+necessary, and the POSIX.1
+<B>getpgrp</B>()
 
-is equivalent to
+is preferred for that task.)
+<P>
+The System V-style
+<B>setpgrp</B>(),
+
+which takes no arguments, is equivalent to
 <I>setpgid(0,&nbsp;0)</I>.
 
 <P>
-Similarly,
-<I>getpgrp</I>()
+The BSD-specific
+<B>setpgrp</B>()
 
-is equivalent to
-<I>getpgid(0)</I>.
-
-Each process group is a member of a session and each process is a
-member of the session of which its process group is a member.
-<P>
-Process groups are used for distribution of signals, and by terminals to
-arbitrate requests for their input: Processes that have the same process
-group as the terminal are foreground and may read, while others will
-block with a signal if they attempt to read.
-These calls are thus used by programs such as
-<B><A HREF="../man1/csh.1.html">csh</A></B>(1)
-
-to create process groups in implementing job control.
-The
-<B>TIOCGPGRP</B>
+call, which takes arguments
+<I>pid</I>
 
 and
-<B>TIOCSPGRP</B>
+<I>pgid</I>,
 
-calls described in
-<B><A HREF="../man3/termios.3.html">termios</A></B>(3)
+is equivalent to
+<I>setpgid(pid, pgid)</I>.
 
-are used to get/set the process group of the control terminal.
+
+
+
 <P>
-If a session has a controlling terminal,
-<B>CLOCAL</B>
+The BSD-specific
+<B>getpgrp</B>()
 
-is not set and a hangup
-occurs, then the session leader is sent a
-<B>SIGHUP</B>.
+call, which takes a single
+<I>pid</I>
 
-If the session leader
-exits, the
-<B>SIGHUP</B>
+argument, is equivalent to
+<I>getpgid(pid)</I>.
 
-signal will be sent to each process in the foreground
-process group of the controlling terminal.
-<P>
-If the exit of the process causes a process group to become orphaned,
-and if any member of the newly-orphaned process group is stopped, then a
-<B>SIGHUP</B>
-
-signal followed by a
-<B>SIGCONT</B>
-
-signal will be sent to each process
-in the newly-orphaned process group.
 <A NAME="lbAE">&nbsp;</A>
 <H2>RETURN VALUE</H2>
 
@@ -147,17 +180,21 @@ On error, -1 is returned, and
 
 is set appropriately.
 <P>
-<B>getpgid</B>()
+The POSIX.1
+<B>getpgrp</B>()
 
-returns a process group on success.
+always returns the PGID of the caller.
+<P>
+<B>getpgid</B>(),
+
+and the BSD-specific
+<B>getpgrp</B>()
+
+return a process group on success.
 On error, -1 is returned, and
 <I>errno</I>
 
 is set appropriately.
-<P>
-<B>getpgrp</B>()
-
-always returns the current process group.
 <A NAME="lbAF">&nbsp;</A>
 <H2>ERRORS</H2>
 
@@ -215,21 +252,30 @@ is not the current process and not a child of the current process.
 <A NAME="lbAG">&nbsp;</A>
 <H2>CONFORMING TO</H2>
 
-The functions
 <B>setpgid</B>()
 
-and
+and the version of
 <B>getpgrp</B>()
 
+with no argumennts
 conform to POSIX.1-2001.
-The function
-<B>setpgrp</B>()
-
-is from 4.2BSD.
-The function
+<P>
+POSIX.1-2001 also specifies
 <B>getpgid</B>()
 
-conforms to SVr4.
+and the version of
+<B>setpgrp</B>()
+
+that takes no arguments.
+<P>
+The version of
+<B>getpgrp</B>()
+
+with one argument and the version of
+<B>setpgrp</B>()
+
+that takes two arguments derive from 4.2BSD,
+and are not specified by POSIX.1.
 <A NAME="lbAH">&nbsp;</A>
 <H2>NOTES</H2>
 
@@ -237,29 +283,80 @@ A child created via
 <B><A HREF="../man2/fork.2.html">fork</A></B>(2)
 
 inherits its parent's process group ID.
-The process group ID is preserved across an
+The PGID is preserved across an
 <B><A HREF="../man2/execve.2.html">execve</A></B>(2).
 
 <P>
-POSIX took
-<B>setpgid</B>()
-
-from the BSD function
-<B>setpgrp</B>().
-
-Also System V has a function with the same name, but it is identical to
-<B><A HREF="../man2/setsid.2.html">setsid</A></B>(2).
-
+Each process group is a member of a session and each process is a
+member of the session of which its process group is a member.
 <P>
+A session can have a controlling terminal.
+At any time, one (and only one) of the process groups
+in the session can be the foreground process group
+for the terminal;
+the remaining process groups are in the background.
+If a signal is generated from the terminal (e.g., typing the
+interrupt key to generate
+<B>SIGINT</B>),
 
-To get the prototypes under glibc, define both
-<B>_XOPEN_SOURCE</B>
+that signal is sent to the foreground process group.
+(See
+<B><A HREF="../man3/termios.3.html">termios</A></B>(3)
+
+for a description of the characters that generate signals.)
+Only the foreground process group may
+<B><A HREF="../man2/read.2.html">read</A></B>(2)
+
+from the terminal;
+if a background process group tries to
+<B><A HREF="../man2/read.2.html">read</A></B>(2)
+
+from the terminal, then the group is send a
+<B>SIGTSTP</B>
+
+signal, which suspends it.
+The
+<B><A HREF="../man3/tcgetpgrp.3.html">tcgetpgrp</A></B>(3)
 
 and
-<B>_XOPEN_SOURCE_EXTENDED</B>,
+<B><A HREF="../man3/tcsetpgrp.3.html">tcsetpgrp</A></B>(3)
 
-or use &quot;#define _XOPEN_SOURCE <I>n</I>&quot;
-for some integer <I>n</I> larger than or equal to 500.
+functions are used to get/set the foreground
+process group of the controlling terminal.
+<P>
+The
+<B>setpgid</B>()
+
+and
+<B>getpgrp</B>()
+
+calls are used by programs such as
+<B><A HREF="../man1/bash.1.html">bash</A></B>(1)
+
+to create process groups in order to implement shell job control.
+<P>
+If a session has a controlling terminal, and the
+<B>CLOCAL</B>
+
+flag for that terminal is not set,
+and a terminal hangup occurs, then the session leader is sent a
+<B>SIGHUP</B>.
+
+If the session leader exits, then a
+<B>SIGHUP</B>
+
+signal will also be sent to each process in the foreground
+process group of the controlling terminal.
+<P>
+If the exit of the process causes a process group to become orphaned,
+and if any member of the newly orphaned process group is stopped, then a
+<B>SIGHUP</B>
+
+signal followed by a
+<B>SIGCONT</B>
+
+signal will be sent to each process
+in the newly orphaned process group.
 <A NAME="lbAI">&nbsp;</A>
 <H2>SEE ALSO</H2>
 
@@ -271,9 +368,7 @@ for some integer <I>n</I> larger than or equal to 500.
 
 <B><A HREF="../man3/tcsetpgrp.3.html">tcsetpgrp</A></B>(3),
 
-<B><A HREF="../man3/termios.3.html">termios</A></B>(3),
-
-<B><A HREF="../man7/feature_test_macros.7.html">feature_test_macros</A></B>(7)
+<B><A HREF="../man3/termios.3.html">termios</A></B>(3)
 
 <P>
 
@@ -293,6 +388,6 @@ for some integer <I>n</I> larger than or equal to 500.
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 02:43:45 GMT, April 20, 2020
+Time: 02:44:19 GMT, April 20, 2020
 </BODY>
 </HTML>
