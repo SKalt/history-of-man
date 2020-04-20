@@ -34,7 +34,7 @@ SUCH DAMAGE.
 <HTML><HEAD><TITLE>Man page of RECV</TITLE>
 </HEAD><BODY>
 <H1>RECV</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2015-12-28<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2016-03-15<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -75,6 +75,33 @@ They may be used
 to receive data on both connectionless and connection-oriented sockets.
 This page first describes common features of all three system calls,
 and then describes the differences between the calls.
+<P>
+
+The only difference between
+<B>recv</B>()
+
+and
+<B><A HREF="../man2/read.2.html">read</A></B>(2)
+
+is the presence of
+<I>flags</I>.
+
+With a zero
+<I>flags</I>
+
+argument,
+<B>recv</B>()
+
+is equivalent to
+<B><A HREF="../man2/read.2.html">read</A></B>(2).
+
+Also, the following call
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;recv(sockfd,&nbsp;buf,&nbsp;len,&nbsp;flags);
+<P>
+is equivalent to
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;recvfrom(sockfd,&nbsp;buf,&nbsp;len,&nbsp;flags,&nbsp;NULL,&nbsp;NULL);
 <P>
 
 All three calls return the length of the message on successful
@@ -314,6 +341,7 @@ satisfied.
 However, the call may still return less data than requested if
 a signal is caught, an error or disconnect occurs, or the next data to be
 received is of a different type than that returned.
+This flag has no effect for datagram sockets.
 
 </DL>
 <A NAME="lbAF">&nbsp;</A>
@@ -475,9 +503,10 @@ The messages are of the form:
 <PRE>
 
 struct cmsghdr {
-    socklen_t     cmsg_len;     /* data byte count, including hdr */
-    int           cmsg_level;   /* originating protocol */
-    int           cmsg_type;    /* protocol-specific type */
+    size_t cmsg_len;    /* Data byte count, including header
+                           (type is socklen_t in POSIX) */
+    int    cmsg_level;  /* Originating protocol */
+    int    cmsg_type;   /* Protocol-specific type */
 /* followed by
     unsigned char cmsg_data[]; */
 };
@@ -576,7 +605,7 @@ so a portable application should check for both possibilities.
 The argument
 <I>sockfd</I>
 
-is an invalid descriptor.
+is an invalid file descriptor.
 <DT><B>ECONNREFUSED</B>
 
 <DD>
@@ -732,6 +761,6 @@ is shown in
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:41:45 GMT, April 20, 2020
+Time: 03:42:23 GMT, April 20, 2020
 </BODY>
 </HTML>

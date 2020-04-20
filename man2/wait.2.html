@@ -26,7 +26,7 @@ the source, must acknowledge the copyright and authors of this work.
 <HTML><HEAD><TITLE>Man page of WAIT</TITLE>
 </HEAD><BODY>
 <H1>WAIT</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2015-07-23<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2016-03-15<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -43,10 +43,10 @@ wait, waitpid, waitid - wait for process to change state
 <B>#include &lt;<A HREF="file:///usr/include/sys/wait.h">sys/wait.h</A>&gt;</B>
 
 <P>
-<B>pid_t wait(int *</B><I>status</I><B>);</B>
+<B>pid_t wait(int *</B><I>wstatus</I><B>);</B>
 
 <P>
-<B>pid_t waitpid(pid_t </B><I>pid</I><B>, int *</B><I>status</I><B>, int </B><I>options</I><B>);</B>
+<B>pid_t waitpid(pid_t </B><I>pid</I><B>, int *</B><I>wstatus</I><B>, int </B><I>options</I><B>);</B>
 
 <P>
 <B>int waitid(idtype_t </B><I>idtype</I><B>, id_t </B><I>id</I><B>, siginfo_t *</B><I>infop</I><B>, int </B><I>options</I><B>);</B>
@@ -65,12 +65,9 @@ Feature Test Macro Requirements for glibc (see
 <B>waitid</B>():
 
 <DL COMPACT><DT><DD>
-_SVID_SOURCE ||
-_XOPEN_SOURCE&nbsp;&gt;=&nbsp;500 ||
-_XOPEN_SOURCE&nbsp;&amp;&amp;&nbsp;_XOPEN_SOURCE_EXTENDED
-<BR>
-
-|| /* Since glibc 2.12: */ _POSIX_C_SOURCE&nbsp;&gt;=&nbsp;200809L
+_XOPEN_SOURCE
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;||&nbsp;/*&nbsp;Since&nbsp;glibc&nbsp;2.12:&nbsp;*/&nbsp;_POSIX_C_SOURCE&nbsp;&gt;=&nbsp;200809L
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;||&nbsp;/*&nbsp;Glibc&nbsp;versions&nbsp;&lt;=&nbsp;2.19:&nbsp;*/&nbsp;_BSD_SOURCE
 </DL>
 
 
@@ -111,12 +108,12 @@ The
 system call suspends execution of the calling process until one of its
 children terminates.
 The call
-<I>wait(&amp;status)</I>
+<I>wait(&amp;wstatus)</I>
 
 is equivalent to:
 <PRE>
 
-    waitpid(-1, &amp;status, 0);
+    waitpid(-1, &amp;wstatus, 0);
 </PRE>
 
 <P>
@@ -194,7 +191,7 @@ also return if a stopped child has been resumed by delivery of
 <P>
 
 If
-<I>status</I>
+<I>wstatus</I>
 
 is not NULL,
 <B>wait</B>()
@@ -212,7 +209,7 @@ and
 <B>waitpid</B>()!):
 
 <DL COMPACT>
-<DT><B>WIFEXITED(</B><I>status</I><B>)</B>
+<DT><B>WIFEXITED(</B><I>wstatus</I><B>)</B>
 
 <DD>
 returns true if the child terminated normally, that is,
@@ -223,12 +220,12 @@ or
 <B><A HREF="../man2/_exit.2.html">_exit</A></B>(2),
 
 or by returning from main().
-<DT><B>WEXITSTATUS(</B><I>status</I><B>)</B>
+<DT><B>WEXITSTATUS(</B><I>wstatus</I><B>)</B>
 
 <DD>
 returns the exit status of the child.
 This consists of the least significant 8 bits of the
-<I>status</I>
+<I>wstatus</I>
 
 argument that the child specified in a call to
 <B><A HREF="../man3/exit.3.html">exit</A></B>(3)
@@ -241,11 +238,11 @@ This macro should be employed only if
 <B>WIFEXITED</B>
 
 returned true.
-<DT><B>WIFSIGNALED(</B><I>status</I><B>)</B>
+<DT><B>WIFSIGNALED(</B><I>wstatus</I><B>)</B>
 
 <DD>
 returns true if the child process was terminated by a signal.
-<DT><B>WTERMSIG(</B><I>status</I><B>)</B>
+<DT><B>WTERMSIG(</B><I>wstatus</I><B>)</B>
 
 <DD>
 returns the number of the signal that caused the child process to
@@ -254,7 +251,7 @@ This macro should be employed only if
 <B>WIFSIGNALED</B>
 
 returned true.
-<DT><B>WCOREDUMP(</B><I>status</I><B>)</B>
+<DT><B>WCOREDUMP(</B><I>wstatus</I><B>)</B>
 
 <DD>
 returns true if the child produced a core dump.
@@ -265,7 +262,7 @@ returned true.
 This macro is not specified in POSIX.1-2001 and is not available on
 some UNIX implementations (e.g., AIX, SunOS).
 Only use this enclosed in #ifdef WCOREDUMP ... #endif.
-<DT><B>WIFSTOPPED(</B><I>status</I><B>)</B>
+<DT><B>WIFSTOPPED(</B><I>wstatus</I><B>)</B>
 
 <DD>
 returns true if the child process was stopped by delivery of a signal;
@@ -275,7 +272,7 @@ this is possible only if the call was done using
 or when the child is being traced (see
 <B><A HREF="../man2/ptrace.2.html">ptrace</A></B>(2)).
 
-<DT><B>WSTOPSIG(</B><I>status</I><B>)</B>
+<DT><B>WSTOPSIG(</B><I>wstatus</I><B>)</B>
 
 <DD>
 returns the number of the signal which caused the child to stop.
@@ -283,7 +280,7 @@ This macro should be employed only if
 <B>WIFSTOPPED</B>
 
 returned true.
-<DT><B>WIFCONTINUED(</B><I>status</I><B>)</B>
+<DT><B>WIFCONTINUED(</B><I>wstatus</I><B>)</B>
 
 <DD>
 (since Linux 2.6.10)
@@ -802,7 +799,7 @@ int
 main(int argc, char *argv[])
 {
     pid_t cpid, w;
-    int status;
+    int wstatus;
 
     cpid = fork();
     if (cpid == -1) {
@@ -818,22 +815,22 @@ main(int argc, char *argv[])
 
     } else {                    /* Code executed by parent */
         do {
-            w = waitpid(cpid, &amp;status, WUNTRACED | WCONTINUED);
+            w = waitpid(cpid, &amp;wstatus, WUNTRACED | WCONTINUED);
             if (w == -1) {
                 perror(&quot;waitpid&quot;);
                 exit(EXIT_FAILURE);
             }
 
-            if (WIFEXITED(status)) {
-                printf(&quot;exited, status=%d\n&quot;, WEXITSTATUS(status));
-            } else if (WIFSIGNALED(status)) {
-                printf(&quot;killed by signal %d\n&quot;, WTERMSIG(status));
-            } else if (WIFSTOPPED(status)) {
-                printf(&quot;stopped by signal %d\n&quot;, WSTOPSIG(status));
-            } else if (WIFCONTINUED(status)) {
+            if (WIFEXITED(wstatus)) {
+                printf(&quot;exited, status=%d\n&quot;, WEXITSTATUS(wstatus));
+            } else if (WIFSIGNALED(wstatus)) {
+                printf(&quot;killed by signal %d\n&quot;, WTERMSIG(wstatus));
+            } else if (WIFSTOPPED(wstatus)) {
+                printf(&quot;stopped by signal %d\n&quot;, WSTOPSIG(wstatus));
+            } else if (WIFCONTINUED(wstatus)) {
                 printf(&quot;continued\n&quot;);
             }
-        } while (!WIFEXITED(status) &amp;&amp; !WIFSIGNALED(status));
+        } while (!WIFEXITED(wstatus) &amp;&amp; !WIFSIGNALED(wstatus));
         exit(EXIT_SUCCESS);
     }
 }
@@ -895,6 +892,6 @@ main(int argc, char *argv[])
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:41:47 GMT, April 20, 2020
+Time: 03:42:25 GMT, April 20, 2020
 </BODY>
 </HTML>

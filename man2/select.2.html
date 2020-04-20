@@ -25,7 +25,7 @@ the source, must acknowledge the copyright and authors of this work.
 <HTML><HEAD><TITLE>Man page of SELECT</TITLE>
 </HEAD><BODY>
 <H1>SELECT</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2015-07-23<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2016-03-15<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -76,7 +76,7 @@ Feature Test Macro Requirements for glibc (see
 <P>
 <B>pselect</B>():
 
-_POSIX_C_SOURCE&nbsp;&gt;=&nbsp;200112L || _XOPEN_SOURCE&nbsp;&gt;=&nbsp;600
+_POSIX_C_SOURCE&nbsp;&gt;=&nbsp;200112L
 <A NAME="lbAD">&nbsp;</A>
 <H2>DESCRIPTION</H2>
 
@@ -95,6 +95,17 @@ perform a corresponding I/O operation (e.g.,
 without blocking, or a sufficiently small
 <B><A HREF="../man2/write.2.html">write</A></B>(2)).
 
+<P>
+
+<B>select</B>()
+
+can monitor only file descriptors numbers that are less than
+<B>FD_SETSIZE</B>;
+
+<B><A HREF="../man2/poll.2.html">poll</A></B>(2)
+
+does not have this limitation.
+See BUGS.
 <P>
 
 The operation of
@@ -428,14 +439,14 @@ resource limit (see
 <DT><B>EINVAL</B>
 
 <DD>
-the value contained within
+The value contained within
 <I>timeout</I>
 
 is invalid.
 <DT><B>ENOMEM</B>
 
 <DD>
-unable to allocate memory for internal tables.
+Unable to allocate memory for internal tables.
 </DL>
 <A NAME="lbAH">&nbsp;</A>
 <H2>VERSIONS</H2>
@@ -493,6 +504,30 @@ Moreover, POSIX requires
 <I>fd</I>
 
 to be a valid file descriptor.
+<P>
+On some other UNIX systems,
+
+<B>select</B>()
+
+can fail with the error
+<B>EAGAIN</B>
+
+if the system fails to allocate kernel-internal resources, rather than
+<B>ENOMEM</B>
+
+as Linux does.
+POSIX specifies this error for
+<B><A HREF="../man2/poll.2.html">poll</A></B>(2),
+
+but not for
+<B>select</B>().
+
+Portable programs may wish to check for
+<B>EAGAIN</B>
+
+and loop, just as with
+<B>EINTR</B>.
+
 <P>
 Concerning the types involved, the classical situation is that
 the two fields of a
@@ -587,6 +622,16 @@ in this scenario must be considered buggy.
 <A NAME="lbAL">&nbsp;</A>
 <H3>C library/kernel differences</H3>
 
+The Linux kernel allows file descriptor sets of arbitrary size,
+determining the length of the sets to be checked from the value of
+<I>nfds</I>.
+
+However, in the glibc implementation, the
+<I>fd_set</I>
+
+type is fixed in size.
+See also BUGS.
+<P>
 The
 <B>pselect</B>()
 
@@ -642,6 +687,27 @@ support a maximum of 6 arguments to a system call.
 <A NAME="lbAM">&nbsp;</A>
 <H2>BUGS</H2>
 
+POSIX allows an implementation to define an upper limit,
+advertised via the constant
+<B>FD_SETSIZE</B>,
+
+on the range of file descriptors that can be specified
+in a file descriptor set.
+The Linux kernel imposes no fixed limit, but the glibc implementation makes
+<I>fd_set</I>
+
+a fixed-size type, with
+<B>FD_SETSIZE</B>
+
+defined as 1024, and the
+<B>FD_*</B>()
+
+macros operating according to that limit.
+To monitor file descriptors greater than 1023, use
+<B><A HREF="../man2/poll.2.html">poll</A></B>(2)
+
+instead.
+<P>
 Glibc 2.0 provided a version of
 <B>pselect</B>()
 
@@ -738,10 +804,12 @@ main(void)
     int retval;
 
     /* Watch stdin (fd 0) to see when it has input. */
+
     FD_ZERO(&amp;rfds);
     FD_SET(0, &amp;rfds);
 
     /* Wait up to five seconds. */
+
     tv.tv_sec = 5;
     tv.tv_usec = 0;
 
@@ -817,6 +885,6 @@ For a tutorial with discussion and examples, see
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:41:46 GMT, April 20, 2020
+Time: 03:42:24 GMT, April 20, 2020
 </BODY>
 </HTML>

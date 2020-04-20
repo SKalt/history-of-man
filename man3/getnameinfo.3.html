@@ -7,7 +7,7 @@ This page is in the public domain.
 <HTML><HEAD><TITLE>Man page of GETNAMEINFO</TITLE>
 </HEAD><BODY>
 <H1>GETNAMEINFO</H1>
-Section: Linux Programmer's Manual (3)<BR>Updated: 2015-07-23<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2016-03-15<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -21,7 +21,7 @@ getnameinfo - address-to-name translation in protocol-independent manner
 <B>#include &lt;<A HREF="file:///usr/include/sys/socket.h">sys/socket.h</A>&gt;</B>
 <B>#include &lt;<A HREF="file:///usr/include/netdb.h">netdb.h</A>&gt;</B>
 
-<B>int getnameinfo(const struct sockaddr *</B><I>sa</I><B>, socklen_t </B><I>salen</I><B>,</B>
+<B>int getnameinfo(const struct sockaddr *</B><I>addr</I><B>, socklen_t </B><I>addrlen</I><B>,</B>
 <B>                char *</B><I>host</I><B>, socklen_t </B><I>hostlen</I><B>,</B>
 <B>                char *</B><I>serv</I><B>, socklen_t </B><I>servlen</I><B>, int </B><I>flags</I><B>);</B>
 </PRE>
@@ -36,7 +36,8 @@ Feature Test Macro Requirements for glibc (see
 <P>
 <B>getnameinfo</B>():
 
-_POSIX_C_SOURCE&nbsp;&gt;=&nbsp;1 || _XOPEN_SOURCE || _POSIX_SOURCE
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;Since&nbsp;glibc&nbsp;2.22:&nbsp;_POSIX_C_SOURCE&nbsp;&gt;=&nbsp;201112L
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;Glibc&nbsp;2.21&nbsp;and&nbsp;earlier:&nbsp;_POSIX_C_SOURCE
 
 <A NAME="lbAD">&nbsp;</A>
 <H2>DESCRIPTION</H2>
@@ -72,7 +73,7 @@ or
 <I>sockaddr_in6</I>)
 
 of size
-<I>salen</I>
+<I>addrlen</I>
 
 that holds the input IP address and port number.
 The arguments
@@ -313,15 +314,19 @@ defines the constants
 
 <P>
 Since glibc 2.8,
-these definitions are exposed only if one of the feature test macros
-<B>_BSD_SOURCE</B>,
+these definitions are exposed only if suitable
+feature test macros are defined, namely:
+<B>_GNU_SOURCE</B>,
 
-<B>_SVID_SOURCE</B>,
+<B>_DEFAULT_SOURCE</B>
+
+(since glibc 2.19),
+or (in glibc versions up to and including 2.19)
+<B>_BSD_SOURCE</B>
 
 or
-<B>_GNU_SOURCE</B>
+<B>_SVID_SOURCE</B>.
 
-is defined.
 <P>
 
 The former is the constant
@@ -353,11 +358,11 @@ a particular address family.
 <P>
 
 <PRE>
-struct sockaddr *sa;    /* input */
-socklen_t len;         /* input */
+struct sockaddr *addr;     /* input */
+socklen_t addrlen;         /* input */
 char hbuf[NI_MAXHOST], sbuf[NI_MAXSERV];
 
-if (getnameinfo(sa, len, hbuf, sizeof(hbuf), sbuf,
+if (getnameinfo(addr, addrlen, hbuf, sizeof(hbuf), sbuf,
             sizeof(sbuf), NI_NUMERICHOST | NI_NUMERICSERV) == 0)
     printf(&quot;host=%s, serv=%s\n&quot;, hbuf, sbuf);
 </PRE>
@@ -369,11 +374,11 @@ reverse address mapping.
 <P>
 
 <PRE>
-struct sockaddr *sa;    /* input */
-socklen_t len;         /* input */
+struct sockaddr *addr;     /* input */
+socklen_t addrlen;         /* input */
 char hbuf[NI_MAXHOST];
 
-if (getnameinfo(sa, len, hbuf, sizeof(hbuf),
+if (getnameinfo(addr, addrlen, hbuf, sizeof(hbuf),
             NULL, 0, NI_NAMEREQD))
     printf(&quot;could not resolve hostname&quot;);
 else
@@ -465,6 +470,6 @@ Proceedings of the freenix track:
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:41:51 GMT, April 20, 2020
+Time: 03:42:29 GMT, April 20, 2020
 </BODY>
 </HTML>

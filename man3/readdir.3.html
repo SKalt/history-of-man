@@ -26,13 +26,13 @@ the source, must acknowledge the copyright and authors of this work.
 <HTML><HEAD><TITLE>Man page of READDIR</TITLE>
 </HEAD><BODY>
 <H1>READDIR</H1>
-Section: Linux Programmer's Manual (3)<BR>Updated: 2015-08-08<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2016-03-15<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
 <H2>NAME</H2>
 
-readdir, readdir_r - read a directory
+readdir - read a directory
 <A NAME="lbAC">&nbsp;</A>
 <H2>SYNOPSIS</H2>
 
@@ -40,25 +40,7 @@ readdir, readdir_r - read a directory
 <B>#include &lt;<A HREF="file:///usr/include/dirent.h">dirent.h</A>&gt;</B>
 
 <B>struct dirent *readdir(DIR *</B><I>dirp</I><B>);</B>
-
-<B>int readdir_r(DIR *</B><I>dirp</I><B>, struct dirent *</B><I>entry</I><B>, struct dirent **</B><I>result</I><B>);</B>
 </PRE>
-
-<P>
-
-Feature Test Macro Requirements for glibc (see
-<B><A HREF="../man7/feature_test_macros.7.html">feature_test_macros</A></B>(7)):
-
-
-
-<P>
-<B>readdir_r</B>():
-
-<DL COMPACT><DT><DD>
-_POSIX_C_SOURCE&nbsp;&gt;=&nbsp;1 || _XOPEN_SOURCE || _BSD_SOURCE ||
-_SVID_SOURCE || _POSIX_SOURCE
-</DL>
-
 
 <A NAME="lbAD">&nbsp;</A>
 <H2>DESCRIPTION</H2>
@@ -73,7 +55,7 @@ It returns NULL on reaching the end of the directory stream or if
 an error occurred.
 <P>
 
-On Linux, the
+In the glibc implementation, the
 <I>dirent</I>
 
 structure is defined as follows:
@@ -82,12 +64,12 @@ structure is defined as follows:
 
 <PRE>
 struct dirent {
-    ino_t          d_ino;       /* inode number */
-    off_t          d_off;       /* not an offset; see NOTES */
-    unsigned short d_reclen;    /* length of this record */
-    unsigned char  d_type;      /* type of file; not supported
+    ino_t          d_ino;       /* Inode number */
+    off_t          d_off;       /* Not an offset; see below */
+    unsigned short d_reclen;    /* Length of this record */
+    unsigned char  d_type;      /* Type of file; not supported
                                    by all filesystem types */
-    char           d_name[256]; /* filename */
+    char           d_name[256]; /* Null-terminated filename */
 };
 </PRE>
 
@@ -97,139 +79,27 @@ struct dirent {
 The only fields in the
 <I>dirent</I>
 
-structure that are mandated by POSIX.1 are:
-<I>d_name</I>[],
+structure that are mandated by POSIX.1 are
+<I>d_name</I>
 
-of unspecified size, with at most
-<B>NAME_MAX</B>
-
-characters preceding the terminating null byte ('\0');
-and (as an XSI extension)
+and
 <I>d_ino</I>.
 
 The other fields are unstandardized, and not present on all systems;
 see NOTES below for some further details.
 <P>
-
-The data returned by
-<B>readdir</B>()
-
-may be overwritten by subsequent calls to
-<B>readdir</B>()
-
-for the same directory stream.
-<P>
-The
-<B>readdir_r</B>()
-
-function is a reentrant version of
-<B>readdir</B>().
-
-It reads the next directory entry from the directory stream
-<I>dirp</I>,
-
-and returns it in the caller-allocated buffer pointed to by
-<I>entry</I>.
-
-(See NOTES for information on allocating this buffer.)
-A pointer to the returned item is placed in
-<I>*result</I>;
-
-if the end of the directory stream was encountered,
-then NULL is instead returned in
-<I>*result</I>.
-
-<A NAME="lbAE">&nbsp;</A>
-<H2>RETURN VALUE</H2>
-
-On success,
-<B>readdir</B>()
-
-returns a pointer to a
+The fields of the
 <I>dirent</I>
 
-structure.
-(This structure may be statically allocated; do not attempt to
-<B><A HREF="../man3/free.3.html">free</A></B>(3)
-
-it.)
-If the end of the directory stream is reached, NULL is returned and
-<I>errno</I>
-
-is not changed.
-If an error occurs, NULL is returned and
-<I>errno</I>
-
-is set appropriately.
-<P>
-The
-<B>readdir_r</B>()
-
-function returns 0 on success.
-On error, it returns a positive error number (listed under ERRORS).
-If the end of the directory stream is reached,
-<B>readdir_r</B>()
-
-returns 0, and returns NULL in
-<I>*result</I>.
-
-<A NAME="lbAF">&nbsp;</A>
-<H2>ERRORS</H2>
-
+structure are as follows:
 <DL COMPACT>
-<DT><B>EBADF</B>
+<DT><I>d_ino</I>
 
 <DD>
-Invalid directory stream descriptor <I>dirp</I>.
-</DL>
-<A NAME="lbAG">&nbsp;</A>
-<H2>ATTRIBUTES</H2>
+This is the inode number of the file.
+<DT><I>d_off</I>
 
-For an explanation of the terms used in this section, see
-<B><A HREF="../man7/attributes.7.html">attributes</A></B>(7).
-
-<TABLE BORDER>
-<TR VALIGN=top><TD><B>Interface</B></TD><TD><B>Attribute</B></TD><TD><B>Value</B><BR></TD></TR>
-<TR VALIGN=top><TD>
-<B>readdir</B>()
-
-</TD><TD>Thread safety</TD><TD>MT-Unsafe race:dirstream<BR></TD></TR>
-<TR VALIGN=top><TD>
-<B>readdir_r</B>()
-
-</TD><TD>Thread safety</TD><TD>MT-Safe<BR></TD></TR>
-</TABLE>
-
-<A NAME="lbAH">&nbsp;</A>
-<H2>CONFORMING TO</H2>
-
-POSIX.1-2001, POSIX.1-2008, SVr4, 4.3BSD.
-<A NAME="lbAI">&nbsp;</A>
-<H2>NOTES</H2>
-
-Only the fields
-<I>d_name</I>
-
-and
-<I>d_ino</I>
-
-are specified in POSIX.1.
-
-The remaining fields are available on many, but not all systems.
-Under glibc,
-programs can check for the availability of the fields not defined
-in POSIX.1 by testing whether the macros
-<B>_DIRENT_HAVE_D_NAMLEN</B>,
-
-<B>_DIRENT_HAVE_D_RECLEN</B>,
-
-<B>_DIRENT_HAVE_D_OFF</B>,
-
-or
-<B>_DIRENT_HAVE_D_TYPE</B>
-
-are defined.
-<P>
+<DD>
 The value returned in
 <I>d_off</I>
 
@@ -246,23 +116,32 @@ Applications should treat this field as an opaque value,
 making no assumptions about its contents; see also
 <B><A HREF="../man3/telldir.3.html">telldir</A></B>(3).
 
-<P>
-Other than Linux, the
-<I>d_type</I>
+<DT><I>d_reclen</I>
 
-field is available mainly only on BSD systems.
-This field makes it possible to avoid the expense of calling
+<DD>
+This is the size (in bytes) of the returned record.
+This may not match the size of the structure definition shown above;
+see NOTES.
+<DT><I>d_type</I>
+
+<DD>
+This field contains a value indicating the file type,
+making it possible to avoid the expense of calling
 <B><A HREF="../man2/lstat.2.html">lstat</A></B>(2)
 
 if further actions depend on the type of the file.
-If the
+<DT><DD>
+When a suitable feature test macro is defined
+(<B>_DEFAULT_SOURCE</B>
+
+on glibc versions since 2.19, or
 <B>_BSD_SOURCE</B>
 
-feature test macro is defined,
-then glibc defines the following macro constants
-for the value returned in
+on glibc versions 2.19 and earlier),
+glibc defines the following macro constants for the value returned in
 <I>d_type</I>:
 
+<DL COMPACT><DT><DD>
 <DL COMPACT>
 <DT><B>DT_BLK</B>
 
@@ -295,19 +174,11 @@ This is a UNIX domain socket.
 <DT><B>DT_UNKNOWN</B>
 
 <DD>
-The file type is unknown.
-
-
+The file type could not be determined.
 </DL>
-<P>
+</DL>
 
-If the file type could not be determined, the value
-<B>DT_UNKNOWN</B>
-
-is returned in
-<I>d_type</I>.
-
-<P>
+<DT><DD>
 Currently,
 
 
@@ -318,39 +189,212 @@ have full support for returning the file type in
 All applications must properly handle a return of
 <B>DT_UNKNOWN</B>.
 
-<P>
-Since POSIX.1 does not specify the size of the
-<I>d_name</I>
+<DT><I>d_name</I>
 
-field, and other nonstandard fields may precede that field within the
+<DD>
+This field contains the null terminated filename.
+<I>See NOTES</I>.
+
+</DL>
+<P>
+
+The data returned by
+<B>readdir</B>()
+
+may be overwritten by subsequent calls to
+<B>readdir</B>()
+
+for the same directory stream.
+<A NAME="lbAE">&nbsp;</A>
+<H2>RETURN VALUE</H2>
+
+On success,
+<B>readdir</B>()
+
+returns a pointer to a
 <I>dirent</I>
 
-structure, portable applications that use
-<B>readdir_r</B>()
+structure.
+(This structure may be statically allocated; do not attempt to
+<B><A HREF="../man3/free.3.html">free</A></B>(3)
 
-should allocate the buffer whose address is passed in
-<I>entry</I>
+it.)
+<P>
+If the end of the directory stream is reached, NULL is returned and
+<I>errno</I>
 
-as follows:
+is not changed.
+If an error occurs, NULL is returned and
+<I>errno</I>
 
-<PRE>
+is set appropriately.
+To distinguish end of stream and from an error, set
+<I>errno</I>
 
-name_max = pathconf(dirpath, _PC_NAME_MAX);
-if (name_max == -1)         /* Limit not defined, or error */
-    name_max = 255;         /* Take a guess */
-len = offsetof(struct dirent, d_name) + name_max + 1;
-entryp = malloc(len);
+to zero before calling
+<B>readdir</B>()
 
-</PRE>
+and then check the value of
+<I>errno</I>
+
+if NULL is returned.
+<A NAME="lbAF">&nbsp;</A>
+<H2>ERRORS</H2>
+
+<DL COMPACT>
+<DT><B>EBADF</B>
+
+<DD>
+Invalid directory stream descriptor <I>dirp</I>.
+</DL>
+<A NAME="lbAG">&nbsp;</A>
+<H2>ATTRIBUTES</H2>
+
+For an explanation of the terms used in this section, see
+<B><A HREF="../man7/attributes.7.html">attributes</A></B>(7).
+
+<TABLE BORDER>
+<TR VALIGN=top><TD><B>Interface</B></TD><TD><B>Attribute</B></TD><TD><B>Value</B><BR></TD></TR>
+<TR VALIGN=top><TD>
+<B>readdir</B>()
+
+</TD><TD>Thread safety</TD><TD>MT-Unsafe race:dirstream<BR></TD></TR>
+</TABLE>
+
+<P>
+<P>
+
+In the current POSIX.1 specification (POSIX.1-2008),
+<B>readdir</B>()
+
+is not required to be thread-safe.
+However, in modern implementations (including the glibc implementation),
+concurrent calls to
+<B>readdir</B>()
+
+that specify different directory streams are thread-safe.
+In cases where multiple threads must read from the same directory stream,
+using
+<B>readdir</B>()
+
+with external synchronization is still preferable to the use of the deprecated
+<B><A HREF="../man3/readdir_r.3.html">readdir_r</A></B>(3)
+
+function.
+It is expected that a future version of POSIX.1
 
 
-(POSIX.1 requires that
+will require that
+<B>readdir</B>()
+
+be thread-safe when concurrently employed on different directory streams.
+<A NAME="lbAH">&nbsp;</A>
+<H2>CONFORMING TO</H2>
+
+POSIX.1-2001, POSIX.1-2008, SVr4, 4.3BSD.
+<A NAME="lbAI">&nbsp;</A>
+<H2>NOTES</H2>
+
+A directory stream is opened using
+<B><A HREF="../man3/opendir.3.html">opendir</A></B>(3).
+
+<P>
+The order in which filenames are read by successive calls to
+<B>readdir</B>()
+
+depends on the filesystem implementation;
+it us unlikely that the names will be sorted in any fashion.
+<P>
+Only the fields
 <I>d_name</I>
 
-is the last field in a
-<I>struct dirent</I>.)
+and (as an XSI extension)
+<I>d_ino</I>
+
+are specified in POSIX.1.
+
+Other than Linux, the
+<I>d_type</I>
+
+field is available mainly only on BSD systems.
+The remaining fields are available on many, but not all systems.
+Under glibc,
+programs can check for the availability of the fields not defined
+in POSIX.1 by testing whether the macros
+<B>_DIRENT_HAVE_D_NAMLEN</B>,
+
+<B>_DIRENT_HAVE_D_RECLEN</B>,
+
+<B>_DIRENT_HAVE_D_OFF</B>,
+
+or
+<B>_DIRENT_HAVE_D_TYPE</B>
+
+are defined.
 
 <A NAME="lbAJ">&nbsp;</A>
+<H3>The d_name field</H3>
+
+The
+<I>dirent</I>
+
+structure definition shown above is taken from the glibc headers,
+and shows the
+<I>d_name</I>
+
+field with a fixed size.
+<P>
+<I>Warning</I>:
+
+applications should avoid any dependence on the size of the
+<I>d_name</I>
+
+field.
+POSIX defines it as
+<I>char&nbsp;d_name[],</I>
+
+a character array of unspecified size, with at most
+<B>NAME_MAX</B>
+
+characters preceding the terminating null byte ('\0').
+<P>
+POSIX.1 explicitly notes that this field should not be used as an lvalue.
+The standard also notes that the use of
+<I>sizeof(d_name)</I>
+
+is incorrect; use
+<I>strlen(d_name)</I>
+
+instead.
+(On some systems, this field is defined as
+<I>char&nbsp;d_name[1]</I>!)
+
+By implication, the use
+<I>sizeof(struct dirent)</I>
+
+to capture the size of record including the size of
+<I>d_name</I>
+
+is also incorrect.
+<P>
+Note that while the call
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;fpathconf(fd,&nbsp;_PC_NAME_MAX)
+<P>
+returns the value 255 for most filesystems,
+on some filesystems (e.g., CIFS, Windows SMB servers),
+the null-terminated filename that is (correctly) returned in
+<I>d_name</I>
+
+can actually exceed this size.
+In such cases, the
+<I>d_reclen</I>
+
+field will contain a value that exceeds the size of the glibc
+<I>dirent</I>
+
+structure shown above.
+<A NAME="lbAK">&nbsp;</A>
 <H2>SEE ALSO</H2>
 
 <B><A HREF="../man2/getdents.2.html">getdents</A></B>(2),
@@ -366,6 +410,8 @@ is the last field in a
 <B><A HREF="../man3/offsetof.3.html">offsetof</A></B>(3),
 
 <B><A HREF="../man3/opendir.3.html">opendir</A></B>(3),
+
+<B><A HREF="../man3/readdir_r.3.html">readdir_r</A></B>(3),
 
 <B><A HREF="../man3/rewinddir.3.html">rewinddir</A></B>(3),
 
@@ -388,12 +434,15 @@ is the last field in a
 <DT><A HREF="#lbAG">ATTRIBUTES</A><DD>
 <DT><A HREF="#lbAH">CONFORMING TO</A><DD>
 <DT><A HREF="#lbAI">NOTES</A><DD>
-<DT><A HREF="#lbAJ">SEE ALSO</A><DD>
+<DL>
+<DT><A HREF="#lbAJ">The d_name field</A><DD>
+</DL>
+<DT><A HREF="#lbAK">SEE ALSO</A><DD>
 </DL>
 <HR>
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:41:54 GMT, April 20, 2020
+Time: 03:42:32 GMT, April 20, 2020
 </BODY>
 </HTML>

@@ -26,7 +26,7 @@ the source, must acknowledge the copyright and authors of this work.
 <HTML><HEAD><TITLE>Man page of SEMCTL</TITLE>
 </HEAD><BODY>
 <H1>SEMCTL</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2015-08-08<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2016-03-15<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -330,14 +330,9 @@ Return the value of
 for the
 <I>semnum</I>-th
 
-semaphore of the set
-(i.e., the PID of the process that executed the last
-<B><A HREF="../man2/semop.2.html">semop</A></B>(2)
-
-call for the
-<I>semnum</I>-th
-
-semaphore of the set).
+semaphore of the set.
+This is the PID of the process that last performed an operation on
+that semaphore (but see NOTES).
 The calling process must have read permission on the semaphore set.
 <DT><B>GETVAL</B>
 
@@ -715,7 +710,65 @@ For greater portability, it is best to always call
 <B>semctl</B>()
 
 with four arguments.
+
 <A NAME="lbAI">&nbsp;</A>
+<H3>The sempid value</H3>
+
+POSIX.1 defines
+<I>sempid</I>
+
+as the &quot;process ID of [the] last operation&quot; on a semaphore,
+and explicitly notes that this value is set by a successful
+<B><A HREF="../man2/semop.2.html">semop</A></B>(2)
+
+call, with the implication that no other interface affects the
+<I>sempid</I>
+
+value.
+<P>
+While some implementations conform to the behavior specified in POSIX.1,
+others do not.
+(The fault here probably lies with POSIX.1 inasmuch as it likely failed
+to capture the full range of existing implementation behaviors.)
+Various other implementations
+
+also update
+<I>sempid</I>
+
+for the other operations that update the value of a semaphore: the
+<B>SETVAL</B>
+
+and
+<B>SETALL</B>
+
+operations, as well as the semaphore adjustments performed
+on process termination as a consequence of the use of the
+<B>SEM_UNDO</B>
+
+flag (see
+<B><A HREF="../man2/semop.2.html">semop</A></B>(2)).
+
+<P>
+Linux also updates
+<I>sempid</I>
+
+for
+<B>SETVAL</B>
+
+operations and semaphore adjustments.
+However, somewhat inconsistently, it does not update
+<I>sempid</I>
+
+for
+<B>SETALL</B>
+
+operations.
+While the
+<B>SETALL</B>
+
+behavior might be viewed as a bug, the behavior is longstanding,
+and is probably unlikely to change.
+<A NAME="lbAJ">&nbsp;</A>
 <H2>SEE ALSO</H2>
 
 <B><A HREF="../man2/ipc.2.html">ipc</A></B>(2),
@@ -742,12 +795,15 @@ with four arguments.
 <DT><A HREF="#lbAF">ERRORS</A><DD>
 <DT><A HREF="#lbAG">CONFORMING TO</A><DD>
 <DT><A HREF="#lbAH">NOTES</A><DD>
-<DT><A HREF="#lbAI">SEE ALSO</A><DD>
+<DL>
+<DT><A HREF="#lbAI">The sempid value</A><DD>
+</DL>
+<DT><A HREF="#lbAJ">SEE ALSO</A><DD>
 </DL>
 <HR>
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:41:46 GMT, April 20, 2020
+Time: 03:42:24 GMT, April 20, 2020
 </BODY>
 </HTML>

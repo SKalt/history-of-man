@@ -26,7 +26,7 @@ the source, must acknowledge the copyright and authors of this work.
 <HTML><HEAD><TITLE>Man page of MADVISE</TITLE>
 </HEAD><BODY>
 <H1>MADVISE</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2015-04-19<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2016-03-15<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -50,7 +50,17 @@ Feature Test Macro Requirements for glibc (see
 <P>
 <B>madvise</B>():
 
+
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT>Since glibc 2.19:<DD>
+_DEFAULT_SOURCE
+<DT>Up to and including glibc 2.19:<DD>
 _BSD_SOURCE
+</DL>
+</DL>
+
+
 <A NAME="lbAD">&nbsp;</A>
 <H2>DESCRIPTION</H2>
 
@@ -285,7 +295,14 @@ restoring the default behavior, whereby a mapping is inherited across
 
 <DD>
 
-Poison a page and handle it like a hardware memory corruption.
+Poison the pages in the range specified by
+<I>addr</I>
+
+and
+<I>length</I>
+
+and handle subsequent references to those pages
+like a hardware memory corruption.
 This operation is available only for privileged
 (<B>CAP_SYS_ADMIN</B>)
 
@@ -294,31 +311,6 @@ This operation may result in the calling process receiving a
 <B>SIGBUS</B>
 
 and the page being unmapped.
-<P>
-This feature is intended for testing of memory error-handling code;
-it is available only if the kernel was configured with
-<B>CONFIG_MEMORY_FAILURE</B>.
-
-<DT><B>MADV_SOFT_OFFLINE</B> (since Linux 2.6.33)
-
-<DD>
-
-Soft offline the pages in the range specified by
-<I>addr</I>
-
-and
-<I>length</I>.
-
-The memory of each page in the specified range is preserved
-(i.e., when next accessed, the same content will be visible,
-but in a new physical page frame),
-and the original page is offlined
-(i.e., no longer used, and taken out of normal memory management).
-The effect of the
-<B>MADV_SOFT_OFFLINE</B>
-
-operation is invisible to (i.e., does not change the semantics of)
-the calling process.
 <P>
 This feature is intended for testing of memory error-handling code;
 it is available only if the kernel was configured with
@@ -372,6 +364,31 @@ KSM unmerges whatever pages it had merged in the address range specified by
 
 and
 <I>length</I>.
+
+<DT><B>MADV_SOFT_OFFLINE</B> (since Linux 2.6.33)
+
+<DD>
+
+Soft offline the pages in the range specified by
+<I>addr</I>
+
+and
+<I>length</I>.
+
+The memory of each page in the specified range is preserved
+(i.e., when next accessed, the same content will be visible,
+but in a new physical page frame),
+and the original page is offlined
+(i.e., no longer used, and taken out of normal memory management).
+The effect of the
+<B>MADV_SOFT_OFFLINE</B>
+
+operation is invisible to (i.e., does not change the semantics of)
+the calling process.
+<P>
+This feature is intended for testing of memory error-handling code;
+it is available only if the kernel was configured with
+<B>CONFIG_MEMORY_FAILURE</B>.
 
 <DT><B>MADV_HUGEPAGE</B> (since Linux 2.6.38)
 
@@ -452,6 +469,42 @@ file (see
 Undo the effect of an earlier
 <B>MADV_DONTDUMP</B>.
 
+<DT><B>MADV_FREE</B> (since Linux 4.5)
+
+<DD>
+The application no longer requires the pages in the range specified by
+<I>addr</I>
+
+and
+<I>len</I>.
+
+The kernel can thus free these pages,
+but the freeing could be delayed until memory pressure occurs.
+For each of the pages that has been marked to be freed
+but has not yet been freed,
+the free operation will be canceled if the caller writes into the page.
+After a successful
+<B>MADV_FREE</B>
+
+operation, any stale data (i.e., dirty, unwritten pages) will be lost
+when the kernel frees the pages.
+However, subsequent writes to pages in the range will succeed
+and then kernel cannot free those dirtied pages,
+so that the caller can always see just written data.
+If there is no subsequent write,
+the kernel can free the pages at any time.
+Once pages in the range have been freed, the caller will
+see zero-fill-on-demand pages upon subsequent page references.
+<P>
+The
+<B>MADV_FREE</B>
+
+operation
+can be applied only to private anonymous pages (see
+<B><A HREF="../man2/mmap.2.html">mmap</A></B>(2)).
+
+On a swapless system, freeing pages in a given range happens instantly,
+regardless of memory pressure.
 </DL>
 <A NAME="lbAG">&nbsp;</A>
 <H2>RETURN VALUE</H2>
@@ -684,6 +737,6 @@ from the system call, as it should).
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:41:45 GMT, April 20, 2020
+Time: 03:42:23 GMT, April 20, 2020
 </BODY>
 </HTML>

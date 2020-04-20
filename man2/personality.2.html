@@ -26,7 +26,7 @@ the source, must acknowledge the copyright and authors of this work.
 <HTML><HEAD><TITLE>Man page of PERSONALITY</TITLE>
 </HEAD><BODY>
 <H1>PERSONALITY</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2015-12-28<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2016-03-15<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -71,6 +71,264 @@ the current persona without changing it.
 A list of the available execution domains can be found in
 <I>&lt;<A HREF="file:///usr/include/sys/personality.h">sys/personality.h</A>&gt;</I>.
 
+The execution domain is a 32-bit value in which the top three
+bytes are set aside for flags that cause the kernel to modify the
+behavior of certain system calls so as to emulate historical or
+architectural quirks.
+The least significant byte is value defining the personality
+the kernel should assume.
+The flag values are as follows:
+<DL COMPACT>
+<DT><B>ADDR_COMPAT_LAYOUT</B> (since Linux 2.6.9)
+
+<DD>
+With this flag set, provide legacy virtual address space layout.
+<DT><B>ADDR_NO_RANDOMIZE</B> (since Linux 2.6.12)
+
+<DD>
+With this flag set, disable address-space-layout randomization.
+<DT><B>ADDR_LIMIT_32BIT</B> (since Linux 2.2)
+
+<DD>
+Limit the address space to 32 bits.
+<DT><B>ADDR_LIMIT_3GB</B> (since Linux 2.4.0)
+
+<DD>
+With this flag set, use 0xc0000000 as the offset at which to search
+a virtual memory chunk on
+<B><A HREF="../man2/mmap.2.html">mmap</A></B>(2);
+
+otherwise use 0xffffe000.
+<DT><B>FDPIC_FUNCPTRS</B> (since Linux 2.6.11)
+
+<DD>
+User-space function pointers to signal handlers point
+(on certain architectures) to descriptors.
+<DT><B>MMAP_PAGE_ZERO</B> (since Linux 2.4.0)
+
+<DD>
+Map page 0 as read-only
+(to support binaries that depend on this SVr4 behavior).
+<DT><B>READ_IMPLIES_EXEC</B> (since Linux 2.6.8)
+
+<DD>
+With this flag set,
+<B>PROT_READ</B>
+
+implies
+<B>PROT_EXEC</B>
+
+for
+<B><A HREF="../man2/mmap.2.html">mmap</A></B>(2).
+
+<DT><B>SHORT_INODE</B> (since Linux 2.4.0)
+
+<DD>
+No effects(?).
+<DT><B>STICKY_TIMEOUTS</B> (since Linux 1.2.0)
+
+<DD>
+With this flag set,
+<B><A HREF="../man2/select.2.html">select</A></B>(2),
+
+<B><A HREF="../man2/pselect.2.html">pselect</A></B>(2),
+
+and
+<B><A HREF="../man2/ppoll.2.html">ppoll</A></B>(2)
+
+do not modify the returned timeout argument when
+interrupted by a signal handler.
+<DT><B>UNAME26</B> (since Linux 3.1)
+
+<DD>
+Have
+<B><A HREF="../man2/uname.2.html">uname</A></B>(2)
+
+report a 2.6.40+ version number rather than a 3.x version number.
+Added as a stopgap measure to support broken applications that
+could not handle the kernel version-numbering switch from 2.6.x to 3.x.
+<DT><B>WHOLE_SECONDS</B> (since Linux 1.2.0)
+
+<DD>
+No effects(?).
+</DL>
+<P>
+
+The available execution domains are:
+<DL COMPACT>
+<DT><B>PER_BSD</B> (since Linux 1.2.0)
+
+<DD>
+BSD. (No effects.)
+<DT><B>PER_HPUX</B> (since Linux 2.4)
+
+<DD>
+Support for 32-bit HP/UX.
+This support was never complete, and was dropped so that since Linux 4.0,
+this value has no effect.
+<DT><B>PER_IRIX32</B> (since Linux 2.2)
+
+<DD>
+IRIX 5 32-bit.
+Never fully functional; support dropped in Linux 2.6.27.
+Implies
+<B>STICKY_TIMEOUTS</B>.
+
+<DT><B>PER_IRIX64</B> (since Linux 2.2)
+
+<DD>
+IRIX 6 64-bit.
+Implies
+<B>STICKY_TIMEOUTS</B>;
+
+otherwise no effects.
+<DT><B>PER_IRIXN32</B> (since Linux 2.2)
+
+<DD>
+IRIX 6 new 32-bit.
+Implies
+<B>STICKY_TIMEOUTS</B>;
+
+otherwise no effects.
+<DT><B>PER_ISCR4</B> (since Linux 1.2.0)
+
+<DD>
+Implies
+<B>STICKY_TIMEOUTS</B>;
+
+otherwise no effects.
+<DT><B>PER_LINUX</B> (since Linux 1.2.0)
+
+<DD>
+Linux.
+<DT><B>PER_LINUX32</B> (since Linux 2.2)
+
+<DD>
+[To be documented.]
+<DT><B>PER_LINUX32_3GB</B> (since Linux 2.4)
+
+<DD>
+Implies
+<B>ADDR_LIMIT_3GB</B>.
+
+<DT><B>PER_LINUX_32BIT</B> (since Linux 2.0)
+
+<DD>
+Implies
+<B>ADDR_LIMIT_32BIT</B>.
+
+<DT><B>PER_LINUX_FDPIC</B> (since Linux 2.6.11)
+
+<DD>
+Implies
+<B>FDPIC_FUNCPTRS</B>.
+
+<DT><B>PER_OSF4</B> (since Linux 2.4)
+
+<DD>
+OSF/1 v4.
+On alpha,
+
+clear top 32 bits of iov_len in the user's buffer for
+compatibility with old versions of OSF/1 where iov_len
+was defined as.
+<I>int</I>.
+
+<DT><B>PER_OSR5</B> (since Linux 2.4)
+
+<DD>
+Implies
+<B>STICKY_TIMEOUTS</B>
+
+and
+<B>WHOLE_SECONDS</B>;
+
+otherwise no effects.
+<DT><B>PER_RISCOS</B> (since Linux 2.2)
+
+<DD>
+[To be documented.]
+<DT><B>PER_SCOSVR3</B> (since Linux 1.2.0)
+
+<DD>
+Implies
+<B>STICKY_TIMEOUTS</B>,
+
+<B>WHOLE_SECONDS</B>,
+
+and
+<B>SHORT_INODE</B>;
+
+otherwise no effects.
+<DT><B>PER_SOLARIS</B> (since Linux 2.4)
+
+<DD>
+Implies
+<B>STICKY_TIMEOUTS</B>;
+
+otherwise no effects.
+<DT><B>PER_SUNOS</B> (since Linux 2.4.0)
+
+<DD>
+Implies
+<B>STICKY_TIMEOUTS</B>.
+
+Divert library and dynamic linker searches to
+<I>/usr/gnemul</I>.
+
+Buggy, largely unmaintained, and almost entirely unused;
+support was removed in Linux 2.6.26.
+<DT><B>PER_SVR3</B> (since Linux 1.2.0)
+
+<DD>
+Implies
+<B>STICKY_TIMEOUTS</B>
+
+and
+<B>SHORT_INODE</B>;
+
+otherwise no effects.
+<DT><B>PER_SVR4</B> (since Linux 1.2.0)
+
+<DD>
+Implies
+<B>STICKY_TIMEOUTS</B>
+
+and
+<B>MMAP_PAGE_ZERO</B>;
+
+otherwise no effects.
+<DT><B>PER_UW7</B> (since Linux 2.4)
+
+<DD>
+Implies
+<B>STICKY_TIMEOUTS</B>
+
+and
+<B>MMAP_PAGE_ZERO</B>;
+
+otherwise no effects.
+<DT><B>PER_WYSEV386</B> (since Linux 1.2.0)
+
+<DD>
+Implies
+<B>STICKY_TIMEOUTS</B>
+
+and
+<B>SHORT_INODE</B>;
+
+otherwise no effects.
+<DT><B>PER_XENIX</B> (since Linux 1.2.0)
+
+<DD>
+Implies
+<B>STICKY_TIMEOUTS</B>
+
+and
+<B>SHORT_INODE</B>;
+
+otherwise no effects.
+</DL>
 <A NAME="lbAE">&nbsp;</A>
 <H2>RETURN VALUE</H2>
 
@@ -94,7 +352,8 @@ The kernel was unable to change the personality.
 <A NAME="lbAG">&nbsp;</A>
 <H2>VERSIONS</H2>
 
-This system call first appeared in Linux 1.1.20;
+This system call first appeared in Linux 1.1.20
+(and thus first in a stable kernel release with Linux 1.2.0);
 library support was added in glibc 2.3.
 
 
@@ -128,6 +387,6 @@ be portable.
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:41:45 GMT, April 20, 2020
+Time: 03:42:23 GMT, April 20, 2020
 </BODY>
 </HTML>

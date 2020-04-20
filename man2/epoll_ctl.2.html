@@ -19,13 +19,13 @@ License along with this manual; if not, see
 <HTML><HEAD><TITLE>Man page of EPOLL_CTL</TITLE>
 </HEAD><BODY>
 <H1>EPOLL_CTL</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2015-05-07<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2016-03-15<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
 <H2>NAME</H2>
 
-epoll_ctl - control interface for an epoll descriptor
+epoll_ctl - control interface for an epoll file descriptor
 <A NAME="lbAC">&nbsp;</A>
 <H2>SYNOPSIS</H2>
 
@@ -256,6 +256,104 @@ for the event file descriptor with
 <B>EPOLL_CTL_MOD</B>.
 
 See also BUGS.
+<DT><B>EPOLLEXCLUSIVE</B> (since Linux 4.5)
+
+<DD>
+Sets an exclusive wakeup mode for the epoll file descriptor that is being
+attached to the target file descriptor,
+<I>fd</I>.
+
+When a wakeup event occurs and multiple epoll file descriptors
+are attached to the same target file using
+<B>EPOLLEXCLUSIVE</B>,
+
+one or more of the epoll file descriptors will receive an event with
+<B><A HREF="../man2/epoll_wait.2.html">epoll_wait</A></B>(2).
+
+The default in this scenario (when
+<B>EPOLLEXCLUSIVE</B>
+
+is not set) is for all epoll file descriptors to receive an event.
+<B>EPOLLEXCLUSIVE</B>
+
+is thus useful for avoiding thundering herd problems in certain scenarios.
+<P>
+If the same file descriptor is in multiple epoll instances,
+some with the
+<B>EPOLLEXCLUSIVE</B>
+
+flag, and others without, then events will provided to all epoll
+instances that did not specify
+<B>EPOLLEXCLUSIVE</B>,
+
+and at least one of the epoll instances that did specify
+<B>EPOLLEXCLUSIVE</B>.
+
+<P>
+The following values may be specified in conjunction with
+<B>EPOLLEXCLUSIVE</B>:
+
+<B>EPOLLIN</B>,
+
+<B>EPOLLOUT</B>,
+
+<B>EPOLLWAKEUP,</B>
+
+and
+<B>EPOLLET</B>.
+
+<B>EPOLLHUP</B>
+
+and
+<B>EPOLLERR</B>
+
+can also be specified, but this is not required:
+as usual, these events are always reported if they occur,
+regardless of whether they are specified in
+<I>events</I>.
+
+Attempts to specify other values in
+<I>events</I>
+
+yield an error.
+<B>EPOLLEXCLUSIVE</B>
+
+may be used only in an
+<B>EPOLL_CTL_ADD</B>
+
+operation; attempts to employ it with
+<B>EPOLL_CTL_MOD</B>
+
+yield an error.
+If
+<B>EPOLLEXCLUSIVE</B>
+
+has set using
+<B><A HREF="../man2/epoll_ctl.2.html">epoll_ctl</A></B>(2),
+
+then a subsequent
+<B>EPOLL_CTL_MOD</B>
+
+on the same
+<I>epfd</I>,&nbsp;<I>fd</I>
+
+pair yields an error.
+A call to
+<B><A HREF="../man2/epoll_ctl.2.html">epoll_ctl</A></B>(2)
+
+that specifies
+<B>EPOLLEXCLUSIVE</B>
+
+in
+<I>events</I>
+
+and specifies the target file descriptor
+<I>fd</I>
+
+as an epoll instance will likewise fail.
+The error in all of these cases is
+<B>EINVAL</B>.
+
 </DL>
 <A NAME="lbAE">&nbsp;</A>
 <H2>RETURN VALUE</H2>
@@ -315,6 +413,66 @@ or the requested operation
 <I>op</I>
 
 is not supported by this interface.
+<DT><B>ELOOP</B>
+
+<DD>
+<I>fd</I>
+
+refers to an epoll instance and this
+<B>EPOLL_CTL_ADD</B>
+
+operation would result in a circular loop of epoll instances
+monitoring one another.
+<DT><B>EINVAL</B>
+
+<DD>
+An invalid event type was specified along with
+<B>EPOLLEXCLUSIVE</B>
+
+in
+<I>events</I>.
+
+<DT><B>EINVAL</B>
+
+<DD>
+<I>op</I>
+
+was
+<B>EPOLL_CTL_MOD</B>
+
+and
+<I>events</I>
+
+included
+<B>EPOLLEXCLUSIVE</B>.
+
+<DT><B>EINVAL</B>
+
+<DD>
+<I>op</I>
+
+was
+<B>EPOLL_CTL_MOD</B>
+
+and the
+<B>EPOLLEXCLUSIVE</B>
+
+flag has previously been applied to this
+<I>epfd</I>,&nbsp;<I>fd</I>
+
+pair.
+<DT><B>EINVAL</B>
+
+<DD>
+<B>EPOLLEXCLUSIVE</B>
+
+was specified in
+<I>event</I>
+
+and
+<I>fd</I>
+
+refers to an epoll instance.
 <DT><B>ENOENT</B>
 
 <DD>
@@ -478,6 +636,6 @@ flag.
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:41:44 GMT, April 20, 2020
+Time: 03:42:22 GMT, April 20, 2020
 </BODY>
 </HTML>

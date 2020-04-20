@@ -10,7 +10,7 @@ of the modification is added to the header.
 <HTML><HEAD><TITLE>Man page of SOCKET</TITLE>
 </HEAD><BODY>
 <H1>SOCKET</H1>
-Section: Linux Programmer's Manual (7)<BR>Updated: 2015-05-07<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (7)<BR>Updated: 2016-03-15<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -200,7 +200,7 @@ is also sent.
 Socket has enough send buffer space for writing new data.
 <BR></TD></TR>
 <TR VALIGN=top><TD>Read/Write</TD><TD>
-POLLIN|
+POLLIN |
 <BR>
 
 POLLOUT
@@ -345,6 +345,121 @@ to accept connections with
 The value 0 indicates that this is not a listening socket,
 the value 1 indicates that this is a listening socket.
 This socket option is read-only.
+<DT><B>SO_ATTACH_FILTER</B> (since Linux 2.2), <B>SO_ATTACH_BPF</B> (since Linux 3.19)
+
+<DD>
+Attach a classic BPF
+(<B>SO_ATTACH_FILTER</B>)
+
+or an extended BPF
+(<B>SO_ATTACH_BPF</B>)
+
+program to the socket for use as a filter of incoming packets.
+A packet will be dropped if the filter program returns zero.
+If the filter program returns a
+non-zero value which is less than the packet's data length,
+the packet will be truncated to the length returned.
+If the value returned by the filter is greater than or equal to the
+packet's data length, the packet is allowed to proceed unmodified.
+<P>
+The argument for
+<B>SO_ATTACH_FILTER</B>
+
+is a
+<I>sock_fprog</I>
+
+structure, defined in
+<I>&lt;<A HREF="file:///usr/include/linux/filter.h">linux/filter.h</A>&gt;</I>:
+
+<P>
+
+<PRE>
+struct sock_fprog {
+    unsigned short      len;
+    struct sock_filter *filter;
+};
+</PRE>
+
+
+<DT><DD>
+The argument for
+<B>SO_ATTACH_BPF</B>
+
+is a file descriptor returned by the
+<B><A HREF="../man2/bpf.2.html">bpf</A></B>(2)
+
+system call and must refer to a program of type
+<B>BPF_PROG_TYPE_SOCKET_FILTER.</B>
+
+<P>
+These options may be set multiple times for a given socket,
+each time replacing the previous filter program.
+The classic and extended versions may be called on the same socket,
+but the previous filter will always be replaced such that a socket
+never has more than one filter defined.
+<P>
+Both classic and extended BPF are explained in the kernel source file
+<I>Documentation/networking/filter.txt</I>
+
+<DT><B>SO_ATTACH_REUSEPORT_CBPF</B>, <B>SO_ATTACH_REUSEPORT_EBPF</B>
+
+<DD>
+For use with the
+<B>SO_REUSEPORT</B>
+
+option, these options allow the user to set a classic BPF
+(<B>SO_ATTACH_REUSEPORT_CBPF</B>)
+
+or an extended BPF
+(<B>SO_ATTACH_REUSEPORT_EBPF</B>)
+
+program which defines how packets are assigned to
+the sockets in the reuseport group (that is, all sockets which have
+<B>SO_REUSEPORT</B>
+
+set and are using the same local address to receive packets).
+<P>
+The BPF program must return an index between 0 and N-1 representing
+the socket which should receive the packet
+(where N is the number of sockets in the group).
+If the BPF program returns an invalid index,
+socket selection will fall back to the plain
+<B>SO_REUSEPORT</B>
+
+mechanism.
+<P>
+Sockets are numbered in the order in which they are added to the group
+(that is, the order of
+<B><A HREF="../man2/bind.2.html">bind</A></B>(2)
+
+calls for UDP sockets or the order of
+<B><A HREF="../man2/listen.2.html">listen</A></B>(2)
+
+calls for TCP sockets).
+New sockets added to a reuseport group will inherit the BPF program.
+When a socket is removed from a reuseport group (via
+<B><A HREF="../man2/close.2.html">close</A></B>(2)),
+
+the last socket in the group will be moved into the closed socket's
+position.
+<P>
+These options may be set repeatedly at any time on any socket in the group
+to replace the current BPF program used by all sockets in the group.
+<P>
+<B>SO_ATTACH_REUSEPORT_CBPF</B>
+
+takes the same argument type as
+<B>SO_ATTACH_FILTER</B>
+
+and
+<B>SO_ATTACH_REUSEPORT_EBPF</B>
+
+takes the same argument type as
+<B>SO_ATTACH_BPF.</B>
+
+<P>
+UDP support for this feature is available since Linux 4.5;
+TCP support is available since Linux 4.6.
 <DT><B>SO_BINDTODEVICE</B>
 
 <DD>
@@ -414,6 +529,18 @@ Only allowed for processes with the
 <B>CAP_NET_ADMIN</B>
 
 capability or an effective user ID of 0.
+<DT><B>SO_DETACH_FILTER</B> (since Linux 2.2), <B>SO_DETACH_BPF</B> (since Linux 3.19)
+
+<DD>
+These two options, which are synonyms,
+may be used to remove the classic or extended BPF
+program attached to a socket with either
+<B>SO_ATTACH_FILTER</B>
+
+or
+<B>SO_ATTACH_BPF</B>.
+
+The option value is ignored.
 <DT><B>SO_DOMAIN</B> (since Linux 2.6.32)
 
 <DD>
@@ -484,6 +611,44 @@ When the socket is closed as part of
 <B><A HREF="../man2/exit.2.html">exit</A></B>(2),
 
 it always lingers in the background.
+<DT><B>SO_LOCK_FILTER</B>
+
+<DD>
+
+When set, this option will prevent
+changing the filters associated with the socket.
+These filters include any set using the socket options
+<B>SO_ATTACH_FILTER,</B>
+
+<B>SO_ATTACH_BPF,</B>
+
+<B>SO_ATTACH_REUSEPORT_CBPF</B>
+
+and
+<B>SO_ATTACH_REUSEPORT_EPBF</B>.
+
+<P>
+The typical use case is for a privileged process to set up a raw socket
+(an operation that requires the
+<B>CAP_NET_RAW</B>
+
+capability), apply a restrictive filter, set the
+<B>SO_LOCK_FILTER</B>
+
+option,
+and then either drop its privileges or pass the socket file descriptor
+to an unprivileged process via a UNIX domain socket.
+<P>
+Once the
+<B>SO_LOCK_FILTER</B>
+
+option has been enabled, attempts to change or remove the filter
+attached to a socket, or to disable the
+<B>SO_LOCK_FILTER</B>
+
+option will fail with the error
+<B>EPERM</B>.
+
 <DT><B>SO_MARK</B> (since Linux 2.6.25)
 
 <DD>
@@ -586,7 +751,6 @@ The following example serves to illustrate the use of
 Suppose a stream socket has the following queued input data:
 <P>
 <BR>&nbsp;&nbsp;&nbsp;&nbsp;aabbccddeeff
-<P>
 <DT><DD>
 The following sequence of
 <B><A HREF="../man2/recv.2.html">recv</A></B>(2)
@@ -1246,26 +1410,12 @@ where only the later program needs to set the
 option.
 Typically this difference is invisible, since, for example, a server
 program is designed to always set this option.
+
+
 <A NAME="lbAM">&nbsp;</A>
-<H2>BUGS</H2>
-
-The
-<B>CONFIG_FILTER</B>
-
-socket options
-<B>SO_ATTACH_FILTER</B>
-
-and
-<B>SO_DETACH_FILTER</B>
-
-
-are not documented.
-The suggested interface to use them is via the libpcap
-library.
-
-
-<A NAME="lbAN">&nbsp;</A>
 <H2>SEE ALSO</H2>
+
+<B><A HREF="../man1/wireshark.1.html">wireshark</A></B>(1),
 
 <B><A HREF="../man2/bpf.2.html">bpf</A></B>(2),
 
@@ -1276,6 +1426,8 @@ library.
 <B><A HREF="../man2/setsockopt.2.html">setsockopt</A></B>(2),
 
 <B><A HREF="../man2/socket.2.html">socket</A></B>(2),
+
+<B><A HREF="../man3/pcap.3.html">pcap</A></B>(3),
 
 <B><A HREF="../man7/capabilities.7.html">capabilities</A></B>(7),
 
@@ -1289,7 +1441,9 @@ library.
 
 <B><A HREF="../man7/udp.7.html">udp</A></B>(7),
 
-<B><A HREF="../man7/unix.7.html">unix</A></B>(7)
+<B><A HREF="../man7/unix.7.html">unix</A></B>(7),
+
+<B><A HREF="../man8/tcpdump.8.html">tcpdump</A></B>(8)
 
 <P>
 
@@ -1309,13 +1463,12 @@ library.
 </DL>
 <DT><A HREF="#lbAK">VERSIONS</A><DD>
 <DT><A HREF="#lbAL">NOTES</A><DD>
-<DT><A HREF="#lbAM">BUGS</A><DD>
-<DT><A HREF="#lbAN">SEE ALSO</A><DD>
+<DT><A HREF="#lbAM">SEE ALSO</A><DD>
 </DL>
 <HR>
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:41:58 GMT, April 20, 2020
+Time: 03:42:36 GMT, April 20, 2020
 </BODY>
 </HTML>

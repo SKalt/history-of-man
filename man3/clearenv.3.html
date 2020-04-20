@@ -26,7 +26,7 @@ the source, must acknowledge the copyright and authors of this work.
 <HTML><HEAD><TITLE>Man page of CLEARENV</TITLE>
 </HEAD><BODY>
 <H1>CLEARENV</H1>
-Section: Linux Programmer's Manual (3)<BR>Updated: 2015-07-23<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2016-03-15<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -51,7 +51,8 @@ Feature Test Macro Requirements for glibc (see
 <P>
 <B>clearenv</B>():
 
-_SVID_SOURCE || _BSD_SOURCE
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;/*&nbsp;Glibc&nbsp;since&nbsp;2.19:&nbsp;*/&nbsp;_DEFAULT_SOURCE
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;||&nbsp;/*&nbsp;Glibc&nbsp;versions&nbsp;&lt;=&nbsp;2.19:&nbsp;*/&nbsp;_SVID_SOURCE&nbsp;||&nbsp;_BSD_SOURCE
 <A NAME="lbAD">&nbsp;</A>
 <H2>DESCRIPTION</H2>
 
@@ -63,6 +64,12 @@ pairs and sets the value of the external variable
 <I>environ</I>
 
 to NULL.
+After this call, new variables can be added to the environment using
+<B><A HREF="../man3/putenv.3.html">putenv</A></B>(3)
+
+and
+<B><A HREF="../man3/setenv.3.html">setenv</A></B>(3).
+
 <A NAME="lbAE">&nbsp;</A>
 <H2>RETURN VALUE</H2>
 
@@ -115,9 +122,10 @@ and rejected
 <A NAME="lbAI">&nbsp;</A>
 <H2>NOTES</H2>
 
-Used in security-conscious applications.
-If it is unavailable
-the assignment
+On systems where
+<B>clearenv</B>()
+
+is unavailable, the assignment
 <PRE>
 
     environ = NULL;
@@ -126,7 +134,26 @@ the assignment
 
 will probably do.
 <P>
+The
+<B>clearenv</B>()
 
+function may be useful in security-conscious applications that want to
+precisely control the environment that is passed to programs
+executed using
+<B><A HREF="../man3/exec.3.html">exec</A></B>(3).
+
+The application would do this by first clearing the environment
+and then adding select environment variables.
+<P>
+Note that the main effect of
+<B>clearenv</B>()
+
+is to adjust the value of the pointer
+<B><A HREF="../man7/environ.7.html">environ</A></B>(7);
+
+this function does not erase the contents of the buffers
+containing the environment definitions.
+<P>
 The DG/UX and Tru64 man pages write: If
 <I>environ</I>
 
@@ -176,6 +203,6 @@ will return an error and the process environment will remain unchanged.
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:41:49 GMT, April 20, 2020
+Time: 03:42:27 GMT, April 20, 2020
 </BODY>
 </HTML>

@@ -26,7 +26,7 @@ the source, must acknowledge the copyright and authors of this work.
 <HTML><HEAD><TITLE>Man page of TIMEGM</TITLE>
 </HEAD><BODY>
 <H1>TIMEGM</H1>
-Section: Linux Programmer's Manual (3)<BR>Updated: 2015-03-02<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2016-03-15<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -55,7 +55,10 @@ Feature Test Macro Requirements for glibc (see
 
 <B>timegm</B>():
 
-_BSD_SOURCE || _SVID_SOURCE
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;Since&nbsp;glibc&nbsp;2.19:
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;_DEFAULT_SOURCE
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;Glibc&nbsp;2.19&nbsp;and&nbsp;earlier:
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;_BSD_SOURCE&nbsp;||&nbsp;_SVID_SOURCE
 <A NAME="lbAD">&nbsp;</A>
 <H2>DESCRIPTION</H2>
 
@@ -71,6 +74,15 @@ are the inverses of
 and
 <B><A HREF="../man3/gmtime.3.html">gmtime</A></B>(3).
 
+Both functions take a broken-down time and convert it to calendar time
+(seconds since the Epoch, 1970-01-01 00:00:00 +0000, UTC).
+The difference between the two functions is that
+<B>timelocal</B>()
+
+takes the local timezone into account when doing the conversion, while
+<B>timegm</B>()
+
+takes the input value to be Coordinated Universal Time (UTC).
 <A NAME="lbAE">&nbsp;</A>
 <H2>ATTRIBUTES</H2>
 
@@ -92,7 +104,7 @@ For an explanation of the terms used in this section, see
 
 These functions are nonstandard GNU extensions
 that are also present on the BSDs.
-Avoid their use; see NOTES.
+Avoid their use.
 <A NAME="lbAG">&nbsp;</A>
 <H2>NOTES</H2>
 
@@ -103,50 +115,6 @@ function is equivalent to the POSIX standard function
 <B><A HREF="../man3/mktime.3.html">mktime</A></B>(3).
 
 There is no reason to ever use it.
-<P>
-
-For a portable version of
-<B>timegm</B>(),
-
-set the
-<B>TZ</B>
-
-environment variable to UTC, call
-<B><A HREF="../man3/mktime.3.html">mktime</A></B>(3)
-
-and restore the value of
-<B>TZ</B>.
-
-Something like
-<P>
-
-<PRE>
-#include &lt;<A HREF="file:///usr/include/time.h">time.h</A>&gt;
-#include &lt;<A HREF="file:///usr/include/stdlib.h">stdlib.h</A>&gt;
-
-time_t
-my_timegm(struct tm *tm)
-{
-    time_t ret;
-    char *tz;
-
-    tz = getenv(&quot;TZ&quot;);
-    if (tz)
-        tz = strdup(tz);
-    setenv(&quot;TZ&quot;, &quot;&quot;, 1);
-    tzset();
-    ret = mktime(tm);
-    if (tz) {
-        setenv(&quot;TZ&quot;, tz, 1);
-        free(tz);
-    } else
-        unsetenv(&quot;TZ&quot;);
-    tzset();
-    return ret;
-}
-</PRE>
-
-
 <A NAME="lbAH">&nbsp;</A>
 <H2>SEE ALSO</H2>
 
@@ -175,6 +143,6 @@ my_timegm(struct tm *tm)
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:41:55 GMT, April 20, 2020
+Time: 03:42:33 GMT, April 20, 2020
 </BODY>
 </HTML>

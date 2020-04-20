@@ -1,4 +1,5 @@
 <!--
+Copyright (C) 2016 Michael Kerrisk &lt;mtk.manpages@gmail.com&gt;
 %%%LICENSE_START(GPLv2+_DOC_FULL)
 This is free documentation; you can redistribute it and/or
 modify it under the terms of the GNU General Public License as
@@ -24,13 +25,13 @@ License along with this manual; if not, see
 <HTML><HEAD><TITLE>Man page of SETJMP</TITLE>
 </HEAD><BODY>
 <H1>SETJMP</H1>
-Section: Linux Programmer's Manual (3)<BR>Updated: 2015-08-08<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2016-03-15<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
 <H2>NAME</H2>
 
-setjmp, sigsetjmp - save stack context for nonlocal goto
+setjmp, sigsetjmp, longjmp, siglongjmp  - performing a nonlocal goto
 <A NAME="lbAC">&nbsp;</A>
 <H2>SYNOPSIS</H2>
 
@@ -39,8 +40,10 @@ setjmp, sigsetjmp - save stack context for nonlocal goto
 <P>
 <PRE>
 <B>int setjmp(jmp_buf </B><I>env</I><B>);</B>
-
 <B>int sigsetjmp(sigjmp_buf </B><I>env</I><B>, int </B><I>savesigs</I><B>);</B>
+
+<B>void longjmp(jmp_buf </B><I>env</I><B>, int </B><I>val</I><B>);</B>
+<B>void siglongjmp(sigjmp_buf </B><I>env</I><B>, int </B><I>val</I><B>);</B>
 </PRE>
 
 <P>
@@ -52,57 +55,109 @@ Feature Test Macro Requirements for glibc (see
 <P>
 <B>setjmp</B>():
 
-see NOTES.
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;see&nbsp;NOTES.
 <BR>
 
 <B>sigsetjmp</B>():
 
-_POSIX_C_SOURCE&nbsp;&gt;=&nbsp;1 || _XOPEN_SOURCE || _POSIX_C_SOURCE
+_POSIX_C_SOURCE
 <A NAME="lbAD">&nbsp;</A>
 <H2>DESCRIPTION</H2>
 
+The functions described on this page are used for performing &quot;nonlocal gotos&quot;:
+transferring execution from one function to a predetermined location
+in another function.
+The
 <B>setjmp</B>()
 
-and
-<B><A HREF="../man3/longjmp.3.html">longjmp</A></B>(3)
+function dynamically establishes the target to which control
+will later be transferred, and
+<B>longjmp</B>()
 
-are useful for dealing with errors
-and interrupts encountered in a low-level subroutine of a program.
+performs the transfer of execution.
+<P>
+The
 <B>setjmp</B>()
 
-saves the stack context/environment in
+function saves various information about the calling environment
+(typically, the stack pointer, the instruction pointer,
+possibly the values of other registers and the signal mask)
+in the buffer
 <I>env</I>
 
-for
-later use by
-<B><A HREF="../man3/longjmp.3.html">longjmp</A></B>(3).
+for later use by
+<B>longjmp</B>().
 
-The stack context will be invalidated
-if the function which called
+In this case,
 <B>setjmp</B>()
 
-returns.
+returns 0.
 <P>
+The
+<B>longjmp</B>()
+
+function uses the information saved in
+<I>env</I>
+
+to transfer control back to the point where
+<B>setjmp</B>()
+
+was called and to restore (&quot;rewind&quot;) the stack to its state at the time of the
+<B>setjmp</B>()
+
+call.
+In addition, and depending on the implementation (see NOTES),
+the values of some other registers and the process signal mask
+may be restored to their state at the time of the
+<B>setjmp</B>()
+
+call.
+<P>
+Following a successful
+<B>longjmp</B>(),
+
+execution continues as if
+<B>setjmp</B>()
+
+had returned for a second time.
+This &quot;fake&quot; return can be distinguished from a true
+<B>setjmp</B>()
+
+call because the &quot;fake&quot; return returns the value provided in
+<I>val</I>.
+
+If the programmer mistakenly passes the value 0 in
+<I>val</I>,
+
+the &quot;fake&quot; return will instead return 1.
+<P>
+<A NAME="lbAE">&nbsp;</A>
+<H3>sigsetjmp() and siglongjmp()</H3>
 
 <B>sigsetjmp</B>()
 
-is similar to
-<B>setjmp</B>().
+and
+<B>siglongjmp</B>()
 
-If, and only if,
+also perform nonlocal gotos, but provide predictable handling of
+the process signal mask.
+<P>
+If, and only if, the
 <I>savesigs</I>
 
-is nonzero,
-the process's current signal mask is saved in
+argument provided to
+<B>sigsetjmp</B>()
+
+is nonzero, the process's current signal mask is saved in
 <I>env</I>
 
 and will be restored if a
-<B><A HREF="../man3/siglongjmp.3.html">siglongjmp</A></B>(3)
+<B>siglongjmp</B>()
 
 is later performed with this
 <I>env</I>.
 
-<A NAME="lbAE">&nbsp;</A>
+<A NAME="lbAF">&nbsp;</A>
 <H2>RETURN VALUE</H2>
 
 <B>setjmp</B>()
@@ -110,15 +165,26 @@ is later performed with this
 and
 <B>sigsetjmp</B>()
 
-return 0 if returning directly, and
-nonzero when returning from
-<B><A HREF="../man3/longjmp.3.html">longjmp</A></B>(3)
+return 0 when called directly;
+on the &quot;fake&quot; return that occurs after
+<B>longjmp</B>()
 
 or
-<B><A HREF="../man3/siglongjmp.3.html">siglongjmp</A></B>(3)
+<B>siglongjmp</B>(),
 
-using the saved context.
-<A NAME="lbAF">&nbsp;</A>
+the nonzero value specified in
+<I>val</I>
+
+is returned.
+<P>
+The
+<B>longjmp</B>()
+
+or
+<B>siglongjmp</B>()
+
+functions do not return.
+<A NAME="lbAG">&nbsp;</A>
 <H2>ATTRIBUTES</H2>
 
 For an explanation of the terms used in this section, see
@@ -132,20 +198,30 @@ For an explanation of the terms used in this section, see
 <B>sigsetjmp</B>()
 
 </TD><TD>Thread safety</TD><TD>MT-Safe<BR></TD></TR>
+<TR VALIGN=top><TD>
+<B>longjmp</B>(),
+
+<B>siglongjmp</B>()
+
+</TD><TD>Thread safety</TD><TD>MT-Safe<BR></TD></TR>
 </TABLE>
 
 <P>
-<A NAME="lbAG">&nbsp;</A>
+<A NAME="lbAH">&nbsp;</A>
 <H2>CONFORMING TO</H2>
 
-<B>setjmp</B>():
+<B>setjmp</B>(),
+
+<B>longjmp</B>():
 
 POSIX.1-2001, POSIX.1-2008, C89, C99.
 <P>
-<B>sigsetjmp</B>():
+<B>sigsetjmp</B>(),
+
+<B>siglongjmp</B>():
 
 POSIX.1-2001, POSIX.1-2008.
-<A NAME="lbAH">&nbsp;</A>
+<A NAME="lbAI">&nbsp;</A>
 <H2>NOTES</H2>
 
 POSIX does not specify whether
@@ -153,7 +229,7 @@ POSIX does not specify whether
 
 will save the signal mask
 (to be later restored during
-<B><A HREF="../man3/longjmp.3.html">longjmp</A></B>(3)).
+<B>longjmp</B>().
 
 In System V it will not.
 In 4.3BSD it will, and there
@@ -175,7 +251,6 @@ feature test macro is defined and none of
 
 <B>_XOPEN_SOURCE</B>,
 
-<B>_XOPEN_SOURCE_EXTENDED</B>,
 
 <B>_GNU_SOURCE</B>,
 
@@ -200,28 +275,174 @@ with a nonzero
 
 argument.
 <P>
-If you want to portably save and restore signal masks, use
-<B>sigsetjmp</B>()
-
-and
-<B><A HREF="../man3/siglongjmp.3.html">siglongjmp</A></B>(3).
-
-<P>
-
 <B>setjmp</B>()
 
 and
+<B><A HREF="../man3/longjmp.3.html">longjmp</A></B>(3)
+
+can be useful for dealing with errors inside deeply nested function calls
+or to allow a signal handler to pass control to
+a specific point in the program,
+rather than returning to the point where the handler interrupted
+the main program.
+In the latter case,
+if you want to portably save and restore signal masks, use
 <B>sigsetjmp</B>()
 
-make programs hard to understand
-and maintain.
-If possible, an alternative should be used.
-<A NAME="lbAI">&nbsp;</A>
+and
+<B>siglongjmp</B>().
+
+See also the discussion of program readability below.
+<P>
+The compiler may optimize variables into registers, and
+<B>longjmp</B>()
+
+may restore the values of other registers in addition to the
+stack pointer and program counter.
+Consequently, the values of automatic variables are unspecified
+after a call to
+<B>longjmp</B>()
+
+if they meet all the following criteria:
+<DL COMPACT>
+<DT>&bull;<DD>
+they are local to the function that made the corresponding
+<B><A HREF="../man3/setjmp.3.html">setjmp</A></B>(3)
+
+call;
+<DT>&bull;<DD>
+their values are changed between the calls to
+<B><A HREF="../man3/setjmp.3.html">setjmp</A></B>(3)
+
+and
+<B>longjmp</B>();
+
+and
+<DT>&bull;<DD>
+they are not declared as
+<I>volatile</I>.
+
+</DL>
+<P>
+
+Analogous remarks apply for
+<B>siglongjmp</B>().
+
+
+<A NAME="lbAJ">&nbsp;</A>
+<H3>Nonlocal gotos and program readability</H3>
+
+While it can be abused,
+the traditional C &quot;goto&quot; statement at least has the benefit that lexical cues
+(the goto statement and the target label)
+allow the programmer to easily perceive the flow of control.
+Nonlocal gotos provide no such cues: multiple
+<B>setjmp</B>()
+
+calls might employ the same
+<I>jmp_buf</I>
+
+variable so that the content of the variable may change
+over the lifetime of the application.
+Consequently, the programmer may be forced to perform detailed
+reading of the code to determine the dynamic target of a particular
+<B>longjmp</B>()
+
+call.
+(To make the programmer's life easier, each
+<B>setjmp</B>()
+
+call should employ a unique
+<I>jmp_buf</I>
+
+variable.)
+<P>
+Adding further difficulty, the
+<B>setjmp</B>()
+
+and
+<B>longjmp</B>()
+
+calls may not even be in the same source code module.
+<P>
+In summary, nonlocal gotos can make programs harder to understand
+and maintain, and an alternative should be used if possible.
+
+<A NAME="lbAK">&nbsp;</A>
+<H3>Caveats</H3>
+
+If the function which called
+<B>setjmp</B>()
+
+returns before
+<B>longjmp</B>()
+
+is called, the behavior is undefined.
+Some kind of subtle or unsubtle chaos is sure to result.
+<P>
+If, in a multithreaded program, a
+<B>longjmp</B>()
+
+call employs an
+<I>env</I>
+
+buffer that was initialized by a call to
+<B>setjmp</B>()
+
+in a different thread, the behavior is undefined.
+
+
+
+
+
+
+
+
+
+
+<P>
+POSIX.1-2008 Technical Corrigendum 2 adds
+
+<B>longjmp</B>()
+
+and
+<B>siglongjmp</B>()
+
+to the list of async-signal-safe functions.
+However, the standard recommends avoiding the use of these functions
+from signal handlers and goes on to point out that
+if these functions are called from a signal handler that interrupted
+a call to a non-async-signal-safe function (or some equivalent,
+such as the steps equivalent to
+<B><A HREF="../man3/exit.3.html">exit</A></B>(3)
+
+that occur upon a return from the initial call to
+<I>main</I>()),
+
+the behavior is undefined if the program subsequently makes a call to
+a non-async-signal-safe function.
+The only way of avoiding undefined behavior is to ensure one of the following:
+<DL COMPACT>
+<DT>*<DD>
+After long jumping from the signal handler,
+the program does not call any non-async-signal-safe functions
+and does not return from the initial call to
+<I>main</I>().
+
+<DT>*<DD>
+Any signal whose handler performs a long jump must be blocked during
+<I>every</I>
+
+call to a non-async-signal-safe function and
+no non-async-signal-safe functions are called after
+returning from the initial call to
+<I>main</I>().
+
+</DL>
+<A NAME="lbAL">&nbsp;</A>
 <H2>SEE ALSO</H2>
 
-<B><A HREF="../man3/longjmp.3.html">longjmp</A></B>(3),
-
-<B><A HREF="../man3/siglongjmp.3.html">siglongjmp</A></B>(3)
+<B><A HREF="../man7/signal.7.html">signal</A></B>(7)
 
 <P>
 
@@ -231,16 +452,23 @@ If possible, an alternative should be used.
 <DT><A HREF="#lbAB">NAME</A><DD>
 <DT><A HREF="#lbAC">SYNOPSIS</A><DD>
 <DT><A HREF="#lbAD">DESCRIPTION</A><DD>
-<DT><A HREF="#lbAE">RETURN VALUE</A><DD>
-<DT><A HREF="#lbAF">ATTRIBUTES</A><DD>
-<DT><A HREF="#lbAG">CONFORMING TO</A><DD>
-<DT><A HREF="#lbAH">NOTES</A><DD>
-<DT><A HREF="#lbAI">SEE ALSO</A><DD>
+<DL>
+<DT><A HREF="#lbAE">sigsetjmp() and siglongjmp()</A><DD>
+</DL>
+<DT><A HREF="#lbAF">RETURN VALUE</A><DD>
+<DT><A HREF="#lbAG">ATTRIBUTES</A><DD>
+<DT><A HREF="#lbAH">CONFORMING TO</A><DD>
+<DT><A HREF="#lbAI">NOTES</A><DD>
+<DL>
+<DT><A HREF="#lbAJ">Nonlocal gotos and program readability</A><DD>
+<DT><A HREF="#lbAK">Caveats</A><DD>
+</DL>
+<DT><A HREF="#lbAL">SEE ALSO</A><DD>
 </DL>
 <HR>
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:41:54 GMT, April 20, 2020
+Time: 03:42:32 GMT, April 20, 2020
 </BODY>
 </HTML>

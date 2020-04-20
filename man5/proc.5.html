@@ -25,7 +25,7 @@ License along with this manual; if not, see
 <HTML><HEAD><TITLE>Man page of PROC</TITLE>
 </HEAD><BODY>
 <H1>PROC</H1>
-Section: Linux Programmer's Manual (5)<BR>Updated: 2015-12-05<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (5)<BR>Updated: 2016-03-15<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -728,7 +728,7 @@ The files in this directory are readable only by the owner of the process.
 The contents of each file can be read to obtain information
 about the corresponding file descriptor.
 The content depends on the type of file referred to by the
-corresponding descriptor.
+corresponding file descriptor.
 <P>
 For regular files and directories, we see something like:
 
@@ -742,31 +742,55 @@ mnt_id: 21
 
 
 <P>
-The
-<I>pos</I>
+The fields are as follows:
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT><I>pos</I>
 
-field is a decimal number showing the current file offset.
-The
-<I>flags</I>
+<DD>
+This is a decimal number showing the file offset.
+<DT><I>flags</I>
 
-field is an octal number that displays the
+<DD>
+This is an octal number that displays the
 file access mode and file status flags (see
 <B><A HREF="../man2/open.2.html">open</A></B>(2)).
 
-The
-<I>mnt_id</I>
+If the close-on-exec file descriptor flag is set, then
+<I>flags</I>
 
-field, present since Linux 3.15,
+will also include the value
+<B>O_CLOEXEC</B>.
+
+<P>
+Before Linux 3.1,
+
+this field incorrectly displayed the setting of
+<B>O_CLOEXEC</B>
+
+at the time the file was opened,
+rather than the current setting of the close-on-exec flag.
+<DT><I>mnt_id</I>
+
+
+
+<DD>
+This field, present since Linux 3.15,
 
 is the ID of the mount point containing this file.
 See the description of
 <I>/proc/[pid]/mountinfo</I>.
 
-<P>
+</DL>
+</DL>
+
+<DT><DD>
 For eventfd file descriptors (see
 <B><A HREF="../man2/eventfd.2.html">eventfd</A></B>(2)),
 
-we see the following fields:
+we see (since Linux 3.8)
+
+the following fields:
 <P>
 
 <PRE>
@@ -785,7 +809,9 @@ is the current value of the eventfd counter, in hexadecimal.
 For epoll file descriptors (see
 <B><A HREF="../man7/epoll.7.html">epoll</A></B>(7)),
 
-we see the following fields:
+we see (since Linux 3.8)
+
+the following fields:
 <P>
 
 <PRE>
@@ -823,7 +849,9 @@ field is the data value associated with this file descriptor.
 For signalfd file descriptors (see
 <B><A HREF="../man2/signalfd.2.html">signalfd</A></B>(2)),
 
-we see the following fields:
+we see (since Linux 3.8)
+
+the following fields:
 <P>
 
 <PRE>
@@ -848,18 +876,132 @@ and
 see
 <B><A HREF="../man7/signal.7.html">signal</A></B>(7).)
 
+<P>
+For inotify file descriptors (see
+<B><A HREF="../man7/inotify.7.html">inotify</A></B>(7)),
+
+we see (since Linux 3.8)
+the following fields:
+<P>
+
+<PRE>
+pos:    0
+flags:  00
+mnt_id: 11
+inotify wd:2 ino:7ef82a sdev:800001 mask:800afff ignored_mask:0 fhandle-bytes:8 fhandle-type:1 f_handle:2af87e00220ffd73
+inotify wd:1 ino:192627 sdev:800001 mask:800afff ignored_mask:0 fhandle-bytes:8 fhandle-type:1 f_handle:27261900802dfd73
+</PRE>
 
 
+<P>
+Each of the lines beginning with &quot;inotify&quot; displays information about
+one file or directory that is being monitored.
+The fields in this line are as follows:
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT><I>wd</I>
+
+<DD>
+A watch descriptor number (in decimal).
+<DT><I>ino</I>
+
+<DD>
+The inode number of the target file (in hexadecimal).
+<DT><I>sdev</I>
+
+<DD>
+The ID of the device where the target file resides (in hexadecimal).
+<DT><I>mask</I>
+
+<DD>
+The mask of events being monitored for the target file (in hexadecimal).
+</DL>
+</DL>
+
+<DT><DD>
+If the kernel was built with exportfs support, the path to the target
+file is exposed as a file handle, via three hexadecimal fields:
+<I>fhandle-bytes</I>,
+
+<I>fhandle-type</I>,
+
+and
+<I>f_handle</I>.
+
+<P>
+For fanotify file descriptors (see
+<B><A HREF="../man7/fanotify.7.html">fanotify</A></B>(7)),
+
+we see (since Linux 3.8)
+the following fields:
+<P>
+
+<PRE>
+pos:    0
+flags:  02
+mnt_id: 11
+fanotify flags:0 event-flags:88002
+fanotify ino:19264f sdev:800001 mflags:0 mask:1 ignored_mask:0 fhandle-bytes:8 fhandle-type:1 f_handle:4f261900a82dfd73
+</PRE>
 
 
+<P>
+The fourth line displays information defined when the fanotify group
+was created via
+<B><A HREF="../man2/fanotify_init.2.html">fanotify_init</A></B>(2):
 
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT><I>flags</I>
 
+<DD>
+The
+<I>flags</I>
 
+argument given to
+<B><A HREF="../man2/fanotify_init.2.html">fanotify_init</A></B>(2)
 
+(expressed in hexadecimal).
+<DT><I>event-flags</I>
 
+<DD>
+The
+<I>event_f_flags</I>
 
+argument given to
+<B><A HREF="../man2/fanotify_init.2.html">fanotify_init</A></B>(2)
 
+(expressed in hexadecimal).
+</DL>
+</DL>
 
+<DT><DD>
+Each additional line shown in the file contains information
+about one of the marks in the fanotify group.
+Most of these fields are as for inotify, except:
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT><I>mflags</I>
+
+<DD>
+The flags associated with the mark
+(expressed in hexadecimal).
+<DT><I>mask</I>
+
+<DD>
+The events mask for this mark
+(expressed in hexadecimal).
+<DT><I>ignored_mask</I>
+
+<DD>
+The mask of events that are ignored for this mark
+(expressed in hexadecimal).
+</DL>
+</DL>
+
+<DT><DD>
+For details on these fields, see
+<B><A HREF="../man2/fanotify_mark.2.html">fanotify_mark</A></B>(2).
 
 <DT><I>/proc/[pid]/io</I> (since kernel 2.6.20)
 
@@ -1233,7 +1375,7 @@ super options: per-superblock options.
 
 <DT><DD>
 Parsers should ignore all unrecognized optional fields.
-Currently the possible optional fields are:
+Currently, the possible optional fields are:
 <DL COMPACT><DT><DD>
 <DL COMPACT>
 <DT>shared:X<DD>
@@ -1330,7 +1472,6 @@ supports being manipulated by
 For more information, see
 <B><A HREF="../man7/namespaces.7.html">namespaces</A></B>(7).
 
-<P>
 <DT><I>/proc/[pid]/numa_maps</I> (since Linux 2.6.14)
 
 <DD>
@@ -2980,6 +3121,11 @@ bits and the kernel binary code).
 The sum of
 <I>LowFree</I>+<I>HighFree</I>.
 
+<DT><I>MemAvailable</I> %lu (since Linux 3.14)
+
+<DD>
+An estimate of how much memory is available for starting new
+applications, without swapping.
 <DT><I>Buffers</I> %lu
 
 <DD>
@@ -3215,6 +3361,16 @@ Largest contiguous block of vmalloc area which is free.
 <DD>
 (<B>CONFIG_TRANSPARENT_HUGEPAGE</B> is required.)
 Non-file backed huge pages mapped into user-space page tables.
+<DT><I>CmaTotal</I> %lu (since Linux 3.1)
+
+<DD>
+Total CMA (Contiguous Memory Allocator) pages.
+(<B>CONFIG_CMA</B> is required.)
+<DT><I>CmaFree</I> %lu (since Linux 3.1)
+
+<DD>
+Free CMA (Contiguous Memory Allocator) pages.
+(<B>CONFIG_CMA</B> is required.)
 <DT><I>HugePages_Total</I> %lu
 
 <DD>
@@ -3251,6 +3407,43 @@ The maximum number of surplus huge pages is controlled by
 <DD>
 (<B>CONFIG_HUGETLB_PAGE</B> is required.)
 The size of huge pages.
+<DT><I>DirectMap4k</I> %lu (since Linux 2.6.27)
+
+<DD>
+Number of bytes of RAM linearly mapped by kernel in 4kB pages.
+(x86.)
+<DT><I>DirectMap4M</I> %lu (since Linux 2.6.27)
+
+<DD>
+Number of bytes of RAM linearly mapped by kernel in 4MB pages.
+(x86 with
+<B>CONFIG_X86_64</B>
+
+or
+<B>CONFIG_X86_PAE</B>
+
+enabled.)
+<DT><I>DirectMap2M</I> %lu (since Linux 2.6.27)
+
+<DD>
+Number of bytes of RAM linearly mapped by kernel in 2MB pages.
+(x86 with neither
+<B>CONFIG_X86_64</B>
+
+nor
+<B>CONFIG_X86_PAE</B>
+
+enabled.)
+<DT><I>DirectMap1G</I> %lu (since Linux 2.6.27)
+
+<DD>
+(x86 with
+<B>CONFIG_X86_64</B>
+
+and
+<B>CONFIG_X86_DIRECT_GBPAGES</B>
+
+enabled.)
 </DL>
 </DL>
 
@@ -5622,7 +5815,6 @@ Collection: active
     1,  4911 kworker/u16:0    mod_delayed_work_on (delayed_work_timer_fn)
    1D,  2522 kworker/0:0      queue_delayed_work_on (delayed_work_timer_fn)
 1029 total events, 583.333 events/sec
-
 </PRE>
 
 
@@ -6621,6 +6813,6 @@ and
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:41:57 GMT, April 20, 2020
+Time: 03:42:35 GMT, April 20, 2020
 </BODY>
 </HTML>

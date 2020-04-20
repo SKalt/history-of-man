@@ -26,7 +26,7 @@ the source, must acknowledge the copyright and authors of this work.
 <HTML><HEAD><TITLE>Man page of DL_ITERATE_PHDR</TITLE>
 </HEAD><BODY>
 <H1>DL_ITERATE_PHDR</H1>
-Section: Linux Programmer's Manual (3)<BR>Updated: 2015-07-23<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2016-03-15<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -107,6 +107,26 @@ struct dl_phdr_info {
                                      ELF program headers
                                      for this object */
     ElfW(Half)        dlpi_phnum; /* # of items in <I>dlpi_phdr</I> */
+
+    /* The following fields were added in glibc 2.4, after the first
+       version of this structure was available.  Check the <I>size</I>
+       argument passed to the dl_iterate_phdr callback to determine
+       whether or not each later member is available.  */
+
+    unsigned long long int dlpi_adds;
+                    /* Incremented when a new object may
+                       have been added */
+    unsigned long long int dlpi_subs;
+                    /* Incremented when an object may
+                       have been removed */
+    size_t dlpi_tls_modid;
+                    /* If there is a PT_TLS segment, its module
+                       ID as used in TLS relocations, else zero */
+    void  *dlpi_tls_data;
+                    /* The address of the calling thread's instance
+                       of this module's PT_TLS segment, if it has
+                       one and it has been allocated in the calling
+                       thread, otherwise a null pointer */
 };
 </PRE>
 
@@ -251,6 +271,15 @@ structure; in that event, the
 
 argument provides a mechanism for the callback function to discover
 whether it is running on a system with added fields.
+<P>
+The first object visited by
+<I>callback</I>
+
+is the main program.
+For the main program, the
+<I>dlpi_name</I>
+
+field will be an empty string.
 <A NAME="lbAJ">&nbsp;</A>
 <H2>EXAMPLE</H2>
 
@@ -329,6 +358,6 @@ available at various locations online.
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:41:50 GMT, April 20, 2020
+Time: 03:42:28 GMT, April 20, 2020
 </BODY>
 </HTML>

@@ -25,7 +25,7 @@ the source, must acknowledge the copyright and authors of this work.
 <HTML><HEAD><TITLE>Man page of FCNTL</TITLE>
 </HEAD><BODY>
 <H1>FCNTL</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2015-12-28<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2016-03-15<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -104,9 +104,9 @@ and make it be a copy of
 This is different from
 <B><A HREF="../man2/dup2.2.html">dup2</A></B>(2),
 
-which uses exactly the descriptor specified.
+which uses exactly the file descriptor specified.
 <DT><DD>
-On success, the new descriptor is returned.
+On success, the new file descriptor is returned.
 <DT><DD>
 See
 <B><A HREF="../man2/dup.2.html">dup</A></B>(2)
@@ -119,7 +119,7 @@ As for
 <B>F_DUPFD</B>,
 
 but additionally set the
-close-on-exec flag for the duplicate descriptor.
+close-on-exec flag for the duplicate file descriptor.
 Specifying this flag permits a program to avoid an additional
 <B>fcntl</B>()
 
@@ -879,10 +879,10 @@ Set the process ID or process group ID that will receive
 and
 <B>SIGURG</B>
 
-signals for events on file descriptor
-<I>fd</I>
+signals for events on the file descriptor
+<I>fd</I>.
 
-to the ID given in
+The target process or process group ID is specified in
 <I>arg</I>.
 
 A process ID is specified as a positive value;
@@ -895,28 +895,30 @@ is specified as
 <B><A HREF="../man2/getpid.2.html">getpid</A></B>(2)).
 
 <P>
+As well as setting the file descriptor owner,
+one must also enable generation of signals on the file descriptor.
+This is done by using the
+<B>fcntl</B>()
 
-If you set the
-<B>O_ASYNC</B>
-
-status flag on a file descriptor by using the
 <B>F_SETFL</B>
 
-command of
-<B>fcntl</B>(),
+command to set the
+<B>O_ASYNC</B>
 
-a
+file status flag on the file descriptor.
+Subsequently, a
 <B>SIGIO</B>
 
 signal is sent whenever input or output becomes possible
-on that file descriptor.
+on the file descriptor.
+The
+<B>fcntl</B>()
+
 <B>F_SETSIG</B>
 
-can be used to obtain delivery of a signal other than
+command can be used to obtain delivery of a signal other than
 <B>SIGIO</B>.
 
-If this permission check fails, then the signal is
-silently discarded.
 <P>
 Sending a signal to the owner process (group) specified by
 <B>F_SETOWN</B>
@@ -928,6 +930,8 @@ where the sending process is the one that employs
 <B>F_SETOWN</B>
 
 (but see BUGS below).
+If this permission check fails, then the signal is
+silently discarded.
 <P>
 If the file descriptor
 <I>fd</I>
@@ -1217,7 +1221,7 @@ set etc.) to determine which file descriptors are available for I/O.
 Note that the file descriptor provided in
 <I>si_fd</I>
 
-is the one that that was specified during the
+is the one that was specified during the
 <B>F_SETSIG</B>
 
 operation.
@@ -1377,8 +1381,8 @@ or released using any of these descriptors.
 Furthermore, the lease is released by either an explicit
 <B>F_UNLCK</B>
 
-operation on any of these duplicate descriptors, or when all
-such descriptors have been closed.
+operation on any of these duplicate file descriptors, or when all
+such file descriptors have been closed.
 <P>
 
 Leases may be taken out only on regular files.
@@ -1523,7 +1527,7 @@ then the handler will receive a
 structure as its second argument, and the
 <I>si_fd</I>
 
-field of this argument will hold the descriptor of the leased file
+field of this argument will hold the file descriptor of the leased file
 that has been accessed by another process.
 (This is useful if the caller holds leases against multiple files.)
 <A NAME="lbAM">&nbsp;</A>
@@ -1959,7 +1963,7 @@ For a successful call, the return value depends on the operation:
 <DT><B>F_DUPFD</B>
 
 <DD>
-The new descriptor.
+The new file descriptor.
 <DT><B>F_GETFD</B>
 
 <DD>
@@ -1975,7 +1979,7 @@ Type of lease held on file descriptor.
 <DT><B>F_GETOWN</B>
 
 <DD>
-Value of descriptor owner.
+Value of file descriptor owner.
 <DT><B>F_GETSIG</B>
 
 <DD>
@@ -2273,9 +2277,8 @@ and
 
 are specified in POSIX.1-2001.
 (To get their definitions, define either
-<B>_BSD_SOURCE</B>,
 
-or
+
 <B>_XOPEN_SOURCE</B>
 
 with the value 500 or greater, or
@@ -2635,7 +2638,9 @@ It is therefore inadvisable to rely on mandatory locking.
 
 <B><A HREF="../man7/capabilities.7.html">capabilities</A></B>(7),
 
-<B><A HREF="../man7/feature_test_macros.7.html">feature_test_macros</A></B>(7)
+<B><A HREF="../man7/feature_test_macros.7.html">feature_test_macros</A></B>(7),
+
+<B><A HREF="../man8/lslocks.8.html">lslocks</A></B>(8)
 
 <P>
 <I>locks.txt</I>,
@@ -2701,6 +2706,6 @@ is called
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:41:44 GMT, April 20, 2020
+Time: 03:42:22 GMT, April 20, 2020
 </BODY>
 </HTML>

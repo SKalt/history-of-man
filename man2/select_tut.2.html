@@ -25,7 +25,7 @@ the source, must acknowledge the copyright and authors of this work.
 <HTML><HEAD><TITLE>Man page of SELECT_TUT</TITLE>
 </HEAD><BODY>
 <H1>SELECT_TUT</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2015-08-08<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2016-03-15<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -76,7 +76,7 @@ Feature Test Macro Requirements for glibc (see
 <P>
 <B>pselect</B>():
 
-_POSIX_C_SOURCE&nbsp;&gt;=&nbsp;200112L || _XOPEN_SOURCE&nbsp;&gt;=&nbsp;600
+_POSIX_C_SOURCE&nbsp;&gt;=&nbsp;200112L
 <A NAME="lbAD">&nbsp;</A>
 <H2>DESCRIPTION</H2>
 
@@ -88,7 +88,7 @@ _POSIX_C_SOURCE&nbsp;&gt;=&nbsp;200112L || _XOPEN_SOURCE&nbsp;&gt;=&nbsp;600
 is used to efficiently monitor multiple file descriptors,
 to see if any of them is, or becomes, &quot;ready&quot;;
 that is, to see whether I/O becomes possible,
-or an &quot;exceptional condition&quot; has occurred on any of the descriptors.
+or an &quot;exceptional condition&quot; has occurred on any of the file descriptors.
 <P>
 Its principal arguments are three &quot;sets&quot; of file descriptors:
 <I>readfds</I>, <I>writefds</I>, and <I>exceptfds</I>.
@@ -369,7 +369,7 @@ main(int argc, char *argv[])
 So what is the point of
 <B>select</B>()?
 
-Can't I just read and write to my descriptors whenever I want?
+Can't I just read and write to my file descriptors whenever I want?
 The point of
 <B>select</B>()
 
@@ -513,12 +513,12 @@ and
 
 fail with errors other than those listed in <B>7.</B>,
 or one of the input functions returns 0, indicating end of file,
-then you should <I>not</I> pass that descriptor to
+then you should <I>not</I> pass that file descriptor to
 <B>select</B>()
 
 again.
 In the example below,
-I close the descriptor immediately, and then set it to -1
+I close the file descriptor immediately, and then set it to -1
 to prevent it being included in a set.
 <DT>10.<DD>
 The timeout value must be initialized with each new call to
@@ -663,65 +663,68 @@ static int forward_port;
 static int
 listen_socket(int listen_port)
 {
-    struct sockaddr_in a;
-    int s;
+    struct sockaddr_in addr;
+    int lfd;
     int yes;
 
-    s = socket(AF_INET, SOCK_STREAM, 0);
-    if (s == -1) {
+    lfd = socket(AF_INET, SOCK_STREAM, 0);
+    if (lfd == -1) {
         perror(&quot;socket&quot;);
         return -1;
     }
+
     yes = 1;
-    if (setsockopt(s, SOL_SOCKET, SO_REUSEADDR,
+    if (setsockopt(lfd, SOL_SOCKET, SO_REUSEADDR,
             &amp;yes, sizeof(yes)) == -1) {
         perror(&quot;setsockopt&quot;);
-        close(s);
+        close(lfd);
         return -1;
     }
-    memset(&amp;a, 0, sizeof(a));
-    a.sin_port = htons(listen_port);
-    a.sin_family = AF_INET;
-    if (bind(s, (struct sockaddr *) &amp;a, sizeof(a)) == -1) {
+
+    memset(&amp;addr, 0, sizeof(addr));
+    addr.sin_port = htons(listen_port);
+    addr.sin_family = AF_INET;
+    if (bind(lfd, (struct sockaddr *) &amp;addr, sizeof(addr)) == -1) {
         perror(&quot;bind&quot;);
-        close(s);
+        close(lfd);
         return -1;
     }
+
     printf(&quot;accepting connections on port %d\n&quot;, listen_port);
-    listen(s, 10);
-    return s;
+    listen(lfd, 10);
+    return lfd;
 }
 
 static int
 connect_socket(int connect_port, char *address)
 {
-    struct sockaddr_in a;
-    int s;
+    struct sockaddr_in addr;
+    int cfd;
 
-    s = socket(AF_INET, SOCK_STREAM, 0);
-    if (s == -1) {
+    cfd = socket(AF_INET, SOCK_STREAM, 0);
+    if (cfd == -1) {
         perror(&quot;socket&quot;);
-        close(s);
+        close(cfd);
         return -1;
     }
 
-    memset(&amp;a, 0, sizeof(a));
-    a.sin_port = htons(connect_port);
-    a.sin_family = AF_INET;
+    memset(&amp;addr, 0, sizeof(addr));
+    addr.sin_port = htons(connect_port);
+    addr.sin_family = AF_INET;
 
-    if (!inet_aton(address, (struct in_addr *) &amp;a.sin_addr.s_addr)) {
+    if (!inet_aton(address, (struct in_addr *) &amp;addr.sin_addr.s_addr)) {
         perror(&quot;bad IP address format&quot;);
-        close(s);
+        close(cfd);
         return -1;
     }
 
-    if (connect(s, (struct sockaddr *) &amp;a, sizeof(a)) == -1) {
+    if (connect(cfd, (struct sockaddr *) &amp;addr, sizeof(addr)) == -1) {
         perror(&quot;connect()&quot;);
-        shutdown(s, SHUT_RDWR);
-        close(s);
+        shutdown(cfd, SHUT_RDWR);
+        close(cfd);
         return -1;
     }
-    return s;
+    return cfd;
 }
 
 #define SHUT_FD1 do {                                \
@@ -766,139 +769,136 @@ main(int argc, char *argv[])
         exit(EXIT_FAILURE);
 
     for (;;) {
-        int r, nfds = 0;
-        fd_set rd, wr, er;
+        int ready, nfds = 0;
+        ssize_t nbytes;
+        fd_set readfds, writefds, exceptfds;
 
-        FD_ZERO(&amp;rd);
-        FD_ZERO(&amp;wr);
-        FD_ZERO(&amp;er);
-        FD_SET(h, &amp;rd);
+        FD_ZERO(&amp;readfds);
+        FD_ZERO(&amp;writefds);
+        FD_ZERO(&amp;exceptfds);
+        FD_SET(h, &amp;readfds);
         nfds = max(nfds, h);
         if (fd1 &gt; 0 &amp;&amp; buf1_avail &lt; BUF_SIZE) {
-            FD_SET(fd1, &amp;rd);
+            FD_SET(fd1, &amp;readfds);
             nfds = max(nfds, fd1);
         }
         if (fd2 &gt; 0 &amp;&amp; buf2_avail &lt; BUF_SIZE) {
-            FD_SET(fd2, &amp;rd);
+            FD_SET(fd2, &amp;readfds);
             nfds = max(nfds, fd2);
         }
         if (fd1 &gt; 0 &amp;&amp; buf2_avail - buf2_written &gt; 0) {
-            FD_SET(fd1, &amp;wr);
+            FD_SET(fd1, &amp;writefds);
             nfds = max(nfds, fd1);
         }
         if (fd2 &gt; 0 &amp;&amp; buf1_avail - buf1_written &gt; 0) {
-            FD_SET(fd2, &amp;wr);
+            FD_SET(fd2, &amp;writefds);
             nfds = max(nfds, fd2);
         }
         if (fd1 &gt; 0) {
-            FD_SET(fd1, &amp;er);
+            FD_SET(fd1, &amp;exceptfds);
             nfds = max(nfds, fd1);
         }
         if (fd2 &gt; 0) {
-            FD_SET(fd2, &amp;er);
+            FD_SET(fd2, &amp;exceptfds);
             nfds = max(nfds, fd2);
         }
 
-        r = select(nfds + 1, &amp;rd, &amp;wr, &amp;er, NULL);
+        ready = select(nfds + 1, &amp;readfds, &amp;writefds, &amp;exceptfds, NULL);
 
-        if (r == -1 &amp;&amp; errno == EINTR)
+        if (ready == -1 &amp;&amp; errno == EINTR)
             continue;
 
-        if (r == -1) {
+        if (ready == -1) {
             perror(&quot;select()&quot;);
             exit(EXIT_FAILURE);
         }
 
-        if (FD_ISSET(h, &amp;rd)) {
-            unsigned int l;
-            struct sockaddr_in client_address;
+        if (FD_ISSET(h, &amp;readfds)) {
+            socklen_t addrlen;
+            struct sockaddr_in client_addr;
+            int fd;
 
-            memset(&amp;client_address, 0, l = sizeof(client_address));
-            r = accept(h, (struct sockaddr *) &amp;client_address, &amp;l);
-            if (r == -1) {
+            addrlen = sizeof(client_addr);
+            memset(&amp;client_addr, 0, addrlen);
+            fd = accept(h, (struct sockaddr *) &amp;client_addr, &amp;addrlen);
+            if (fd == -1) {
                 perror(&quot;accept()&quot;);
             } else {
                 SHUT_FD1;
                 SHUT_FD2;
                 buf1_avail = buf1_written = 0;
                 buf2_avail = buf2_written = 0;
-                fd1 = r;
+                fd1 = fd;
                 fd2 = connect_socket(forward_port, argv[3]);
                 if (fd2 == -1)
                     SHUT_FD1;
                 else
                     printf(&quot;connect from %s\n&quot;,
-                            inet_ntoa(client_address.sin_addr));
+                            inet_ntoa(client_addr.sin_addr));
             }
         }
 
-        /* NB: read oob data before normal reads */
+        /* NB: read OOB data before normal reads */
 
-        if (fd1 &gt; 0)
-            if (FD_ISSET(fd1, &amp;er)) {
-                char c;
+        if (fd1 &gt; 0 &amp;&amp; FD_ISSET(fd1, &amp;exceptfds)) {
+            char c;
 
-                r = recv(fd1, &amp;c, 1, MSG_OOB);
-                if (r &lt; 1)
-                    SHUT_FD1;
-                else
-                    send(fd2, &amp;c, 1, MSG_OOB);
-            }
-        if (fd2 &gt; 0)
-            if (FD_ISSET(fd2, &amp;er)) {
-                char c;
+            nbytes = recv(fd1, &amp;c, 1, MSG_OOB);
+            if (nbytes &lt; 1)
+                SHUT_FD1;
+            else
+                send(fd2, &amp;c, 1, MSG_OOB);
+        }
+        if (fd2 &gt; 0 &amp;&amp; FD_ISSET(fd2, &amp;exceptfds)) {
+            char c;
 
-                r = recv(fd2, &amp;c, 1, MSG_OOB);
-                if (r &lt; 1)
-                    SHUT_FD2;
-                else
-                    send(fd1, &amp;c, 1, MSG_OOB);
-            }
-        if (fd1 &gt; 0)
-            if (FD_ISSET(fd1, &amp;rd)) {
-                r = read(fd1, buf1 + buf1_avail,
-                          BUF_SIZE - buf1_avail);
-                if (r &lt; 1)
-                    SHUT_FD1;
-                else
-                    buf1_avail += r;
-            }
-        if (fd2 &gt; 0)
-            if (FD_ISSET(fd2, &amp;rd)) {
-                r = read(fd2, buf2 + buf2_avail,
-                          BUF_SIZE - buf2_avail);
-                if (r &lt; 1)
-                    SHUT_FD2;
-                else
-                    buf2_avail += r;
-            }
-        if (fd1 &gt; 0)
-            if (FD_ISSET(fd1, &amp;wr)) {
-                r = write(fd1, buf2 + buf2_written,
-                           buf2_avail - buf2_written);
-                if (r &lt; 1)
-                    SHUT_FD1;
-                else
-                    buf2_written += r;
-            }
-        if (fd2 &gt; 0)
-            if (FD_ISSET(fd2, &amp;wr)) {
-                r = write(fd2, buf1 + buf1_written,
-                           buf1_avail - buf1_written);
-                if (r &lt; 1)
-                    SHUT_FD2;
-                else
-                    buf1_written += r;
-            }
+            nbytes = recv(fd2, &amp;c, 1, MSG_OOB);
+            if (nbytes &lt; 1)
+                SHUT_FD2;
+            else
+                send(fd1, &amp;c, 1, MSG_OOB);
+        }
+        if (fd1 &gt; 0 &amp;&amp; FD_ISSET(fd1, &amp;readfds)) {
+            nbytes = read(fd1, buf1 + buf1_avail,
+                      BUF_SIZE - buf1_avail);
+            if (nbytes &lt; 1)
+                SHUT_FD1;
+            else
+                buf1_avail += nbytes;
+        }
+        if (fd2 &gt; 0 &amp;&amp; FD_ISSET(fd2, &amp;readfds)) {
+            nbytes = read(fd2, buf2 + buf2_avail,
+                      BUF_SIZE - buf2_avail);
+            if (nbytes &lt; 1)
+                SHUT_FD2;
+            else
+                buf2_avail += nbytes;
+        }
+        if (fd1 &gt; 0 &amp;&amp; FD_ISSET(fd1, &amp;writefds)) {
+            nbytes = write(fd1, buf2 + buf2_written,
+                       buf2_avail - buf2_written);
+            if (nbytes &lt; 1)
+                SHUT_FD1;
+            else
+                buf2_written += nbytes;
+        }
+        if (fd2 &gt; 0 &amp;&amp; FD_ISSET(fd2, &amp;writefds)) {
+            nbytes = write(fd2, buf1 + buf1_written,
+                       buf1_avail - buf1_written);
+            if (nbytes &lt; 1)
+                SHUT_FD2;
+            else
+                buf1_written += nbytes;
+        }
 
-        /* check if write data has caught read data */
+        /* Check if write data has caught read data */
 
         if (buf1_written == buf1_avail)
             buf1_written = buf1_avail = 0;
         if (buf2_written == buf2_avail)
             buf2_written = buf2_avail = 0;
 
-        /* one side has closed the connection, keep
+        /* One side has closed the connection, keep
            writing to the other side until empty */
 
         if (fd1 &lt; 0 &amp;&amp; buf1_avail - buf1_written == 0)
@@ -993,6 +993,6 @@ connections cause the current connection to be dropped.
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:41:46 GMT, April 20, 2020
+Time: 03:42:24 GMT, April 20, 2020
 </BODY>
 </HTML>

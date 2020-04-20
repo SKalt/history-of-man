@@ -26,7 +26,7 @@ the source, must acknowledge the copyright and authors of this work.
 <HTML><HEAD><TITLE>Man page of CAPABILITIES</TITLE>
 </HEAD><BODY>
 <H1>CAPABILITIES</H1>
-Section: Linux Programmer's Manual (7)<BR>Updated: 2015-12-05<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (7)<BR>Updated: 2016-03-15<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -116,7 +116,6 @@ Invoke
 </DL>
 
 
-<P>
 <DT><B>CAP_FOWNER</B>
 
 <DD>
@@ -1103,7 +1102,7 @@ denotes the value of a thread capability set before the
 <B><A HREF="../man2/execve.2.html">execve</A></B>(2)
 
 <DT>P'<DD>
-denotes the value of a capability set after the
+denotes the value of a thread capability set after the
 <B><A HREF="../man2/execve.2.html">execve</A></B>(2)
 
 <DT>F<DD>
@@ -1119,6 +1118,49 @@ A privileged file is one that has capabilities or
 has the set-user-ID or set-group-ID bit set.
 
 <A NAME="lbAI">&nbsp;</A>
+<H3>Safety checking for capability-dumb binaries</H3>
+
+A capability-dumb binary is an application that has been
+marked to have file capabilities, but has not been converted to use the
+<B><A HREF="../man3/libcap.3.html">libcap</A></B>(3)
+
+API to manipulate its capabilities.
+(In other words, this is a traditional set-user-ID-root program
+that has been switched to use file capabilities,
+but whose code has not been modified to understand capabilities.)
+For such applications,
+the effective capability bit is set on the file,
+so that the file permitted capabilities are automatically
+enabled in the process effective set when executing the file.
+The kernel recognizes a file which has the effective capability bit set
+as capability-dumb for the purpose of the check described here.
+<P>
+When executing a capability-dumb binary,
+the kernel checks if the process obtained all permitted capabilities
+that were specified in the file permitted set,
+after the capability transformations described above have been performed.
+(The typical reason why this might
+<I>not</I>
+
+occur is that the capability bounding set masked out some
+of the capabilities in the file permitted set.)
+If the process did not obtain the full set of
+file permitted capabilities, then
+<B><A HREF="../man2/execve.2.html">execve</A></B>(2)
+
+fails with the error
+<B>EPERM</B>.
+
+This prevents possible security risks that could arise when
+a capability-dumb application is executed with less privilege that it needs.
+Note that, by definition,
+the application could not itself recognize this problem,
+since it does not employ the
+<B><A HREF="../man3/libcap.3.html">libcap</A></B>(3)
+
+API.
+
+<A NAME="lbAJ">&nbsp;</A>
 <H3>Capabilities and execution of programs by root</H3>
 
 In order to provide an all-powerful
@@ -1155,7 +1197,7 @@ except those masked out by the capability bounding set.
 
 This provides semantics that are the same as those provided by
 traditional UNIX systems.
-<A NAME="lbAJ">&nbsp;</A>
+<A NAME="lbAK">&nbsp;</A>
 <H3>Capability bounding set</H3>
 
 The capability bounding set is a security mechanism that can be used
@@ -1307,7 +1349,7 @@ However it does prevent the capability from being added
 back into the thread's inherited set in the future.
 
 
-<A NAME="lbAK">&nbsp;</A>
+<A NAME="lbAL">&nbsp;</A>
 <H3>Effect of user ID changes on capabilities</H3>
 
 To preserve the traditional semantics for transitions between
@@ -1375,7 +1417,7 @@ operation or the
 
 securebits flag described below.
 
-<A NAME="lbAL">&nbsp;</A>
+<A NAME="lbAM">&nbsp;</A>
 <H3>Programmatically adjusting capability sets</H3>
 
 A thread can retrieve and change its capability sets using the
@@ -1416,7 +1458,7 @@ that the thread does not currently have).
 <DT>4.<DD>
 The new effective set must be a subset of the new permitted set.
 </DL>
-<A NAME="lbAM">&nbsp;</A>
+<A NAME="lbAN">&nbsp;</A>
 <H3>The securebits flags: establishing a capabilities-only environment</H3>
 
 
@@ -1452,10 +1494,10 @@ operation.)
 
 <DD>
 Setting this flag stops the kernel from adjusting capability sets when
-the threads's effective and filesystem UIDs are switched between
+the thread's effective and filesystem UIDs are switched between
 zero and nonzero values.
 (See the subsection
-<I>Effect of User ID Changes on Capabilities</I>.)
+<I>Effect of user ID changes on capabilities</I>.)
 
 <DT><B>SECBIT_NOROOT</B>
 
@@ -1492,7 +1534,7 @@ The locked flags are:
 <B>SECBIT_NOROOT_LOCKED</B>,
 
 and
-<B>SECBIT_NO_CAP_AMBIENT_RAISE</B>.
+<B>SECBIT_NO_CAP_AMBIENT_RAISE_LOCKED</B>.
 
 <P>
 
@@ -1541,13 +1583,13 @@ prctl(PR_SET_SECUREBITS,
 </PRE>
 
 
-<A NAME="lbAN">&nbsp;</A>
+<A NAME="lbAO">&nbsp;</A>
 <H3>Interaction with user namespaces</H3>
 
 For a discussion of the interaction of capabilities and user namespaces, see
 <B><A HREF="../man7/user_namespaces.7.html">user_namespaces</A></B>(7).
 
-<A NAME="lbAO">&nbsp;</A>
+<A NAME="lbAP">&nbsp;</A>
 <H2>CONFORMING TO</H2>
 
 <P>
@@ -1556,14 +1598,14 @@ No standards govern capabilities, but the Linux capability implementation
 is based on the withdrawn POSIX.1e draft standard; see
 
 
-<A NAME="lbAP">&nbsp;</A>
+<A NAME="lbAQ">&nbsp;</A>
 <H2>NOTES</H2>
 
 From kernel 2.5.27 to kernel 2.6.26,
 
 
 capabilities were an optional kernel component,
-and can be enabled/disabled via the
+and could be enabled/disabled via the
 <B>CONFIG_SECURITY_CAPABILITIES</B>
 
 kernel configuration option.
@@ -1634,7 +1676,7 @@ starts out with this capability removed from its per-process bounding
 set, and that bounding set is inherited by all other processes
 created on the system.
 </DL>
-<A NAME="lbAQ">&nbsp;</A>
+<A NAME="lbAR">&nbsp;</A>
 <H2>SEE ALSO</H2>
 
 <B><A HREF="../man1/capsh.1.html">capsh</A></B>(1),
@@ -1691,21 +1733,22 @@ in the Linux kernel source tree
 <DT><A HREF="#lbAF">Thread capability sets</A><DD>
 <DT><A HREF="#lbAG">File capabilities</A><DD>
 <DT><A HREF="#lbAH">Transformation of capabilities during execve()</A><DD>
-<DT><A HREF="#lbAI">Capabilities and execution of programs by root</A><DD>
-<DT><A HREF="#lbAJ">Capability bounding set</A><DD>
-<DT><A HREF="#lbAK">Effect of user ID changes on capabilities</A><DD>
-<DT><A HREF="#lbAL">Programmatically adjusting capability sets</A><DD>
-<DT><A HREF="#lbAM">The securebits flags: establishing a capabilities-only environment</A><DD>
-<DT><A HREF="#lbAN">Interaction with user namespaces</A><DD>
+<DT><A HREF="#lbAI">Safety checking for capability-dumb binaries</A><DD>
+<DT><A HREF="#lbAJ">Capabilities and execution of programs by root</A><DD>
+<DT><A HREF="#lbAK">Capability bounding set</A><DD>
+<DT><A HREF="#lbAL">Effect of user ID changes on capabilities</A><DD>
+<DT><A HREF="#lbAM">Programmatically adjusting capability sets</A><DD>
+<DT><A HREF="#lbAN">The securebits flags: establishing a capabilities-only environment</A><DD>
+<DT><A HREF="#lbAO">Interaction with user namespaces</A><DD>
 </DL>
-<DT><A HREF="#lbAO">CONFORMING TO</A><DD>
-<DT><A HREF="#lbAP">NOTES</A><DD>
-<DT><A HREF="#lbAQ">SEE ALSO</A><DD>
+<DT><A HREF="#lbAP">CONFORMING TO</A><DD>
+<DT><A HREF="#lbAQ">NOTES</A><DD>
+<DT><A HREF="#lbAR">SEE ALSO</A><DD>
 </DL>
 <HR>
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:41:58 GMT, April 20, 2020
+Time: 03:42:36 GMT, April 20, 2020
 </BODY>
 </HTML>
