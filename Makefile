@@ -6,14 +6,16 @@ man2html-docker-image:
 lint: scripts/*
 	@./scripts/lint.sh
 
-history: man2html-docker-image ./scripts/common.sh ./scripts/run-in-docker.sh ./scripts/build-version.sh ./scripts/build-all-versions.sh
+history: man2html-docker-image
 	@echo "todo"
 
 recent-history:
 	@echo "todo"
 
 history-anew:
-	./scripts/reset-history.sh && 
+	@./scripts/reset-history.sh
+	@./scripts/build-all-versions.sh
+
 
 clobber-man-pages-subrepo:
 	./scripts/clobber-man-pages-subrepo.sh

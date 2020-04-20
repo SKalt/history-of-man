@@ -1,18 +1,22 @@
 #!/usr/bin/env bash
 # shellcheck source=scripts/common.sh
-. "${BASH_SOURCE[0]%/*}/common.sh"
-declare -a ALL_VERSIONS;
+source "${BASH_SOURCE[0]%/*}/common.sh"
 
 function main() {
+  local versions=();
   for version in $("$REPO_ROOT"/scripts/get-versions.sh); do
-    ALL_VERSIONS+=("$version");
+    versions+=("$version");
   done
-  local max="${#ALL_VERSIONS[@]}";
-  local version=
-  for ((i = 0 ; i < "$max" ; i++)); do
+  local max="${#versions[@]}";
+  local version="${versions[0]}"
+  log-info "processing version 1 / $max: $version"
+  "$REPO_ROOT"/scripts/build-version.sh "$version"
+
+  local prev_version="$version"
+  for ((i = 1 ; i < "$max" ; i++)); do
     version="${ALL_VERSIONS[$i]}"
     log-info "processing version $i / $max: $version"
-    "$REPO_ROOT"/scripts/build-version.sh "$version"
+    "$REPO_ROOT"/scripts/build-version.sh "$prev_version" "$version"
   done
 }
 

@@ -1,18 +1,29 @@
 #!/usr/bin/env bash
 # shellcheck source=scripts/common.sh
 . "${BASH_SOURCE[0]%/*}/common.sh"
-VERSION=
-HM_LOG_FILE=
-export HTDIR=
+
+function extract-copyright-lines() {
+  local file="${1:?file is required}"
+  grep -ie '^\.\\" copyright' "$file" | sed 's/^.\\" //';
+}
+declare -f extract-copyright-lines
+
+function extract-license-text() {
+  local file="${1:?file is required}"
+  awk '/%%%LICENSE_START\(/,/%%%LICENSE_END/' "$file"  | sed 's/^.\\" //';
+}
+declare -f extract-license-text
+
+function escape-html-content() {
+  cat - | sed 's/&/\&amp;/g; s/</\&lt;/g; s/>/\&gt;/g;'
+}
+declare -f esacape-html-content
 
 function html-comment-license() {
   local file="${1:?file is required}"
   echo '<!--';
-    grep -ie '^\.\\" copyright' "$file";
-    awk '/%%%LICENSE_START\(/,/%%%LICENSE_END/' "$file" \
-      | sed 's/^.\\" //'                                \
-      | sed 's/<--/&lt;--/g'                            \
-      | sed 's/-->/--&gt;/g';
+  extract-copyright-lines "$file" | escape-html-content;
+  extract-license-text    "$file" | escape-html-content;
   echo "-->";
 }
 declare -f html-comment-license;
@@ -21,32 +32,108 @@ function build-file() {
   local file="${1:?file is required}"
   local dest="${2:?destination is required}"
   (
+    html-comment-license "$file";
     man2html -h -r -p -D "$file" "$file" | sed -e '1,2d';
-    html-comment-license "$file"
   ) > "$dest"
 }
 export -f build-file;
 
-function parallel-build-all-files() {
-  input_files=();
-  output_files=();
- 
-  for output_dir in "$MAN_PAGES_REPO_DIR"/man?*/; do
-    mkdir -p "${output_dir/$MAN_PAGES_REPO_DIR/$HTDIR}";
-  done
-  
-  for f in "$MAN_PAGES_REPO_DIR"/man*/*; do
-    input_files+=("$f");
-    local output_file="${f/$MAN_PAGES_REPO_DIR/$HTDIR}"
-    output_files+=("${output_file%*.}.html");
-  done
+function get-changed-file-names() {
+  local filter="${1:?filter is required}"
+  local prev_ref="${1:?prev ref is required}";
+  local next_ref="${2:?next ref is required}";
+  (
+    cd-into-man-pages-dir     &&
+    git --no-pager diff        \
+      --name-only              \
+      --diff-filter="$filter"  \
+      "$prev_ref".."$next_ref" \
+      -- man?
+  )
+}
 
+function get-modified-file-names() {
+  local prev_ref="${1:?prev ref is required}";
+  local next_ref="${2:?next ref is required}";
+  get-changed-file-names "M" "$prev_ref" "$next_ref"
+}
+
+function get-moved-file-names(){
+  local prev_ref="${1:?prev ref is required}";
+  local next_ref="${2:?next ref is required}";
+  get-changed-file-names "R" "$prev_ref" "$next_ref" | awk '{ print $2 $3 }'
+}
+
+function prep-moved-files() {
+  local prev_ref="${1:?prev ref is required}";
+  local next_ref="${2:?next ref is required}";
+  (
+    set -euo pipefail;
+    cd-into-history-dir;
+    get-moved-file-names "$prev_ref" "$next_ref" | while read -r to_move; do
+      local src=''; local dest=''
+      src="$(echo "$to_move" | awk '{print $1}')"
+      dest="$(echo "$to_move" | awk '{print $2}')"
+      # $to_move is two words which MUST expand for git mv to function
+      git mv "$src" "$dest";
+    done
+  )
+}
+
+function get-deleted-files(){
+  local prev_ref="${1:?prev ref is required}"
+  local next_ref="${2:?prev ref is required}"
+  get-changed-file-names "D"
+}
+
+function prep-deleted-files(){
+  local prev_ref="${1:?prev ref is required}";
+  local next_ref="${2:?next ref is required}";
+  (
+    cd "$HISTORY_SUBREPO_DIR" && get-deleted-files "$prev_ref" "$next_ref" | xargs git rm -rf 
+  )
+}
+
+function get-all-file-names() { ( cd-into-man-pages-dir && echo ./man?/*; ); }
+
+function parallel-build-files() {
   (
     parallel --jobs 100% --bar \
-    build-file {} \
-      ::: "${input_files[@]}" \
-      :::+ "${output_files[@]}" 2>&1;
+      build-file "$MAN_PAGES_REPO_DIR"/{} "$HISTORY_SUBREPO_DIR"/{}.html \
+      ::: "$@" 2>&1;
   ) | tee /dev/stderr | log-debug
+}
+
+function get-all-man-page-directories() {
+  (cd-into-man-pages-dir && echo ./man?*/;)
+}
+
+function ensure-all-man-page-directories-present() {
+  (
+    cd-into-history-dir || exit 1;
+    for output_dir in $(get-all-man-page-directories); do
+      mkdir -p "$output_dir";
+    done
+  )
+}
+
+function get-file-names-to-rebuild() {
+  local prev_ref="${1:?prev ref is required}";
+  local next_ref="${2:?next ref is required}";
+  get-modified-file-names "$prev_ref" "$next_ref";
+  get-moved-file-names "$prev_ref" "$next_ref" | awk '{ print $2 }';
+}
+
+function parallel-build-all-files() {
+  local prev_ref="${1:?prev ref is required}";
+  local next_ref="${2:?next ref is required}";
+  # shellcheck disable=2046
+  parallel-build-files $(get-file-names-to-rebuild "$prev_ref" "$next_ref")
+}
+
+function build-first-version(){
+  # shellcheck disable=2046
+  parallel-build-files $(get-all-file-names)
 }
 
 function set-man-pages-version() {
@@ -59,7 +146,9 @@ function tag-build() {
   local version_date="${2:?date is required}"
   log-info "tagging build $version"
   (
-    cd "$HTDIR" && git add -A . &&
+    set -euo pipefail;
+    cd-into-history-dir;
+    git add -A . &&
       git config user.name 'anon' &&
       git config user.email 'anon@mous.org' &&
       git commit -m "$version ~ $version_date" &&
@@ -78,38 +167,42 @@ function get-version-date(){
 }
 
 function clean-build-dir() {
-  ( cd "$HTDIR" && rm -rf ./*; ) | tee /dev/stderr | log-debug
+  ( cd "$HISTORY_SUBREPO_DIR" && rm -rf ./*; ) | tee /dev/stderr | log-debug
 }
+
 
 function build-version() {
-  log-debug "build-version man2html opts: HTDIR='$HTDIR'"
-  local version_date="$(get-version-date "$VERSION")"
-  clean-build-dir && 
-    set-man-pages-version "$VERSION" && 
-    parallel-build-all-files &&
-    tag-build "$VERSION" "$version_date";
-  result=$?
-  set-man-pages-version "master";
-  cd "$REPO_ROOT" || return $result;
-  return $result;
+  local prev_version='';
+  local version='';
+  local version_date='';
+
+  case "$#" in
+    1) version="${1:?version argument is required}";;
+    2) prev_version="$1"; version="${2:?version argument is required}";;
+    *) log-info "expected 1-2 args, got $#" && return 1;
+  esac
+
+  HM_LOG_FILE="$(get-log-file-path "$version")"
+  log-info "building $version";
+
+  version_date="$(get-version-date "$version")"
+  set-man-pages-version "$version";
+
+  # assertion: on a full rebuild, the history dir will be clean and the 
+  # history branch will have only an empty commit
+  ensure-all-man-page-directories-present;
+
+  if [ -n "$prev_version" ]; then
+    parallel-build-all-files "$prev_version" "$version"
+  else
+    build-first-version "$version"
+  fi
+
+  tag-build "$version" "$version_date";
+  # result=$?
+  # # set-man-pages-version "master";
+  # cd "$REPO_ROOT" || return $result;
+  # return $result;
 }
 
-function prettify-version() { # TODO: move to parallel
-  log-debug "Prettier log:"
-  (
-    parallel --jobs 100% --bar prettier --write ::: "$HTDIR"/**/*.html
-  ) 2>&1 | log-debug;
-}
-
-
-function main() {
-  VERSION="${1:?version argument is required}"
-  HM_LOG_FILE="$(get-log-file-path "$VERSION")"
-  HTDIR="$(get-htdir-path "$VERSION")"
-  log-info "building $VERSION";
-  # if ! (version-already-exists); then
-  build-version;
-  # fi
-}
-
-main "$@"
+build-version "$@"

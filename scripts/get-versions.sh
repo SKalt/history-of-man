@@ -2,11 +2,12 @@
 # shellcheck source=scripts/common.sh
 . "${BASH_SOURCE[0]%/*}/common.sh"
 
-function main() {
+function get-man-pages-versions() {
   (
-    cd "$MAN_PAGES_REPO_DIR" || log-debug "unable to cd into $MAN_PAGES_REPO_DIR";
-    git --no-pager tag --list
+    cd-into-man-pages-dir &&
+      git pull &>/dev/null &&
+      git --no-pager tag --list
   );
 }
 
-main;
+get-man-pages-versions;

@@ -30,18 +30,20 @@ function log-debug() { logger "DEBUG" "$*"; }
 
 SCRIPTS_DIR="$(realpath "$(dirname "${BASH_SOURCE[0]}")")"; export SCRIPTS_DIR;
 REPO_ROOT="$(realpath "$SCRIPTS_DIR/..")"; export REPO_ROOT;
-MAN_PAGES_REPO_DIR="$REPO_ROOT/external/man-pages"; export MAN_PAGES_REPO_DIR;
-DIST_DIR="$REPO_ROOT/dist"
-LOG_DIR="$REPO_ROOT/logs"
-
-function get-htdir-path() {
-  local version="${1:?version argument is required}"
-  echo "$REPO_ROOT/history"
-}
+export MAN_PAGES_REPO_DIR="$REPO_ROOT/external/man-pages";
+export LOG_DIR="$REPO_ROOT/logs"
+export HISTORY_SUBREPO_DIR="$REPO_ROOT/history"
+# TODO: use a global constant instead of this function
 
 function get-log-file-path() { 
   local version="${1:?version argument is required}"
-  echo "$REPO_ROOT/logs/$version.log"  
+  echo "$LOG_DIR/$version.log"  
 }
 
-# function version-already-exists() { [ -d "$HTDIR" ]; }
+function cd-or-log-failure() {
+  cd "$1" && return 0;
+  log-info "cd'ing into $1 failed";
+  return 1;
+}
+function cd-into-history-dir() { cd-or-log-failure "$HISTORY_SUBREPO_DIR"; }
+function cd-into-man-pages-dir() { cd-or-log-failure "$MAN_PAGES_REPO_DIR"; }
