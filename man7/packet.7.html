@@ -10,7 +10,7 @@ of the modification is added to the header.
 <HTML><HEAD><TITLE>Man page of PACKET</TITLE>
 </HEAD><BODY>
 <H1>PACKET</H1>
-Section: Linux Programmer's Manual (7)<BR>Updated: 2014-08-19<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (7)<BR>Updated: 2015-03-29<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -49,8 +49,9 @@ for raw packets including the link-level header or
 
 for cooked packets with the link-level header removed.
 The link-level header information is available in a common format in a
-<I>sockaddr_ll</I>.
+<I>sockaddr_ll</I>
 
+structure.
 <I>protocol</I>
 
 is the IEEE 802.3 protocol number in network byte order.
@@ -60,13 +61,13 @@ See the
 include file for a list of allowed protocols.
 When protocol
 is set to
-<B>htons(ETH_P_ALL)</B>
+<B>htons(ETH_P_ALL)</B>,
 
 then all protocols are received.
 All incoming packets of that protocol type will be passed to the packet
 socket before they are passed to the protocols implemented in the kernel.
 <P>
-Only processes with effective UID 0 or the
+Only processes with the
 <B>CAP_NET_RAW</B>
 
 capability may open packet sockets.
@@ -80,8 +81,8 @@ passed in a standard
 <I>sockaddr_ll</I>
 
 address structure.
-When transmitting a packet, the user supplied buffer
-should contain the physical layer header.
+When transmitting a packet, the user-supplied buffer
+should contain the physical-layer header.
 That packet is then
 queued unmodified to the network driver of the interface defined by the
 destination address.
@@ -100,13 +101,13 @@ The physical header is removed before the packet is passed to the user.
 Packets sent through a
 <B>SOCK_DGRAM</B>
 
-packet socket get a suitable physical layer header based on the
+packet socket get a suitable physical-layer header based on the
 information in the
 <I>sockaddr_ll</I>
 
 destination address before they are queued.
 <P>
-By default all packets of the specified protocol type
+By default, all packets of the specified protocol type
 are passed to a packet socket.
 To get packets only from a specific interface use
 <B><A HREF="../man2/bind.2.html">bind</A></B>(2)
@@ -136,7 +137,8 @@ flag is passed to
 
 <B><A HREF="../man2/recv.2.html">recv</A></B>(2),
 
-<B><A HREF="../man2/recvfrom.2.html">recvfrom</A></B>(2)
+or
+<B><A HREF="../man2/recvfrom.2.html">recvfrom</A></B>(2),
 
 the real length of the packet on the wire is always returned,
 even when it is longer than the buffer.
@@ -146,23 +148,26 @@ even when it is longer than the buffer.
 The
 <I>sockaddr_ll</I>
 
-is a device independent physical layer address.
+structure is a device-independent physical-layer address.
 <P>
 
 <PRE>
 struct sockaddr_ll {
     unsigned short sll_family;   /* Always AF_PACKET */
-    unsigned short sll_protocol; /* Physical layer protocol */
+    unsigned short sll_protocol; /* Physical-layer protocol */
     int            sll_ifindex;  /* Interface number */
     unsigned short sll_hatype;   /* ARP hardware type */
     unsigned char  sll_pkttype;  /* Packet type */
     unsigned char  sll_halen;    /* Length of address */
-    unsigned char  sll_addr[8];  /* Physical layer address */
+    unsigned char  sll_addr[8];  /* Physical-layer address */
 };
 </PRE>
 
 
 <P>
+The fields of this structure are as follows:
+<DL COMPACT>
+<DT>*<DD>
 <I>sll_protocol</I>
 
 is the standard ethernet protocol type in network byte order as defined
@@ -171,6 +176,7 @@ in the
 
 include file.
 It defaults to the socket's protocol.
+<DT>*<DD>
 <I>sll_ifindex</I>
 
 is the interface index of the interface
@@ -184,6 +190,7 @@ is an ARP type as defined in the
 <I>&lt;<A HREF="file:///usr/include/linux/if_arp.h">linux/if_arp.h</A>&gt;</I>
 
 include file.
+<DT>*<DD>
 <I>sll_pkttype</I>
 
 contains the packet type.
@@ -193,28 +200,31 @@ Valid types are
 for a packet addressed to the local host,
 <B>PACKET_BROADCAST</B>
 
-for a physical layer broadcast packet,
+for a physical-layer broadcast packet,
 <B>PACKET_MULTICAST</B>
 
-for a packet sent to a physical layer multicast address,
+for a packet sent to a physical-layer multicast address,
 <B>PACKET_OTHERHOST</B>
 
 for a packet to some other host that has been caught by a device driver
 in promiscuous mode, and
 <B>PACKET_OUTGOING</B>
 
-for a packet originated from the local host that is looped back to a packet
+for a packet originating from the local host that is looped back to a packet
 socket.
 These types make sense only for receiving.
+<DT>*<DD>
 <I>sll_addr</I>
 
 and
 <I>sll_halen</I>
 
-contain the physical layer (e.g., IEEE 802.3) address and its length.
+contain the physical-layer (e.g., IEEE 802.3) address and its length.
 The exact interpretation depends on the device.
+</DL>
 <P>
-When you send packets it is enough to specify
+
+When you send packets, it is enough to specify
 <I>sll_family</I>,
 
 <I>sll_addr</I>,
@@ -230,7 +240,7 @@ and
 <I>sll_pkttype</I>
 
 are set on received packets for your information.
-For bind only
+For bind, only
 <I>sll_protocol</I>
 
 and
@@ -255,7 +265,7 @@ with level
 
 <DD>
 
-Packet sockets can be used to configure physical layer multicasting
+Packet sockets can be used to configure physical-layer multicasting
 and promiscuous mode.
 <B>PACKET_ADD_MEMBERSHIP</B>
 
@@ -274,31 +284,31 @@ struct packet_mreq {
     int            mr_ifindex;    /* interface index */
     unsigned short mr_type;       /* action */
     unsigned short mr_alen;       /* address length */
-    unsigned char  mr_address[8]; /* physical layer address */
+    unsigned char  mr_address[8]; /* physical-layer address */
 };
 </PRE>
 
 
 <P>
-<B>mr_ifindex</B>
+<I>mr_ifindex</I>
 
 contains the interface index for the interface whose status
 should be changed.
 The
-<B>mr_type</B>
+<I>mr_type</I>
 
-parameter specifies which action to perform.
+field specifies which action to perform.
 <B>PACKET_MR_PROMISC</B>
 
 enables receiving all packets on a shared medium (often known as
 &quot;promiscuous mode&quot;),
 <B>PACKET_MR_MULTICAST</B>
 
-binds the socket to the physical layer multicast group specified in
-<B>mr_address</B>
+binds the socket to the physical-layer multicast group specified in
+<I>mr_address</I>
 
 and
-<B>mr_alen</B>,
+<I>mr_alen</I>,
 
 and
 <B>PACKET_MR_ALLMULTI</B>
@@ -369,7 +379,11 @@ flags (see below).
 Packet sockets can leave a fanout group only by closing the socket.
 The group is deleted when the last socket is closed.
 <P>
-Fanout supports multiple algorithms to spread traffic between sockets.
+Fanout supports multiple algorithms to spread traffic between sockets,
+as follows:
+<DL COMPACT><DT><DD>
+<DL COMPACT>
+<DT>*<DD>
 The default mode,
 <B>PACKET_FANOUT_HASH</B>,
 
@@ -378,33 +392,41 @@ per-flow ordering.
 For each packet, it chooses a socket by taking the packet flow hash
 modulo the number of sockets in the group, where a flow hash is a hash
 over network-layer address and optional transport-layer port fields.
+<DT>*<DD>
 The load-balance mode
 <B>PACKET_FANOUT_LB</B>
 
 implements a round-robin algorithm.
+<DT>*<DD>
 <B>PACKET_FANOUT_CPU</B>
 
 selects the socket based on the CPU that the packet arrived on.
+<DT>*<DD>
 <B>PACKET_FANOUT_ROLLOVER</B>
 
-processes all data on a single socket, moves to the next when one
+processes all data on a single socket, moving to the next when one
 becomes backlogged.
+<DT>*<DD>
 <B>PACKET_FANOUT_RND</B>
 
 selects the socket using a pseudo-random number generator.
+<DT>*<DD>
 <B>PACKET_FANOUT_QM</B>
 
 
 (available since Linux 3.14)
 selects the socket using the recorded queue_mapping of the received skb.
-<P>
+</DL>
+</DL>
+
+<DT><DD>
 Fanout modes can take additional options.
 IP fragmentation causes packets from the same flow to have different
 flow hashes.
 The flag
 <B>PACKET_FANOUT_FLAG_DEFRAG</B>,
 
-if set, causes packet to be defragmented before fanout is applied, to
+if set, causes packets to be defragmented before fanout is applied, to
 preserve order even in this case.
 Fanout mode and options are communicated in the second 16 bits of the
 integer option value.
@@ -508,6 +530,7 @@ ownership of the slot back to the socket by setting
 equal to
 <B>TP_STATUS_KERNEL</B>.
 
+<P>
 Packet sockets implement multiple variants of the packet ring.
 The implementation details are described in
 <I>Documentation/networking/packet_mmap.txt</I>
@@ -695,9 +718,10 @@ Interface address contained an invalid interface index.
 
 <DD>
 User has insufficient privileges to carry out this operation.
-<P>
-In addition, other errors may be generated by the low-level driver.
 </DL>
+<P>
+
+In addition, other errors may be generated by the low-level driver.
 <A NAME="lbAJ">&nbsp;</A>
 <H2>VERSIONS</H2>
 
@@ -753,17 +777,18 @@ Packet sockets are not subject to the input or output firewall chains.
 <A NAME="lbAL">&nbsp;</A>
 <H3>Compatibility</H3>
 
-In Linux 2.0, the only way to get a packet socket was by calling
-<B>socket(AF_INET, SOCK_PACKET, </B><I>protocol</I><B>)</B>.
-
-This is still supported but strongly deprecated.
+In Linux 2.0, the only way to get a packet socket was with the call:
+<P>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;socket(AF_INET,&nbsp;SOCK_PACKET,&nbsp;protocol)
+<P>
+This is still supported, but deprecated and strongly discouraged.
 The main difference between the two methods is that
 <B>SOCK_PACKET</B>
 
 uses the old
 <I>struct sockaddr_pkt</I>
 
-to specify an interface, which doesn't provide physical layer
+to specify an interface, which doesn't provide physical-layer
 independence.
 <P>
 
@@ -795,22 +820,6 @@ This structure is obsolete and should not be used in new code.
 <A NAME="lbAM">&nbsp;</A>
 <H2>BUGS</H2>
 
-glibc 2.1 does not have a define for
-<B>SOL_PACKET</B>.
-
-The suggested workaround is to use:
-
-<PRE>
-
-#ifndef SOL_PACKET
-#define SOL_PACKET 263
-#endif
-
-</PRE>
-
-
-This is fixed in later glibc versions.
-<P>
 The IEEE 802.2/803.3 LLC handling could be considered as a bug.
 <P>
 Socket filters are not documented.
@@ -851,7 +860,7 @@ RFC&nbsp;1700 for the IEEE 802.3 IP encapsulation.
 The
 <I>&lt;<A HREF="file:///usr/include/linux/if_ether.h">linux/if_ether.h</A>&gt;</I>
 
-include file for physical layer protocols.
+include file for physical-layer protocols.
 <P>
 The Linux kernel source tree.
 <I>/Documentation/networking/filter.txt</I>
@@ -892,6 +901,6 @@ and
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:37:59 GMT, April 20, 2020
+Time: 03:38:35 GMT, April 20, 2020
 </BODY>
 </HTML>

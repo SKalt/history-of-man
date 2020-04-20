@@ -26,7 +26,7 @@ the source, must acknowledge the copyright and authors of this work.
 <HTML><HEAD><TITLE>Man page of MSGOP</TITLE>
 </HEAD><BODY>
 <H1>MSGOP</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2015-02-21<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2015-03-29<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -565,15 +565,6 @@ and does not have the
 <B>CAP_IPC_OWNER</B>
 
 capability.
-<DT><B>EAGAIN</B>
-
-<DD>
-No message was available in the queue and
-<B>IPC_NOWAIT</B>
-
-was specified in
-<I>msgflg</I>.
-
 <DT><B>EFAULT</B>
 
 <DD>
@@ -797,6 +788,152 @@ This bug is fixed
 
 in Linux 3.14.
 <A NAME="lbAL">&nbsp;</A>
+<H2>EXAMPLE</H2>
+
+The program below demonstrates the use of
+<B>msgsnd</B>()
+
+and
+<B>msgrcv</B>().
+
+<P>
+The example program is first run with the <B>-s</B> option to send a
+message and then run again with the <B>-r</B> option to receive a
+message.
+<P>
+The following shell session shows a sample run of the program:
+
+<PRE>
+
+$<B> ./a.out -s</B>
+sent: a message at Wed Mar  4 16:25:45 2015
+
+$<B> ./a.out -r</B>
+message received: a message at Wed Mar  4 16:25:45 2015
+
+</PRE>
+
+
+<A NAME="lbAM">&nbsp;</A>
+<H3>Program source</H3>
+
+
+<PRE>
+#include &lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/stdlib.h">stdlib.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/string.h">string.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/time.h">time.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/errno.h">errno.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/sys/types.h">sys/types.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/sys/ipc.h">sys/ipc.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/sys/msg.h">sys/msg.h</A>&gt;
+
+struct msgbuf {
+    long mtype;
+    char mtext[80];
+};
+
+static void
+usage(char *prog_name, char *msg)
+{
+    if (msg != NULL)
+        fputs(msg, stderr);
+
+    fprintf(stderr, &quot;Usage: %s [options]\n&quot;, prog_name);
+    fprintf(stderr, &quot;Options are:\n&quot;);
+    fprintf(stderr, &quot;-s        send message using msgsnd()\n&quot;);
+    fprintf(stderr, &quot;-r        read message using msgrcv()\n&quot;);
+    fprintf(stderr, &quot;-t        message type (default is 1)\n&quot;);
+    fprintf(stderr, &quot;-k        message queue key (default is 1234)\n&quot;);
+    exit(EXIT_FAILURE);
+}
+
+static void
+send_msg(int qid, int msgtype)
+{
+    struct msgbuf msg;
+    time_t t;
+
+    msg.mtype = msgtype;
+
+    time(&amp;t);
+    snprintf(msg.mtext, sizeof(msg.mtext), &quot;a message at %s&quot;,
+            ctime(&amp;t));
+
+    if (msgsnd(qid, (void *) &amp;msg, sizeof(msg.mtext),
+                IPC_NOWAIT) == -1) {
+        perror(&quot;msgsnd error&quot;);
+        exit(EXIT_FAILURE);
+    }
+    printf(&quot;sent: %s\n&quot;, msg.mtext);
+}
+
+static void
+get_msg(int qid, int msgtype)
+{
+    struct msgbuf msg;
+
+    if (msgrcv(qid, (void *) &amp;msg, sizeof(msg.mtext), msgtype,
+               MSG_NOERROR | IPC_NOWAIT) == -1) {
+        if (errno != ENOMSG) {
+            perror(&quot;msgrcv&quot;);
+            exit(EXIT_FAILURE);
+        }
+        printf(&quot;No message available for msgrcv()\n&quot;);
+    } else
+        printf(&quot;message received: %s\n&quot;, msg.mtext);
+}
+
+int
+main(int argc, char *argv[])
+{
+    int qid, opt;
+    int mode = 0;               /* 1 = send, 2 = receive */
+    int msgtype = 1;
+    int msgkey = 1234;
+
+    while ((opt = getopt(argc, argv, &quot;srt:k:&quot;)) != -1) {
+        switch (opt) {
+        case 's':
+            mode = 1;
+            break;
+        case 'r':
+            mode = 2;
+            break;
+        case 't':
+            msgtype = atoi(optarg);
+            if (msgtype &lt;= 0)
+                usage(argv[0], &quot;-t option must be greater than 0\n&quot;);
+            break;
+        case 'k':
+            msgkey = atoi(optarg);
+            break;
+        default:
+            usage(argv[0], &quot;Unrecognized option\n&quot;);
+        }
+    }
+
+    if (mode == 0)
+        usage(argv[0], &quot;must use either -s or -r option\n&quot;);
+
+    qid = msgget(msgkey, IPC_CREAT | 0666);
+
+    if (qid == -1) {
+        perror(&quot;msgget&quot;);
+        exit(EXIT_FAILURE);
+    }
+
+    if (mode == 2)
+        get_msg(qid, msgtype);
+    else
+        send_msg(qid, msgtype);
+
+    exit(EXIT_SUCCESS);
+}
+</PRE>
+
+<A NAME="lbAN">&nbsp;</A>
 <H2>SEE ALSO</H2>
 
 <B><A HREF="../man2/msgctl.2.html">msgctl</A></B>(2),
@@ -826,12 +963,16 @@ in Linux 3.14.
 <DT><A HREF="#lbAI">CONFORMING TO</A><DD>
 <DT><A HREF="#lbAJ">NOTES</A><DD>
 <DT><A HREF="#lbAK">BUGS</A><DD>
-<DT><A HREF="#lbAL">SEE ALSO</A><DD>
+<DT><A HREF="#lbAL">EXAMPLE</A><DD>
+<DL>
+<DT><A HREF="#lbAM">Program source</A><DD>
+</DL>
+<DT><A HREF="#lbAN">SEE ALSO</A><DD>
 </DL>
 <HR>
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:37:46 GMT, April 20, 2020
+Time: 03:38:22 GMT, April 20, 2020
 </BODY>
 </HTML>

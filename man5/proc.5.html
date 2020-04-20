@@ -25,7 +25,7 @@ License along with this manual; if not, see
 <HTML><HEAD><TITLE>Man page of PROC</TITLE>
 </HEAD><BODY>
 <H1>PROC</H1>
-Section: Linux Programmer's Manual (5)<BR>Updated: 2015-02-21<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (5)<BR>Updated: 2015-03-29<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -89,15 +89,31 @@ This directory is present only if the kernel was configured with
 The contents of this file represent the current
 security attributes of the process.
 <P>
-In SELinux, this file is used to get the security context of a process,
-but not to set the security context (a write is always denied),
-since SELinux limits process security transitions to
+In SELinux, this file is used to get the security context of a process.
+Prior to Linux 2.6.11, this file could not be used to set the security
+context (a write was always denied), since SELinux limited process security
+transitions to
 <B><A HREF="../man2/execve.2.html">execve</A></B>(2)
 
 (see the description of
 <I>/proc/[pid]/attr/exec</I>,
 
 below).
+Since Linux 2.6.11, SELinux lifted this restriction and began supporting
+&quot;set&quot; operations via writes to this node if authorized by policy,
+although use of this operation is only suitable for applications that are
+trusted to maintain any desired separation between the old and new security
+contexts.
+Prior to Linux 2.6.28, SELinux did not allow threads within a
+multi-threaded process to set their security context via this node
+as it would yield an inconsistency among the security contexts of the
+threads sharing the same memory space.
+Since Linux 2.6.28, SELinux lifted
+this restriction and began supporting &quot;set&quot; operations for threads within
+a multithreaded process if the new security context is bounded by the old
+security context, where the bounded relation is defined in policy and
+guarantees that the new security context has a subset of the permissions
+of the old security context.
 Other security modules may choose to support &quot;set&quot; operations via
 writes to this node.
 <DT><I>/proc/[pid]/attr/exec</I> (since Linux 2.6.0)
@@ -749,10 +765,9 @@ process A could see an intermediate result.
 <DT><I>/proc/[pid]/gid_map</I> (since Linux 3.5)
 
 <DD>
-See the description of
-<I>/proc/[pid]/uid_map</I>.
+See
+<B><A HREF="../man7/user_namespaces.7.html">user_namespaces</A></B>(7).
 
-<P>
 <DT><I>/proc/[pid]/limits</I> (since Linux 2.6.24)
 
 <DD>
@@ -1380,6 +1395,34 @@ are not available if the main thread has already terminated
 
 
 
+<DT><I>/proc/[pid]/seccomp</I> (from Linux 2.6.12 to 2.6.22)
+
+<DD>
+Read/set the seccomp mode for the process.
+If this file contains the value zero, seccomp mode is not enabled.
+Writing the value 1 to this file (irreversibly) places the process in
+seccomp mode: the only permitted system calls are
+<B><A HREF="../man2/read.2.html">read</A></B>(2),
+
+<B><A HREF="../man2/write.2.html">write</A></B>(2),
+
+<B><A HREF="../man2/_exit.2.html">_exit</A></B>(2),
+
+and
+<B><A HREF="../man2/sigreturn.2.html">sigreturn</A></B>(2).
+
+This file went away in Linux 2.6.23,
+
+when it was replaced by a
+<B><A HREF="../man2/prctl.2.html">prctl</A></B>(2)-based
+
+mechanism.
+<DT><I>/proc/[pid]/setgroups</I> (since Linux 3.19)
+
+<DD>
+See
+<B><A HREF="../man7/user_namespaces.7.html">user_namespaces</A></B>(7).
+
 <DT><I>/proc/[pid]/smaps</I> (since Linux 2.6.14)
 
 <DD>
@@ -1862,6 +1905,7 @@ Groups: 16 33 100
 VmPeak:     9136 kB
 VmSize:     7896 kB
 VmLck:         0 kB
+VmPin:         0 kB
 VmHWM:      7572 kB
 VmRSS:      6316 kB
 VmData:     5224 kB
@@ -1956,6 +2000,14 @@ Virtual memory size.
 Locked memory size (see
 <B><A HREF="../man3/mlock.3.html">mlock</A></B>(3)).
 
+<DT>*<DD>
+<I>VmPin</I>:
+
+Pinned memory size
+
+(since Linux 3.2).
+These are pages that can't be moved because something needs to
+directly access physical memory.
 <DT>*<DD>
 <I>VmHWM</I>:
 
@@ -2155,182 +2207,8 @@ directory are not available if the main thread has already terminated
 <DT><I>/proc/[pid]/uid_map</I>, <I>/proc/[pid]/gid_map</I> (since Linux 3.5)
 
 <DD>
-
-These files expose the mappings for user and group IDs
-inside the user namespace for the process
-<I>pid</I>.
-
-The description here explains the details for
-<I>uid_map</I>;
-
-<I>gid_map</I>
-
-is exactly the same,
-but each instance of &quot;user ID&quot; is replaced by &quot;group ID&quot;.
-<P>
-The
-<I>uid_map</I>
-
-file exposes the mapping of user IDs from the user namespace
-of the process
-<I>pid</I>
-
-to the user namespace of the process that opened
-<I>uid_map</I>
-
-(but see a qualification to this point below).
-In other words, processes that are in different user namespaces
-will potentially see different values when reading from a particular
-<I>uid_map</I>
-
-file, depending on the user ID mappings for the user namespaces
-of the reading processes.
-<P>
-<P>
-Each line in the file specifies a 1-to-1 mapping of a range of contiguous
-between two user namespaces.
-The specification in each line takes the form of
-three numbers delimited by white space.
-The first two numbers specify the starting user ID in
-each user namespace.
-The third number specifies the length of the mapped range.
-In detail, the fields are interpreted as follows:
-<DL COMPACT><DT><DD>
-<DL COMPACT>
-<DT>(1)<DD>
-The start of the range of user IDs in
-the user namespace of the process
-<I>pid</I>.
-
-<DT>(2)<DD>
-The start of the range of user
-IDs to which the user IDs specified by field one map.
-How field two is interpreted depends on whether the process that opened
-<I>uid_map</I>
-
-and the process
-<I>pid</I>
-
-are in the same user namespace, as follows:
-<DL COMPACT><DT><DD>
-<DL COMPACT>
-<DT>a)<DD>
-If the two processes are in different user namespaces:
-field two is the start of a range of
-user IDs in the user namespace of the process that opened
-<I>uid_map</I>.
-
-<DT>b)<DD>
-If the two processes are in the same user namespace:
-field two is the start of the range of
-user IDs in the parent user namespace of the process
-<I>pid</I>.
-
-(The &quot;parent user namespace&quot;
-is the user namespace of the process that created a user namespace
-via a call to
-<B><A HREF="../man2/unshare.2.html">unshare</A></B>(2)
-
-or
-<B><A HREF="../man2/clone.2.html">clone</A></B>(2)
-
-with the
-<B>CLONE_NEWUSER</B>
-
-flag.)
-This case enables the opener of
-<I>uid_map</I>
-
-(the common case here is opening
-<I>/proc/self/uid_map</I>)
-
-to see the mapping of user IDs into the user namespace of the process
-that created this user namespace.
-</DL>
-</DL>
-
-<DT>(3)<DD>
-The length of the range of user IDs that is mapped between the two
-user namespaces.
-</DL>
-</DL>
-
-<DT><DD>
-After the creation of a new user namespace, the
-<I>uid_map</I>
-
-file may be written to exactly once to specify
-the mapping of user IDs in the new user namespace.
-(An attempt to write more than once to the file fails with the error
-<B>EPERM</B>.)
-
-<DT><DD>
-The lines written to
-<I>uid_map</I>
-
-must conform to the following rules:
-<DL COMPACT><DT><DD>
-<DL COMPACT>
-<DT>*<DD>
-The three fields must be valid numbers,
-and the last field must be greater than 0.
-<DT>*<DD>
-Lines are terminated by newline characters.
-<DT>*<DD>
-There is an (arbitrary) limit on the number of lines in the file.
-As at Linux 3.8, the limit is five lines.
-<DT>*<DD>
-The range of user IDs specified in each line cannot overlap with the ranges
-in any other lines.
-In the current implementation (Linux 3.8), this requirement is
-satisfied by a simplistic implementation that imposes the further
-requirement that
-the values in both field 1 and field 2 of successive lines must be
-in ascending numerical order.
-</DL>
-</DL>
-
-<DT><DD>
-Writes that violate the above rules fail with the error
-<B>EINVAL</B>.
-
-<P>
-In order for a process to write to the
-<I>/proc/[pid]/uid_map</I>
-
-(<I>/proc/[pid]/gid_map</I>)
-
-file, the following requirements must be met:
-<DL COMPACT><DT><DD>
-<DL COMPACT>
-<DT>*<DD>
-The process must have the
-<B>CAP_SETUID</B>
-
-(<B>CAP_SETGID</B>)
-
-capability in the user namespace of the process
-<I>pid</I>.
-
-<DT>*<DD>
-The process must have the
-<B>CAP_SETUID</B>
-
-(<B>CAP_SETGID</B>)
-
-capability in the parent user namespace.
-<DT>*<DD>
-The process must be in either the user namespace of the process
-<I>pid</I>
-
-or inside the parent user namespace of the process
-<I>pid</I>.
-
-</DL>
-</DL>
-
-For further details, see
-<B><A HREF="../man7/namespaces.7.html">namespaces</A></B>(7).
+See
+<B><A HREF="../man7/user_namespaces.7.html">user_namespaces</A></B>(7).
 
 <DT><I>/proc/[pid]/wchan</I> (since Linux 2.6.0)
 
@@ -5453,6 +5331,6 @@ and
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:37:58 GMT, April 20, 2020
+Time: 03:38:34 GMT, April 20, 2020
 </BODY>
 </HTML>

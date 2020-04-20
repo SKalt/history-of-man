@@ -34,7 +34,7 @@ SUCH DAMAGE.
 <HTML><HEAD><TITLE>Man page of SETREUID</TITLE>
 </HEAD><BODY>
 <H1>SETREUID</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2014-09-21<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2015-03-29<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -199,13 +199,13 @@ Setting the effective user (group) ID to the
 saved set-user-ID (saved set-group-ID) is
 possible since Linux 1.1.37 (1.1.38).
 <P>
-POSIX.1 does not specify all of possible ID changes that are permitted
-on Linux for an unprivileged process.
+POSIX.1 does not specify all of the UID changes that Linux permits
+for an unprivileged process.
 For
 <B>setreuid</B>(),
 
 the effective user ID can be made the same as the
-real user ID or the save set-user-ID,
+real user ID or the saved set-user-ID,
 and it is unspecified whether unprivileged processes may set the
 real user ID to the real user ID, the effective user ID, or the
 saved set-user-ID.
@@ -242,7 +242,29 @@ and
 <B>setregid</B>()
 
 wrapper functions transparently deal with the variations across kernel versions.
+
 <A NAME="lbAI">&nbsp;</A>
+<H3>C library/kernel ABI differences</H3>
+
+At the kernel level, user IDs and group IDs are a per-thread attribute.
+However, POSIX requires that all threads in a process
+share the same credentials.
+The NPTL threading implementation handles the POSIX requirements by
+providing wrapper functions for
+the various system calls that change process UIDs and GIDs.
+These wrapper functions (including those for
+<B>setreuid</B>()
+
+and
+<B>setregid</B>())
+
+employ a signal-based technique to ensure
+that when one thread changes credentials,
+all of the other threads in the process also change their credentials.
+For details, see
+<B><A HREF="../man7/nptl.7.html">nptl</A></B>(7).
+
+<A NAME="lbAJ">&nbsp;</A>
 <H2>SEE ALSO</H2>
 
 <B><A HREF="../man2/getgid.2.html">getgid</A></B>(2),
@@ -259,6 +281,8 @@ wrapper functions transparently deal with the variations across kernel versions.
 
 <B><A HREF="../man7/capabilities.7.html">capabilities</A></B>(7),
 
+<B><A HREF="../man7/credentials.7.html">credentials</A></B>(7),
+
 <B><A HREF="../man7/user_namespaces.7.html">user_namespaces</A></B>(7)
 
 <P>
@@ -273,12 +297,15 @@ wrapper functions transparently deal with the variations across kernel versions.
 <DT><A HREF="#lbAF">ERRORS</A><DD>
 <DT><A HREF="#lbAG">CONFORMING TO</A><DD>
 <DT><A HREF="#lbAH">NOTES</A><DD>
-<DT><A HREF="#lbAI">SEE ALSO</A><DD>
+<DL>
+<DT><A HREF="#lbAI">C library/kernel ABI differences</A><DD>
+</DL>
+<DT><A HREF="#lbAJ">SEE ALSO</A><DD>
 </DL>
 <HR>
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:37:47 GMT, April 20, 2020
+Time: 03:38:23 GMT, April 20, 2020
 </BODY>
 </HTML>

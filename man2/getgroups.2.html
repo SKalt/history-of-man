@@ -26,7 +26,7 @@ the source, must acknowledge the copyright and authors of this work.
 <HTML><HEAD><TITLE>Man page of GETGROUPS</TITLE>
 </HEAD><BODY>
 <H1>GETGROUPS</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2014-08-19<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2015-03-29<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -185,7 +185,24 @@ Out of memory.
 <DT><B>EPERM</B>
 
 <DD>
-The calling process has insufficient privilege.
+The calling process has insufficient privilege
+(it does not have the
+<B>CAP_SETGID</B>
+
+capability).
+<DT><B>EPERM</B> (since Linux 3.19)
+
+<DD>
+The use of
+<B>setgroups</B>()
+
+is denied in this user namespace.
+See the description of
+<I>/proc/[pid]/setgroups</I>
+
+in
+<B><A HREF="../man7/user_namespaces.7.html">user_namespaces</A></B>(7).
+
 </DL>
 <A NAME="lbAG">&nbsp;</A>
 <H2>CONFORMING TO</H2>
@@ -249,7 +266,26 @@ The glibc
 <B>getgroups</B>()
 
 wrapper function transparently deals with the variation across kernel versions.
+
 <A NAME="lbAI">&nbsp;</A>
+<H3>C library/kernel ABI differences</H3>
+
+At the kernel level, user IDs and group IDs are a per-thread attribute.
+However, POSIX requires that all threads in a process
+share the same credentials.
+The NPTL threading implementation handles the POSIX requirements by
+providing wrapper functions for
+the various system calls that change process UIDs and GIDs.
+These wrapper functions (including the one for
+<B>setgroups</B>())
+
+employ a signal-based technique to ensure
+that when one thread changes credentials,
+all of the other threads in the process also change their credentials.
+For details, see
+<B><A HREF="../man7/nptl.7.html">nptl</A></B>(7).
+
+<A NAME="lbAJ">&nbsp;</A>
 <H2>SEE ALSO</H2>
 
 <B><A HREF="../man2/getgid.2.html">getgid</A></B>(2),
@@ -278,12 +314,15 @@ wrapper function transparently deals with the variation across kernel versions.
 <DT><A HREF="#lbAF">ERRORS</A><DD>
 <DT><A HREF="#lbAG">CONFORMING TO</A><DD>
 <DT><A HREF="#lbAH">NOTES</A><DD>
-<DT><A HREF="#lbAI">SEE ALSO</A><DD>
+<DL>
+<DT><A HREF="#lbAI">C library/kernel ABI differences</A><DD>
+</DL>
+<DT><A HREF="#lbAJ">SEE ALSO</A><DD>
 </DL>
 <HR>
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:37:45 GMT, April 20, 2020
+Time: 03:38:21 GMT, April 20, 2020
 </BODY>
 </HTML>

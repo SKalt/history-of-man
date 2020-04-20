@@ -26,13 +26,14 @@ the source, must acknowledge the copyright and authors of this work.
 <HTML><HEAD><TITLE>Man page of SIGWAITINFO</TITLE>
 </HEAD><BODY>
 <H1>SIGWAITINFO</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2014-08-19<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2015-03-29<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
 <H2>NAME</H2>
 
-sigwaitinfo, sigtimedwait - synchronously wait for queued signals
+sigwaitinfo, sigtimedwait, rt_sigtimedwait - synchronously wait
+for queued signals
 <A NAME="lbAC">&nbsp;</A>
 <H2>SYNOPSIS</H2>
 
@@ -261,22 +262,54 @@ is a library function implemented on top of
 <B>sigtimedwait</B>().
 
 <P>
-The raw
+The glibc wrapper functions for
+<B>sigwaitinfo</B>()
+
+and
 <B>sigtimedwait</B>()
 
-system call has a fifth argument,
+silently ignore attempts to wait for the two real-time signals that
+are used internally by the NPTL threading implementation.
+See
+<B><A HREF="../man7/nptl.7.html">nptl</A></B>(7)
+
+for details.
+<P>
+The original Linux system call was named
+<B>sigtimedwait</B>().
+
+However, with the addition of real-time signals in Linux 2.2,
+the fixed-size, 32-bit
+<I>sigset_t</I>
+
+type supported by that system call was no longer fit for purpose.
+Consequently, a new system call,
+<B>rt_sigtimedwait</B>(),
+
+was added to support an enlarged
+<I>sigset_t</I>
+
+type.
+The new system call takes a fourth argument,
 <I>size_t sigsetsize</I>,
 
-which specifies the size in bytes of the
-<I>set</I>
+which specifies the size in bytes of the signal set in
+<I>set</I>.
 
-argument.
+This argument is currently required to have the value
+<I>sizeof(sigset_t)</I>
+
+(or the error
+<B>EINVAL</B>
+
+results).
 The glibc
 <B>sigtimedwait</B>()
 
-wrapper function specifies this argument as a fixed value
-(equal to
-<I>sizeof(sigset_t)</I>).
+wrapper function hides these details from us, transparently calling
+<B>rt_sigtimedwait</B>()
+
+when the kernel provides it.
 
 <A NAME="lbAJ">&nbsp;</A>
 <H2>SEE ALSO</H2>
@@ -324,6 +357,6 @@ wrapper function specifies this argument as a fixed value
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:37:47 GMT, April 20, 2020
+Time: 03:38:23 GMT, April 20, 2020
 </BODY>
 </HTML>

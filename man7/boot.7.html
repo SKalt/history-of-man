@@ -7,222 +7,253 @@ May be distributed subject to the GPL.
 <HTML><HEAD><TITLE>Man page of BOOT</TITLE>
 </HEAD><BODY>
 <H1>BOOT</H1>
-Section: Linux Programmer's Manual (7)<BR>Updated: 2010-09-19<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (7)<BR>Updated: 2015-03-11<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
 <H2>NAME</H2>
 
-boot-scripts - general description of boot sequence
+boot - System bootup process based on UNIX System V Release 4
 <A NAME="lbAC">&nbsp;</A>
 <H2>DESCRIPTION</H2>
 
 <P>
 
-The boot sequence varies in details among systems
-but can be roughly divided to the following steps:
-(i) hardware boot, (ii) operating system (OS) loader,
-(iii) kernel startup, (iv) init and inittab,
-(v) boot scripts.
-We will describe each of these in more detail below.
+The <B>bootup process</B> (or &quot;<B>boot sequence</B>&quot;) varies in details
+among systems, but can be roughly divided into phases controlled by
+the following components:
+<DL COMPACT>
+<DT>1.<DD>
+hardware
+<DT>2.<DD>
+operating system (OS) loader
+<DT>3.<DD>
+kernel
+<DT>4.<DD>
+root user-space process (<I>init</I> and <I>inittab</I>)
+<DT>5.<DD>
+boot scripts
+</DL>
+<P>
+
+Each of these is described below in more detail.
 <A NAME="lbAD">&nbsp;</A>
-<H3>Hardware-boot</H3>
+<H3>Hardware</H3>
 
 After power-on or hard reset, control is given
-to a program stored on read-only memory (normally
-PROM).
-In PC we usually call this program the <B>BIOS</B>.
+to a program stored in read-only memory (normally
+PROM); for historical reasons involving the personal
+computer, this program is often called &quot;the <B>BIOS</B>&quot;.
 <P>
-This program normally makes a basic self-test of the
+This program normally performs a basic self-test of the
 machine and accesses nonvolatile memory to read
 further parameters.
 This memory in the PC is
 battery-backed CMOS memory, so most people
-refer to it as the <B>CMOS</B>, although outside
-of the PC world, it is usually called <B>nvram</B>
-(nonvolatile ram).
+refer to it as &quot;the <B>CMOS</B>&quot;; outside
+of the PC world, it is usually called &quot;the <B>NVRAM</B>&quot;
+(nonvolatile RAM).
 <P>
-The parameters stored in the nvram vary between
-systems, but as a minimum, the hardware boot program
-should know what is the boot device, or which devices
-to probe as possible boot devices.
-<P>
-Then the hardware boot stage accesses the boot device,
-loads the OS loader, which is located on a fixed position
-on the boot device, and transfers control to it.
+The parameters stored in the NVRAM vary among
+systems, but as a minimum, they should specify
+which device can supply an OS loader, or at least which
+devices may be probed for one; such a device is known as &quot;the
+<B>boot device</B>&quot;.
+The hardware boot stage loads the OS loader from a fixed position on
+the boot device, and then transfers control to it.
 <DL COMPACT>
 <DT>Note:<DD>
-We do not cover here booting from network.
-Those who want
-to investigate this subject may want to research:
-DHCP, TFTP, PXE, Etherboot.
+The device from which the OS loader is read may be attached via a network, in which
+case the details of booting are further specified by protocols such as
+DHCP, TFTP, PXE, Etherboot, etc.
 </DL>
 <A NAME="lbAE">&nbsp;</A>
 <H3>OS loader</H3>
 
-In PC, the OS loader is located in the first sector
-of the boot device - this is the <B>MBR</B>
+The main job of the OS loader is to locate the kernel
+on some device, load it, and run it.
+Most OS loaders allow
+interactive use, in order to enable specification of an alternative
+kernel (maybe a backup in case the one last compiled
+isn't functioning) and to pass optional parameters
+to the kernel.
+<P>
+In a traditional PC, the OS loader is located in the initial 512-byte block
+of the boot device; this block is known as &quot;the <B>MBR</B>&quot;
 (Master Boot Record).
 <P>
-In most systems, this primary loader is very
+In most systems, the OS loader is very
 limited due to various constraints.
-Even on non-PC systems
-there are some limitations to the size and complexity
+Even on non-PC systems,
+there are some limitations on the size and complexity
 of this loader, but the size limitation of the PC MBR
-(512 bytes including the partition table) makes it
-almost impossible to squeeze a full OS loader into it.
+(512 bytes, including the partition table) makes it
+almost impossible to squeeze much functionality into it.
 <P>
-Therefore, most operating systems make the primary loader
-call a secondary OS loader which may be located on
-a specified disk partition.
+Therefore, most systems split the role of loading the OS between
+a primary OS loader and a secondary OS loader; this secondary
+OS loader may be located within a larger portion of persistent
+storage, such as a disk partition.
 <P>
-In Linux the OS loader is normally
+In Linux, the OS loader is often either
 <B><A HREF="../man8/lilo.8.html">lilo</A></B>(8)
 
 or
 <B><A HREF="../man8/grub.8.html">grub</A></B>(8).
 
-Both of them may install either as secondary loaders
-(where the DOS installed MBR points to them), or
-as a two part loader where they provide special MBR
-containing the bootstrap code to load the second part
-of the loader from the root partition.
-<P>
-The main job of the OS loader is to locate the kernel
-on the disk, load it and run it.
-Most OS loaders allow
-interactive use, to enable specification of alternative
-kernel (maybe a backup in case the last compiled one
-isn't functioning) and to pass optional parameters
-to the kernel.
 <A NAME="lbAF">&nbsp;</A>
-<H3>Kernel startup</H3>
+<H3>Kernel</H3>
 
-When the kernel is loaded, it initializes the devices (via
-their drivers), starts the swapper (it is a &quot;kernel process&quot;,
-called kswapd in modern Linux kernels), and mounts the root
-filesystem (/).
+When the kernel is loaded, it initializes various components of
+the computer and operating system; each portion of software
+responsible for such a task is usually consider &quot;a <B>driver</B>&quot; for
+the applicable component. The kernel starts the virtual memory
+swapper (it is a kernel process, called &quot;kswapd&quot; in a modern Linux
+kernel), and mounts some filesystem at the root path,
+<I>/</I>.
+
 <P>
 Some of the parameters that may be passed to the kernel
-relate to these activities (e.g: You can override the
-default root filesystem).
-For further information
-on Linux kernel parameters read
+relate to these activities (for example, the default root filesystem
+can be overriden); for further information
+on Linux kernel parameters, read
 <B><A HREF="../man7/bootparam.7.html">bootparam</A></B>(7).
 
 <P>
-Only then the kernel creates the first (user land)
-process which is numbered 1.
-This process executes the
+Only then does the kernel create the initial userland
+process, which is given the number 1 as its
+<B>PID</B>
+
+(process ID).
+Traditionally, this process executes the
 program
 <I>/sbin/init</I>,
 
-passing any parameters that weren't handled by the kernel already.
+to which are passed the parameters that haven't already been
+handled by the kernel.
 <A NAME="lbAG">&nbsp;</A>
-<H3>init and inittab</H3>
+<H3>Root user-space process</H3>
 
-When init starts it reads
+<DL COMPACT>
+<DT>Note:<DD>
+The following description applies to an OS based on UNIX System V Release 4.
+However, a number of widely used systems have adopted a related but
+fundamentally different approach known as
+<B><A HREF="../man1/systemd.1.html">systemd</A></B>(1),
+
+for which the bootup process is detailed in its associated
+<B><A HREF="../man7/bootup.7.html">bootup</A></B>(7).
+
+</DL>
+<P>
+
+When
+<I>/sbin/init</I>
+
+starts, it reads
 <I>/etc/inittab</I>
 
 for further instructions.
-This file defines what should be run in different <I>run-levels</I>.
+This file defines what should be run when the
+<I>/sbin/init</I>
+
+program is instructed to enter a particular <I>run-level</I>, giving
+the administrator an easy way to establish an environment
+for some usage; each run-level is associated with a set of services
+(for example, run-level <B>S</B> is <I>single-user</I> mode,
+and run-level <B>2</B> entails running most network services).
 <P>
-This gives the system administrator an easy management scheme, where
-each run-level is associated with a set of services (e.g,
-<B>S</B> is <I>single-user</I>, on <B>2</B> most network
-services start).
 The administrator may change the current
 run-level via
-<B><A HREF="../man1/init.1.html">init</A></B>(1)
+<B><A HREF="../man1/init.1.html">init</A></B>(1),
 
 and query the current run-level via
 <B><A HREF="../man8/runlevel.8.html">runlevel</A></B>(8).
 
 <P>
 However, since it is not convenient to manage individual services
-by editing this file, inittab only bootstraps a set of scripts
+by editing this file,
+<I>/etc/inittab</I>
+
+only bootstraps a set of scripts
 that actually start/stop the individual services.
 <A NAME="lbAH">&nbsp;</A>
 <H3>Boot scripts</H3>
 
 <DL COMPACT>
 <DT>Note:<DD>
-The following description applies to System V release 4-based systems, which
-currently covers most commercial UNIX systems (Solaris, HP-UX, Irix, Tru64)
-as well as the major Linux distributions (Red Hat, Debian, Mandriva,
-SUSE, Ubuntu).
-Some systems (Slackware Linux, FreeBSD, OpenBSD)
-have a somewhat different scheme of boot scripts.
+The following description applies to an OS based on UNIX System V Release 4.
+However, a number of widely used systems (Slackware Linux, FreeBSD, OpenBSD)
+have a somewhat different scheme for boot scripts.
 </DL>
 <P>
 
-For each managed service (mail, nfs server, cron, etc.) there is
+For each managed service (mail, nfs server, cron, etc.), there is
 a single startup script located in a specific directory
 (<I>/etc/init.d</I>
 
 in most versions of Linux).
 Each of these scripts accepts as a single argument
-the word &quot;start&quot; -- causing it to start the service, or the word
-&quot;stop&quot; -- causing it to stop the service.
+the word &quot;start&quot; (causing it to start the service) or the word
+&quot;stop&quot; (causing it to stop the service).
 The script may optionally
-accept other &quot;convenience&quot; parameters (e.g: &quot;restart&quot;, to stop and then
-start, &quot;status&quot; to display the service status).
+accept other &quot;convenience&quot; parameters (e.g,. &quot;restart&quot; to stop and then
+start, &quot;status&quot; to display the service status, etc.).
 Running the script
 without parameters displays the possible arguments.
 <A NAME="lbAI">&nbsp;</A>
 <H3>Sequencing directories</H3>
 
-To make specific scripts start/stop at specific run-levels and in
-specific order, there are <I>sequencing directories</I>.
-These
-are normally in <I>/etc/rc[0-6S].d</I>.
-In each of these directories
+To make specific scripts start/stop at specific run-levels and in a
+specific order, there are <I>sequencing directories</I>, normally
+of the form  <I>/etc/rc[0-6S].d</I>.
+In each of these directories,
 there are links (usually symbolic) to the scripts in the <I>/etc/init.d</I>
 directory.
 <P>
 A primary script (usually <I>/etc/rc</I>) is called from
-<B><A HREF="../man5/inittab.5.html">inittab</A></B>(5)
+<B><A HREF="../man5/inittab.5.html">inittab</A></B>(5);
 
-and calls the services scripts via the links in the sequencing directories.
-All links with names that begin with 'S' are being called with
+this primary script calls each service's script via a link in the
+relevant sequencing directory.
+Each link whose name begins with 'S' is called with
 the argument &quot;start&quot; (thereby starting the service).
-All links with
-names that begin with 'K' are being called with the argument &quot;stop&quot;
-(thereby stopping the service).
+Each link whose name begins with 'K' is called with
+the argument &quot;stop&quot; (thereby stopping the service).
 <P>
 To define the starting or stopping order within the same run-level,
-the names of the links contain order-numbers.
-Also, to make the names clearer, they usually
-end with the name of the service they refer to.
-Example:
+the name of a link contains an <B>order-number</B>.
+Also, for clarity, the name of a link usually
+ends with the name of the service to which it refers.
+For example,
 the link <I>/etc/rc2.d/S80sendmail</I> starts the sendmail service on
 runlevel 2.
 This happens after <I>/etc/rc2.d/S12syslog</I> is run
 but before <I>/etc/rc2.d/S90xfs</I> is run.
 <P>
-To manage the boot order and run-levels, we have to manage these links.
-However, on many versions of Linux, there are tools to help with this task
-(e.g:
+To manage these links is to manage the boot order and run-levels;
+under many systems, there are tools to help with this task
+(e.g.,
 <B><A HREF="../man8/chkconfig.8.html">chkconfig</A></B>(8)).
 
 <A NAME="lbAJ">&nbsp;</A>
 <H3>Boot configuration</H3>
 
-Usually the daemons started may optionally receive command-line options
+A program that provides a service is often called a &quot;<B>daemon</B>&quot;.
+Usually, a daemon may receive various command-line options
 and parameters.
-To allow system administrators to change these
-parameters without editing the boot scripts themselves,
-configuration files are used.
-These are located in a specific
-directory (<I>/etc/sysconfig</I> on Red Hat systems) and are
-used by the boot scripts.
+To allow a system administrator to change these
+inputs without editing an entire boot script,
+some separate configuration file is used, and is located in a specific
+directory where an associated boot script may find it
+(<I>/etc/sysconfig</I> on older Red Hat systems).
 <P>
-In older UNIX systems, these files contained the actual command line
-options for the daemons, but in modern Linux systems (and also
-in HP-UX), these files just contain shell variables.
-The boot scripts in <I>/etc/init.d</I>
-<B>source</B> the configuration
-files, and then use the variable values.
+In older UNIX systems, such a file contained the actual command line
+options for a daemon, but in modern Linux systems (and also
+in HP-UX), it just contains shell variables.
+A boot script in <I>/etc/init.d</I> reads and includes its configuration
+file (that is, it &quot;<B>sources</B>&quot; its configuration file) and then uses
+the variable values.
 <A NAME="lbAK">&nbsp;</A>
 <H2>FILES</H2>
 
@@ -236,6 +267,10 @@ files, and then use the variable values.
 
 <A NAME="lbAL">&nbsp;</A>
 <H2>SEE ALSO</H2>
+
+<B><A HREF="../man7/bootup.7.html">bootup</A></B>(7)
+
+<B><A HREF="../man1/systemd.1.html">systemd</A></B>(1)
 
 <B><A HREF="../man5/inittab.5.html">inittab</A></B>(5),
 
@@ -255,10 +290,10 @@ files, and then use the variable values.
 <DT><A HREF="#lbAB">NAME</A><DD>
 <DT><A HREF="#lbAC">DESCRIPTION</A><DD>
 <DL>
-<DT><A HREF="#lbAD">Hardware-boot</A><DD>
+<DT><A HREF="#lbAD">Hardware</A><DD>
 <DT><A HREF="#lbAE">OS loader</A><DD>
-<DT><A HREF="#lbAF">Kernel startup</A><DD>
-<DT><A HREF="#lbAG">init and inittab</A><DD>
+<DT><A HREF="#lbAF">Kernel</A><DD>
+<DT><A HREF="#lbAG">Root user-space process</A><DD>
 <DT><A HREF="#lbAH">Boot scripts</A><DD>
 <DT><A HREF="#lbAI">Sequencing directories</A><DD>
 <DT><A HREF="#lbAJ">Boot configuration</A><DD>
@@ -270,6 +305,6 @@ files, and then use the variable values.
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:37:58 GMT, April 20, 2020
+Time: 03:38:34 GMT, April 20, 2020
 </BODY>
 </HTML>

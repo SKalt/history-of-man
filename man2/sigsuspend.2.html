@@ -26,13 +26,13 @@ the source, must acknowledge the copyright and authors of this work.
 <HTML><HEAD><TITLE>Man page of SIGSUSPEND</TITLE>
 </HEAD><BODY>
 <H1>SIGSUSPEND</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2013-04-19<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2015-03-29<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
 <H2>NAME</H2>
 
-sigsuspend - wait for a signal
+sigsuspend, rt_sigsuspend - wait for a signal
 <A NAME="lbAC">&nbsp;</A>
 <H2>SYNOPSIS</H2>
 
@@ -150,7 +150,47 @@ See
 <B><A HREF="../man3/sigsetops.3.html">sigsetops</A></B>(3)
 
 for details on manipulating signal sets.
+
 <A NAME="lbAI">&nbsp;</A>
+<H3>C library/kernel ABI differences</H3>
+
+The original Linux system call was named
+<B>sigsuspend</B>().
+
+However, with the addition of real-time signals in Linux 2.2,
+the fixed-size, 32-bit
+<I>sigset_t</I>
+
+type supported by that system call was no longer fit for purpose.
+Consequently, a new system call,
+<B>rt_sigsuspend</B>(),
+
+was added to support an enlarged
+<I>sigset_t</I>
+
+type.
+The new system call takes a second argument,
+<I>size_t sigsetsize</I>,
+
+which specifies the size in bytes of the signal set in
+<I>mask</I>.
+
+This argument is currently required to have the value
+<I>sizeof(sigset_t)</I>
+
+(or the error
+<B>EINVAL</B>
+
+results).
+The glibc
+<B>sigsuspend</B>()
+
+wrapper function hides these details from us, transparently calling
+<B>rt_sigsuspend</B>()
+
+when the kernel provides it.
+
+<A NAME="lbAJ">&nbsp;</A>
 <H2>SEE ALSO</H2>
 
 <B><A HREF="../man2/kill.2.html">kill</A></B>(2),
@@ -183,12 +223,15 @@ for details on manipulating signal sets.
 <DT><A HREF="#lbAF">ERRORS</A><DD>
 <DT><A HREF="#lbAG">CONFORMING TO</A><DD>
 <DT><A HREF="#lbAH">NOTES</A><DD>
-<DT><A HREF="#lbAI">SEE ALSO</A><DD>
+<DL>
+<DT><A HREF="#lbAI">C library/kernel ABI differences</A><DD>
+</DL>
+<DT><A HREF="#lbAJ">SEE ALSO</A><DD>
 </DL>
 <HR>
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:37:47 GMT, April 20, 2020
+Time: 03:38:23 GMT, April 20, 2020
 </BODY>
 </HTML>

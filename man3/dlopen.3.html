@@ -25,7 +25,7 @@ License along with this manual; if not, see
 <HTML><HEAD><TITLE>Man page of DLOPEN</TITLE>
 </HEAD><BODY>
 <H1>DLOPEN</H1>
-Section: Linux Programmer's Manual (3)<BR>Updated: 2014-10-02<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (3)<BR>Updated: 2015-03-29<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -39,7 +39,7 @@ dynamic linking loader
 <B>#include &lt;<A HREF="file:///usr/include/dlfcn.h">dlfcn.h</A>&gt;</B>
 
 <P>
-<B>void *dlopen(const char *</B><I>filename</I><B>, int </B><I>flag</I><B>);</B>
+<B>void *dlopen(const char *</B><I>filename</I><B>, int </B><I>flags</I><B>);</B>
 
 <P>
 <B>char *dlerror(void);</B>
@@ -156,7 +156,7 @@ if those libraries in turn have dependencies, and so on.)
 <P>
 
 One of the following two values must be included in
-<I>flag</I>:
+<I>flags</I>:
 
 <DL COMPACT>
 <DT><B>RTLD_LAZY</B>
@@ -184,7 +184,7 @@ If this cannot be done, an error is returned.
 <P>
 
 Zero or more of the following values may also be ORed in
-<I>flag</I>:
+<I>flags</I>:
 
 <DL COMPACT>
 <DT><B>RTLD_GLOBAL</B>
@@ -347,19 +347,37 @@ again, saving its return value into a variable, and check whether
 this saved value is not NULL.
 <P>
 
-There are two special pseudo-handles,
-<B>RTLD_DEFAULT</B>
+There are two special pseudo-handles:
+<DL COMPACT>
+<DT><B>RTLD_DEFAULT</B>
 
-and
-<B>RTLD_NEXT</B>.
-
-The former will find the first occurrence of the desired symbol
+<DD>
+Find the first occurrence of the desired symbol
 using the default library search order.
-The latter
-will find the next occurrence of a function in the search order
+The search will include global symbols in the executable
+and its dependencies,
+as well as symbols in libraries that were dynamically loaded with the
+<B>RTLD_GLOBAL</B>
+
+flag.
+<DT><B>RTLD_NEXT</B>
+
+<DD>
+Find the next occurrence of the desired symbol in the search order
 after the current library.
 This allows one to provide a wrapper
-around a function in another shared library.
+around a function in another shared library, so that, for example,
+the definition of a function in a preloaded library
+(see
+<B>LD_PRELOAD</B>
+
+in
+<B><A HREF="../man8/ld.so.8.html">ld.so</A></B>(8))
+
+can find and invoke the &quot;real&quot; function provided in another library
+(or for that matter, the &quot;next&quot; definition of the function in cases
+where there are multiple layers of preloading).
+</DL>
 <A NAME="lbAH">&nbsp;</A>
 <H3>dlclose()</H3>
 
@@ -369,8 +387,15 @@ The function
 decrements the reference count on the dynamic library handle
 <I>handle</I>.
 
-If the reference count drops to zero and no other loaded libraries use
-symbols in it, then the dynamic library is unloaded.
+If the reference count drops to zero,
+then the dynamic library is unloaded.
+All shared objects that were automatically loaded when
+<B>dlopen</B>()
+
+was invoked on the object referred to by
+<I>handle</I>
+
+are recursively closed in the same manner.
 <P>
 
 The function
@@ -726,6 +751,6 @@ ld.so info pages, gcc info pages, ld info pages
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:37:51 GMT, April 20, 2020
+Time: 03:38:26 GMT, April 20, 2020
 </BODY>
 </HTML>
