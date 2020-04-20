@@ -28,7 +28,7 @@ open, creat - open and possibly create a file or device
 <H2>DESCRIPTION</H2>
 
 The
-<B>open()</B>
+<B>open</B>()
 
 system call is used to convert a pathname into a file descriptor
 (a small, non-negative integer for use in subsequent I/O as with
@@ -36,16 +36,23 @@ system call is used to convert a pathname into a file descriptor
 
 When the call is successful, the file descriptor returned will be
 the lowest file descriptor not currently open for the process.
-This call creates a new open file, not shared with any other process.
-(But shared open files may arise via the
+This call creates a new open file description,
+not shared with any other process.
+(But shared open file descriptions may arise via the
 <B><A HREF="../man2/fork.2.html">fork</A></B>(2)
 
 system call.)
 The new file descriptor is set to remain open across exec functions
-(see
-<B><A HREF="../man2/fcntl.2.html">fcntl</A></B>(2)).
+(i.e., the
+<B>FD_CLOEXEC</B>
 
-The file offset is set to the beginning of the file. 
+file descriptor flag described in
+<B><A HREF="../man2/fcntl.2.html">fcntl</A></B>(2)
+
+is initially disabled).
+The file offset is set to the beginning of the file (see
+<B><A HREF="../man2/lseek.2.html">lseek</A></B>(2)).
+
 <P>
 The parameter
 <I>flags</I>
@@ -84,8 +91,9 @@ Generate a signal (SIGIO by default, but this can be changed via
 <B><A HREF="../man2/fcntl.2.html">fcntl</A></B>(2))
 
 when input or output becomes possible on this file descriptor.
-This feature is only available for terminals, pseudo-terminals, and
-sockets. See
+This feature is only available for terminals, pseudo-terminals, 
+sockets, and (since Linux 2.6) pipes and FIFOs.
+See
 <B><A HREF="../man2/fcntl.2.html">fcntl</A></B>(2)
 
 for further details.
@@ -149,10 +157,10 @@ if the file already exists it is an error and the
 <B>open</B>()
 
 will fail. In this context, a symbolic link exists, regardless
-of where its points to.
+of where it points to.
 <B>O_EXCL</B>
 
-is broken on NFS file systems, programs which rely on it for performing
+is broken on NFS file systems; programs which rely on it for performing
 locking tasks will contain a race condition.  The solution for performing
 atomic file locking using a lockfile is to create a unique file on
 the same file system (e.g., incorporating hostname and pid), use
@@ -547,7 +555,7 @@ macro to get their definitions.
 The (undefined) effect of
 <B>O_RDONLY | O_TRUNC</B>
 
-various among implementations. On many systems the file is actually
+varies among implementations. On many systems the file is actually
 truncated.
 
 
@@ -566,6 +574,10 @@ query appropriate alignments, and sizes.   FreeBSD 4.x introduced
 a flag of same name, but without alignment restrictions.
 Support was added under Linux in kernel version 2.4.10.
 Older Linux kernels simply ignore this flag.
+One may have to define the
+<B>_GNU_SOURCE</B>
+
+macro to get its definition.
 <A NAME="lbAI">&nbsp;</A>
 <H2>BUGS</H2>
 
@@ -591,6 +603,8 @@ corresponding to the flags <B>O_SYNC</B>, <B>O_DSYNC</B> and
 <B><A HREF="../man2/fcntl.2.html">fcntl</A></B>(2),
 
 <B><A HREF="../man2/link.2.html">link</A></B>(2),
+
+<B><A HREF="../man2/lseek.2.html">lseek</A></B>(2),
 
 <B><A HREF="../man2/mknod.2.html">mknod</A></B>(2),
 
@@ -634,6 +648,6 @@ corresponding to the flags <B>O_SYNC</B>, <B>O_DSYNC</B> and
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 02:13:09 GMT, April 20, 2020
+Time: 02:13:32 GMT, April 20, 2020
 </BODY>
 </HTML>

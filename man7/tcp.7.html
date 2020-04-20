@@ -4,7 +4,7 @@
 <HTML><HEAD><TITLE>Man page of TCP</TITLE>
 </HEAD><BODY>
 <H1>TCP</H1>
-Section: Linux Programmer's Manual (7)<BR>Updated: 2003-08-21<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (7)<BR>Updated: 2005-06-15<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -32,44 +32,44 @@ tcp - TCP protocol
 <H2>DESCRIPTION</H2>
 
 This is an implementation of the TCP protocol defined in
-RFC793, RFC1122 and RFC2001 with the NewReno and SACK
-extensions.  It provides a reliable, stream oriented, full
-duplex connection between two sockets on top of
+RFC&nbsp;793, RFC&nbsp;1122 and RFC&nbsp;2001 with the NewReno and SACK
+extensions.  It provides a reliable, stream-oriented, 
+full-duplex connection between two sockets on top of
 <B><A HREF="../man7/ip.7.html">ip</A></B>(7),
 
 for both v4 and v6 versions.
 TCP guarantees that the data arrives in order and
-retransmits lost packets.  It generates and checks a per
-packet checksum to catch transmission errors.  TCP does not
-preserve record boundaries.
+retransmits lost packets.
+It generates and checks a per-packet checksum to catch transmission errors.
+TCP does not preserve record boundaries.
 <P>
-A fresh TCP socket has no remote or local address and is not
+A newly created TCP socket has no remote or local address and is not
 fully specified.  To create an outgoing TCP connection use
 <B><A HREF="../man2/connect.2.html">connect</A></B>(2)
 
 to establish a connection to another TCP socket.
-To receive new incoming connections
+To receive new incoming connections, first
 <B><A HREF="../man2/bind.2.html">bind</A></B>(2)
 
-the socket first to a local address and port and then call 
+the socket to a local address and port and then call 
 <B><A HREF="../man2/listen.2.html">listen</A></B>(2)
 
-to put the socket into listening state.  After that a new
+to put the socket into the listening state.  After that a new
 socket for each incoming connection can be accepted 
 using
 <B><A HREF="../man2/accept.2.html">accept</A></B>(2).
 
 A socket which has had
-<B>accept</B>
+<B>accept()</B>
 
 or 
-<B>connect</B>
+<B>connect()</B>
 
 successfully called on it is fully specified and may
 transmit data.  Data cannot be transmitted on listening or
 not yet connected sockets.
 <P>
-Linux supports RFC1323 TCP high performance
+Linux supports RFC&nbsp;1323 TCP high performance
 extensions.  These include Protection Against Wrapped
 Sequence Numbers (PAWS), Window Scaling  and 
 Timestamps.  Window scaling allows the use
@@ -116,7 +116,7 @@ call will not return the same size of buffer as requested
 in the 
 <B><A HREF="../man2/setsockopt.2.html">setsockopt</A></B>(2)
 
-call.  TCP uses this for administrative purposes and internal
+call.  TCP uses the extra space for administrative purposes and internal
 kernel structures, and the sysctl variables reflect the
 larger sizes compared to the actual TCP windows. 
 On individual connections, the socket buffer size must be
@@ -144,31 +144,40 @@ option to
 When urgent data is received, the kernel sends a
 <B>SIGURG</B>
 
-signal to the reading process or the process or process
-group that has been set for the socket using the
+signal to the the process or process group that has been set as the 
+socket &quot;owner&quot; using the
 <B>SIOCSPGRP</B>
 
 or 
 <B>FIOSETOWN </B>
 
-ioctls. When the 
+ioctls (or the SUSv3-specified
+<B><A HREF="../man2/fcntl.2.html">fcntl</A></B>(2)
+
+<B>F_SETOWN</B>
+
+operation).
+When the 
 <B>SO_OOBINLINE</B>
 
 socket option is enabled, urgent data is put into the normal
-data stream (and can be tested for by the
+data stream (a program can test for its location using the
 <B>SIOCATMARK</B>
 
-ioctl), 
+ioctl described below), 
 otherwise it can be only received when the
 <B>MSG_OOB</B>
 
 flag is set for 
-<B><A HREF="../man2/sendmsg.2.html">sendmsg</A></B>(2).
+<B><A HREF="../man2/recv.2.html">recv</A></B>(2)
+
+or
+<B><A HREF="../man2/recvmsg.2.html">recvmsg</A></B>(2).
 
 <P>
 Linux 2.4 introduced a number of changes for improved
 throughput and scaling, as well as enhanced functionality.
-Some of these features include support for zerocopy
+Some of these features include support for zero-copy
 <B><A HREF="../man2/sendfile.2.html">sendfile</A></B>(2),
 
 Explicit Congestion Notification, new
@@ -198,23 +207,46 @@ files or with the
 interface.  In addition, most IP sysctls also apply to TCP; see
 <B><A HREF="../man7/ip.7.html">ip</A></B>(7).
 
+Variables described as
+<I>Boolean</I>
+
+take an integer value, with a non-zero value (&quot;true&quot;) meaning that
+the corresponding option is enabled, and a zero value (&quot;false&quot;)
+meaning that the option is disabled.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 <DL COMPACT>
-<DT><B>tcp_abort_on_overflow</B>
+<DT><B>tcp_abort_on_overflow</B> (Boolean; default: disabled)
 
 <DD>
 Enable resetting connections if the listening service is too
-slow and unable to keep up and accept them.  It is not
-enabled by default.  It means that if overflow occurred due
+slow and unable to keep up and accept them.
+It means that if overflow occurred due
 to a burst, the connection will recover.  Enable this option
-_only_ if you are really sure that the listening daemon
+<I>only</I>
+
+if you are really sure that the listening daemon
 cannot be tuned to accept connections faster.  Enabling this
 option can harm the clients of your server. 
-<DT><B>tcp_adv_win_scale</B>
+<DT><B>tcp_adv_win_scale</B> (integer; default: 2)
 
 <DD>
 Count buffering overhead as bytes/2^tcp_adv_win_scale
 (if tcp_adv_win_scale &gt; 0) or bytes-bytes/2^(-tcp_adv_win_scale),
-if it is &lt;= 0. The default is 2.  
+if it is &lt;= 0.
 <P>
 The socket receive buffer space is shared between the
 application and kernel.  TCP maintains part of the buffer as
@@ -222,12 +254,12 @@ the TCP window, this is the size of the receive window
 advertised to the other end.  The rest of the space is used
 as the &quot;application&quot; buffer, used to isolate the network
 from scheduling and application latencies.  The 
-<B>tcp_adv_win_scale </B>
+<B>tcp_adv_win_scale</B>
 
 default value of 2 implies that the space
 used for the application buffer is one fourth that of the
 total.  
-<DT><B>tcp_app_win </B>
+<DT><B>tcp_app_win</B> (integer; default: 31)
 
 <DD>
 This variable defines how many
@@ -236,45 +268,80 @@ overhead.
 <P>
 A maximum of (window/2^tcp_app_win, mss) bytes in the window
 are reserved for the application buffer.  A value of 0
-implies that no amount is reserved.  The default value is 31.
-<DT><B>tcp_dsack</B>
+implies that no amount is reserved.
+
+
+<DT><B>tcp_bic</B> (Boolean; default: disabled)
 
 <DD>
-Enable RFC2883 TCP Duplicate SACK support. 
-It is enabled by default.
-<DT><B>tcp_ecn</B>
+Enable BIC TCP congestion control algorithm.
+BIC-TCP is a sender-side only change that ensures a linear RTT
+fairness under large windows while offering both scalability and
+bounded TCP-friendliness. The protocol combines two schemes
+called additive increase and binary search increase. When the
+congestion window is large, additive increase with a large
+increment ensures linear RTT fairness as well as good
+scalability. Under small congestion windows, binary search
+increase provides TCP friendliness.
+
+
+<DT><B>tcp_bic_low_window</B> (integer; default: 14)
 
 <DD>
-Enable RFC2884 Explicit Congestion Notification.  It is not
-enabled by default.  When enabled, connectivity to some
+Sets the threshold window (in packets) where BIC TCP starts to
+adjust the congestion window. Below this threshold BIC TCP behaves
+the same as the default TCP Reno.
+
+
+<DT><B>tcp_bic_fast_convergence</B> (Boolean; default: enabled)
+
+<DD>
+Forces BIC TCP to more quickly respond to changes in congestion
+window. Allows two flows sharing the same connection to converge
+more rapidly.
+<DT><B>tcp_dsack</B> (Boolean; default: enabled)
+
+<DD>
+Enable RFC&nbsp;2883 TCP Duplicate SACK support. 
+<DT><B>tcp_ecn</B> (Boolean; default: disabled)
+
+<DD>
+Enable RFC&nbsp;2884 Explicit Congestion Notification.
+When enabled, connectivity to some
 destinations could be affected due to older, misbehaving
 routers along the path causing connections to be dropped.
-<DT><B>tcp_fack</B>
+<DT><B>tcp_fack</B> (Boolean; default: enabled)
 
 <DD>
-Enable TCP Forward Acknowledgement support.  It is enabled by
-default.
-<DT><B>tcp_fin_timeout</B>
+Enable TCP Forward Acknowledgement support.
+<DT><B>tcp_fin_timeout</B> (integer; default: 60)
 
 <DD>
-How many seconds to wait for a final FIN packet before the
+This specifies how many seconds to wait for a final FIN packet before the
 socket is forcibly closed.  This is strictly a violation of
 the TCP specification, but required to prevent
-denial-of-service (DoS) attacks.  The default value in 2.4
-kernels is 60, down from 180 in 2.2.
-<DT><B>tcp_keepalive_intvl</B>
+denial-of-service attacks.  
+In Linux 2.2, the default value was 180.
+
+
+<DT><B>tcp_frto</B> (Boolean; default: disabled)
+
+<DD>
+Enables F-RTO, an enhanced recovery algorithm for TCP retransmission
+timeouts.  It is particularly beneficial in wireless environments
+where packet loss is typically due to random radio interference
+rather than intermediate router congestion.
+<DT><B>tcp_keepalive_intvl</B> (integer; default: 75)
 
 <DD>
 The number of seconds between TCP keep-alive probes.
-The default value is 75 seconds.
-<DT><B>tcp_keepalive_probes</B>
+<DT><B>tcp_keepalive_probes</B> (integer; default: 9)
 
 <DD>
 The maximum number of TCP keep-alive probes to send  
 before giving up and killing the connection if
 no response is obtained from the other end.
-The default value is 9. 
-<DT><B>tcp_keepalive_time</B>
+<DT><B>tcp_keepalive_time</B> (integer; default: 7200)
 
 <DD>
 The number of seconds a connection needs to be idle
@@ -289,20 +356,30 @@ of 75 seconds apart) when keep-alive is enabled.
 <P>
 Note that underlying connection tracking mechanisms and 
 application timeouts may be much shorter.
-<DT><B>tcp_max_orphans</B>
+
+
+<DT><B>tcp_low_latency</B> (Boolean; default: disabled)
+
+<DD>
+If enabled, the TCP stack makes decisions that prefer lower
+latency as opposed to higher throughput.
+It this option is disabled, then higher throughput is preferred.
+An example of an application where this default should be
+changed would be a Beowulf compute cluster.
+<DT><B>tcp_max_orphans</B> (integer; default: see below)
 
 <DD>
 The maximum number of orphaned (not attached to any user file
 handle) TCP sockets allowed in the system.  When this number
 is exceeded, the orphaned connection is reset and a warning
-is printed.  This limit exists only to prevent simple DoS
+is printed.  This limit exists only to prevent simple denial-of-service
 attacks.  Lowering this limit is not recommended. Network
 conditions might require you to increase the number of
 orphans allowed, but note that each orphan can eat up to ~64K
 of unswappable memory.  The default initial value is set
 equal to the kernel parameter NR_FILE.  This initial default
 is adjusted depending on the memory in the system.
-<DT><B>tcp_max_syn_backlog</B>
+<DT><B>tcp_max_syn_backlog</B> (integer; default: see below)
 
 <DD>
 The maximum number of queued connection requests which have
@@ -316,11 +393,11 @@ needs to be increased above 1024, TCP_SYNQ_HSIZE in
 include/net/tcp.h be modified to keep
 TCP_SYNQ_HSIZE*16&lt;=tcp_max_syn_backlog, and the kernel be
 recompiled.
-<DT><B>tcp_max_tw_buckets</B>
+<DT><B>tcp_max_tw_buckets</B> (integer; default: see below)
 
 <DD>
 The maximum number of sockets in TIME_WAIT state allowed in
-the system.  This limit exists only to prevent simple DoS
+the system.  This limit exists only to prevent simple denial-of-service
 attacks.  The default value of NR_FILE*2 is adjusted
 depending on the memory in the system.  If this number is
 exceeded, the socket is closed and a warning is printed.
@@ -353,27 +430,25 @@ mark.
 - the maximum number of pages, globally, that TCP
 will allocate.  This value overrides any other limits
 imposed by the kernel. 
-<DT><B>tcp_orphan_retries</B>
+<DT><B>tcp_orphan_retries</B> (integer; default: 8)
 
 <DD>
 The maximum number of attempts made to probe the other
 end of a connection which has been closed by our end.
-The default value is 8.
-<DT><B>tcp_reordering</B>
+<DT><B>tcp_reordering</B> (integer; default: 3)
 
 <DD>
 The maximum a packet can be reordered in a TCP packet stream
 without TCP assuming packet loss and going into slow start.
-The default is 3.  It is not advisable to change this number.
+It is not advisable to change this number.
 This is a packet reordering detection metric designed to
 minimize unnecessary back off and retransmits provoked by
 reordering of packets on a connection.
-<DT><B>tcp_retrans_collapse</B>
+<DT><B>tcp_retrans_collapse</B> (Boolean; default: enabled)
 
 <DD>
 Try to send full-sized packets during retransmit. 
-This is enabled by default. 
-<DT><B>tcp_retries1</B>
+<DT><B>tcp_retries1</B> (integer; default: 3)
 
 <DD>
 The number of times TCP will attempt to retransmit a
@@ -383,25 +458,25 @@ layers involved.  Once we exceed this number of
 retransmits, we first have the network layer
 update the route if possible before each new retransmit.
 The default is the RFC specified minimum of 3.
-<DT><B>tcp_retries2</B>
+<DT><B>tcp_retries2</B> (integer; default: 15)
 
 <DD>
 The maximum number of times a TCP packet is retransmitted
 in established state before giving up.  The default
 value is 15, which corresponds to a duration of
 approximately between 13 to 30 minutes, depending
-on the retransmission timeout.  The RFC1122 specified
+on the retransmission timeout.  The RFC&nbsp;1122 specified
 minimum limit of 100 seconds is typically deemed too
 short.
-<DT><B>tcp_rfc1337</B>
+<DT><B>tcp_rfc1337</B> (Boolean; default: disabled)
 
 <DD>
 Enable TCP behaviour conformant with RFC 1337.
-This is not enabled by default.  When not enabled,
+When disabled,
 if a RST is received in TIME_WAIT state, we close 
 the socket immediately without waiting for the end
 of the TIME_WAIT period. 
-<DT><B>tcp_rmem </B>
+<DT><B>tcp_rmem</B>
 
 <DD>
 This is a vector of 3 integers: [min, default,
@@ -415,7 +490,7 @@ in the system.
 
 - minimum size of the receive buffer used by each TCP
 socket.  The default value is 4K, and is lowered to
-PAGE_SIZE bytes in low memory systems.  This value
+PAGE_SIZE bytes in low-memory systems.  This value
 is used to ensure that in memory pressure mode,
 allocations below this size will still succeed.  This is not
 used to bound the size of the receive buffer declared
@@ -432,7 +507,7 @@ the generic global
 <B>net.core.rmem_default</B>
 
 defined for all protocols.  The default value is 87380
-bytes, and is lowered to 43689 in low memory systems.  If
+bytes, and is lowered to 43689 in low-memory systems.  If
 larger receive buffer sizes are desired, this value should
 be increased (to affect all sockets).  To employ large TCP
 windows, the
@@ -452,30 +527,32 @@ declared using
 
 on a socket.
 The default value of 87380*2 bytes is lowered to 87380
-in low memory systems.
-<DT><B>tcp_sack</B>
+in low-memory systems.
+<DT><B>tcp_sack</B> (Boolean; default: enabled)
 
 <DD>
-Enable RFC2018 TCP Selective Acknowledgements. 
-It is enabled by default.
-<DT><B>tcp_stdurg</B>
+Enable RFC&nbsp;2018 TCP Selective Acknowledgements. 
+<DT><B>tcp_stdurg</B> (Boolean; default: disabled)
 
 <DD>
-Enable the strict RFC793 interpretation of the TCP
-urgent-pointer field.  The default is to use the
-BSD-compatible interpretation of the urgent-pointer, pointing
-to the first byte after the urgent data.  The RFC793
-interpretation is to have it point to the last byte of urgent
-data.  Enabling this option may lead to interoperability
-problems.
-<DT><B>tcp_synack_retries</B>
+If this option is enabled, then use the RFC&nbsp;1122 interpretation
+of the TCP urgent-pointer field.
+
+
+
+According to this interpretation, the urgent pointer points
+to the last byte of urgent data.
+If this option is disabled, then use the BSD-compatible interpretation of 
+the urgent pointer:
+the urgent pointer points to the first byte after the urgent data.
+Enabling this option may lead to interoperability problems.
+<DT><B>tcp_synack_retries</B> (integer; default: 5)
 
 <DD>
 The maximum number of times a SYN/ACK segment
 for a passive TCP connection will be retransmitted.
-This number should not be higher than 255. The default
-value is 5.
-<DT><B>tcp_syncookies</B>
+This number should not be higher than 255.
+<DT><B>tcp_syncookies</B> (Boolean)
 
 <DD>
 Enable TCP syncookies.  The kernel must be compiled with 
@@ -494,42 +571,77 @@ conditions.  For recommended alternatives see
 
 <B>tcp_synack_retries</B>,
 
+and
 <B>tcp_abort_on_overflow</B>.
 
-<DT><B>tcp_syn_retries</B>
+<DT><B>tcp_syn_retries</B> (integer; default: 5)
 
 <DD>
 The maximum number of times initial SYNs for an active TCP
 connection attempt will be retransmitted.  This value should
 not be higher than 255.  The default value is 5, which
 corresponds to approximately 180 seconds.
-<DT><B>tcp_timestamps</B>
+<DT><B>tcp_timestamps</B> (Boolean; default: enabled)
 
 <DD>
-Enable RFC1323 TCP timestamps.  This is enabled
-by default.
-<DT><B>tcp_tw_recycle</B>
+Enable RFC&nbsp;1323 TCP timestamps.
+<DT><B>tcp_tw_recycle</B> (Boolean; default: disabled)
 
 <DD>
-Enable fast recycling of TIME-WAIT sockets.  It is 
-not enabled by default.  Enabling this option is not
+Enable fast recycling of TIME-WAIT sockets.
+Enabling this option is not
 recommended since this causes problems when working
 with NAT (Network Address Translation). 
-<DT><B>tcp_window_scaling</B>
+
+
+<DT><B>tcp_tw_reuse</B> (Boolean; default: disabled)
 
 <DD>
-Enable RFC1323 TCP window scaling.  It is enabled by
-default.  This feature allows the use of a large window
+Allow to reuse TIME-WAIT sockets for new connections when it is
+safe from protocol viewpoint.
+It should not be changed without advice/request of technical
+experts.
+<DT><B>tcp_window_scaling</B> (Boolean; default: disabled)
+
+<DD>
+Enable RFC&nbsp;1323 TCP window scaling.
+This feature allows the use of a large window
 (&gt; 64K) on a TCP connection, should the other end support it.
 Normally, the 16 bit window length field in the TCP header
 limits the window size to less than 64K bytes.  If larger
 windows are desired, applications can increase the size of
 their socket buffers and the window scaling option will be
 employed.  If
-<B>tcp_window_scaling </B>
+<B>tcp_window_scaling</B>
 
 is disabled, TCP will not negotiate the use of window
 scaling with the other end during connection setup.
+
+
+<DT><B>tcp_vegas_cong_avoid</B> (Boolean; default: disabled)
+
+<DD>
+Enable TCP Vegas congestion avoidance algorithm.
+TCP Vegas is a sender-side only change to TCP that anticipates
+the onset of congestion by estimating the bandwidth. TCP Vegas
+adjusts the sending rate by modifying the congestion
+window. TCP Vegas should provide less packet loss, but it is
+not as aggressive as TCP Reno.
+
+
+<DT><B>tcp_westwood</B> (Boolean; default: disabled)
+
+<DD>
+Enable TCP Westwood+ congestion control algorithm.
+TCP Westwood+ is a sender-side only modification of the TCP Reno
+protocol stack that optimizes the performance of TCP congestion
+control. It is based on end-to-end bandwidth estimation to set
+congestion window and slow start threshold after a congestion
+episode. Using this estimation, TCP Westwood+ adaptively sets a
+slow start threshold and a congestion window which takes into
+account the bandwidth used  at the time congestion is experienced.
+TCP Westwood+ significantly increases fairness with respect to
+TCP Reno in wired networks and throughput over wireless links.
 <DT><B>tcp_wmem</B>
 
 <DD>
@@ -629,7 +741,7 @@ code intended to be portable.
 
 <DD>
 Used to collect information about this socket.  The kernel
-returns a struct tcp_info as defined in the file
+returns a <I>struct tcp_info</I> as defined in the file
 /usr/include/linux/tcp.h.  This option should not be used in
 code intended to be portable.
 <DT><B>TCP_KEEPCNT</B>
@@ -724,8 +836,11 @@ portable.
 <A NAME="lbAH">&nbsp;</A>
 <H2>IOCTLS</H2>
 
-These ioctls can be accessed using 
-<B><A HREF="../man2/ioctl.2.html">ioctl</A></B>(2).
+These following
+<B><A HREF="../man2/ioctl.2.html">ioctl</A></B>(2)
+
+calls return information in
+<I>value</I>.
 
 The correct syntax is:
 <P>
@@ -738,28 +853,70 @@ The correct syntax is:
 
 </DL>
 
+<P>
+
+<I>ioctl_type</I>
+
+is one of the following:
 <DL COMPACT>
 <DT><B>SIOCINQ</B>
 
 <DD>
-Returns the amount of queued unread data in the receive
-buffer.  Argument is a pointer to an integer.  The socket
-must not be in LISTEN state, otherwise an error (EINVAL)
+Returns the amount of queued unread data in the receive buffer.
+The socket must not be in LISTEN state, otherwise an error (EINVAL)
 is returned.
 <DT><B>SIOCATMARK</B>
 
 <DD>
-Returns true when the all urgent data has been already
-received by the user program.  This is used together with
-<B>SO_OOBINLINE</B>.
+Returns true (i.e., 
+<I>value</I>
 
-Argument is an pointer to an integer for the test result.
+is non-zero) if the inbound data stream is at the urgent mark.
+<P>
+If the 
+<B>SO_OOBINLINE</B>
+
+socket option is set, and 
+<B>SIOCATMARK</B>
+
+returns true, then the
+next read from the socket will return the urgent data.
+If the 
+<B>SO_OOBINLINE</B>
+
+socket option is not set, and 
+<B>SIOCATMARK</B>
+
+returns true, then the
+next read from the socket will return the bytes following
+the urgent data (to actually read the urgent data requires the
+<B>recv(MSG_OOB)</B>
+
+flag).
+<P>
+Note that a read never reads across the urgent mark.
+If an application is informed of the presence of urgent data via
+<B><A HREF="../man2/select.2.html">select</A></B>(2)
+
+(using the
+<I>exceptfds</I>
+
+argument) or through delivery of a
+<B>SIGURG</B>
+
+signal,
+then it can advance up to the mark using a loop which repeatedly tests 
+<B>SIOCATMARK</B>
+
+and performs a read (requesting any number of bytes) as long as
+<B>SIOCATMARK</B>
+
+returns false.
 <DT><B>SIOCOUTQ</B>
 
 <DD>
-Returns the amount of unsent data in the socket send queue
-in the passed integer value pointer.  The socket must not 
-be in LISTEN state, otherwise an error (EINVAL)
+Returns the amount of unsent data in the socket send queue.
+The socket must not be in LISTEN state, otherwise an error (EINVAL)
 is returned.
 </DL>
 <A NAME="lbAI">&nbsp;</A>
@@ -802,11 +959,11 @@ data the older urgent data is inserted as normal data into
 the stream (even when
 <B>SO_OOBINLINE</B>
 
-is not set). This differs from BSD based stacks. 
+is not set). This differs from BSD-based stacks. 
 <P>
 
 Linux uses the BSD compatible interpretation of the urgent
-pointer field by default.  This violates RFC1122, but is
+pointer field by default.  This violates RFC&nbsp;1122, but is
 required for interoperability with other stacks.  It can be
 changed by the
 <B>tcp_stdurg</B>
@@ -855,7 +1012,7 @@ IPv6 is not described.
 <A NAME="lbAM">&nbsp;</A>
 <H2>VERSIONS</H2>
 
-Support for Explicit Congestion Notification, zerocopy 
+Support for Explicit Congestion Notification, zero-copy 
 sendfile, reordering support and some SACK extensions
 (DSACK) were introduced in 2.4.
 Support for forward acknowledgement (FACK), TIME_WAIT recycling, 
@@ -899,28 +1056,28 @@ document.
 <B><A HREF="../man7/socket.7.html">socket</A></B>(7)
 
 <P>
-RFC793 for the TCP specification.
+RFC&nbsp;793 for the TCP specification.
 <BR>
 
-RFC1122 for the TCP requirements and a description 
+RFC&nbsp;1122 for the TCP requirements and a description 
 of the Nagle algorithm.
 <BR>
 
-RFC1323 for TCP timestamp and window scaling options.
+RFC&nbsp;1323 for TCP timestamp and window scaling options.
 <BR>
 
-RFC1644 for a description of TIME_WAIT assassination
+RFC&nbsp;1644 for a description of TIME_WAIT assassination
 hazards.
 <BR>
 
-RFC2481 for a description of Explicit Congestion
+RFC&nbsp;2481 for a description of Explicit Congestion
 Notification.
 <BR>
 
-RFC2581 for TCP congestion control algorithms.
+RFC&nbsp;2581 for TCP congestion control algorithms.
 <BR>
 
-RFC2018 and RFC2883 for SACK and extensions to SACK.
+RFC&nbsp;2018 and RFC&nbsp;2883 for SACK and extensions to SACK.
 <P>
 
 <HR>
@@ -945,6 +1102,6 @@ RFC2018 and RFC2883 for SACK and extensions to SACK.
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 02:13:14 GMT, April 20, 2020
+Time: 02:13:37 GMT, April 20, 2020
 </BODY>
 </HTML>

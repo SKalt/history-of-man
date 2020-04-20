@@ -85,6 +85,7 @@ Timer values are defined by the following structures:
 
 <DL COMPACT><DT><DD>
 <PRE>
+
 struct itimerval {
     struct timeval it_interval; /* next value */
     struct timeval it_value;    /* current value */
@@ -134,7 +135,7 @@ sets the indicated timer to the value in
 If
 <I>ovalue</I>
 
-is nonzero, the old value of the timer is stored there.
+is non-zero, the old value of the timer is stored there.
 <P>
 
 Timers decrement from
@@ -162,10 +163,11 @@ are significant in determining the duration of a timer.
 <P>
 
 Timers will never expire before the requested time,
-instead expiring some short, constant time afterwards, dependent
-on the system timer resolution (currently 10ms).  Upon expiration, a
-signal will be generated and the timer reset.  If the timer expires
-while the process is active (always true for
+but may expire some (short) time afterwards, which depends
+on the system timer resolution and on the system load.
+(But see BUGS below.)
+Upon expiration, a signal will be generated and the timer reset.
+If the timer expires while the process is active (always true for
 <B>ITIMER_VIRT</B>)
 
 the signal will be delivered immediately when generated.  Otherwise the
@@ -222,12 +224,14 @@ POSIX.1-2001, SVr4, 4.4BSD (this call first appeared in 4.2BSD).
 <A NAME="lbAI">&nbsp;</A>
 <H2>BUGS</H2>
 
-Under Linux, the generation and delivery of a signal are distinct, and
-there each signal is permitted only one outstanding event.  It's therefore
-conceivable that under pathologically heavy loading,
+The generation and delivery of a signal are distinct, and
+only one instance of each of the signals listed above may be pending
+for a process.
+Under very  heavy loading, an
 <B>ITIMER_REAL</B>
 
-will expire before the signal from a previous expiration has been delivered.
+timer may expire before the signal from a previous expiration
+has been delivered.
 The second signal in such an event will be lost.
 <P>
 On Linux, timer values are represented in jiffies.
@@ -240,6 +244,11 @@ then the timer is silently truncated to this ceiling value.
 On Linux 2.6 on x86 (where a jiffy is 0.001 seconds),
 this means that the ceiling value for a timer is
 approximately 24.86 days.
+<P>
+On certain systems (including x86), the Linux kernel has a bug which will
+produce premature timer expirations of up to one jiffy under some
+circumstances.
+
 <P>
 POSIX.1 says that
 <B>setitimer</B>
@@ -268,6 +277,6 @@ adjusts the corresponding seconds value for the timer.
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 02:13:09 GMT, April 20, 2020
+Time: 02:13:31 GMT, April 20, 2020
 </BODY>
 </HTML>

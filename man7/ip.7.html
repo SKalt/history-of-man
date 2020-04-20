@@ -41,11 +41,11 @@ ip - Linux IPv4 protocol implementation
 <H2>DESCRIPTION</H2>
 
 Linux implements the Internet Protocol, version 4, 
-described in RFC791 and RFC1122. 
+described in RFC&nbsp;791 and RFC&nbsp;1122. 
 <B>ip </B>
 
 contains a level 2 
-multicasting implementation conforming to RFC1112.  It also contains an IP 
+multicasting implementation conforming to RFC&nbsp;1112.  It also contains an IP 
 router including a packet filter.
 
 <P>
@@ -104,7 +104,7 @@ for UDP sockets.  For
 
 you may specify
 a valid IANA IP protocol defined in 
-RFC1700
+RFC&nbsp;1700
 assigned numbers.
 <P>
 
@@ -290,7 +290,7 @@ The
 <B><A HREF="../man2/setsockopt.2.html">setsockopt</A></B>(2)
 
 call sets the IP options associated with a socket.
-The maximum option size for IPv4 is 40 bytes. See RFC791 for the allowed
+The maximum option size for IPv4 is 40 bytes. See RFC&nbsp;791 for the allowed
 options. When the initial connection request packet for a
 <B>SOCK_STREAM</B>
 
@@ -655,7 +655,7 @@ defaults to off.
 <DD>
 Sets or receives the Path MTU Discovery setting
 for a socket. When enabled, Linux will perform Path MTU Discovery
-as defined in RFC1191
+as defined in RFC&nbsp;1191
 on this socket. The don't fragment flag is set on all outgoing datagrams.
 The system-wide default is controlled by the 
 <B>ip_no_pmtu_disc </B>
@@ -856,79 +856,28 @@ can be accessed by reading or writing the
 <B>/proc/sys/net/ipv4/* </B>
 
 files or using the
+
+
+
 <B><A HREF="../man2/sysctl.2.html">sysctl</A></B>(2)
 
 interface.
+Variables described as
+<I>Boolean</I>
+
+take an integer value, with a non-zero value (&quot;true&quot;) meaning that
+the corresponding option is enabled, and a zero value (&quot;false&quot;)
+meaning that the option is disabled.
 
 <DL COMPACT>
-<DT><B>ip_default_ttl </B>
+<DT><B>ip_always_defrag</B> (Boolean)
 
 <DD>
-Set the default time-to-live value of outgoing packets. This can be changed
-per socket with the 
-<I>IP_TTL </I>
-
-option.
-
-<DT><B>ip_forward</B>
-
-<DD>
-Enable IP forwarding with a boolean flag. IP forwarding can be also set on a 
-per interface basis. 
-
-<DT><B>ip_dynaddr</B>
-
-<DD>
-Enable dynamic socket address and masquerading entry rewriting on interface 
-address change. This is useful for dialup interface with changing IP addresses.
-0 means no rewriting, 1 turns it on and 2 enables verbose mode.
-
-<DT><B>ip_autoconfig</B>
-
-<DD>
-Not documented.
-
-<DT><B>ip_local_port_range</B>
-
-<DD>
-Contains two integers that define the default local port range allocated to
-sockets. Allocation starts with the first number and ends with the second number.
-Note that these should not conflict with the ports used by masquerading (although
-the case is handled). Also arbitary choices may cause problems with some
-firewall packet filters that make assumptions about the local ports in use.
-First number should be at least &gt;1024, better &gt;4096 to avoid clashes with well
-known ports and to minimize firewall problems. 
-
-<DT><B>ip_no_pmtu_disc</B>
-
-<DD>
-If enabled, don't do Path MTU Discovery for TCP sockets by default. Path MTU
-discovery may fail if misconfigured firewalls (that drop all ICMP packets) or
-misconfigured interfaces (e.g., a point-to-point link where the both ends don't
-agree on the MTU) are on the path. It is better to fix the broken routers on
-the path than to turn off Path MTU Discovery globally, because not doing it
-incurs a high cost to the network.
-
-<DT><B>ipfrag_high_thresh</B>, <B>ipfrag_low_thresh</B>
-
-<DD>
-If the amount of queued IP fragments reaches 
-<B>ipfrag_high_thresh</B>,
-
-the queue 
-is pruned down to 
-<B>ipfrag_low_thresh</B>.
-
-Contains an integer with the number of 
-bytes.
-<DT><B>ip_always_defrag</B>
-
-<DD>
-[New with Kernel 2.2.13; in earlier kernel version the feature was controlled
+[New with kernel 2.2.13; in earlier kernel version the feature was controlled
 at compile time by the
 <B>CONFIG_IP_ALWAYS_DEFRAG </B>
 
-option]
+option; this file is not present in 2.4.x and later]
 <P>
 When this boolean frag is enabled (not equal 0) incoming fragments 
 (parts of IP packets
@@ -945,6 +894,90 @@ also has a large memory and CPU time cost.
 <P>
 This is automagically turned on when masquerading or transparent
 proxying are configured.
+
+<DT><B>ip_autoconfig</B>
+
+<DD>
+
+Not documented.
+
+<DT><B>ip_default_ttl</B> (integer; default: 64)
+
+<DD>
+Set the default time-to-live value of outgoing packets. This can be changed
+per socket with the 
+<I>IP_TTL </I>
+
+option.
+
+<DT><B>ip_dynaddr</B> (Boolean; default: disabled)
+
+<DD>
+Enable dynamic socket address and masquerading entry rewriting on interface 
+address change. This is useful for dialup interface with changing IP addresses.
+0 means no rewriting, 1 turns it on and 2 enables verbose mode.
+
+<DT><B>ip_forward</B> (Boolean; default: disabled)
+
+<DD>
+Enable IP forwarding with a boolean flag. IP forwarding can be also set on a 
+per interface basis. 
+
+<DT><B>ip_local_port_range</B>
+
+<DD>
+Contains two integers that define the default local port range 
+allocated to sockets. 
+Allocation starts with the first number and ends with the second number.
+Note that these should not conflict with the ports used by masquerading 
+(although the case is handled). 
+Also arbitary choices may cause problems with some firewall packet 
+filters that make assumptions about the local ports in use.
+First number should be at least &gt;1024, better &gt;4096 to avoid clashes 
+with well known ports and to minimize firewall problems. 
+
+<DT><B>ip_no_pmtu_disc</B> (Boolean; default: disabled)
+
+<DD>
+If enabled, don't do Path MTU Discovery for TCP sockets by default. 
+Path MTU discovery may fail if misconfigured firewalls (that drop 
+all ICMP packets) or misconfigured interfaces (e.g., a point-to-point 
+link where the both ends don't agree on the MTU) are on the path. 
+It is better to fix the broken routers on the path than to turn off 
+Path MTU Discovery globally, because not doing it incurs a high cost 
+to the network.
+
+
+<DT><B>ip_nonlocal_bind</B> (Boolean; default: disabled)
+
+<DD>
+If set, allows processes to bind() to non-local IP addresses,
+which can be quite useful - but may break some applications.
+
+
+<DT><B>ip6frag_time</B> (integer; default 30)
+
+<DD>
+Time in seconds to keep an IPv6 fragment in memory.
+
+
+<DT><B>ip6frag_secret_interval</B> (integer; default 600)
+
+<DD>
+Regeneration interval (in seconds) of the hash secret (or lifetime
+for the hash secret) for IPv6 fragments.
+<DT><B>ipfrag_high_thresh</B> (integer), <B>ipfrag_low_thresh</B> (integer)
+
+<DD>
+If the amount of queued IP fragments reaches 
+<B>ipfrag_high_thresh</B>,
+
+the queue 
+is pruned down to 
+<B>ipfrag_low_thresh</B>.
+
+Contains an integer with the number of 
+bytes.
 <DT><B>neigh/*</B>
 
 <DD>
@@ -1231,13 +1264,13 @@ does not work in some 2.2 kernels.
 
 <P>
 
-RFC791 for the original IP specification.
+RFC&nbsp;791 for the original IP specification.
 <BR>
 
-RFC1122 for the IPv4 host requirements.
+RFC&nbsp;1122 for the IPv4 host requirements.
 <BR>
 
-RFC1812 for the IPv4 router requirements.
+RFC&nbsp;1812 for the IPv4 router requirements.
 <P>
 
 <HR>
@@ -1261,6 +1294,6 @@ RFC1812 for the IPv4 router requirements.
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 02:13:13 GMT, April 20, 2020
+Time: 02:13:37 GMT, April 20, 2020
 </BODY>
 </HTML>

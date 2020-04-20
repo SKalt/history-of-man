@@ -11,7 +11,7 @@ Section: Linux Programmer's Manual (3)<BR>Updated: 2001-11-17<BR><A HREF="#index
 <A NAME="lbAB">&nbsp;</A>
 <H2>NAME</H2>
 
-exit - cause normal program termination
+exit - cause normal process termination
 <A NAME="lbAC">&nbsp;</A>
 <H2>SYNOPSIS</H2>
 
@@ -24,18 +24,20 @@ exit - cause normal program termination
 <A NAME="lbAD">&nbsp;</A>
 <H2>DESCRIPTION</H2>
 
-The <B>exit()</B> function causes normal program termination and the
+The <B>exit()</B> function causes normal process termination and the
 the value of <I>status &amp; 0377</I> is returned to the parent
 (see
 <B><A HREF="../man2/wait.2.html">wait</A></B>(2)).
 
-All functions registered with <B>atexit()</B> and <B>on_exit()</B>
-are called in the reverse order of their registration,
+All process termination functions registered with
+<B>atexit()</B> and <B>on_exit()</B>
+are called, in the reverse order of their registration,
 and all open streams are flushed and closed.
 Files created by <I>tmpfile()</I> are removed.
 <P>
 
-The C standard specifies two defines <I>EXIT_SUCCESS</I> and <I>EXIT_FAILURE</I>
+The C standard specifies two constants
+<I>EXIT_SUCCESS</I> and <I>EXIT_FAILURE</I>
 that may be passed to <B>exit()</B> to indicate successful or unsuccessful
 termination, respectively.
 <A NAME="lbAE">&nbsp;</A>
@@ -49,16 +51,19 @@ SVID 3, POSIX, BSD 4.3, ISO 9899 (``ANSI C'')
 <A NAME="lbAG">&nbsp;</A>
 <H2>NOTES</H2>
 
-During the exit processing, it is possible to register additional
+During exit processing, a process termination function may 
+register additional process termination
 functions with <B>atexit()</B> and <B>on_exit()</B>.
-Always the last-registered function is removed from the chain
-of registered functions, and invoked.
-It is undefined what happens if during this processing
-either <B>exit()</B> or <B>longjmp()</B> is called.
+These functions are added to the front of the list of
+process termination functions that remain to be called.
+<P>
+
+It is undefined what happens if one of the process termination
+functions calls either <B>exit()</B> or <B>longjmp()</B>.
 <P>
 
 The use of EXIT_SUCCESS and EXIT_FAILURE is slightly more portable
-(to non-Unix environments) than that of 0 and some nonzero value
+(to non-Unix environments) than that of 0 and some non-zero value
 like 1 or -1. In particular, VMS uses a different convention.
 <P>
 
@@ -94,7 +99,7 @@ process.
 <P>
 
 If the exit of the process causes a process group to become orphaned,
-and if any member of the newly-orphaned process group is stopped,
+and if any member of the newly orphaned process group is stopped,
 then a SIGHUP signal followed by a SIGCONT signal will be
 sent to each process in this process group.
 <A NAME="lbAH">&nbsp;</A>
@@ -127,6 +132,6 @@ sent to each process in this process group.
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 02:10:28 GMT, April 20, 2020
+Time: 02:13:34 GMT, April 20, 2020
 </BODY>
 </HTML>
