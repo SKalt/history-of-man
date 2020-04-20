@@ -555,6 +555,27 @@ Get and clear the pending socket error. Only valid as a
 <B>getsockopt</B>().
 
 Expects an integer. 
+<DT><B>SO_TIMESTAMP</B>
+
+<DD>
+Enable or disable the receiving of the
+<B>SO_TIMESTAMP</B>
+
+control message.  
+The timestamp control message is sent with level
+<B>SOL_SOCKET</B>
+
+and the 
+<I>cmsg_data field is a </I>
+
+<I>struct timeval</I>
+
+indicating the
+reception time of the last packet passed to the user in this call.
+See
+<B><A HREF="../man3/cmsg.3.html">cmsg</A></B>(3)
+
+for details on control messages.
 </DL>
 <A NAME="lbAG">&nbsp;</A>
 <H2>SIGNALS</H2>
@@ -692,13 +713,29 @@ These operations can be accessed using
 Return a 
 <I>struct timeval </I>
 
-with the receive timestamp of the last packet passed to the user. This is useful
-for accurate round trip time measurements. See 
+with the receive timestamp of the last packet passed to the user. 
+This is useful for accurate round trip time measurements. 
+See 
 <B><A HREF="../man2/setitimer.2.html">setitimer</A></B>(2)
 
 for a description of 
 <I>struct timeval</I>.
 
+
+This ioctl should only be used if the socket option
+<B>SO_TIMESTAMP</B>
+
+is not set on the socket.  
+Otherwise, it returns the timestamp of the
+last packet that was received while
+<B>SO_TIMESTAMP</B>
+
+was not set, or it fails if no such packet has been received,
+(i.e., 
+<B>ioctl</B>()
+
+returns -1 with errno set to 
+<B>ENOENT</B>).
 
 <DT><B>SIOCSPGRP</B>
 
@@ -862,6 +899,6 @@ a protocol specific setting, and could not be read or written.
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 02:19:15 GMT, April 20, 2020
+Time: 02:19:46 GMT, April 20, 2020
 </BODY>
 </HTML>

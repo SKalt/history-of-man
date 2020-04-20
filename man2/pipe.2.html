@@ -66,6 +66,69 @@ The system limit on the total number of open files has been reached.
 
 POSIX.1
 <A NAME="lbAH">&nbsp;</A>
+<H2>EXAMPLE</H2>
+
+
+The following program creates a pipe, and then 
+<B><A HREF="../man2/fork.2.html">fork</A></B>(2)s
+
+to create a child process.  
+After the 
+<B><A HREF="../man2/fork.2.html">fork</A></B>(2),
+
+each process closes the descriptors that it doesn't need for the pipe
+(see 
+<B><A HREF="../man7/pipe.7.html">pipe</A></B>(7)).
+
+The parent then writes the string contained in the program's 
+command-line argument to the pipe, 
+and the child reads this string a byte at a time from the pipe 
+and echoes it on standard output.
+<PRE>
+
+#include &lt;<A HREF="file:///usr/include/sys/wait.h">sys/wait.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/assert.h">assert.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/stdio.h">stdio.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/stdlib.h">stdlib.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/unistd.h">unistd.h</A>&gt;
+#include &lt;<A HREF="file:///usr/include/string.h">string.h</A>&gt;
+
+int
+main(int argc, char *argv[])
+{
+    int pfd[2];
+    pid_t cpid;
+    char buf;
+
+    assert(argc == 2);
+
+    if (pipe(pfd) == -1) { perror(&quot;pipe&quot;); exit(EXIT_FAILURE); }
+
+    cpid = fork();
+    if (cpid == -1) { perror(&quot;fork&quot;); exit(EXIT_FAILURE); }
+
+    if (cpid == 0) {    /* Child reads from pipe */
+        close(pfd[1]);          /* Close unused write end */
+
+        while (read(pfd[0], &amp;buf, 1) &gt; 0)
+            write(STDOUT_FILENO, &amp;buf, 1);
+
+        write(STDOUT_FILENO, &quot;\n&quot;, 1);
+        close(pfd[0]);
+        _exit(EXIT_SUCCESS);
+
+    } else {            /* Parent writes argv[1] to pipe */
+        close(pfd[0]);          /* Close unused read end */
+        write(pfd[1], argv[1], strlen(argv[1]));
+        close(pfd[1]);          /* Reader will see EOF */
+        wait(NULL);             /* Wait for child */
+        exit(EXIT_SUCCESS);
+    }
+}
+
+</PRE>
+
+<A NAME="lbAI">&nbsp;</A>
 <H2>SEE ALSO</H2>
 
 <B><A HREF="../man2/fork.2.html">fork</A></B>(2),
@@ -74,7 +137,9 @@ POSIX.1
 
 <B><A HREF="../man2/socketpair.2.html">socketpair</A></B>(2),
 
-<B><A HREF="../man2/write.2.html">write</A></B>(2)
+<B><A HREF="../man2/write.2.html">write</A></B>(2),
+
+<B><A HREF="../man7/pipe.7.html">pipe</A></B>(7)
 
 <P>
 
@@ -87,12 +152,13 @@ POSIX.1
 <DT><A HREF="#lbAE">RETURN VALUE</A><DD>
 <DT><A HREF="#lbAF">ERRORS</A><DD>
 <DT><A HREF="#lbAG">CONFORMING TO</A><DD>
-<DT><A HREF="#lbAH">SEE ALSO</A><DD>
+<DT><A HREF="#lbAH">EXAMPLE</A><DD>
+<DT><A HREF="#lbAI">SEE ALSO</A><DD>
 </DL>
 <HR>
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 02:19:03 GMT, April 20, 2020
+Time: 02:19:34 GMT, April 20, 2020
 </BODY>
 </HTML>
