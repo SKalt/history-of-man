@@ -4,7 +4,7 @@
 <HTML><HEAD><TITLE>Man page of OPEN</TITLE>
 </HEAD><BODY>
 <H1>OPEN</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2008-12-03<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2009-09-20<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -318,13 +318,20 @@ Try to minimize cache effects of the I/O to and from this file.
 In general this will degrade performance, but it is useful in
 special situations, such as when applications do their own caching.
 File I/O is done directly to/from user space buffers.
-The I/O is synchronous, that is, at the completion of a
-<B><A HREF="../man2/read.2.html">read</A></B>(2)
+The
+<B>O_DIRECT</B>
 
-or
-<B><A HREF="../man2/write.2.html">write</A></B>(2),
+flag on its own makes at an effort to transfer data synchronously,
+but does not give the guarantees of the
+<B>O_SYNC</B>
 
-data is guaranteed to have been transferred.
+that data and necessary metadata are transferred.
+To guarantee synchronous I/O the
+<B>O_SYNC</B>
+
+must be used in addition to
+<B>O_DIRECT</B>.
+
 See
 <B>NOTES</B>
 
@@ -844,9 +851,35 @@ amongst others
 
 <P>
 POSIX provides for three different variants of synchronized I/O,
-corresponding to the flags <B>O_SYNC</B>, <B>O_DSYNC</B> and
+corresponding to the flags
+<B>O_SYNC</B>,
+
+<B>O_DSYNC</B>,
+
+and
 <B>O_RSYNC</B>.
-Currently (2.1.130) these are all synonymous under Linux.
+
+Currently (2.6.31), Linux only implements
+<B>O_SYNC</B>,
+
+but glibc maps
+<B>O_DSYNC</B>
+
+and
+<B>O_RSYNC</B>
+
+to the same numerical value as
+<B>O_SYNC</B>
+
+Most Linux filesystems don't actually implement the POSIX
+<B>O_SYNC</B>
+
+semantics, which require all metadata updates of a write
+to be on disk on returning to userspace, but only the
+<B>O_DSYNC</B>
+
+semantics, which require only actual file data and metadata necessary
+to retrieve it to be on disk by the time the system call returns.
 <P>
 Note that
 <B>open</B>()
@@ -1101,6 +1134,6 @@ to enable this flag.
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 03:04:57 GMT, April 20, 2020
+Time: 03:05:26 GMT, April 20, 2020
 </BODY>
 </HTML>
