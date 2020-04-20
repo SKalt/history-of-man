@@ -4,7 +4,7 @@
 <HTML><HEAD><TITLE>Man page of OPEN</TITLE>
 </HEAD><BODY>
 <H1>OPEN</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2005-06-22<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2007-09-18<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -41,7 +41,7 @@ The file descriptor returned by a successful call will be
 the lowest-numbered file descriptor not currently open for the process.
 <P>
 
-The new file descriptor is set to remain open across an
+By default, the new file descriptor is set to remain open across an
 <B><A HREF="../man2/execve.2.html">execve</A></B>(2)
 
 (i.e., the
@@ -50,7 +50,10 @@ The new file descriptor is set to remain open across an
 file descriptor flag described in
 <B><A HREF="../man2/fcntl.2.html">fcntl</A></B>(2)
 
-is initially disabled).
+is initially disabled; the Linux-specific
+<B>O_CLOEXEC</B>
+
+flag, described below, can be used to change this default).
 The file offset is set to the beginning of the file (see
 <B><A HREF="../man2/lseek.2.html">lseek</A></B>(2)).
 
@@ -152,6 +155,39 @@ See
 <B><A HREF="../man2/fcntl.2.html">fcntl</A></B>(2)
 
 for further details.
+<DT><B>O_CLOEXEC</B> (Since Linux 2.6.23)
+
+<DD>
+Enable the close-on-exec flag for the new file descriptor.
+Specifying this flag permits a program to avoid an additional
+<B><A HREF="../man2/fcntl.2.html">fcntl</A></B>(2)
+
+<B>F_SETFD</B>
+
+operation to set the
+<B>FD_CLOEXEC</B>
+
+flag.
+Additionally,
+use of this flag is essential in some multithreaded programs
+since using a separate
+<B><A HREF="../man2/fcntl.2.html">fcntl</A></B>(2)
+
+<B>F_SETFD</B>
+
+operation to set the
+<B>FD_CLOEXEC</B>
+
+flag does not suffice to avoid race conditions
+where one thread opens a file descriptor at the same
+time as another thread does a
+<B><A HREF="../man2/fork.2.html">fork</A></B>(2)
+
+plus
+<B><A HREF="../man2/execve.2.html">execve</A></B>(2).
+
+
+
 
 <DT><B>O_CREAT</B>
 
@@ -171,7 +207,7 @@ and
 of the ext2 filesystem, as described in
 <B><A HREF="../man8/mount.8.html">mount</A></B>(8)).
 
-<DT><B>O_DIRECT</B>
+<DT><B>O_DIRECT</B> (Since Linux 2.6.10)
 
 <DD>
 Try to minimize cache effects of the I/O to and from this file.
@@ -271,10 +307,9 @@ is the preferred method of obtaining
 method of accessing large files on 32-bit systems (see
 <B><A HREF="../man7/feature_test_macros.7.html">feature_test_macros</A></B>(7)).
 
-<DT><B>O_NOATIME</B>
+<DT><B>O_NOATIME</B> (Since Linux 2.6.8)
 
 <DD>
-(Since Linux 2.6.8)
 Do not update the file last access time (st_atime in the inode)
 when the file is
 <B><A HREF="../man2/read.2.html">read</A></B>(2).
@@ -647,18 +682,26 @@ flag was specified, and an incompatible lease was held on the file
 
 SVr4, 4.3BSD, POSIX.1-2001.
 The
+<B>O_CLOEXEC</B>,
+
+<B>O_DIRECTORY</B>,
+
 <B>O_NOATIME</B>,
 
-<B>O_NOFOLLOW</B>,
-
 and
-<B>O_DIRECTORY</B>
+<B>O_NOFOLLOW</B>
 
 flags are Linux specific.
 One may have to define the
 <B>_GNU_SOURCE</B>
 
 macro to get their definitions.
+<B>O_DIRECT</B>
+
+is not specified in POSIX; one has to define
+<B>_GNU_SOURCE</B>
+
+to get its definition.
 <A NAME="lbAH">&nbsp;</A>
 <H2>NOTES</H2>
 
@@ -846,6 +889,6 @@ to enable this flag.
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 02:44:50 GMT, April 20, 2020
+Time: 02:45:26 GMT, April 20, 2020
 </BODY>
 </HTML>

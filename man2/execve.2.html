@@ -5,7 +5,7 @@ Copyright (c) 1992 Drew Eckhardt (drew@cs.colorado.edu), March 28, 1992
 <HTML><HEAD><TITLE>Man page of EXECVE</TITLE>
 </HEAD><BODY>
 <H1>EXECVE</H1>
-Section: Linux Programmer's Manual (2)<BR>Updated: 2006-09-04<BR><A HREF="#index">Index</A>
+Section: Linux Programmer's Manual (2)<BR>Updated: 2007-09-14<BR><A HREF="#index">Index</A>
 <A HREF="../index.html">Return to Main Contents</A><HR>
 
 <A NAME="lbAB">&nbsp;</A>
@@ -327,6 +327,56 @@ For portable use,
 should either be absent, or be specified as a single word (i.e., it
 should not contain white space); see NOTES below.
 <A NAME="lbAF">&nbsp;</A>
+<H3>Limits on size of arguments + environment</H3>
+
+Most Unix implementations impose some limit on the total size
+of the command-line argument
+(<I>argv</I>)
+
+and environment
+(<I>envp</I>)
+
+strings that may be passed to a new program.
+POSIX.1 allows an implementation to advertise this limit using the
+<B>ARG_MAX</B>
+
+constant (either defined in
+<I>&lt;<A HREF="file:///usr/include/limits.h">limits.h</A>&gt;</I>
+
+or available at run time using the call
+<I>sysconf(_SC_ARG_MAX)</I>).
+
+<P>
+On Linux prior to kernel 2.6.23, the memory used to store the
+environment and argument strings was limited to 32 pages
+(defined by the kernel constant
+<B>MAX_ARG_PAGES</B>).
+
+On architectures with a 4-kB page size,
+this yields a maximum size of 128 kB.
+<P>
+On kernel 2.6.23 and later, most architectures support a size limit
+derived from the soft
+<B>RLIMIT_STACK</B>
+
+resource limit (see
+<B><A HREF="../man2/getrlimit.2.html">getrlimit</A></B>(2)).
+
+For
+these architectures, the total size is limited to 1/4 of the allowed
+stack size, the limit per string is 32 pages (the kernel constant
+<B>MAX_ARG_STRLEN),</B>
+
+and the maximum number of strings is 0x7FFFFFFF.
+(This change allows programs to have a much larger
+argument and/or environment list.
+Imposing the 1/4-limit
+ensures that the new program always has some stack space.)
+Architectures with no memory management unit are excepted:
+they maintain the pre-2.6.23 limit.
+
+
+<A NAME="lbAG">&nbsp;</A>
 <H2>RETURN VALUE</H2>
 
 On success,
@@ -336,7 +386,7 @@ does not return, on error -1 is returned, and
 <I>errno</I>
 
 is set appropriately.
-<A NAME="lbAG">&nbsp;</A>
+<A NAME="lbAH">&nbsp;</A>
 <H2>ERRORS</H2>
 
 <DL COMPACT>
@@ -461,7 +511,7 @@ file has the set-user-ID or set-group-ID bit set.
 <DD>
 Executable was open for writing by one or more processes.
 </DL>
-<A NAME="lbAH">&nbsp;</A>
+<A NAME="lbAI">&nbsp;</A>
 <H2>CONFORMING TO</H2>
 
 SVr4, 4.3BSD, POSIX.1-2001.
@@ -471,7 +521,7 @@ but is otherwise compatible.
 
 
 
-<A NAME="lbAI">&nbsp;</A>
+<A NAME="lbAJ">&nbsp;</A>
 <H2>NOTES</H2>
 
 Set-user-ID and set-group-ID processes can not be
@@ -547,7 +597,7 @@ on most other Unix systems doing this will result in an error.
 
 
 
-<A NAME="lbAJ">&nbsp;</A>
+<A NAME="lbAK">&nbsp;</A>
 <H3>Historical</H3>
 
 With Unix V6 the argument list of an
@@ -563,7 +613,7 @@ Thus, this argument list was not directly usable in a further
 
 call.
 Since Unix V7 both are NULL.
-<A NAME="lbAK">&nbsp;</A>
+<A NAME="lbAL">&nbsp;</A>
 <H2>EXAMPLE</H2>
 
 The following program is designed to execed by the second program below.
@@ -664,7 +714,7 @@ argv[4]: world
 </PRE>
 
 
-<A NAME="lbAL">&nbsp;</A>
+<A NAME="lbAM">&nbsp;</A>
 <H2>SEE ALSO</H2>
 
 <B><A HREF="../man2/chmod.2.html">chmod</A></B>(2),
@@ -676,6 +726,8 @@ argv[4]: world
 <B><A HREF="../man3/execl.3.html">execl</A></B>(3),
 
 <B><A HREF="../man3/fexecve.3.html">fexecve</A></B>(3),
+
+<B><A HREF="../man3/getopt.3.html">getopt</A></B>(3),
 
 <B><A HREF="../man7/environ.7.html">environ</A></B>(7),
 
@@ -695,21 +747,22 @@ argv[4]: world
 <DT><A HREF="#lbAD">DESCRIPTION</A><DD>
 <DL>
 <DT><A HREF="#lbAE">Interpreter scripts</A><DD>
+<DT><A HREF="#lbAF">Limits on size of arguments + environment</A><DD>
 </DL>
-<DT><A HREF="#lbAF">RETURN VALUE</A><DD>
-<DT><A HREF="#lbAG">ERRORS</A><DD>
-<DT><A HREF="#lbAH">CONFORMING TO</A><DD>
-<DT><A HREF="#lbAI">NOTES</A><DD>
+<DT><A HREF="#lbAG">RETURN VALUE</A><DD>
+<DT><A HREF="#lbAH">ERRORS</A><DD>
+<DT><A HREF="#lbAI">CONFORMING TO</A><DD>
+<DT><A HREF="#lbAJ">NOTES</A><DD>
 <DL>
-<DT><A HREF="#lbAJ">Historical</A><DD>
+<DT><A HREF="#lbAK">Historical</A><DD>
 </DL>
-<DT><A HREF="#lbAK">EXAMPLE</A><DD>
-<DT><A HREF="#lbAL">SEE ALSO</A><DD>
+<DT><A HREF="#lbAL">EXAMPLE</A><DD>
+<DT><A HREF="#lbAM">SEE ALSO</A><DD>
 </DL>
 <HR>
 This document was created by
 <A HREF="http://localhost/cgi-bin/man/man2html">man2html</A>,
 using the manual pages.<BR>
-Time: 02:44:48 GMT, April 20, 2020
+Time: 02:45:24 GMT, April 20, 2020
 </BODY>
 </HTML>
